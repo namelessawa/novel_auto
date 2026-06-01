@@ -4,18 +4,15 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional
 from .config import (
-    DEEPSEEK_API_KEY,
-    DEEPSEEK_BASE_URL,
-    MODEL_NAME,
-    MAX_TOKENS,
-    TEMPERATURE,
     DASHSCOPE_API_KEY,
+    get_active_llm_config,
 )
 from memory_system.sliding_window import SlidingWindowMemory
 from memory_system.entity_state import EntityStateTracker
 from memory_system.hierarchical_summary import HierarchicalSummarizer
 from memory_system.long_term_memory import LongTermEventMemory
 from memory_system.character_relationship import CharacterRelationshipGraph
+from memory_system.knowledge_graph import KnowledgeGraph
 # Enhanced continuity evaluator (the active scorer for this generator)
 from evaluation.continuity_v2 import EnhancedContinuityEvaluator
 from .llm_client import LLMClient
@@ -29,30 +26,47 @@ class NovelGenerator:
     整合四个记忆模块，实现完整的生成工作流
     """
 
-    def __init__(self, topic_dir: str = "results", enable_multimedia: bool = False):
+    def __init__(
+        self,
+        topic_dir: str = "results",
+        enable_multimedia: bool = False,
+        enable_knowledge_graph: bool = True,
+    ):
         """
         初始化小说生成器
-        
+
         Args:
             topic_dir: 主题目录路径
             enable_multimedia: 是否启用多媒体功能
+            enable_knowledge_graph: 是否启用 KnowledgeGraph 模块（NetworkX 实体图 + 快照）
         """
-        # 初始化五个记忆模块
+        # 初始化五个原有记忆模块
         self.sliding_window = SlidingWindowMemory(memory_dir=topic_dir)
         self.entity_state = EntityStateTracker(memory_dir=topic_dir)
         self.hierarchical_summary = HierarchicalSummarizer(memory_dir=topic_dir)
         self.long_term_memory = LongTermEventMemory(memory_dir=topic_dir)
         self.character_relationship = CharacterRelationshipGraph(memory_dir=topic_dir)
 
-        # API 配置
-        self.api_key = DEEPSEEK_API_KEY
-        self.base_url = DEEPSEEK_BASE_URL
-        self.model_name = MODEL_NAME
-        self.max_tokens = MAX_TOKENS
-        self.temperature = TEMPERATURE
+        # 新增：KnowledgeGraph（与 character_relationship 并行存在，可选启用）
+        self.enable_knowledge_graph = enable_knowledge_graph
+        if enable_knowledge_graph:
+            self.knowledge_graph = KnowledgeGraph(memory_dir=topic_dir)
+            self.knowledge_graph.load_from_disk()
+        else:
+            self.knowledge_graph = None
+
+        # LLM 提供商配置（DeepSeek / MiMo / Custom 由 LLM_PROVIDER 决定）
+        active = get_active_llm_config()
+        self.llm_provider = active["provider"]
+        self.llm_provider_label = active["label"]
+        self.api_key = active["api_key"]
+        self.base_url = active["base_url"]
+        self.model_name = active["model"]
+        self.max_tokens = active["max_tokens"]
+        self.temperature = active["temperature"]
         self.dashscope_api_key = DASHSCOPE_API_KEY
 
-        # 初始化 LLM 客户端（使用 OpenAI SDK）
+        # 初始化 LLM 客户端（使用 OpenAI SDK，所有支持的提供商都是 OpenAI 兼容协议）
         self.llm_client = LLMClient(
             api_key=self.api_key,
             base_url=self.base_url,

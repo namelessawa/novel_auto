@@ -32,26 +32,103 @@ TEMP_DIR.mkdir(exist_ok=True)
 
 
 # ============================================================================
-# DeepSeek API 配置
+# LLM 提供商配置（多提供商抽象）
 # ============================================================================
+#
+# 通过 `LLM_PROVIDER` 切换默认提供商：
+#   - "deepseek"  → 使用 DeepSeek 官方 API
+#   - "mimo"      → 使用小米 MiMo API（OpenAI 兼容）
+#   - "custom"    → 使用 CUSTOM_* 系列环境变量自定义提供商
+#
+# 每个提供商分别用独立的环境变量保存凭据，运行时 `get_active_llm_config()`
+# 会返回当前生效的 `{api_key, base_url, model, max_tokens, temperature, timeout}`。
 
-# API 密钥（优先从环境变量读取）
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "deepseek").strip().lower()
+
+# 通用默认参数（被各提供商共享，除非提供商单独覆盖）
+DEFAULT_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", os.getenv("DEEPSEEK_MAX_TOKENS", "8192")))
+DEFAULT_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", os.getenv("DEEPSEEK_TEMPERATURE", "0.7")))
+DEFAULT_TIMEOUT = int(os.getenv("LLM_TIMEOUT", os.getenv("DEEPSEEK_TIMEOUT", "120")))
+
+# --- DeepSeek ---------------------------------------------------------------
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-
-# API 基础 URL
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
-# 模型名称
-MODEL_NAME = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+# --- MiMo（小米）-----------------------------------------------------------
+MIMO_API_KEY = os.getenv("MIMO_API_KEY", "")
+MIMO_BASE_URL = os.getenv("MIMO_BASE_URL", "https://token-plan-cn.xiaomimimo.com/v1")
+MIMO_MODEL = os.getenv("MIMO_MODEL", "mimo-chat")
 
-# 最大 Token 数
-MAX_TOKENS = int(os.getenv("DEEPSEEK_MAX_TOKENS", "8192"))
+# --- Custom（任意 OpenAI 兼容端点）-----------------------------------------
+CUSTOM_API_KEY = os.getenv("CUSTOM_API_KEY", "")
+CUSTOM_BASE_URL = os.getenv("CUSTOM_BASE_URL", "")
+CUSTOM_MODEL = os.getenv("CUSTOM_MODEL", "")
 
-# 温度参数（控制生成随机性，0-1 之间）
-TEMPERATURE = float(os.getenv("DEEPSEEK_TEMPERATURE", "0.7"))
+# 已知提供商注册表：name → {api_key, base_url, model}
+PROVIDERS = {
+    "deepseek": {
+        "label": "DeepSeek",
+        "api_key": DEEPSEEK_API_KEY,
+        "base_url": DEEPSEEK_BASE_URL,
+        "model": DEEPSEEK_MODEL,
+    },
+    "mimo": {
+        "label": "MiMo (小米)",
+        "api_key": MIMO_API_KEY,
+        "base_url": MIMO_BASE_URL,
+        "model": MIMO_MODEL,
+    },
+    "custom": {
+        "label": "Custom",
+        "api_key": CUSTOM_API_KEY,
+        "base_url": CUSTOM_BASE_URL,
+        "model": CUSTOM_MODEL,
+    },
+}
 
-# API 请求超时时间（秒）
-API_TIMEOUT = int(os.getenv("DEEPSEEK_TIMEOUT", "120"))
+
+def get_active_llm_config() -> dict:
+    """
+    返回当前生效的 LLM 配置。
+
+    根据 `LLM_PROVIDER` 选择对应提供商；若所选提供商缺少关键字段，回退到 DeepSeek
+    （保持向后兼容）。
+
+    Returns:
+        dict: 包含 provider/label/api_key/base_url/model/max_tokens/temperature/timeout
+    """
+    provider = LLM_PROVIDER if LLM_PROVIDER in PROVIDERS else "deepseek"
+    cfg = PROVIDERS.get(provider, PROVIDERS["deepseek"])
+
+    if not cfg.get("base_url") or not cfg.get("model"):
+        # 配置不完整 → 回退到 DeepSeek
+        provider = "deepseek"
+        cfg = PROVIDERS["deepseek"]
+
+    return {
+        "provider": provider,
+        "label": cfg["label"],
+        "api_key": cfg["api_key"],
+        "base_url": cfg["base_url"],
+        "model": cfg["model"],
+        "max_tokens": DEFAULT_MAX_TOKENS,
+        "temperature": DEFAULT_TEMPERATURE,
+        "timeout": DEFAULT_TIMEOUT,
+    }
+
+
+# --- 向后兼容别名 -----------------------------------------------------------
+# 旧代码继续使用 DEEPSEEK_* / MODEL_NAME / MAX_TOKENS / TEMPERATURE 时，
+# 这些变量映射到当前生效的提供商，避免老代码失效。
+_active = get_active_llm_config()
+
+# 当 LLM_PROVIDER != "deepseek" 时，DEEPSEEK_* 变量也会指向 active 配置
+# （这样 generator.py 老路径不用改也能用上新提供商）。
+MODEL_NAME = _active["model"]
+MAX_TOKENS = _active["max_tokens"]
+TEMPERATURE = _active["temperature"]
+API_TIMEOUT = _active["timeout"]
 
 
 # ============================================================================
@@ -136,11 +213,17 @@ LOG_FILE = PROJECT_ROOT / "novel_auto.log"
 # ============================================================================
 
 def validate_api_keys():
-    """验证必要的 API 密钥是否已配置"""
+    """验证当前 active 提供商的 API 密钥是否已配置"""
     warnings = []
+    active = get_active_llm_config()
 
-    if not DEEPSEEK_API_KEY or (DEEPSEEK_API_KEY.startswith("sk-") and len(DEEPSEEK_API_KEY) < 20):
-        warnings.append("警告：DeepSeek API 密钥可能未正确配置")
+    if not active["api_key"]:
+        warnings.append(
+            f"警告：当前提供商 [{active['label']}] 的 API 密钥未配置"
+        )
+    elif active["provider"] == "deepseek" and active["api_key"].startswith("sk-") \
+            and len(active["api_key"]) < 20:
+        warnings.append("警告：DeepSeek API 密钥长度可疑")
 
     if not DASHSCOPE_API_KEY:
         warnings.append("提示：DashScope API 密钥未配置，图片生成功能将不可用")
@@ -148,16 +231,34 @@ def validate_api_keys():
     return warnings
 
 
+def _safe_summary(active: dict) -> dict:
+    """构建不含敏感字段的展示用 summary（供日志/print 使用）。"""
+    has_credential = bool(active.get("api_key"))
+    return {
+        "label": active.get("label", ""),
+        "provider": active.get("provider", ""),
+        "endpoint": active.get("base_url", ""),
+        "model": active.get("model", ""),
+        "credential_status": "configured" if has_credential else "missing",
+    }
+
+
 def print_config():
-    """打印当前配置（用于调试）"""
+    """打印当前配置（用于调试，不会输出任何凭据）"""
+    summary = _safe_summary(get_active_llm_config())
+    dashscope_status = "configured" if DASHSCOPE_API_KEY else "missing"
+    multimedia_status = "enabled" if ENABLE_MULTIMEDIA_DEFAULT else "disabled"
     print("=" * 60)
     print("当前配置")
     print("=" * 60)
     print(f"项目根目录：{PROJECT_ROOT}")
     print(f"结果目录：{RESULTS_DIR}")
-    print(f"DeepSeek API: {'已配置' if DEEPSEEK_API_KEY else '未配置'}")
-    print(f"DashScope API: {'已配置' if DASHSCOPE_API_KEY else '未配置'}")
-    print(f"多媒体功能：{'启用' if ENABLE_MULTIMEDIA_DEFAULT else '禁用'}")
+    print(f"LLM 提供商：{summary['label']} ({summary['provider']})")
+    print(f"  endpoint: {summary['endpoint']}")
+    print(f"  model:    {summary['model']}")
+    print(f"  status:   {summary['credential_status']}")
+    print(f"DashScope: {dashscope_status}")
+    print(f"多媒体功能：{multimedia_status}")
     print(f"前端端口：{FRONTEND_PORT}")
     print("=" * 60)
 

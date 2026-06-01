@@ -279,13 +279,19 @@ class LLMClient:
 
 # 使用示例
 if __name__ == "__main__":
-    from .config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, MODEL_NAME
-    
+    from .config import get_active_llm_config
+
+    _active = get_active_llm_config()
+    # 仅展示提供商名称与端点，不输出任何凭据字段
+    _label = _active["label"]
+    _provider_id = _active["provider"]
+    print(f"测试提供商: {_label} ({_provider_id})")
+
     # 创建客户端
     client = LLMClient(
-        api_key=DEEPSEEK_API_KEY,
-        base_url=DEEPSEEK_BASE_URL,
-        model_name=MODEL_NAME
+        api_key=_active["api_key"],
+        base_url=_active["base_url"],
+        model_name=_active["model"]
     )
     
     # 测试生成

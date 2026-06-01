@@ -22,6 +22,8 @@ from .entity_state import EntityStateTracker
 from .hierarchical_summary import HierarchicalSummarizer
 from .long_term_memory import LongTermEventMemory
 from .character_relationship import CharacterRelationshipGraph
+from .knowledge_graph import KnowledgeGraph
+from . import models
 
 __all__ = [
     'SlidingWindowMemory',
@@ -29,4 +31,6 @@ __all__ = [
     'HierarchicalSummarizer',
     'LongTermEventMemory',
     'CharacterRelationshipGraph',
+    'KnowledgeGraph',
+    'models',
 ]

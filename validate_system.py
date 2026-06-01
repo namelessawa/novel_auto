@@ -54,15 +54,23 @@ def test_system_structure():
         print(f"✗ continue_novel 模块导入失败: {e}")
         all_present = False
     
-    # 测试API配置
+    # 测试 LLM 提供商配置（仅展示非敏感元数据）
     try:
-        from core.config import DEEPSEEK_API_KEY
-        if DEEPSEEK_API_KEY:
-            print("✓ API密钥已配置")
+        from core.config import _safe_summary, get_active_llm_config
+        _summary = _safe_summary(get_active_llm_config())
+        _label = _summary["label"]
+        _provider_id = _summary["provider"]
+        _endpoint = _summary["endpoint"]
+        _model_name = _summary["model"]
+        print(f"  当前 LLM 提供商: {_label} ({_provider_id})")
+        print(f"  endpoint: {_endpoint}")
+        print(f"  model:    {_model_name}")
+        if _summary["credential_status"] == "configured":
+            print("✓ 凭据已配置")
         else:
-            print("? API密钥未配置（需要用户设置）")
+            print("? 凭据未配置（请在 .env 或前端设置中填入）")
     except ImportError as e:
-        print(f"✗ API配置导入失败: {e}")
+        print(f"✗ 配置导入失败: {e}")
         all_present = False
     
     if all_present:

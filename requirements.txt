@@ -9,3 +9,16 @@ tiktoken>=0.5.0
 tenacity>=8.0.0
 chromadb>=0.4.0
 sentence-transformers>=2.2.0
+
+# 阶段三新增（KnowledgeGraph + 快照）
+networkx>=3.0
+
+# 阶段四新增（Agent backend / FastAPI / SSE）
+# 这些被 novel_frame/backend 直接 import；通过 agent_backend 启动器调用它
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+sse-starlette>=2.0.0
+pydantic>=2.0.0
+httpx>=0.27.0
+jieba>=0.42.0
+posthog>=3.0.0  # chromadb 0.5.x telemetry shim 依赖

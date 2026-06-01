@@ -23,6 +23,7 @@ from .llm_client import LLMClient
 from .chapter_analyzer import ChapterAnalyzer, apply_analysis_to_memory
 from .background_task import ChapterPostProcessor
 from .embedding_service import EmbeddingService
+from . import novel_manager
 
 __all__ = [
     "NovelGenerator",
@@ -31,4 +32,5 @@ __all__ = [
     "apply_analysis_to_memory",
     "ChapterPostProcessor",
     "EmbeddingService",
+    "novel_manager",
 ]

@@ -20,3 +20,10 @@ htmlcov/
 
 # Claude session state
 .claude/
+
+# novel_frame 本地配置 / 运行时数据（含密钥）
+novel_frame/config.json
+novel_frame/backend/data/
+novel_frame/backend/.venv/
+novel_frame/frontend/dist/
+novel_frame/frontend/.env.production

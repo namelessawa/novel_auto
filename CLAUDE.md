@@ -17,8 +17,31 @@ The running pipeline maintains story coherence through these modules in `memory_
 3. **Hierarchical Summarizer (`hierarchical_summary.py`)** - Three-level summaries: high-level outline, mid-level story arcs, low-level chapter summaries
 4. **Long-Term Memory (`long_term_memory.py`)** - RAG-based vector storage using ChromaDB for semantic retrieval of historical events
 5. **Character Relationship Graph (`character_relationship.py`)** - Tracks inter-character relationships
+6. **Knowledge Graph (`knowledge_graph.py`)** - **新增 (阶段三)** NetworkX 有向图，实体/关系建模 + 快照回滚。可通过 `NovelGenerator(enable_knowledge_graph=True)` 启用（默认开启）。与 `character_relationship.py` 并行存在。共享 `memory_system/models.py` 的 dataclass。
 
 > **There is a second, parallel memory architecture that is NOT yet wired in** — see "Built-but-unintegrated modules" below before assuming a module is live.
+
+### Multi-Provider LLM Configuration
+
+`core/config.py` 现支持多 LLM 提供商（通过 `LLM_PROVIDER` 环境变量切换）：
+- `deepseek` (默认): `DEEPSEEK_*` 环境变量
+- `mimo` (小米): `MIMO_*` 环境变量，base_url 默认 `https://token-plan-cn.xiaomimimo.com/v1`
+- `custom`: `CUSTOM_*` 环境变量，任意 OpenAI 兼容端点
+
+运行时调用 `core.config.get_active_llm_config()` 获取 `{provider, label, api_key, base_url, model, max_tokens, temperature, timeout}`。`NovelGenerator` 自动使用 active provider；Express `/api/config` 与前端 UI 提供切换控件。
+
+### Multi-Novel Project Management
+
+`core/novel_manager.py` 维护 `results/manifest.json`，跟踪每本小说的 `id / title / created_at / updated_at`。已有 `results/{topic}/` 目录会自动 backfill 到 manifest。前端 Express `/api/novels` GET / POST / PUT / DELETE 暴露管理能力。
+
+### Parallel FastAPI Agent Backend (`agent_backend/`)
+
+阶段四并行接入：`agent_backend/` 是一个薄壳启动器，通过 subprocess 启动 `novel_frame/backend/main.py` (FastAPI + SSE)，提供 Agent-style 多智能体生成管线（outline → retrieval → validation → writer → update）。
+
+- 启动: `python -m agent_backend --port 8000`
+- LLM 配置: 通过 `novel_frame/backend/config/settings.py` 的桥接逻辑读取主项目 `.env` 的 active provider；切换提供商无需重启
+- 数据目录: `novel_frame/backend/data/novels/{novel_id}/` (与主项目 `results/` 并存)
+- 与主项目 CLI/Express 后端**并行**运行，互不干扰
 
 ### Key Components
 
@@ -76,9 +99,14 @@ python create_novel.py
 # Terminal mode - continue existing novel
 python continue_novel.py
 
-# Frontend mode
+# Frontend mode (Express + ejs，主项目原前端)
 cd frontend && npm install && npm start
 # Access at http://localhost:8080
+
+# Agent backend (FastAPI + SSE，阶段四并行接入)
+python -m agent_backend --port 8000
+# 然后访问 novel_frame 自带的 Vite/React 前端 (cd novel_frame/frontend && npm i && npm run dev)
+# 或直接调用 REST/SSE API：http://localhost:8000/api/...
 ```
 
 ### Testing
@@ -104,11 +132,19 @@ All configuration is centralized in `core/config.py`. Key settings loaded from e
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DEEPSEEK_API_KEY` | DeepSeek API key (required) | - |
-| `DEEPSEEK_BASE_URL` | API endpoint | `https://api.deepseek.com/v1` |
-| `DEEPSEEK_MODEL` | Model name | `deepseek-chat` |
-| `DEEPSEEK_MAX_TOKENS` | Max generation tokens | `8192` |
-| `DEEPSEEK_TEMPERATURE` | Generation randomness | `0.7` |
+| `LLM_PROVIDER` | 当前生效提供商 (`deepseek` / `mimo` / `custom`) | `deepseek` |
+| `LLM_MAX_TOKENS` | 共享 max_tokens | `8192` |
+| `LLM_TEMPERATURE` | 共享 temperature | `0.7` |
+| `LLM_TIMEOUT` | 共享 API 超时秒数 | `120` |
+| `DEEPSEEK_API_KEY` | DeepSeek API key | - |
+| `DEEPSEEK_BASE_URL` | DeepSeek endpoint | `https://api.deepseek.com/v1` |
+| `DEEPSEEK_MODEL` | DeepSeek model name | `deepseek-chat` |
+| `MIMO_API_KEY` | MiMo (小米) API key | - |
+| `MIMO_BASE_URL` | MiMo endpoint | `https://token-plan-cn.xiaomimimo.com/v1` |
+| `MIMO_MODEL` | MiMo model name | `mimo-chat` |
+| `CUSTOM_API_KEY` | 自定义提供商 API key | - |
+| `CUSTOM_BASE_URL` | 自定义提供商 endpoint | - |
+| `CUSTOM_MODEL` | 自定义提供商 model | - |
 | `DASHSCOPE_API_KEY` | DashScope API key (for images) | - |
 | `ENABLE_MULTIMEDIA` | Enable TTS/image/video generation | `false` |
 | `SLIDING_WINDOW_MAX_TOKENS` | Short-term memory size | `2500` |

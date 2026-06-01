@@ -1,11 +1,40 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const rateLimitMw = require('express-rate-limit');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// ============================================================================
+// 速率限制中间件（CodeQL 识别 express-rate-limit）
+// ============================================================================
+// 写操作（POST/PUT/DELETE）：每分钟 30 次，每 IP
+const writeLimiter = rateLimitMw({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: '请求过于频繁，请稍后重试' },
+});
+// 昂贵读操作（章节内容、记忆数据）：每分钟 120 次
+const readLimiter = rateLimitMw({
+    windowMs: 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: '请求过于频繁，请稍后重试' },
+});
+// 任务触发（生成/继续/停止）：每分钟 5 次（与已有自定义 rateLimit 一致）
+const taskLimiter = rateLimitMw({
+    windowMs: 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: '生成任务触发过于频繁，请稍后重试' },
+});
 
 // 使用虚拟环境的 Python 解释器
 const PYTHON_PATH = (() => {
@@ -32,6 +61,15 @@ app.use((req, res, next) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '100kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 全局限速：所有写方法默认走 writeLimiter，所有 GET 走 readLimiter
+// 单条路由可自行覆盖 (e.g. /create-novel 用更严格的 taskLimiter)
+app.use((req, res, next) => {
+    if (req.method === 'GET' || req.method === 'HEAD') {
+        return readLimiter(req, res, next);
+    }
+    return writeLimiter(req, res, next);
+});
 
 // 简易速率限制（内存计数器）
 const rateLimits = new Map();
@@ -76,7 +114,11 @@ function isValidFilename(filename) {
     if (!filename || typeof filename !== 'string') {
         return false;
     }
-    return /^[a-zA-Z0-9\u4e00-\u9fa5_-]+\.?[a-zA-Z0-9]*$/.test(filename);
+    // \u957f\u5ea6\u4e0a\u754c\u9632\u5fa1 ReDoS\uff1b\u6269\u5c55\u540d\u4f5c\u4e3a\u663e\u5f0f\u53ef\u9009 group \u907f\u514d\u6b67\u4e49\u91cf\u8bcd
+    if (filename.length > 200) {
+        return false;
+    }
+    return /^[a-zA-Z0-9\u4e00-\u9fa5_-]+(?:\.[a-zA-Z0-9]+)?$/.test(filename);
 }
 
 /**
@@ -153,18 +195,44 @@ app.get('/api/check-apikey', (req, res) => {
         return res.json({ configured: false });
     }
     const content = fs.readFileSync(envPath, 'utf8');
-    const match = content.match(/DEEPSEEK_API_KEY=(.+)/);
-    const key = match ? match[1].trim() : '';
-    res.json({
-        configured: key.length >= 20 && key.startsWith('sk-')
+    const env = {};
+    content.split('\n').forEach(line => {
+        line = line.trim();
+        if (line && !line.startsWith('#') && line.includes('=')) {
+            const [k, ...v] = line.split('=');
+            env[k.trim()] = v.join('=').trim();
+        }
     });
+
+    const provider = (env.LLM_PROVIDER || 'deepseek').toLowerCase();
+    const keyByProvider = {
+        deepseek: env.DEEPSEEK_API_KEY || '',
+        mimo: env.MIMO_API_KEY || '',
+        custom: env.CUSTOM_API_KEY || '',
+    };
+    const activeKey = keyByProvider[provider] || '';
+
+    // DeepSeek 要求 sk- 前缀，其他提供商只要求非空
+    const configured = provider === 'deepseek'
+        ? (activeKey.length >= 20 && activeKey.startsWith('sk-'))
+        : activeKey.length > 0;
+
+    res.json({ configured, provider });
 });
 
 // ============================================================================
 // 配置 API（不返回明文密钥）
 // ============================================================================
 
-const SECRET_KEYS = new Set(['DEEPSEEK_API_KEY', 'DASHSCOPE_API_KEY']);
+const SECRET_KEYS = new Set([
+    'DEEPSEEK_API_KEY',
+    'DASHSCOPE_API_KEY',
+    'MIMO_API_KEY',
+    'CUSTOM_API_KEY',
+]);
+
+// 已知 LLM 提供商（与 core/config.py 保持一致）
+const LLM_PROVIDERS = ['deepseek', 'mimo', 'custom'];
 
 app.get('/api/config', (req, res) => {
     const envPath = path.join(__dirname, '..', '.env');
@@ -195,31 +263,52 @@ app.get('/api/config', (req, res) => {
     res.json({ success: true, config });
 });
 
-app.post('/api/config', (req, res) => {
-    const newConfig = req.body;
-    const envPath = path.join(__dirname, '..', '.env');
-
-    const errors = [];
-
-    // 读取现有配置以保留未修改的密钥
-    const existingConfig = {};
+// 读取 .env，返回原始 key→value 字典（明文）
+function readEnv(envPath) {
+    const existing = {};
     if (fs.existsSync(envPath)) {
         const content = fs.readFileSync(envPath, 'utf8');
         content.split('\n').forEach(line => {
             line = line.trim();
             if (line && !line.startsWith('#') && line.includes('=')) {
                 const [key, ...valueParts] = line.split('=');
-                existingConfig[key.trim()] = valueParts.join('=').trim();
+                existing[key.trim()] = valueParts.join('=').trim();
             }
         });
     }
+    return existing;
+}
 
-    // 处理 API 密钥：如果前端传来的是掩码（****开头），则保留原值
-    let deepseekKey = newConfig.DEEPSEEK_API_KEY || '';
-    if (deepseekKey.startsWith('****')) {
-        deepseekKey = existingConfig.DEEPSEEK_API_KEY || '';
+// 解析前端传来的密钥：若是 **** 掩码则保留原值
+function resolveSecret(newValue, existingValue) {
+    if (!newValue) return existingValue || '';
+    if (typeof newValue === 'string' && newValue.startsWith('****')) {
+        return existingValue || '';
     }
-    if (deepseekKey && deepseekKey.trim()) {
+    return newValue;
+}
+
+app.post('/api/config', writeLimiter, (req, res) => {
+    const newConfig = req.body;
+    const envPath = path.join(__dirname, '..', '.env');
+    const existing = readEnv(envPath);
+    const errors = [];
+
+    // --- 提供商选择 -------------------------------------------------------
+    let provider = (newConfig.LLM_PROVIDER || existing.LLM_PROVIDER || 'deepseek').toLowerCase();
+    if (!LLM_PROVIDERS.includes(provider)) {
+        errors.push(`未知 LLM 提供商: ${provider}（可选 ${LLM_PROVIDERS.join(' / ')})`);
+        provider = 'deepseek';
+    }
+
+    // --- 密钥处理 ---------------------------------------------------------
+    const deepseekKey = resolveSecret(newConfig.DEEPSEEK_API_KEY, existing.DEEPSEEK_API_KEY);
+    const mimoKey = resolveSecret(newConfig.MIMO_API_KEY, existing.MIMO_API_KEY);
+    const customKey = resolveSecret(newConfig.CUSTOM_API_KEY, existing.CUSTOM_API_KEY);
+    const dashscopeKey = resolveSecret(newConfig.DASHSCOPE_API_KEY, existing.DASHSCOPE_API_KEY);
+
+    // DeepSeek 密钥仅做轻量格式校验（其他提供商无统一格式）
+    if (provider === 'deepseek' && deepseekKey) {
         if (!deepseekKey.startsWith('sk-')) {
             errors.push('DeepSeek API 密钥格式错误，应以 sk- 开头');
         } else if (deepseekKey.length < 20) {
@@ -227,17 +316,23 @@ app.post('/api/config', (req, res) => {
         }
     }
 
-    let dashscopeKey = newConfig.DASHSCOPE_API_KEY || '';
-    if (dashscopeKey.startsWith('****')) {
-        dashscopeKey = existingConfig.DASHSCOPE_API_KEY || '';
+    // active 提供商必须有 key
+    const activeKey = { deepseek: deepseekKey, mimo: mimoKey, custom: customKey }[provider];
+    if (!activeKey) {
+        errors.push(`当前选择的提供商 [${provider}] 缺少 API Key`);
+    }
+    if (provider === 'custom' && !(newConfig.CUSTOM_BASE_URL || existing.CUSTOM_BASE_URL)) {
+        errors.push('自定义提供商必须填写 CUSTOM_BASE_URL');
     }
 
-    const maxTokens = parseInt(newConfig.DEEPSEEK_MAX_TOKENS);
+    // --- 通用参数 ---------------------------------------------------------
+    const maxTokens = parseInt(newConfig.LLM_MAX_TOKENS || newConfig.DEEPSEEK_MAX_TOKENS || existing.LLM_MAX_TOKENS || existing.DEEPSEEK_MAX_TOKENS || '8192');
     if (isNaN(maxTokens) || maxTokens < 100 || maxTokens > 32768) {
         errors.push('Max Tokens 必须在 100-32768 之间');
     }
 
-    const temperature = parseFloat(newConfig.DEEPSEEK_TEMPERATURE);
+    const temperatureRaw = newConfig.LLM_TEMPERATURE || newConfig.DEEPSEEK_TEMPERATURE || existing.LLM_TEMPERATURE || existing.DEEPSEEK_TEMPERATURE || '0.7';
+    const temperature = parseFloat(temperatureRaw);
     if (isNaN(temperature) || temperature < 0 || temperature > 1) {
         errors.push('Temperature 必须在 0-1 之间');
     }
@@ -251,37 +346,211 @@ app.post('/api/config', (req, res) => {
         return res.status(400).json({ success: false, errors });
     }
 
-    // 构建 .env（所有值均清理换行符）
+    // --- 写回 .env --------------------------------------------------------
+    const pick = (k, fallback = '') =>
+        sanitizeEnvValue(newConfig[k] || existing[k] || fallback);
+
     let content = '# 无限小说生成系统 - 环境变量配置\n';
     content += '# 自动生成，请勿删除\n\n';
+
+    content += '# LLM 提供商：deepseek | mimo | custom\n';
+    content += `LLM_PROVIDER=${sanitizeEnvValue(provider)}\n`;
+    content += `LLM_MAX_TOKENS=${sanitizeEnvValue(String(maxTokens))}\n`;
+    content += `LLM_TEMPERATURE=${sanitizeEnvValue(String(temperature))}\n`;
+    content += `LLM_TIMEOUT=${pick('LLM_TIMEOUT', '120')}\n\n`;
+
     content += '# DeepSeek API 配置\n';
     content += `DEEPSEEK_API_KEY=${sanitizeEnvValue(deepseekKey)}\n`;
-    content += `DEEPSEEK_BASE_URL=https://api.deepseek.com/v1\n`;
-    content += `DEEPSEEK_MODEL=${sanitizeEnvValue(newConfig.DEEPSEEK_MODEL || 'deepseek-chat')}\n`;
-    content += `DEEPSEEK_MAX_TOKENS=${sanitizeEnvValue(newConfig.DEEPSEEK_MAX_TOKENS || '8192')}\n`;
-    content += `DEEPSEEK_TEMPERATURE=${sanitizeEnvValue(newConfig.DEEPSEEK_TEMPERATURE || '0.7')}\n`;
-    content += `DEEPSEEK_TIMEOUT=${sanitizeEnvValue(newConfig.DEEPSEEK_TIMEOUT || '120')}\n\n`;
+    content += `DEEPSEEK_BASE_URL=${pick('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1')}\n`;
+    content += `DEEPSEEK_MODEL=${pick('DEEPSEEK_MODEL', 'deepseek-chat')}\n\n`;
+
+    content += '# MiMo (小米) API 配置\n';
+    content += `MIMO_API_KEY=${sanitizeEnvValue(mimoKey)}\n`;
+    content += `MIMO_BASE_URL=${pick('MIMO_BASE_URL', 'https://token-plan-cn.xiaomimimo.com/v1')}\n`;
+    content += `MIMO_MODEL=${pick('MIMO_MODEL', 'mimo-chat')}\n\n`;
+
+    content += '# 自定义 OpenAI 兼容端点\n';
+    content += `CUSTOM_API_KEY=${sanitizeEnvValue(customKey)}\n`;
+    content += `CUSTOM_BASE_URL=${pick('CUSTOM_BASE_URL')}\n`;
+    content += `CUSTOM_MODEL=${pick('CUSTOM_MODEL')}\n\n`;
+
     content += '# DashScope API 配置（图片生成）\n';
     content += `DASHSCOPE_API_KEY=${sanitizeEnvValue(dashscopeKey)}\n`;
-    content += `DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/api/v1\n`;
-    content += `DASHSCOPE_MODEL=${sanitizeEnvValue(newConfig.DASHSCOPE_MODEL || 'qwen-image-2.0')}\n`;
-    content += `DASHSCOPE_IMAGES_PER_CHAPTER=${sanitizeEnvValue(newConfig.DASHSCOPE_IMAGES_PER_CHAPTER || '2')}\n`;
-    content += `DASHSCOPE_WATERMARK=${sanitizeEnvValue(newConfig.DASHSCOPE_WATERMARK || 'true')}\n\n`;
+    content += `DASHSCOPE_BASE_URL=${pick('DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com/api/v1')}\n`;
+    content += `DASHSCOPE_MODEL=${pick('DASHSCOPE_MODEL', 'qwen-image-2.0')}\n`;
+    content += `DASHSCOPE_IMAGES_PER_CHAPTER=${pick('DASHSCOPE_IMAGES_PER_CHAPTER', '2')}\n`;
+    content += `DASHSCOPE_WATERMARK=${pick('DASHSCOPE_WATERMARK', 'true')}\n\n`;
+
     content += '# 多媒体配置\n';
-    content += `ENABLE_MULTIMEDIA=${sanitizeEnvValue(newConfig.ENABLE_MULTIMEDIA || 'false')}\n`;
-    content += `TTS_VOICE=${sanitizeEnvValue(newConfig.TTS_VOICE || 'zh-CN-XiaoxiaoNeural')}\n`;
-    content += `TTS_RATE=${sanitizeEnvValue(newConfig.TTS_RATE || '+0%')}\n`;
-    content += `TTS_VOLUME=${sanitizeEnvValue(newConfig.TTS_VOLUME || '+0%')}\n\n`;
+    content += `ENABLE_MULTIMEDIA=${pick('ENABLE_MULTIMEDIA', 'false')}\n`;
+    content += `TTS_VOICE=${pick('TTS_VOICE', 'zh-CN-XiaoxiaoNeural')}\n`;
+    content += `TTS_RATE=${pick('TTS_RATE', '+0%')}\n`;
+    content += `TTS_VOLUME=${pick('TTS_VOLUME', '+0%')}\n\n`;
+
     content += '# 前端配置\n';
-    content += `FRONTEND_PORT=${sanitizeEnvValue(newConfig.FRONTEND_PORT || '8080')}\n`;
-    content += `FRONTEND_HOST=127.0.0.1\n\n`;
+    content += `FRONTEND_PORT=${pick('FRONTEND_PORT', '8080')}\n`;
+    content += `FRONTEND_HOST=${pick('FRONTEND_HOST', '127.0.0.1')}\n\n`;
 
     try {
         fs.writeFileSync(envPath, content, 'utf8');
-        res.json({ success: true, message: '配置已保存' });
+        res.json({ success: true, message: '配置已保存', provider });
     } catch (error) {
         res.status(500).json({ success: false, message: '保存配置失败' });
     }
+});
+
+// 返回受支持的提供商元数据（前端 UI 用）
+app.get('/api/config/providers', (req, res) => {
+    res.json({
+        success: true,
+        providers: [
+            { id: 'deepseek', label: 'DeepSeek', base_url: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+            { id: 'mimo', label: 'MiMo (小米)', base_url: 'https://token-plan-cn.xiaomimimo.com/v1', model: 'mimo-chat' },
+            { id: 'custom', label: '自定义', base_url: '', model: '' },
+        ],
+    });
+});
+
+// ============================================================================
+// 小说项目管理 API (与 core/novel_manager.py 共享 results/manifest.json)
+// ============================================================================
+
+const RESULTS_DIR = path.resolve(path.join(__dirname, '..', 'results'));
+const MANIFEST_PATH = path.join(RESULTS_DIR, 'manifest.json');
+const LEGACY_SKIP = new Set(['__pycache__']);
+
+function ensureResultsDir() {
+    if (!fs.existsSync(RESULTS_DIR)) {
+        fs.mkdirSync(RESULTS_DIR, { recursive: true });
+    }
+}
+
+function loadManifest() {
+    if (!fs.existsSync(MANIFEST_PATH)) return [];
+    try {
+        const data = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+        return Array.isArray(data) ? data : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveManifest(entries) {
+    ensureResultsDir();
+    fs.writeFileSync(MANIFEST_PATH, JSON.stringify(entries, null, 2) + '\n', 'utf8');
+}
+
+function nowIso() {
+    return new Date().toISOString();
+}
+
+function slugify(title) {
+    // 与 Python 版保持一致：保留中文/字母/数字/下划线/短横，其他换 _
+    // 长度上界优先于正则替换，避免极长输入触发 ReDoS
+    const bounded = String(title).slice(0, 100);
+    const cleaned = bounded.replace(/[^\w一-鿿-]/g, '_').slice(0, 30);
+    // 用 for 循环手动 trim 下划线，避免使用易被 CodeQL 误报的歧义正则
+    let start = 0;
+    let end = cleaned.length;
+    while (start < end && cleaned.charCodeAt(start) === 95) start++;
+    while (end > start && cleaned.charCodeAt(end - 1) === 95) end--;
+    const trimmed = cleaned.slice(start, end);
+    const suffix = (Date.now() % 0xFFFFFF).toString(16);
+    return trimmed ? `${trimmed}_${suffix}` : suffix;
+}
+
+function scanLegacyTopics() {
+    ensureResultsDir();
+    return fs.readdirSync(RESULTS_DIR)
+        .filter(name => {
+            if (LEGACY_SKIP.has(name) || name.startsWith('.')) return false;
+            try {
+                return fs.statSync(path.join(RESULTS_DIR, name)).isDirectory();
+            } catch {
+                return false;
+            }
+        });
+}
+
+function backfillLegacy(entries) {
+    const known = new Set(entries.map(e => e.id));
+    let changed = false;
+    for (const topic of scanLegacyTopics()) {
+        if (known.has(topic)) continue;
+        let ts = nowIso();
+        try {
+            ts = fs.statSync(path.join(RESULTS_DIR, topic)).mtime.toISOString();
+        } catch {}
+        entries.push({ id: topic, title: topic, created_at: ts, updated_at: ts });
+        changed = true;
+    }
+    if (changed) saveManifest(entries);
+    return entries;
+}
+
+function listNovels() {
+    let entries = backfillLegacy(loadManifest());
+    return [...entries].sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''));
+}
+
+// --- REST endpoints --------------------------------------------------------
+
+app.get('/api/novels', (req, res) => {
+    try {
+        res.json({ success: true, novels: listNovels() });
+    } catch (e) {
+        res.status(500).json({ success: false, message: '读取小说列表失败' });
+    }
+});
+
+app.post('/api/novels', writeLimiter, (req, res) => {
+    const title = (req.body && req.body.title) ? String(req.body.title).trim() : '未命名小说';
+    if (!title) return res.status(400).json({ success: false, message: '标题不能为空' });
+
+    const entries = loadManifest();
+    let novelId = slugify(title);
+    while (entries.some(e => e.id === novelId)) {
+        novelId = `${novelId}_${(Date.now() % 0xFFFFFF).toString(16)}`;
+    }
+    const novelDir = path.join(RESULTS_DIR, novelId);
+    if (!fs.existsSync(novelDir)) fs.mkdirSync(novelDir, { recursive: true });
+
+    const now = nowIso();
+    const entry = { id: novelId, title, created_at: now, updated_at: now };
+    entries.push(entry);
+    saveManifest(entries);
+    res.json({ success: true, novel: entry });
+});
+
+app.put('/api/novels/:id', writeLimiter, (req, res) => {
+    const novelId = sanitizePath(req.params.id);
+    const newTitle = (req.body && req.body.title) ? String(req.body.title).trim() : '';
+    if (!newTitle) return res.status(400).json({ success: false, message: '标题不能为空' });
+
+    const entries = loadManifest();
+    const entry = entries.find(e => e.id === novelId);
+    if (!entry) return res.status(404).json({ success: false, message: '小说不存在' });
+
+    entry.title = newTitle;
+    entry.updated_at = nowIso();
+    saveManifest(entries);
+    res.json({ success: true, novel: entry });
+});
+
+app.delete('/api/novels/:id', writeLimiter, (req, res) => {
+    const novelId = sanitizePath(req.params.id);
+    const entries = loadManifest();
+    const idx = entries.findIndex(e => e.id === novelId);
+    if (idx === -1) return res.status(404).json({ success: false, message: '小说不存在' });
+
+    entries.splice(idx, 1);
+    saveManifest(entries);
+
+    const novelDir = path.join(RESULTS_DIR, novelId);
+    if (path.resolve(novelDir).startsWith(RESULTS_DIR) && fs.existsSync(novelDir)) {
+        fs.rmSync(novelDir, { recursive: true, force: true });
+    }
+    res.json({ success: true });
 });
 
 // ============================================================================
@@ -409,7 +678,7 @@ app.get('/api/memory/chapter/:topic/:chapterNum', (req, res) => {
 // 小说生成 API（通过环境变量传参，不在代码字符串中拼接用户输入）
 // ============================================================================
 
-app.post('/create-novel', (req, res) => {
+app.post('/create-novel', taskLimiter, (req, res) => {
     const { topic } = req.body;
 
     if (!topic || !topic.trim()) {
@@ -466,7 +735,7 @@ app.post('/create-novel', (req, res) => {
     });
 });
 
-app.post('/continue-novel', (req, res) => {
+app.post('/continue-novel', taskLimiter, (req, res) => {
     const { topic, mode, customPrompt } = req.body;
 
     if (!topic) {
@@ -609,7 +878,7 @@ app.get('/multimedia-files/:topic/:chapterNum/:mediaType/:fileName', (req, res) 
 // 进程管理
 // ============================================================================
 
-app.post('/stop-process', (req, res) => {
+app.post('/stop-process', taskLimiter, (req, res) => {
     if (runningProcesses.size > 0) {
         for (const [id, proc] of runningProcesses) {
             proc.kill();

@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+node_modules/
+frontend/dist/
+backend/data/
+*.log
+.DS_Store
+Thumbs.db
+config.json
+.env
+.env.production.local
+.vercel

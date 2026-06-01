@@ -16,12 +16,26 @@
             <div style="text-align:center;margin-bottom:16px;">
                 <i class="fas fa-key" style="font-size:36px;color:var(--accent-purple);"></i>
             </div>
-            <h2 class="modal-title">配置 API 密钥</h2>
-            <p class="modal-desc">在开始创作前，请先配置 DeepSeek API 密钥。<br>密钥以 <code style="background:rgba(139,92,246,0.15);padding:2px 6px;border-radius:4px;">sk-</code> 开头。</p>
+            <h2 class="modal-title">配置 LLM 提供商</h2>
+            <p class="modal-desc">选择一个 LLM 提供商并填入对应的 API 密钥。<br>稍后可在「系统设置」中切换。</p>
+            <div style="margin-bottom:14px;">
+                <label class="input-label">提供商</label>
+                <select id="modalProvider" class="input-field" onchange="onModalProviderChange()">
+                    <option value="deepseek">DeepSeek（官方）</option>
+                    <option value="mimo">MiMo（小米）</option>
+                    <option value="custom">自定义（OpenAI 兼容）</option>
+                </select>
+            </div>
             <div style="margin-bottom:16px;">
-                <label class="input-label">DeepSeek API Key</label>
+                <label class="input-label" id="modalKeyLabel">DeepSeek API Key</label>
                 <input type="password" id="modalApiKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx">
                 <p class="input-hint"><i class="fas fa-lock" style="margin-right:4px;"></i>密钥仅保存在本地 .env 文件中</p>
+            </div>
+            <div id="modalCustomFields" style="display:none;margin-bottom:16px;">
+                <label class="input-label">Base URL <span style="color:var(--accent-rose);">*</span></label>
+                <input type="text" id="modalBaseUrl" class="input-field" placeholder="https://...">
+                <label class="input-label" style="margin-top:10px;">Model</label>
+                <input type="text" id="modalModel" class="input-field" placeholder="model-id">
             </div>
             <div id="modalError" style="color:var(--accent-rose);font-size:13px;margin-bottom:12px;display:none;"></div>
             <button onclick="submitApiKey()" class="btn btn-primary btn-full" style="padding:12px;">
@@ -251,25 +265,90 @@
                     </div>
                 </div>
                 <div class="content-body" style="max-width:640px;">
-                    <!-- DeepSeek -->
+                    <!-- LLM 提供商 -->
                     <div class="config-section">
                         <div class="config-section-title" style="color:var(--accent-blue);">
-                            <i class="fas fa-key"></i> DeepSeek API
+                            <i class="fas fa-cloud"></i> LLM 提供商
                         </div>
                         <div class="card">
-                            <div style="margin-bottom:12px;">
-                                <label class="input-label">API 密钥 <span style="color:var(--accent-rose);">*</span></label>
-                                <input type="password" id="cfgApiKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx">
-                                <p class="input-hint"><i class="fas fa-info-circle"></i> 必填，以 sk- 开头</p>
+                            <div style="margin-bottom:14px;">
+                                <label class="input-label">当前使用的提供商</label>
+                                <select id="cfgProvider" class="input-field" onchange="onProviderChange()">
+                                    <option value="deepseek">DeepSeek（官方）</option>
+                                    <option value="mimo">MiMo（小米）</option>
+                                    <option value="custom">自定义（OpenAI 兼容）</option>
+                                </select>
+                                <p class="input-hint"><i class="fas fa-info-circle"></i> 切换后请填入对应提供商的密钥并保存</p>
                             </div>
-                            <div class="grid-2">
-                                <div>
-                                    <label class="input-label">Max Tokens</label>
-                                    <input type="number" id="cfgMaxTokens" class="input-field" value="8192" min="100" max="32768">
+
+                            <!-- DeepSeek 子面板 -->
+                            <div class="provider-panel" id="panelDeepseek">
+                                <div style="margin-bottom:12px;">
+                                    <label class="input-label">DeepSeek API Key <span class="provider-required" style="color:var(--accent-rose);">*</span></label>
+                                    <input type="password" id="cfgDeepseekKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx">
+                                    <p class="input-hint"><i class="fas fa-info-circle"></i> 以 sk- 开头</p>
                                 </div>
-                                <div>
-                                    <label class="input-label">Temperature</label>
-                                    <input type="number" id="cfgTemperature" class="input-field" value="0.7" step="0.1" min="0" max="1">
+                                <div class="grid-2">
+                                    <div>
+                                        <label class="input-label">Base URL</label>
+                                        <input type="text" id="cfgDeepseekBaseUrl" class="input-field" value="https://api.deepseek.com/v1">
+                                    </div>
+                                    <div>
+                                        <label class="input-label">Model</label>
+                                        <input type="text" id="cfgDeepseekModel" class="input-field" value="deepseek-chat">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MiMo 子面板 -->
+                            <div class="provider-panel" id="panelMimo" style="display:none;">
+                                <div style="margin-bottom:12px;">
+                                    <label class="input-label">MiMo API Key <span class="provider-required" style="color:var(--accent-rose);">*</span></label>
+                                    <input type="password" id="cfgMimoKey" class="input-field" placeholder="小米 MiMo 密钥">
+                                    <p class="input-hint"><i class="fas fa-info-circle"></i> 申请请参考小米官方文档</p>
+                                </div>
+                                <div class="grid-2">
+                                    <div>
+                                        <label class="input-label">Base URL</label>
+                                        <input type="text" id="cfgMimoBaseUrl" class="input-field" value="https://token-plan-cn.xiaomimimo.com/v1">
+                                    </div>
+                                    <div>
+                                        <label class="input-label">Model</label>
+                                        <input type="text" id="cfgMimoModel" class="input-field" value="mimo-chat">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom 子面板 -->
+                            <div class="provider-panel" id="panelCustom" style="display:none;">
+                                <div style="margin-bottom:12px;">
+                                    <label class="input-label">Custom API Key <span class="provider-required" style="color:var(--accent-rose);">*</span></label>
+                                    <input type="password" id="cfgCustomKey" class="input-field" placeholder="自定义提供商密钥">
+                                </div>
+                                <div class="grid-2">
+                                    <div>
+                                        <label class="input-label">Base URL <span style="color:var(--accent-rose);">*</span></label>
+                                        <input type="text" id="cfgCustomBaseUrl" class="input-field" placeholder="https://...">
+                                    </div>
+                                    <div>
+                                        <label class="input-label">Model</label>
+                                        <input type="text" id="cfgCustomModel" class="input-field" placeholder="model-id">
+                                    </div>
+                                </div>
+                                <p class="input-hint" style="margin-top:8px;"><i class="fas fa-info-circle"></i> 任意 OpenAI Chat Completions 兼容端点</p>
+                            </div>
+
+                            <!-- 共享生成参数 -->
+                            <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+                                <div class="grid-2">
+                                    <div>
+                                        <label class="input-label">Max Tokens（共享）</label>
+                                        <input type="number" id="cfgMaxTokens" class="input-field" value="8192" min="100" max="32768">
+                                    </div>
+                                    <div>
+                                        <label class="input-label">Temperature（共享）</label>
+                                        <input type="number" id="cfgTemperature" class="input-field" value="0.7" step="0.1" min="0" max="1">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -359,7 +438,33 @@
         }
     }
 
+    function onModalProviderChange() {
+        const provider = document.getElementById('modalProvider').value;
+        const keyLabel = document.getElementById('modalKeyLabel');
+        const keyInput = document.getElementById('modalApiKey');
+        const customFields = document.getElementById('modalCustomFields');
+        const baseUrl = document.getElementById('modalBaseUrl');
+
+        if (provider === 'deepseek') {
+            keyLabel.textContent = 'DeepSeek API Key';
+            keyInput.placeholder = 'sk-xxxxxxxxxxxxxxxx';
+            customFields.style.display = 'none';
+        } else if (provider === 'mimo') {
+            keyLabel.textContent = 'MiMo API Key';
+            keyInput.placeholder = '小米 MiMo 密钥';
+            customFields.style.display = 'none';
+            // 帮用户预填 MiMo base_url（提交时被忽略，仅做提示）
+            baseUrl.value = 'https://token-plan-cn.xiaomimimo.com/v1';
+        } else {
+            keyLabel.textContent = 'API Key';
+            keyInput.placeholder = '自定义提供商密钥';
+            customFields.style.display = 'block';
+            if (!baseUrl.value) baseUrl.value = '';
+        }
+    }
+
     async function submitApiKey() {
+        const provider = document.getElementById('modalProvider').value;
         const key = document.getElementById('modalApiKey').value.trim();
         const errorEl = document.getElementById('modalError');
 
@@ -368,25 +473,47 @@
             errorEl.style.display = 'block';
             return;
         }
-        if (!key.startsWith('sk-') || key.length < 20) {
-            errorEl.textContent = 'API 密钥格式错误，应以 sk- 开头且长度不少于 20 位';
+        if (provider === 'deepseek' && (!key.startsWith('sk-') || key.length < 20)) {
+            errorEl.textContent = 'DeepSeek 密钥应以 sk- 开头且长度 ≥ 20';
             errorEl.style.display = 'block';
             return;
+        }
+
+        // 构造按提供商分流的 payload
+        const payload = {
+            LLM_PROVIDER: provider,
+            LLM_MAX_TOKENS: '8192',
+            LLM_TEMPERATURE: '0.7',
+            DASHSCOPE_IMAGES_PER_CHAPTER: '2',
+            DASHSCOPE_WATERMARK: 'false',
+            ENABLE_MULTIMEDIA: 'false',
+            TTS_VOICE: 'zh-CN-XiaoxiaoNeural',
+        };
+        if (provider === 'deepseek') {
+            payload.DEEPSEEK_API_KEY = key;
+        } else if (provider === 'mimo') {
+            payload.MIMO_API_KEY = key;
+            payload.MIMO_BASE_URL = 'https://token-plan-cn.xiaomimimo.com/v1';
+            payload.MIMO_MODEL = 'mimo-chat';
+        } else {
+            // custom
+            const baseUrl = document.getElementById('modalBaseUrl').value.trim();
+            const model = document.getElementById('modalModel').value.trim();
+            if (!baseUrl) {
+                errorEl.textContent = '自定义提供商必须填写 Base URL';
+                errorEl.style.display = 'block';
+                return;
+            }
+            payload.CUSTOM_API_KEY = key;
+            payload.CUSTOM_BASE_URL = baseUrl;
+            payload.CUSTOM_MODEL = model || 'gpt-3.5-turbo';
         }
 
         try {
             const res = await fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    DEEPSEEK_API_KEY: key,
-                    DEEPSEEK_MAX_TOKENS: '8192',
-                    DEEPSEEK_TEMPERATURE: '0.7',
-                    DASHSCOPE_IMAGES_PER_CHAPTER: '2',
-                    DASHSCOPE_WATERMARK: 'false',
-                    ENABLE_MULTIMEDIA: 'false',
-                    TTS_VOICE: 'zh-CN-XiaoxiaoNeural'
-                })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (data.success) {
@@ -429,39 +556,104 @@
     }
 
     // ========================================================================
-    // 主题列表
+    // 主题列表（基于 /api/novels：含 id/title/created_at/updated_at）
     // ========================================================================
+    let novelsCache = [];  // 记录 id→title 映射用于显示
+
     async function loadTopics() {
         try {
-            const res = await fetch('/chapters');
-            const topics = await res.json();
+            const res = await fetch('/api/novels');
+            const data = await res.json();
+            const novels = (data && data.success) ? (data.novels || []) : [];
+            novelsCache = novels;
 
             // 侧边栏
             const sidebar = document.getElementById('sidebarTopics');
-            if (topics.length === 0) {
+            if (novels.length === 0) {
                 sidebar.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--text-muted);">暂无作品，开始创作吧</div>';
             } else {
-                sidebar.innerHTML = topics.map(t => {
-                    const safeAttr = escapeAttr(t);
+                sidebar.innerHTML = novels.map(n => {
+                    const idAttr = escapeAttr(n.id);
+                    const titleHtml = escapeHtml(n.title || n.id);
                     return `
-                    <div class="topic-item${currentTopic === t ? ' active' : ''}" data-topic="${safeAttr}" onclick="openNovel(this.dataset.topic)">
+                    <div class="topic-item${currentTopic === n.id ? ' active' : ''}" data-topic="${idAttr}" onclick="openNovel(this.dataset.topic)">
                         <i class="fas fa-book"></i>
-                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t)}</span>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" title="${escapeAttr(n.title || n.id)}">${titleHtml}</span>
+                        <span class="novel-actions" style="display:none;gap:4px;">
+                            <i class="fas fa-pen" title="重命名" style="font-size:11px;opacity:.6;" onclick="event.stopPropagation();renameNovel('${idAttr}');"></i>
+                            <i class="fas fa-trash" title="删除" style="font-size:11px;opacity:.6;color:var(--accent-rose);" onclick="event.stopPropagation();deleteNovel('${idAttr}');"></i>
+                        </span>
                     </div>`;
                 }).join('');
+
+                // 悬浮显示操作按钮
+                sidebar.querySelectorAll('.topic-item').forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        const a = item.querySelector('.novel-actions');
+                        if (a) a.style.display = 'flex';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        const a = item.querySelector('.novel-actions');
+                        if (a) a.style.display = 'none';
+                    });
+                });
             }
 
             // 续写下拉
             const select = document.getElementById('topicSelect');
             select.innerHTML = '<option value="">选择已有作品...</option>';
-            topics.forEach(t => {
+            novels.forEach(n => {
                 const opt = document.createElement('option');
-                opt.value = t;
-                opt.textContent = t;
+                opt.value = n.id;
+                opt.textContent = n.title || n.id;
                 select.appendChild(opt);
             });
         } catch (e) {
             console.error('加载主题失败:', e);
+        }
+    }
+
+    async function renameNovel(novelId) {
+        const current = novelsCache.find(n => n.id === novelId);
+        const newTitle = prompt('新的小说标题', current ? current.title : novelId);
+        if (!newTitle || !newTitle.trim()) return;
+        try {
+            const res = await fetch(`/api/novels/${encodeURIComponent(novelId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle.trim() }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('标题已更新', 'success');
+                await loadTopics();
+            } else {
+                showToast(data.message || '更新失败', 'error');
+            }
+        } catch (e) {
+            showToast('更新失败: ' + e.message, 'error');
+        }
+    }
+
+    async function deleteNovel(novelId) {
+        const current = novelsCache.find(n => n.id === novelId);
+        const label = current ? (current.title || current.id) : novelId;
+        if (!confirm(`确定删除「${label}」？该操作不可撤销。`)) return;
+        try {
+            const res = await fetch(`/api/novels/${encodeURIComponent(novelId)}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                showToast('小说已删除', 'success');
+                if (currentTopic === novelId) {
+                    currentTopic = null;
+                    switchView('home');
+                }
+                await loadTopics();
+            } else {
+                showToast(data.message || '删除失败', 'error');
+            }
+        } catch (e) {
+            showToast('删除失败: ' + e.message, 'error');
         }
     }
 
@@ -473,7 +665,9 @@
         currentChapterNum = null;
         switchView('novel');
 
-        document.getElementById('novelTitle').textContent = topic;
+        // 优先用 manifest 里的 title，回退到 id
+        const meta = novelsCache.find(n => n.id === topic);
+        document.getElementById('novelTitle').textContent = meta ? (meta.title || topic) : topic;
         document.getElementById('noChapterSelected').style.display = 'flex';
         document.getElementById('chapterReadingView').style.display = 'none';
 
@@ -817,44 +1011,118 @@
     // ========================================================================
     // 配置
     // ========================================================================
+
+    // 已知提供商对应面板 id
+    const PROVIDER_PANELS = {
+        deepseek: 'panelDeepseek',
+        mimo: 'panelMimo',
+        custom: 'panelCustom',
+    };
+
+    function onProviderChange() {
+        const provider = document.getElementById('cfgProvider').value;
+        Object.entries(PROVIDER_PANELS).forEach(([id, panelId]) => {
+            const el = document.getElementById(panelId);
+            if (el) el.style.display = (id === provider) ? '' : 'none';
+        });
+    }
+
     async function loadConfig() {
         try {
             const res = await fetch('/api/config');
             const data = await res.json();
-            if (data.success) {
-                const c = data.config;
-                document.getElementById('cfgApiKey').value = c.DEEPSEEK_API_KEY || '';
-                document.getElementById('cfgMaxTokens').value = c.DEEPSEEK_MAX_TOKENS || '8192';
-                document.getElementById('cfgTemperature').value = c.DEEPSEEK_TEMPERATURE || '0.7';
-                document.getElementById('cfgDashKey').value = c.DASHSCOPE_API_KEY || '';
-                document.getElementById('cfgImages').value = c.DASHSCOPE_IMAGES_PER_CHAPTER || '2';
-                document.getElementById('cfgWatermark').value = c.DASHSCOPE_WATERMARK || 'false';
-                document.getElementById('cfgMultimedia').value = c.ENABLE_MULTIMEDIA || 'false';
-                document.getElementById('cfgTTS').value = c.TTS_VOICE || 'zh-CN-XiaoxiaoNeural';
-            }
+            if (!data.success) return;
+            const c = data.config;
+
+            // 提供商
+            const provider = (c.LLM_PROVIDER || 'deepseek').toLowerCase();
+            document.getElementById('cfgProvider').value = provider;
+
+            // DeepSeek
+            document.getElementById('cfgDeepseekKey').value = c.DEEPSEEK_API_KEY || '';
+            document.getElementById('cfgDeepseekBaseUrl').value = c.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
+            document.getElementById('cfgDeepseekModel').value = c.DEEPSEEK_MODEL || 'deepseek-chat';
+
+            // MiMo
+            document.getElementById('cfgMimoKey').value = c.MIMO_API_KEY || '';
+            document.getElementById('cfgMimoBaseUrl').value = c.MIMO_BASE_URL || 'https://token-plan-cn.xiaomimimo.com/v1';
+            document.getElementById('cfgMimoModel').value = c.MIMO_MODEL || 'mimo-chat';
+
+            // Custom
+            document.getElementById('cfgCustomKey').value = c.CUSTOM_API_KEY || '';
+            document.getElementById('cfgCustomBaseUrl').value = c.CUSTOM_BASE_URL || '';
+            document.getElementById('cfgCustomModel').value = c.CUSTOM_MODEL || '';
+
+            // 共享参数
+            document.getElementById('cfgMaxTokens').value = c.LLM_MAX_TOKENS || c.DEEPSEEK_MAX_TOKENS || '8192';
+            document.getElementById('cfgTemperature').value = c.LLM_TEMPERATURE || c.DEEPSEEK_TEMPERATURE || '0.7';
+
+            // DashScope / 多媒体
+            document.getElementById('cfgDashKey').value = c.DASHSCOPE_API_KEY || '';
+            document.getElementById('cfgImages').value = c.DASHSCOPE_IMAGES_PER_CHAPTER || '2';
+            document.getElementById('cfgWatermark').value = c.DASHSCOPE_WATERMARK || 'false';
+            document.getElementById('cfgMultimedia').value = c.ENABLE_MULTIMEDIA || 'false';
+            document.getElementById('cfgTTS').value = c.TTS_VOICE || 'zh-CN-XiaoxiaoNeural';
+
+            onProviderChange();
         } catch (e) {
             showToast('加载配置失败', 'error');
         }
     }
 
-    async function saveConfig() {
-        const apiKey = document.getElementById('cfgApiKey').value.trim();
+    // 把以 **** 开头的占位符识别为「保留原值」
+    function valOrKeep(id) {
+        const v = document.getElementById(id).value.trim();
+        return v;  // 后端会识别 **** 开头并保留
+    }
 
-        // 强制要求 API Key
-        if (!apiKey || !apiKey.startsWith('sk-') || apiKey.length < 20) {
-            showToast('请填入有效的 DeepSeek API 密钥（以 sk- 开头）', 'error');
+    async function saveConfig() {
+        const provider = document.getElementById('cfgProvider').value;
+
+        // 收集当前提供商对应的 key
+        const providerKeyId = {
+            deepseek: 'cfgDeepseekKey',
+            mimo: 'cfgMimoKey',
+            custom: 'cfgCustomKey',
+        }[provider];
+        const activeKey = document.getElementById(providerKeyId).value.trim();
+
+        if (!activeKey) {
+            showToast(`请填入 ${provider} 提供商的 API 密钥`, 'error');
+            return;
+        }
+        if (provider === 'deepseek' && !activeKey.startsWith('****') &&
+            (!activeKey.startsWith('sk-') || activeKey.length < 20)) {
+            showToast('DeepSeek 密钥应以 sk- 开头且长度 ≥ 20', 'error');
+            return;
+        }
+        if (provider === 'custom' && !document.getElementById('cfgCustomBaseUrl').value.trim()) {
+            showToast('自定义提供商必须填写 Base URL', 'error');
             return;
         }
 
         const config = {
-            DEEPSEEK_API_KEY: apiKey,
-            DEEPSEEK_MAX_TOKENS: document.getElementById('cfgMaxTokens').value,
-            DEEPSEEK_TEMPERATURE: document.getElementById('cfgTemperature').value,
-            DASHSCOPE_API_KEY: document.getElementById('cfgDashKey').value,
+            LLM_PROVIDER: provider,
+            LLM_MAX_TOKENS: document.getElementById('cfgMaxTokens').value,
+            LLM_TEMPERATURE: document.getElementById('cfgTemperature').value,
+
+            DEEPSEEK_API_KEY: valOrKeep('cfgDeepseekKey'),
+            DEEPSEEK_BASE_URL: document.getElementById('cfgDeepseekBaseUrl').value,
+            DEEPSEEK_MODEL: document.getElementById('cfgDeepseekModel').value,
+
+            MIMO_API_KEY: valOrKeep('cfgMimoKey'),
+            MIMO_BASE_URL: document.getElementById('cfgMimoBaseUrl').value,
+            MIMO_MODEL: document.getElementById('cfgMimoModel').value,
+
+            CUSTOM_API_KEY: valOrKeep('cfgCustomKey'),
+            CUSTOM_BASE_URL: document.getElementById('cfgCustomBaseUrl').value,
+            CUSTOM_MODEL: document.getElementById('cfgCustomModel').value,
+
+            DASHSCOPE_API_KEY: valOrKeep('cfgDashKey'),
             DASHSCOPE_IMAGES_PER_CHAPTER: document.getElementById('cfgImages').value,
             DASHSCOPE_WATERMARK: document.getElementById('cfgWatermark').value,
             ENABLE_MULTIMEDIA: document.getElementById('cfgMultimedia').value,
-            TTS_VOICE: document.getElementById('cfgTTS').value
+            TTS_VOICE: document.getElementById('cfgTTS').value,
         };
 
         try {
@@ -865,7 +1133,7 @@
             });
             const data = await res.json();
             if (data.success) {
-                showToast('配置已保存', 'success');
+                showToast(`配置已保存（当前提供商: ${data.provider || provider}）`, 'success');
             } else {
                 showToast((data.errors || [data.message]).join(', '), 'error');
             }

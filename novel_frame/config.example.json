@@ -1,0 +1,37 @@
+{
+  "_note": "如果主项目 ../.env 中已设置 LLM_PROVIDER, 本文件中的 llm 段会被忽略 (作为兜底)。要切换提供商, 优先编辑主项目 .env 的 LLM_PROVIDER (deepseek|mimo|custom)。",
+  "llm": {
+    "api_key": "sk-your-deepseek-api-key-here",
+    "base_url": "https://api.deepseek.com",
+    "model": "deepseek-chat",
+    "_alternative_providers_example": {
+      "mimo": {
+        "api_key": "your-mimo-key",
+        "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+        "model": "mimo-chat"
+      }
+    }
+  },
+  "memory": {
+    "working_memory_size": 3,
+    "summary_merge_threshold": 10,
+    "section_summary_length": 50
+  },
+  "vector_db": {
+    "persist_dir": "./data/chroma",
+    "top_k": 5
+  },
+  "knowledge_graph": {
+    "snapshot_dir": "./data/snapshots"
+  },
+  "pipeline": {
+    "max_validation_retries": 3,
+    "max_chapter_retries": 2
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "backend_port": 8000,
+    "frontend_port": 3000,
+    "cors_origins": ["https://your-domain.com"]
+  }
+}
