@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovelAuto - AI 智能小说创作</title>
+<script>
+  // 自动检测 base path（支持 /na 路由）
+  (function(){
+    var m = window.location.pathname.match(/^(\/na)\b/);
+    window.BASE = m ? m[1] : '';
+    if (window.BASE) { var b = document.createElement('base'); b.href = window.BASE + '/'; document.head.appendChild(b); }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- API Key Modal -->
+<div id="apiModal" class="modal-overlay" style="display:none">
+  <div class="modal-content">
+    <div style="text-align:center;margin-bottom:16px"><i class="fas fa-key" style="font-size:36px;color:var(--accent-purple)"></i></div>
+    <h2 class="modal-title">配置 API 密钥</h2>
+    <p class="modal-desc">在开始创作前，请先配置 DeepSeek API 密钥。</p>
+    <div style="margin-bottom:16px">
+      <label class="input-label">DeepSeek API Key</label>
+      <input type="password" id="modalKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx">
+      <p class="input-hint"><i class="fas fa-lock" style="margin-right:4px"></i>密钥仅保存在浏览器本地</p>
+    </div>
+    <div id="modalErr" style="color:var(--accent-rose);font-size:13px;margin-bottom:12px;display:none"></div>
+    <button onclick="submitApiKey()" class="btn btn-primary btn-full" style="padding:12px"><i class="fas fa-check"></i> 确认并开始</button>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="deleteModal" class="modal-overlay" style="display:none">
+  <div class="modal-content" style="width:360px">
+    <h2 class="modal-title">确认删除</h2>
+    <p class="modal-desc">将永久删除 <strong id="deleteTarget"></strong> 及其所有章节和记忆数据，此操作不可恢复。</p>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeDeleteModal()" class="btn btn-secondary" style="flex:1">取消</button>
+      <button onclick="confirmDelete()" class="btn btn-danger" style="flex:1"><i class="fas fa-trash"></i> 确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Continue Modal -->
+<div id="continueModal" class="modal-overlay" style="display:none">
+  <div class="modal-content" style="width:480px">
+    <h2 class="modal-title" style="font-size:18px">续写下一章</h2>
+    <p class="modal-desc">为 <strong id="continueTarget"></strong> 生成新的章节</p>
+    <div style="margin-bottom:16px">
+      <label class="input-label">作者提示词（可选）</label>
+      <textarea id="continuePrompt" class="input-field" placeholder="输入你的创作指引，留空则由 AI 自由发挥..." style="min-height:100px"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeContinueModal()" class="btn btn-secondary" style="flex:1">取消</button>
+      <button onclick="doContinueFromModal()" class="btn btn-success" style="flex:1" id="btnModalContinue"><i class="fas fa-play"></i> 开始续写</button>
+    </div>
+  </div>
+</div>
+
+<!-- App Layout -->
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">NovelAuto</div>
+      <div class="sidebar-sub">AI 智能小说创作平台</div>
+    </div>
+    <nav style="padding:8px 0">
+      <button class="nav-item active" onclick="switchView('home')" id="navHome"><i class="fas fa-pen-fancy"></i> 创作工坊</button>
+      <button class="nav-item" onclick="switchView('config')" id="navConfig"><i class="fas fa-sliders-h"></i> 系统设置</button>
+    </nav>
+    <div class="nav-divider"></div>
+    <div class="sidebar-section-title">我的作品</div>
+    <div class="sidebar-novels" id="sidebarNovels">
+      <div style="padding:12px;font-size:13px;color:var(--text-muted)">加载中...</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <!-- Home View -->
+    <div id="viewHome" class="view active">
+      <div class="content-header"><h2><i class="fas fa-pen-fancy" style="color:var(--accent-purple)"></i> 创作工坊</h2></div>
+      <div class="content-body">
+        <div class="grid-2" style="max-width:800px">
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px"><i class="fas fa-plus-circle" style="color:var(--accent-emerald);margin-right:6px"></i>创建新小说</div>
+            <div style="margin-bottom:12px"><input type="text" id="topicInput" class="input-field" placeholder="输入小说主题，如：末世修仙"></div>
+            <button onclick="createNovel()" class="btn btn-primary btn-full" id="btnCreate"><i class="fas fa-magic"></i> 开始创作</button>
+          </div>
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px"><i class="fas fa-feather-alt" style="color:var(--accent-cyan);margin-right:6px"></i>续写小说</div>
+            <div style="margin-bottom:8px"><select id="topicSelect" class="input-field"><option value="">选择已有作品...</option></select></div>
+            <div style="margin-bottom:8px">
+              <label class="input-label">作者提示词（可选）</label>
+              <textarea id="customPrompt" class="input-field" placeholder="输入你的创作指引..." style="min-height:50px"></textarea>
+            </div>
+            <button onclick="continueNovel()" class="btn btn-success btn-full" id="btnContinue"><i class="fas fa-play"></i> 续写下一章</button>
+          </div>
+        </div>
+        <div id="genStatus" class="gen-status" style="display:none">
+          <div class="gen-indicator" id="genIndicator">
+            <span class="spinner"></span>
+            <span id="genText">正在生成中...</span>
+            <button onclick="cancelGen()" class="btn btn-danger btn-sm" style="margin-left:auto"><i class="fas fa-stop"></i> 取消</button>
+          </div>
+          <div class="gen-output" id="genOutput"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Novel Detail View -->
+    <div id="viewNovel" class="view">
+      <div class="content-header">
+        <h2><i class="fas fa-book-open" style="color:var(--accent-purple)"></i> <span id="novelTitle">作品</span> <span id="chapterCount" style="font-size:12px;color:var(--text-muted);margin-left:6px"></span></h2>
+        <div style="display:flex;gap:8px">
+          <button onclick="downloadNovel()" class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> 下载</button>
+          <button onclick="showContinueModal()" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> 续写下一章</button>
+        </div>
+      </div>
+      <div class="content-body" style="padding:0;overflow:hidden">
+        <div class="novel-layout">
+          <div class="chapter-list-panel">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px">章节列表</div>
+            <div id="chapterList"></div>
+          </div>
+          <div class="reading-area">
+            <div id="noChapter" class="empty-state" style="flex:1"><i class="fas fa-book-reader"></i><p>选择一个章节开始阅读</p></div>
+            <div id="readingView" style="display:none;flex:1;overflow:hidden">
+              <div class="reading-main" id="chapterContent"></div>
+              <div class="memory-sidebar" id="memorySidebar">
+                <div class="memory-panel"><div class="memory-panel-header" onclick="togglePanel(this)"><i class="fas fa-users" style="color:var(--accent-cyan)"></i> 角色关系 <i class="fas fa-chevron-down toggle"></i></div><div class="memory-panel-body" id="panelRels"><div style="color:var(--text-muted)">暂无数据</div></div></div>
+                <div class="memory-panel"><div class="memory-panel-header" onclick="togglePanel(this)"><i class="fas fa-user-tag" style="color:var(--accent-amber)"></i> 人物与实体 <i class="fas fa-chevron-down toggle"></i></div><div class="memory-panel-body" id="panelChars"><div style="color:var(--text-muted)">暂无数据</div></div></div>
+                <div class="memory-panel"><div class="memory-panel-header" onclick="togglePanel(this)"><i class="fas fa-scroll" style="color:var(--accent-emerald)"></i> 记忆事件 <i class="fas fa-chevron-down toggle"></i></div><div class="memory-panel-body" id="panelEvents"><div style="color:var(--text-muted)">暂无数据</div></div></div>
+                <div class="memory-panel"><div class="memory-panel-header" onclick="togglePanel(this)"><i class="fas fa-align-left" style="color:var(--accent-purple)"></i> 故事摘要 <i class="fas fa-chevron-down toggle collapsed"></i></div><div class="memory-panel-body collapsed" id="panelSummary"><div style="color:var(--text-muted)">暂无数据</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Config View -->
+    <div id="viewConfig" class="view">
+      <div class="content-header">
+        <h2><i class="fas fa-sliders-h" style="color:var(--accent-purple)"></i> 系统设置</h2>
+        <button onclick="saveConfig()" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> 保存</button>
+      </div>
+      <div class="content-body" style="max-width:560px">
+        <div class="config-section">
+          <div class="config-section-title" style="color:var(--accent-blue)"><i class="fas fa-key"></i> DeepSeek API</div>
+          <div class="card">
+            <div style="margin-bottom:12px"><label class="input-label">API 密钥 <span style="color:var(--accent-rose)">*</span></label><input type="password" id="cfgKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx"><p class="input-hint">密钥仅保存在浏览器本地，不会上传服务器</p></div>
+            <div style="margin-bottom:12px"><label class="input-label">API 地址</label><input type="text" id="cfgUrl" class="input-field" value="https://api.deepseek.com/v1"></div>
+            <div class="grid-2">
+              <div><label class="input-label">模型名称</label><input type="text" id="cfgModel" class="input-field" value="deepseek-chat"></div>
+              <div><label class="input-label">Temperature</label><input type="number" id="cfgTemp" class="input-field" value="0.7" step="0.1" min="0" max="1.5"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/store.js"></script>
+<script src="js/memory.js"></script>
+<script>
+// ================================================================
+// 状态
+// ================================================================
+let currentView = 'home';
+let currentNovel = null;
+let currentChapterNum = null;
+let generating = false;
+let abortCtrl = null;
+let pendingDeleteId = null;
+
+const BASE = window.BASE || '';
+
+// ================================================================
+// 初始化
+// ================================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  await Store.openDB();
+  checkApiKey();
+  loadNovels();
+  loadConfigUI();
+});
+
+// ================================================================
+// API Key
+// ================================================================
+function checkApiKey() {
+  if (!Store.getSetting('apiKey')) {
+    document.getElementById('apiModal').style.display = 'flex';
+  }
+}
+
+function submitApiKey() {
+  const key = document.getElementById('modalKey').value.trim();
+  const err = document.getElementById('modalErr');
+  if (!key || !key.startsWith('sk-') || key.length < 20) {
+    err.textContent = 'API 密钥格式错误（应以 sk- 开头，长度不少于 20）';
+    err.style.display = 'block'; return;
+  }
+  Store.setSetting('apiKey', key);
+  if (!Store.getSetting('baseUrl')) Store.setSetting('baseUrl', 'https://api.deepseek.com/v1');
+  if (!Store.getSetting('model')) Store.setSetting('model', 'deepseek-chat');
+  if (!Store.getSetting('temperature')) Store.setSetting('temperature', '0.7');
+  document.getElementById('apiModal').style.display = 'none';
+  toast('API 密钥已保存', 'success');
+}
+
+// ================================================================
+// 视图切换
+// ================================================================
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if (v === 'home') { document.getElementById('viewHome').classList.add('active'); document.getElementById('navHome').classList.add('active'); }
+  else if (v === 'config') { document.getElementById('viewConfig').classList.add('active'); document.getElementById('navConfig').classList.add('active'); loadConfigUI(); }
+  else if (v === 'novel') { document.getElementById('viewNovel').classList.add('active'); }
+  highlightNovel();
+}
+
+function highlightNovel() {
+  document.querySelectorAll('.novel-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === currentNovel);
+  });
+}
+
+// ================================================================
+// 小说列表
+// ================================================================
+async function loadNovels() {
+  const novels = await Store.getNovels();
+  const sb = document.getElementById('sidebarNovels');
+  const sel = document.getElementById('topicSelect');
+
+  if (!novels.length) {
+    sb.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--text-muted)">暂无作品，开始创作吧</div>';
+  } else {
+    sb.innerHTML = novels.map(n => `
+      <div class="novel-item" data-id="${esc(n.id)}" onclick="openNovel('${esc(n.id)}')">
+        <i class="fas fa-book" style="color:var(--text-muted);font-size:12px"></i>
+        <span>${esc(n.id)}</span>
+        <div class="novel-actions">
+          <button class="dl-btn" onclick="event.stopPropagation();downloadNovelById('${esc(n.id)}')" title="下载"><i class="fas fa-download"></i></button>
+          <button onclick="event.stopPropagation();showDeleteModal('${esc(n.id)}')" title="删除"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('');
+  }
+
+  sel.innerHTML = '<option value="">选择已有作品...</option>';
+  novels.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n.id; opt.textContent = n.id;
+    sel.appendChild(opt);
+  });
+
+  highlightNovel();
+}
+
+// ================================================================
+// 打开小说
+// ================================================================
+async function openNovel(id) {
+  currentNovel = id;
+  currentChapterNum = null;
+  switchView('novel');
+  document.getElementById('novelTitle').textContent = id;
+  document.getElementById('noChapter').style.display = 'flex';
+  document.getElementById('readingView').style.display = 'none';
+
+  const chapters = await Store.getChapters(id);
+  document.getElementById('chapterCount').textContent = `${chapters.length} 章`;
+
+  const list = document.getElementById('chapterList');
+  if (!chapters.length) {
+    list.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text-muted)">暂无章节</div>';
+  } else {
+    list.innerHTML = chapters.map(ch => `
+      <div class="chapter-item" data-num="${ch.chapterNum}" onclick="openChapter(${ch.chapterNum})">
+        <div class="chapter-num">${ch.chapterNum}</div>
+        <div><div class="chapter-title">${esc(ch.title)}</div><div class="chapter-preview">${esc(ch.content.substring(0, 40))}</div></div>
+      </div>`).join('');
+  }
+}
+
+// ================================================================
+// 打开章节 + 显示记忆
+// ================================================================
+async function openChapter(num) {
+  currentChapterNum = num;
+  document.querySelectorAll('.chapter-item').forEach(el => el.classList.toggle('active', +el.dataset.num === num));
+  document.getElementById('noChapter').style.display = 'none';
+  document.getElementById('readingView').style.display = 'flex';
+
+  const ch = await Store.getChapter(currentNovel, num);
+  if (!ch) return;
+
+  const el = document.getElementById('chapterContent');
+  el.innerHTML = `<h1>${esc(ch.title)}</h1>` + esc(ch.content).replace(/\n/g, '<br>');
+
+  // 渲染记忆面板
+  const mem = await Store.getMemory(currentNovel);
+  const view = Memory.getChapterMemoryView(mem, num);
+  renderMemoryPanels(view);
+}
+
+function renderMemoryPanels(v) {
+  // 关系
+  const relsEl = document.getElementById('panelRels');
+  if (!v.relationships.length) { relsEl.innerHTML = '<div style="color:var(--text-muted)">暂无角色关系数据</div>'; }
+  else {
+    let html = '';
+    const seen = new Set();
+    for (const r of v.relationships) {
+      const key = [r.char1, r.char2].sort().join('-');
+      if (seen.has(key)) continue; seen.add(key);
+      const hints = [];
+      if (r.emotions?.affection > 0.7) hints.push('好感');
+      if (r.emotions?.trust > 0.7) hints.push('信任');
+      if (r.emotions?.conflict > 0.5) hints.push('冲突');
+      html += `<div class="rel-group"><span class="rel-name">${esc(r.char1)}</span> ↔ <span class="rel-name">${esc(r.char2)}</span>: <span class="rel-item">${esc(r.type)}${hints.length ? ' - ' + hints.join('/') : ''}</span></div>`;
+    }
+    relsEl.innerHTML = html;
+  }
+
+  // 角色
+  const charsEl = document.getElementById('panelChars');
+  if (!v.characters.length) { charsEl.innerHTML = '<div style="color:var(--text-muted)">暂无实体数据</div>'; }
+  else {
+    charsEl.innerHTML = v.characters.map(c => {
+      const info = [c.role, c.description, c.status].filter(Boolean).join('，');
+      return `<div class="entity-item"><span class="entity-name">${esc(c.name)}</span>${info ? ' - ' + esc(info) : ''}</div>`;
+    }).join('');
+  }
+
+  // 事件
+  const eventsEl = document.getElementById('panelEvents');
+  const events = v.chapterEvents.length ? v.chapterEvents : v.allEvents;
+  if (!events.length) { eventsEl.innerHTML = '<div style="color:var(--text-muted)">暂无事件数据</div>'; }
+  else {
+    eventsEl.innerHTML = events.map(e =>
+      `<div class="event-item"><div class="event-chapter">第 ${e.chapterNum} 章 - ${esc(e.title)}</div><div>${esc(e.summary)}</div>${(e.keyEvents||[]).length ? '<div style="margin-top:4px;font-size:11px;color:var(--text-muted)">' + e.keyEvents.map(k => '· ' + esc(k)).join('<br>') + '</div>' : ''}</div>`
+    ).join('');
+  }
+
+  // 摘要
+  const sumEl = document.getElementById('panelSummary');
+  let sumHtml = '';
+  if (v.outline) sumHtml += `<div style="margin-bottom:8px"><strong style="color:var(--accent-purple)">大纲：</strong>${esc(v.outline)}</div>`;
+  if (v.arcs.length) {
+    sumHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:4px">剧情弧线</div>';
+    for (const a of v.arcs.slice(-3)) sumHtml += `<div class="event-item" style="border-left:2px solid var(--accent-purple);padding-left:8px"><strong>${esc(a.title)}</strong>: ${esc(a.summary)}</div>`;
+  }
+  if (v.chapterSummary) {
+    sumHtml += `<div style="font-size:12px;font-weight:600;margin-top:8px;margin-bottom:4px">本章摘要</div><div>${esc(v.chapterSummary.summary)}</div>`;
+  }
+  sumEl.innerHTML = sumHtml || '<div style="color:var(--text-muted)">暂无摘要数据</div>';
+}
+
+// ================================================================
+// 创建小说
+// ================================================================
+async function createNovel() {
+  const topic = document.getElementById('topicInput').value.trim();
+  if (!topic) { toast('请输入小说主题', 'error'); return; }
+
+  // 检查是否已存在
+  const existing = await Store.getNovel(topic);
+  if (existing) { toast('该主题已存在', 'error'); return; }
+
+  await Store.createNovel(topic);
+  await loadNovels();
+
+  // 生成第一章
+  await doGenerate(topic, 1, `请围绕「${topic}」创作一篇小说的第一章。要求：\n1. 建立世界观和背景设定\n2. 引入主要角色\n3. 设置悬念或冲突\n4. 字数在2000-4000字之间\n\n直接输出正文内容，不要包含章节标题。`);
+}
+
+// ================================================================
+// 续写小说
+// ================================================================
+async function continueNovel() {
+  const topic = document.getElementById('topicSelect').value;
+  const customPrompt = document.getElementById('customPrompt').value.trim();
+  if (!topic) { toast('请选择要续写的作品', 'error'); return; }
+
+  const chapters = await Store.getChapters(topic);
+  const nextNum = chapters.length + 1;
+  const memory = await Store.getMemory(topic);
+  const prompt = Memory.buildGenerationPrompt(memory, chapters, customPrompt);
+  await doGenerate(topic, nextNum, prompt);
+}
+
+function showContinueModal() {
+  document.getElementById('continueTarget').textContent = currentNovel;
+  document.getElementById('continuePrompt').value = '';
+  document.getElementById('continueModal').style.display = 'flex';
+}
+function closeContinueModal() { document.getElementById('continueModal').style.display = 'none'; }
+
+async function doContinueFromModal() {
+  const customPrompt = document.getElementById('continuePrompt').value.trim();
+  closeContinueModal();
+  const chapters = await Store.getChapters(currentNovel);
+  const nextNum = chapters.length + 1;
+  const memory = await Store.getMemory(currentNovel);
+  const prompt = Memory.buildGenerationPrompt(memory, chapters, customPrompt);
+  await doGenerate(currentNovel, nextNum, prompt);
+}
+
+// ================================================================
+// 核心生成流程
+// ================================================================
+async function doGenerate(novelId, chapterNum, prompt) {
+  if (generating) { toast('正在生成中，请等待', 'info'); return; }
+  generating = true;
+  abortCtrl = new AbortController();
+
+  const apiKey = Store.getSetting('apiKey');
+  const baseUrl = Store.getSetting('baseUrl', 'https://api.deepseek.com/v1');
+  const model = Store.getSetting('model', 'deepseek-chat');
+  const temperature = parseFloat(Store.getSetting('temperature', '0.7'));
+
+  if (!apiKey) { toast('请先配置 API 密钥', 'error'); generating = false; return; }
+
+  if (currentView !== 'home') switchView('home');
+  showGenStatus(`正在生成「${novelId}」第 ${chapterNum} 章...`);
+
+  let content = '';
+  try {
+    // 1. 流式生成章节
+    appendOutput('▶ 正在调用 AI 生成章节内容...\n\n');
+    content = await streamGenerate(apiKey, baseUrl, model, prompt, temperature);
+    if (!content) throw new Error('生成内容为空');
+    appendOutput('\n\n✓ 章节内容生成完成\n');
+
+    // 2. 保存章节
+    const title = `第${chapterNum}章`;
+    await Store.addChapter(novelId, chapterNum, title, content);
+    appendOutput('✓ 章节已保存\n');
+
+    // 3. 调用 LLM 分析章节
+    appendOutput('▶ 正在分析章节内容（角色、关系、事件、摘要）...\n');
+    const analysis = await analyzeChapter(apiKey, baseUrl, model, chapterNum, title, content);
+    if (analysis) {
+      const memory = await Store.getMemory(novelId);
+      const updated = Memory.applyAnalysisToMemory(memory, analysis, chapterNum, title, content);
+      await Store.updateMemory(novelId, updated);
+      appendOutput(`✓ 记忆系统已更新：${(analysis.characters||[]).length} 角色, ${(analysis.relationships||[]).length} 关系, ${(analysis.key_events||[]).length} 事件\n`);
+    } else {
+      appendOutput('⚠ 章节分析失败，记忆未更新\n');
+    }
+
+    appendOutput(`\n✓ 第 ${chapterNum} 章已成功生成`);
+    toast('生成完成！', 'success');
+    await loadNovels();
+    setTimeout(() => openNovel(novelId), 300);
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      appendOutput('\n\n⚠ 已取消生成');
+      toast('已取消', 'info');
+    } else {
+      appendOutput('\n\n✗ 错误: ' + err.message);
+      toast('生成失败: ' + err.message, 'error');
+    }
+  }
+
+  generating = false;
+  document.getElementById('genIndicator').style.display = 'none';
+}
+
+async function streamGenerate(apiKey, baseUrl, model, prompt, temperature) {
+  const res = await fetch(BASE + '/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      apiKey, baseUrl, model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 8192,
+      temperature,
+      stream: true,
+    }),
+    signal: abortCtrl.signal,
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error?.message || errData.error || `API 错误 ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let content = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith('data:')) continue;
+      const data = trimmed.slice(5).trim();
+      if (data === '[DONE]') continue;
+      try {
+        const json = JSON.parse(data);
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          content += delta;
+          appendOutput(delta);
+        }
+      } catch {}
+    }
+  }
+
+  return content;
+}
+
+async function analyzeChapter(apiKey, baseUrl, model, chapterNum, title, content) {
+  try {
+    const prompt = Memory.buildAnalysisPrompt(chapterNum, title, content);
+    const res = await fetch(BASE + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey, baseUrl, model,
+        messages: [
+          { role: 'system', content: Memory.ANALYSIS_SYSTEM_PROMPT },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 2048,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+      }),
+      signal: abortCtrl.signal,
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) return null;
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('分析失败:', err);
+    return null;
+  }
+}
+
+function cancelGen() {
+  if (abortCtrl) abortCtrl.abort();
+}
+
+// ================================================================
+// 删除小说
+// ================================================================
+function showDeleteModal(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteTarget').textContent = id;
+  document.getElementById('deleteModal').style.display = 'flex';
+}
+function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; pendingDeleteId = null; }
+
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+  await Store.deleteNovel(pendingDeleteId);
+  toast(`「${pendingDeleteId}」已删除`, 'success');
+  if (currentNovel === pendingDeleteId) { currentNovel = null; switchView('home'); }
+  closeDeleteModal();
+  await loadNovels();
+}
+
+// ================================================================
+// 下载小说
+// ================================================================
+async function downloadNovel() {
+  if (currentNovel) await downloadNovelById(currentNovel);
+}
+
+async function downloadNovelById(id) {
+  const text = await Store.exportNovelAsText(id);
+  if (!text) { toast('无内容可下载', 'error'); return; }
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${id}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('开始下载', 'success');
+}
+
+// ================================================================
+// 设置
+// ================================================================
+function loadConfigUI() {
+  document.getElementById('cfgKey').value = Store.getSetting('apiKey', '');
+  document.getElementById('cfgUrl').value = Store.getSetting('baseUrl', 'https://api.deepseek.com/v1');
+  document.getElementById('cfgModel').value = Store.getSetting('model', 'deepseek-chat');
+  document.getElementById('cfgTemp').value = Store.getSetting('temperature', '0.7');
+}
+
+function saveConfig() {
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!key || !key.startsWith('sk-') || key.length < 20) { toast('请填入有效的 API 密钥', 'error'); return; }
+  Store.setSetting('apiKey', key);
+  Store.setSetting('baseUrl', document.getElementById('cfgUrl').value.trim());
+  Store.setSetting('model', document.getElementById('cfgModel').value.trim());
+  Store.setSetting('temperature', document.getElementById('cfgTemp').value.trim());
+  toast('设置已保存', 'success');
+}
+
+// ================================================================
+// UI 辅助
+// ================================================================
+function showGenStatus(text) {
+  document.getElementById('genStatus').style.display = 'block';
+  document.getElementById('genIndicator').style.display = 'flex';
+  document.getElementById('genText').textContent = text;
+  document.getElementById('genOutput').textContent = '';
+}
+
+function appendOutput(text) {
+  const el = document.getElementById('genOutput');
+  el.textContent += text;
+  el.scrollTop = el.scrollHeight;
+}
+
+function togglePanel(header) {
+  const body = header.nextElementSibling;
+  const icon = header.querySelector('.toggle');
+  body.classList.toggle('collapsed');
+  icon.classList.toggle('collapsed');
+}
+
+function toast(msg, type = 'info') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+function esc(text) {
+  if (!text) return '';
+  const d = document.createElement('div');
+  d.textContent = String(text);
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

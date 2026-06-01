@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovelAuto - AI 智能小说创作</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body>
+    <!-- API Key 门禁 Modal -->
+    <div id="apiKeyModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div style="text-align:center;margin-bottom:16px;">
+                <i class="fas fa-key" style="font-size:36px;color:var(--accent-purple);"></i>
+            </div>
+            <h2 class="modal-title">配置 API 密钥</h2>
+            <p class="modal-desc">在开始创作前，请先配置 DeepSeek API 密钥。<br>密钥以 <code style="background:rgba(139,92,246,0.15);padding:2px 6px;border-radius:4px;">sk-</code> 开头。</p>
+            <div style="margin-bottom:16px;">
+                <label class="input-label">DeepSeek API Key</label>
+                <input type="password" id="modalApiKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx">
+                <p class="input-hint"><i class="fas fa-lock" style="margin-right:4px;"></i>密钥仅保存在本地 .env 文件中</p>
+            </div>
+            <div id="modalError" style="color:var(--accent-rose);font-size:13px;margin-bottom:12px;display:none;"></div>
+            <button onclick="submitApiKey()" class="btn btn-primary btn-full" style="padding:12px;">
+                <i class="fas fa-check"></i> 确认并开始
+            </button>
+        </div>
+    </div>
+
+    <!-- 主布局 -->
+    <div class="app-layout">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">NovelAuto</div>
+                <div class="sidebar-logo-sub">AI 智能小说创作平台</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="switchView('home')" id="navHome">
+                    <i class="fas fa-pen-fancy"></i> 创作工坊
+                </button>
+                <button class="nav-item" onclick="switchView('config')" id="navConfig">
+                    <i class="fas fa-sliders-h"></i> 系统设置
+                </button>
+            </nav>
+
+            <div class="nav-divider"></div>
+
+            <div class="sidebar-topics-header">我的作品</div>
+            <div class="sidebar-topics" id="sidebarTopics">
+                <!-- 动态填充 -->
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- ============================================================ -->
+            <!-- 首页视图 -->
+            <!-- ============================================================ -->
+            <div id="viewHome" class="view active">
+                <div class="content-header">
+                    <h2><i class="fas fa-pen-fancy" style="color:var(--accent-purple);margin-right:8px;"></i>创作工坊</h2>
+                </div>
+                <div class="content-body">
+                    <div class="grid-2" style="max-width:800px;">
+                        <!-- 创建新小说 -->
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-plus-circle"></i> 创建新小说</div>
+                            <div style="margin-bottom:12px;">
+                                <input type="text" id="topicInput" class="input-field" placeholder="输入小说主题，如：末世修仙">
+                            </div>
+                            <button onclick="createNovel()" class="btn btn-primary btn-full" id="btnCreate">
+                                <i class="fas fa-magic"></i> 开始创作
+                            </button>
+                        </div>
+
+                        <!-- 续写小说 -->
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-feather-alt"></i> 续写小说</div>
+                            <div style="margin-bottom:12px;">
+                                <select id="topicSelect" class="input-field">
+                                    <option value="">选择已有作品...</option>
+                                </select>
+                            </div>
+                            <!-- 自定义提示词 -->
+                            <div class="prompt-drawer">
+                                <div class="prompt-drawer-title">
+                                    <i class="fas fa-lightbulb"></i> 作者提示词（可选）
+                                </div>
+                                <textarea id="customPrompt" class="input-field" placeholder="输入你的创作指引，如：让主角在这一章获得新能力，并与反派有一场激烈对决..." style="min-height:64px;"></textarea>
+                                <p class="input-hint">提示词会影响下一章的生成方向，留空则由 AI 自由发挥</p>
+                            </div>
+                            <button onclick="continueNovel()" class="btn btn-success btn-full" id="btnContinue" style="margin-top:12px;">
+                                <i class="fas fa-play"></i> 续写下一章
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 生成状态 & 输出 -->
+                    <div id="generationStatus" style="display:none;max-width:800px;margin-top:20px;">
+                        <div class="generating-indicator" id="generatingIndicator">
+                            <span class="loading-spinner"></span>
+                            <span id="generatingText">正在生成中...</span>
+                            <button onclick="stopProcess()" class="btn btn-danger btn-sm" style="margin-left:auto;">
+                                <i class="fas fa-stop"></i> 停止
+                            </button>
+                        </div>
+                        <div class="output-console" id="outputConsole" style="margin-top:12px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 作品详情视图（章节列表 + 阅读） -->
+            <!-- ============================================================ -->
+            <div id="viewNovel" class="view">
+                <div class="content-header">
+                    <h2>
+                        <i class="fas fa-book-open" style="color:var(--accent-purple);margin-right:8px;"></i>
+                        <span id="novelTitle">作品</span>
+                        <span class="badge badge-purple" id="chapterCount" style="margin-left:8px;"></span>
+                    </h2>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="showContinuePrompt()" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> 续写下一章
+                        </button>
+                    </div>
+                </div>
+                <div class="content-body" style="padding:0;">
+                    <div style="display:flex;height:100%;">
+                        <!-- 左侧章节列表 -->
+                        <div style="width:260px;min-width:260px;border-right:1px solid var(--border-subtle);padding:16px;overflow-y:auto;">
+                            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">章节列表</div>
+                            <div class="chapter-list" id="chapterList">
+                                <!-- 动态填充 -->
+                            </div>
+                        </div>
+
+                        <!-- 右侧内容区 -->
+                        <div style="flex:1;display:flex;overflow:hidden;padding:20px;">
+                            <!-- 未选择章节时 -->
+                            <div id="noChapterSelected" class="empty-state" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                                <i class="fas fa-book-reader"></i>
+                                <p style="font-size:16px;font-weight:500;color:var(--text-secondary);">选择一个章节开始阅读</p>
+                                <p>点击左侧章节列表查看内容</p>
+                            </div>
+
+                            <!-- 阅读视图 -->
+                            <div id="chapterReadingView" class="reading-container" style="display:none;flex:1;">
+                                <div class="reading-main">
+                                    <div class="reading-content" id="chapterContent">
+                                        <!-- 动态填充 -->
+                                    </div>
+                                </div>
+
+                                <!-- 记忆面板 -->
+                                <div class="reading-sidebar" id="memorySidebar">
+                                    <!-- 角色关系 -->
+                                    <div class="memory-panel">
+                                        <div class="memory-panel-header" onclick="togglePanel(this)">
+                                            <i class="fas fa-users" style="color:var(--accent-cyan);"></i>
+                                            角色关系
+                                            <i class="fas fa-chevron-down toggle"></i>
+                                        </div>
+                                        <div class="memory-panel-body" id="panelRelationships">
+                                            <div class="empty-state" style="padding:16px;">
+                                                <p>暂无角色关系数据</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 实体状态 -->
+                                    <div class="memory-panel">
+                                        <div class="memory-panel-header" onclick="togglePanel(this)">
+                                            <i class="fas fa-user-tag" style="color:var(--accent-amber);"></i>
+                                            人物与实体
+                                            <i class="fas fa-chevron-down toggle"></i>
+                                        </div>
+                                        <div class="memory-panel-body" id="panelEntities">
+                                            <div class="empty-state" style="padding:16px;">
+                                                <p>暂无实体数据</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 章节事件 -->
+                                    <div class="memory-panel">
+                                        <div class="memory-panel-header" onclick="togglePanel(this)">
+                                            <i class="fas fa-scroll" style="color:var(--accent-emerald);"></i>
+                                            记忆事件
+                                            <i class="fas fa-chevron-down toggle"></i>
+                                        </div>
+                                        <div class="memory-panel-body" id="panelEvents">
+                                            <div class="empty-state" style="padding:16px;">
+                                                <p>暂无事件数据</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 故事摘要 -->
+                                    <div class="memory-panel">
+                                        <div class="memory-panel-header" onclick="togglePanel(this)">
+                                            <i class="fas fa-align-left" style="color:var(--accent-purple);"></i>
+                                            故事摘要
+                                            <i class="fas fa-chevron-down toggle collapsed"></i>
+                                        </div>
+                                        <div class="memory-panel-body collapsed" id="panelSummary">
+                                            <div class="empty-state" style="padding:16px;">
+                                                <p>暂无摘要数据</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 续写弹出框 -->
+                <div id="continuePromptOverlay" class="modal-overlay" style="display:none;">
+                    <div class="modal-content" style="width:500px;">
+                        <h2 class="modal-title" style="font-size:18px;">续写下一章</h2>
+                        <p class="modal-desc" style="margin-bottom:16px;">为 <strong id="continueTopicName"></strong> 生成新的章节</p>
+                        <div style="margin-bottom:16px;">
+                            <label class="input-label">作者提示词（可选）</label>
+                            <textarea id="continueCustomPrompt" class="input-field" placeholder="输入你的创作指引，留空则由 AI 自由发挥..." style="min-height:100px;"></textarea>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="closeContinuePrompt()" class="btn btn-secondary" style="flex:1;">取消</button>
+                            <button onclick="doContinueFromModal()" class="btn btn-success" style="flex:1;" id="btnModalContinue">
+                                <i class="fas fa-play"></i> 开始续写
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 设置视图 -->
+            <!-- ============================================================ -->
+            <div id="viewConfig" class="view">
+                <div class="content-header">
+                    <h2><i class="fas fa-sliders-h" style="color:var(--accent-purple);margin-right:8px;"></i>系统设置</h2>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="loadConfig()" class="btn btn-secondary btn-sm"><i class="fas fa-sync"></i> 刷新</button>
+                        <button onclick="saveConfig()" class="btn btn-primary btn-sm" id="btnSaveConfig"><i class="fas fa-save"></i> 保存</button>
+                    </div>
+                </div>
+                <div class="content-body" style="max-width:640px;">
+                    <!-- DeepSeek -->
+                    <div class="config-section">
+                        <div class="config-section-title" style="color:var(--accent-blue);">
+                            <i class="fas fa-key"></i> DeepSeek API
+                        </div>
+                        <div class="card">
+                            <div style="margin-bottom:12px;">
+                                <label class="input-label">API 密钥 <span style="color:var(--accent-rose);">*</span></label>
+                                <input type="password" id="cfgApiKey" class="input-field" placeholder="sk-xxxxxxxxxxxxxxxx">
+                                <p class="input-hint"><i class="fas fa-info-circle"></i> 必填，以 sk- 开头</p>
+                            </div>
+                            <div class="grid-2">
+                                <div>
+                                    <label class="input-label">Max Tokens</label>
+                                    <input type="number" id="cfgMaxTokens" class="input-field" value="8192" min="100" max="32768">
+                                </div>
+                                <div>
+                                    <label class="input-label">Temperature</label>
+                                    <input type="number" id="cfgTemperature" class="input-field" value="0.7" step="0.1" min="0" max="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DashScope -->
+                    <div class="config-section">
+                        <div class="config-section-title" style="color:var(--accent-purple);">
+                            <i class="fas fa-image"></i> DashScope（图片生成，可选）
+                        </div>
+                        <div class="card">
+                            <div style="margin-bottom:12px;">
+                                <label class="input-label">API 密钥</label>
+                                <input type="password" id="cfgDashKey" class="input-field" placeholder="可选，用于图片生成">
+                            </div>
+                            <div class="grid-2">
+                                <div>
+                                    <label class="input-label">每章图片数</label>
+                                    <input type="number" id="cfgImages" class="input-field" value="2" min="1" max="4">
+                                </div>
+                                <div>
+                                    <label class="input-label">水印</label>
+                                    <select id="cfgWatermark" class="input-field">
+                                        <option value="false">关闭</option>
+                                        <option value="true">开启</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multimedia -->
+                    <div class="config-section">
+                        <div class="config-section-title" style="color:var(--accent-emerald);">
+                            <i class="fas fa-photo-video"></i> 多媒体设置
+                        </div>
+                        <div class="card">
+                            <div class="grid-2">
+                                <div>
+                                    <label class="input-label">多媒体功能</label>
+                                    <select id="cfgMultimedia" class="input-field">
+                                        <option value="false">关闭</option>
+                                        <option value="true">开启</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="input-label">TTS 语音</label>
+                                    <input type="text" id="cfgTTS" class="input-field" value="zh-CN-XiaoxiaoNeural">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    // ========================================================================
+    // 全局状态
+    // ========================================================================
+    let currentView = 'home';
+    let currentTopic = null;
+    let currentChapterNum = null;
+    let isGenerating = false;
+
+    // ========================================================================
+    // 初始化
+    // ========================================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+        await checkApiKey();
+        await loadTopics();
+    });
+
+    // ========================================================================
+    // API Key 门禁
+    // ========================================================================
+    async function checkApiKey() {
+        try {
+            const res = await fetch('/api/check-apikey');
+            const data = await res.json();
+            if (!data.configured) {
+                document.getElementById('apiKeyModal').style.display = 'flex';
+            }
+        } catch (e) {
+            console.error('检查 API Key 失败:', e);
+        }
+    }
+
+    async function submitApiKey() {
+        const key = document.getElementById('modalApiKey').value.trim();
+        const errorEl = document.getElementById('modalError');
+
+        if (!key) {
+            errorEl.textContent = '请输入 API 密钥';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!key.startsWith('sk-') || key.length < 20) {
+            errorEl.textContent = 'API 密钥格式错误，应以 sk- 开头且长度不少于 20 位';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    DEEPSEEK_API_KEY: key,
+                    DEEPSEEK_MAX_TOKENS: '8192',
+                    DEEPSEEK_TEMPERATURE: '0.7',
+                    DASHSCOPE_IMAGES_PER_CHAPTER: '2',
+                    DASHSCOPE_WATERMARK: 'false',
+                    ENABLE_MULTIMEDIA: 'false',
+                    TTS_VOICE: 'zh-CN-XiaoxiaoNeural'
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('apiKeyModal').style.display = 'none';
+                showToast('API 密钥已保存', 'success');
+            } else {
+                errorEl.textContent = (data.errors || [data.message]).join(', ');
+                errorEl.style.display = 'block';
+            }
+        } catch (e) {
+            errorEl.textContent = '保存失败: ' + e.message;
+            errorEl.style.display = 'block';
+        }
+    }
+
+    // ========================================================================
+    // 视图切换
+    // ========================================================================
+    function switchView(view) {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.topic-item').forEach(el => el.classList.remove('active'));
+
+        currentView = view;
+
+        if (view === 'home') {
+            document.getElementById('viewHome').classList.add('active');
+            document.getElementById('navHome').classList.add('active');
+        } else if (view === 'config') {
+            document.getElementById('viewConfig').classList.add('active');
+            document.getElementById('navConfig').classList.add('active');
+            loadConfig();
+        } else if (view === 'novel') {
+            document.getElementById('viewNovel').classList.add('active');
+            // 高亮对应 topic
+            document.querySelectorAll('.topic-item').forEach(el => {
+                if (el.dataset.topic === currentTopic) el.classList.add('active');
+            });
+        }
+    }
+
+    // ========================================================================
+    // 主题列表
+    // ========================================================================
+    async function loadTopics() {
+        try {
+            const res = await fetch('/chapters');
+            const topics = await res.json();
+
+            // 侧边栏
+            const sidebar = document.getElementById('sidebarTopics');
+            if (topics.length === 0) {
+                sidebar.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--text-muted);">暂无作品，开始创作吧</div>';
+            } else {
+                sidebar.innerHTML = topics.map(t => {
+                    const safeAttr = escapeAttr(t);
+                    return `
+                    <div class="topic-item${currentTopic === t ? ' active' : ''}" data-topic="${safeAttr}" onclick="openNovel(this.dataset.topic)">
+                        <i class="fas fa-book"></i>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t)}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            // 续写下拉
+            const select = document.getElementById('topicSelect');
+            select.innerHTML = '<option value="">选择已有作品...</option>';
+            topics.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('加载主题失败:', e);
+        }
+    }
+
+    // ========================================================================
+    // 打开作品（加载章节列表）
+    // ========================================================================
+    async function openNovel(topic) {
+        currentTopic = topic;
+        currentChapterNum = null;
+        switchView('novel');
+
+        document.getElementById('novelTitle').textContent = topic;
+        document.getElementById('noChapterSelected').style.display = 'flex';
+        document.getElementById('chapterReadingView').style.display = 'none';
+
+        try {
+            const res = await fetch(`/chapters/${encodeURIComponent(topic)}`);
+            const chapters = await res.json();
+
+            document.getElementById('chapterCount').textContent = `${chapters.length} 章`;
+
+            const list = document.getElementById('chapterList');
+            if (chapters.length === 0) {
+                list.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text-muted);">暂无章节</div>';
+            } else {
+                list.innerHTML = chapters.map((ch, i) => `
+                    <div class="chapter-item" data-chapter="${i+1}" data-topic="${escapeAttr(topic)}" data-filename="${escapeAttr(ch.filename)}" onclick="openChapter(this.dataset.topic, this.dataset.filename, ${i+1})">
+                        <div class="chapter-num">${i+1}</div>
+                        <div class="chapter-info">
+                            <div class="chapter-title">${escapeHtml(ch.title)}</div>
+                            <div class="chapter-preview">${escapeHtml(ch.preview.substring(0, 60))}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error('加载章节失败:', e);
+        }
+    }
+
+    // ========================================================================
+    // 打开章节（阅读 + 记忆数据）
+    // ========================================================================
+    async function openChapter(topic, filename, chapterNum) {
+        currentChapterNum = chapterNum;
+
+        // 高亮
+        document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
+        const active = document.querySelector(`.chapter-item[data-chapter="${chapterNum}"]`);
+        if (active) active.classList.add('active');
+
+        document.getElementById('noChapterSelected').style.display = 'none';
+        document.getElementById('chapterReadingView').style.display = 'flex';
+
+        // 并行加载章节内容和记忆数据
+        const [contentRes, memoryRes] = await Promise.all([
+            fetch(`/chapter-content/${encodeURIComponent(topic)}/${encodeURIComponent(filename)}`),
+            fetch(`/api/memory/chapter/${encodeURIComponent(topic)}/${chapterNum}`)
+        ]);
+
+        // 渲染章节内容
+        const content = await contentRes.text();
+        const contentEl = document.getElementById('chapterContent');
+        const lines = content.split('\n');
+        let html = '';
+        if (lines[0] && lines[0].startsWith('#')) {
+            html += `<h1>${escapeHtml(lines[0].substring(2).trim())}</h1>`;
+            html += escapeHtml(lines.slice(1).join('\n').trim());
+        } else {
+            html += escapeHtml(content);
+        }
+        contentEl.innerHTML = html;
+
+        // 渲染记忆数据
+        const memoryData = await memoryRes.json();
+        if (memoryData.success) {
+            renderRelationships(memoryData.relationships);
+            renderEntities(memoryData.entityState);
+            renderEvents(memoryData.chapterEvents, memoryData.allEvents);
+            renderSummary(memoryData.summary);
+        }
+    }
+
+    // ========================================================================
+    // 渲染记忆面板
+    // ========================================================================
+    function renderRelationships(relationships) {
+        const panel = document.getElementById('panelRelationships');
+        if (!relationships || Object.keys(relationships).length === 0) {
+            panel.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">暂无角色关系数据</div>';
+            return;
+        }
+
+        let html = '';
+        const rendered = new Set();
+
+        for (const [char1, rels] of Object.entries(relationships)) {
+            const relEntries = Object.entries(rels);
+            if (relEntries.length === 0) continue;
+
+            html += `<div class="rel-group"><div class="rel-name">${escapeHtml(char1)}</div>`;
+            for (const [char2, rel] of relEntries) {
+                const key = [char1, char2].sort().join('-');
+                if (rendered.has(key)) continue;
+                rendered.add(key);
+
+                const type = rel.relationship_type || '未知';
+                const emotions = rel.emotions || {};
+                let emotionHints = [];
+                if (emotions.affection > 0.7) emotionHints.push('好感');
+                if (emotions.trust > 0.7) emotionHints.push('信任');
+                if (emotions.conflict > 0.5) emotionHints.push('冲突');
+
+                html += `<span class="rel-item">${escapeHtml(char2)} (${escapeHtml(type)}${emotionHints.length ? ' - ' + emotionHints.join('/') : ''})</span>`;
+            }
+            html += '</div>';
+        }
+
+        panel.innerHTML = html || '<div style="color:var(--text-muted);">暂无角色关系数据</div>';
+    }
+
+    function renderEntities(entityState) {
+        const panel = document.getElementById('panelEntities');
+        if (!entityState || (!entityState.entities && !entityState.world_state)) {
+            panel.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">暂无实体数据</div>';
+            return;
+        }
+
+        let html = '';
+        const entities = entityState.entities || {};
+
+        // 人物
+        if (entities.characters && Object.keys(entities.characters).length > 0) {
+            html += '<div style="font-size:12px;font-weight:600;color:var(--accent-amber);margin-bottom:6px;">人物</div>';
+            for (const [name, attrs] of Object.entries(entities.characters)) {
+                const details = Object.entries(attrs)
+                    .filter(([k]) => !['last_updated', 'last_chapter', 'mentioned_in'].includes(k))
+                    .map(([k, v]) => `${k}: ${typeof v === 'string' ? v.substring(0, 50) : v}`)
+                    .join(', ');
+                html += `<div class="entity-item"><span class="entity-name">${escapeHtml(name)}</span>${details ? ' - ' + escapeHtml(details) : ''}</div>`;
+            }
+        }
+
+        // 地点
+        if (entities.locations && Object.keys(entities.locations).length > 0) {
+            html += '<div style="font-size:12px;font-weight:600;color:var(--accent-cyan);margin-top:8px;margin-bottom:6px;">地点</div>';
+            for (const [name, attrs] of Object.entries(entities.locations)) {
+                html += `<div class="entity-item"><span class="entity-name" style="color:var(--accent-cyan);">${escapeHtml(name)}</span></div>`;
+            }
+        }
+
+        // 世界观
+        const worldState = entityState.world_state || {};
+        if (Object.keys(worldState).length > 0) {
+            html += '<div style="font-size:12px;font-weight:600;color:var(--accent-purple);margin-top:8px;margin-bottom:6px;">世界观</div>';
+            for (const [name, data] of Object.entries(worldState)) {
+                const desc = data.description || JSON.stringify(data);
+                html += `<div class="entity-item"><span class="entity-name" style="color:var(--accent-purple);">${escapeHtml(name)}</span> - ${escapeHtml(desc.substring(0, 100))}</div>`;
+            }
+        }
+
+        panel.innerHTML = html || '<div style="color:var(--text-muted);">暂无实体数据</div>';
+    }
+
+    function renderEvents(chapterEvents, allEvents) {
+        const panel = document.getElementById('panelEvents');
+        // 优先显示当前章节事件，若无则显示所有事件的最近几条
+        const events = (chapterEvents && chapterEvents.length > 0) ? chapterEvents : (allEvents || []).slice(-5);
+
+        if (!events || events.length === 0) {
+            panel.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">暂无事件数据</div>';
+            return;
+        }
+
+        let html = '';
+        for (const evt of events) {
+            const summary = evt.summary || (evt.content ? evt.content.substring(0, 100) + '...' : '');
+            html += `<div class="event-item">
+                <div class="event-chapter">第 ${evt.chapter_num} 章 - ${escapeHtml(evt.title || '')}</div>
+                <div>${escapeHtml(summary)}</div>
+            </div>`;
+        }
+
+        panel.innerHTML = html;
+    }
+
+    function renderSummary(summary) {
+        const panel = document.getElementById('panelSummary');
+        if (!summary || Object.keys(summary).length === 0) {
+            panel.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">暂无摘要数据</div>';
+            return;
+        }
+
+        let html = '';
+
+        if (summary.high_level_outline) {
+            html += `<div style="margin-bottom:8px;"><strong style="color:var(--accent-purple);">大纲：</strong>${escapeHtml(summary.high_level_outline)}</div>`;
+        }
+
+        if (summary.mid_level_arcs && summary.mid_level_arcs.length > 0) {
+            html += '<div style="font-size:12px;font-weight:600;margin-bottom:4px;">剧情弧线</div>';
+            for (const arc of summary.mid_level_arcs.slice(-3)) {
+                html += `<div class="event-item" style="border-left-color:var(--accent-purple);"><strong>${escapeHtml(arc.title)}</strong>: ${escapeHtml(arc.summary)}</div>`;
+            }
+        }
+
+        if (summary.low_level_summaries && summary.low_level_summaries.length > 0) {
+            html += '<div style="font-size:12px;font-weight:600;margin-top:8px;margin-bottom:4px;">章节摘要</div>';
+            for (const s of summary.low_level_summaries) {
+                html += `<div class="event-item"><div class="event-chapter">第 ${s.chapter_num} 章 ${escapeHtml(s.title)}</div>${escapeHtml(s.summary)}</div>`;
+            }
+        }
+
+        panel.innerHTML = html || '<div style="color:var(--text-muted);">暂无摘要数据</div>';
+    }
+
+    // ========================================================================
+    // 创建小说
+    // ========================================================================
+    async function createNovel() {
+        const topic = document.getElementById('topicInput').value.trim();
+        if (!topic) { showToast('请输入小说主题', 'error'); return; }
+
+        const btn = document.getElementById('btnCreate');
+        btn.disabled = true;
+        isGenerating = true;
+        showGenerationStatus('正在创建小说...');
+
+        try {
+            const res = await fetch('/create-novel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic })
+            });
+            const data = await res.json();
+            appendOutput(data.output || data.message);
+
+            if (data.success) {
+                showToast('小说创建成功！', 'success');
+                await loadTopics();
+                // 自动打开
+                setTimeout(() => openNovel(topic), 500);
+            } else {
+                showToast('创建失败: ' + data.message, 'error');
+            }
+        } catch (e) {
+            appendOutput('错误: ' + e.message);
+            showToast('创建失败', 'error');
+        }
+
+        btn.disabled = false;
+        isGenerating = false;
+        hideGeneratingIndicator();
+    }
+
+    // ========================================================================
+    // 续写小说
+    // ========================================================================
+    async function continueNovel() {
+        const topic = document.getElementById('topicSelect').value;
+        const customPrompt = document.getElementById('customPrompt').value.trim();
+        if (!topic) { showToast('请选择要续写的作品', 'error'); return; }
+
+        await doContinue(topic, customPrompt);
+    }
+
+    function showContinuePrompt() {
+        document.getElementById('continueTopicName').textContent = currentTopic;
+        document.getElementById('continueCustomPrompt').value = '';
+        document.getElementById('continuePromptOverlay').style.display = 'flex';
+    }
+
+    function closeContinuePrompt() {
+        document.getElementById('continuePromptOverlay').style.display = 'none';
+    }
+
+    async function doContinueFromModal() {
+        const customPrompt = document.getElementById('continueCustomPrompt').value.trim();
+        closeContinuePrompt();
+        await doContinue(currentTopic, customPrompt);
+    }
+
+    async function doContinue(topic, customPrompt) {
+        const btn = document.getElementById('btnContinue');
+        const modalBtn = document.getElementById('btnModalContinue');
+        if (btn) btn.disabled = true;
+        if (modalBtn) modalBtn.disabled = true;
+        isGenerating = true;
+
+        // 切换到首页显示生成进度
+        if (currentView !== 'home') switchView('home');
+        showGenerationStatus(`正在续写 "${topic}"...`);
+
+        try {
+            const body = { topic, mode: '1' };
+            if (customPrompt) body.customPrompt = customPrompt;
+
+            const res = await fetch('/continue-novel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            appendOutput(data.output || data.message);
+
+            if (data.success) {
+                showToast('续写完成！', 'success');
+                await loadTopics();
+                setTimeout(() => openNovel(topic), 500);
+            } else {
+                showToast('续写失败: ' + data.message, 'error');
+            }
+        } catch (e) {
+            appendOutput('错误: ' + e.message);
+            showToast('续写失败', 'error');
+        }
+
+        if (btn) btn.disabled = false;
+        if (modalBtn) modalBtn.disabled = false;
+        isGenerating = false;
+        hideGeneratingIndicator();
+    }
+
+    async function stopProcess() {
+        try {
+            await fetch('/stop-process', { method: 'POST' });
+            showToast('已停止生成', 'info');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // ========================================================================
+    // 生成状态
+    // ========================================================================
+    function showGenerationStatus(text) {
+        document.getElementById('generationStatus').style.display = 'block';
+        document.getElementById('generatingIndicator').style.display = 'flex';
+        document.getElementById('generatingText').textContent = text;
+        document.getElementById('outputConsole').textContent = '';
+    }
+
+    function hideGeneratingIndicator() {
+        document.getElementById('generatingIndicator').style.display = 'none';
+    }
+
+    function appendOutput(text) {
+        const console_ = document.getElementById('outputConsole');
+        console_.textContent += text;
+        console_.scrollTop = console_.scrollHeight;
+    }
+
+    // ========================================================================
+    // 配置
+    // ========================================================================
+    async function loadConfig() {
+        try {
+            const res = await fetch('/api/config');
+            const data = await res.json();
+            if (data.success) {
+                const c = data.config;
+                document.getElementById('cfgApiKey').value = c.DEEPSEEK_API_KEY || '';
+                document.getElementById('cfgMaxTokens').value = c.DEEPSEEK_MAX_TOKENS || '8192';
+                document.getElementById('cfgTemperature').value = c.DEEPSEEK_TEMPERATURE || '0.7';
+                document.getElementById('cfgDashKey').value = c.DASHSCOPE_API_KEY || '';
+                document.getElementById('cfgImages').value = c.DASHSCOPE_IMAGES_PER_CHAPTER || '2';
+                document.getElementById('cfgWatermark').value = c.DASHSCOPE_WATERMARK || 'false';
+                document.getElementById('cfgMultimedia').value = c.ENABLE_MULTIMEDIA || 'false';
+                document.getElementById('cfgTTS').value = c.TTS_VOICE || 'zh-CN-XiaoxiaoNeural';
+            }
+        } catch (e) {
+            showToast('加载配置失败', 'error');
+        }
+    }
+
+    async function saveConfig() {
+        const apiKey = document.getElementById('cfgApiKey').value.trim();
+
+        // 强制要求 API Key
+        if (!apiKey || !apiKey.startsWith('sk-') || apiKey.length < 20) {
+            showToast('请填入有效的 DeepSeek API 密钥（以 sk- 开头）', 'error');
+            return;
+        }
+
+        const config = {
+            DEEPSEEK_API_KEY: apiKey,
+            DEEPSEEK_MAX_TOKENS: document.getElementById('cfgMaxTokens').value,
+            DEEPSEEK_TEMPERATURE: document.getElementById('cfgTemperature').value,
+            DASHSCOPE_API_KEY: document.getElementById('cfgDashKey').value,
+            DASHSCOPE_IMAGES_PER_CHAPTER: document.getElementById('cfgImages').value,
+            DASHSCOPE_WATERMARK: document.getElementById('cfgWatermark').value,
+            ENABLE_MULTIMEDIA: document.getElementById('cfgMultimedia').value,
+            TTS_VOICE: document.getElementById('cfgTTS').value
+        };
+
+        try {
+            const res = await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('配置已保存', 'success');
+            } else {
+                showToast((data.errors || [data.message]).join(', '), 'error');
+            }
+        } catch (e) {
+            showToast('保存失败: ' + e.message, 'error');
+        }
+    }
+
+    // ========================================================================
+    // 记忆面板折叠
+    // ========================================================================
+    function togglePanel(header) {
+        const body = header.nextElementSibling;
+        const icon = header.querySelector('.toggle');
+        body.classList.toggle('collapsed');
+        icon.classList.toggle('collapsed');
+    }
+
+    // ========================================================================
+    // Toast 通知
+    // ========================================================================
+    function showToast(message, type = 'info') {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" style="margin-right:8px;"></i>${escapeHtml(message)}`;
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    // ========================================================================
+    // 工具函数
+    // ========================================================================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function escapeAttr(text) {
+        if (!text) return '';
+        return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    </script>
+</body>
+</html>

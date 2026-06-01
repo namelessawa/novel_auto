@@ -1,0 +1,22 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+results/
+temp/
+.idea/
+.qwen/
+node_modules/
+*.log
+memory_system/long_term_memory_db/
+memory_system/entity_snapshots/
+
+# Test / lint caches
+.coverage
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+
+# Claude session state
+.claude/
