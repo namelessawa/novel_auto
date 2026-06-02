@@ -195,6 +195,23 @@ _STOP_NOMINALS: frozenset[str] = frozenset(
 )
 
 
+def _length_aware_threshold(text_len: int, base: int) -> int:
+    """文本越长, 同一名词自然重复越多 — 自适应阈值。
+
+    * ≤500 字: 阈值 = base (3)
+    * 501-1500 字: 阈值 = base + 1 (4)
+    * 1501-3000 字: 阈值 = base + 2 (5)
+    * >3000 字: 阈值 = base + 3 (6)
+    """
+    if text_len <= 500:
+        return base
+    if text_len <= 1500:
+        return base + 1
+    if text_len <= 3000:
+        return base + 2
+    return base + 3
+
+
 def check_word_repetition(
     text: str,
     threshold: int = 3,
@@ -202,6 +219,10 @@ def check_word_repetition(
     exempt_words: list[str] | tuple[str, ...] | None = None,
 ) -> list[DeterministicTrigger]:
     """A1: 同段实词重复 ≥threshold 次。
+
+    threshold 实际值会按文本长度自适应:
+    >500 字 +1, >1500 字 +2, >3000 字 +3。
+    传入的 threshold 视作"基准 (短文本) 阈值"。
 
     实词识别策略 (轻量, 无分词器依赖):
     * 按标点/空白把文本切成中文连续片段
@@ -218,6 +239,7 @@ def check_word_repetition(
             Orchestrator 传入 ``[char.name for char in profiles]`` +
             ``[loc.name for loc in world_state.locations]``
     """
+    effective_threshold = _length_aware_threshold(len(text), threshold)
     exempt_set: set[str] = set(_STOP_NOMINALS)
     if exempt_words:
         for w in exempt_words:
@@ -244,13 +266,13 @@ def check_word_repetition(
             counter[w] += 1
     triggers: list[DeterministicTrigger] = []
     for word, cnt in counter.most_common(20):
-        if cnt < threshold:
+        if cnt < effective_threshold:
             break
         triggers.append(
             DeterministicTrigger(
                 code="A1",
                 severity="medium",
-                evidence=f'实词 "{word}" 出现 {cnt} 次',
+                evidence=f'实词 "{word}" 出现 {cnt} 次 (text={len(text)}字, 阈值={effective_threshold})',
             )
         )
     return triggers
