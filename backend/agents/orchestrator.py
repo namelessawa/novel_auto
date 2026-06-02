@@ -39,11 +39,13 @@ from typing import AsyncIterator, Protocol
 from agents.character_agent import CharacterAgent
 from agents.narrator_agent import NarratorAgent, NarratorOutput
 from agents.world_simulator import WorldSimulator
+from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.tick_state import TickState
 from memory_system.models import (
     CharacterAction,
     CharacterState,
     Event,
+    MemoryEntry,
     TickSummary,
     WorldState,
 )
@@ -81,14 +83,25 @@ class NoveltyCriticProtocol(Protocol):
 # ------------------------------------------------------------------
 
 
-SHOWRUNNER_CADENCE = 5
-NOVELTY_CRITIC_CADENCE = 20
-CONSISTENCY_GUARDIAN_CADENCE = 30
-MEMORY_COMPRESSOR_CADENCE = 50
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        v = int(raw)
+        return v if v > 0 else default
+    except ValueError:
+        return default
+
+
+SHOWRUNNER_CADENCE = _env_int("SHOWRUNNER_CADENCE", 5)
+NOVELTY_CRITIC_CADENCE = _env_int("NOVELTY_CRITIC_CADENCE", 20)
+CONSISTENCY_GUARDIAN_CADENCE = _env_int("CONSISTENCY_GUARDIAN_CADENCE", 30)
+MEMORY_COMPRESSOR_CADENCE = _env_int("MEMORY_COMPRESSOR_CADENCE", 50)
 
 # 戏剧/外生事件冷却:Showrunner 没就位时,EventInjector 自身的简单触发判断
-EXOGENOUS_COOLDOWN_TICKS = 10
-MIN_OPEN_LOOPS = 3
+EXOGENOUS_COOLDOWN_TICKS = _env_int("EXOGENOUS_COOLDOWN_TICKS", 10)
+MIN_OPEN_LOOPS = _env_int("MIN_OPEN_LOOPS", 3)
 
 
 def _get_main_character_id_from_env() -> str | None:
@@ -115,6 +128,7 @@ class Orchestrator:
         tick_db: TickDB | None = None,
         main_tracking_character_id: str | None = None,
         narrative_text_writer=None,  # Callable[[int, str], Awaitable[None]] - 可选
+        memory_store: PriorityMemoryStore | None = None,
     ) -> None:
         self._tick_state = tick_state
         self._world_simulator = world_simulator
@@ -130,6 +144,14 @@ class Orchestrator:
         self._main_tracking_character_id = (
             main_tracking_character_id or _get_main_character_id_from_env()
         )
+        # 长期记忆存储 (v2.3) — 自动加载 / 持久化, 阶段 5 后填充 L0, 阶段 7 压缩
+        self._memory_store = memory_store or PriorityMemoryStore(
+            tick_state.data_dir
+        )
+        try:
+            self._memory_store.load()
+        except Exception as e:  # pragma: no cover
+            logger.warning("MemoryStore.load failed (non-fatal): %s", e)
 
         # narrative_text_writer(tick, text) - Orchestrator 把叙述文本交给外部写盘
         # 默认: 写到 ``{data_dir}/narratives/tick_{tick:06d}.txt``
@@ -296,6 +318,9 @@ class Orchestrator:
         events_generated_ids.extend(e.id for e in action_events)
         all_events.extend(action_events)
 
+        # 阶段 5b: 把本 tick 显著事件登记到长期记忆 (L0) -------------------
+        self._ingest_events_to_memory(tick, all_events)
+
         # 阶段 6: 叙述 ----------------------------------------------------
         narrator_out = await self._narrate(tick, all_events)
         agents_called.append("narrator")
@@ -308,12 +333,20 @@ class Orchestrator:
             self._recent_chapter_summaries.append(
                 f"tick {tick}: {narrator_out.scene_focus or narrator_out.narrative_text[:60]}…"
             )
-            # 引用的 OpenLoop touch
+            # 引用的 OpenLoop touch + 关联事件 touch
             for loop_id in narrator_out.open_loops_referenced:
                 self._tick_state.touch_open_loop(loop_id, tick)
-            # 新种 OpenLoop
+            # Narrator 实际消费的事件 → memory_store.touch (提升 ref_count, 防遗忘)
+            for evt_id in narrator_out.events_consumed:
+                self._memory_store.touch(evt_id, tick)
+            # 新种 OpenLoop + 若 loop 关联了源事件, 标记为 protected
             for loop in narrator_out.newly_opened_loops:
                 self._tick_state.add_open_loop(loop)
+                origin_ids = getattr(loop, "origin_event_ids", None) or []
+                for evt_id in origin_ids:
+                    self._memory_store.mark_protected(
+                        evt_id, reason=f"open_loop:{loop.id}"
+                    )
         else:
             # 仍要把 tick_summary_for_record 累积,供未来 Narrator 上下文
             if narrator_out.tick_summary_for_record:
@@ -329,6 +362,10 @@ class Orchestrator:
 
         # 持久化(原子写)
         self._tick_state.save()
+        try:
+            self._memory_store.save()
+        except Exception as e:  # pragma: no cover
+            logger.warning("MemoryStore.save failed (non-fatal): %s", e)
 
         # 维持 recent_chapter_summaries 上限
         if len(self._recent_chapter_summaries) > 100:
@@ -435,6 +472,32 @@ class Orchestrator:
             result.append(cid)
         return result
 
+    def _ingest_events_to_memory(self, tick: int, events: list[Event]) -> None:
+        """阶段 5b: 把本 tick 显著事件登记到 PriorityMemoryStore 的 L0 层。
+
+        策略:
+        * 仅登记 narrative_value (或 hint) ≥ 4 的事件 (背景级别以下不入库)
+        * 情感色彩从 event.type 推断 (character_action 等 → []) 后续可由
+          Narrator 补充
+        * 不重复登记 — store.add 已是 upsert
+        """
+        if not events:
+            return
+        for evt in events:
+            score = max(evt.narrative_value or 0, evt.narrative_value_hint or 0)
+            if score < 4:
+                continue
+            entry = MemoryEntry(
+                id=evt.id,
+                tier="L0",
+                original_tick_range=(evt.tick, evt.tick),
+                summary=evt.description[:200],
+                involved=list(evt.participants),
+                importance=min(10, max(1, score)),
+                emotional_tags=[],
+            )
+            self._memory_store.add(entry, current_tick=tick)
+
     def _apply_actions(
         self, tick: int, actions: list[CharacterAction]
     ) -> list[Event]:
@@ -513,17 +576,51 @@ class Orchestrator:
         return sorted(visible)
 
     async def _narrate(self, tick: int, all_events: list[Event]) -> NarratorOutput:
+        # 优先级长期记忆: 从 store 召回 top-5, 拼接为标注前缀的"摘要"行,
+        # 与时间线 recent_chapter_summaries 合并后送 Narrator
+        memory_summaries = self._build_long_term_memory_excerpts(tick, all_events)
+        merged_summaries = memory_summaries + list(self._recent_chapter_summaries)
         return await self._narrator.narrate(
             tick=tick,
             world_time=self._tick_state.world_state.world_time,
             tracking_character_id=self._main_tracking_character_id or "",
             tick_events=all_events,
             char_states=self._tick_state.list_character_states(),
-            recent_chapter_summaries=self._recent_chapter_summaries,
+            recent_chapter_summaries=merged_summaries,
             open_loops=self._tick_state.get_open_loops(top_k=15),
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
         )
+
+    def _build_long_term_memory_excerpts(
+        self, tick: int, all_events: list[Event]
+    ) -> list[str]:
+        """从 PriorityMemoryStore 取 top-5 高优先级历史条目, 注入 Narrator 上下文。
+
+        提供给 Narrator 的优势:
+        * 不仅看时间线邻近 (recent_chapter_summaries), 还看跨章节高优先级条目
+        * 保护条目 (open_loop / trauma / 高引用) 享受 score 加成, 不会"被遗忘"
+        * 多因子 dedup, 避免相似事件挤占 prompt 空间
+        """
+        if self._memory_store.size == 0:
+            return []
+        # 提取本 tick 出场角色作为查询信号
+        query_chars: set[str] = set()
+        for evt in all_events:
+            query_chars.update(evt.participants)
+        results = self._memory_store.retrieve(
+            RetrievalQuery(
+                current_tick=tick,
+                query_chars=sorted(query_chars),
+                top_k=5,
+                min_l0_or_l1=2,
+            )
+        )
+        return [
+            f"[长期记忆 tier={r.record.entry.tier} importance={r.record.entry.importance}] "
+            f"{r.record.entry.summary[:120]}"
+            for r in results
+        ]
 
     async def _phase7_periodic_maintenance(
         self, tick: int, agents_called: list[str]
@@ -570,11 +667,30 @@ class Orchestrator:
             and tick % MEMORY_COMPRESSOR_CADENCE == 0
         ):
             try:
-                await self._memory_compressor.compress(
+                # 从 PriorityMemoryStore 抽出真实 MemoryEntry 池 + open_loop 源 id
+                all_entries = [r.entry for r in self._memory_store.all_records()]
+                # OpenLoop 关联的所有事件 id 作为保护清单
+                protected_ids: list[str] = []
+                for loop in self._tick_state.get_open_loops():
+                    protected_ids.extend(getattr(loop, "origin_event_ids", None) or [])
+                comp_out = await self._memory_compressor.compress(
                     current_tick=tick,
-                    memory_entries=[],  # P2: 维护 MemoryEntry 池
-                    open_loop_origin_ids=[],
+                    memory_entries=all_entries,
+                    open_loop_origin_ids=protected_ids,
                 )
+                # 把压缩输出反写回 store: L0→L1 替换, L1→L2 替换
+                for new_l1 in getattr(comp_out, "l0_to_l1", []) or []:
+                    self._memory_store.replace_with_compressed(
+                        source_ids=[],  # MemoryCompressor 不返回原 ids, 替换粒度暂时不细化
+                        new_entry=new_l1,
+                        current_tick=tick,
+                    )
+                for new_l2 in getattr(comp_out, "l1_to_l2", []) or []:
+                    self._memory_store.replace_with_compressed(
+                        source_ids=[],
+                        new_entry=new_l2,
+                        current_tick=tick,
+                    )
                 agents_called.append("memory_compressor")
             except Exception as e:
                 logger.error("MemoryCompressor.compress failed: %s", e)

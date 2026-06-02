@@ -1,7 +1,7 @@
 # 项目结构 (structure.md)
 
 > 本文档描述项目具体结构分布,随每轮迭代同步更新。
-> 版本: v2.2 · 2026-06-03
+> 版本: v2.3 · 2026-06-03
 
 ---
 
@@ -70,7 +70,8 @@ backend/
 │   └── settings.py           # .env + config.json 双源配置
 ├── memory/
 │   ├── tick_state.py         # TickState — Pydantic v2 dump 原子写
-│   └── summary_tree.py       # 分层摘要树 (L0-L3) + 持久化
+│   ├── summary_tree.py       # 分层摘要树 (L0-L3) + 持久化
+│   └── memory_store.py       # ★ v2.3 PriorityMemoryStore — 多因子检索 + 持久化
 ├── nf_core/
 │   ├── llm_client.py         # OpenAI SDK 包装, streaming + JSON mode
 │   ├── action_resolver.py    # 纯 Python 行动冲突解析
@@ -208,7 +209,8 @@ TickState  ── 阶段 1 ──→  WorldSimulator           → 新 WorldStat
 |------|------|------|
 | v2.0 | 2026-04 | 9 Agent + 7 阶段 Tick 架构落地 |
 | v2.1 | 2026-06-02 | 双栈融合为单进程, v1.x → `old/` |
-| **v2.2** | **2026-06-03** | **质量规范层 — CRITIQUE → REVISE / REWRITE 循环嵌入 Narrator** |
+| v2.2 | 2026-06-03 | 质量规范层 — CRITIQUE → REVISE / REWRITE 循环嵌入 Narrator |
+| **v2.3** | **2026-06-03** | **优先级分层长期记忆 PriorityMemoryStore + 反 RAG 退化策略** |
 
 后续路线 (`TaskList` 跟踪):
 

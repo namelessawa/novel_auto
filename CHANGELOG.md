@@ -5,6 +5,49 @@
 
 ---
 
+## [2.3.0] — 2026-06-03
+
+### Added — 优先级分层长期记忆 (`backend/memory/memory_store.py`)
+
+针对主 Agent 关注问题清单中的三项:
+* **长期记忆与全局一致性崩塌** — 持久化的 `PriorityMemoryStore` (JSON 原子写),
+  不依赖单一 LLM 上下文窗口
+* **RAG 检索式记忆的致命缺陷** — `RetrievalQuery` 多因子打分
+  (importance × recency × reference_count × char_overlap × tag_overlap +
+  tier_proximity + protected_bonus), 否定朴素 top-k 余弦相似
+* **缺乏分层记忆与优先级机制** — `MemoryRecord` 加 `last_access_tick` /
+  `reference_count` / `decay_floor`; `is_protected` 综合 `protected_reason` /
+  `TRAUMA_TAGS` (trauma/vow/secret/loss/betrayal) / `reference_count ≥ 3`
+
+### Added — 防退化策略
+
+* `min_l0_or_l1` — 强制 top-k 中至少包含 N 条近期层 (避免"全是 L3 传说"的副作用)
+* 同 involved + 邻近 tick_range 桶 dedup, 但空 involved 不参与碰撞
+* `effective_importance(current_tick)` — 衰减但有 `decay_floor` 兜底
+* `replace_with_compressed(source_ids, new_entry)` — 升级层级时引用计数继承累加
+
+### Changed — Orchestrator 集成
+
+* `Orchestrator.__init__` 接受可选 `memory_store: PriorityMemoryStore`,
+  默认从 `tick_state.data_dir` 自动 load
+* 新增 `_ingest_events_to_memory(tick, events)` — 阶段 5 后把
+  `narrative_value ≥ 4` 的事件入库到 L0
+* 阶段 6 后: `events_consumed` 触发 `memory_store.touch()`
+  (提升 ref_count, 防遗忘); newly_opened_loops 关联的源事件 `mark_protected()`
+* 阶段 7 (`MemoryCompressor`): 真实条目池 + open_loop 保护清单传入, 压缩输出
+  `replace_with_compressed` 反写
+* `_build_long_term_memory_excerpts(tick, events)` — 新增, 召回 top-5 高优先级
+  历史条目, 拼接前缀 `[长期记忆 tier=L1 importance=8] ...` 注入
+  `recent_chapter_summaries`, 让 Narrator 跨章节看见保护事件
+
+### Tests
+
+* `backend/tests/test_memory_store.py` — 新增 17 用例 (CRUD / 保护机制 /
+  持久化 roundtrip / 多因子打分 / 防退化 / 升级替换 / 长跑不丢保护事实场景)
+* 全套 86 条用例通过
+
+---
+
 ## [2.2.0] — 2026-06-03
 
 ### Added — 质量规范层 (`novel_quality_critique_and_iteration.md` 落地)

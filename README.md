@@ -71,6 +71,30 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 优先级分层长期记忆 (v2.3 新增)
+
+> 反 RAG 退化 — 不依赖朴素余弦相似, 多因子打分 + 防退化策略。
+
+`backend/memory/memory_store.py` 提供 `PriorityMemoryStore`:
+
+| 维度 | 公式 | 作用 |
+|------|------|------|
+| importance_eff | `importance × decay(ticks_since_access) + ref_bonus` | 重要性随时间衰减, 但高引用补偿 |
+| recency | `5 / (1 + ticks_since / 100)` | 偏好近期, 但不抹掉远古 |
+| char_overlap | `× 4.0` | 角色重叠加成 |
+| tag_overlap | `× 3.0` | 情感/主题标签 |
+| tier_proximity | L0=+1.0 / L1=+0.5 / L3=-0.5 | 分层近程 |
+| protected | `+2.0 if is_protected` | open_loop / trauma / ref≥3 保护 |
+
+防退化:
+* `min_l0_or_l1` 强制保留近期层, 避免"全是 L3 传说"
+* 同 involved + 邻近 tick 去重 (桶宽 20 tick)
+* `replace_with_compressed` 升级时引用计数继承
+
+Orchestrator 集成: 阶段 5 后自动 L0 入库, 阶段 6 后 `events_consumed`
+触发 `touch()`, 阶段 7 整池压缩。Narrator 通过 `_build_long_term_memory_excerpts`
+拿到 top-5 高优先级历史条目, 跨章节看见保护事件。
+
 ### 质量规范层 (v2.2 新增)
 
 > 故事不是"生成",而是 **生成 → 批判 → 修订**。Narrator 每段产出后自动跑
