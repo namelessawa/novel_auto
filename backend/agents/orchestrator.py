@@ -38,6 +38,7 @@ from typing import AsyncIterator, Protocol
 
 from agents.character_agent import CharacterAgent
 from agents.narrator_agent import NarratorAgent, NarratorOutput
+from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
 from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.tick_state import TickState
@@ -129,6 +130,7 @@ class Orchestrator:
         main_tracking_character_id: str | None = None,
         narrative_text_writer=None,  # Callable[[int, str], Awaitable[None]] - 可选
         memory_store: PriorityMemoryStore | None = None,
+        story_arc_director: StoryArcDirector | None = None,
     ) -> None:
         self._tick_state = tick_state
         self._world_simulator = world_simulator
@@ -152,6 +154,11 @@ class Orchestrator:
             self._memory_store.load()
         except Exception as e:  # pragma: no cover
             logger.warning("MemoryStore.load failed (non-fatal): %s", e)
+
+        # v2.4 叙事大纲守护 — 每 N tick 调用一次, 阶段 6 注入 narrator_hint
+        self._story_arc_director = story_arc_director
+        # 上一轮 directive — 阶段 6 前用于注入 narrator_hint 到 recent_chapter_summaries
+        self._last_story_directive = None
 
         # narrative_text_writer(tick, text) - Orchestrator 把叙述文本交给外部写盘
         # 默认: 写到 ``{data_dir}/narratives/tick_{tick:06d}.txt``
@@ -321,6 +328,9 @@ class Orchestrator:
         # 阶段 5b: 把本 tick 显著事件登记到长期记忆 (L0) -------------------
         self._ingest_events_to_memory(tick, all_events)
 
+        # 阶段 5c: StoryArcDirector — 节奏曲线 + 节拍守护 (v2.4) ----------
+        await self._run_story_arc_director(tick, all_events)
+
         # 阶段 6: 叙述 ----------------------------------------------------
         narrator_out = await self._narrate(tick, all_events)
         agents_called.append("narrator")
@@ -472,6 +482,35 @@ class Orchestrator:
             result.append(cid)
         return result
 
+    async def _run_story_arc_director(
+        self, tick: int, all_events: list[Event]
+    ) -> None:
+        """阶段 5c: 调用 StoryArcDirector, 把 directive 缓存供阶段 6 _narrate 使用。"""
+        if self._story_arc_director is None:
+            return
+        arc = self._tick_state.get_story_arc()
+        if arc is None:
+            return
+        # 本 tick narrative_value 总和 (作为 pacing 采样)
+        nv_sum = sum(
+            max(e.narrative_value or 0, e.narrative_value_hint or 0)
+            for e in all_events
+        )
+        try:
+            directive = await self._story_arc_director.direct(
+                arc=arc,
+                current_tick=tick,
+                recent_events=all_events,
+                recent_narrator_value_sum=nv_sum,
+                narrator_produced=False,  # 阶段 6 还没跑, 这里只采样
+            )
+            arc.last_updated_tick = tick
+            self._tick_state.set_story_arc(arc)
+            self._last_story_directive = directive
+        except Exception as e:
+            logger.warning("StoryArcDirector.direct failed (non-fatal): %s", e)
+            self._last_story_directive = None
+
     def _ingest_events_to_memory(self, tick: int, events: list[Event]) -> None:
         """阶段 5b: 把本 tick 显著事件登记到 PriorityMemoryStore 的 L0 层。
 
@@ -579,7 +618,9 @@ class Orchestrator:
         # 优先级长期记忆: 从 store 召回 top-5, 拼接为标注前缀的"摘要"行,
         # 与时间线 recent_chapter_summaries 合并后送 Narrator
         memory_summaries = self._build_long_term_memory_excerpts(tick, all_events)
-        merged_summaries = memory_summaries + list(self._recent_chapter_summaries)
+        # v2.4 StoryArc directive: narrator_hint + theme_reminder + 节奏强度建议
+        arc_hints = self._build_story_arc_hints()
+        merged_summaries = arc_hints + memory_summaries + list(self._recent_chapter_summaries)
         return await self._narrator.narrate(
             tick=tick,
             world_time=self._tick_state.world_state.world_time,
@@ -591,6 +632,27 @@ class Orchestrator:
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
         )
+
+    def _build_story_arc_hints(self) -> list[str]:
+        """把 StoryArcDirector 的 directive 翻译为 Narrator 可消费的"前缀摘要行"。"""
+        d = self._last_story_directive
+        if d is None:
+            return []
+        lines: list[str] = []
+        if d.theme_reminder:
+            lines.append(f"[叙事大纲] {d.theme_reminder[:120]}")
+        if d.narrator_hint:
+            lines.append(f"[本段提示] {d.narrator_hint[:80]}")
+        if d.intensity_recommendation:
+            lines.append(
+                f"[节奏建议] 期望强度={d.intensity_recommendation} "
+                f"(escalation={d.needs_escalation}, breather={d.needs_breather})"
+            )
+        if d.overdue_beats:
+            lines.append(
+                f"[逾期节拍] {', '.join(d.overdue_beats[:3])} — 推进或显式标记跳过"
+            )
+        return lines
 
     def _build_long_term_memory_excerpts(
         self, tick: int, all_events: list[Event]

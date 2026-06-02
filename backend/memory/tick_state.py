@@ -32,6 +32,7 @@ from memory_system.models import (
     CharacterProfile,
     CharacterState,
     OpenLoop,
+    StoryArc,
     StyleAnchor,
     WorldState,
 )
@@ -73,6 +74,9 @@ class TickState:
 
         # NoveltyCritic 输出的反馈,供 Narrator/EventInjector 下次调用参考
         self._novelty_warnings: list[str] = []
+
+        # v2.4 叙事大纲 — StoryArcDirector 维护
+        self._story_arc: StoryArc | None = None
 
     # ------------------------------------------------------------------
     # 只读属性
@@ -242,6 +246,19 @@ class TickState:
         return list(self._novelty_warnings)
 
     # ------------------------------------------------------------------
+    # v2.4 StoryArc API
+    # ------------------------------------------------------------------
+
+    def get_story_arc(self) -> StoryArc | None:
+        return self._story_arc
+
+    def set_story_arc(self, arc: StoryArc) -> None:
+        self._story_arc = arc
+
+    def has_story_arc(self) -> bool:
+        return self._story_arc is not None
+
+    # ------------------------------------------------------------------
     # 持久化(原子写)
     # ------------------------------------------------------------------
 
@@ -265,6 +282,9 @@ class TickState:
             "style_anchors": [a.model_dump(mode="json") for a in self._style_anchors],
             "last_event_tick_by_type": dict(self._last_event_tick_by_type),
             "novelty_warnings": list(self._novelty_warnings),
+            "story_arc": (
+                self._story_arc.model_dump(mode="json") if self._story_arc else None
+            ),
         }
 
         fd, tmp_path = tempfile.mkstemp(
@@ -326,6 +346,15 @@ class TickState:
                 k: int(v) for k, v in payload.get("last_event_tick_by_type", {}).items()
             }
             self._novelty_warnings = list(payload.get("novelty_warnings", []))
+            arc_raw = payload.get("story_arc")
+            if arc_raw:
+                try:
+                    self._story_arc = StoryArc.model_validate(arc_raw)
+                except Exception as e:
+                    logger.warning("StoryArc load failed: %s", e)
+                    self._story_arc = None
+            else:
+                self._story_arc = None
         except Exception as e:
             logger.error(
                 "TickState payload validation failed (%s) - starting fresh", e

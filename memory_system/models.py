@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # ---------------------------------------------------------------------------
 # 遗留 dataclass 契约 (knowledge_graph / 节级管线)
@@ -120,6 +120,70 @@ _TickModelConfig = ConfigDict(
 )
 
 
+def _coerce_llm_payload(cls, values):
+    """Tolerate quirks of LLM-generated JSON before strict pydantic validation.
+
+    LLMs commonly emit ``None`` for optional string fields (instead of ``""``)
+    stringly-typed numbers for ``age``/``priority``, and a single scalar where a
+    list is required (e.g. ``"all_in_location"`` instead of
+    ``["all_in_location"]``). Without this, the whole model is rejected and the
+    character/state/event is silently dropped during bootstrap or injection.
+    We coerce just enough to keep valid payloads usable, while leaving genuinely
+    malformed values to fail downstream validation.
+    """
+    if not isinstance(values, dict):
+        return values
+    for fname, finfo in cls.model_fields.items():
+        if fname not in values:
+            continue
+        val = values[fname]
+        ann = finfo.annotation
+        ann_str = str(ann)
+        is_list = ann is list or getattr(ann, "__origin__", None) is list
+        is_dict = ann is dict or getattr(ann, "__origin__", None) is dict
+
+        if val is None:
+            # Skip fields where None is explicitly allowed (Optional / X | None)
+            if "None" in ann_str or "Optional" in ann_str:
+                continue
+            if ann is str:
+                values[fname] = ""
+            elif ann is int:
+                values[fname] = 0
+            elif ann is float:
+                values[fname] = 0.0
+            elif is_list:
+                values[fname] = []
+            elif is_dict:
+                values[fname] = {}
+            continue
+
+        # Wrap a scalar in a list when a list is expected
+        # (LLMs sometimes return a single string instead of an array)
+        if is_list and not isinstance(val, (list, tuple)):
+            if isinstance(val, str) and val.strip():
+                values[fname] = [val]
+            elif val == "":
+                values[fname] = []
+    return values
+
+
+class _TickBase(BaseModel):
+    """Common base for tick-architecture Pydantic models.
+
+    Provides shared config and the LLM payload normalisation hook so that None
+    values for required-string fields don't drop entire records during bootstrap
+    or agent output parsing.
+    """
+
+    model_config = _TickModelConfig
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_llm_payload(cls, values):
+        return _coerce_llm_payload(cls, values)
+
+
 ImportanceTier = Literal["A", "B", "C"]
 EventKind = Literal["endogenous", "exogenous", "dramatic", "character_action"]
 MemoryTier = Literal["L0", "L1", "L2", "L3"]
@@ -128,10 +192,9 @@ ConflictType = Literal["character", "time", "setting", "relationship", "item"]
 OpenLoopType = Literal["mystery", "conflict", "promise", "threat", "other"]
 
 
-class TickLocation(BaseModel):
+class TickLocation(_TickBase):
     """世界中的一个地点。与遗留 ``Entity(entity_type=LOCATION)`` 不冲突。"""
 
-    model_config = _TickModelConfig
 
     id: str
     name: str
@@ -141,10 +204,9 @@ class TickLocation(BaseModel):
     notable_features: list[str] = Field(default_factory=list)
 
 
-class Faction(BaseModel):
+class Faction(_TickBase):
     """势力。WorldState 引用,可选,初代世界至少应有 3 个。"""
 
-    model_config = _TickModelConfig
 
     id: str
     name: str
@@ -155,10 +217,9 @@ class Faction(BaseModel):
     hostile_factions: list[str] = Field(default_factory=list)
 
 
-class WorldState(BaseModel):
+class WorldState(_TickBase):
     """世界级状态 - WorldSimulator 输入与输出的核心契约。"""
 
-    model_config = _TickModelConfig
 
     world_time: int = Field(default=0, description="世界时间 tick")
     era: str = ""
@@ -170,10 +231,9 @@ class WorldState(BaseModel):
     world_rules: list[str] = Field(default_factory=list, description="物理/魔法/社会规则,不超过10条")
 
 
-class CharacterProfile(BaseModel):
+class CharacterProfile(_TickBase):
     """角色档案 - 不变部分。CharacterAgent 实例化时一次性持有。"""
 
-    model_config = _TickModelConfig
 
     id: str
     name: str
@@ -187,11 +247,32 @@ class CharacterProfile(BaseModel):
     fears: list[str] = Field(default_factory=list)
     desires: list[str] = Field(default_factory=list)
 
+    @field_validator("age", mode="before")
+    @classmethod
+    def _coerce_age(cls, v):
+        """LLM may return strings like "未知" or "未知（古老）" for mysterious entities.
 
-class Goal(BaseModel):
+        Try to parse leading integer; otherwise fall back to 0 instead of failing
+        the whole CharacterProfile validation.
+        """
+        if isinstance(v, int):
+            return v
+        if v is None or v == "":
+            return 0
+        if isinstance(v, str):
+            import re
+            m = re.search(r"-?\d+", v)
+            return int(m.group(0)) if m else 0
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return 0
+
+
+
+class Goal(_TickBase):
     """角色短期/长期目标。CharacterState.current_goals 持有。"""
 
-    model_config = _TickModelConfig
 
     id: str
     description: str
@@ -200,10 +281,9 @@ class Goal(BaseModel):
     obstacles: list[str] = Field(default_factory=list)
 
 
-class Relationship(BaseModel):
+class Relationship(_TickBase):
     """角色对角色的关系条目。CharacterState.relationships[other_id] 持有。"""
 
-    model_config = _TickModelConfig
 
     with_character_id: str
     type: str = Field(default="stranger", description="朋友|敌人|恋人|陌生人|...")
@@ -212,10 +292,9 @@ class Relationship(BaseModel):
     last_interaction_tick: int = 0
 
 
-class CharacterState(BaseModel):
+class CharacterState(_TickBase):
     """角色可变状态 - 每 tick 由 CharacterAgent 更新。"""
 
-    model_config = _TickModelConfig
 
     character_id: str
     current_location: str = Field(default="", description="location_id")
@@ -239,15 +318,19 @@ class CharacterState(BaseModel):
     inventory: list[str] = Field(default_factory=list)
     status_effects: list[str] = Field(default_factory=list, description="受伤|生病|堕落中|...")
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_llm_payload(cls, values):
+        return _coerce_llm_payload(cls, values)
 
-class Event(BaseModel):
+
+class Event(_TickBase):
     """世界事件 - 在 WorldSimulator / EventInjector / CharacterAgent 之间流转。
 
     可见性受 ``visible_to`` 严格约束 - CharacterAgent 只能看到自己 id 在
     ``visible_to`` 中的事件。这是戏剧性的根基(prompts.md 第 0 节第 4 条)。
     """
 
-    model_config = _TickModelConfig
 
     id: str
     tick: int
@@ -266,10 +349,9 @@ class Event(BaseModel):
     narrative_value_hint: int | None = Field(default=None, ge=0, le=10)
 
 
-class OpenLoop(BaseModel):
+class OpenLoop(_TickBase):
     """未解决的张力/伏笔 - Showrunner 维护冲突保留池 >=3 的核心抓手。"""
 
-    model_config = _TickModelConfig
 
     id: str
     opened_tick: int
@@ -289,10 +371,9 @@ class OpenLoop(BaseModel):
     )
 
 
-class MemoryEntry(BaseModel):
+class MemoryEntry(_TickBase):
     """分层记忆条目 - MemoryCompressor 在 L0/L1/L2/L3 间搬运。"""
 
-    model_config = _TickModelConfig
 
     id: str
     tier: MemoryTier
@@ -305,10 +386,9 @@ class MemoryEntry(BaseModel):
     protected_reason: str | None = None
 
 
-class StyleAnchor(BaseModel):
+class StyleAnchor(_TickBase):
     """风格锚点 - Narrator 每次写作时取 top-k 注入 system_prompt 保持文风。"""
 
-    model_config = _TickModelConfig
 
     excerpt: str = Field(description="高质量段落,通常约 300 字")
     selection_reason: str = ""
@@ -324,14 +404,13 @@ class StyleAnchor(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class CharacterAction(BaseModel):
+class CharacterAction(_TickBase):
     """CharacterAgent 决策输出 - Orchestrator 阶段4(冲突解析)的输入。
 
     与遗留 ``ActionPlan`` 不同:``ActionPlan`` 是 OutlineAgent 给 WriterAgent
     的节级写作指南;``CharacterAction`` 是单角色 tick 内的具体行动。
     """
 
-    model_config = _TickModelConfig
 
     character_id: str
     action_type: str = Field(default="wait", description="move|speak|fight|investigate|wait|...")
@@ -350,10 +429,9 @@ class CharacterAction(BaseModel):
     flags: list[str] = Field(default_factory=list, description="例如'此行动违背我的性格'")
 
 
-class TickSummary(BaseModel):
+class TickSummary(_TickBase):
     """Orchestrator 每 tick 结束时的诊断输出 - 写入 TickDB,推送给前端 SSE。"""
 
-    model_config = _TickModelConfig
 
     tick: int
     world_time: int
@@ -364,6 +442,100 @@ class TickSummary(BaseModel):
     narrator_output_chars: int = 0
     state_changes_summary: str = ""
     next_tick_recommendations: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# v2.4 叙事大纲层 — StoryArc / KeyBeat / PacingPoint / SuspenseLevel
+# ---------------------------------------------------------------------------
+
+
+BeatStatus = Literal["pending", "active", "completed", "skipped"]
+PacingIntensity = Literal["low", "medium", "high", "climax"]
+SuspenseLevel = Literal["background", "active", "escalating", "peaking"]
+
+
+class KeyBeat(_TickBase):
+    """剧情大纲中的关键节拍。
+
+    设计原则:
+    * 不指定具体场景, 只指定戏剧目标 — 让 Narrator / EventInjector 自由实现
+    * 有目标 tick 区间但不强制 (window_start ≤ 触达 tick ≤ window_end)
+    * status 由 StoryArcDirector 推断, 完成态后保留作为伏笔回响参考
+    """
+
+    id: str
+    title: str
+    description: str = Field(description="该节拍要达到的戏剧目标, 而非具体场景")
+    act: int = Field(default=1, ge=1, le=5, description="所属幕, 默认 3 幕剧")
+    window_start: int = Field(default=0, ge=0, description="可触发的最早 tick")
+    window_end: int = Field(default=100, ge=0, description="必须完成的最晚 tick")
+    status: BeatStatus = "pending"
+    triggered_at_tick: int = 0
+    completion_evidence: list[str] = Field(
+        default_factory=list,
+        description="完成证据 — 关联的事件 id / Narrator 段落标记",
+    )
+    importance: int = Field(default=7, ge=1, le=10)
+
+
+class PacingPoint(_TickBase):
+    """单 tick 的强度采样 — StoryArcDirector 用于绘制节奏曲线。"""
+
+    tick: int
+    intensity: PacingIntensity = "medium"
+    narrative_value_sum: int = 0
+    is_narration_produced: bool = False
+
+
+class StoryArc(_TickBase):
+    """全局叙事大纲 — 在冷启动时生成, 由 StoryArcDirector 维护。
+
+    防止"叙事动力枯竭"与"情节循环":
+    * theme — 主题锚点, 所有章节必须呼应 (但不直接说出)
+    * key_beats — 剧本骨架, 按 act 分组, 不达成则强制 EventInjector 兜底
+    * current_act / target_climax_tick — 当前位置与终点目标, 防止漂流
+    * pacing_history — 最近 N 个 tick 的强度采样, 用于节奏校正
+    * suspense_pool — 按 level 分级的悬念池, 强制 ≥1 escalating + ≥1 active
+    """
+
+    title: str = ""
+    theme: str = Field(
+        default="",
+        description="一句话主题 — 不是答案, 是问题",
+    )
+    central_question: str = Field(
+        default="",
+        description="读者要带走的'问题', 不是结论",
+    )
+    current_act: int = Field(default=1, ge=1, le=5)
+    target_climax_tick: int = Field(
+        default=500,
+        ge=10,
+        description="预期高潮 tick, 节奏曲线向此收敛",
+    )
+    key_beats: list[KeyBeat] = Field(default_factory=list)
+    pacing_history: list[PacingPoint] = Field(
+        default_factory=list,
+        description="最近 N 个 tick 的强度采样, 上限由 director 维护",
+    )
+    last_updated_tick: int = 0
+
+
+class StoryArcDirective(_TickBase):
+    """StoryArcDirector 输出 — 给 Orchestrator / EventInjector / Narrator 的调度指令。"""
+
+    intensity_recommendation: PacingIntensity = "medium"
+    needs_escalation: bool = False
+    needs_breather: bool = False
+    active_beat_id: str | None = None
+    overdue_beats: list[str] = Field(default_factory=list)
+    theme_reminder: str = ""
+    narrator_hint: str = Field(
+        default="",
+        description="单句, 注入 Narrator 用户提示, 不显式说出主题",
+    )
+    suspense_pool_health: SuspenseLevel = "active"
+    diagnosis: str = ""
 
 
 __all__ = [
@@ -397,4 +569,12 @@ __all__ = [
     "StyleAnchor",
     "CharacterAction",
     "TickSummary",
+    # v2.4 叙事大纲层
+    "BeatStatus",
+    "PacingIntensity",
+    "SuspenseLevel",
+    "KeyBeat",
+    "PacingPoint",
+    "StoryArc",
+    "StoryArcDirective",
 ]

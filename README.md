@@ -71,6 +71,39 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 叙事大纲层 (v2.4 新增)
+
+> 不让叙事漂流 — StoryArc 锚定主题, KeyBeat 锚定剧情骨架, PacingPoint 锚定节奏曲线。
+
+`backend/agents/story_arc_director.py` 提供 `StoryArcDirector`:
+
+| 输入 | 输出 (`StoryArcDirective`) |
+|------|----------------------------|
+| `StoryArc` (theme / beats / pacing_history) | `intensity_recommendation` (期望强度) |
+| `current_tick` + `target_climax_tick` | `needs_escalation` / `needs_breather` |
+| `recent_narrator_value_sum` | `active_beat_id` / `overdue_beats` |
+| | `theme_reminder` / `narrator_hint` (≤30字) |
+| | `suspense_pool_health` (4 档) |
+
+**期待节奏曲线** (三幕剧 + 收尾抬升):
+
+| progress | 期望强度 |
+|----------|----------|
+| 0%-10% | low (引子) |
+| 10%-50% | medium (第一/二幕展开) |
+| 50%-65% | high (危机) |
+| 65%-80% | medium (黎明前的平静) |
+| 80%-95% | high (高潮前奏) |
+| 95%-100% | climax |
+
+**异常触发**:
+* 连续 ≥8 tick low → `needs_escalation=True` (EventInjector 兜底)
+* 连续 ≥6 tick high → `needs_breather=True` (Showrunner 降温)
+* `pending` beat 超过 window_end → `overdue_beats` 强制干预
+
+Orchestrator 阶段 5c 调用, directive 注入 Narrator `recent_chapter_summaries`
+作为前缀提示 (`[叙事大纲]` / `[本段提示]` / `[节奏建议]` / `[逾期节拍]`)。
+
 ### 优先级分层长期记忆 (v2.3 新增)
 
 > 反 RAG 退化 — 不依赖朴素余弦相似, 多因子打分 + 防退化策略。

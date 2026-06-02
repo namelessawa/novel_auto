@@ -5,6 +5,74 @@
 
 ---
 
+## [2.4.0] — 2026-06-03
+
+### Added — 叙事大纲层 (StoryArc / KeyBeat / PacingPoint / SuspenseLevel)
+
+针对主 Agent 关注问题清单的四项:
+* **叙事动力枯竭与情节循环** — `key_beats` 骨架驱动剧情前进, beat 逾期触发干预
+* **缺乏全局叙事大纲与主题锚点** — `StoryArc.theme` + `central_question` 作为
+  锚点, 每段叙述前注入"主题提醒"(但不直接说出)
+* **悬念制造与转折能力的缺失** — `SuspenseLevel`
+  (background/active/escalating/peaking) 分级悬念池
+* **无法处理叙事节奏的变化** — `pacing_history` 滚动采样 + 期待曲线
+  (三幕剧 + 收尾抬升: 0%→10% low → 25% medium → 65% high → 80% medium →
+  95% high → climax)
+
+### Added — `backend/agents/story_arc_director.py`
+
+`StoryArcDirector`:
+* `analyze()` — 确定性 (无 LLM) 计算 `progress_ratio` / `expected_intensity` /
+  `flat_streak` / `high_streak` / `overdue_beat_ids` / `active_beat` / `next_beat`
+* `direct()` — 主入口, 返回 `StoryArcDirective`
+  * `intensity_recommendation` (期望强度)
+  * `needs_escalation` (停滞 ≥8 tick 时触发)
+  * `needs_breather` (紧绷 ≥6 tick 时触发)
+  * `theme_reminder` / `narrator_hint` (LLM 增强, 关闭时降级为兜底文案)
+  * `suspense_pool_health` (background/active/escalating/peaking)
+  * `overdue_beats` (强制 EventInjector 兜底)
+* 副作用: 把 `PacingPoint` 追加到 `arc.pacing_history`, 上限 60
+
+### Added — 模型契约
+
+* `BeatStatus` = pending | active | completed | skipped
+* `PacingIntensity` = low | medium | high | climax
+* `SuspenseLevel` = background | active | escalating | peaking
+* `KeyBeat` — 节拍 (id / title / description / act / window_start/end / status)
+* `PacingPoint` — 节拍点 (tick / intensity / narrative_value_sum)
+* `StoryArc` — 大纲 (title / theme / central_question / current_act /
+  target_climax_tick / key_beats / pacing_history)
+* `StoryArcDirective` — 调度指令输出
+
+### Changed — TickState 持有 StoryArc
+
+* `get_story_arc()` / `set_story_arc()` / `has_story_arc()` API
+* save/load 自动序列化 (兼容旧版本: 无 story_arc 字段时 None)
+
+### Changed — Orchestrator 接入
+
+* 新参数 `story_arc_director: StoryArcDirector | None`
+* 阶段 5c (`_run_story_arc_director`): 阶段 5 后调用, directive 缓存到
+  `_last_story_directive`, 阶段 6 _narrate 注入
+* `_build_story_arc_hints()` — 把 directive 翻译为"前缀摘要行"
+  ([叙事大纲]/[本段提示]/[节奏建议]/[逾期节拍]) 注入 Narrator
+  `recent_chapter_summaries`
+
+### Tests
+
+* `backend/tests/test_story_arc_director.py` — 新增 17 用例
+  * 节奏曲线 / 节拍状态分析 / 节拍点追加 / 历史上限 / 逾期检测 /
+    fallback hint / LLM hint path / progress 驱动期望强度
+* 全套 103 用例通过, ~2.7s
+
+### Environment
+
+* `STORY_ARC_DIRECTOR_LLM` — `1`/`0` 显式开关 LLM 增强, 留空时
+  按 `PYTEST_CURRENT_TEST` 自动判定
+* `STORY_ARC_PACING_HISTORY_MAX` — pacing 历史上限 (默认 60)
+
+---
+
 ## [2.3.0] — 2026-06-03
 
 ### Added — 优先级分层长期记忆 (`backend/memory/memory_store.py`)
