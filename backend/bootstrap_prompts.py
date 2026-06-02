@@ -272,7 +272,7 @@ async def bootstrap_world(
     world_resp = await _llm_json(
         system_prompt="你是一个虚构世界设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_WORLD.format(seed=seed),
-        max_tokens=3072,
+        max_tokens=61440,
     )
     ws = WorldState.model_validate(world_resp.get("world_state", {}))
     ts.set_world_state(ws)
@@ -291,7 +291,7 @@ async def bootstrap_world(
         user_prompt=PROMPT_CHARACTERS.format(
             world_state=ws.model_dump_json(indent=2)
         ),
-        max_tokens=6144,
+        max_tokens=122880,
     )
     main_tracking_id: str | None = None
     for char_item in chars_resp.get("characters", []) or []:
@@ -326,7 +326,7 @@ async def bootstrap_world(
                 indent=2,
             ),
         ),
-        max_tokens=2048,
+        max_tokens=40960,
     )
     for loop_raw in loops_resp.get("open_loops", []) or []:
         try:
@@ -345,7 +345,7 @@ async def bootstrap_world(
             positioning=positioning,
             references=references,
         ),
-        max_tokens=4096,
+        max_tokens=81920,
     )
     for anchor_raw in style_resp.get("style_anchors", []) or []:
         try:
@@ -411,7 +411,8 @@ def main(argv: list[str] | None = None) -> int:
             references=args.references,
         )
     )
-    print(f"✓ Bootstrap complete: {data_dir}")
+    # Windows GBK 控制台无法编码 ✓ — 用 ASCII 替代
+    print(f"[OK] Bootstrap complete: {data_dir}")
     print(f"  启动 backend: ACTIVE_NOVEL_DATA_DIR={data_dir} python run.py")
     return 0
 

@@ -716,6 +716,20 @@ class Orchestrator:
 
             # 转换为 Event
             visible_to = self._infer_visible_to(action, state)
+            # v2.11 — action 事件不再默认 nv=0, 否则 narrator 早期总跳过。
+            # 启发式: dialogue + 完成 goal + 新 learned 各 +1, emotional_shift +1
+            nv_hint = 1
+            if action.dialogue_spoken:
+                nv_hint += 1
+            if action.completed_goal_ids:
+                nv_hint += 1
+            if action.newly_learned:
+                nv_hint += 1
+            if action.emotional_shift:
+                nv_hint += 1
+            if "fight" in (action.action_type or "") or "attack" in (action.action_type or ""):
+                nv_hint += 2
+            nv_hint = min(nv_hint, 6)  # 上限, narrator 仍可自己评估更高
             event = Event(
                 id=f"evt_act_{tick}_{action.character_id}_{uuid.uuid4().hex[:6]}",
                 tick=tick,
@@ -729,7 +743,8 @@ class Orchestrator:
                     or f"{action.character_id} {action.action_type} → {action.target}"
                 ),
                 visible_to=visible_to,
-                narrative_value=0,  # Narrator 自己评估
+                narrative_value=0,  # Narrator 自己评估精确值
+                narrative_value_hint=nv_hint,  # 启发式提示, 防止早期跳过
                 consequences=[],
             )
             action_events.append(event)

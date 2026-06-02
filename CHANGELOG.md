@@ -5,6 +5,66 @@
 
 ---
 
+## [2.11.0] — 2026-06-03
+
+### 真实 MIMO 测试 + 基于证据的修复
+
+**端到端验证**: 用 MIMO API 真实冷启动 `critique_test` 小说 (民国 1927 上海旧书店),
+推 3-12 tick, 在产出的 narratives 上跑 `quality_checks.run_deterministic_checks`:
+
+| 触发项 | v1 baseline (test_story_A) | v2.10 实测 (critique_test) |
+|--------|----------------------------|---------------------------|
+| A4 仿佛 ≥2 次 | ❌ 3 次 (高) | ✅ 0 |
+| A6 段末升华 | ❌ 触发 (高) | ✅ 0 |
+| D4 告诉情绪 | ❌ "内疚感涌上来" | ✅ 0 |
+| D3 陈词滥调 | ❌ 触发 | ✅ 0 |
+| E1 句长单调 | - | ⚠️ 中, 20-24% |
+
+**结论**: v2.2 注入的硬约束在真实 MIMO 输出上经验证有效, 按 §2.1 决策矩阵
+判定为 **POLISH & ACCEPT**。
+
+### Fixed — E1 句长单调 (基于实测证据)
+
+`quality_spec.render_anti_pattern_block()` 新增 **句长节奏 (E1 防退化)** 段:
+* 必须出现 1 个 ≤5 字短句
+* 长句 (>25 字) 与短句 (≤8 字) 必须穿插
+* 段落开篇或中段允许"突变节奏" — 3-5 字独立短句作为节拍标记
+* 给出反例/正例对照, 避免 12-20 字均匀长度
+
+### Fixed — 早期 tick narrator 总跳过
+
+实测发现 `_apply_actions` 给 character_action 事件设 `narrative_value=0`,
+导致前 10 tick 总分 ≤4 < 阈值 5, narrator 始终跳过, 直到
+`_TIME_LAPSE_TICKS=10` 兜底才产出。
+
+修正策略: 在 Event 上设 `narrative_value_hint` (非 narrative_value, 保留
+narrator 自评空间), 启发式计算:
+* base 1, dialogue +1, completed_goal +1, newly_learned +1,
+  emotional_shift +1, fight/attack +2
+* 上限 6, narrator 可自评更高
+
+这样在角色真的"做了戏剧性的事"时, narrator 不再静默跳过。
+
+### Fixed — Windows GBK 控制台编码 (`bootstrap_prompts.py`)
+
+`print(f"✓ Bootstrap complete...")` 在 Windows GBK 控制台抛 UnicodeEncodeError,
+导致 bootstrap 即使 LLM 调用全成功也以非 0 退出。改为 `[OK]` ASCII 标记。
+
+### Added — `tools/run_ticks.py`
+
+最小驱动脚本, 不启动 FastAPI 直接调用 Orchestrator 推 N tick, 自动读
+`bootstrap.env` 拿 `MAIN_TRACKING_CHARACTER_ID`, 报告 token 使用。
+
+```bash
+python tools/run_ticks.py --novel-id critique_test --n 3 --disable-critic
+```
+
+### Tests
+
+178 用例继续全过, 0 回归。
+
+---
+
 ## [2.10.0] — 2026-06-03
 
 ### Changed — TickRuntime 完整装配 v2.3-v2.9 全部增强层
