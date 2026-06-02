@@ -5,6 +5,61 @@
 
 ---
 
+## [2.6.0] — 2026-06-03
+
+### Added — 事实账本 + 时间线索引 (`backend/narrative/fact_ledger.py`)
+
+针对主 Agent 关注问题清单的四项:
+* **逻辑错误与常识漏洞的累积** — 每条 `Fact` 带 `source_event_id`, 可回溯;
+  矛盾事实记录而非默认覆盖
+* **事实性错误的滚雪球效应** — append-only ledger; 同 (subject, kind) 后续矛盾
+  自动触发 `disputed` 标记, 不让错误悄悄演化为另一条线
+* **复杂因果关系与时间线的混乱** — `TimelineEntry` 按 tick 升序维护; 可查询
+  `location_at_tick(subject, tick)` 反查任意 tick 的所在地
+* **世界设定的自相矛盾** — `Fact(kind="rule")` 与 `Fact(kind="death")` 分离,
+  跨 subject 的 possession 冲突检测 (同物品两主)
+
+### Added — `FactLedger` API
+
+* `Fact` Pydantic 模型 — kind ∈ {location, possession, relation, rule, death,
+  skill, promise, fact}, status ∈ {active, disputed, retracted, superseded}
+* `assert_fact(fact, contradict_action="dispute"|"supersede"|"keep_old")`
+  — append-only, 默认 dispute 策略保留矛盾历史
+* `contradict_check(new_fact)` — 不修改账本, 返回 `FactConflict` 列表
+  (severity high/medium/low + reason)
+* 矛盾检测覆盖:
+  * 同 subject 同 kind 但 predicate/object 不同 (高)
+  * 死者再次出现 location/skill/promise/possession (高)
+  * possession 同 object 跨 subject (中)
+* 查询: `current_location_of` / `location_at_tick` / `is_dead` /
+  `facts_about(subject, kind)`
+* JSON 原子写到 `data_dir/fact_ledger.json`
+
+### Changed — Orchestrator 接入
+
+* 新参数 `fact_ledger: FactLedger | None`, 默认自动 `load()` 自 `data_dir`
+* 阶段 5b' (`_ingest_facts_from_actions`):
+  * `target` 命中 `world_state.locations` id → location fact
+  * `status_effects` 含 "dead" 或 `action_type == "die"` → death fact
+  * 检测矛盾, 缓存到 `_last_fact_conflicts` (上限 5 条)
+* `_build_fact_conflict_hints()` — 翻译为
+  `[事实冲突 high] alice.location: ...` 前缀注入 Narrator
+  (强制不要复述错误事实)
+* `tick_state.save()` 后追加 `fact_ledger.save()`
+
+### Tests
+
+* `backend/tests/test_fact_ledger.py` — 新增 16 用例
+  * CRUD / facts_about 筛选 / current_location / is_dead
+  * 时间线: 乱序 assert 仍按 tick 升序; location_at_tick 返回 ≤tick 最新
+  * 矛盾检测: 同 subject 两地 / 死者动作 / possession 两主 / 干净返回空
+  * 冲突动作三策略 (dispute / supersede / keep_old)
+  * 持久化 roundtrip
+  * 综合: 滚雪球矛盾链留下 disputed 痕迹, 不静默覆盖
+* 全套 133 用例通过
+
+---
+
 ## [2.5.0] — 2026-06-03
 
 ### Added — 人物弧光跟踪 (`backend/agents/character_arc_tracker.py`)

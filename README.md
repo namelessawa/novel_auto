@@ -71,6 +71,39 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 事实账本 + 时间线 (v2.6 新增)
+
+> 不让错误悄悄演化 — append-only ledger, 矛盾留下 disputed 痕迹而非默认覆盖。
+
+`backend/narrative/fact_ledger.py` 提供 `FactLedger`:
+
+**Fact** 字段: `id` / `kind` / `subject` / `predicate` / `object` /
+`established_tick` / `source_event_id` / `status`
+
+**FactKind**: location / possession / relation / rule / death / skill /
+promise / fact
+
+**矛盾检测** (`contradict_check` 不修改账本):
+
+| 场景 | severity |
+|------|----------|
+| 同 subject 同 kind 但 predicate/object 不同 | high |
+| 死者再次出现 location/skill/promise/possession | high |
+| possession 同 object 跨 subject | medium |
+
+**冲突动作** (`assert_fact(contradict_action=...)`):
+
+* `"dispute"` (默认) — 旧 fact 降为 `disputed`, 新 fact 接管 `active`
+* `"supersede"` — 旧 fact 标记 `superseded`, 写入 `superseded_by`
+* `"keep_old"` — 新 fact 直接进 `disputed`, 旧保持
+
+**时间线**: `location_at_tick(subject, tick)` 反查任意 tick 所在地;
+乱序 assert 仍按 tick 升序维护。
+
+Orchestrator 阶段 5b' 调用, 冲突翻译为 `[事实冲突 high]` 前缀注入 Narrator
+recent_chapter_summaries, 强制不复述错误事实。持久化到
+`data_dir/fact_ledger.json` 原子写。
+
 ### 人物弧光跟踪 (v2.5 新增)
 
 > 不让角色长期 OOC — 7 阶段 ArcStage + 漂移检测 + B 级配角独立议程守护。

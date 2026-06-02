@@ -1,7 +1,7 @@
 # 项目结构 (structure.md)
 
 > 本文档描述项目具体结构分布,随每轮迭代同步更新。
-> 版本: v2.5 · 2026-06-03
+> 版本: v2.6 · 2026-06-03
 
 ---
 
@@ -74,6 +74,8 @@ backend/
 │   ├── tick_state.py         # TickState — Pydantic v2 dump 原子写
 │   ├── summary_tree.py       # 分层摘要树 (L0-L3) + 持久化
 │   └── memory_store.py       # ★ v2.3 PriorityMemoryStore — 多因子检索 + 持久化
+├── narrative/                # ★ v2.6 叙事层独立目录
+│   └── fact_ledger.py        # ★ v2.6 FactLedger — 事实账本 + 时间线 + 矛盾检测
 ├── nf_core/
 │   ├── llm_client.py         # OpenAI SDK 包装, streaming + JSON mode
 │   ├── action_resolver.py    # 纯 Python 行动冲突解析
@@ -214,7 +216,8 @@ TickState  ── 阶段 1 ──→  WorldSimulator           → 新 WorldStat
 | v2.2 | 2026-06-03 | 质量规范层 — CRITIQUE → REVISE / REWRITE 循环嵌入 Narrator |
 | v2.3 | 2026-06-03 | 优先级分层长期记忆 PriorityMemoryStore + 反 RAG 退化策略 |
 | v2.4 | 2026-06-03 | 叙事大纲层 StoryArc + KeyBeat + PacingPoint + 节奏曲线守护 |
-| **v2.5** | **2026-06-03** | **人物弧光 7 阶段 ArcStage + 性格漂移检测 + 配角独立议程守护** |
+| v2.5 | 2026-06-03 | 人物弧光 7 阶段 ArcStage + 性格漂移检测 + 配角独立议程守护 |
+| **v2.6** | **2026-06-03** | **FactLedger 事实账本 + 时间线索引 + 矛盾检测 (append-only)** |
 
 后续路线 (`TaskList` 跟踪):
 

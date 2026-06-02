@@ -46,6 +46,7 @@ from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
 from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.tick_state import TickState
+from narrative.fact_ledger import Fact, FactLedger
 from memory_system.models import (
     CharacterAction,
     CharacterState,
@@ -137,6 +138,7 @@ class Orchestrator:
         memory_store: PriorityMemoryStore | None = None,
         story_arc_director: StoryArcDirector | None = None,
         character_arc_tracker: CharacterArcTracker | None = None,
+        fact_ledger: FactLedger | None = None,
     ) -> None:
         self._tick_state = tick_state
         self._world_simulator = world_simulator
@@ -172,6 +174,14 @@ class Orchestrator:
         self._recent_actions_by_char: dict[str, list[CharacterAction]] = {}
         # 上一轮 tracker 报告 — 阶段 6 前注入 Narrator 性格漂移警告
         self._last_arc_tracker_output: CharacterArcTrackerOutput | None = None
+
+        # v2.6 事实账本 — 阶段 5 自动 ingest, 阶段 6 前注入冲突警告
+        self._fact_ledger = fact_ledger or FactLedger(tick_state.data_dir)
+        try:
+            self._fact_ledger.load()
+        except Exception as e:  # pragma: no cover
+            logger.warning("FactLedger.load failed (non-fatal): %s", e)
+        self._last_fact_conflicts: list[dict] = []
 
         # narrative_text_writer(tick, text) - Orchestrator 把叙述文本交给外部写盘
         # 默认: 写到 ``{data_dir}/narratives/tick_{tick:06d}.txt``
@@ -348,6 +358,9 @@ class Orchestrator:
         # 阶段 5b: 把本 tick 显著事件登记到长期记忆 (L0) -------------------
         self._ingest_events_to_memory(tick, all_events)
 
+        # 阶段 5b': 把角色 location 变化登记到 FactLedger, 检测矛盾 (v2.6) --
+        self._ingest_facts_from_actions(tick, resolved_actions)
+
         # 阶段 5c: StoryArcDirector — 节奏曲线 + 节拍守护 (v2.4) ----------
         await self._run_story_arc_director(tick, all_events)
 
@@ -396,6 +409,10 @@ class Orchestrator:
             self._memory_store.save()
         except Exception as e:  # pragma: no cover
             logger.warning("MemoryStore.save failed (non-fatal): %s", e)
+        try:
+            self._fact_ledger.save()
+        except Exception as e:  # pragma: no cover
+            logger.warning("FactLedger.save failed (non-fatal): %s", e)
 
         # 维持 recent_chapter_summaries 上限
         if len(self._recent_chapter_summaries) > 100:
@@ -531,6 +548,58 @@ class Orchestrator:
             logger.warning("StoryArcDirector.direct failed (non-fatal): %s", e)
             self._last_story_directive = None
 
+    def _ingest_facts_from_actions(
+        self, tick: int, actions: list[CharacterAction]
+    ) -> None:
+        """阶段 5b': 把本 tick 的角色位置/死亡/持有变化登记到 FactLedger。
+
+        策略:
+        * action.target 看似地点 (有 "loc_" 前缀或匹配 world_state.locations.id) →
+          location fact
+        * action_type == "die" / status_effects 含 "dead" → death fact
+        * 检测矛盾 → 写入 _last_fact_conflicts, 阶段 6 注入 Narrator
+        """
+        if not actions:
+            return
+        location_ids = {loc.id for loc in self._tick_state.world_state.locations}
+        conflicts_collected: list[dict] = []
+        for idx, action in enumerate(actions):
+            state = self._tick_state.get_character_state(action.character_id)
+            if state is None:
+                continue
+            new_facts: list[Fact] = []
+            # location: action.target 像 location_id, 或 action_type == "move"
+            target = action.target or ""
+            if target and target in location_ids:
+                new_facts.append(
+                    Fact(
+                        id=f"fact_loc_{tick}_{action.character_id}_{idx}",
+                        kind="location",
+                        subject=action.character_id,
+                        predicate=target,
+                        established_tick=tick,
+                        source_event_id="",
+                    )
+                )
+            # death
+            if "dead" in (state.status_effects or []) or action.action_type == "die":
+                new_facts.append(
+                    Fact(
+                        id=f"fact_death_{tick}_{action.character_id}",
+                        kind="death",
+                        subject=action.character_id,
+                        predicate=action.description[:80] or "未明",
+                        established_tick=tick,
+                    )
+                )
+            # 检测 + 提交
+            for f in new_facts:
+                conflicts = self._fact_ledger.contradict_check(f)
+                for c in conflicts:
+                    conflicts_collected.append(c.to_dict())
+                self._fact_ledger.assert_fact(f)
+        self._last_fact_conflicts = conflicts_collected[-5:]  # 上限 5 条
+
     def _ingest_events_to_memory(self, tick: int, events: list[Event]) -> None:
         """阶段 5b: 把本 tick 显著事件登记到 PriorityMemoryStore 的 L0 层。
 
@@ -642,8 +711,11 @@ class Orchestrator:
         arc_hints = self._build_story_arc_hints()
         # v2.5 CharacterArcTracker: 漂移警告 + 阶段推进
         char_arc_hints = self._build_character_arc_hints()
+        # v2.6 FactLedger: 事实冲突警告 (强制 Narrator 不要复述错误事实)
+        fact_hints = self._build_fact_conflict_hints()
         merged_summaries = (
-            arc_hints
+            fact_hints
+            + arc_hints
             + char_arc_hints
             + memory_summaries
             + list(self._recent_chapter_summaries)
@@ -659,6 +731,20 @@ class Orchestrator:
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
         )
+
+    def _build_fact_conflict_hints(self) -> list[str]:
+        """把 v2.6 FactLedger 最近一轮冲突翻译为前缀摘要行注入 Narrator。"""
+        if not self._last_fact_conflicts:
+            return []
+        lines: list[str] = []
+        for c in self._last_fact_conflicts[:3]:
+            new = c.get("new_fact", {})
+            reason = c.get("reason", "")
+            severity = c.get("severity", "medium")
+            lines.append(
+                f"[事实冲突 {severity}] {new.get('subject', '?')}.{new.get('kind', '?')}: {reason[:80]}"
+            )
+        return lines
 
     def _build_character_arc_hints(self) -> list[str]:
         """把 CharacterArcTracker 最近一轮报告翻译为前缀摘要行注入 Narrator。"""
