@@ -5,6 +5,56 @@
 
 ---
 
+## [2.7.0] — 2026-06-03
+
+### Added — TokenBudgetTracker + SafetyFilter (性能与安全闭环)
+
+针对主 Agent 关注问题清单的两项:
+* **计算成本与延迟的指数级增长** — 每次 LLM 调用自动入账, 三层视图
+  (累计 / 每 agent / 每 priority), 触达预算时低优先级路径退化
+* **内容安全与伦理风险** — Narrator 落盘前正则过滤 PII / 自伤指南 /
+  违禁品制作, 文学暴力与悲剧描写不阻塞
+
+### Added — `backend/nf_core/token_budget.py`
+
+* `TokenBudgetTracker` 持久化 (`data_dir/token_budget.json`) + 全局单例
+* `record(agent_id, priority, prompt_tokens, completion_tokens, model, tick)`
+* `can_afford(priority, estimated_tokens)` 退化策略:
+  * `critical` 永远允许 (Narrator 不可断)
+  * `medium` 总预算 ≥90% 拒绝
+  * `optional` 总预算 ≥70% / 单 tick ≥80% 拒绝
+* `begin_tick(tick)` 重置 tick token 计数
+* 环境变量: `LLM_BUDGET_MAX_TOTAL` / `LLM_BUDGET_MAX_PER_TICK`
+* `LLMClient.chat` 接受 `agent_id` / `priority` / `tick` 三个透传参数, 自动入账
+
+### Added — `backend/narrative/safety_filter.py`
+
+* `SafetyFilter` 注册式正则规则集 (DEFAULT_RULES 6 条)
+* `Severity` ∈ {block, warn, log}; block 命中阻止落盘, warn 命中 mask
+* 默认覆盖 PII (身份证/手机号/邮箱/银行卡) + 自伤操作指南 + 违禁品合成
+* `add_rule(SafetyRule)` 运行时拓展
+* 故意不阻塞: 文学暴力 / 灰色道德 / 悲剧 / 创伤描写
+
+### Changed — Orchestrator 接入
+
+* 新参数 `safety_filter` / `token_budget`
+* Narrator 落盘前 `safety_filter.check()` — block 时仅记 log, 跳过落盘 +
+  跳过状态更新
+* 持久化阶段追加 `token_budget.save()`
+* `set_global_tracker(self._token_budget)` — 共享给 LLMClient 自动入账
+
+### Tests
+
+* `backend/tests/test_token_budget_safety.py` — 新增 19 用例
+  * record 累计 / 跨 agent 聚合 / begin_tick 重置
+  * 决策矩阵 4 路径 (无限 / critical 总过 / optional 70% / medium 90% / per-tick)
+  * 持久化 roundtrip / 全局单例
+  * SafetyFilter: 身份证 block / 手机号 block / 邮箱 warn mask /
+    文学暴力放行 / 自伤指南 block / 悲剧描写放行 / 自定义规则
+* 全套 152 用例通过
+
+---
+
 ## [2.6.0] — 2026-06-03
 
 ### Added — 事实账本 + 时间线索引 (`backend/narrative/fact_ledger.py`)

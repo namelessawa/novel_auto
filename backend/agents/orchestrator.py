@@ -47,6 +47,8 @@ from agents.world_simulator import WorldSimulator
 from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.tick_state import TickState
 from narrative.fact_ledger import Fact, FactLedger
+from narrative.safety_filter import SafetyFilter
+from nf_core.token_budget import TokenBudgetTracker, get_global_tracker, set_global_tracker
 from memory_system.models import (
     CharacterAction,
     CharacterState,
@@ -139,6 +141,8 @@ class Orchestrator:
         story_arc_director: StoryArcDirector | None = None,
         character_arc_tracker: CharacterArcTracker | None = None,
         fact_ledger: FactLedger | None = None,
+        safety_filter: SafetyFilter | None = None,
+        token_budget: TokenBudgetTracker | None = None,
     ) -> None:
         self._tick_state = tick_state
         self._world_simulator = world_simulator
@@ -182,6 +186,18 @@ class Orchestrator:
         except Exception as e:  # pragma: no cover
             logger.warning("FactLedger.load failed (non-fatal): %s", e)
         self._last_fact_conflicts: list[dict] = []
+
+        # v2.7 安全过滤 — Narrator 落盘前检查 PII / 有害指南
+        self._safety_filter = safety_filter or SafetyFilter()
+        # v2.7 Token 预算追踪 — 持久化 + 全局单例共享
+        self._token_budget = token_budget or TokenBudgetTracker(
+            tick_state.data_dir
+        )
+        try:
+            self._token_budget.load()
+        except Exception as e:  # pragma: no cover
+            logger.warning("TokenBudgetTracker.load failed (non-fatal): %s", e)
+        set_global_tracker(self._token_budget)
 
         # narrative_text_writer(tick, text) - Orchestrator 把叙述文本交给外部写盘
         # 默认: 写到 ``{data_dir}/narratives/tick_{tick:06d}.txt``
@@ -368,10 +384,24 @@ class Orchestrator:
         narrator_out = await self._narrate(tick, all_events)
         agents_called.append("narrator")
         if narrator_out.should_narrate:
-            narrator_produced = True
-            narrator_chars = len(narrator_out.narrative_text)
-            self._tick_state.mark_narration(tick)
-            await self._narrative_writer(tick, narrator_out.narrative_text)
+            # v2.7 安全过滤 — block 级命中跳过落盘
+            safety_result = self._safety_filter.check(narrator_out.narrative_text)
+            if safety_result.is_blocked:
+                logger.warning(
+                    "Narrator output BLOCKED by SafetyFilter at tick %d: %d hits",
+                    tick,
+                    len(safety_result.hits),
+                )
+                narrator_produced = False
+            else:
+                narrator_produced = True
+                narrator_chars = len(narrator_out.narrative_text)
+                self._tick_state.mark_narration(tick)
+                await self._narrative_writer(
+                    tick,
+                    safety_result.sanitized_text or narrator_out.narrative_text,
+                )
+        if narrator_out.should_narrate and narrator_produced:
             # 累积摘要 - 给 Narrator 下一轮 recent_chapter_summaries 用
             self._recent_chapter_summaries.append(
                 f"tick {tick}: {narrator_out.scene_focus or narrator_out.narrative_text[:60]}…"
@@ -413,6 +443,10 @@ class Orchestrator:
             self._fact_ledger.save()
         except Exception as e:  # pragma: no cover
             logger.warning("FactLedger.save failed (non-fatal): %s", e)
+        try:
+            self._token_budget.save()
+        except Exception as e:  # pragma: no cover
+            logger.warning("TokenBudgetTracker.save failed (non-fatal): %s", e)
 
         # 维持 recent_chapter_summaries 上限
         if len(self._recent_chapter_summaries) > 100:

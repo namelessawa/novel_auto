@@ -1,7 +1,7 @@
 # 项目结构 (structure.md)
 
 > 本文档描述项目具体结构分布,随每轮迭代同步更新。
-> 版本: v2.6 · 2026-06-03
+> 版本: v2.7 · 2026-06-03
 
 ---
 
@@ -75,11 +75,13 @@ backend/
 │   ├── summary_tree.py       # 分层摘要树 (L0-L3) + 持久化
 │   └── memory_store.py       # ★ v2.3 PriorityMemoryStore — 多因子检索 + 持久化
 ├── narrative/                # ★ v2.6 叙事层独立目录
-│   └── fact_ledger.py        # ★ v2.6 FactLedger — 事实账本 + 时间线 + 矛盾检测
+│   ├── fact_ledger.py        # ★ v2.6 FactLedger — 事实账本 + 时间线 + 矛盾检测
+│   └── safety_filter.py      # ★ v2.7 SafetyFilter — PII / 自伤指南 / 违禁品过滤
 ├── nf_core/
-│   ├── llm_client.py         # OpenAI SDK 包装, streaming + JSON mode
+│   ├── llm_client.py         # OpenAI SDK 包装, streaming + JSON mode + v2.7 自动入账
 │   ├── action_resolver.py    # 纯 Python 行动冲突解析
-│   └── prompt_builder.py     # Token 自适应裁剪
+│   ├── prompt_builder.py     # Token 自适应裁剪
+│   └── token_budget.py       # ★ v2.7 TokenBudgetTracker — 三层视图 + 退化决策
 ├── persistence/
 │   └── tick_db.py            # SQLite WAL (tick_log + events 两表)
 ├── data/
@@ -217,7 +219,8 @@ TickState  ── 阶段 1 ──→  WorldSimulator           → 新 WorldStat
 | v2.3 | 2026-06-03 | 优先级分层长期记忆 PriorityMemoryStore + 反 RAG 退化策略 |
 | v2.4 | 2026-06-03 | 叙事大纲层 StoryArc + KeyBeat + PacingPoint + 节奏曲线守护 |
 | v2.5 | 2026-06-03 | 人物弧光 7 阶段 ArcStage + 性格漂移检测 + 配角独立议程守护 |
-| **v2.6** | **2026-06-03** | **FactLedger 事实账本 + 时间线索引 + 矛盾检测 (append-only)** |
+| v2.6 | 2026-06-03 | FactLedger 事实账本 + 时间线索引 + 矛盾检测 (append-only) |
+| **v2.7** | **2026-06-03** | **TokenBudgetTracker + SafetyFilter — 性能与安全闭环** |
 
 后续路线 (`TaskList` 跟踪):
 

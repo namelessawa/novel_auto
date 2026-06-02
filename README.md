@@ -71,6 +71,36 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### Token 预算 + 安全过滤 (v2.7 新增)
+
+> 不让成本失控 — 三层视图记账 + 退化决策 + Narrator 落盘前安全检查。
+
+**TokenBudgetTracker** (`backend/nf_core/token_budget.py`):
+
+| 优先级 | 退化阈值 |
+|--------|---------|
+| `critical` (Narrator, Critic) | 永不拒绝 |
+| `medium` (Showrunner, Director) | 总预算 ≥90% 拒绝 |
+| `optional` (NoveltyCritic, Tracker LLM) | 总 ≥70% 或 tick ≥80% 拒绝 |
+
+环境变量: `LLM_BUDGET_MAX_TOTAL` / `LLM_BUDGET_MAX_PER_TICK`,
+持久化到 `data_dir/token_budget.json` 累计 token 跨进程恢复。
+`LLMClient.chat` 三参数 `agent_id` / `priority` / `tick` 自动入账。
+
+**SafetyFilter** (`backend/narrative/safety_filter.py`):
+
+| 类别 | 规则 | severity |
+|------|------|----------|
+| PII | 身份证号 (18 位 + X) | block |
+| PII | 中国大陆手机号 | block |
+| PII | 邮箱 | warn (mask) |
+| PII | 银行卡号 16-19 位 | warn |
+| harm | 自伤操作指南 (具体方法 + 自杀手段共现) | block |
+| illegal | 违禁品制作 (炸弹/毒品合成) | block |
+
+故意不阻塞: 文学暴力 / 灰色道德 / 悲剧 / 创伤描写。
+block 时 Narrator 输出跳过落盘 + 状态更新, warn 时占位符替换继续。
+
 ### 事实账本 + 时间线 (v2.6 新增)
 
 > 不让错误悄悄演化 — append-only ledger, 矛盾留下 disputed 痕迹而非默认覆盖。
