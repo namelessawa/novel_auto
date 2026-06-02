@@ -259,6 +259,7 @@ class NarrativeCritic:
         scene_focus: str = "",
         viewpoint_character_id: str = "",
         enable_llm: bool | None = None,
+        exempt_words: list[str] | tuple[str, ...] | None = None,
     ) -> CritiqueOutput:
         """主入口。返回最终采纳文本 + 完整迭代历史。"""
         if not draft_text or not draft_text.strip():
@@ -285,7 +286,9 @@ class NarrativeCritic:
         while True:
             # === Step 1: 确定性 + LLM 触发合并 =========================
             det_triggers = run_deterministic_checks(
-                current_text, recent_openings=recent_openings
+                current_text,
+                recent_openings=recent_openings,
+                exempt_words=exempt_words,
             )
             llm_triggers: list[DeterministicTrigger] = []
             if use_llm:

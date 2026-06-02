@@ -191,6 +191,18 @@ class Orchestrator:
 
         # v2.7 安全过滤 — Narrator 落盘前检查 PII / 有害指南
         self._safety_filter = safety_filter or SafetyFilter()
+        # v2.12 — 把角色名 + 地点名作为 A1 豁免清单注入 narrator critic
+        try:
+            exempt_words = [
+                p.name for p in tick_state.list_character_profiles() if p.name
+            ] + [
+                loc.name for loc in tick_state.world_state.locations if loc.name
+            ]
+            if hasattr(narrator, "set_exempt_words"):
+                narrator.set_exempt_words(exempt_words)
+        except Exception as e:  # pragma: no cover
+            logger.debug("set_exempt_words failed (non-fatal): %s", e)
+
         # v2.7 Token 预算追踪 — 持久化 + 全局单例共享
         self._token_budget = token_budget or TokenBudgetTracker(
             tick_state.data_dir

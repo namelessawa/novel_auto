@@ -188,6 +188,12 @@ class NarratorAgent:
         self._recent_openings: list[str] = []
         # 当前章累计的"段内黑名单"词
         self._chapter_blacklist: set[str] = set()
+        # v2.12 A1 豁免清单 — 专有名词 (角色名 + 地点名), Orchestrator 注入
+        self._exempt_words: set[str] = set()
+
+    def set_exempt_words(self, words) -> None:
+        """Orchestrator 在装配阶段 / 角色加入时调用, 注入专有名词豁免。"""
+        self._exempt_words = set(w for w in words if w)
 
     # ------------------------------------------------------------------
 
@@ -289,6 +295,7 @@ class NarratorAgent:
                     if draft.viewpoint_characters
                     else ""
                 ),
+                exempt_words=list(self._exempt_words),
             )
         except Exception as e:
             logger.warning("NarratorAgent critic failed (non-fatal): %s", e)

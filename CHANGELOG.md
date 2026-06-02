@@ -5,6 +5,54 @@
 
 ---
 
+## [2.12.0] — 2026-06-03
+
+### 真实输出第二轮评估 — A1 误报修正
+
+继 v2.11 后, 实测 tick_7 的真实 MIMO 输出, 发现 A1 检测器有两个误报源:
+
+1. **专有名词重复**: "陈默"(主角名) 3 次、"李华"(配角名) 3 次、"马灯"(场景物件)
+   3 次、"码头"(地点名) 4 次 — 这是场景所需, 不该触发 A1
+2. **助词伪 2-gram**: "的货" 3 次 (来自"的货物"/"的货栈"/"的货箱"的滑动窗口
+   切片), "了什"/"着" 类似 — 这是分词缺失的副作用, 不是真实重复
+
+### Fixed — `check_word_repetition` 双重过滤
+
+* **新参数 `exempt_words`**: 调用方传入角色名 + 地点名清单, 函数自动展开为
+  2-char 滑窗形式加入豁免集
+* **`_PARTICLE_PREFIXES`** (50+ 助词): 2-gram 首字若为 "的/地/得/了/着/把/被/
+  给/和/在/于/向/为/从/由..." 等, 跳过
+* **`_PARTICLE_SUFFIXES`**: 2-gram 尾字若为"的/地/得/了/着/呀/啊/呢/吧..." 等,
+  跳过
+
+### Changed — 全链路豁免清单传递
+
+* `quality_checks.run_deterministic_checks(..., exempt_words=...)` 接受新参数
+* `NarrativeCritic.critique_and_iterate(..., exempt_words=...)` 透传
+* `NarratorAgent.set_exempt_words(words)` API + `_run_critique` 自动传入
+* `Orchestrator.__init__` 装配阶段:
+  ```python
+  exempt = [p.name for p in profiles] + [loc.name for loc in locations]
+  narrator.set_exempt_words(exempt)
+  ```
+
+### 实测结果对比
+
+| narrative | v2.11 | v2.12 |
+|-----------|-------|-------|
+| tick_000005 (717字) | 0高/1中 (E1) | 0高/1中 (E1) |
+| tick_000006 (1249字) | 0高/1中 (E1) | 0高/1中 (E1) |
+| tick_000007 (1431字) | 0高/4中 (A1×4 误报) | **0高/0中 全清** |
+
+按 §2.1 决策矩阵, 3/3 段落判定 POLISH & ACCEPT。
+**v2.2 + v2.11 + v2.12 经实测真实 MIMO 输出验证, 完整生效。**
+
+### Tests
+
+178 用例继续全过, 0 回归。
+
+---
+
 ## [2.11.0] — 2026-06-03
 
 ### 真实 MIMO 测试 + 基于证据的修复

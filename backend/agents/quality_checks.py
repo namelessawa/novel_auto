@@ -133,6 +133,21 @@ def check_adjective_runs(text: str) -> list[DeterministicTrigger]:
 # 中文字符片段切分: 按标点和空白拆段, 段内做滑动 2-char 提取
 _CJK_SEGMENT_PAT = re.compile(r"[一-龥]+")
 
+# 助词/介词 — 不应作为 2-char 窗口的首字 (避免 "的货"/"了什" 等切片伪重复)
+_PARTICLE_PREFIXES: frozenset[str] = frozenset({
+    "的", "地", "得", "了", "着", "过", "把", "被", "给", "和",
+    "与", "或", "及", "并", "而", "但", "就", "也", "都", "还",
+    "再", "又", "却", "可", "且", "却", "在", "于", "向", "对",
+    "为", "从", "由", "至", "用", "比", "如", "若", "其", "之",
+    "乎", "者", "焉", "也", "矣", "兮", "哉", "呀", "啊", "呢",
+    "吧", "嘛", "啦", "吗", "呵", "嗯",
+})
+_PARTICLE_SUFFIXES: frozenset[str] = frozenset({
+    "的", "地", "得", "了", "着", "过", "者", "乎", "焉",
+    "也", "矣", "兮", "哉", "呀", "啊", "呢", "吧", "嘛",
+    "啦", "吗", "呵", "嗯",
+})
+
 # 太常见以致重复无意义的高频词 — 排除
 _STOP_NOMINALS: frozenset[str] = frozenset(
     {
@@ -180,22 +195,51 @@ _STOP_NOMINALS: frozenset[str] = frozenset(
 )
 
 
-def check_word_repetition(text: str, threshold: int = 3) -> list[DeterministicTrigger]:
+def check_word_repetition(
+    text: str,
+    threshold: int = 3,
+    *,
+    exempt_words: list[str] | tuple[str, ...] | None = None,
+) -> list[DeterministicTrigger]:
     """A1: 同段实词重复 ≥threshold 次。
 
     实词识别策略 (轻量, 无分词器依赖):
     * 按标点/空白把文本切成中文连续片段
     * 每段内取所有 2-char 滑动窗口
     * 排除 _STOP_NOMINALS 中的常用功能词
+    * 排除 ``exempt_words`` — 调用方传入的专有名词 (角色名、地点名),
+      在场景中重复出现属自然文学使用, 不应触发 A1
     * 计数后取出现 ≥threshold 次的词作为触发
+
+    Args:
+        text: 待检测段落
+        threshold: 触发阈值, 默认 3
+        exempt_words: 豁免清单 (会与 _STOP_NOMINALS 合并); 通常由
+            Orchestrator 传入 ``[char.name for char in profiles]`` +
+            ``[loc.name for loc in world_state.locations]``
     """
+    exempt_set: set[str] = set(_STOP_NOMINALS)
+    if exempt_words:
+        for w in exempt_words:
+            if not w:
+                continue
+            # 把多字名拆为 2-char 滑窗形式加入豁免
+            for i in range(len(w) - 1):
+                exempt_set.add(w[i : i + 2])
+            if len(w) == 2:
+                exempt_set.add(w)
     counter: Counter[str] = Counter()
     for segment in _CJK_SEGMENT_PAT.findall(text):
         if len(segment) < 2:
             continue
         for i in range(len(segment) - 1):
             w = segment[i : i + 2]
-            if w in _STOP_NOMINALS:
+            if w in exempt_set:
+                continue
+            # 过滤助词头/尾的伪 2-gram (如"的货"/"了什")
+            if w[0] in _PARTICLE_PREFIXES:
+                continue
+            if w[1] in _PARTICLE_SUFFIXES:
                 continue
             counter[w] += 1
     triggers: list[DeterministicTrigger] = []
@@ -325,15 +369,20 @@ def run_deterministic_checks(
     text: str,
     *,
     recent_openings: list[str] | None = None,
+    exempt_words: list[str] | tuple[str, ...] | None = None,
 ) -> list[DeterministicTrigger]:
-    """跑全部确定性检查, 返回去重后的触发列表。"""
+    """跑全部确定性检查, 返回去重后的触发列表。
+
+    ``exempt_words`` 传入 A1 豁免清单 (角色名 + 地点名), 避免专有名词
+    自然重复触发误报。
+    """
     if not text or not text.strip():
         return []
     out: list[DeterministicTrigger] = []
     out.extend(check_ai_cliche_blacklist(text))
     out.extend(check_cliche_blacklist(text))
     out.extend(check_adjective_runs(text))
-    out.extend(check_word_repetition(text))
+    out.extend(check_word_repetition(text, exempt_words=exempt_words))
     out.extend(check_summary_ending(text))
     out.extend(check_sentence_rhythm(text))
     if recent_openings is not None:
