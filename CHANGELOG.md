@@ -5,6 +5,49 @@
 
 ---
 
+## [2.9.0] — 2026-06-03
+
+### Added — BranchManager (覆盖关注问题清单的最后未解项)
+
+针对主 Agent 关注问题清单的剩余一项:
+* **读者互动与分支处理的困境** — 读者在"选择点"做出不同决定时, 系统能保留
+  多条平行叙事线; 每条线持有独立的 tick_state + memory_store + fact_ledger +
+  narratives, 互不污染
+
+### Added — `backend/narrative/branch_manager.py`
+
+* `BranchMeta` 单分支元数据 (id / parent / forked_at_tick /
+  choice_description / choice_options / selected_option / archived / notes)
+* `BranchTreeNode` 供前端展示的树节点
+* `BranchManager` 操作:
+  * `fork(from, new, tick, description, options, selected)` — 拷贝整个
+    data_dir 到 `branches/<new_id>/`, 跳过 `branches/` `.git/` `__pycache__/`
+  * `archive` / `unarchive` — 不删磁盘, 仅索引标记
+  * `set_canonical(id)` — 切换主线, Orchestrator 启动时读
+  * `annotate(id, notes)` — 给分支添加说明
+  * `build_tree()` — 拼父子关系树
+  * `list_branches(include_archived)` — 查询
+* JSON 原子写到 `root/branches.json`
+
+### 设计哲学
+
+* **拷贝即分支** — 不在内存维护"多状态合一"图; 每分支独立 Orchestrator 实例
+* **不强制 merge** — 平行宇宙概念, 不期待合并回主线
+* **可追溯** — parent_branch_id 形成树结构
+
+### Tests
+
+* `backend/tests/test_branch_manager.py` — 新增 13 用例
+  * 基础: canonical=main / list 仅 active
+  * fork: 拷贝 data_dir / 拒重复 / 拒缺父 / 跳过 branches/ 子目录 (防递归)
+  * archive: 标记 / unarchive / 拒归档 canonical
+  * set_canonical 切换 / annotate notes
+  * build_tree 二级深度
+  * 持久化 roundtrip
+* 全套 178 用例通过
+
+---
+
 ## [2.8.0] — 2026-06-03
 
 ### Added — CreativityScorer (覆盖最后一项关注问题)

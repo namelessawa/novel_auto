@@ -1,7 +1,7 @@
 # 项目结构 (structure.md)
 
 > 本文档描述项目具体结构分布,随每轮迭代同步更新。
-> 版本: v2.8 · 2026-06-03
+> 版本: v2.9 · 2026-06-03
 
 ---
 
@@ -77,7 +77,8 @@ backend/
 ├── narrative/                # ★ v2.6 叙事层独立目录
 │   ├── fact_ledger.py        # ★ v2.6 FactLedger — 事实账本 + 时间线 + 矛盾检测
 │   ├── safety_filter.py      # ★ v2.7 SafetyFilter — PII / 自伤指南 / 违禁品过滤
-│   └── creativity_scorer.py  # ★ v2.8 CreativityScorer — 词汇/结构/情感多样性滑窗追踪
+│   ├── creativity_scorer.py  # ★ v2.8 CreativityScorer — 词汇/结构/情感多样性滑窗追踪
+│   └── branch_manager.py     # ★ v2.9 BranchManager — 读者分支 fork/archive/tree
 ├── nf_core/
 │   ├── llm_client.py         # OpenAI SDK 包装, streaming + JSON mode + v2.7 自动入账
 │   ├── action_resolver.py    # 纯 Python 行动冲突解析
@@ -222,7 +223,8 @@ TickState  ── 阶段 1 ──→  WorldSimulator           → 新 WorldStat
 | v2.5 | 2026-06-03 | 人物弧光 7 阶段 ArcStage + 性格漂移检测 + 配角独立议程守护 |
 | v2.6 | 2026-06-03 | FactLedger 事实账本 + 时间线索引 + 矛盾检测 (append-only) |
 | v2.7 | 2026-06-03 | TokenBudgetTracker + SafetyFilter — 性能与安全闭环 |
-| **v2.8** | **2026-06-03** | **CreativityScorer — 词汇/结构/情感多样性滑窗追踪 (覆盖创造力维度)** |
+| v2.8 | 2026-06-03 | CreativityScorer — 词汇/结构/情感多样性滑窗追踪 (覆盖创造力维度) |
+| **v2.9** | **2026-06-03** | **BranchManager — 读者互动分支 (平行宇宙 fork/archive/tree, 覆盖最后一项关注问题)** |
 
 后续路线 (`TaskList` 跟踪):
 

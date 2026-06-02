@@ -71,6 +71,33 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 读者互动分支管理 (v2.9 新增)
+
+> 平行宇宙模型 — fork 即拷贝整个 data_dir, 各分支互不污染。
+
+`backend/narrative/branch_manager.py` 提供 `BranchManager`:
+
+```python
+bm = BranchManager(root_data_dir="/path/to/novels/my_novel")
+bm.load()
+
+# tick 50 时给读者两个选择
+meta = bm.fork(
+    from_branch_id="main",
+    new_branch_id="branch_追查",
+    forked_at_tick=50,
+    choice_description="alice 在十字路口",
+    choice_options=["回家", "追查"],
+    selected_option="追查",
+)
+# 之后 Orchestrator 用 bm.data_dir_for("branch_追查") 实例化
+```
+
+**操作**: `fork` / `archive` / `unarchive` / `set_canonical` / `annotate` /
+`build_tree` / `list_branches(include_archived)`
+
+**树结构** (BranchTreeNode) 供前端展示分支演化。
+
 ### 创造力评分器 (v2.8 新增)
 
 > 不让系统渐进套路化 — 滑窗追踪词汇/结构/情感三维多样性, 退化时主动 alert。
