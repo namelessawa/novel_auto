@@ -286,20 +286,30 @@ _SUMMARY_ENDING_PAT = re.compile(
     r"(只剩下|只有|不过是|只是|终归|终究|或许就是|大约就是|"
     r"这就是|这便是|这才是|"
     r"无论如何|纵然|纵使|"
-    r"也许从此|从此|此后|此刻|这一刻)"
+    r"也许从此|从此|此后|此刻|这一刻|"
+    # v2.14 实测发现的新升华模式
+    r"剩下的|余下的|留下的|"
+    r"时间仿佛|时间像是|一切归于|归于一片|"
+    r"天地间|世间)"
     r"[一-龥,，、 ]{3,}"
     r"[。…！]?\s*$"
+)
+
+# v2.14 强化: "只有 X 和 Y" 等末尾对仗式升华即使中间有标点也算 (例:
+# "...只有风声和自己的呼吸。"). 单独 pattern 抓段末 80 字内的此结构。
+_TRAILING_DUAL_PAT = re.compile(
+    r"只有\s*[一-龥]{1,6}\s*[和与跟]\s*[一-龥]{1,8}\s*[。…！]?\s*$"
 )
 
 
 def check_summary_ending(text: str) -> list[DeterministicTrigger]:
     """A6/G4: 段末"总结性独白"启发式。
 
-    检测段落最后 ~50 字中是否包含"只剩下 X"/"这就是 Y"/"终究 Z"等
-    升华套路。
+    检测段落最后 ~80 字中是否包含"只剩下 X"/"这就是 Y"/"终究 Z"/
+    "只有 X 和 Y"等升华套路。
     """
     tail = text.rstrip()[-80:]
-    if _SUMMARY_ENDING_PAT.search(tail):
+    if _SUMMARY_ENDING_PAT.search(tail) or _TRAILING_DUAL_PAT.search(tail):
         return [
             DeterministicTrigger(
                 code="A6",

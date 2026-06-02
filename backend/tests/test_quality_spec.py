@@ -141,6 +141,20 @@ def test_a6_clean_action_ending() -> None:
     assert triggers == []
 
 
+def test_a6_v214_real_mimo_evidence_endings() -> None:
+    """v2.14: 实测 MIMO 输出发现的真实升华句, 必须被识别。"""
+    # tick_10 实测段末
+    assert check_summary_ending("他停下来,侧耳听了一会儿,只有风声和自己的呼吸。")
+    # 其他常见模板
+    assert check_summary_ending("剩下的, 只有夜色。")
+    assert check_summary_ending("天地间, 仿佛只剩他一人。")
+    assert check_summary_ending("时间仿佛静止了。")
+    # 正例不误报
+    assert not check_summary_ending("他把帽檐往下压了压。")
+    assert not check_summary_ending("袖口沾了一点泥。")
+    assert not check_summary_ending("走吧。")
+
+
 # ---------------------------------------------------------------------------
 # quality_checks: A5/A7 开头重复
 # ---------------------------------------------------------------------------
