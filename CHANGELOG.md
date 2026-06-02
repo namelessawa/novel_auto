@@ -5,6 +5,75 @@
 
 ---
 
+## [2.2.0] — 2026-06-03
+
+### Added — 质量规范层 (`novel_quality_critique_and_iteration.md` 落地)
+
+* **`backend/agents/quality_spec.py`** — 集中维护规范单一真理源
+  * A-G 7 类 50+ 条触发条件 (`TRIGGER_RULES`, `RULES_BY_CODE`)
+  * AI 高频套话黑名单 (28 条, A4 触发)
+  * 陈词滥调黑名单 (28 条, D3 触发)
+  * 展示-而非-告诉对照表 (D4 修订参考)
+  * 决策矩阵 (`decide_action`): REWRITE / REVISE / POLISH / RED_TEAM
+  * Prompt 片段渲染器: `render_blacklist_block` / `render_show_dont_tell_block`
+    / `render_anti_pattern_block` / `render_diversity_block` /
+    `render_narrator_quality_block` / `render_full_critique_block`
+* **`backend/agents/quality_checks.py`** — 确定性 (无 LLM) 触发检测
+  * A1 实词重复 (滑动 2-char 窗口 + stop nominals)
+  * A4 AI 套话命中 (含 缓缓地/轻轻地/静静地 的 ≥2 次软触发)
+  * A6 段末升华句启发式 (高严重度)
+  * A7 开头句式与最近三段命中
+  * D2 形容词堆砌 (顿号/逗号分隔启发式)
+  * D3 陈词滥调命中
+  * E1 句长标准差过低
+* **`backend/agents/narrative_critic.py`** — CRITIQUE → REVISE/REWRITE 循环
+  * `NarrativeCritic.critique_and_iterate`: 合并确定性 + LLM 触发, 按决策矩阵迭代
+  * `MAX_REVISE_ROUNDS` (默认 2) / `MAX_REWRITE_ROUNDS` (默认 2), 上限达到自动降级
+  * 高严重度时调用 REWRITE prompt (温度 0.85, 强制维度切换), 中触发时 REVISE
+    (温度 0.7, 外科手术式修订, 输出 diffs)
+  * 输出 `CritiqueOutput`: `final_text` / `rounds` / `surviving_triggers`
+    / `decision_trail` / `new_opening_signature` / `blacklist_to_add`
+
+### Changed — Narrator / Writer prompts 注入硬约束
+
+* **`backend/agents/narrator_agent.py`**
+  * `NARRATOR_SYSTEM_PROMPT` 改为字符串拼接, 内嵌
+    `render_narrator_quality_block()` 输出的硬黑名单 / 展示-非告诉对照 /
+    段落禁忌 / 跨段多样性 4 个 prompt 段
+  * 末尾追加 6 条元规则: 不奖励自己 / 代价原则 / 能力守恒 / 未知优先 /
+    收尾禁忌 / 直接说情绪 = D4 触发
+  * `NarratorAgent.__init__` 增加 `critic` / `enable_critic` 参数, 默认按
+    `NARRATOR_ENABLE_CRITIC` 环境变量或 pytest 自动检测决定开关
+  * `narrate()` 在 `_parse_output` 之后串接 `_run_critique()`, 调用 critic 循环,
+    把最终文本 / 决策轨迹写回 `NarratorOutput`
+  * `NarratorOutput` 新增字段: `critique_trace` / `critique_action` /
+    `draft_text` / `new_opening_signature` / `blacklist_to_add`
+  * 新增滚动状态: `_recent_openings` (最近三段开头签名) /
+    `_chapter_blacklist` (本章累计黑名单), 暴露 `reset_chapter_state()` /
+    `chapter_blacklist` 给 Orchestrator
+* **`backend/agents/writer_agent.py`**
+  * 老的 7 条网文风格指令替换为质量规范 block + 元规则
+  * 留白原则、代价原则、D4 警告显式写入 system prompt
+
+### Tests
+
+* **`backend/tests/test_quality_spec.py`** — 新增 19 条用例
+  * 规范常量自洽 (高严重度 codes 与 rules 一致)
+  * 决策矩阵 4 分支
+  * 黑名单/陈词滥调/段末升华/开头重复/句长节奏 7 类确定性检查
+  * NarrativeCritic 4 路径集成 (clean / medium-only REVISE / high REWRITE /
+    上限达到降级)
+  * 全套 69 条用例 (含原 50) 通过, 总时长 ~2.3s
+
+### Environment
+
+* `NARRATOR_ENABLE_CRITIC` — `1`/`0` 显式开关, 留空时按 `PYTEST_CURRENT_TEST`
+  自动判定 (pytest 关, 生产开)
+* `CRITIC_MAX_REVISE_ROUNDS` / `CRITIC_MAX_REWRITE_ROUNDS` — 修订/重写上限
+* `CRITIC_ENABLE_LLM` — `0` 时 critic 仅跑确定性检查, 不调 LLM
+
+---
+
 ## [2.1.0] — 2026-06-02
 
 将原本并行的两套架构(主目录 v1.x Express+CLI 与 `novel_frame/` v2.x FastAPI+React)
@@ -17,7 +86,7 @@
 * **入口统一**:新增根级 `run.py` 与 `start.bat` / `start.sh`,直接 `uvicorn backend.main:app`
   启动,不再需要 `agent_backend` 子进程壳
 * **静态资源**:`backend/main.py` 在启动时检测 `frontend/dist/`,存在则直接 mount 到
-  Vite base path `/nw/`;dev 模式仍可独立跑 `npm run dev`(Vite 自带 `/api` 代理到 8000)
+  Vite base path `/nw/`;dev 模式仍可独立跑 `npm run dev`(Vite 自带 `/api` 代理到 8762)
 * **配置桥接**:`backend/config/settings.py` 路径常量从 `<root>/../../config.json` 改为
   `<root>/config.json`,保留 `.env` 优先的 LLM provider 桥接逻辑
 * **依赖合并**:删除 `backend/requirements.txt`,根 `requirements.txt` 统一所有运行时依赖,

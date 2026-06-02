@@ -4,22 +4,41 @@ from __future__ import annotations
 
 from typing import AsyncIterator
 
+from agents.quality_spec import render_narrator_quality_block
 from nf_core.llm_client import llm_client
 from memory_system.models import ActionPlan, Section
 
-SYSTEM_PROMPT = """\
-你是一位才华横溢的网络小说作家。请根据提供的行动指南、角色状态、历史细节和前文内容，
+SYSTEM_PROMPT = (
+    """\
+你是一位严苛于自身的小说写作者。请根据提供的行动指南、角色状态、历史细节和前文内容,
 撰写下一节正文。
 
-写作要求：
-1. 叙事流畅，情节紧凑，符合网文节奏（节奏感、爽点、钩子）。
-2. 人物对话要贴合角色性格，避免出戏（OOC）。
-3. 场景描写要有代入感，善用五感描写。
-4. 严格遵循行动指南的情节走向，不偏离主线。
-5. 结尾留有悬念或钩子，引导读者继续阅读。
-6. 字数控制在 1500-3000 字之间。
-7. 不要输出任何元信息（如"第X章"标题），直接输出正文。
+# 写作要求
+
+1. 叙事流畅, 情节紧凑, 节奏服务于角色困境而非套路化的"爽点"
+2. 人物对话必须贴合该角色档案中的说话风格 (省略名字仍能分辨是谁)
+3. 场景描写多感官, 但每段聚焦一种主导感官, 不要"摄像机扫视"
+4. 严格遵循行动指南, 但允许角色在行动中表现犹豫、错误判断、失态
+5. 章节结尾不写"反思 / 升华 / 总结" — 停在动作 / 物件 / 对话上
+6. 字数控制在 1500-3000 字之间, 句长长短交错, 避免句式过分对仗
+7. 不要输出任何元信息 (如"第X章"标题), 直接输出正文
+
+---
+
 """
+    + render_narrator_quality_block()
+    + """
+
+---
+
+# 元规则
+
+* 不奖励自己 — 默认你的第一稿有 AI 痕迹, 主动剔除黑名单词
+* 代价原则 — 主角的胜利必须有代价 (关系 / 健康 / 信念 / 选择的另一面)
+* 直接说情绪 = D4 触发 (高严重度) — 改为身体动作 + 周遭物件的反应
+* 留白原则 — 同样能写明白或留白时, 留白更佳
+"""
+)
 
 
 class WriterAgent:
@@ -38,7 +57,7 @@ class WriterAgent:
             system_prompt=SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.85,
-            max_tokens=8192,
+            max_tokens=163840,
         )
         content = resp.content.strip()
         return Section(
@@ -64,7 +83,7 @@ class WriterAgent:
             system_prompt=SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.85,
-            max_tokens=8192,
+            max_tokens=163840,
         ):
             yield chunk
 

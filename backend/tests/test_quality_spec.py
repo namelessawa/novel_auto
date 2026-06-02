@@ -1,0 +1,308 @@
+"""Tests for quality_spec + quality_checks + NarrativeCritic.
+
+确定性检查可独立验证, NarrativeCritic 用 mock_llm 验证决策矩阵。
+"""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from agents.narrative_critic import NarrativeCritic
+from agents.quality_checks import (
+    check_ai_cliche_blacklist,
+    check_cliche_blacklist,
+    check_opening_repetition,
+    check_summary_ending,
+    check_word_repetition,
+    run_deterministic_checks,
+    summarize_triggers,
+)
+from agents.quality_spec import (
+    AI_CLICHE_BLACKLIST,
+    HIGH_SEVERITY_CODES,
+    RULES_BY_CODE,
+    decide_action,
+    render_blacklist_block,
+    render_narrator_quality_block,
+)
+
+
+# ---------------------------------------------------------------------------
+# quality_spec
+# ---------------------------------------------------------------------------
+
+
+def test_high_severity_codes_match_rules() -> None:
+    for code in HIGH_SEVERITY_CODES:
+        assert RULES_BY_CODE[code].severity == "high"
+
+
+def test_decision_matrix_branches() -> None:
+    assert decide_action(1, 0) == "REWRITE"
+    assert decide_action(2, 5) == "REWRITE"
+    assert decide_action(0, 3) == "REVISE"
+    assert decide_action(0, 2) == "POLISH"
+    assert decide_action(0, 1) == "POLISH"
+    assert decide_action(0, 0) == "RED_TEAM"
+
+
+def test_blacklist_block_contains_core_words() -> None:
+    block = render_blacklist_block()
+    # 关键黑名单词必须出现在 prompt 片段
+    for w in ("仿佛", "心中涌起一股", "命运的齿轮", "月光如水"):
+        assert w in block
+
+
+def test_quality_block_compiles() -> None:
+    """完整 narrator quality block 编译不抛异常且非空。"""
+    block = render_narrator_quality_block()
+    assert len(block) > 500
+    assert "硬性禁用清单" in block
+    assert "段落禁忌" in block
+
+
+# ---------------------------------------------------------------------------
+# quality_checks: A4 黑名单
+# ---------------------------------------------------------------------------
+
+
+def test_a4_triggers_on_fangfu() -> None:
+    text = "他停在门口,仿佛听到了什么。她抬头,仿佛要说话。"
+    triggers = check_ai_cliche_blacklist(text)
+    codes = {t.code for t in triggers}
+    assert "A4" in codes
+    assert all(t.severity == "high" for t in triggers if t.code == "A4")
+
+
+def test_a4_soft_words_need_two_occurrences() -> None:
+    # 缓缓地 出现 1 次 — 不触发
+    one = "他缓缓地推开门,走进去。"
+    assert all(t.code != "A4" or "缓缓地" not in t.evidence for t in check_ai_cliche_blacklist(one))
+    # 缓缓地 出现 2 次 — 触发
+    two = "他缓缓地推开门,然后缓缓地坐下。"
+    assert any(
+        t.code == "A4" and "缓缓地" in t.evidence
+        for t in check_ai_cliche_blacklist(two)
+    )
+
+
+def test_a4_clean_text_no_trigger() -> None:
+    text = "他把钥匙放在桌上。桌面有一圈水渍。他没有去擦。"
+    assert check_ai_cliche_blacklist(text) == []
+
+
+# ---------------------------------------------------------------------------
+# quality_checks: D3 陈词滥调
+# ---------------------------------------------------------------------------
+
+
+def test_d3_triggers_on_cliche() -> None:
+    text = "月光如水般倾泻在庭院里,她嘴角上扬。"
+    triggers = check_cliche_blacklist(text)
+    codes = {t.code for t in triggers}
+    assert "D3" in codes
+
+
+# ---------------------------------------------------------------------------
+# quality_checks: A1 实词重复
+# ---------------------------------------------------------------------------
+
+
+def test_a1_triggers_on_repeat() -> None:
+    # "灯塔" 重复 4 次
+    text = "灯塔在夜里亮着。灯塔的光是橙色的。灯塔下有礁石。灯塔是他的责任。"
+    triggers = check_word_repetition(text, threshold=3)
+    assert any(t.code == "A1" and "灯塔" in t.evidence for t in triggers)
+
+
+def test_a1_skips_stopwords() -> None:
+    # "自己"/"什么" 是 stop nominals, 不触发
+    text = "他想自己应该做什么。她不知道自己该说什么。但他们都在想自己究竟在等什么。"
+    triggers = check_word_repetition(text)
+    assert all("自己" not in t.evidence and "什么" not in t.evidence for t in triggers)
+
+
+# ---------------------------------------------------------------------------
+# quality_checks: A6 段末升华
+# ---------------------------------------------------------------------------
+
+
+def test_a6_triggers_on_summary_ending() -> None:
+    text = "他站在风里看着远处的火光,只剩下纯粹的、近乎绝望的紧迫。"
+    triggers = check_summary_ending(text)
+    assert any(t.code == "A6" and t.severity == "high" for t in triggers)
+
+
+def test_a6_clean_action_ending() -> None:
+    text = "他把火柴放回口袋。风停了一下,又起。他没有再看那扇窗。"
+    triggers = check_summary_ending(text)
+    assert triggers == []
+
+
+# ---------------------------------------------------------------------------
+# quality_checks: A5/A7 开头重复
+# ---------------------------------------------------------------------------
+
+
+def test_a7_triggers_when_opening_matches_recent() -> None:
+    recent = ["他停在门口", "她抬起头", "雨开始下了"]
+    text = "他停在门口,看着窗外。"
+    triggers = check_opening_repetition(text, recent)
+    assert any(t.code == "A7" for t in triggers)
+
+
+# ---------------------------------------------------------------------------
+# 综合主入口
+# ---------------------------------------------------------------------------
+
+
+def test_run_deterministic_returns_summary() -> None:
+    text = (
+        "他仿佛看见了什么,缓缓地走过去。月光如水般洒在地上。"
+        "他想,他想,他想 — 心中涌起一股说不清的感觉,只剩下纯粹的孤独。"
+    )
+    triggers = run_deterministic_checks(text)
+    summary = summarize_triggers(triggers)
+    assert summary["high_count"] >= 2  # A4 仿佛 / 心中涌起一股 / A6 段末升华
+    assert "A4" in summary["high_codes"]
+
+
+# ---------------------------------------------------------------------------
+# NarrativeCritic — 集成 (mock LLM)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_critic_accepts_clean_text(mock_llm) -> None:
+    """干净文本 LLM critic 返回空 triggers → 决策 RED_TEAM, 直接接受。"""
+    mock_llm.set_responses([{"triggers": [], "rationale": "", "red_team_critiques": []}])
+    critic = NarrativeCritic()
+    text = (
+        "他把钥匙放在桌上。桌面有一圈水渍。"
+        "他没有去擦。窗外有狗叫了一声,然后停了。"
+    )
+    out = await critic.critique_and_iterate(draft_text=text)
+    assert out.final_text == text
+    assert out.final_action in ("RED_TEAM", "ACCEPT")
+
+
+@pytest.mark.asyncio
+async def test_critic_revises_on_medium_only(mock_llm) -> None:
+    """3 个中触发 → REVISE 路径, LLM 返回修订后的 text。"""
+    revised = "他把钥匙放在桌上。"
+    mock_llm.set_responses(
+        [
+            # round 1 critic: 0 high, 3 medium → REVISE
+            {
+                "triggers": [
+                    {"code": "A1", "severity": "medium", "evidence": "x x x"},
+                    {"code": "D2", "severity": "medium", "evidence": "y y y"},
+                    {"code": "A2", "severity": "medium", "evidence": "z z z"},
+                ],
+                "rationale": "中触发",
+                "red_team_critiques": [],
+            },
+            # round 1 revise output
+            {
+                "revised_text": revised,
+                "diffs": [],
+                "removed_words": [],
+            },
+            # round 2 critic: 全清 → 接受
+            {"triggers": [], "rationale": "", "red_team_critiques": []},
+        ]
+    )
+    critic = NarrativeCritic()
+    out = await critic.critique_and_iterate(draft_text="原稿,有问题但没高触发。")
+    assert out.final_text == revised
+    assert any(r.action == "REVISE" for r in out.rounds)
+
+
+@pytest.mark.asyncio
+async def test_critic_rewrites_on_high(mock_llm) -> None:
+    """高触发 → REWRITE, LLM 返回重写文本。"""
+    rewritten = "他把钥匙放在桌上, 没有去擦水渍。"
+    mock_llm.set_responses(
+        [
+            # round 1 critic: 1 high → REWRITE
+            {
+                "triggers": [
+                    {"code": "A4", "severity": "high", "evidence": '仿佛'},
+                ],
+                "rationale": "AI 套话",
+                "red_team_critiques": [],
+            },
+            # round 1 rewrite output
+            {
+                "rewritten_text": rewritten,
+                "dimension_shift": "节奏 慢 → 快",
+                "avoided_codes": ["A4"],
+            },
+            # round 2 critic: 全清
+            {"triggers": [], "rationale": "", "red_team_critiques": []},
+        ]
+    )
+    critic = NarrativeCritic()
+    out = await critic.critique_and_iterate(
+        draft_text="他仿佛看见了什么,缓缓地走过去。"
+    )
+    assert out.final_text == rewritten
+    assert any(r.action == "REWRITE" for r in out.rounds)
+
+
+@pytest.mark.asyncio
+async def test_critic_empty_draft_returns_immediately(mock_llm) -> None:
+    critic = NarrativeCritic()
+    out = await critic.critique_and_iterate(draft_text="")
+    assert out.final_text == ""
+    assert out.final_action == "ACCEPT"
+    assert out.rounds == []
+
+
+@pytest.mark.asyncio
+async def test_critic_caps_rewrite_attempts(mock_llm, monkeypatch) -> None:
+    """REWRITE 上限达到后, 应降级为 REVISE 或接受, 不能死循环。"""
+    # 每轮 critic 都返回 1 high (持续 REWRITE), 每次 rewrite 仍带高触发
+    rewritten = "依然包含仿佛"
+    responses = []
+    for _ in range(6):
+        responses.append(
+            {
+                "triggers": [{"code": "A4", "severity": "high", "evidence": "仿佛"}],
+                "rationale": "持续高触发",
+                "red_team_critiques": [],
+            }
+        )
+        responses.append(
+            {
+                "rewritten_text": rewritten,
+                "dimension_shift": "x",
+                "avoided_codes": [],
+            }
+        )
+        # REVISE 兜底分支
+        responses.append(
+            {
+                "revised_text": rewritten,
+                "diffs": [],
+                "removed_words": [],
+            }
+        )
+    mock_llm.set_responses(responses)
+
+    monkeypatch.setenv("CRITIC_MAX_REWRITE_ROUNDS", "1")
+    monkeypatch.setenv("CRITIC_MAX_REVISE_ROUNDS", "1")
+    # 重新导入以读取新 env
+    import importlib
+
+    import agents.narrative_critic as nc
+
+    importlib.reload(nc)
+    critic = nc.NarrativeCritic()
+    out = await critic.critique_and_iterate(draft_text="仿佛永不停止。")
+    # 必须终止
+    assert out.final_action == "ACCEPT"
+    # 至少有一轮 REWRITE
+    assert any(r.action == "REWRITE" for r in out.rounds)

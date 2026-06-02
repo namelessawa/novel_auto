@@ -71,6 +71,35 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 质量规范层 (v2.2 新增)
+
+> 故事不是"生成",而是 **生成 → 批判 → 修订**。Narrator 每段产出后自动跑
+> CRITIQUE → REVISE / REWRITE 循环,直到通过规范或触达上限。
+
+| 模块 | 角色 |
+|------|------|
+| `backend/agents/quality_spec.py` | 单一真理源 — A-G 7 类 50+ 触发条件、AI 套话黑名单、陈词滥调黑名单、展示-非告诉对照表、决策矩阵 |
+| `backend/agents/quality_checks.py` | 确定性 (无 LLM) 检测 — A1/A4/A6/A7/D2/D3/E1 |
+| `backend/agents/narrative_critic.py` | CRITIQUE → REVISE / REWRITE 循环, 按 §2.1 决策矩阵迭代 |
+
+**决策矩阵**:
+
+| 触发情况 | 决策 |
+|----------|------|
+| ≥1 项高严重度 | **REWRITE** — 完全丢稿, 在节奏 / 感官 / 内外比例 / 句长 / 信息密度 至少一维度上切换 |
+| 0 高 + ≥3 中 | **REVISE** — 外科手术式修订, 输出 diffs |
+| 0 高 + ≤2 中 | **POLISH & ACCEPT** — 微调接受, 黑名单更新 |
+| 全部通过 | **RED_TEAM** — 红队复查 (Showrunner/NoveltyCritic 层兜底) |
+
+**环境开关**:
+
+```bash
+NARRATOR_ENABLE_CRITIC=1          # 显式开启 (留空时 pytest 关 / 生产开)
+CRITIC_MAX_REVISE_ROUNDS=2        # 修订上限
+CRITIC_MAX_REWRITE_ROUNDS=2       # 重写上限
+CRITIC_ENABLE_LLM=1               # 0 时仅跑确定性检查
+```
+
 ---
 
 ## 快速开始
@@ -111,14 +140,15 @@ start.bat
 或分别启动:
 
 ```bash
-# 后端 (FastAPI, http://127.0.0.1:8000)
+# 后端 (FastAPI, http://127.0.0.1:8762)
 python run.py --reload
 
-# 前端 (Vite, http://127.0.0.1:3000/nw/)
+# 前端 (Vite, http://127.0.0.1:3143/nw/)
 cd frontend && npm run dev
 ```
 
-> Vite dev server 自带 `/api` 代理到 8000;前端访问 backend 的 SSE 与 REST 无需配置 CORS。
+> Vite dev server 自带 `/api` 代理到 8762;前端访问 backend 的 SSE 与 REST 无需配置 CORS。
+> 端口可通过 `config.json` `server.backend_port` / `server.frontend_port` 修改。
 
 ### 4. 冷启动一个新世界
 
@@ -133,9 +163,9 @@ python -m backend.bootstrap_prompts \
 bootstrap 完成后:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/tick/run
-curl http://127.0.0.1:8000/api/tick/status
-curl http://127.0.0.1:8000/api/tick/history?last_n=20
+curl -X POST http://127.0.0.1:8762/api/tick/run
+curl http://127.0.0.1:8762/api/tick/status
+curl http://127.0.0.1:8762/api/tick/history?last_n=20
 ```
 
 也可在前端 Tick 控制面板里手动推进、注入事件、查看 OpenLoop。
@@ -147,7 +177,7 @@ cd frontend && npm run build && cd ..    # 产物在 frontend/dist/
 python run.py                            # FastAPI 自动 mount frontend/dist 到 /nw/
 ```
 
-访问 `http://<host>:8000/nw/` 即可。`deploy/` 下提供了 nginx 与 systemd 样例。
+访问 `http://<host>:8762/nw/` 即可。`deploy/` 下提供了 nginx 与 systemd 样例。
 
 ---
 
@@ -226,7 +256,7 @@ novel_auto/
 │   └── tests/                        ← 50 个测试
 ├── frontend/                         ← React + Vite 6
 │   ├── index.html
-│   ├── vite.config.js                ← base=/nw/, /api → 8000 proxy
+│   ├── vite.config.js                ← base=/nw/, /api → 8762 proxy
 │   ├── src/
 │   │   ├── App.jsx / main.jsx
 │   │   ├── pages/ components/ services/ styles/
@@ -311,7 +341,7 @@ python -m pytest backend/tests/ -v
 后端未启动或未 bootstrap:
 
 ```bash
-curl http://127.0.0.1:8000/api/health     # 1. 检查后端是否在跑
+curl http://127.0.0.1:8762/api/health     # 1. 检查后端是否在跑
 python run.py --reload                    # 2. 启动后端
 python -m backend.bootstrap_prompts --novel-id test --seed "..."   # 3. bootstrap 一个世界
 ```
