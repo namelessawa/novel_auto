@@ -5,6 +5,64 @@
 
 ---
 
+## [2.5.0] — 2026-06-03
+
+### Added — 人物弧光跟踪 (`backend/agents/character_arc_tracker.py`)
+
+针对主 Agent 关注问题清单的四项:
+* **人物塑造的扁平化与失真** — 检测 B5 (主角全程正确), B4 (内心过载)
+* **性格一致性的长期崩坏** — 滑动窗口对比 CharacterAction 与 profile,
+  检测 B1 (违背动机) 与 B2 (说话像别人)
+* **无法实现真实的人物成长与转变** — 维护 7 阶段 ArcStage (起点/觉醒/抗拒/
+  挫折/转变/抉择/结局), arc_progress vs arc_stage 错配警报, 停滞过久自动升阶
+* **配角与群像塑造的彻底失败** — B 级角色无 `independent_agenda` 触发 B3,
+  议程未推进单独警告
+
+### Added — `CharacterArcTracker` API
+
+* `analyze()` 系列 (确定性, 无 LLM):
+  * `detect_progress_mismatch` — arc_progress 不在 stage 期待区间
+  * `detect_stalled` — 同 stage 停留 ≥80 tick (结局态除外)
+  * `detect_agenda_health` — A 级始终 ok, B 级空议程 → empty
+  * `suggest_next_stage` — progress 超阈值时推荐升阶
+* `deterministic_report(profile, state, tick)` — 合成 `CharacterArcReport`
+* `evaluate(...)` — 主入口, A/B 级角色逐一评估, LLM 增强可选
+* 输出 `CharacterArcTrackerOutput.summary` —
+  "停滞: alice, charlie | 漂移: bob | 无议程: charlie"
+
+### Added — 模型契约
+
+* `ArcStage` = 起点 | 觉醒 | 抗拒 | 挫折 | 转变 | 抉择 | 结局
+* `CharacterState` 新增字段:
+  * `arc_stage: ArcStage` (默认 起点)
+  * `arc_stage_entered_tick: int`
+  * `independent_agenda: list[str]` (B 级配角必需)
+  * `speech_fingerprint_features: list[str]` (说话风格指纹)
+
+### Changed — Orchestrator 接入
+
+* 新参数 `character_arc_tracker: CharacterArcTracker | None`
+* `_recent_actions_by_char` 环形缓冲 (每角色 ≤20 条) 阶段 5a 记录
+* 阶段 7 周期性维护 (`CHARACTER_ARC_TRACKER_CADENCE=30`) 调用 evaluate
+* 报告反馈循环: stalled + suggested_stage → 自动升级 arc_stage
+* `_build_character_arc_hints()` — 把漂移警告 / 阶段推进翻译为前缀摘要行
+  ([人物弧光]/[漂移警告 X]/[阶段推进 X]) 注入 Narrator
+
+### Tests
+
+* `backend/tests/test_character_arc_tracker.py` — 新增 14 用例
+  * 确定性检测 (progress mismatch / stalled / agenda health / next stage)
+  * deterministic_report B3 触发 / stalled evidence
+  * evaluate A/B 过滤 / summary 拼装 / LLM 合并 / 全清场景
+* 全套 117 用例通过
+
+### Environment
+
+* `CHARACTER_ARC_TRACKER_LLM` — `1`/`0` 显式开关, 留空时 pytest 关 / 生产开
+* `CHARACTER_ARC_TRACKER_CADENCE` — 评估频率 (默认 30)
+
+---
+
 ## [2.4.0] — 2026-06-03
 
 ### Added — 叙事大纲层 (StoryArc / KeyBeat / PacingPoint / SuspenseLevel)

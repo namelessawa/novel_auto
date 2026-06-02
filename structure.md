@@ -1,7 +1,7 @@
 # 项目结构 (structure.md)
 
 > 本文档描述项目具体结构分布,随每轮迭代同步更新。
-> 版本: v2.4 · 2026-06-03
+> 版本: v2.5 · 2026-06-03
 
 ---
 
@@ -66,7 +66,8 @@ backend/
 │   ├── quality_spec.py       # ★ v2.2 质量规范单一真理源
 │   ├── quality_checks.py     # ★ v2.2 确定性触发检测
 │   ├── narrative_critic.py   # ★ v2.2 CRITIQUE → REVISE/REWRITE 循环
-│   └── story_arc_director.py # ★ v2.4 全局叙事大纲 + 节奏曲线守护
+│   ├── story_arc_director.py # ★ v2.4 全局叙事大纲 + 节奏曲线守护
+│   └── character_arc_tracker.py # ★ v2.5 7 阶段 ArcStage + 性格漂移 + 配角议程守护
 ├── config/
 │   └── settings.py           # .env + config.json 双源配置
 ├── memory/
@@ -212,7 +213,8 @@ TickState  ── 阶段 1 ──→  WorldSimulator           → 新 WorldStat
 | v2.1 | 2026-06-02 | 双栈融合为单进程, v1.x → `old/` |
 | v2.2 | 2026-06-03 | 质量规范层 — CRITIQUE → REVISE / REWRITE 循环嵌入 Narrator |
 | v2.3 | 2026-06-03 | 优先级分层长期记忆 PriorityMemoryStore + 反 RAG 退化策略 |
-| **v2.4** | **2026-06-03** | **叙事大纲层 StoryArc + KeyBeat + PacingPoint + 节奏曲线守护** |
+| v2.4 | 2026-06-03 | 叙事大纲层 StoryArc + KeyBeat + PacingPoint + 节奏曲线守护 |
+| **v2.5** | **2026-06-03** | **人物弧光 7 阶段 ArcStage + 性格漂移检测 + 配角独立议程守护** |
 
 后续路线 (`TaskList` 跟踪):
 

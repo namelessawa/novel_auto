@@ -71,6 +71,38 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 人物弧光跟踪 (v2.5 新增)
+
+> 不让角色长期 OOC — 7 阶段 ArcStage + 漂移检测 + B 级配角独立议程守护。
+
+`backend/agents/character_arc_tracker.py` 提供 `CharacterArcTracker`:
+
+**ArcStage 7 阶段** (`起点 → 觉醒 → 抗拒 → 挫折 → 转变 → 抉择 → 结局`)
+对应 arc_progress 期待区间:
+
+| Stage | arc_progress 区间 |
+|-------|-------------------|
+| 起点 | 0.00 – 0.15 |
+| 觉醒 | 0.10 – 0.30 |
+| 抗拒 | 0.25 – 0.50 |
+| 挫折 | 0.40 – 0.65 |
+| 转变 | 0.55 – 0.80 |
+| 抉择 | 0.70 – 0.95 |
+| 结局 | 0.85 – 1.00 |
+
+**检测触发**:
+
+| 触发码 | 条件 |
+|--------|------|
+| stalled | 同 stage 停留 ≥ 80 tick (结局态除外) → 自动升阶 |
+| progress_mismatch | progress 不在 stage 期待区间 |
+| B3 | B 级角色 `independent_agenda` 为空 |
+| B1/B2/B4/B5/B6 | LLM 评估 (开启时), 引用 recent_actions 给证据 |
+
+Orchestrator 阶段 7 调用 (CHARACTER_ARC_TRACKER_CADENCE 默认 30), 报告
+通过 `_build_character_arc_hints()` 翻译为前缀提示 `[人物弧光]` /
+`[漂移警告 alice]` / `[阶段推进 bob]` 注入 Narrator。
+
 ### 叙事大纲层 (v2.4 新增)
 
 > 不让叙事漂流 — StoryArc 锚定主题, KeyBeat 锚定剧情骨架, PacingPoint 锚定节奏曲线。

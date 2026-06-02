@@ -190,6 +190,8 @@ MemoryTier = Literal["L0", "L1", "L2", "L3"]
 ConflictPriority = Literal["A", "B", "C", "D"]
 ConflictType = Literal["character", "time", "setting", "relationship", "item"]
 OpenLoopType = Literal["mystery", "conflict", "promise", "threat", "other"]
+# v2.5 人物弧光阶段 — 编剧界 7 阶段经典模型
+ArcStage = Literal["起点", "觉醒", "抗拒", "挫折", "转变", "抉择", "结局"]
 
 
 class TickLocation(_TickBase):
@@ -305,6 +307,23 @@ class CharacterState(_TickBase):
         ge=0.0,
         le=1.0,
         description="arc 完成度,Showrunner 监控用",
+    )
+    arc_stage: ArcStage = Field(
+        default="起点",
+        description="v2.5 弧光阶段 — 由 CharacterArcTracker 监控并推荐推进",
+    )
+    arc_stage_entered_tick: int = Field(
+        default=0,
+        ge=0,
+        description="本阶段开始的 tick, 用于检测 阶段停滞过久",
+    )
+    independent_agenda: list[str] = Field(
+        default_factory=list,
+        description="独立议程 — 该角色自己关心、但不为主角而存在的事项 (B 级配角必须)",
+    )
+    speech_fingerprint_features: list[str] = Field(
+        default_factory=list,
+        description="说话风格指纹特征 (如 短句 / 反问多 / 沉默多 / 偏书面)",
     )
     known_facts: list[str] = Field(
         default_factory=list,
@@ -555,6 +574,7 @@ __all__ = [
     "ConflictPriority",
     "ConflictType",
     "OpenLoopType",
+    "ArcStage",
     # tick Pydantic 契约
     "TickLocation",
     "Faction",

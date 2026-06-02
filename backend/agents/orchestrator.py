@@ -37,6 +37,10 @@ import uuid
 from typing import AsyncIterator, Protocol
 
 from agents.character_agent import CharacterAgent
+from agents.character_arc_tracker import (
+    CharacterArcTracker,
+    CharacterArcTrackerOutput,
+)
 from agents.narrator_agent import NarratorAgent, NarratorOutput
 from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
@@ -99,6 +103,7 @@ SHOWRUNNER_CADENCE = _env_int("SHOWRUNNER_CADENCE", 5)
 NOVELTY_CRITIC_CADENCE = _env_int("NOVELTY_CRITIC_CADENCE", 20)
 CONSISTENCY_GUARDIAN_CADENCE = _env_int("CONSISTENCY_GUARDIAN_CADENCE", 30)
 MEMORY_COMPRESSOR_CADENCE = _env_int("MEMORY_COMPRESSOR_CADENCE", 50)
+CHARACTER_ARC_TRACKER_CADENCE = _env_int("CHARACTER_ARC_TRACKER_CADENCE", 30)
 
 # 戏剧/外生事件冷却:Showrunner 没就位时,EventInjector 自身的简单触发判断
 EXOGENOUS_COOLDOWN_TICKS = _env_int("EXOGENOUS_COOLDOWN_TICKS", 10)
@@ -131,6 +136,7 @@ class Orchestrator:
         narrative_text_writer=None,  # Callable[[int, str], Awaitable[None]] - 可选
         memory_store: PriorityMemoryStore | None = None,
         story_arc_director: StoryArcDirector | None = None,
+        character_arc_tracker: CharacterArcTracker | None = None,
     ) -> None:
         self._tick_state = tick_state
         self._world_simulator = world_simulator
@@ -159,6 +165,13 @@ class Orchestrator:
         self._story_arc_director = story_arc_director
         # 上一轮 directive — 阶段 6 前用于注入 narrator_hint 到 recent_chapter_summaries
         self._last_story_directive = None
+
+        # v2.5 人物弧光跟踪器 — 阶段 7 周期性维护时调用
+        self._character_arc_tracker = character_arc_tracker
+        # 角色最近 N 个 action 的环形缓冲, 供 tracker 输入
+        self._recent_actions_by_char: dict[str, list[CharacterAction]] = {}
+        # 上一轮 tracker 报告 — 阶段 6 前注入 Narrator 性格漂移警告
+        self._last_arc_tracker_output: CharacterArcTrackerOutput | None = None
 
         # narrative_text_writer(tick, text) - Orchestrator 把叙述文本交给外部写盘
         # 默认: 写到 ``{data_dir}/narratives/tick_{tick:06d}.txt``
@@ -324,6 +337,13 @@ class Orchestrator:
         action_events = self._apply_actions(tick, resolved_actions)
         events_generated_ids.extend(e.id for e in action_events)
         all_events.extend(action_events)
+
+        # 阶段 5a: 记录本 tick 的 CharacterAction 到环形缓冲, 供 v2.5 tracker --
+        for action in resolved_actions:
+            buf = self._recent_actions_by_char.setdefault(action.character_id, [])
+            buf.append(action)
+            if len(buf) > 20:  # 每角色最多保留 20 条
+                del buf[: len(buf) - 20]
 
         # 阶段 5b: 把本 tick 显著事件登记到长期记忆 (L0) -------------------
         self._ingest_events_to_memory(tick, all_events)
@@ -620,7 +640,14 @@ class Orchestrator:
         memory_summaries = self._build_long_term_memory_excerpts(tick, all_events)
         # v2.4 StoryArc directive: narrator_hint + theme_reminder + 节奏强度建议
         arc_hints = self._build_story_arc_hints()
-        merged_summaries = arc_hints + memory_summaries + list(self._recent_chapter_summaries)
+        # v2.5 CharacterArcTracker: 漂移警告 + 阶段推进
+        char_arc_hints = self._build_character_arc_hints()
+        merged_summaries = (
+            arc_hints
+            + char_arc_hints
+            + memory_summaries
+            + list(self._recent_chapter_summaries)
+        )
         return await self._narrator.narrate(
             tick=tick,
             world_time=self._tick_state.world_state.world_time,
@@ -632,6 +659,27 @@ class Orchestrator:
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
         )
+
+    def _build_character_arc_hints(self) -> list[str]:
+        """把 CharacterArcTracker 最近一轮报告翻译为前缀摘要行注入 Narrator。"""
+        out = self._last_arc_tracker_output
+        if out is None or not out.reports:
+            return []
+        lines: list[str] = []
+        if out.summary and out.summary != "全员稳定":
+            lines.append(f"[人物弧光] {out.summary[:120]}")
+        for rep in out.reports:
+            if rep.drift_codes:
+                lines.append(
+                    f"[漂移警告 {rep.character_id}] "
+                    f"{','.join(rep.drift_codes)} — {rep.rationale[:60]}"
+                )
+            elif rep.is_stalled and rep.suggested_stage:
+                lines.append(
+                    f"[阶段推进 {rep.character_id}] "
+                    f"{rep.current_stage} → {rep.suggested_stage}"
+                )
+        return lines[:5]  # 上限 5 行防 prompt 膨胀
 
     def _build_story_arc_hints(self) -> list[str]:
         """把 StoryArcDirector 的 directive 翻译为 Narrator 可消费的"前缀摘要行"。"""
@@ -723,6 +771,42 @@ class Orchestrator:
                 agents_called.append("consistency_guardian")
             except Exception as e:
                 logger.error("ConsistencyGuardian.scan failed: %s", e)
+
+        if (
+            self._character_arc_tracker is not None
+            and tick % CHARACTER_ARC_TRACKER_CADENCE == 0
+        ):
+            try:
+                profiles = {
+                    cid: a.profile for cid, a in self._character_agents.items()
+                }
+                states = {
+                    s.character_id: s
+                    for s in self._tick_state.list_character_states()
+                }
+                tracker_out = await self._character_arc_tracker.evaluate(
+                    profiles=profiles,
+                    states=states,
+                    recent_actions_by_char=self._recent_actions_by_char,
+                    current_tick=tick,
+                )
+                self._last_arc_tracker_output = tracker_out
+                # 自动推进 suggested_stage (确定性推进, LLM 建议不自动应用)
+                for rep in tracker_out.reports:
+                    if rep.suggested_stage and rep.is_stalled:
+                        state = self._tick_state.get_character_state(rep.character_id)
+                        if state is not None:
+                            self._tick_state.upsert_character_state(
+                                state.model_copy(
+                                    update={
+                                        "arc_stage": rep.suggested_stage,
+                                        "arc_stage_entered_tick": tick,
+                                    }
+                                )
+                            )
+                agents_called.append("character_arc_tracker")
+            except Exception as e:
+                logger.error("CharacterArcTracker.evaluate failed: %s", e)
 
         if (
             self._memory_compressor is not None
