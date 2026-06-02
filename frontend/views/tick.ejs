@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tick 控制面板 - 无限小说生成系统 v2.x</title>
+    <style>
+        :root {
+            --color-surface: oklch(98% 0 0);
+            --color-text: oklch(18% 0 0);
+            --color-muted: oklch(50% 0 0);
+            --color-accent: oklch(58% 0.21 250);
+            --color-warning: oklch(70% 0.18 60);
+            --color-danger: oklch(58% 0.21 25);
+            --color-success: oklch(58% 0.18 145);
+            --space-section: clamp(1.5rem, 1rem + 2vw, 3rem);
+            --duration-fast: 150ms;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--color-surface);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: var(--space-section);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid var(--color-text);
+            padding-bottom: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+            letter-spacing: -0.02em;
+            font-weight: 700;
+        }
+
+        .header-meta {
+            font-size: 0.875rem;
+            color: var(--color-muted);
+            font-family: ui-monospace, "SF Mono", Consolas, monospace;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .card {
+            border: 1px solid oklch(85% 0 0);
+            border-radius: 6px;
+            padding: 1.25rem;
+            background: oklch(100% 0 0);
+            transition: border-color var(--duration-fast) var(--ease-out-expo);
+        }
+        .card:hover { border-color: var(--color-text); }
+        .card h2 {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--color-muted);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stat {
+            font-size: clamp(1.75rem, 1.2rem + 1.5vw, 2.5rem);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        .stat-sub {
+            color: var(--color-muted);
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .pill-ok { background: oklch(94% 0.06 145); color: oklch(35% 0.18 145); }
+        .pill-warn { background: oklch(94% 0.06 60); color: oklch(35% 0.18 60); }
+        .pill-danger { background: oklch(94% 0.06 25); color: oklch(35% 0.18 25); }
+
+        .row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+
+        button {
+            font: inherit;
+            background: var(--color-text);
+            color: var(--color-surface);
+            border: 1px solid var(--color-text);
+            padding: 0.55rem 1.1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--ease-out-expo);
+            font-weight: 500;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 8px oklch(0% 0 0 / 0.1); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        button.secondary {
+            background: transparent;
+            color: var(--color-text);
+        }
+        button.danger {
+            background: var(--color-danger);
+            border-color: var(--color-danger);
+            color: white;
+        }
+
+        section { margin-block: 2rem; }
+
+        section h2 {
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        section h2::before {
+            content: "";
+            width: 4px;
+            height: 1.15rem;
+            background: var(--color-accent);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.55rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid oklch(92% 0 0);
+        }
+        th {
+            background: oklch(96% 0 0);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-muted);
+        }
+        td.mono { font-family: ui-monospace, monospace; font-size: 0.85rem; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        form.inject-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        form label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--color-muted);
+        }
+        form input, form select, form textarea {
+            font: inherit;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid oklch(85% 0 0);
+            border-radius: 4px;
+            background: oklch(100% 0 0);
+            width: 100%;
+        }
+        form input:focus, form select:focus, form textarea:focus {
+            outline: 2px solid var(--color-accent);
+            outline-offset: -1px;
+            border-color: var(--color-accent);
+        }
+        form textarea { resize: vertical; min-height: 4em; font-family: inherit; }
+
+        .log-panel {
+            font-family: ui-monospace, "SF Mono", Consolas, monospace;
+            font-size: 0.85rem;
+            background: oklch(15% 0 0);
+            color: oklch(85% 0 0);
+            padding: 1rem;
+            border-radius: 4px;
+            max-height: 18em;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .log-line { padding: 0.15rem 0; }
+        .log-line.error { color: oklch(78% 0.18 25); }
+        .log-line.ok { color: oklch(78% 0.18 145); }
+
+        nav.back-link {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        nav.back-link a {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+        nav.back-link a:hover { text-decoration: underline; }
+
+        .empty {
+            color: var(--color-muted);
+            font-style: italic;
+            padding: 1.25rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="back-link">
+            <a href="/">← 返回主页</a>
+        </nav>
+
+        <header>
+            <h1>Tick 控制面板</h1>
+            <div class="header-meta">
+                后端: <%= backendUrl %><br>
+                <span id="backend-status" class="pill pill-warn">检测中…</span>
+            </div>
+        </header>
+
+        <section>
+            <div class="grid">
+                <div class="card">
+                    <h2>当前 Tick</h2>
+                    <div class="stat" id="stat-tick">—</div>
+                    <div class="stat-sub">世界时间: <span id="stat-world-time">—</span></div>
+                </div>
+                <div class="card">
+                    <h2>开放伏笔</h2>
+                    <div class="stat" id="stat-loops">—</div>
+                    <div class="stat-sub">底线 ≥3 by Showrunner</div>
+                </div>
+                <div class="card">
+                    <h2>活跃角色</h2>
+                    <div class="stat" id="stat-chars">—</div>
+                    <div class="stat-sub">A/B 级</div>
+                </div>
+                <div class="card">
+                    <h2>风格锚点</h2>
+                    <div class="stat" id="stat-anchors">—</div>
+                    <div class="stat-sub">Narrator 引用</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <button id="btn-run-tick">推进 1 个 tick</button>
+                <button id="btn-pause" class="secondary">暂停</button>
+                <button id="btn-resume" class="secondary">恢复</button>
+                <button id="btn-refresh" class="secondary">刷新状态</button>
+            </div>
+        </section>
+
+        <section>
+            <h2>开放伏笔 (Showrunner 监控)</h2>
+            <div id="loops-container">
+                <p class="empty">尚未加载</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>手动注入事件</h2>
+            <form id="inject-form" class="inject-form">
+                <div>
+                    <label for="evt-description">事件描述</label>
+                    <textarea id="evt-description" name="description" required
+                              placeholder="例如: 城门口陌生信使留下一封血书,信封无名……"></textarea>
+                </div>
+                <div class="row" style="margin: 0;">
+                    <div style="flex: 1;">
+                        <label for="evt-type">事件类型</label>
+                        <select id="evt-type" name="type">
+                            <option value="dramatic">戏剧 (dramatic)</option>
+                            <option value="exogenous">外生 (exogenous)</option>
+                            <option value="endogenous">内生 (endogenous)</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="evt-nv">叙事价值 (0-10)</label>
+                        <input type="number" id="evt-nv" name="narrative_value" min="0" max="10" value="8">
+                    </div>
+                    <div style="flex: 2;">
+                        <label for="evt-visible">可见对象</label>
+                        <input type="text" id="evt-visible" name="visible_to"
+                               placeholder="all | all_in_location | char_id1,char_id2" value="all">
+                    </div>
+                </div>
+                <button type="submit">注入到下一 tick</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>历史 Tick (最近 20)</h2>
+            <div id="history-container">
+                <p class="empty">尚未加载</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>事件统计 (Showrunner 视角)</h2>
+            <div id="stats-container">
+                <p class="empty">尚未加载</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Novelty 警告 (反馈给 Narrator)</h2>
+            <ul id="novelty-list" class="log-panel"></ul>
+        </section>
+
+        <section>
+            <h2>操作日志</h2>
+            <div id="log-panel" class="log-panel"></div>
+        </section>
+    </div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const logPanel = $('#log-panel');
+
+function log(msg, kind = '') {
+    const div = document.createElement('div');
+    div.className = 'log-line' + (kind ? ' ' + kind : '');
+    const ts = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    div.textContent = `[${ts}] ${msg}`;
+    logPanel.insertBefore(div, logPanel.firstChild);
+    while (logPanel.childElementCount > 200) logPanel.lastChild.remove();
+}
+
+async function api(path, opts = {}) {
+    const resp = await fetch(path, {
+        method: opts.method || 'GET',
+        headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
+        body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    if (resp.status === 503) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error('tick_backend_unreachable: ' + (j.detail || ''));
+    }
+    if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`HTTP ${resp.status}: ${text}`);
+    }
+    return resp.json();
+}
+
+async function refreshStatus() {
+    try {
+        const status = await api('/api/tick/status');
+        $('#stat-tick').textContent = status.current_tick;
+        $('#stat-world-time').textContent = status.world_time;
+        $('#stat-loops').textContent = status.open_loop_count;
+        $('#stat-chars').textContent = status.character_count;
+        $('#stat-anchors').textContent = status.style_anchor_count;
+        const sb = $('#backend-status');
+        if (status.is_paused) {
+            sb.className = 'pill pill-warn';
+            sb.textContent = '已暂停';
+        } else {
+            sb.className = 'pill pill-ok';
+            sb.textContent = '运行中';
+        }
+    } catch (e) {
+        const sb = $('#backend-status');
+        sb.className = 'pill pill-danger';
+        sb.textContent = '后端不可达';
+        log('状态刷新失败: ' + e.message, 'error');
+    }
+}
+
+async function refreshLoops() {
+    try {
+        const data = await api('/api/tick/open-loops?top_k=30');
+        const c = $('#loops-container');
+        if (!data.loops || data.loops.length === 0) {
+            c.innerHTML = '<p class="empty">无开放伏笔(Showrunner 会触发 EventInjector)</p>';
+            return;
+        }
+        let html = '<table><thead><tr><th>ID</th><th>类型</th><th>紧急度</th><th>描述</th><th>持续 tick</th></tr></thead><tbody>';
+        for (const l of data.loops) {
+            html += `<tr>
+                <td class="mono">${l.id}</td>
+                <td>${l.type}</td>
+                <td class="num">${l.urgency}</td>
+                <td>${l.description.replace(/</g, '&lt;')}</td>
+                <td class="num">${l.opened_tick}</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        c.innerHTML = html;
+    } catch (e) {
+        log('OpenLoop 加载失败: ' + e.message, 'error');
+    }
+}
+
+async function refreshHistory() {
+    try {
+        const data = await api('/api/tick/history?last_n=20');
+        const c = $('#history-container');
+        if (!data.ticks || data.ticks.length === 0) {
+            c.innerHTML = '<p class="empty">尚无历史 tick</p>';
+            return;
+        }
+        let html = '<table><thead><tr><th>Tick</th><th>世界时间</th><th>Narrator</th><th>字符</th><th>事件数</th><th>变化摘要</th></tr></thead><tbody>';
+        for (const t of data.ticks) {
+            const evtsLen = Array.isArray(t.events_generated) ? t.events_generated.length : 0;
+            html += `<tr>
+                <td class="num">${t.tick_id}</td>
+                <td class="num">${t.world_time}</td>
+                <td>${t.narrator_produced ? '✓' : '○'}</td>
+                <td class="num">${t.narrator_chars || 0}</td>
+                <td class="num">${evtsLen}</td>
+                <td>${(t.state_changes_summary || '').replace(/</g, '&lt;')}</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        c.innerHTML = html;
+    } catch (e) {
+        log('历史加载失败: ' + e.message, 'error');
+    }
+}
+
+async function refreshStats() {
+    try {
+        const stats = await api('/api/tick/event-stats?last_n_ticks=50');
+        const c = $('#stats-container');
+        if (!stats || stats.ticks_sampled === 0) {
+            c.innerHTML = '<p class="empty">尚无统计数据</p>';
+            return;
+        }
+        let html = '<div class="grid">';
+        html += `<div class="card"><h2>采样 tick</h2><div class="stat">${stats.ticks_sampled}</div></div>`;
+        html += `<div class="card"><h2>高价值事件</h2><div class="stat">${stats.high_value_count || 0}</div><div class="stat-sub">narrative_value ≥7</div></div>`;
+        html += `<div class="card"><h2>叙述率</h2><div class="stat">${Math.round((stats.narration_rate || 0) * 100)}%</div></div>`;
+        html += `<div class="card"><h2>平均字符</h2><div class="stat">${Math.round(stats.avg_narrator_chars || 0)}</div></div>`;
+        html += '</div>';
+        if (stats.by_type) {
+            html += '<table style="margin-top: 1rem;"><thead><tr><th>事件类型</th><th>计数</th></tr></thead><tbody>';
+            for (const [t, n] of Object.entries(stats.by_type)) {
+                html += `<tr><td>${t}</td><td class="num">${n}</td></tr>`;
+            }
+            html += '</tbody></table>';
+        }
+        c.innerHTML = html;
+    } catch (e) {
+        log('统计加载失败: ' + e.message, 'error');
+    }
+}
+
+async function refreshNovelty() {
+    try {
+        const data = await api('/api/tick/novelty-warnings');
+        const ul = $('#novelty-list');
+        ul.innerHTML = '';
+        if (!data.warnings || data.warnings.length === 0) {
+            ul.innerHTML = '<li class="log-line">(暂无 Novelty Critic 警告)</li>';
+            return;
+        }
+        for (const w of data.warnings) {
+            const li = document.createElement('li');
+            li.className = 'log-line';
+            li.textContent = '⚠ ' + w;
+            ul.appendChild(li);
+        }
+    } catch (e) {
+        // 静默忽略 - 端点可能未启用
+    }
+}
+
+async function refreshAll() {
+    await Promise.all([
+        refreshStatus(),
+        refreshLoops(),
+        refreshHistory(),
+        refreshStats(),
+        refreshNovelty(),
+    ]);
+}
+
+$('#btn-run-tick').addEventListener('click', async () => {
+    const btn = $('#btn-run-tick');
+    btn.disabled = true;
+    log('推进 tick…');
+    try {
+        const result = await api('/api/tick/run', { method: 'POST', body: {} });
+        const s = result.summary || {};
+        if (s.narrator_produced_text) {
+            log(`✓ tick ${s.tick} 完成: ${s.narrator_output_chars} 字符,${(s.events_generated || []).length} 事件`, 'ok');
+        } else {
+            log(`○ tick ${s.tick} Narrator 沉默 (${s.state_changes_summary || ''})`);
+        }
+        await refreshAll();
+    } catch (e) {
+        log('推进失败: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+$('#btn-pause').addEventListener('click', async () => {
+    try {
+        await api('/api/tick/pause', { method: 'POST', body: {} });
+        log('已发送暂停请求', 'ok');
+        await refreshStatus();
+    } catch (e) { log('暂停失败: ' + e.message, 'error'); }
+});
+
+$('#btn-resume').addEventListener('click', async () => {
+    try {
+        await api('/api/tick/resume', { method: 'POST', body: {} });
+        log('已发送恢复请求', 'ok');
+        await refreshStatus();
+    } catch (e) { log('恢复失败: ' + e.message, 'error'); }
+});
+
+$('#btn-refresh').addEventListener('click', refreshAll);
+
+$('#inject-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const visibleRaw = String(fd.get('visible_to') || '').trim();
+    const visibleTo = visibleRaw.includes(',')
+        ? visibleRaw.split(',').map(s => s.trim()).filter(Boolean)
+        : (visibleRaw ? [visibleRaw] : ['all']);
+    const payload = {
+        description: String(fd.get('description') || '').trim(),
+        type: String(fd.get('type') || 'dramatic'),
+        narrative_value: parseInt(fd.get('narrative_value') || '8'),
+        visible_to: visibleTo,
+    };
+    log('注入事件: ' + payload.description.slice(0, 60) + '…');
+    try {
+        const result = await api('/api/tick/inject-event', { method: 'POST', body: payload });
+        log(`✓ 事件 ${result.event ? result.event.id : '?'} 已注入下一 tick`, 'ok');
+        e.target.reset();
+        await refreshStatus();
+    } catch (err) {
+        log('注入失败: ' + err.message, 'error');
+    }
+});
+
+// 初始加载 + 自动 5s 刷新状态
+refreshAll();
+setInterval(refreshStatus, 5000);
+log('Tick 面板初始化完成');
+</script>
+</body>
+</html>

@@ -27,3 +27,7 @@ novel_frame/backend/data/
 novel_frame/backend/.venv/
 novel_frame/frontend/dist/
 novel_frame/frontend/.env.production
+
+# Windows / git-bash crash dumps
+bash.exe.stackdump
+**/bash.exe.stackdump

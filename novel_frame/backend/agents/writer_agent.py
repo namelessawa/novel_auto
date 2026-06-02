@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import AsyncIterator
 
-from core.llm_client import llm_client
-from core.models import ActionPlan, Section
+from nf_core.llm_client import llm_client
+from memory_system.models import ActionPlan, Section
 
 SYSTEM_PROMPT = """\
 你是一位才华横溢的网络小说作家。请根据提供的行动指南、角色状态、历史细节和前文内容，

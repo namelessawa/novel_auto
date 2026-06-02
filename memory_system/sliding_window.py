@@ -124,3 +124,31 @@ class SlidingWindowMemory:
         """清空滑动窗口"""
         self.content = []
         self.save_to_disk()
+
+    # ------------------------------------------------------------------
+    # v2.x 适配器 - MemoryCompressor / TickState 读取接口
+    # ------------------------------------------------------------------
+
+    def get_sections(self):
+        """返回所有滑动窗口条目的 Section dataclass 列表(v2.x 兼容)。
+
+        SlidingWindow 旧实现以章节聚合内容,这里把每条转换为遗留
+        ``memory_system.models.Section``,供 MemoryCompressor / SummaryTree 消费。
+        """
+        from memory_system.models import Section
+
+        sections = []
+        for idx, item in enumerate(self.content, start=1):
+            title = item.get("title") or f"chapter_{idx}"
+            content = item.get("content") or ""
+            sections.append(
+                Section(
+                    chapter=idx,
+                    section=1,
+                    title=str(title)[:120],
+                    content=str(content),
+                    summary="",
+                    word_count=item.get("char_count", len(content)),
+                )
+            )
+        return sections

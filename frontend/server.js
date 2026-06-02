@@ -4,9 +4,22 @@ const rateLimitMw = require('express-rate-limit');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// ============================================================================
+// v2.x Tick Backend (FastAPI) 代理配置
+// ============================================================================
+// 通过 TICK_BACKEND_URL 环境变量覆盖默认 (http://127.0.0.1:8000)
+// 若后端不可达,/api/tick/* 路由返回 503;/create-novel 和 /continue-novel
+// 仍然 fallback 到旧的 spawn Python 行为
+// ============================================================================
+const TICK_BACKEND_URL = (process.env.TICK_BACKEND_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+const TICK_HEALTH_CACHE_MS = 5000;
+let _tickBackendHealthy = null;
+let _tickBackendCheckedAt = 0;
 
 // ============================================================================
 // 速率限制中间件（CodeQL 识别 express-rate-limit）
@@ -174,6 +187,87 @@ function hasRunningProcess() {
 }
 
 // ============================================================================
+// Tick Backend HTTP 代理工具
+// ============================================================================
+
+/**
+ * 透传 HTTP 请求到 tick 后端,返回 {status, body(string)}。
+ * 失败时 status=0, body=错误描述。
+ */
+function proxyToTickBackend(req, pathOverride) {
+    return new Promise((resolve) => {
+        const targetUrl = new URL((pathOverride || req.originalUrl), TICK_BACKEND_URL);
+        const bodyText = req.method === 'GET' || req.method === 'HEAD'
+            ? null
+            : JSON.stringify(req.body || {});
+        const headers = {
+            'Accept': 'application/json',
+        };
+        if (bodyText) {
+            headers['Content-Type'] = 'application/json';
+            headers['Content-Length'] = Buffer.byteLength(bodyText);
+        }
+
+        const upstream = http.request({
+            method: req.method,
+            host: targetUrl.hostname,
+            port: targetUrl.port || 80,
+            path: targetUrl.pathname + targetUrl.search,
+            headers,
+            timeout: 30000,
+        }, (resp) => {
+            let chunks = [];
+            resp.on('data', (c) => chunks.push(c));
+            resp.on('end', () => {
+                resolve({
+                    status: resp.statusCode || 502,
+                    body: Buffer.concat(chunks).toString('utf8'),
+                    contentType: resp.headers['content-type'] || 'application/json',
+                });
+            });
+        });
+
+        upstream.on('error', (err) => {
+            resolve({ status: 0, body: JSON.stringify({ error: String(err.message || err) }) });
+        });
+        upstream.on('timeout', () => {
+            upstream.destroy();
+            resolve({ status: 504, body: JSON.stringify({ error: 'tick backend timeout' }) });
+        });
+
+        if (bodyText) upstream.write(bodyText);
+        upstream.end();
+    });
+}
+
+async function tickBackendHealthy() {
+    const now = Date.now();
+    if (_tickBackendHealthy !== null && (now - _tickBackendCheckedAt) < TICK_HEALTH_CACHE_MS) {
+        return _tickBackendHealthy;
+    }
+    const result = await proxyToTickBackend({ method: 'GET', originalUrl: '/' });
+    _tickBackendHealthy = result.status >= 200 && result.status < 500;
+    _tickBackendCheckedAt = now;
+    return _tickBackendHealthy;
+}
+
+// 通用代理 - /api/tick/* 全部透传
+app.all('/api/tick/*', async (req, res) => {
+    const result = await proxyToTickBackend(req);
+    if (result.status === 0) {
+        return res.status(503).json({
+            success: false,
+            error: 'tick_backend_unreachable',
+            backend_url: TICK_BACKEND_URL,
+            detail: result.body,
+        });
+    }
+    res.status(result.status);
+    res.setHeader('Content-Type', result.contentType || 'application/json');
+    res.send(result.body);
+});
+
+// ============================================================================
 // 页面路由
 // ============================================================================
 
@@ -182,6 +276,12 @@ app.get('/', (req, res) => {
         topics: getAvailableTopics(),
         currentTopic: currentTopic,
         status: 'ready'
+    });
+});
+
+app.get('/tick', (req, res) => {
+    res.render('tick', {
+        backendUrl: TICK_BACKEND_URL,
     });
 });
 
@@ -678,7 +778,7 @@ app.get('/api/memory/chapter/:topic/:chapterNum', (req, res) => {
 // 小说生成 API（通过环境变量传参，不在代码字符串中拼接用户输入）
 // ============================================================================
 
-app.post('/create-novel', taskLimiter, (req, res) => {
+app.post('/create-novel', taskLimiter, async (req, res) => {
     const { topic } = req.body;
 
     if (!topic || !topic.trim()) {
@@ -695,6 +795,38 @@ app.post('/create-novel', taskLimiter, (req, res) => {
     }
 
     currentTopic = topic;
+
+    // v2.x 优先路径: 检测 tick 后端;就绪则推进 1 个 tick 代替 spawn
+    // 若未 bootstrap 或 tick 后端不可达,fallback 到 v1.x spawn
+    if (process.env.FORCE_LEGACY_GENERATOR !== '1' && await tickBackendHealthy()) {
+        const statusResult = await proxyToTickBackend({ method: 'GET', originalUrl: '/api/tick/status' });
+        if (statusResult.status === 200) {
+            try {
+                const status = JSON.parse(statusResult.body);
+                if (status.character_count > 0) {
+                    // 直接推 1 个 tick 让 Orchestrator 产出第一章
+                    const runResult = await proxyToTickBackend({
+                        method: 'POST', originalUrl: '/api/tick/run', body: {},
+                    });
+                    return res.json({
+                        success: runResult.status === 200,
+                        message: runResult.status === 200
+                            ? `tick 后端已生成新章节`
+                            : `tick 后端推进失败`,
+                        backend: 'tick',
+                        result: runResult.body,
+                        topics: getAvailableTopics(),
+                    });
+                }
+                // 未 bootstrap - 提示用户先跑 bootstrap_prompts CLI
+                console.log('[create-novel] tick backend not bootstrapped, falling back to v1.x spawn');
+            } catch (e) {
+                console.error('[create-novel] status parse failed:', e);
+            }
+        }
+    }
+
+    // v1.x fallback: spawn Python
     const processId = ++processIdCounter;
 
     const pythonProcess = spawn(PYTHON_PATH, [
@@ -704,7 +836,8 @@ app.post('/create-novel', taskLimiter, (req, res) => {
         env: {
             ...process.env,
             PYTHONUNBUFFERED: '1',
-            NOVEL_TOPIC: topic
+            NOVEL_TOPIC: topic,
+            LEGACY_GENERATOR: '1'  // 防 create_novel.py 自己再尝试 HTTP
         }
     });
 
@@ -735,7 +868,7 @@ app.post('/create-novel', taskLimiter, (req, res) => {
     });
 });
 
-app.post('/continue-novel', taskLimiter, (req, res) => {
+app.post('/continue-novel', taskLimiter, async (req, res) => {
     const { topic, mode, customPrompt } = req.body;
 
     if (!topic) {
@@ -754,13 +887,55 @@ app.post('/continue-novel', taskLimiter, (req, res) => {
     }
 
     currentTopic = sanitizedTopic;
+
+    // v2.x 优先路径: 检测 tick 后端
+    if (process.env.FORCE_LEGACY_GENERATOR !== '1' && await tickBackendHealthy()) {
+        const statusResult = await proxyToTickBackend({ method: 'GET', originalUrl: '/api/tick/status' });
+        if (statusResult.status === 200) {
+            try {
+                const status = JSON.parse(statusResult.body);
+                if (status.character_count > 0) {
+                    // 若有 customPrompt 先注入事件
+                    if (customPrompt && typeof customPrompt === 'string' && customPrompt.trim()) {
+                        await proxyToTickBackend({
+                            method: 'POST',
+                            originalUrl: '/api/tick/inject-event',
+                            body: {
+                                description: customPrompt.trim().substring(0, 500),
+                                narrative_value: 7,
+                                visible_to: ['all'],
+                                type: 'dramatic',
+                            },
+                        });
+                    }
+                    const runResult = await proxyToTickBackend({
+                        method: 'POST', originalUrl: '/api/tick/run', body: {},
+                    });
+                    return res.json({
+                        success: runResult.status === 200,
+                        message: runResult.status === 200
+                            ? `tick 后端已推进续写`
+                            : `tick 后端推进失败`,
+                        backend: 'tick',
+                        result: runResult.body,
+                        topics: getAvailableTopics(),
+                    });
+                }
+            } catch (e) {
+                console.error('[continue-novel] status parse failed:', e);
+            }
+        }
+    }
+
+    // v1.x fallback: spawn Python
     const processId = ++processIdCounter;
 
     const env = {
         ...process.env,
         PYTHONUNBUFFERED: '1',
         NOVEL_TOPIC: sanitizedTopic,
-        NOVEL_MODE: '1'
+        NOVEL_MODE: '1',
+        LEGACY_GENERATOR: '1'  // 防 continue_novel.py 自己再尝试 HTTP
     };
 
     // 限制自定义提示词长度

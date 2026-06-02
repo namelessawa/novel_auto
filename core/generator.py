@@ -1,3 +1,24 @@
+# =============================================================================
+# LEGACY (since v2.0 / tick refactor): 此 NovelGenerator 单体类在新 tick 架构中
+# 被以下模块联合替代,本文件保留仅为 create_novel.py / continue_novel.py 等旧 CLI
+# 入口向后兼容。
+#
+#   职责                       新位置
+#   -------------------------------------------------------------------------
+#   章节生成调度               novel_frame/backend/agents/orchestrator.py
+#   写作 LLM 调用              novel_frame/backend/agents/narrator_agent.py
+#                              novel_frame/backend/agents/writer_agent.py
+#   prompt 构建 + token 裁剪   待 P2 提取 (PromptBuilder),逻辑仍在此文件中
+#   记忆模块更新               novel_frame/backend/agents/memory_compressor.py
+#                              novel_frame/backend/agents/update_agent.py
+#   连续性检查                 novel_frame/backend/agents/consistency_guardian.py
+#                              (适配 evaluation.continuity_v2.EnhancedContinuityEvaluator)
+#   章节持久化                 novel_frame/backend/pipeline/engine.py (legacy 路径)
+#                              novel_frame/backend/agents/orchestrator.py (新路径)
+#
+# 新代码不应再 import NovelGenerator。所有新功能应建立在 Orchestrator 上。
+# =============================================================================
+
 import os
 import json
 import re

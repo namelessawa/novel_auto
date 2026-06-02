@@ -1,6 +1,20 @@
 """
 后台任务管理器
-使用 threading 实现异步处理，避免阻塞主线程
+
+# 部分 LEGACY (since v2.0 / tick refactor)
+
+* ``BackgroundTaskManager`` (通用线程池) - **保留**,供 ENABLE_MULTIMEDIA=true 时
+  TTS / 图像 / 视频生成路径异步触发使用。新 tick 架构在 FastAPI asyncio 事件
+  循环下运行,不直接消费此队列。
+
+* ``ChapterPostProcessor`` (章节后处理) - **LEGACY**,记忆更新逻辑已注释为
+  skipped(实际只剩多媒体分支)。tick 架构下后台任务由 Orchestrator 阶段 7
+  周期性 maintenance + ``async`` MemoryCompressor 替代。本类在完整入口迁移
+  完成后可删除。
+
+# 原始 docstring
+
+使用 threading 实现异步处理,避免阻塞主线程
 """
 
 import threading

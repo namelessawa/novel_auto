@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from core.llm_client import llm_client
-from core.models import ActionPlan
+from nf_core.llm_client import llm_client
+from memory_system.models import ActionPlan
 
 SYSTEM_PROMPT = """\
 你是一位资深网文大纲策划师。根据提供的全书梗概、前文内容和当前场景信息，

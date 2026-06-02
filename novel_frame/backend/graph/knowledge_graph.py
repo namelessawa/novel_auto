@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import networkx as nx
 
 from config.settings import settings
-from core.models import (
+from memory_system.models import (
     Entity,
     EntityType,
     GraphSnapshot,

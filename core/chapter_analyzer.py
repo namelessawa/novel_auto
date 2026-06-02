@@ -1,6 +1,18 @@
 """
 章节分析器
-在章节生成完成后，调用 LLM 分析章节内容，提取：
+
+# LEGACY (since v2.0 / tick refactor)
+
+本模块的功能已被 ``novel_frame/backend/agents/update_agent.py`` 的 ``UpdateAgent``
+完整覆盖,且 UpdateAgent 使用更现代的 JSON schema 提取格式 + 知识图谱 / 向量库
+双写。新代码不应再 import ChapterAnalyzer。
+
+保留原因: NovelGenerator (core/generator.py LEGACY) 仍依赖此模块。完整的入口点
+迁移完成后(P2 末或 P3),本文件可与 NovelGenerator 一并删除。
+
+# 原始 docstring
+
+在章节生成完成后,调用 LLM 分析章节内容,提取:
 1. 出场人物及其状态
 2. 角色关系变化
 3. 关键事件

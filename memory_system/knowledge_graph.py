@@ -285,6 +285,102 @@ class KnowledgeGraph:
             lines.append(f"  ... 共 {self._graph.number_of_nodes()} 个实体")
         return "\n".join(lines)
 
+    # ------------------------------------------------------------------
+    # v2.x 适配器 - tick 架构 WorldState / CharacterState 投影
+    # ------------------------------------------------------------------
+
+    def get_character_state(self, character_id: str):
+        """投影一个 character 实体为 tick 架构的 ``CharacterState`` Pydantic。
+
+        Args:
+            character_id: 实体 id
+
+        Returns:
+            CharacterState 或 None(实体不存在 / 非 character 类型)
+        """
+        from .models import CharacterState, Relationship
+
+        entity = self.get_entity(character_id)
+        if entity is None or entity.entity_type != EntityType.CHARACTER:
+            return None
+
+        attrs = entity.attributes or {}
+        # 投影关系: 出边里所有指向 character 类型的目标
+        rels: dict[str, Relationship] = {}
+        for src, tgt, data in self._graph.out_edges(character_id, data=True):
+            target_entity = self.get_entity(tgt)
+            if target_entity is None or target_entity.entity_type != EntityType.CHARACTER:
+                continue
+            edge_attrs = data.get("attributes") or {}
+            rels[tgt] = Relationship(
+                with_character_id=tgt,
+                type=str(data.get("label") or data.get("relation_type") or "stranger"),
+                trust=int(edge_attrs.get("trust", 0)),
+                history_summary=str(edge_attrs.get("history_summary", "")),
+                last_interaction_tick=int(edge_attrs.get("last_interaction_tick", 0)),
+            )
+
+        return CharacterState(
+            character_id=character_id,
+            current_location=str(attrs.get("location", "")),
+            arc_goal=str(attrs.get("arc_goal", attrs.get("goal", ""))),
+            arc_progress=float(attrs.get("arc_progress", 0.0)),
+            known_facts=list(attrs.get("known_facts", []) or []),
+            secrets_kept=list(attrs.get("secrets_kept", []) or []),
+            relationships=rels,
+            emotional_state=str(attrs.get("emotion", attrs.get("emotional_state", "neutral"))),
+            inventory=list(attrs.get("inventory", []) or []),
+            status_effects=list(attrs.get("status_effects", []) or []),
+        )
+
+    def get_world_state_snapshot(self):
+        """聚合所有 LOCATION / FACTION 实体为 tick 架构 ``WorldState``。
+
+        Returns:
+            WorldState Pydantic 模型
+        """
+        from .models import Faction, TickLocation, WorldState
+
+        locations: list[TickLocation] = []
+        for e in self.list_entities(EntityType.LOCATION):
+            attrs = e.attributes or {}
+            locations.append(
+                TickLocation(
+                    id=e.id,
+                    name=e.name,
+                    type=str(attrs.get("type", "region")),
+                    current_state=str(attrs.get("description", "")),
+                    present_characters=list(attrs.get("present_characters", []) or []),
+                    notable_features=list(attrs.get("notable_features", []) or []),
+                )
+            )
+
+        factions: list[Faction] = []
+        for e in self.list_entities(EntityType.FACTION):
+            attrs = e.attributes or {}
+            factions.append(
+                Faction(
+                    id=e.id,
+                    name=e.name,
+                    description=str(attrs.get("description", "")),
+                    territory=list(attrs.get("territory", []) or []),
+                    leader_character_id=attrs.get("leader_character_id"),
+                    allied_factions=list(attrs.get("allied_factions", []) or []),
+                    hostile_factions=list(attrs.get("hostile_factions", []) or []),
+                )
+            )
+
+        return WorldState(
+            world_time=0,
+            era="",
+            current_season="",
+            weather="",
+            locations=locations,
+            factions=factions,
+            active_global_events=[],
+            world_rules=[],
+        )
+
     # -- helpers --------------------------------------------------------------
 
     @staticmethod

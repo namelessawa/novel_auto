@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from core.llm_client import llm_client
-from core.models import ActionPlan, ValidationResult
+from nf_core.llm_client import llm_client
+from memory_system.models import ActionPlan, ValidationResult
 from graph.knowledge_graph import KnowledgeGraph
 
 SYSTEM_PROMPT = """\
