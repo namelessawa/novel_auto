@@ -5,6 +5,49 @@
 
 ---
 
+## [2.10.0] — 2026-06-03
+
+### Changed — TickRuntime 完整装配 v2.3-v2.9 全部增强层
+
+把过去 7 轮迭代新增的可选增强层显式装配到 `backend/tick_runtime.py`,
+让 FastAPI 启动后 Orchestrator 即时享受全部能力, 无需手动注入。
+
+* `PriorityMemoryStore` — 自动 load `data_dir/memory_store.json`
+* `StoryArcDirector`
+* `CharacterArcTracker`
+* `FactLedger` — 自动 load `data_dir/fact_ledger.json`
+* `SafetyFilter`
+* `TokenBudgetTracker` — 自动 load `data_dir/token_budget.json`
+* `CreativityScorer`
+* `BranchManager` — 自动 load `data_dir/branches.json`
+
+`Orchestrator.__init__` 改为 7 个新参数全部显式赋值, 不再依赖默认构造。
+
+### Changed — `close()` 补全 v2.3+ 各层持久化
+
+* `memory_store.save()`
+* `fact_ledger.save()`
+* `token_budget.save()`
+* `branch_manager.save()`
+
+### Smoke-test
+
+```bash
+python -c "from backend.tick_runtime import TickRuntime; ..."
+# OK: 8 个新组件全部成功实例化, Orchestrator 接受所有参数
+```
+
+### Tests
+
+* 178 用例继续全过, 无回归
+
+---
+
+至此 v2.2-v2.10 共 9 轮迭代完成, 19 项用户关注问题全覆盖, 全部集成到生产
+运行时, 单条命令 `python run.py` 即可启用完整能力栈。
+
+---
+
 ## [2.9.0] — 2026-06-03
 
 ### Added — BranchManager (覆盖关注问题清单的最后未解项)

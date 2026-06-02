@@ -1,7 +1,7 @@
 # 项目结构 (structure.md)
 
 > 本文档描述项目具体结构分布,随每轮迭代同步更新。
-> 版本: v2.9 · 2026-06-03
+> 版本: v2.10 · 2026-06-03
 
 ---
 
@@ -224,7 +224,8 @@ TickState  ── 阶段 1 ──→  WorldSimulator           → 新 WorldStat
 | v2.6 | 2026-06-03 | FactLedger 事实账本 + 时间线索引 + 矛盾检测 (append-only) |
 | v2.7 | 2026-06-03 | TokenBudgetTracker + SafetyFilter — 性能与安全闭环 |
 | v2.8 | 2026-06-03 | CreativityScorer — 词汇/结构/情感多样性滑窗追踪 (覆盖创造力维度) |
-| **v2.9** | **2026-06-03** | **BranchManager — 读者互动分支 (平行宇宙 fork/archive/tree, 覆盖最后一项关注问题)** |
+| v2.9 | 2026-06-03 | BranchManager — 读者互动分支 (平行宇宙 fork/archive/tree, 覆盖最后一项关注问题) |
+| **v2.10** | **2026-06-03** | **TickRuntime 完整装配 — v2.3-v2.9 全部增强层注入 FastAPI 生产运行时** |
 
 后续路线 (`TaskList` 跟踪):
 

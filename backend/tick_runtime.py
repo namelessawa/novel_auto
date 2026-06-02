@@ -17,6 +17,7 @@ import os
 from typing import Any
 
 from agents.character_agent import CharacterAgent
+from agents.character_arc_tracker import CharacterArcTracker
 from agents.consistency_guardian import ConsistencyGuardian
 from agents.event_injector import EventInjector
 from agents.memory_compressor import MemoryCompressor
@@ -24,11 +25,18 @@ from agents.narrator_agent import NarratorAgent
 from agents.novelty_critic import NoveltyCritic
 from agents.orchestrator import Orchestrator
 from agents.showrunner import Showrunner
+from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
 from api.tick_routes import set_orchestrator_dependencies
+from memory.memory_store import PriorityMemoryStore
 from memory.summary_tree import SummaryTree
 from memory.tick_state import TickState
+from narrative.branch_manager import BranchManager
+from narrative.creativity_scorer import CreativityScorer
+from narrative.fact_ledger import FactLedger
+from narrative.safety_filter import SafetyFilter
 from nf_core.action_resolver import ActionResolver
+from nf_core.token_budget import TokenBudgetTracker
 from persistence.tick_db import TickDB
 
 logger = logging.getLogger(__name__)
@@ -62,7 +70,7 @@ class TickRuntime:
             os.path.join(self.data_dir, "summary_tree.json")
         )
 
-        # 9 agents
+        # 9 agents (v2.0-v2.1)
         self.world_simulator = WorldSimulator()
         self.narrator = NarratorAgent()
         self.event_injector = EventInjector()
@@ -72,11 +80,27 @@ class TickRuntime:
         self.novelty_critic = NoveltyCritic()
         self.action_resolver = ActionResolver()
 
+        # v2.3-v2.9 增强层 — 全部显式装配, Orchestrator 即时享受全部能力
+        self.memory_store = PriorityMemoryStore(data_dir=self.data_dir)
+        self.memory_store.load()  # 静默 fallthrough
+        self.story_arc_director = StoryArcDirector()
+        self.character_arc_tracker = CharacterArcTracker()
+        self.fact_ledger = FactLedger(data_dir=self.data_dir)
+        self.fact_ledger.load()
+        self.safety_filter = SafetyFilter()
+        self.token_budget = TokenBudgetTracker(data_dir=self.data_dir)
+        self.token_budget.load()
+        self.creativity_scorer = CreativityScorer()
+        # v2.9 BranchManager — 以小说根目录 (而非 data_dir) 为 root
+        # data_dir 已是 <novels>/<id>/, 这里就以它为分支树根
+        self.branch_manager = BranchManager(root_data_dir=self.data_dir)
+        self.branch_manager.load()
+
         # CharacterAgent 实例随 TickState 中已注册的 profile 自动构造
         self.character_agents: dict[str, CharacterAgent] = {}
         self._rebuild_character_agents()
 
-        # Orchestrator 主调度器
+        # Orchestrator 主调度器 — v2.10 显式注入 v2.3-v2.9 全部增强层
         self.orchestrator = Orchestrator(
             tick_state=self.tick_state,
             world_simulator=self.world_simulator,
@@ -90,6 +114,13 @@ class TickRuntime:
             novelty_critic=self.novelty_critic,
             tick_db=self.tick_db,
             main_tracking_character_id=os.environ.get("MAIN_TRACKING_CHARACTER_ID"),
+            memory_store=self.memory_store,
+            story_arc_director=self.story_arc_director,
+            character_arc_tracker=self.character_arc_tracker,
+            fact_ledger=self.fact_ledger,
+            safety_filter=self.safety_filter,
+            token_budget=self.token_budget,
+            creativity_scorer=self.creativity_scorer,
         )
 
     def _rebuild_character_agents(self) -> None:
@@ -116,7 +147,7 @@ class TickRuntime:
         )
 
     def close(self) -> None:
-        # 保存最终状态
+        # 保存最终状态 (含 v2.3-v2.9 各层)
         try:
             self.tick_state.save()
         except Exception as e:
@@ -127,6 +158,22 @@ class TickRuntime:
             )
         except Exception as e:
             logger.error("Final SummaryTree persist failed: %s", e)
+        try:
+            self.memory_store.save()
+        except Exception as e:
+            logger.error("Final MemoryStore save failed: %s", e)
+        try:
+            self.fact_ledger.save()
+        except Exception as e:
+            logger.error("Final FactLedger save failed: %s", e)
+        try:
+            self.token_budget.save()
+        except Exception as e:
+            logger.error("Final TokenBudgetTracker save failed: %s", e)
+        try:
+            self.branch_manager.save()
+        except Exception as e:
+            logger.error("Final BranchManager save failed: %s", e)
         try:
             self.tick_db.close()
         except Exception as e:
