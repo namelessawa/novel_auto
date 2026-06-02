@@ -1,36 +1,16 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Memory System Module (active runtime memory)
+"""Shared data contracts for the backend tick engine.
 
-These are the five memory modules actually wired into ``NovelGenerator``
-(see ``core_generator.py``):
+After the v2.x consolidation only ``memory_system/models.py`` remains here
+— it holds the Pydantic v2 tick contracts (``TickState``, ``CharacterState``,
+``Event``, ``OpenLoop``, ``WorldState`` …) that ``backend/`` imports
+directly.
 
-- Sliding Window      (sliding_window.py)        token-based short-term context
-- Entity State        (entity_state.py)          global state machine + snapshots
-- Hierarchical Summary(hierarchical_summary.py)  three-level summaries
-- Long-Term Memory    (long_term_memory.py)      ChromaDB RAG event store
-- Character Relationship (character_relationship.py) relationship graph
-
-The cognitive-science four-layer rewrite (working / episodic / semantic /
-procedural / unified memory) is unintegrated and now lives under
-``experimental/memory_system/``. Import it explicitly from there if needed.
+All v1.x memory modules (sliding window / entity state / hierarchical
+summary / long-term memory / character relationship / knowledge graph
+duplicate) live in ``old/memory_system/``. The active tick-era memory
+implementations now live under ``backend/memory/`` and ``backend/graph/``.
 """
 
-from .sliding_window import SlidingWindowMemory
-from .entity_state import EntityStateTracker
-from .hierarchical_summary import HierarchicalSummarizer
-from .long_term_memory import LongTermEventMemory
-from .character_relationship import CharacterRelationshipGraph
-from .knowledge_graph import KnowledgeGraph
 from . import models
 
-__all__ = [
-    'SlidingWindowMemory',
-    'EntityStateTracker',
-    'HierarchicalSummarizer',
-    'LongTermEventMemory',
-    'CharacterRelationshipGraph',
-    'KnowledgeGraph',
-    'models',
-]
+__all__ = ["models"]

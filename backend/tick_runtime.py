@@ -4,7 +4,7 @@
 依赖容器。
 
 设计要点:
-* 单 novel_id 单 Orchestrator 实例(目前 novel_frame 单小说运行模型)
+* 单 novel_id 单 Orchestrator 实例(当前 backend 单小说运行模型)
 * CharacterAgent 实例数随 TickState.character_profiles 增长
 * tick_routes API 通过 set_orchestrator_dependencies() 拿到引用
 * main.py FastAPI 启动事件触发 build_orchestrator(); 关闭事件触发 close()

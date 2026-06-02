@@ -4,9 +4,9 @@
 本文件同时承载两套契约,刻意保留分层:
 
 1. **遗留 dataclass 契约**(``Entity`` / ``Relation`` / ``Section`` / ``ActionPlan``
-   / ``ValidationResult`` / ``GraphSnapshot`` 等) - 供 ``knowledge_graph.py``、
-   ``novel_frame`` 旧管线(outline → retrieval → validation → writer → update)
-   使用。frozen dataclass、零依赖,接口稳定不动。
+   / ``ValidationResult`` / ``GraphSnapshot`` 等) - 供 ``backend/graph/knowledge_graph.py``
+   与节级管线(outline → retrieval → validation → writer → update)使用。
+   frozen dataclass、零依赖,接口稳定不动。
 
 2. **tick 架构 Pydantic v2 契约**(``WorldState`` / ``CharacterProfile`` /
    ``CharacterState`` / ``Event`` / ``OpenLoop`` / ``MemoryEntry`` /
@@ -29,7 +29,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 # ---------------------------------------------------------------------------
-# 遗留 dataclass 契约 (knowledge_graph / 旧 novel_frame 管线)
+# 遗留 dataclass 契约 (knowledge_graph / 节级管线)
 # ---------------------------------------------------------------------------
 
 

@@ -3,14 +3,10 @@
 __pycache__/
 *.pyc
 *.pyo
-results/
-temp/
 .idea/
 .qwen/
 node_modules/
 *.log
-memory_system/long_term_memory_db/
-memory_system/entity_snapshots/
 
 # Test / lint caches
 .coverage
@@ -21,12 +17,25 @@ htmlcov/
 # Claude session state
 .claude/
 
-# novel_frame 本地配置 / 运行时数据（含密钥）
-novel_frame/config.json
-novel_frame/backend/data/
-novel_frame/backend/.venv/
-novel_frame/frontend/dist/
-novel_frame/frontend/.env.production
+# 本地配置 / 运行时数据(含密钥)
+config.json
+backend/data/
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+frontend/dist/
+frontend/.env.production
+
+# 进程启动时若 config.json 用了相对路径,会在工作目录自动创建这些
+/data/
+/results/
+/temp/
+
+# 归档目录里 v1.x 运行数据
+old/results/
+old/temp/
+old/memory_system/long_term_memory_db/
+old/memory_system/entity_snapshots/
 
 # Windows / git-bash crash dumps
 bash.exe.stackdump

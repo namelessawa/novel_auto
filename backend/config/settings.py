@@ -1,11 +1,10 @@
 """Settings loaded from the project-root config.json.
 
 Bridge note:
-当 novel_frame 与主项目（novel_auto）位于同一仓库时，会优先使用主项目
-``core/config.py`` 的 ``get_active_llm_config()`` 作为 LLM 配置来源
-（这样 .env 里的 ``LLM_PROVIDER`` / MiMo 切换对两套后端同时生效）。
-config.json 仍然作为 memory/vector_db/server 等 novel_frame 特有配置的来源，
-且当主项目不可用时作为兜底 LLM 配置来源。
+LLM 凭据的真正来源是项目根 ``.env``;``core/config.py`` 的
+``get_active_llm_config()`` 暴露 active provider 给后端。
+``config.json`` 仍然作为 memory/vector_db/server 等非 LLM 配置的来源,
+当 ``.env`` 缺失时也可兜底 LLM 段。
 """
 
 from __future__ import annotations
@@ -15,22 +14,19 @@ import os
 import sys
 from dataclasses import dataclass, field
 
-_CONFIG_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "config.json"
+# backend/config/settings.py → ../.. = 项目根
+_PROJECT_ROOT = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
 )
-
-# 主项目根目录（novel_auto/）— novel_frame 位于其下一层
-_MAIN_PROJECT_ROOT = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..")
-)
+_CONFIG_PATH = os.path.join(_PROJECT_ROOT, "config.json")
+_MAIN_PROJECT_ROOT = _PROJECT_ROOT  # 保留别名兼容(单仓库后两者相同)
 
 
 def _try_load_main_project_llm() -> dict | None:
     """尝试从主项目 core/config.py 读取 active LLM provider。
 
-    通过 importlib 以独立模块名加载 (``_main_project_config``)，避免污染
-    ``sys.modules['core']`` —— 否则会与 novel_frame/backend/core 包冲突。
-    失败时返回 None — 调用方回退到 config.json。
+    通过 importlib 以独立模块名加载 (``_main_project_config``),避免污染
+    ``sys.modules['core']``。失败时返回 None — 调用方回退到 config.json。
     """
     import importlib.util
 

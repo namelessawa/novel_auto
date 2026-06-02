@@ -4,207 +4,154 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-无限小说生成系统 (Infinite Novel Generation System) - An AI-powered novel generation system using DeepSeek API with a four-layer memory mechanism for coherent, continuous story generation.
+无限小说生成系统 — 单栈 FastAPI + React/Vite,9 Agent + 7 阶段 Tick 调度的
+多智能体小说生成系统。设计哲学来自
+[`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
+**故事是模拟的副产品,Narrator 选择性讲述**。
 
-## Core Architecture
+> v1.x 章节驱动单体生成器已整体归档到 `old/`,不参与运行时。详见 `CHANGELOG.md` 2.1.0。
 
-### Active Memory System (wired into `NovelGenerator`)
+## 核心架构
 
-The running pipeline maintains story coherence through these modules in `memory_system/`, all of which `core/generator.py` imports and updates:
+### 9 Agent + 7 阶段 Tick 循环
 
-1. **Sliding Window (`sliding_window.py`)** - Short-term memory retaining recent text, measured by **tokens** (`SLIDING_WINDOW_MAX_TOKENS`, default 2500) via `utils/token_counter.py`. The `max_chars` parameter is kept only for backward compatibility.
-2. **Entity State Tracker (`entity_state.py`)** - Global state machine tracking characters, locations, and world rules with per-chapter snapshots
-3. **Hierarchical Summarizer (`hierarchical_summary.py`)** - Three-level summaries: high-level outline, mid-level story arcs, low-level chapter summaries
-4. **Long-Term Memory (`long_term_memory.py`)** - RAG-based vector storage using ChromaDB for semantic retrieval of historical events
-5. **Character Relationship Graph (`character_relationship.py`)** - Tracks inter-character relationships
-6. **Knowledge Graph (`knowledge_graph.py`)** - **新增 (阶段三)** NetworkX 有向图，实体/关系建模 + 快照回滚。可通过 `NovelGenerator(enable_knowledge_graph=True)` 启用（默认开启）。与 `character_relationship.py` 并行存在。共享 `memory_system/models.py` 的 dataclass。
+| # | Agent | 频率 | LLM | 路径 |
+|---|-------|------|-----|------|
+| 0 | Orchestrator | 每 tick | ❌ | `backend/agents/orchestrator.py` |
+| 1 | WorldSimulator | 每 tick | small | `backend/agents/world_simulator.py` |
+| 2 | EventInjector | 3-5 tick | medium | `backend/agents/event_injector.py` |
+| 3 | CharacterAgent×N | 每 tick | A=strong/B=medium | `backend/agents/character_agent.py` |
+| 4 | ActionResolver | 每 tick | ❌ | `backend/nf_core/action_resolver.py` |
+| 5 | NarratorAgent | 每 tick | strongest→medium | `backend/agents/narrator_agent.py` |
+| 6 | Showrunner | 每 5 tick | medium | `backend/agents/showrunner.py` |
+| 7 | MemoryCompressor | 每 50 tick | small | `backend/agents/memory_compressor.py` |
+| 8 | ConsistencyGuardian | 每 30 tick | continuity_v2 | `backend/agents/consistency_guardian.py` |
+| 9 | NoveltyCritic | 每 20 tick | small | `backend/agents/novelty_critic.py` |
 
-> **There is a second, parallel memory architecture that is NOT yet wired in** — see "Built-but-unintegrated modules" below before assuming a module is live.
+### 多 LLM 提供商
 
-### Multi-Provider LLM Configuration
+`core/config.py` 通过 `LLM_PROVIDER` 环境变量切换:
+- `deepseek` (默认), `mimo` (小米), `custom` (任意 OpenAI 兼容)
 
-`core/config.py` 现支持多 LLM 提供商（通过 `LLM_PROVIDER` 环境变量切换）：
-- `deepseek` (默认): `DEEPSEEK_*` 环境变量
-- `mimo` (小米): `MIMO_*` 环境变量，base_url 默认 `https://token-plan-cn.xiaomimimo.com/v1`
-- `custom`: `CUSTOM_*` 环境变量，任意 OpenAI 兼容端点
+`backend/config/settings.py` 用 `importlib` 加载 `core/config.py:get_active_llm_config()`,
+读取 `.env`。`.env` 缺失时回落到根 `config.json`。
 
-运行时调用 `core.config.get_active_llm_config()` 获取 `{provider, label, api_key, base_url, model, max_tokens, temperature, timeout}`。`NovelGenerator` 自动使用 active provider；Express `/api/config` 与前端 UI 提供切换控件。
+### 数据存储
 
-### Multi-Novel Project Management
-
-`core/novel_manager.py` 维护 `results/manifest.json`，跟踪每本小说的 `id / title / created_at / updated_at`。已有 `results/{topic}/` 目录会自动 backfill 到 manifest。前端 Express `/api/novels` GET / POST / PUT / DELETE 暴露管理能力。
-
-### Parallel FastAPI Agent Backend (`agent_backend/`)
-
-阶段四并行接入：`agent_backend/` 是一个薄壳启动器，通过 subprocess 启动 `novel_frame/backend/main.py` (FastAPI + SSE)，提供 Agent-style 多智能体生成管线（outline → retrieval → validation → writer → update）。
-
-- 启动: `python -m agent_backend --port 8000`
-- LLM 配置: 通过 `novel_frame/backend/config/settings.py` 的桥接逻辑读取主项目 `.env` 的 active provider；切换提供商无需重启
-- 数据目录: `novel_frame/backend/data/novels/{novel_id}/` (与主项目 `results/` 并存)
-- 与主项目 CLI/Express 后端**并行**运行，互不干扰
-
-### Key Components
-
-The runtime engine lives under `core/` (a single Python package that `core/__init__.py` re-exports). Only the four entry-point scripts (`main.py`, `create_novel.py`, `continue_novel.py`, `validate_system.py`) remain at the project root.
-
-- **`core/generator.py`** - Main `NovelGenerator` class orchestrating all modules. Import as `from core import NovelGenerator`.
-- **`core/llm_client.py`** - OpenAI SDK wrapper supporting DeepSeek API with streaming and JSON mode
-- **`core/chapter_analyzer.py`** - LLM-based extraction of characters, relationships, events from chapters
-- **`core/background_task.py`** - Threading-based async post-processing for memory updates
-- **`core/embedding_service.py`** - Sentence Transformers for vector embeddings (BAAI/bge-small-zh-v1.5)
-- **`core/config.py`** - Centralized configuration loaded from environment variables (`from core.config import ...`)
-- **`evaluation/continuity_v2.py`** - `EnhancedContinuityEvaluator`, the **active** multi-dimensional continuity scorer used by `NovelGenerator`. (The legacy `continuity_evaluator.py` has been deleted.)
-- **`main.py`** - Interactive menu entry point dispatching to `create_novel.py` / `continue_novel.py`
-
-### Data Flow
-
-```
-User Input → NovelGenerator.generate_next_chapter()
-    → _build_full_prompt() (aggregates all memory contexts)
-    → LLMClient.generate() → Chapter Content
-    → EnhancedContinuityEvaluator.evaluate() (multi-dimensional; if prev chapter exists)
-    → Optimize via generate_fix_prompt() if score < CONTINUITY_THRESHOLD
-    → Save chapter → ChapterAnalyzer.analyze()
-    → apply_analysis_to_memory() → Update all memory modules
-```
-
-### Built-but-unintegrated modules (IMPORTANT)
-
-Several subsystems exist in the tree but are **not imported by `core/generator.py` or the runtime pipeline**. They have been quarantined under `experimental/`. Treat them as in-progress scaffolding, not live behavior. Verify with `grep` before assuming any is active:
-
-- **`experimental/memory_system/`** — cognitive-science four-layer memory: `unified_memory.py` (`UnifiedMemorySystem`) plus `working_memory.py`, `episodic_memory.py`, `semantic_memory.py`, `procedural_memory.py`. Intended to eventually replace the five active modules under `memory_system/`, but only wired to itself.
-- **`experimental/core/`** — `event_bus.py`, `llm_scheduler.py`, `plugin_manager.py` (event-driven plugin architecture / multi-LLM scheduling). Note: distinct from the live `core/` package at the project root.
-- **`experimental/plot_engine/`** — `foreshadowing.py`, `story_arc.py` (foreshadowing lifecycle and multi-thread arc management).
-- **`experimental/evaluation/`** — `context_integrity.py` and `refinement.py`. Only `evaluation/continuity_v2.py` (live) is wired in.
-
-See `experimental/README.md` for the quarantine rationale and the steps required to integrate any of these modules. `IMPLEMENTATION_PLAN.md`, `PROGRESS_SUMMARY.md`, and `REFACTORING_REPORT.md` track the original migration plan.
+`backend/data/novels/{novel_id}/` 下:
+- `tick_state.json` — Pydantic v2 dump(WorldState + CharacterProfile×N + OpenLoop + …)
+- `summary_tree.json` — 分层摘要 + L3 传说
+- `ticks.db` — SQLite WAL (tick_log + events 两表)
+- `knowledge_graph.json` + `snapshots/` — NetworkX 图 + 每 50 tick 快照
+- `chroma_db/` — 向量索引
+- `narratives/tick_NNNNNN.txt` — Narrator 产出
 
 ## Commands
 
-### Setup
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Configure API keys (create .env file)
-cp .env.example .env
-# Edit .env with DEEPSEEK_API_KEY and optionally DASHSCOPE_API_KEY
-```
-
-### Running
-```bash
-# Terminal mode - create new novel
-python create_novel.py
-
-# Terminal mode - continue existing novel
-python continue_novel.py
-
-# Frontend mode (Express + ejs，主项目原前端)
-cd frontend && npm install && npm start
-# Access at http://localhost:8080
-
-# Agent backend (FastAPI + SSE，阶段四并行接入)
-python -m agent_backend --port 8000
-# 然后访问 novel_frame 自带的 Vite/React 前端 (cd novel_frame/frontend && npm i && npm run dev)
-# 或直接调用 REST/SSE API：http://localhost:8000/api/...
-```
-
-### Testing
-A `pytest` suite lives in `tests/` (fixtures in `tests/conftest.py`; unit tests under `tests/unit/`, with memory tests in `tests/unit/memory/`). `tests/integration/` exists but is currently empty. There is no `pytest.ini`/`pyproject.toml` config — pass paths explicitly.
+### 开发循环
 
 ```bash
-# Run all unit tests
-python -m pytest tests/unit/ -v
+# 安装依赖
+pip install -r requirements-dev.txt
+cd frontend && npm install && cd ..
 
-# Run with coverage report
-python -m pytest tests/unit/ --cov=. --cov-report=term-missing
+# 一键启动前后端
+start.bat                    # Windows
+./start.sh                   # macOS/Linux
 
-# Run a single test file / single test
-python -m pytest tests/unit/test_token_counter.py -v
-python -m pytest tests/unit/test_token_counter.py::test_name -v
+# 单独启动
+python run.py --reload                            # 后端 → http://127.0.0.1:8000
+cd frontend && npm run dev                        # 前端 → http://127.0.0.1:3000/nw/
+
+# 冷启动一个新世界
+python -m backend.bootstrap_prompts --novel-id mountain --seed "..."
+
+# 推进 tick
+curl -X POST http://127.0.0.1:8000/api/tick/run
 ```
 
-Coverage is currently concentrated in the leaf utilities/evaluators (`token_counter`, `sliding_window`, `continuity_v2`, `embedding_service`); `core/llm_client.py` and `core/generator.py` are largely untested because they require live LLM calls — mock the LLM when adding tests for them. The frontend `npm test` script is a placeholder no-op.
+### 测试
 
-## Configuration
+```bash
+# 全部测试
+python -m pytest backend/tests/ -v
 
-All configuration is centralized in `core/config.py`. Key settings loaded from environment variables:
+# 单文件
+python -m pytest backend/tests/test_orchestrator_p0.py -v
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `LLM_PROVIDER` | 当前生效提供商 (`deepseek` / `mimo` / `custom`) | `deepseek` |
-| `LLM_MAX_TOKENS` | 共享 max_tokens | `8192` |
-| `LLM_TEMPERATURE` | 共享 temperature | `0.7` |
-| `LLM_TIMEOUT` | 共享 API 超时秒数 | `120` |
-| `DEEPSEEK_API_KEY` | DeepSeek API key | - |
-| `DEEPSEEK_BASE_URL` | DeepSeek endpoint | `https://api.deepseek.com/v1` |
-| `DEEPSEEK_MODEL` | DeepSeek model name | `deepseek-chat` |
-| `MIMO_API_KEY` | MiMo (小米) API key | - |
-| `MIMO_BASE_URL` | MiMo endpoint | `https://token-plan-cn.xiaomimimo.com/v1` |
-| `MIMO_MODEL` | MiMo model name | `mimo-chat` |
-| `CUSTOM_API_KEY` | 自定义提供商 API key | - |
-| `CUSTOM_BASE_URL` | 自定义提供商 endpoint | - |
-| `CUSTOM_MODEL` | 自定义提供商 model | - |
-| `DASHSCOPE_API_KEY` | DashScope API key (for images) | - |
-| `ENABLE_MULTIMEDIA` | Enable TTS/image/video generation | `false` |
-| `SLIDING_WINDOW_MAX_TOKENS` | Short-term memory size | `2500` |
-| `CONTINUITY_THRESHOLD` | Chapter continuity score threshold | `80.0` |
+# 单用例
+python -m pytest backend/tests/test_orchestrator_p0.py::test_name -v
 
-## Frontend
-
-Express.js server in `frontend/server.js` provides:
-- Web UI at `/` for creating/continuing novels
-- REST API endpoints for topics, chapters, memory system data
-- Process management for Python generation tasks
-- Multimedia file serving
-
-The frontend communicates with Python scripts via environment variables (`NOVEL_TOPIC`, `NOVEL_CUSTOM_PROMPT`).
-
-## Important Patterns
-
-### Memory Module Interface
-Each memory module follows a consistent pattern:
-- `__init__(memory_dir: str)` - Initialize with storage directory
-- `load_from_disk()` / `save_to_disk()` - Persistence
-- `to_text_description()` - Format for LLM prompts
-- `clear()` - Reset state
-
-### Token-Aware Prompt Building
-`_build_full_prompt()` in `core/generator.py` implements adaptive token reduction:
-- Priority order for reduction: RAG → Sliding Window → Hierarchy → Entities
-- Monitors token count via `tiktoken`
-- Iteratively reduces context if exceeding 6000 token threshold
-
-### Path Safety
-All file operations validate paths stay within project directory:
-```python
-def _safe_path(self, path: str) -> str:
-    project_root = Path(__file__).parent.resolve()
-    safe = Path(path).resolve()
-    if not str(safe).startswith(str(project_root)):
-        raise ValueError(f"Unsafe path: {path}")
-    return str(safe)
+# 覆盖率
+python -m pytest backend/tests/ --cov=backend --cov-report=term-missing
 ```
 
-## Output Structure
+测试用 `conftest.py` 的 `mock_llm` fixture 替换 `nf_core.llm_client.llm_client.chat`,
+不依赖真实 LLM。
 
+### 生产构建
+
+```bash
+cd frontend && npm run build      # 产物 → frontend/dist/
+python run.py                     # FastAPI 自动 mount frontend/dist 到 /nw/
 ```
-results/
-└── {topic_name}/
-    ├── chapter_001_第一章.txt
-    ├── chapter_002_第二章.txt
-    ├── sliding_window.json
-    ├── entity_state.json
-    ├── entity_snapshots/
-    │   ├── chapter_001.json
-    │   └── chapter_002.json
-    ├── hierarchical_summary.json
-    ├── long_term_events.json
-    ├── long_term_memory_db/  (ChromaDB)
-    ├── character_relationships.json
-    └── multimedia/
-        └── chapter_001/
-            ├── audio/
-            ├── images/
-            └── video/
-```
+
+## 关键路径
+
+| 文件 | 作用 |
+|------|------|
+| `backend/main.py` | FastAPI 入口 + 静态资源 mount + lifecycle 钩子 |
+| `backend/tick_runtime.py` | Orchestrator + TickState + TickDB 单例容器 |
+| `backend/bootstrap_prompts.py` | 5 prompt 冷启动 CLI |
+| `backend/api/tick_routes.py` | 14 条 tick 控制 REST 端点 |
+| `backend/api/routes.py` | 节级管线 REST + SSE(legacy 节级管线) |
+| `backend/config/settings.py` | `.env` + `config.json` 双源配置 |
+| `backend/nf_core/llm_client.py` | OpenAI SDK 包装,支持 streaming + JSON mode |
+| `backend/nf_core/action_resolver.py` | 纯 Python 行动冲突解析 |
+| `backend/nf_core/prompt_builder.py` | Token 自适应裁剪 |
+| `core/config.py` | 多 provider 路由,backend 通过 importlib 加载 |
+| `memory_system/models.py` | Pydantic v2 tick 契约 + 遗留 dataclass |
+| `evaluation/continuity_v2.py` | ConsistencyGuardian 复用的连贯性评估器 |
+| `frontend/vite.config.js` | base=/nw/,/api → 8000 proxy |
+| `frontend/src/` | React 18 + react-force-graph-2d + react-markdown |
+| `run.py` | 根级启动入口,等价 uvicorn backend.main:app --app-dir backend |
+
+## 路径常量约定
+
+- backend 内大多数模块通过 `sys.path.insert` 把 `backend/` 和项目根加入路径,
+  然后用裸 import:`from agents.X`, `from memory.tick_state`, `from memory_system.models`
+- 入口脚本 (main.py / bootstrap_prompts.py / tests/conftest.py) 负责设置 sys.path
+- 不要在 backend 子模块里写 `from backend.X` —— 保持原有的裸 import 风格
+
+## 重要模式
+
+### Pydantic v2 契约
+所有 tick 数据契约在 `memory_system/models.py`,带 `model_dump_json()` / `model_validate_json()`,
+FastAPI 直接消费,SQLite 序列化与 SSE 推送都靠它。
+
+### 原子写
+TickState / SummaryTree 都用 `tempfile.mkstemp + os.replace` 原子写,
+防止崩溃留下半截文件。
+
+### 路径安全
+backend 内所有文件操作通过 `TickState.data_dir` 走绝对路径,不接受用户输入路径拼接。
+
+### Narrator 沉默
+事件总价值 < 5 时 Narrator 跳过 — 这是 feature,不是 bug。
+长期沉默通过 `inject-event` API 或 `OpenLoop ≥ 3` 触发。
+
+## 测试约定
+
+测试文件:`backend/tests/test_*.py`,8 个文件 50 个用例。
+
+- 用 `mock_llm` fixture 控制 LLM 输出
+- `mock_llm.set_responses([dict, str, ...])` 排队下一组返回
+- 不依赖真实 LLM 调用,测试 2.8 秒全过
+- pytest 配置:根级无 `pytest.ini`,直接 `python -m pytest backend/tests/`
+
+## 不要
+
+- ❌ 重新引入 `core.NovelGenerator` 链路(章节式生成)— 已归档到 `old/core/`
+- ❌ 在 backend 子模块写 `from backend.X` — 用裸 import 即可
+- ❌ 改动 `old/` 内容 — 那是只读归档
+- ❌ 在 `config.json` 里硬编码 API key — 放 `.env`
