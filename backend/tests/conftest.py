@@ -1,7 +1,7 @@
-"""pytest fixtures for novel_frame backend tests.
+"""pytest fixtures for the backend (tick-architecture) tests.
 
 确保两件事:
-1. ``PROJECT_ROOT`` 和 ``novel_frame/backend`` 都加入 ``sys.path``,
+1. ``PROJECT_ROOT`` 和 ``backend/`` 都加入 ``sys.path``,
    测试可以 ``from memory_system.models import ...`` 也可以
    ``from agents.xxx import ...``
 2. 提供 ``mock_llm`` fixture - 把 ``nf_core.llm_client.llm_client.chat``
@@ -20,7 +20,8 @@ import pytest
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _BACKEND_DIR = os.path.abspath(os.path.join(_THIS_DIR, ".."))
-_PROJECT_ROOT = os.path.abspath(os.path.join(_THIS_DIR, "..", "..", ".."))
+# backend/ 现已位于项目根,因此 PROJECT_ROOT 只需向上两层
+_PROJECT_ROOT = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
 
 # PROJECT_ROOT 在前 - 让 memory_system / utils / core 等顶级包能被 import
 for p in (_PROJECT_ROOT, _BACKEND_DIR):

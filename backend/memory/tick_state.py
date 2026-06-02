@@ -45,7 +45,7 @@ class TickState:
     """Mutable tick state with atomic JSON persistence.
 
     实例化时 ``data_dir`` 必须为绝对路径,通常为
-    ``novel_frame/backend/data/novels/{novel_id}/``。
+    ``backend/data/novels/{novel_id}/``。
     """
 
     def __init__(self, data_dir: str) -> None:

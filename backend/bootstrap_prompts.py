@@ -10,7 +10,7 @@
 
 用法:
 
-    python -m novel_frame.backend.bootstrap_prompts \\
+    python -m backend.bootstrap_prompts \\
         --novel-id mountain \\
         --seed "宋代仿古,边境与中央的张力" \\
         --positioning "古典含蓄、心理白描" \\
@@ -31,9 +31,9 @@ import sys
 import uuid
 from pathlib import Path
 
-# 确保 backend 在 sys.path 中
+# 确保 backend 与项目根都在 sys.path 中
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
-_PROJECT_ROOT = os.path.abspath(os.path.join(_BACKEND_DIR, "..", ".."))
+_PROJECT_ROOT = os.path.abspath(os.path.join(_BACKEND_DIR, ".."))
 for p in (_PROJECT_ROOT, _BACKEND_DIR):
     if p not in sys.path:
         sys.path.insert(0, p)
@@ -376,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--data-dir",
         default=None,
-        help="数据目录,默认 novel_frame/backend/data/novels/<id>",
+        help="数据目录,默认 backend/data/novels/<id>",
     )
     parser.add_argument("--seed", required=True, help="世界种子描述")
     parser.add_argument(
@@ -412,7 +412,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     print(f"✓ Bootstrap complete: {data_dir}")
-    print(f"  启动 backend: ACTIVE_NOVEL_DATA_DIR={data_dir} python -m agent_backend")
+    print(f"  启动 backend: ACTIVE_NOVEL_DATA_DIR={data_dir} python run.py")
     return 0
 
 
