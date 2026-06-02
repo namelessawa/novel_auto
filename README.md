@@ -71,6 +71,27 @@
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
 
+### 创造力评分器 (v2.8 新增)
+
+> 不让系统渐进套路化 — 滑窗追踪词汇/结构/情感三维多样性, 退化时主动 alert。
+
+`backend/narrative/creativity_scorer.py` 提供 `CreativityScorer`:
+
+| 维度 | 指标 | 退化警报 |
+|------|------|---------|
+| 词汇 | TTR (type-token ratio) | `CRX_LEX` (>20% drop) |
+| 结构 | sentence_len_std/mean | `CRX_STRUCT` (>20% drop) |
+| 情感 | 情感类别数 (8 类词典) | `CRX_EMO` (>20% drop, 单类时 high) |
+
+**工作流**:
+1. 每段叙述后 `ingest_paragraph(text, tick)` 计算指标
+2. 前 `baseline_size` (默认 20) 段锁定为基线
+3. 之后每段对比最近 `window_size` (默认 10) 与基线的差
+4. 退化 > 20% → alert 入报告
+5. Orchestrator 把 alert 翻译为 `[创造力警报 CRX_LEX]` 注入下 tick Narrator
+
+每条 alert 自带 `advice`, 可直接作为下段写作方向提示。
+
 ### Token 预算 + 安全过滤 (v2.7 新增)
 
 > 不让成本失控 — 三层视图记账 + 退化决策 + Narrator 落盘前安全检查。

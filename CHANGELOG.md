@@ -5,6 +5,49 @@
 
 ---
 
+## [2.8.0] — 2026-06-03
+
+### Added — CreativityScorer (覆盖最后一项关注问题)
+
+针对主 Agent 关注问题清单的最后一项:
+* **缺乏真正的创造力与情感体验** — 不做审美判断, 而是测量"系统是否在
+  渐进套路化"。滑窗指标显著低于基线时触发 alert, 注入 Narrator 提示
+  下段调整方向
+
+### Added — `backend/narrative/creativity_scorer.py`
+
+* `compute_metrics(text, tick)` — 全确定性, 推理 <1ms:
+  * 词汇: token_count / unique_token_count / hapax_count / 重复 2-gram
+  * 结构: 句长 mean/std / opening_signature
+  * 情感: detected_emotions / emotional_categories (中文情感词典 8 类)
+* `CreativityScorer` 滑窗追踪:
+  * `window_size` (默认 10) — 当前窗口
+  * `baseline_size` (默认 20) — 锁定后的基线
+  * `drop_threshold_pct` (默认 20%) — 退化判定阈值
+  * `ingest_paragraph` 后 `history` 自动裁剪到 `window + baseline`
+* 三类 alert:
+  * `CRX_LEX` — TTR 退化 > 20% (medium)
+  * `CRX_STRUCT` — 句长 std 退化 > 20% (medium)
+  * `CRX_EMO` — 情感类别数退化 > 20% (medium / 单类时升级 high)
+* 每条 alert 含 `advice` 字段直接可注入 Narrator
+
+### Changed — Orchestrator 接入
+
+* 新参数 `creativity_scorer: CreativityScorer | None` (默认自建)
+* Narrator 落盘后 `ingest_paragraph`, 缓存 `_last_creativity_report`
+* `_build_creativity_hints()` — 翻译为 `[创造力警报 CRX_LEX medium]` 前缀
+  提示行注入下 tick Narrator 的 `recent_chapter_summaries`
+
+### Tests
+
+* `backend/tests/test_creativity_scorer.py` — 新增 13 用例
+  * compute_metrics 空文本 / 基础 / 情感识别 / 重复 TTR 低 / 多样 TTR 高
+  * Scorer baseline 锁定 / 未锁前 report 空 / 词汇退化 / 情感退化 / 稳定不报警 /
+    dict 序列化 / history 上限 / drop_pct 区间
+* 全套 165 用例通过
+
+---
+
 ## [2.7.0] — 2026-06-03
 
 ### Added — TokenBudgetTracker + SafetyFilter (性能与安全闭环)

@@ -46,6 +46,7 @@ from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
 from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.tick_state import TickState
+from narrative.creativity_scorer import CreativityReport, CreativityScorer
 from narrative.fact_ledger import Fact, FactLedger
 from narrative.safety_filter import SafetyFilter
 from nf_core.token_budget import TokenBudgetTracker, get_global_tracker, set_global_tracker
@@ -143,6 +144,7 @@ class Orchestrator:
         fact_ledger: FactLedger | None = None,
         safety_filter: SafetyFilter | None = None,
         token_budget: TokenBudgetTracker | None = None,
+        creativity_scorer: CreativityScorer | None = None,
     ) -> None:
         self._tick_state = tick_state
         self._world_simulator = world_simulator
@@ -198,6 +200,10 @@ class Orchestrator:
         except Exception as e:  # pragma: no cover
             logger.warning("TokenBudgetTracker.load failed (non-fatal): %s", e)
         set_global_tracker(self._token_budget)
+
+        # v2.8 创造力评分 — 每段叙述后 ingest, 退化时 alert 注入 Narrator
+        self._creativity_scorer = creativity_scorer or CreativityScorer()
+        self._last_creativity_report: CreativityReport | None = None
 
         # narrative_text_writer(tick, text) - Orchestrator 把叙述文本交给外部写盘
         # 默认: 写到 ``{data_dir}/narratives/tick_{tick:06d}.txt``
@@ -397,10 +403,20 @@ class Orchestrator:
                 narrator_produced = True
                 narrator_chars = len(narrator_out.narrative_text)
                 self._tick_state.mark_narration(tick)
-                await self._narrative_writer(
-                    tick,
-                    safety_result.sanitized_text or narrator_out.narrative_text,
+                final_text = (
+                    safety_result.sanitized_text or narrator_out.narrative_text
                 )
+                await self._narrative_writer(tick, final_text)
+                # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
+                try:
+                    self._creativity_scorer.ingest_paragraph(
+                        final_text, tick=tick
+                    )
+                    self._last_creativity_report = (
+                        self._creativity_scorer.report()
+                    )
+                except Exception as e:  # pragma: no cover
+                    logger.debug("CreativityScorer ingest failed: %s", e)
         if narrator_out.should_narrate and narrator_produced:
             # 累积摘要 - 给 Narrator 下一轮 recent_chapter_summaries 用
             self._recent_chapter_summaries.append(
@@ -747,8 +763,11 @@ class Orchestrator:
         char_arc_hints = self._build_character_arc_hints()
         # v2.6 FactLedger: 事实冲突警告 (强制 Narrator 不要复述错误事实)
         fact_hints = self._build_fact_conflict_hints()
+        # v2.8 CreativityScorer: 多样性退化警报 (词汇/结构/情感)
+        creativity_hints = self._build_creativity_hints()
         merged_summaries = (
             fact_hints
+            + creativity_hints
             + arc_hints
             + char_arc_hints
             + memory_summaries
@@ -765,6 +784,17 @@ class Orchestrator:
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
         )
+
+    def _build_creativity_hints(self) -> list[str]:
+        """把 v2.8 CreativityScorer alerts 翻译为前缀提示行注入 Narrator。"""
+        rep = self._last_creativity_report
+        if rep is None or not rep.alerts:
+            return []
+        return [
+            f"[创造力警报 {a.code} {a.severity}] {a.advice[:80]} "
+            f"(drop {a.drop_pct:.0%})"
+            for a in rep.alerts[:3]
+        ]
 
     def _build_fact_conflict_hints(self) -> list[str]:
         """把 v2.6 FactLedger 最近一轮冲突翻译为前缀摘要行注入 Narrator。"""
