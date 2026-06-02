@@ -15,7 +15,7 @@ from agents.update_agent import UpdateAgent
 from agents.validation_agent import ValidationAgent
 from agents.writer_agent import WriterAgent
 from config.settings import settings
-from core.models import ActionPlan, Section, ValidationResult
+from memory_system.models import ActionPlan, Section, ValidationResult
 from graph.knowledge_graph import KnowledgeGraph
 from memory.summary_tree import SummaryTree
 from memory.working_memory import ActiveCharacter, SceneContext, WorkingMemory

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
 from config.settings import get_llm_config, update_llm_config
-from core.models import Entity, EntityType, Relation, RelationType
+from memory_system.models import Entity, EntityType, Relation, RelationType
 from pipeline.engine import GenerationPipeline, PipelineEvent, PipelineStage
 import novel_manager
 
@@ -498,7 +498,7 @@ def _auto_generate_title(pipeline: GenerationPipeline, content: str) -> None:
 async def _generate_title_async(novel_id: str, content: str) -> None:
     """Use LLM to generate a short novel title from the first section."""
     try:
-        from core.llm_client import llm_client
+        from nf_core.llm_client import llm_client
 
         resp = await llm_client.chat(
             system_prompt=(

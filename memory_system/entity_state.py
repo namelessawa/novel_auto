@@ -300,3 +300,79 @@ class EntityStateTracker:
                 text_parts.append(f"- {name}: {desc}")
 
         return "\n".join(text_parts)
+
+
+# ----------------------------------------------------------------------------
+# v2.x 适配器 - 把旧 EntityStateTracker 的 dict 结构桥接到 tick 架构 TypedDict
+# ----------------------------------------------------------------------------
+
+
+class EntityStateAdapter:
+    """把 ``EntityStateTracker`` 的 untyped dict 转为 tick 架构 Pydantic 模型。
+
+    用于过渡期:旧 NovelGenerator 仍写 entity_state.json,新 Orchestrator 想读
+    时通过此 Adapter 转为 ``WorldState`` / ``CharacterState`` 列表。
+    """
+
+    def __init__(self, tracker):
+        self._tracker = tracker
+
+    def to_world_state(self):
+        """从 self._tracker.world_state 构造 WorldState(world_rules 列表)。"""
+        from memory_system.models import Faction, TickLocation, WorldState
+
+        rules = []
+        for name, attrs in (self._tracker.world_state or {}).items():
+            desc = attrs.get("description") if isinstance(attrs, dict) else str(attrs)
+            if desc:
+                rules.append(f"{name}: {desc}")
+
+        locs_dict = self._tracker.entities.get("locations", {}) if self._tracker.entities else {}
+        locations = []
+        for name, attrs in locs_dict.items():
+            attrs_d = attrs if isinstance(attrs, dict) else {}
+            locations.append(
+                TickLocation(
+                    id=str(name),
+                    name=str(name),
+                    type=str(attrs_d.get("type", "region")),
+                    current_state=str(attrs_d.get("description", "")),
+                    notable_features=list(attrs_d.get("features", []) or []),
+                )
+            )
+
+        return WorldState(
+            world_time=0,
+            era="",
+            current_season="",
+            weather="",
+            locations=locations,
+            factions=[],
+            active_global_events=[],
+            world_rules=rules[:10],
+        )
+
+    def to_character_states(self):
+        """从 self._tracker.entities['characters'] 构造 CharacterState 列表。"""
+        from memory_system.models import CharacterState
+
+        chars_dict = self._tracker.entities.get("characters", {}) if self._tracker.entities else {}
+        out = []
+        for name, attrs in chars_dict.items():
+            attrs_d = attrs if isinstance(attrs, dict) else {}
+            facts = []
+            for key in ("history", "background", "notes"):
+                v = attrs_d.get(key)
+                if v:
+                    facts.append(f"{key}: {v}" if isinstance(v, str) else f"{key}: {v}")
+            out.append(
+                CharacterState(
+                    character_id=str(name),
+                    current_location=str(attrs_d.get("location", "")),
+                    arc_goal=str(attrs_d.get("goal", attrs_d.get("arc_goal", ""))),
+                    known_facts=facts[:10],
+                    emotional_state=str(attrs_d.get("emotion", "neutral")),
+                    inventory=list(attrs_d.get("inventory", []) or []),
+                )
+            )
+        return out

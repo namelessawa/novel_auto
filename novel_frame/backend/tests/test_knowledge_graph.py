@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from graph.knowledge_graph import KnowledgeGraph
-from core.models import Entity, EntityType, Relation, RelationType
+from memory_system.models import Entity, EntityType, Relation, RelationType
 
 
 def test_add_and_get_entity():

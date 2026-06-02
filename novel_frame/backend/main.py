@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from api.routes import router
+from api.tick_routes import router as tick_router
 from config.settings import settings
 
 logging.basicConfig(
@@ -34,6 +35,34 @@ app.add_middleware(
 )
 
 app.include_router(router)
+# tick 架构控制路由(prefix=/api/tick); 路由会在 Orchestrator 实例化前返回 503
+app.include_router(tick_router)
+
+
+@app.on_event("startup")
+async def _build_tick_runtime() -> None:
+    """启动时装配 Orchestrator + TickState + TickDB,注入到 tick_routes 全局容器。
+
+    通过 ``DISABLE_TICK_RUNTIME=1`` 可禁用(用于纯 legacy 模式)。
+    """
+    if os.environ.get("DISABLE_TICK_RUNTIME", "0") == "1":
+        logging.getLogger(__name__).info("tick runtime disabled by env")
+        return
+    try:
+        from tick_runtime import get_runtime
+        get_runtime()
+        logging.getLogger(__name__).info("tick runtime ready - /api/tick routes active")
+    except Exception as e:
+        logging.getLogger(__name__).error("tick runtime init failed: %s", e)
+
+
+@app.on_event("shutdown")
+async def _close_tick_runtime() -> None:
+    try:
+        from tick_runtime import close_runtime
+        close_runtime()
+    except Exception:
+        pass
 
 
 @app.get("/")

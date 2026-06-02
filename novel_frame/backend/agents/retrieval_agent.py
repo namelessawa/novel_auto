@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from core.models import ActionPlan
+from memory_system.models import ActionPlan
 from graph.knowledge_graph import KnowledgeGraph
 from vector.vector_store import VectorStore
 

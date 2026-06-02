@@ -384,6 +384,51 @@ class CharacterRelationshipGraph:
         self.save_to_disk()
 
 
+# ----------------------------------------------------------------------------
+# v2.x 适配器 - 把情感量化逻辑提取为独立工具类
+# ----------------------------------------------------------------------------
+
+
+class RelationAnalyzer:
+    """情感向量 + 张力打分提取版 - 与 CharacterRelationshipGraph 解耦。
+
+    新架构中 ``KnowledgeGraph.Relation.attributes`` 是关系存储后端,
+    本类负责对其计算情感张力,供 Showrunner / ConsistencyGuardian 调用。
+    """
+
+    EMOTION_KEYS = ("trust", "affection", "loyalty", "conflict")
+
+    @staticmethod
+    def emotion_vector(rel_attributes: dict) -> dict:
+        """从一个关系的 attributes dict 提取情感四元向量,缺失值视为 0。"""
+        emo = (rel_attributes or {}).get("emotions", {}) or rel_attributes or {}
+        return {
+            k: float(emo.get(k, 0.0))
+            for k in RelationAnalyzer.EMOTION_KEYS
+        }
+
+    @staticmethod
+    def tension_score(rel_attributes: dict) -> float:
+        """关系张力分数 0-1。conflict 高 + trust/affection 低 → 高张力。"""
+        v = RelationAnalyzer.emotion_vector(rel_attributes)
+        positive = (v["trust"] + v["affection"] + v["loyalty"]) / 3.0
+        return max(0.0, min(1.0, v["conflict"] - positive * 0.5 + 0.5))
+
+    @staticmethod
+    def stability_score(rel_attributes: dict) -> float:
+        """稳定性 0-1。trust + loyalty 平均。"""
+        v = RelationAnalyzer.emotion_vector(rel_attributes)
+        return max(0.0, min(1.0, (v["trust"] + v["loyalty"]) / 2.0))
+
+    @staticmethod
+    def trust_int(rel_attributes: dict) -> int:
+        """折算为 tick 架构 Relationship.trust (-10 到 +10)。"""
+        v = RelationAnalyzer.emotion_vector(rel_attributes)
+        # trust 0-1 → 0 到 +10; conflict 0-1 → 0 到 -10
+        score = v["trust"] * 10 - v["conflict"] * 10
+        return int(round(max(-10, min(10, score))))
+
+
 # 使用示例
 if __name__ == "__main__":
     graph = CharacterRelationshipGraph("test_memory")

@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable, Coroutine
 
-from core.models import Section
+from memory_system.models import Section
 
 
 @dataclass

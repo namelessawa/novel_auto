@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from memory.working_memory import WorkingMemory, SceneContext, ActiveCharacter
-from core.models import Section
+from memory_system.models import Section
 
 
 def make_section(ch: int, sec: int, content: str = "test") -> Section:

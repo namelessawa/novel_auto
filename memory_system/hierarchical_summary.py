@@ -1,3 +1,11 @@
+"""层级摘要 (LEGACY since v2.x).
+
+v2.x 新架构使用 ``novel_frame/backend/memory/summary_tree.py`` (SummaryTree)
++ ``novel_frame/backend/agents/memory_compressor.py`` (MemoryCompressor) 取代。
+本模块仍然保留以兼容 NovelGenerator,并新增 ``get_l1_summaries`` /
+``get_l2_arcs`` / ``get_l3_outline`` 读取接口供 MemoryCompressor 反向读取。
+"""
+
 import json
 import os
 from typing import Dict, List, Optional
@@ -131,3 +139,23 @@ class HierarchicalSummarizer:
         self.mid_level_arcs = []
         self.low_level_summaries = []
         self.save_to_disk()
+
+    # ------------------------------------------------------------------
+    # v2.x 适配器 - MemoryCompressor 的 L1/L2/L3 读取接口
+    # ------------------------------------------------------------------
+
+    def get_l1_summaries(self):
+        """L1 = 章节级摘要(low_level_summaries),返回纯字符串列表。"""
+        return [s.get("summary", "") for s in self.low_level_summaries if s.get("summary")]
+
+    def get_l2_arcs(self):
+        """L2 = 弧线级摘要(mid_level_arcs),返回 (title, summary) 元组列表。"""
+        return [
+            (a.get("title", "未命名弧线"), a.get("summary", ""))
+            for a in self.mid_level_arcs
+            if a.get("summary")
+        ]
+
+    def get_l3_outline(self):
+        """L3 = 全书大纲(high_level_outline)。"""
+        return self.high_level_outline or ""

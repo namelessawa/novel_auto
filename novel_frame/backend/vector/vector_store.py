@@ -17,7 +17,7 @@ posthog.Posthog.capture = lambda *args, **kwargs: None  # noqa: E402
 import chromadb  # noqa: E402
 
 from config.settings import settings  # noqa: E402
-from core.models import Section  # noqa: E402
+from memory_system.models import Section  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

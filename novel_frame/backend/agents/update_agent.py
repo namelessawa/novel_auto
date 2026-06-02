@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 import logging
 
-from core.llm_client import llm_client
-from core.models import Entity, EntityType, Relation, RelationType, Section
+from nf_core.llm_client import llm_client
+from memory_system.models import Entity, EntityType, Relation, RelationType, Section
 from graph.knowledge_graph import KnowledgeGraph
 from memory.summary_tree import SummaryTree
 from vector.vector_store import VectorStore
