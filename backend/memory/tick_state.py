@@ -321,6 +321,55 @@ class TickState:
             return False
         return current_tick <= rs.cooldown_until_tick
 
+    def record_degrade_recommendation(
+        self,
+        agent_id: str,
+        tick: int,
+        hits: int,
+        set_override: str | None = None,
+    ) -> AgentRuntimeState:
+        """Guardian 建议降级时记录到 AgentRuntimeState。
+
+        * 始终累加 ``degrade_recommendations`` (+1) 和 ``hallucination_hits``
+          (+hits)
+        * 始终更新 ``last_degrade_recommended_tick`` = tick
+        * ``set_override`` 非空时同时写 ``model_tier_override`` (例如 'haiku')
+          — 由 Orchestrator 在 HALLUCINATION_AUTO_DEGRADE=1 时传入
+
+        默认 shadow mode (``set_override=None``): 仅写统计字段, 不改 override,
+        允许生产数据积累后再启用降级。
+        """
+        rs = self._agent_runtime_states.get(agent_id) or AgentRuntimeState(
+            agent_id=agent_id
+        )
+        update = {
+            "degrade_recommendations": rs.degrade_recommendations + 1,
+            "hallucination_hits": rs.hallucination_hits + max(0, hits),
+            "last_degrade_recommended_tick": tick,
+        }
+        if set_override is not None:
+            update["model_tier_override"] = set_override
+        self._agent_runtime_states[agent_id] = rs.model_copy(update=update)
+        return self._agent_runtime_states[agent_id]
+
+    def get_hallucination_stats(self) -> dict[str, dict[str, int]]:
+        """返回所有曾被 Guardian 建议降级的 agent 的统计 (dict[agent_id, stats])。
+
+        从未被建议过的 agent (含仅有 failure_count 等其他统计的) 不出现在结果里,
+        让管理端 / 监控只看到真正"风险中"的 agent。
+        """
+        out: dict[str, dict[str, int]] = {}
+        for aid, rs in self._agent_runtime_states.items():
+            if rs.degrade_recommendations == 0:
+                continue
+            out[aid] = {
+                "degrade_recommendations": rs.degrade_recommendations,
+                "hallucination_hits": rs.hallucination_hits,
+                "last_degrade_recommended_tick": rs.last_degrade_recommended_tick,
+                "model_tier_override_active": bool(rs.model_tier_override),
+            }
+        return out
+
     # ------------------------------------------------------------------
     # 持久化(原子写)
     # ------------------------------------------------------------------

@@ -1053,6 +1053,54 @@ class Orchestrator:
         else:  # pragma: no cover — Literal 限定
             raise _OpRejected(f"unknown_op:{op.op}")
 
+    # ------------------------------------------------------------------
+    # v2.18 Phase 5 — Guardian 幻觉 conflict 消费
+    # ------------------------------------------------------------------
+
+    def _ingest_guardian_conflicts(self, output, tick: int) -> int:
+        """把 GuardianOutput 中的 hallucination_<id> conflict 写到 AgentRuntimeState。
+
+        默认 shadow mode (无 ``HALLUCINATION_AUTO_DEGRADE``): 只累加统计,
+        不改 model_tier_override。
+        env flag 开启时: 同时写 ``model_tier_override='haiku'``。
+
+        返回累计处理的 conflict 数, 供 TickSummary / 日志参考。
+
+        典型调用点: ``_phase7_periodic_maintenance`` 在 Guardian.scan 后调用。
+        但本方法独立可测, 不依赖整 tick 流程。
+        """
+        if output is None:
+            return 0
+        conflicts = getattr(output, "conflicts", None) or []
+        auto_degrade = os.environ.get("HALLUCINATION_AUTO_DEGRADE", "").strip()
+        override = "haiku" if auto_degrade in {"1", "true", "TRUE", "yes"} else None
+
+        processed = 0
+        for c in conflicts:
+            cid = getattr(c, "id", "") or ""
+            if not cid.startswith("hallucination_"):
+                continue
+            character_id = cid[len("hallucination_") :]
+            if not character_id:
+                continue
+            hits = len(getattr(c, "evidence", None) or [])
+            self._tick_state.record_degrade_recommendation(
+                agent_id=f"character_agent:{character_id}",
+                tick=tick,
+                hits=hits,
+                set_override=override,
+            )
+            processed += 1
+        if processed:
+            logger.info(
+                "Guardian hallucination conflicts ingested at tick %d: %d "
+                "(auto_degrade=%s)",
+                tick,
+                processed,
+                bool(override),
+            )
+        return processed
+
     @staticmethod
     def _consistency_flags(action: CharacterAction) -> list[str]:
         """检测 action_type 与硬状态字段的不一致, 产出诊断 flag。
@@ -1278,12 +1326,21 @@ class Orchestrator:
             and tick % CONSISTENCY_GUARDIAN_CADENCE == 0
         ):
             try:
-                await self._consistency_guardian.scan(
+                guardian_out = await self._consistency_guardian.scan(
                     world_state=self._tick_state.world_state,
                     char_states=self._tick_state.list_character_states(),
                     recent_events=self._last_tick_events,
                     recent_chapter_text=self._recent_chapter_summaries[-10:],
                 )
+                # v2.18 Phase 5 — 把幻觉率 conflict 写到 AgentRuntimeState 统计;
+                # 默认 shadow mode, 仅 HALLUCINATION_AUTO_DEGRADE=1 时才设
+                # model_tier_override。失败不阻塞主流程。
+                try:
+                    self._ingest_guardian_conflicts(guardian_out, tick=tick)
+                except Exception as e:
+                    logger.warning(
+                        "Guardian conflicts ingest failed (non-fatal): %s", e
+                    )
                 agents_called.append("consistency_guardian")
             except Exception as e:
                 logger.error("ConsistencyGuardian.scan failed: %s", e)

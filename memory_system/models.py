@@ -598,6 +598,23 @@ class AgentRuntimeState(_TickBase):
         default="",
         description="跨 tick 复用的摘要缓存 (例如 CharacterAgent 自我描述), 减少 prompt 重算",
     )
+    # v2.18 Phase 5 — 幻觉率观测字段。默认 shadow mode 只统计不降级,
+    # 由生产数据积累后再决定是否启用 HALLUCINATION_AUTO_DEGRADE。
+    hallucination_hits: int = Field(
+        default=0,
+        ge=0,
+        description="累计幻觉 flag 出现次数 (按 Guardian evidence 数累加)",
+    )
+    degrade_recommendations: int = Field(
+        default=0,
+        ge=0,
+        description="Guardian 建议过降级的次数 (即 hallucination_<id> conflict 数)",
+    )
+    last_degrade_recommended_tick: int = Field(
+        default=0,
+        ge=0,
+        description="最近一次被 Guardian 建议降级的 tick",
+    )
 
 
 class TickSummary(_TickBase):
