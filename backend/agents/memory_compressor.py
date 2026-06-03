@@ -186,7 +186,7 @@ class MemoryCompressor:
                     system_prompt=SYSTEM_PROMPT_L0_L1,
                     user_prompt=user_prompt,
                     temperature=0.3,
-                    max_tokens=2048,
+                    max_tokens=40960,
                 )
                 results.extend(
                     self._parse_compressed(resp.content, target_tier="L1", fallback_entries=batch)
@@ -210,7 +210,7 @@ class MemoryCompressor:
                     system_prompt=SYSTEM_PROMPT_L1_L2,
                     user_prompt=user_prompt,
                     temperature=0.3,
-                    max_tokens=1024,
+                    max_tokens=20480,
                 )
                 results.extend(
                     self._parse_compressed(resp.content, target_tier="L2", fallback_entries=batch)

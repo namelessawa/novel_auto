@@ -23,6 +23,7 @@ for p in (_PROJECT_ROOT, _BACKEND_DIR):
 
 from api.routes import router
 from api.tick_routes import router as tick_router
+from api.agent_routes import router as agent_router
 from config.settings import settings
 
 logging.basicConfig(
@@ -36,7 +37,7 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Vite dev server 默认 3000;生产从 frontend/dist 直接 serve 时这里其实不会触发跨域
+# Vite dev server 默认 3143;生产从 frontend/dist 直接 serve 时这里其实不会触发跨域
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(tick_router)
+app.include_router(agent_router)
 
 
 @app.on_event("startup")

@@ -505,7 +505,7 @@ class ContinuityEvaluatorAdapter:
             api_key=api_key,
             base_url=base_url,
             model_name=model_name,
-            max_tokens=2048,
+            max_tokens=40960,
             temperature=0.2
         )
 

@@ -2,6 +2,10 @@
 // In local dev, empty string lets the vite proxy handle /api requests.
 const BASE = import.meta.env.VITE_API_BASE || ''
 
+// ---------------------------------------------------------------------------
+// Legacy section pipeline
+// ---------------------------------------------------------------------------
+
 export async function fetchStats() {
   const res = await fetch(`${BASE}/api/stats`)
   return res.json()
@@ -49,57 +53,61 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ outline }),
     signal: controller.signal,
-  }).then(async (response) => {
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    let currentEvent = ''
+  })
+    .then(async (response) => {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let currentEvent = ''
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
 
-      for (const line of lines) {
-        if (line.startsWith('event: ')) {
-          currentEvent = line.slice(7).trim()
-          continue
-        }
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6)
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+            continue
+          }
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
 
-          if (currentEvent === 'done') {
-            onDone()
-            return
+            if (currentEvent === 'done') {
+              onDone()
+              return
+            }
+
+            if (currentEvent === 'pipeline') {
+              try {
+                onEvent(JSON.parse(data))
+              } catch {
+                /* ignore parse errors */
+              }
+            } else if (currentEvent === 'text') {
+              if (data) onText(data)
+            }
+
+            currentEvent = ''
+            continue
           }
 
-          if (currentEvent === 'pipeline') {
-            try {
-              onEvent(JSON.parse(data))
-            } catch { /* ignore parse errors */ }
-          } else if (currentEvent === 'text') {
-            if (data) onText(data)
+          if (line.trim() === '') {
+            currentEvent = ''
           }
-
-          currentEvent = ''
-          continue
-        }
-
-        if (line.trim() === '') {
-          currentEvent = ''
         }
       }
-    }
-    onDone()
-  }).catch((err) => {
-    if (err.name !== 'AbortError') {
-      console.error('Stream error:', err)
       onDone()
-    }
-  })
+    })
+    .catch((err) => {
+      if (err.name !== 'AbortError') {
+        console.error('Stream error:', err)
+        onDone()
+      }
+    })
 
   return controller
 }
@@ -146,6 +154,10 @@ export async function takeSnapshot() {
   return res.json()
 }
 
+// ---------------------------------------------------------------------------
+// LLM config
+// ---------------------------------------------------------------------------
+
 export async function fetchLLMConfig() {
   const res = await fetch(`${BASE}/api/config/llm`)
   return res.json()
@@ -164,7 +176,9 @@ export async function updateLLMConfig({ api_key, base_url, model }) {
   return res.json()
 }
 
-// -- Novel Management -------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Novel management
+// ---------------------------------------------------------------------------
 
 export async function fetchNovels() {
   const res = await fetch(`${BASE}/api/novels`)
@@ -197,8 +211,92 @@ export async function deleteNovel(novelId) {
 }
 
 export async function switchNovel(novelId) {
-  const res = await fetch(`${BASE}/api/novels/${encodeURIComponent(novelId)}/switch`, {
+  const res = await fetch(
+    `${BASE}/api/novels/${encodeURIComponent(novelId)}/switch`,
+    { method: 'POST' }
+  )
+  return res.json()
+}
+
+// ---------------------------------------------------------------------------
+// Tick architecture
+// ---------------------------------------------------------------------------
+
+export async function fetchTickStatus() {
+  const res = await fetch(`${BASE}/api/tick/status`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function runOneTick() {
+  const res = await fetch(`${BASE}/api/tick/run`, { method: 'POST' })
+  return res.json()
+}
+
+export async function pauseTick() {
+  const res = await fetch(`${BASE}/api/tick/pause`, { method: 'POST' })
+  return res.json()
+}
+
+export async function resumeTick() {
+  const res = await fetch(`${BASE}/api/tick/resume`, { method: 'POST' })
+  return res.json()
+}
+
+export async function injectTickEvent(payload) {
+  const res = await fetch(`${BASE}/api/tick/inject-event`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   })
+  return res.json()
+}
+
+export async function fetchTickHistory(lastN = 20) {
+  const res = await fetch(`${BASE}/api/tick/history?last_n=${lastN}`)
+  return res.json()
+}
+
+export async function fetchTickOpenLoops(topK = 30) {
+  const res = await fetch(`${BASE}/api/tick/open-loops?top_k=${topK}`)
+  return res.json()
+}
+
+export async function fetchCharacterStates() {
+  const res = await fetch(`${BASE}/api/tick/character-states`)
+  return res.json()
+}
+
+export async function fetchStyleAnchors(topK = 20) {
+  const res = await fetch(`${BASE}/api/tick/style-anchors?top_k=${topK}`)
+  return res.json()
+}
+
+export async function fetchNoveltyWarnings() {
+  const res = await fetch(`${BASE}/api/tick/novelty-warnings`)
+  return res.json()
+}
+
+export async function fetchEventStats(lastNTicks = 50) {
+  const res = await fetch(
+    `${BASE}/api/tick/event-stats?last_n_ticks=${lastNTicks}`
+  )
+  return res.json()
+}
+
+// ---------------------------------------------------------------------------
+// Agent registry (9 v2 tick agents + ActionResolver)
+// ---------------------------------------------------------------------------
+
+export async function fetchAgents() {
+  const res = await fetch(`${BASE}/api/agents`)
+  return res.json()
+}
+
+export async function fetchAgentDetail(agentId) {
+  const res = await fetch(
+    `${BASE}/api/agents/${encodeURIComponent(agentId)}`
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }

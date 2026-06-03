@@ -93,7 +93,7 @@ class UpdateAgent:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=f"请分析以下正文的世界状态变更：\n\n{section.content}",
                 temperature=0.1,
-                max_tokens=2048,
+                max_tokens=40960,
             )
         except Exception as e:
             logger.error("UpdateAgent LLM call failed: %s", e)

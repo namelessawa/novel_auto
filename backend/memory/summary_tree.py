@@ -186,7 +186,7 @@ class SummaryTree:
                 ),
                 user_prompt=combined,
                 temperature=0.5,
-                max_tokens=512,
+                max_tokens=10240,
             )
             legendary_form = resp.content.strip()
         except Exception as e:
@@ -367,7 +367,7 @@ class SummaryTree:
             ),
             user_prompt=text,
             temperature=0.3,
-            max_tokens=512,
+            max_tokens=10240,
         )
         return resp.content.strip()
 
@@ -384,7 +384,7 @@ class SummaryTree:
             ),
             user_prompt=parts,
             temperature=0.3,
-            max_tokens=512,
+            max_tokens=10240,
         )
         return resp.content.strip()
 

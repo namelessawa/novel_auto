@@ -30,8 +30,8 @@
   },
   "server": {
     "host": "0.0.0.0",
-    "backend_port": 8000,
-    "frontend_port": 3000,
+    "backend_port": 8762,
+    "frontend_port": 3143,
     "cors_origins": ["https://your-domain.com"]
   }
 }

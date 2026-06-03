@@ -44,7 +44,7 @@ class OutlineAgent:
             system_prompt=SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.6,
-            max_tokens=512,
+            max_tokens=10240,
         )
 
         plan_text, entities, keywords = self._parse(resp.content)

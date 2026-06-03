@@ -105,6 +105,7 @@ def _resolve_llm_block(cfg: dict) -> dict:
             "base_url": main.get("base_url"),
             "model": main.get("model"),
             "provider": main.get("provider", "deepseek"),
+            "timeout": int(main.get("timeout", 120)),
             "source": "main_env",
         }
     # 兜底：config.json
@@ -114,6 +115,7 @@ def _resolve_llm_block(cfg: dict) -> dict:
         "base_url": llm.get("base_url", "https://api.deepseek.com"),
         "model": llm.get("model", "deepseek-chat"),
         "provider": "deepseek",  # config.json 默认是 deepseek
+        "timeout": int(llm.get("timeout", 120)),
         "source": "config.json",
     }
 

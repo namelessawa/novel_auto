@@ -123,7 +123,7 @@ class EventInjector:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.6,
-                max_tokens=2048,
+                max_tokens=40960,
             )
         except Exception as e:
             logger.error("EventInjector LLM call failed: %s", e)

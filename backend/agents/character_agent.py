@@ -136,7 +136,7 @@ class CharacterAgent:
                 system_prompt=self._system_prompt,
                 user_prompt=user_prompt,
                 temperature=0.7,
-                max_tokens=1536,
+                max_tokens=30720,
             )
         except Exception as e:
             logger.error("CharacterAgent[%s] LLM call failed: %s", self._profile.id, e)

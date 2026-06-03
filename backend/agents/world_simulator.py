@@ -102,7 +102,7 @@ class WorldSimulator:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.4,
-                max_tokens=4096,
+                max_tokens=81920,
             )
         except Exception as e:
             logger.error("WorldSimulator LLM call failed: %s", e)

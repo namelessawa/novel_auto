@@ -93,7 +93,7 @@ class NoveltyCritic:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.3,
-                max_tokens=1024,
+                max_tokens=20480,
             )
         except Exception as e:
             logger.error("NoveltyCritic LLM call failed: %s", e)
