@@ -25,7 +25,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from memory_system.models import Event, OpenLoop
+from memory_system.models import Event, EventKind, OpenLoop
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,10 @@ async def resume_loop() -> dict:
 
 class InjectEventRequest(BaseModel):
     id: str | None = None
-    type: str = Field(default="dramatic")
+    # v2.19.1 — 用 EventKind Literal 在 FastAPI 边界就拒非法值 (422 而非 500)。
+    # 此前 plain str 让 Event(type=...) 内部 Pydantic 校验失败时, 用户收到 500 +
+    # 内部模型路径泄露 traceback。
+    type: EventKind = Field(default="dramatic")
     location: str = ""
     participants: list[str] = Field(default_factory=list)
     description: str
@@ -148,14 +151,46 @@ class InjectEventRequest(BaseModel):
 async def inject_event(req: InjectEventRequest) -> dict:
     orch = _require_orchestrator()
     ts = _require_tick_state()
+
+    # v2.19.1 — 计算最终 visible_to (含空 → all_in_location 的 fallback), 然后
+    # 校验"all_in_location 必须有 location" 这一硬约束。否则事件对所有人不可见,
+    # 调用方拿 200 但事件被静默忽略 — 比 500 更难调试。
+    visible_to = list(req.visible_to) or ["all_in_location"]
+    if "all_in_location" in visible_to and not req.location.strip():
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "visible_to=all_in_location 需要非空 location, 否则事件对所有 "
+                "CharacterAgent 都不可见 (静默被丢弃)。请显式 location 或改用 "
+                "具体的 character_id 列表 / 'all'。"
+            ),
+        )
+
+    # v2.19.1 — id 冲突检查。当前只校验 _injected_pending 范围 (即将被下一 tick
+    # 消费的批次), 这是冲突最常见的发生窗口。跨 tick 的历史 id 由 TickDB 唯一
+    # 约束兜底, 此处不重复扫 SQLite。
+    candidate_id = req.id or (
+        f"evt_user_{ts.current_tick}_{len(orch._injected_pending)}"
+    )
+    if req.id:
+        existing_ids = {e.id for e in orch._injected_pending}
+        if candidate_id in existing_ids:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"event id {candidate_id!r} 已在 pending 队列中, "
+                    f"避免静默覆盖。请换一个 id 或省略 id 让服务端自动生成。"
+                ),
+            )
+
     event = Event(
-        id=req.id or f"evt_user_{ts.current_tick}_{len(orch._injected_pending)}",
+        id=candidate_id,
         tick=ts.current_tick + 1,  # 注入到下一个 tick
-        type=req.type,  # type: ignore[arg-type]
+        type=req.type,
         location=req.location,
         participants=req.participants,
         description=req.description,
-        visible_to=req.visible_to or ["all_in_location"],
+        visible_to=visible_to,
         narrative_value=req.narrative_value,
     )
     orch.inject_event(event)
