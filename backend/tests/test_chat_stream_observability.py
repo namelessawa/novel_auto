@@ -332,3 +332,63 @@ async def test_chat_stream_requests_usage_via_stream_options(
         "应透传 stream_options 以获取 usage chunk; "
         f"实际收到: {stream_opts!r}"
     )
+
+
+# ------------------------------------------------------------------
+# 8. stream 中途抛异常 — 至少 record 一次失败尝试, 让监控看到
+# ------------------------------------------------------------------
+
+
+class _ExplodingStream:
+    """模拟 OpenAI SDK 在 stream 进行中抛出 APIError 之类的错误
+    (实际场景: provider 502 / 网络断 / safety filter 触发)。"""
+
+    def __init__(self, good_chunks_before_boom: list[_FakeChunk]) -> None:
+        self._chunks = list(good_chunks_before_boom)
+
+    def __aiter__(self) -> "_ExplodingStream":
+        return self
+
+    async def __anext__(self):
+        if self._chunks:
+            return self._chunks.pop(0)
+        # 模拟 stream 中途 502 — 不抛 StopAsyncIteration, 而是真实异常
+        raise RuntimeError("upstream API 502 mid-stream")
+
+
+@pytest.mark.asyncio
+async def test_chat_stream_exception_still_records_attempt(
+    monkeypatch, fresh_tracker
+):
+    """stream 中途抛错时, 异常正常传播给调用方, 但 tracker 必须看到这次
+    "失败尝试" — 否则失败的大段写作完全不进 monitoring, 生产侧成本/失败率
+    全是虚低数据。"""
+
+    async def boom_create(**kw):
+        # 先送一个 content chunk, 再在下一次 anext 时炸 — 模拟 partial 输出
+        return _ExplodingStream([_FakeChunk(content="开始写...")])
+
+    monkeypatch.setattr(
+        llm_module.llm_client._client.chat.completions, "create", boom_create
+    )
+
+    with pytest.raises(RuntimeError, match="502"):
+        async for _ in llm_module.llm_client.chat_stream(
+            system_prompt="sys",
+            user_prompt="usr",
+            agent_id="writer_agent",
+            priority="critical",
+            tick=33,
+        ):
+            pass
+
+    assert fresh_tracker.snapshot.call_count == 1, (
+        f"失败的 stream 也应在 tracker 留下 1 条记录, 否则失败率不可观测。"
+        f"实际 call_count={fresh_tracker.snapshot.call_count}"
+    )
+    rec = fresh_tracker.records[0]
+    assert rec.agent_id == "writer_agent"
+    assert rec.tick == 33
+    # 失败时没收到 usage chunk, 记 0 token 是合理的
+    assert rec.prompt_tokens == 0
+    assert rec.completion_tokens == 0

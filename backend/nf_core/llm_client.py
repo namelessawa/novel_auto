@@ -280,43 +280,47 @@ class LLMClient:
         )
 
         usage_obj: object | None = None
-        async for chunk in stream:
-            # usage chunk 在 stream_options.include_usage=True 时通常 choices=[]
-            # 且 usage 非 None — 不要因为 choices 空就崩溃。
-            choices = getattr(chunk, "choices", None) or []
-            if choices:
-                delta = choices[0].delta
-                if getattr(delta, "content", None):
-                    yield delta.content
-            chunk_usage = getattr(chunk, "usage", None)
-            if chunk_usage is not None:
-                # 用最后一个含 usage 的 chunk — 提供商规范是最后一帧给最终统计
-                usage_obj = chunk_usage
-
-        # v2.19 — stream 结束后记账。usage 缺失时仍 record 0 token, 让调用频次
-        # 仍可被 snapshot.call_count 看到, 避免静默成无形成本。
-        effective_tick = tick if tick != -1 else _current_tick_var.get()
-        prompt_tokens = (
-            int(getattr(usage_obj, "prompt_tokens", 0) or 0)
-            if usage_obj is not None
-            else 0
-        )
-        completion_tokens = (
-            int(getattr(usage_obj, "completion_tokens", 0) or 0)
-            if usage_obj is not None
-            else 0
-        )
+        # v2.19.5 — 用 try/finally 包裹 stream 消费, 让失败 (provider 502 /
+        # 网络断 / safety filter mid-stream) 也至少 record 一次。否则失败的大段
+        # 写作完全不进 tracker, 生产监控的失败率全是虚低数据。
         try:
-            tracker.record(
-                agent_id=agent_id,
-                priority=priority,  # type: ignore[arg-type]
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                model=effective_model,
-                tick=effective_tick,
+            async for chunk in stream:
+                # usage chunk 在 stream_options.include_usage=True 时通常 choices=[]
+                # 且 usage 非 None — 不要因为 choices 空就崩溃。
+                choices = getattr(chunk, "choices", None) or []
+                if choices:
+                    delta = choices[0].delta
+                    if getattr(delta, "content", None):
+                        yield delta.content
+                chunk_usage = getattr(chunk, "usage", None)
+                if chunk_usage is not None:
+                    # 用最后一个含 usage 的 chunk — 提供商规范是最后一帧给最终统计
+                    usage_obj = chunk_usage
+        finally:
+            # 不管成功还是异常, 都尝试记账一次。usage 缺失时记 0 token, 让调用
+            # 频次仍能反映在 snapshot.call_count 与 by_agent 上。
+            effective_tick = tick if tick != -1 else _current_tick_var.get()
+            prompt_tokens = (
+                int(getattr(usage_obj, "prompt_tokens", 0) or 0)
+                if usage_obj is not None
+                else 0
             )
-        except Exception as e:  # pragma: no cover
-            logger.debug("TokenBudgetTracker record (stream) failed: %s", e)
+            completion_tokens = (
+                int(getattr(usage_obj, "completion_tokens", 0) or 0)
+                if usage_obj is not None
+                else 0
+            )
+            try:
+                tracker.record(
+                    agent_id=agent_id,
+                    priority=priority,  # type: ignore[arg-type]
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    model=effective_model,
+                    tick=effective_tick,
+                )
+            except Exception as e:  # pragma: no cover
+                logger.debug("TokenBudgetTracker record (stream) failed: %s", e)
 
 
 llm_client = LLMClient()
