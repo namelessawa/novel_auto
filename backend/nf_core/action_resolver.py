@@ -100,6 +100,12 @@ class ActionResolver:
                 losers_total += 1
                 loser = resolved[loser_idx]
                 lost_flag = f"conflict_lost:{winner_id}"
+                # v2.18 — 清零败者的"成果"字段, 否则阶段 5 _apply_actions
+                # 仍会把这些硬转移写回 CharacterState (例如两人同 take 同物品,
+                # 败者 action_type 改 wait 但 inventory_added=["剑"] 仍在,
+                # 导致两人都获得剑)。
+                # 主动卸下/解除 (inventory_removed / status_removed) 保留,
+                # 因为失败也可以"丢掉手里的剑"或"挣脱中毒"。
                 resolved[loser_idx] = loser.model_copy(
                     update={
                         "action_type": "wait",
@@ -108,6 +114,10 @@ class ActionResolver:
                             + f" (原计划'{atype} → {target}'因 {winner_id} 优先而搁置)"
                         ).strip(),
                         "flags": list(loser.flags) + [lost_flag],
+                        "new_location": "",
+                        "inventory_added": [],
+                        "status_added": [],
+                        "relationship_deltas": {},
                     }
                 )
             logger.info(

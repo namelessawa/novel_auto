@@ -835,6 +835,14 @@ class Orchestrator:
                 nv_hint += 2
             nv_hint = min(nv_hint, 6)  # 上限, narrator 仍可自己评估更高
 
+            # v2.18 — action_type 与硬字段一致性检查。
+            # LLM 会偶尔在非交互类 action (wait / speak / investigate) 里随手填
+            # inventory_added 或 new_location, 这通常是幻觉。打 flag 让 Guardian /
+            # NoveltyCritic 可观测, 但不阻止应用 (毕竟 ActionResolver 已是仲裁层)。
+            # 注意: status_added 在 wait/speak 下是合法的 (情绪/疲惫等被动状态),
+            # 所以 status 不参与一致性检查。
+            consistency_flags = self._consistency_flags(action)
+
             # 事件 location 用更新后的位置, 这样 narrator 看到的就是角色"现在"的位置
             event_location = new_location or state.current_location
             event = Event(
@@ -852,13 +860,38 @@ class Orchestrator:
                 visible_to=visible_to,
                 narrative_value=0,  # Narrator 自己评估精确值
                 narrative_value_hint=nv_hint,  # 启发式提示, 防止早期跳过
-                consequences=[location_flag] if location_flag else [],
+                consequences=(
+                    ([location_flag] if location_flag else []) + consistency_flags
+                ),
             )
             action_events.append(event)
 
         if any_location_changed:
             self._sync_location_membership()
         return action_events
+
+    @staticmethod
+    def _consistency_flags(action: CharacterAction) -> list[str]:
+        """检测 action_type 与硬状态字段的不一致, 产出诊断 flag。
+
+        当前规则 (保守, 仅 LLM 几乎肯定幻觉的组合才打 flag):
+        * action_type ∈ {wait, speak, investigate, think, observe} 但 new_location
+          非空 → ``location_without_move``
+        * 同样的非交互动作但 inventory_added 非空 → ``inventory_without_action``
+
+        合法组合不打 flag (take/steal/buy/craft + inventory_added,
+        move/flee/travel + new_location, 等)。status_added 在被动场景下
+        合法 (wait + 焦虑), 不参与一致性检查。
+        """
+        non_interactive = {"wait", "speak", "investigate", "think", "observe"}
+        flags: list[str] = []
+        atype = (action.action_type or "").lower()
+        if atype in non_interactive:
+            if action.new_location:
+                flags.append("location_without_move")
+            if action.inventory_added:
+                flags.append("inventory_without_action")
+        return flags
 
     def _sync_location_membership(self) -> None:
         """根据当前所有 CharacterState 的 current_location 重建
