@@ -368,16 +368,25 @@ class Orchestrator:
         affected_ids = self._collect_affected_characters(all_events)
         actions: list[CharacterAction] = []
         if affected_ids:
+            # v2.18 — 跳过仍在 cooldown 窗口内的 agent (连续 LLM 失败超阈值时
+            # 自动减压, 避免反复浪费 token 撞同一个错误)。
+            runnable_ids = [
+                cid
+                for cid in affected_ids
+                if not self._tick_state.is_agent_in_cooldown(
+                    f"character_agent:{cid}", tick
+                )
+            ]
             agents_to_run = [
                 self._character_agents[cid]
-                for cid in affected_ids
+                for cid in runnable_ids
                 if cid in self._character_agents
             ]
             states_map = {
                 cid: st
                 for cid, st in (
                     (cid, self._tick_state.get_character_state(cid))
-                    for cid in affected_ids
+                    for cid in runnable_ids
                 )
                 if st is not None
             }
@@ -385,6 +394,18 @@ class Orchestrator:
                 actions = await CharacterAgent.batch_decide(
                     agents_to_run, states_map, all_events
                 )
+                # 记录 invocation: action 含 "(LLM 不可用,维持现状)" 描述 →
+                # fallback path, 视为失败; 否则视为成功。
+                for act in actions:
+                    is_fallback = (
+                        act.action_type == "wait"
+                        and "(LLM 不可用" in (act.description or "")
+                    )
+                    self._tick_state.record_agent_invocation(
+                        f"character_agent:{act.character_id}",
+                        tick=tick,
+                        success=not is_fallback,
+                    )
                 agents_called.append(f"character_agents×{len(actions)}")
 
         # 阶段 4: 冲突解析 ------------------------------------------------

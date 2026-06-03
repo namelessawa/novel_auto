@@ -519,6 +519,42 @@ class CharacterAction(_TickBase):
     )
 
 
+class AgentRuntimeState(_TickBase):
+    """Agent 运行态 — 与角色 CharacterState 分离的"调度信息"。
+
+    设计意图: CharacterAgent 实例本身不该持有失败计数/冷却等可变运行态,
+    否则进程重启/重建实例就丢; 同样 Orchestrator 也不该把这种 per-agent 元数据
+    跟 CharacterState 混在一起 (角色"知道自己被 LLM 拒绝过几次"是荒谬的)。
+
+    TickState 持有 dict[agent_id, AgentRuntimeState], save/load 时与
+    character_states 平级持久化。``agent_id`` 通常形如
+    ``"character_agent:<character_id>"`` / ``"narrator"`` / ``"world_simulator"``。
+    """
+
+    agent_id: str
+    last_invoked_tick: int = Field(
+        default=0, ge=0, description="最近一次被调用的 tick"
+    )
+    failure_count: int = Field(
+        default=0,
+        ge=0,
+        description="连续失败次数; 成功调用清零",
+    )
+    cooldown_until_tick: int = Field(
+        default=0,
+        ge=0,
+        description="若 > current_tick 则跳过本 agent; 0 表示无冷却",
+    )
+    model_tier_override: str = Field(
+        default="",
+        description="临时降级标记 (haiku 替 sonnet 等), 由 Guardian 监控写入",
+    )
+    summary_cache: str = Field(
+        default="",
+        description="跨 tick 复用的摘要缓存 (例如 CharacterAgent 自我描述), 减少 prompt 重算",
+    )
+
+
 class TickSummary(_TickBase):
     """Orchestrator 每 tick 结束时的诊断输出 - 写入 TickDB,推送给前端 SSE。"""
 
@@ -660,6 +696,7 @@ __all__ = [
     "StyleAnchor",
     "RelationshipDelta",
     "CharacterAction",
+    "AgentRuntimeState",
     "TickSummary",
     # v2.4 叙事大纲层
     "BeatStatus",

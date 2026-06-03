@@ -29,6 +29,7 @@ import tempfile
 from typing import Iterable
 
 from memory_system.models import (
+    AgentRuntimeState,
     CharacterProfile,
     CharacterState,
     OpenLoop,
@@ -36,6 +37,11 @@ from memory_system.models import (
     StyleAnchor,
     WorldState,
 )
+
+# v2.18 — agent failure cooldown 默认阈值。连续失败 ≥ FAILURE_THRESHOLD 后,
+# cooldown_until_tick 设为 current_tick + COOLDOWN_TICKS, 期间该 agent 被跳过。
+FAILURE_THRESHOLD = 3
+COOLDOWN_TICKS = 5
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +83,9 @@ class TickState:
 
         # v2.4 叙事大纲 — StoryArcDirector 维护
         self._story_arc: StoryArc | None = None
+
+        # v2.18 — agent 运行态 (失败计数 / 冷却 / 模型降级)
+        self._agent_runtime_states: dict[str, AgentRuntimeState] = {}
 
     # ------------------------------------------------------------------
     # 只读属性
@@ -259,6 +268,60 @@ class TickState:
         return self._story_arc is not None
 
     # ------------------------------------------------------------------
+    # v2.18 AgentRuntimeState API
+    # ------------------------------------------------------------------
+
+    def upsert_agent_runtime_state(self, state: AgentRuntimeState) -> None:
+        self._agent_runtime_states[state.agent_id] = state
+
+    def get_agent_runtime_state(self, agent_id: str) -> AgentRuntimeState | None:
+        return self._agent_runtime_states.get(agent_id)
+
+    def list_agent_runtime_states(self) -> list[AgentRuntimeState]:
+        return list(self._agent_runtime_states.values())
+
+    def record_agent_invocation(
+        self, agent_id: str, tick: int, success: bool
+    ) -> AgentRuntimeState:
+        """记录 agent 调用结果, 更新 failure_count / cooldown / last_invoked_tick。
+
+        成功 → failure_count 清零, last_invoked_tick = tick
+        失败 → failure_count += 1; 达到 FAILURE_THRESHOLD 则 cooldown_until_tick
+              = tick + COOLDOWN_TICKS
+        """
+        rs = self._agent_runtime_states.get(agent_id) or AgentRuntimeState(
+            agent_id=agent_id
+        )
+        if success:
+            rs = rs.model_copy(
+                update={
+                    "last_invoked_tick": tick,
+                    "failure_count": 0,
+                }
+            )
+        else:
+            new_failure = rs.failure_count + 1
+            new_cooldown = rs.cooldown_until_tick
+            if new_failure >= FAILURE_THRESHOLD:
+                new_cooldown = tick + COOLDOWN_TICKS
+            rs = rs.model_copy(
+                update={
+                    "last_invoked_tick": tick,
+                    "failure_count": new_failure,
+                    "cooldown_until_tick": new_cooldown,
+                }
+            )
+        self._agent_runtime_states[agent_id] = rs
+        return rs
+
+    def is_agent_in_cooldown(self, agent_id: str, current_tick: int) -> bool:
+        """current_tick 仍在 cooldown 窗口内 → True。未知 agent 视为不在冷却。"""
+        rs = self._agent_runtime_states.get(agent_id)
+        if rs is None:
+            return False
+        return current_tick <= rs.cooldown_until_tick
+
+    # ------------------------------------------------------------------
     # 持久化(原子写)
     # ------------------------------------------------------------------
 
@@ -285,6 +348,10 @@ class TickState:
             "story_arc": (
                 self._story_arc.model_dump(mode="json") if self._story_arc else None
             ),
+            "agent_runtime_states": {
+                aid: rs.model_dump(mode="json")
+                for aid, rs in self._agent_runtime_states.items()
+            },
         }
 
         fd, tmp_path = tempfile.mkstemp(
@@ -355,6 +422,17 @@ class TickState:
                     self._story_arc = None
             else:
                 self._story_arc = None
+            # v2.18 — agent runtime states
+            self._agent_runtime_states = {}
+            for aid, data in payload.get("agent_runtime_states", {}).items():
+                try:
+                    self._agent_runtime_states[aid] = AgentRuntimeState.model_validate(
+                        data
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "AgentRuntimeState load failed for %s: %s — skipped", aid, e
+                    )
         except Exception as e:
             logger.error(
                 "TickState payload validation failed (%s) - starting fresh", e
