@@ -145,6 +145,14 @@ def _default_resolution(priority: ConflictPriority) -> str:
 class ConsistencyGuardian:
     """每 30 tick 调用一次。LLM 失败时回退到 degraded=True 的空输出。"""
 
+    # v2.18 — 幻觉率监控的硬编码 flag 集合, 与 Orchestrator._consistency_flags
+    # 输出对齐。新增 flag 类型时两边同步更新。
+    _HALLUCINATION_FLAGS = (
+        "inventory_without_action",
+        "location_without_move",
+        "money_without_action",
+    )
+
     def __init__(self, evaluator=None) -> None:
         """``evaluator`` - EnhancedContinuityEvaluator 实例。若 None 则延迟构造。"""
         self._evaluator = evaluator
@@ -160,6 +168,67 @@ class ConsistencyGuardian:
                 return None
         return self._evaluator
 
+    def scan_hallucination_rate(
+        self,
+        events: list[Event],
+        threshold: float = 0.3,
+    ) -> list[GuardianConflict]:
+        """统计 character_action 事件里的幻觉 flag 出现率, 超阈值产 conflict。
+
+        仅纳入 ``type='character_action'`` 的事件 (exogenous / dramatic 的
+        consequences flag 不归属任何 character)。按 ``participants[0]`` 归账。
+        ``threshold`` 是严格大于阈值才报 (= 不报), 防边界震荡。
+
+        返回每个 hallucinating character 一个 ``GuardianConflict``:
+        priority='B', type='character', resolution_method='state_update',
+        resolution_specifics 含降级建议 (model_tier_override='haiku')。
+
+        与 async ``scan()`` 平级 — 调用方 (Orchestrator 阶段 7) 可选择同时跑。
+        无 LLM 调用, 纯计数, 100% 确定性。
+        """
+        if not events:
+            return []
+        per_char_total: dict[str, int] = {}
+        per_char_hits: dict[str, list[str]] = {}
+        for ev in events:
+            if ev.type != "character_action":
+                continue
+            if not ev.participants:
+                continue
+            cid = ev.participants[0]
+            per_char_total[cid] = per_char_total.get(cid, 0) + 1
+            for cons in ev.consequences:
+                if cons in self._HALLUCINATION_FLAGS:
+                    per_char_hits.setdefault(cid, []).append(cons)
+        conflicts: list[GuardianConflict] = []
+        for cid, total in per_char_total.items():
+            hits = per_char_hits.get(cid, [])
+            if total == 0:
+                continue
+            rate = len(hits) / total
+            if rate <= threshold:
+                continue
+            unique_flags = sorted(set(hits))
+            conflicts.append(
+                GuardianConflict(
+                    id=f"hallucination_{cid}",
+                    type="character",
+                    priority="B",
+                    details=(
+                        f"角色 {cid} 在最近 {total} 个 character_action 中, "
+                        f"{len(hits)} 次输出幻觉字段 (rate={rate:.0%}); "
+                        f"幻觉类型: {','.join(unique_flags)}"
+                    ),
+                    evidence=unique_flags,
+                    resolution_method="state_update",
+                    resolution_specifics=(
+                        f"建议为该 agent 设 model_tier_override='haiku', "
+                        f"或临时增大 cooldown_until_tick 让其降级冷静。"
+                    ),
+                )
+            )
+        return conflicts
+
     async def scan(
         self,
         *,
@@ -168,10 +237,14 @@ class ConsistencyGuardian:
         recent_events: list[Event],
         recent_chapter_text: list[str],
     ) -> GuardianOutput:
+        # v2.18 — 幻觉率扫描总是先跑 (无 LLM, 100% 确定性, 即使 evaluator 不可用)
+        hallucination_conflicts = self.scan_hallucination_rate(recent_events)
+
         evaluator = self._ensure_evaluator()
         if evaluator is None or not recent_chapter_text:
             return GuardianOutput(
                 scan_summary="evaluator unavailable or no chapter text",
+                conflicts=hallucination_conflicts,
                 degraded=True,
             )
 
@@ -191,4 +264,7 @@ class ConsistencyGuardian:
                 degraded=True,
             )
 
-        return self._adapter.adapt_output(result)
+        output = self._adapter.adapt_output(result)
+        # 把幻觉率 conflict 合并进 LLM 评估器输出
+        output.conflicts.extend(hallucination_conflicts)
+        return output
