@@ -56,17 +56,43 @@ async def _build_tick_runtime() -> None:
     """启动时装配 Orchestrator + TickState + TickDB,注入到 tick_routes 全局容器。
 
     通过 ``DISABLE_TICK_RUNTIME=1`` 可禁用(用于纯 API 调试)。
+
+    v2.17 — 关键一致性: 解析「权威启动默认 novel_id」(novel_manager 视角),
+    用同一 id 装配 tick runtime 并同步给 legacy ``_active_novel_id``。否则
+    manifest 第一项 ≠ ACTIVE_NOVEL_ID 时,/api/stats 与 /api/tick/* 会分别指向
+    不同小说,UI 首屏数据错位。
     """
+    log = logging.getLogger(__name__)
+
+    # 先解析权威默认 — 即使禁用 tick runtime, legacy pipeline 也需要这个对齐
+    try:
+        import novel_manager
+        from api.routes import set_active_novel_id
+
+        default_id = novel_manager.resolve_default_novel_id()
+        set_active_novel_id(default_id)
+    except Exception as e:
+        log.error("default novel resolution failed: %s", e)
+        default_id = None
+
     if os.environ.get("DISABLE_TICK_RUNTIME", "0") == "1":
-        logging.getLogger(__name__).info("tick runtime disabled by env")
+        log.info("tick runtime disabled by env")
         return
     try:
-        from tick_runtime import get_runtime
+        from tick_runtime import set_active_novel, get_runtime
 
-        get_runtime()
-        logging.getLogger(__name__).info("tick runtime ready - /api/tick routes active")
+        if default_id:
+            # 用 set_active_novel 而非裸 get_runtime() — 这样 tick runtime 与
+            # legacy 用同一 novel_id,且 /api/tick/* 路由容器立刻指向它。
+            set_active_novel(default_id)
+        else:
+            get_runtime()
+        log.info(
+            "tick runtime ready - /api/tick routes active (novel='%s')",
+            default_id or "<env-default>",
+        )
     except Exception as e:
-        logging.getLogger(__name__).error("tick runtime init failed: %s", e)
+        log.error("tick runtime init failed: %s", e)
 
 
 @app.on_event("shutdown")

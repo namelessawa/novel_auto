@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import GraphView from './components/GraphView'
 import MemoryView from './components/MemoryView'
-import ControlPanel from './components/ControlPanel'
+import TickControlPanel from './components/TickControlPanel'
 import SectionsList from './components/SectionsList'
 import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
@@ -316,7 +316,7 @@ export default function App() {
             <MemoryView refreshKey={refreshKey} />
           </ViewSlot>
           <ViewSlot active={activeView === 'control'}>
-            <ControlPanel onAction={bumpRefresh} refreshKey={refreshKey} />
+            <TickControlPanel onAction={bumpRefresh} refreshKey={refreshKey} />
           </ViewSlot>
         </div>
       </main>
