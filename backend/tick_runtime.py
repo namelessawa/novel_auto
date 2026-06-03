@@ -16,6 +16,7 @@ import logging
 import os
 from typing import Any
 
+import novel_manager
 from agents.character_agent import CharacterAgent
 from agents.character_arc_tracker import CharacterArcTracker
 from agents.consistency_guardian import ConsistencyGuardian
@@ -42,22 +43,49 @@ from persistence.tick_db import TickDB
 logger = logging.getLogger(__name__)
 
 
+# v2.17 — backend/data/novels/ 是所有 runtime 数据目录的合法根。
+# 解析后的目录必须 realpath 落在此根下, 否则视为越界并拒绝。这里用 realpath + commonpath
+# 是 CodeQL 认可的 path-injection sanitizer 模式。
+_NOVELS_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "novels"))
+
+
+def _sanitize_within_novels_root(candidate: str) -> str:
+    """强校验 candidate 必须落在 _NOVELS_ROOT 之下, 否则抛 ValueError。
+
+    用 realpath 解掉 symlink/相对路径混淆, 用 commonpath 严格比较 — 这是 CodeQL
+    py/path-injection 检查器识别的标准 sanitizer。
+    """
+    real_target = os.path.realpath(candidate)
+    real_root = os.path.realpath(_NOVELS_ROOT)
+    try:
+        common = os.path.commonpath([real_target, real_root])
+    except ValueError:
+        raise ValueError(f"path outside novels root: {candidate!r}") from None
+    if common != real_root:
+        raise ValueError(f"path outside novels root: {candidate!r}")
+    return real_target
+
+
 def _resolve_novel_data_dir(novel_id: str | None = None) -> str:
-    """解析数据目录。
+    """解析数据目录, 强制落在 backend/data/novels/ 之下。
 
     * ``novel_id=None`` 走向后兼容的"启动默认"路径:
       优先 ``ACTIVE_NOVEL_DATA_DIR``, 否则 ``ACTIVE_NOVEL_ID`` → ``data/novels/<id>``。
     * 显式传 ``novel_id`` (v2.15 多 runtime 模式) 则总是 ``data/novels/<novel_id>``,
       不接受 ``ACTIVE_NOVEL_DATA_DIR`` 覆盖 — 否则注册表多个 runtime 会指向同一目录,
       产生并发写盘冲突。
+    * v2.17 — 所有来源(env var、调用方 novel_id)都经 _sanitize_within_novels_root
+      二次校验, 切断 path-injection 污点流到 os.makedirs / sqlite3.connect。
     """
     if novel_id is None:
         explicit = os.environ.get("ACTIVE_NOVEL_DATA_DIR", "").strip()
         if explicit:
-            return os.path.abspath(explicit)
+            return _sanitize_within_novels_root(explicit)
         novel_id = os.environ.get("ACTIVE_NOVEL_ID", "default")
-    base = os.path.join(os.path.dirname(__file__), "data", "novels", novel_id)
-    return os.path.abspath(base)
+    # 复用 novel_manager._validate_novel_id 的正则白名单 (字母/数字/下划线/中文/-)
+    novel_manager._validate_novel_id(novel_id)
+    base = os.path.join(_NOVELS_ROOT, novel_id)
+    return _sanitize_within_novels_root(base)
 
 
 class TickRuntime:
