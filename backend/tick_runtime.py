@@ -43,12 +43,20 @@ logger = logging.getLogger(__name__)
 
 
 def _resolve_novel_data_dir(novel_id: str | None = None) -> str:
-    """优先环境变量 ``ACTIVE_NOVEL_DATA_DIR``,否则 ``data/novels/<id>``。"""
-    explicit = os.environ.get("ACTIVE_NOVEL_DATA_DIR", "").strip()
-    if explicit:
-        return os.path.abspath(explicit)
-    nid = novel_id or os.environ.get("ACTIVE_NOVEL_ID", "default")
-    base = os.path.join(os.path.dirname(__file__), "data", "novels", nid)
+    """解析数据目录。
+
+    * ``novel_id=None`` 走向后兼容的"启动默认"路径:
+      优先 ``ACTIVE_NOVEL_DATA_DIR``, 否则 ``ACTIVE_NOVEL_ID`` → ``data/novels/<id>``。
+    * 显式传 ``novel_id`` (v2.15 多 runtime 模式) 则总是 ``data/novels/<novel_id>``,
+      不接受 ``ACTIVE_NOVEL_DATA_DIR`` 覆盖 — 否则注册表多个 runtime 会指向同一目录,
+      产生并发写盘冲突。
+    """
+    if novel_id is None:
+        explicit = os.environ.get("ACTIVE_NOVEL_DATA_DIR", "").strip()
+        if explicit:
+            return os.path.abspath(explicit)
+        novel_id = os.environ.get("ACTIVE_NOVEL_ID", "default")
+    base = os.path.join(os.path.dirname(__file__), "data", "novels", novel_id)
     return os.path.abspath(base)
 
 
@@ -56,8 +64,9 @@ class TickRuntime:
     """单例容器 - 装配 Orchestrator + 所有依赖,管理生命周期。"""
 
     def __init__(self, novel_id: str | None = None) -> None:
+        # 显式 novel_id 走标准路径; None 走环境变量回退路径 (向后兼容旧 main.py / tools/)
         self.novel_id = novel_id or os.environ.get("ACTIVE_NOVEL_ID", "default")
-        self.data_dir = _resolve_novel_data_dir(self.novel_id)
+        self.data_dir = _resolve_novel_data_dir(novel_id)
         os.makedirs(self.data_dir, exist_ok=True)
 
         # 基础设施
@@ -180,20 +189,93 @@ class TickRuntime:
             logger.error("TickDB close failed: %s", e)
 
 
-# 模块级单例(惰性)
-_runtime: TickRuntime | None = None
+# v2.15 — 多 novel_id → TickRuntime 注册表 (替代旧的单 _runtime 单例)
+#
+# 旧实现的根本问题: switch_novel 只换 legacy GenerationPipeline, tick_routes
+# 永远绑在启动时那本小说。前端切小说后用户在 UI 操作的是 A, 但 /api/tick/*
+# 仍在推进 B 的世界状态。
+#
+# 新实现:
+# - get_runtime(novel_id) 按需构造并缓存 (惰性)
+# - set_active_novel(novel_id) 切换路由层指向哪个 runtime
+# - close_all_runtimes 关闭所有 (FastAPI shutdown 用)
+#
+# 旧 API ``get_runtime() / close_runtime()`` 保留作为向后兼容外壳。
+_runtimes: dict[str, "TickRuntime"] = {}
+_active_novel_id: str | None = None
 
 
-def get_runtime() -> TickRuntime:
-    global _runtime
-    if _runtime is None:
-        _runtime = TickRuntime()
-        _runtime.register_to_routes()
-    return _runtime
+def _resolve_default_novel_id() -> str:
+    """启动时的默认 novel_id — 沿用 ACTIVE_NOVEL_ID 语义。"""
+    return os.environ.get("ACTIVE_NOVEL_ID", "default").strip() or "default"
 
+
+def get_runtime(novel_id: str | None = None) -> TickRuntime:
+    """按 novel_id 取/建 TickRuntime。
+
+    * 不传 novel_id: 走"启动默认"路径 (沿用旧 main.py 启动行为)。
+    * 首次 get 时若尚无 active runtime, 把它注册为 active 并注入路由层。
+    """
+    global _active_novel_id
+    nid = novel_id or _active_novel_id or _resolve_default_novel_id()
+    if nid not in _runtimes:
+        # 显式 nid 走标准路径 _resolve_novel_data_dir(nid);
+        # 但若调用方完全没指定且也没 active, 我们想保留 ACTIVE_NOVEL_DATA_DIR 语义,
+        # 所以这里区分: 真正"无参 get_runtime()" 时传 None 走环境回退。
+        explicit = novel_id is not None or _active_novel_id is not None
+        _runtimes[nid] = TickRuntime(novel_id=nid if explicit else None)
+    if _active_novel_id is None:
+        set_active_novel(nid)
+    return _runtimes[nid]
+
+
+def set_active_novel(novel_id: str) -> TickRuntime:
+    """切换活跃 runtime; 必要时按需构造, 同时把它注入 tick_routes 容器。
+
+    这是把 switch_novel HTTP 路由真正接入 tick 架构的钩子 — 没有它,
+    /api/tick/* 永远是启动时那本小说。
+    """
+    global _active_novel_id
+    if not isinstance(novel_id, str) or not novel_id:
+        raise ValueError(f"invalid novel_id for set_active_novel: {novel_id!r}")
+    if novel_id not in _runtimes:
+        _runtimes[novel_id] = TickRuntime(novel_id=novel_id)
+    _active_novel_id = novel_id
+    _runtimes[novel_id].register_to_routes()
+    logger.info("Active novel switched to '%s' (%d runtimes loaded)",
+                novel_id, len(_runtimes))
+    return _runtimes[novel_id]
+
+
+def get_active_runtime() -> TickRuntime | None:
+    if _active_novel_id is None:
+        return None
+    return _runtimes.get(_active_novel_id)
+
+
+def close_all_runtimes() -> None:
+    """关闭并清空所有已加载的 runtime — FastAPI shutdown 钩子用。"""
+    global _active_novel_id
+    for nid, rt in list(_runtimes.items()):
+        try:
+            rt.close()
+        except Exception as e:
+            logger.error("close runtime '%s' failed: %s", nid, e)
+    _runtimes.clear()
+    _active_novel_id = None
+
+
+# ----- 向后兼容外壳 ---------------------------------------------------------
+# tools/drive_ticks.py / tools/run_ticks.py / 早期 main.py 调用 close_runtime()
+# 旧 API "关闭那一个 runtime" 现在等价于"关闭注册表里所有 runtime"。
 
 def close_runtime() -> None:
-    global _runtime
-    if _runtime is not None:
-        _runtime.close()
-        _runtime = None
+    """旧别名 → close_all_runtimes()。"""
+    close_all_runtimes()
+
+
+def _clear_for_tests() -> None:
+    """测试钩子 — 清空注册表与 active 指针, 不调用 close (保留外部资源)。"""
+    global _active_novel_id
+    _runtimes.clear()
+    _active_novel_id = None

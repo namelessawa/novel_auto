@@ -230,6 +230,11 @@ class Orchestrator:
         self._paused: bool = False
         self._stop_requested: bool = False
 
+        # 并发保护 — 同一 Orchestrator 同一时刻只能有一个 tick 在跑。
+        # 两个 HTTP 请求同时 /api/tick/run、或 start_loop 与手动 /run 并发时,
+        # 这把锁保证 tick_state / tick_db 不会被双写。
+        self._tick_lock: asyncio.Lock = asyncio.Lock()
+
     # ------------------------------------------------------------------
     # 公开 API
     # ------------------------------------------------------------------
@@ -268,7 +273,16 @@ class Orchestrator:
         self._character_agents[agent.character_id] = agent
 
     async def run_tick(self) -> TickSummary:
-        """执行单 tick 全 7 阶段。返回 TickSummary 供 TickDB / SSE 消费。"""
+        """执行单 tick 全 7 阶段。返回 TickSummary 供 TickDB / SSE 消费。
+
+        v2.15 — 用 ``_tick_lock`` 串行化,防止并发 tick 双写 tick_state / tick_db。
+        外部并发调用会自动排队,锁内只允许一个 tick 推进。
+        """
+        async with self._tick_lock:
+            return await self._run_tick_unlocked()
+
+    async def _run_tick_unlocked(self) -> TickSummary:
+        """run_tick 原始实现 — 不加锁版本, 仅供 run_tick 与测试直接调用。"""
         tick = self._tick_state.advance_tick()
         agents_called: list[str] = []
         events_generated_ids: list[str] = []
@@ -1001,16 +1015,18 @@ class Orchestrator:
                     memory_entries=all_entries,
                     open_loop_origin_ids=protected_ids,
                 )
-                # 把压缩输出反写回 store: L0→L1 替换, L1→L2 替换
+                # v2.15 — 把压缩输出反写回 store: 用 MemoryEntry.source_ids 真正退役旧记录。
+                # 此前 source_ids=[] 让 MemoryCompressor 形同空转 (旧 L0 永不删除),
+                # 长跑时 store 单调膨胀。compressor 现在保证 source_ids 至少含整批 fallback。
                 for new_l1 in getattr(comp_out, "l0_to_l1", []) or []:
                     self._memory_store.replace_with_compressed(
-                        source_ids=[],  # MemoryCompressor 不返回原 ids, 替换粒度暂时不细化
+                        source_ids=list(new_l1.source_ids),
                         new_entry=new_l1,
                         current_tick=tick,
                     )
                 for new_l2 in getattr(comp_out, "l1_to_l2", []) or []:
                     self._memory_store.replace_with_compressed(
-                        source_ids=[],
+                        source_ids=list(new_l2.source_ids),
                         new_entry=new_l2,
                         current_tick=tick,
                     )
