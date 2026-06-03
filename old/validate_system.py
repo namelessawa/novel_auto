@@ -56,8 +56,9 @@ def test_system_structure():
     
     # 测试 LLM 提供商配置（仅展示非敏感元数据）
     try:
-        from core.config import _safe_summary, get_active_llm_config
-        _summary = _safe_summary(get_active_llm_config())
+        from core.config import _safe_summary
+        # 不再传入 active 配置 — _safe_summary 现在从公开元数据自构造
+        _summary = _safe_summary()
         _label = _summary["label"]
         _provider_id = _summary["provider"]
         _endpoint = _summary["endpoint"]

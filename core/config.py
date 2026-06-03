@@ -231,21 +231,45 @@ def validate_api_keys():
     return warnings
 
 
-def _safe_summary(active: dict) -> dict:
-    """构建不含敏感字段的展示用 summary（供日志/print 使用）。"""
-    has_credential = bool(active.get("api_key"))
+# 公开元数据注册表 — 不含 api_key，给展示/日志层使用。
+_PROVIDER_PUBLIC_META = {
+    "deepseek": {"label": "DeepSeek", "endpoint": DEEPSEEK_BASE_URL, "model": DEEPSEEK_MODEL},
+    "mimo": {"label": "MiMo (小米)", "endpoint": MIMO_BASE_URL, "model": MIMO_MODEL},
+    "custom": {"label": "Custom", "endpoint": CUSTOM_BASE_URL, "model": CUSTOM_MODEL},
+}
+
+
+def _safe_summary(_active: dict | None = None) -> dict:
+    """构建不含敏感字段的展示用 summary。
+
+    实现上完全独立于 active 配置（参数仅为向后兼容保留），
+    所有返回值都从 _PROVIDER_PUBLIC_META 公开元数据派生，
+    凭据状态用 boolean 截断，避免任何凭据值流向日志。
+    """
+    provider = LLM_PROVIDER if LLM_PROVIDER in _PROVIDER_PUBLIC_META else "deepseek"
+    meta = _PROVIDER_PUBLIC_META[provider]
+    if not meta.get("endpoint") or not meta.get("model"):
+        provider = "deepseek"
+        meta = _PROVIDER_PUBLIC_META["deepseek"]
+    # 凭据存在性 → boolean，丢弃凭据内容
+    _key_lookup = {
+        "deepseek": DEEPSEEK_API_KEY,
+        "mimo": MIMO_API_KEY,
+        "custom": CUSTOM_API_KEY,
+    }
+    has_credential = bool(_key_lookup.get(provider))
     return {
-        "label": active.get("label", ""),
-        "provider": active.get("provider", ""),
-        "endpoint": active.get("base_url", ""),
-        "model": active.get("model", ""),
+        "label": meta["label"],
+        "provider": provider,
+        "endpoint": meta["endpoint"],
+        "model": meta["model"],
         "credential_status": "configured" if has_credential else "missing",
     }
 
 
 def print_config():
     """打印当前配置（用于调试，不会输出任何凭据）"""
-    summary = _safe_summary(get_active_llm_config())
+    summary = _safe_summary()
     dashscope_status = "configured" if DASHSCOPE_API_KEY else "missing"
     multimedia_status = "enabled" if ENABLE_MULTIMEDIA_DEFAULT else "disabled"
     print("=" * 60)
