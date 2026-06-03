@@ -519,6 +519,51 @@ class CharacterAction(_TickBase):
     )
 
 
+StateOpKind = Literal["set", "add", "append", "remove"]
+StatePatchTarget = Literal["character", "world", "location", "faction"]
+
+
+class StateOp(_TickBase):
+    """单字段状态操作。
+
+    * ``set`` — 覆盖字段值 (number / string / dict)
+    * ``add`` — 数值字段累加 (money / trust / age 等)
+    * ``append`` — 列表字段追加元素 (status_effects / inventory / known_facts)
+    * ``remove`` — 列表字段移除元素
+
+    ``field`` 是目标对象上的属性名 (例如 "money" / "current_location" /
+    "status_effects" / "weather")。``value`` 不强类型 — 由应用层负责类型校验。
+    """
+
+    field: str
+    op: StateOpKind
+    value: Any = None
+
+
+class StatePatch(_TickBase):
+    """状态补丁 — EventInjector / Guardian / WorldSimulator 提交的外部权威变更。
+
+    与 CharacterAction 的硬状态字段不同, StatePatch 由"非角色意志"的 agent
+    提交, 描述世界 / 外部因果对角色或世界状态的强制变更 (爆炸炸伤所有人 /
+    Guardian 修正错误 location / Simulator 推进天气)。
+
+    应用顺序: 阶段 5 _apply_actions (角色意志) → 阶段 5d _apply_state_patches
+    (外部权威)。这样角色"决定要拿剑"的失败仲裁仍然有效, 而后再被爆炸"补一刀"
+    加伤。
+    """
+
+    source_agent: str
+    source_event_id: str | None = None
+    target_type: StatePatchTarget = "character"
+    target_id: str = Field(
+        default="",
+        description="character_id / location_id / faction_id; world 时为空",
+    )
+    ops: list[StateOp] = Field(default_factory=list)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    reason: str = ""
+
+
 class AgentRuntimeState(_TickBase):
     """Agent 运行态 — 与角色 CharacterState 分离的"调度信息"。
 
@@ -697,6 +742,10 @@ __all__ = [
     "RelationshipDelta",
     "CharacterAction",
     "AgentRuntimeState",
+    "StateOpKind",
+    "StatePatchTarget",
+    "StateOp",
+    "StatePatch",
     "TickSummary",
     # v2.4 叙事大纲层
     "BeatStatus",

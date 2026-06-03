@@ -51,12 +51,16 @@ from narrative.fact_ledger import Fact, FactLedger
 from narrative.safety_filter import SafetyFilter
 from nf_core.llm_client import set_current_tick
 from nf_core.token_budget import TokenBudgetTracker, get_global_tracker, set_global_tracker
+from dataclasses import dataclass, field as dc_field
+
 from memory_system.models import (
     CharacterAction,
     CharacterState,
     Event,
     MemoryEntry,
     Relationship,
+    StateOp,
+    StatePatch,
     TickSummary,
     WorldState,
 )
@@ -119,6 +123,19 @@ MIN_OPEN_LOOPS = _env_int("MIN_OPEN_LOOPS", 3)
 def _get_main_character_id_from_env() -> str | None:
     val = os.environ.get("MAIN_TRACKING_CHARACTER_ID", "").strip()
     return val or None
+
+
+@dataclass
+class PatchDiagnostic:
+    """_apply_state_patches 的诊断输出, 供 TickSummary 累积。"""
+
+    applied: int = 0
+    rejected: int = 0
+    flags: list[str] = dc_field(default_factory=list)
+
+
+class _OpRejected(Exception):
+    """单 op 应用失败时抛出, 由 _apply_patch_to_* 捕获并记录到 diag.flags。"""
 
 
 class Orchestrator:
@@ -901,6 +918,140 @@ class Orchestrator:
         if any_location_changed:
             self._sync_location_membership()
         return action_events
+
+    # ------------------------------------------------------------------
+    # v2.18 StatePatch 应用
+    # ------------------------------------------------------------------
+
+    def _apply_state_patches(
+        self,
+        tick: int,
+        patches: list[StatePatch],
+    ) -> "PatchDiagnostic":
+        """阶段 5d: 应用 EventInjector / Guardian / Simulator 提交的外部权威补丁。
+
+        与 _apply_actions 并列, 不替代; 顺序为 _apply_actions → _apply_state_patches,
+        让外部权威可以"覆盖"角色意志 (例如爆炸炸伤拿剑成功的角色)。
+
+        失败模式:
+        * 未知 target_type → rejected
+        * 未知 character_id / 不在 WorldState.locations 的 location → rejected
+        * 单个 op 应用失败 (类型不匹配, append 到非 list 字段) → 仅该 op rejected,
+          patch 内其他 op 仍然尝试
+
+        返回 PatchDiagnostic 供 TickSummary 累积。
+        """
+        diag = PatchDiagnostic()
+        for patch in patches:
+            if patch.target_type == "character":
+                self._apply_patch_to_character(patch, diag)
+            elif patch.target_type == "world":
+                self._apply_patch_to_world(patch, diag)
+            else:
+                # location / faction 暂不支持
+                diag.rejected += 1
+                diag.flags.append(f"unsupported_target_type:{patch.target_type}")
+        return diag
+
+    def _apply_patch_to_character(
+        self, patch: StatePatch, diag: "PatchDiagnostic"
+    ) -> None:
+        state = self._tick_state.get_character_state(patch.target_id)
+        if state is None:
+            diag.rejected += 1
+            diag.flags.append(f"unknown_character:{patch.target_id}")
+            return
+        valid_location_ids = {
+            loc.id for loc in self._tick_state.world_state.locations
+        }
+        updated_dict = state.model_dump()
+        applied_any = False
+        for op in patch.ops:
+            try:
+                self._apply_op_to_dict(
+                    updated_dict, op, diag, valid_location_ids=valid_location_ids
+                )
+                applied_any = True
+            except _OpRejected as e:
+                diag.flags.append(str(e))
+        # money 强制 clamp ≥0 + overdraft flag
+        if updated_dict.get("money", 0) < 0:
+            updated_dict["money"] = 0
+            if "money_overdraft" not in diag.flags:
+                diag.flags.append("money_overdraft")
+        if applied_any:
+            try:
+                new_state = CharacterState.model_validate(updated_dict)
+            except Exception as e:
+                diag.rejected += 1
+                diag.flags.append(f"validation_failed:{patch.target_id}:{e}")
+                return
+            self._tick_state.upsert_character_state(new_state)
+            diag.applied += 1
+        else:
+            diag.rejected += 1
+
+    def _apply_patch_to_world(
+        self, patch: StatePatch, diag: "PatchDiagnostic"
+    ) -> None:
+        ws = self._tick_state.world_state
+        updated_dict = ws.model_dump()
+        applied_any = False
+        for op in patch.ops:
+            try:
+                self._apply_op_to_dict(updated_dict, op, diag)
+                applied_any = True
+            except _OpRejected as e:
+                diag.flags.append(str(e))
+        if applied_any:
+            try:
+                new_ws = WorldState.model_validate(updated_dict)
+            except Exception as e:
+                diag.rejected += 1
+                diag.flags.append(f"validation_failed:world:{e}")
+                return
+            self._tick_state.set_world_state(new_ws)
+            diag.applied += 1
+        else:
+            diag.rejected += 1
+
+    @staticmethod
+    def _apply_op_to_dict(
+        target: dict,
+        op: StateOp,
+        diag: "PatchDiagnostic",
+        valid_location_ids: set[str] | None = None,
+    ) -> None:
+        """就地修改 target dict 的 op.field; 失败抛 _OpRejected。"""
+        if op.field not in target:
+            raise _OpRejected(f"unknown_field:{op.field}")
+        # location 字段做有效性校验
+        if op.field == "current_location" and op.op == "set":
+            if valid_location_ids is None or op.value not in valid_location_ids:
+                raise _OpRejected(f"unknown_location:{op.value}")
+            target[op.field] = op.value
+            return
+        if op.op == "set":
+            target[op.field] = op.value
+        elif op.op == "add":
+            cur = target.get(op.field, 0)
+            if not isinstance(cur, (int, float)) or not isinstance(op.value, (int, float)):
+                raise _OpRejected(f"add_type_mismatch:{op.field}")
+            target[op.field] = cur + op.value
+        elif op.op == "append":
+            cur = target.get(op.field)
+            if not isinstance(cur, list):
+                raise _OpRejected(f"append_non_list:{op.field}")
+            if op.value not in cur:
+                cur.append(op.value)
+        elif op.op == "remove":
+            cur = target.get(op.field)
+            if not isinstance(cur, list):
+                raise _OpRejected(f"remove_non_list:{op.field}")
+            if op.value in cur:
+                cur.remove(op.value)
+        else:  # pragma: no cover — Literal 限定
+            raise _OpRejected(f"unknown_op:{op.op}")
 
     @staticmethod
     def _consistency_flags(action: CharacterAction) -> list[str]:
