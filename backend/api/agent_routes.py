@@ -347,8 +347,9 @@ def _build_live_context(spec: AgentSpec) -> dict:
     """
     try:
         from api.tick_routes import _container as tc
-    except Exception as e:
-        return {"available": False, "reason": f"tick_routes 不可用: {e}"}
+    except Exception:
+        logger.warning("tick_routes 不可用", exc_info=True)
+        return {"available": False, "reason": "tick_routes 模块加载失败"}
     ts = getattr(tc, "tick_state", None)
     db = getattr(tc, "tick_db", None)
     orch = getattr(tc, "orchestrator", None)
