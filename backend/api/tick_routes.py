@@ -109,6 +109,13 @@ async def get_status() -> TickStatusResponse:
 @router.post("/run")
 async def run_one_tick() -> dict:
     orch = _require_orchestrator()
+    if orch.is_paused:
+        # v2.15 — pause() 必须真正阻止手动 /run; 否则 start_loop 暂停后用户仍可
+        # 通过 /run 推进 tick, 破坏暂停语义。
+        raise HTTPException(
+            status_code=409,
+            detail="Orchestrator is paused. Call /api/tick/resume before /run.",
+        )
     summary = await orch.run_tick()
     return {"ok": True, "summary": summary.model_dump(mode="json")}
 

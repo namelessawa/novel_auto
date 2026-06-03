@@ -403,6 +403,9 @@ class MemoryEntry(_TickBase):
     importance: int = Field(default=5, ge=0, le=10)
     # 保护标记 - 开放伏笔源头 / 创伤性事件,MemoryCompressor 跳过压缩
     protected_reason: str | None = None
+    # v2.15 — 升级后保留所替换的下级 entry id 列表, 供 MemoryStore 真正退役旧记录。
+    # 空列表 = 未经压缩生成的原始条目 (例如 L0 事件直接入库)。
+    source_ids: list[str] = Field(default_factory=list)
 
 
 class StyleAnchor(_TickBase):

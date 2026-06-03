@@ -272,10 +272,21 @@ class MemoryCompressor:
             return []
 
         key = "l1_entries" if target_tier == "L1" else "l2_entries"
+        src_field = "original_event_ids" if target_tier == "L1" else "original_l1_ids"
+        # v2.15 — fallback_entries 是本批输入的真实 id 集合, 用于:
+        # 1. 过滤 LLM 幻觉的 source id (只接受真实存在的)
+        # 2. 当 LLM 完全没返回 source id 时, 默认把本批全部认为是源
+        # 否则 MemoryCompressor 输出的 source_ids 永远是空 → store 不退役旧记录。
+        batch_ids = {m.id for m in fallback_entries}
         out: list[MemoryEntry] = []
         for idx, item in enumerate(payload.get(key, []) or []):
             try:
                 tick_range = item.get("tick_range", [0, 0])
+                raw_src = item.get(src_field, []) or []
+                src_ids = [s for s in raw_src if isinstance(s, str) and s in batch_ids]
+                if not src_ids:
+                    # LLM 没标 / 标了全是幻觉 → 用整批兜底
+                    src_ids = list(batch_ids)
                 out.append(
                     MemoryEntry(
                         id=f"{target_tier.lower()}_{tick_range[0]}_{tick_range[1]}_{idx}",
@@ -285,6 +296,7 @@ class MemoryCompressor:
                         emotional_tags=list(item.get("emotional_tags", []) or []),
                         involved=list(item.get("involved", []) or []),
                         importance=int(item.get("importance", 5)),
+                        source_ids=src_ids,
                     )
                 )
             except Exception as e:

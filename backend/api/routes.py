@@ -110,7 +110,10 @@ async def create_novel(req: NovelCreateRequest):
 
 @router.put("/api/novels/{novel_id}")
 async def update_novel(novel_id: str, req: NovelUpdateRequest):
-    entry = novel_manager.update_title(novel_id, req.title)
+    try:
+        entry = novel_manager.update_title(novel_id, req.title)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if entry is None:
         raise HTTPException(status_code=404, detail="Novel not found")
     return entry
@@ -121,7 +124,10 @@ async def delete_novel(novel_id: str):
     global _pipeline, _active_novel_id
     if novel_id == _active_novel_id:
         raise HTTPException(status_code=400, detail="不能删除当前活跃的小说")
-    ok = novel_manager.delete_novel(novel_id)
+    try:
+        ok = novel_manager.delete_novel(novel_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not ok:
         raise HTTPException(status_code=404, detail="Novel not found")
     return {"status": "ok"}
@@ -131,7 +137,10 @@ async def delete_novel(novel_id: str):
 async def switch_novel(novel_id: str):
     global _pipeline, _active_novel_id
 
-    target = novel_manager.get_novel(novel_id)
+    try:
+        target = novel_manager.get_novel(novel_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if target is None:
         raise HTTPException(status_code=404, detail="Novel not found")
 
@@ -144,6 +153,15 @@ async def switch_novel(novel_id: str):
     data_dir = novel_manager.get_novel_data_dir(novel_id)
     _pipeline = GenerationPipeline(data_dir=data_dir)
     _pipeline.load_state()
+
+    # v2.15 — 同步把 tick runtime 切到目标小说; 否则 /api/tick/* 仍指向旧 novel。
+    # lazy import 防启动期循环依赖。tick runtime 装配 9 agent + 多个增强层,
+    # 失败不应阻塞 legacy pipeline 切换 — 仅记日志。
+    try:
+        from tick_runtime import set_active_novel
+        set_active_novel(novel_id)
+    except Exception as e:
+        logger.warning("set_active_novel(%s) failed (non-fatal): %s", novel_id, e)
 
     return {"status": "ok", "active_id": novel_id, "title": target["title"]}
 
