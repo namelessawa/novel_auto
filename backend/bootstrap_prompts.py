@@ -69,9 +69,18 @@ PROMPT_WORLD = """\
 # 要求
 
 1. 不要过度设定 - 世界应有"留白"
-2. 至少 3 个相互对立的势力(支撑长期冲突)
-3. 至少 3 个潜在火药桶(future 可激活的张力)
-4. 世界规则不超过 10 条
+2. **至少 5 个有名字的地点 (locations)** — 分散在不同类型, 至少要覆盖:
+   * 1 个主要城市 / 据点 (角色起点)
+   * 1 个边境 / 前线 (冲突地)
+   * 1 个秘所 / 神殿 / 旧址 (悬念锚)
+   * 1 个旷野 / 自然地 (旅行通道)
+   * 1 个聚会点 / 市集 / 港口 (信息交换)
+   * 地点 id 用语义化前缀 (loc_city / loc_frontier / loc_temple / loc_wild / loc_market 等),
+     不要全用 loc_1, loc_2, ...; 不要把所有角色都堆在一个地点
+3. 至少 3 个相互对立的势力 (factions, 支撑长期冲突)
+4. 至少 3 个潜在火药桶 (future 可激活的张力)
+5. 世界规则不超过 10 条
+6. 每个地点的 current_state 至少 20 个汉字, 让 Narrator 一眼能写出气氛
 
 # 输出格式(严格 JSON,不要 markdown 代码块)
 
@@ -81,10 +90,14 @@ PROMPT_WORLD = """\
     "current_season": "...",
     "weather": "...",
     "locations": [
-      {{"id": "loc_1", "name": "...", "type": "city|village|wilderness", "current_state": "...", "notable_features": []}}
+      {{"id": "loc_city", "name": "...", "type": "city", "current_state": "...至少 20 字...", "notable_features": []}},
+      {{"id": "loc_frontier", "name": "...", "type": "frontier", "current_state": "...", "notable_features": []}},
+      {{"id": "loc_temple", "name": "...", "type": "ruin", "current_state": "...", "notable_features": []}},
+      {{"id": "loc_wild", "name": "...", "type": "wilderness", "current_state": "...", "notable_features": []}},
+      {{"id": "loc_market", "name": "...", "type": "port", "current_state": "...", "notable_features": []}}
     ],
     "factions": [
-      {{"id": "f_1", "name": "...", "description": "...", "territory": ["loc_1"]}}
+      {{"id": "f_1", "name": "...", "description": "...", "territory": ["loc_city"]}}
     ],
     "active_global_events": ["..."],
     "world_rules": ["..."]
@@ -237,13 +250,22 @@ PROMPT_STYLE = """\
 # ---------------------------------------------------------------------------
 
 
-async def _llm_json(system_prompt: str, user_prompt: str, max_tokens: int = 4096) -> dict:
-    """统一 LLM 调用 + JSON 解析。"""
+async def _llm_json(
+    system_prompt: str,
+    user_prompt: str,
+    max_tokens: int = 4096,
+    *,
+    stage: str = "unknown",
+) -> dict:
+    """统一 LLM 调用 + JSON 解析。stage 用于 token budget 归账 (world/characters/loops/style)。"""
     resp = await llm_client.chat(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         temperature=0.7,
         max_tokens=max_tokens,
+        agent_id=f"bootstrap:{stage}",
+        priority="medium",
+        tick=0,
     )
     text = resp.content.strip()
     if text.startswith("```"):
@@ -273,8 +295,22 @@ async def bootstrap_world(
         system_prompt="你是一个虚构世界设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_WORLD.format(seed=seed),
         max_tokens=61440,
+        stage="world",
     )
     ws = WorldState.model_validate(world_resp.get("world_state", {}))
+    # v2.16 — 多地点校验: <3 个有效 location 时世界过薄, 长期会让所有角色挤在一处。
+    # 不阻断 bootstrap (LLM 偶发偷工不该让冷启动整条链炸掉), 但 warning 必须可见。
+    if len(ws.locations) < 3:
+        logger.warning(
+            "WorldState locations=%d (<3) — 世界过薄, 角色会挤在单一地点; "
+            "考虑重跑或手动补地点。",
+            len(ws.locations),
+        )
+    elif len(ws.locations) < 5:
+        logger.warning(
+            "WorldState locations=%d (<5) — 已可用但偏少, 建议补到 5 个以上",
+            len(ws.locations),
+        )
     ts.set_world_state(ws)
     logger.info(
         "  → era=%s, locations=%d, factions=%d, rules=%d",
@@ -292,6 +328,7 @@ async def bootstrap_world(
             world_state=ws.model_dump_json(indent=2)
         ),
         max_tokens=122880,
+        stage="characters",
     )
     main_tracking_id: str | None = None
     for char_item in chars_resp.get("characters", []) or []:
@@ -327,6 +364,7 @@ async def bootstrap_world(
             ),
         ),
         max_tokens=40960,
+        stage="open_loops",
     )
     for loop_raw in loops_resp.get("open_loops", []) or []:
         try:
@@ -346,6 +384,7 @@ async def bootstrap_world(
             references=references,
         ),
         max_tokens=81920,
+        stage="style",
     )
     for anchor_raw in style_resp.get("style_anchors", []) or []:
         try:

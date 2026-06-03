@@ -124,6 +124,8 @@ class EventInjector:
                 user_prompt=user_prompt,
                 temperature=0.6,
                 max_tokens=40960,
+                agent_id="event_injector",
+                priority="medium",
             )
         except Exception as e:
             logger.error("EventInjector LLM call failed: %s", e)

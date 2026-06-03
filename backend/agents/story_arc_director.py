@@ -373,6 +373,8 @@ high_streak: {analysis.high_streak}
                 user_prompt=user_prompt,
                 temperature=0.5,
                 max_tokens=2048,
+                agent_id="story_arc_director",
+                priority="medium",
             )
         except Exception as e:
             logger.warning("StoryArcDirector LLM hint failed: %s", e)

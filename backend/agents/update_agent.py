@@ -94,6 +94,8 @@ class UpdateAgent:
                 user_prompt=f"请分析以下正文的世界状态变更：\n\n{section.content}",
                 temperature=0.1,
                 max_tokens=40960,
+                agent_id="update_agent",
+                priority="medium",
             )
         except Exception as e:
             logger.error("UpdateAgent LLM call failed: %s", e)

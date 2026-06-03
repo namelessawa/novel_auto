@@ -394,6 +394,8 @@ class CharacterArcTracker:
             user_prompt=user_prompt,
             temperature=0.3,
             max_tokens=8192,
+            agent_id="character_arc_tracker",
+            priority="optional",
         )
         text = resp.content.strip()
         if text.startswith("```"):

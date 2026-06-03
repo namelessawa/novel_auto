@@ -49,12 +49,14 @@ from memory.tick_state import TickState
 from narrative.creativity_scorer import CreativityReport, CreativityScorer
 from narrative.fact_ledger import Fact, FactLedger
 from narrative.safety_filter import SafetyFilter
+from nf_core.llm_client import set_current_tick
 from nf_core.token_budget import TokenBudgetTracker, get_global_tracker, set_global_tracker
 from memory_system.models import (
     CharacterAction,
     CharacterState,
     Event,
     MemoryEntry,
+    Relationship,
     TickSummary,
     WorldState,
 )
@@ -284,6 +286,11 @@ class Orchestrator:
     async def _run_tick_unlocked(self) -> TickSummary:
         """run_tick 原始实现 — 不加锁版本, 仅供 run_tick 与测试直接调用。"""
         tick = self._tick_state.advance_tick()
+        # v2.16 Observability — 把当前 tick 注入 ContextVar, 让所有 LLM 调用
+        # (CharacterAgent / NarratorAgent / WorldSimulator / ...) 自动归账到本 tick。
+        # 同时通知 TokenBudgetTracker 开始新 tick 窗口, 让 per-tick 上限准确。
+        set_current_tick(tick)
+        self._token_budget.begin_tick(tick)
         agents_called: list[str] = []
         events_generated_ids: list[str] = []
         narrator_produced = False
@@ -705,8 +712,25 @@ class Orchestrator:
     def _apply_actions(
         self, tick: int, actions: list[CharacterAction]
     ) -> list[Event]:
-        """阶段 5: 应用 CharacterAction 到 CharacterState 并生成 character_action Event。"""
+        """阶段 5: 应用 CharacterAction 到 CharacterState 并生成 character_action Event。
+
+        v2.16 — 硬状态转移:
+        * ``new_location`` → 更新 current_location, 且仅当目标 location_id 在
+          WorldState.locations 中存在时才接受 (否则忽略并打 flag)
+        * ``inventory_added`` / ``inventory_removed`` → 去重 / 移除, 失败静默
+        * ``status_added`` / ``status_removed`` → 同上
+        * ``relationship_deltas`` → 合并 trust (clamp [-10, 10]) / new_type /
+          history_summary; 同时刷新 last_interaction_tick
+
+        本次 tick 全部 action 应用完之后, 由 _sync_location_membership() 统一
+        刷新 WorldState.locations[].present_characters, 而不是每 action 刷一次。
+        """
         action_events: list[Event] = []
+        valid_location_ids = {
+            loc.id for loc in self._tick_state.world_state.locations
+        }
+        any_location_changed = False
+
         for action in actions:
             state = self._tick_state.get_character_state(action.character_id)
             if state is None:
@@ -724,18 +748,70 @@ class Orchestrator:
             for f in action.newly_learned:
                 if f and f not in facts:
                     facts.append(f)
-            speculations = list(state.known_facts)  # 暂归并 known_facts;P1 拆 separate field
 
             # 应用 emotional shift
             emotional = state.emotional_state
             if action.emotional_shift:
                 emotional = action.emotional_shift
 
+            # v2.16 — location
+            new_location = state.current_location
+            location_flag: str | None = None
+            if action.new_location:
+                if action.new_location in valid_location_ids:
+                    if new_location != action.new_location:
+                        any_location_changed = True
+                    new_location = action.new_location
+                else:
+                    location_flag = f"unknown_location:{action.new_location}"
+
+            # v2.16 — inventory
+            new_inventory = [
+                item for item in state.inventory if item not in action.inventory_removed
+            ]
+            for item in action.inventory_added:
+                if item and item not in new_inventory:
+                    new_inventory.append(item)
+
+            # v2.16 — status effects
+            new_status = [
+                s for s in state.status_effects if s not in action.status_removed
+            ]
+            for s in action.status_added:
+                if s and s not in new_status:
+                    new_status.append(s)
+
+            # v2.16 — relationships
+            new_relationships = dict(state.relationships)
+            for other_id, delta in action.relationship_deltas.items():
+                if not other_id:
+                    continue
+                existing = new_relationships.get(other_id) or Relationship(
+                    with_character_id=other_id
+                )
+                merged_trust = max(-10, min(10, existing.trust + delta.trust_delta))
+                merged_type = delta.new_type or existing.type
+                merged_history = existing.history_summary
+                if delta.history_entry:
+                    sep = " | " if merged_history else ""
+                    merged_history = (merged_history + sep + delta.history_entry)[-240:]
+                new_relationships[other_id] = Relationship(
+                    with_character_id=other_id,
+                    type=merged_type,
+                    trust=merged_trust,
+                    history_summary=merged_history,
+                    last_interaction_tick=tick,
+                )
+
             updated = state.model_copy(
                 update={
                     "current_goals": new_goals,
                     "known_facts": facts,
                     "emotional_state": emotional,
+                    "current_location": new_location,
+                    "inventory": new_inventory,
+                    "status_effects": new_status,
+                    "relationships": new_relationships,
                 }
             )
             self._tick_state.upsert_character_state(updated)
@@ -753,14 +829,19 @@ class Orchestrator:
                 nv_hint += 1
             if action.emotional_shift:
                 nv_hint += 1
+            if action.new_location and new_location == action.new_location:
+                nv_hint += 1  # 角色真的发生了移动
             if "fight" in (action.action_type or "") or "attack" in (action.action_type or ""):
                 nv_hint += 2
             nv_hint = min(nv_hint, 6)  # 上限, narrator 仍可自己评估更高
+
+            # 事件 location 用更新后的位置, 这样 narrator 看到的就是角色"现在"的位置
+            event_location = new_location or state.current_location
             event = Event(
                 id=f"evt_act_{tick}_{action.character_id}_{uuid.uuid4().hex[:6]}",
                 tick=tick,
                 type="character_action",
-                location=state.current_location,
+                location=event_location,
                 participants=[action.character_id]
                 + ([action.target] if action.target else [])
                 + list(action.dialogue_to_whom),
@@ -771,10 +852,35 @@ class Orchestrator:
                 visible_to=visible_to,
                 narrative_value=0,  # Narrator 自己评估精确值
                 narrative_value_hint=nv_hint,  # 启发式提示, 防止早期跳过
-                consequences=[],
+                consequences=[location_flag] if location_flag else [],
             )
             action_events.append(event)
+
+        if any_location_changed:
+            self._sync_location_membership()
         return action_events
+
+    def _sync_location_membership(self) -> None:
+        """根据当前所有 CharacterState 的 current_location 重建
+        WorldState.locations[].present_characters。
+
+        每 tick 至多调用一次, 在 _apply_actions 末尾。避免每 action 重写一次
+        WorldState (model_copy 不便宜)。仅在确有角色移动时执行。
+        """
+        ws = self._tick_state.world_state
+        if not ws.locations:
+            return
+        membership: dict[str, list[str]] = {loc.id: [] for loc in ws.locations}
+        for st in self._tick_state.list_character_states():
+            if st.current_location and st.current_location in membership:
+                membership[st.current_location].append(st.character_id)
+        new_locations = [
+            loc.model_copy(update={"present_characters": sorted(membership.get(loc.id, []))})
+            for loc in ws.locations
+        ]
+        self._tick_state.set_world_state(
+            ws.model_copy(update={"locations": new_locations})
+        )
 
     def _infer_visible_to(
         self, action: CharacterAction, state: CharacterState

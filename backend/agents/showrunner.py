@@ -132,6 +132,8 @@ class Showrunner:
                 user_prompt=user_prompt,
                 temperature=0.4,
                 max_tokens=30720,
+                agent_id="showrunner",
+                priority="medium",
             )
         except Exception as e:
             logger.error("Showrunner LLM call failed: %s", e)

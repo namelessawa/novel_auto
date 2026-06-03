@@ -55,6 +55,7 @@ def mock_llm(monkeypatch):
         def __init__(self) -> None:
             self._queue: list[Any] = []
             self.calls: list[tuple[str, str]] = []  # (system, user)
+            self.call_kwargs: list[dict] = []  # v2.16 — 暴露 agent_id/priority/tick 供测试断言
 
         def set_responses(self, responses: list[Any]) -> None:
             self._queue = list(responses)
@@ -64,6 +65,27 @@ def mock_llm(monkeypatch):
 
         async def __call__(self, system_prompt: str, user_prompt: str, **kw) -> FakeLLMResponse:
             self.calls.append((system_prompt, user_prompt))
+            self.call_kwargs.append(dict(kw))
+            # v2.16 — 复刻真实 chat 的 token_budget 副作用, 让端到端测试能验证
+            # agent_id / priority / tick 是否被正确传递。失败一律静默, 不影响主测试逻辑。
+            try:
+                from nf_core.llm_client import get_current_tick
+                from nf_core.token_budget import get_global_tracker
+
+                agent_id = kw.get("agent_id", "unknown")
+                priority = kw.get("priority", "medium")
+                tick = kw.get("tick", -1)
+                if tick == -1:
+                    tick = get_current_tick()
+                get_global_tracker().record(
+                    agent_id=agent_id,
+                    priority=priority,
+                    prompt_tokens=0,
+                    completion_tokens=0,
+                    tick=tick,
+                )
+            except Exception:
+                pass
             if not self._queue:
                 return FakeLLMResponse(content="{}")
             r = self._queue.pop(0)

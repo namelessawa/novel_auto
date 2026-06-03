@@ -187,6 +187,8 @@ class MemoryCompressor:
                     user_prompt=user_prompt,
                     temperature=0.3,
                     max_tokens=40960,
+                    agent_id="memory_compressor:l0_l1",
+                    priority="optional",
                 )
                 results.extend(
                     self._parse_compressed(resp.content, target_tier="L1", fallback_entries=batch)
@@ -211,6 +213,8 @@ class MemoryCompressor:
                     user_prompt=user_prompt,
                     temperature=0.3,
                     max_tokens=20480,
+                    agent_id="memory_compressor:l1_l2",
+                    priority="optional",
                 )
                 results.extend(
                     self._parse_compressed(resp.content, target_tier="L2", fallback_entries=batch)

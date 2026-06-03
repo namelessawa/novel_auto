@@ -426,11 +426,39 @@ class StyleAnchor(_TickBase):
 # ---------------------------------------------------------------------------
 
 
+class RelationshipDelta(_TickBase):
+    """v2.16 — 角色关系的单 tick 增量更新。
+
+    CharacterAction.relationship_deltas 用 ``{other_id: RelationshipDelta}`` 表达
+    本 tick 内角色对其他角色关系的变化。Orchestrator._apply_actions 把它合并到
+    CharacterState.relationships 中, 并 clamp trust 到 [-10, 10]。
+    """
+
+    trust_delta: int = Field(
+        default=0,
+        ge=-20,
+        le=20,
+        description="信任度增量, 应用前 clamp 到 ±20 防 LLM 出格; 合并后再 clamp 到 [-10, 10]",
+    )
+    new_type: str = Field(
+        default="",
+        description="若非空, 覆盖关系类型 (朋友|敌人|恋人|盟友|陌生人|...)",
+    )
+    history_entry: str = Field(
+        default="",
+        description="本 tick 互动的一句话摘要; 合并进 history_summary 尾部",
+    )
+
+
 class CharacterAction(_TickBase):
     """CharacterAgent 决策输出 - Orchestrator 阶段4(冲突解析)的输入。
 
     与遗留 ``ActionPlan`` 不同:``ActionPlan`` 是 OutlineAgent 给 WriterAgent
     的节级写作指南;``CharacterAction`` 是单角色 tick 内的具体行动。
+
+    v2.16 — 硬状态转移字段 (new_location / inventory_*/ status_*/ relationship_deltas)
+    让 CharacterAgent 输出能直接落到 CharacterState 上, 不再仅靠 Narrator 圆场。
+    所有新字段都有零值默认, 旧 LLM 输出无需迁移。
     """
 
 
@@ -449,6 +477,32 @@ class CharacterAction(_TickBase):
     newly_learned: list[str] = Field(default_factory=list, description="此 tick 新了解的事")
     newly_speculated: list[str] = Field(default_factory=list, description="新猜测")
     flags: list[str] = Field(default_factory=list, description="例如'此行动违背我的性格'")
+
+    # v2.16 硬状态转移 —————————————————————————————————————————————————
+    new_location: str = Field(
+        default="",
+        description="如本 tick 角色移动, 填入目标 location_id; 不变留空",
+    )
+    inventory_added: list[str] = Field(
+        default_factory=list,
+        description="本 tick 新获得的物品名称, 自动去重并入 CharacterState.inventory",
+    )
+    inventory_removed: list[str] = Field(
+        default_factory=list,
+        description="本 tick 失去/给出/丢弃的物品名称, 自动从 inventory 移除",
+    )
+    status_added: list[str] = Field(
+        default_factory=list,
+        description="本 tick 新增的身体/精神状态效果 (受伤|疲惫|中毒|...)",
+    )
+    status_removed: list[str] = Field(
+        default_factory=list,
+        description="本 tick 解除的状态效果 (治愈|休息恢复|...)",
+    )
+    relationship_deltas: dict[str, RelationshipDelta] = Field(
+        default_factory=dict,
+        description="key=对方 character_id, value=该关系本 tick 的增量更新",
+    )
 
 
 class TickSummary(_TickBase):
@@ -590,6 +644,7 @@ __all__ = [
     "OpenLoop",
     "MemoryEntry",
     "StyleAnchor",
+    "RelationshipDelta",
     "CharacterAction",
     "TickSummary",
     # v2.4 叙事大纲层

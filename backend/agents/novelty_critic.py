@@ -94,6 +94,8 @@ class NoveltyCritic:
                 user_prompt=user_prompt,
                 temperature=0.3,
                 max_tokens=20480,
+                agent_id="novelty_critic",
+                priority="optional",
             )
         except Exception as e:
             logger.error("NoveltyCritic LLM call failed: %s", e)
