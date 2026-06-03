@@ -26,6 +26,7 @@ from memory_system.models import (
     CharacterState,
     Event,
     OpenLoop,
+    StatePatch,
     WorldState,
 )
 from nf_core.llm_client import llm_client
@@ -57,6 +58,19 @@ SYSTEM_PROMPT = """\
 * 不一次注入过多事件
 * 不凭空发明新地名/新势力
 
+# 强因果事件 — state_patches (v2.18 Phase 8)
+
+对于"爆炸波及房间所有人"/"瘟疫降临某地"/"某人当场死亡"这类**外部权威**事件,
+事件本身不足以让世界状态立即生效 — 角色不会自己去填"我被波及受伤了" (那是
+角色意志的输出, 跟"被 NPC 炸伤"是两件事)。这时可以提供 ``state_patches``,
+Orchestrator 在阶段 5d 自动应用到 CharacterState / WorldState。
+
+补丁形式:
+- target_type: "character" | "world"
+- target_id: character_id (target_type=character 时) 或空串
+- ops: list, 每条 {field, op, value}, op ∈ {set, add, append, remove}
+- 仅对**强因果、必须立即生效**的事件添加 patches; 一般事件不需要 (角色自己会反应)
+
 # 输出格式(严格 JSON,不要 markdown 代码块)
 
 {
@@ -76,6 +90,17 @@ SYSTEM_PROMPT = """\
       "narrative_value_hint": 7
     }
   ],
+  "state_patches": [
+    {
+      "source_agent": "event_injector",
+      "source_event_id": "evt_xxx",
+      "target_type": "character",
+      "target_id": "char_id_1",
+      "ops": [{"field": "status_effects", "op": "append", "value": "受伤"}],
+      "confidence": 0.9,
+      "reason": "事件直接结果"
+    }
+  ],
   "no_events_reason": null
 }
 
@@ -88,6 +113,13 @@ class EventInjectorOutput:
     events: list[Event]
     no_events_reason: str | None = None
     conflict_pool_count: int = 0
+    # v2.18 Phase 8 — 强因果事件 (爆炸 / 瘟疫 / 死亡) 可携带 StatePatch 立即生效,
+    # 避免借道 character_action (那是角色意志, 不该承担"被 NPC 炸伤"这种外部权威)。
+    state_patches: list[StatePatch] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.state_patches is None:
+            self.state_patches = []
 
 
 class EventInjector:
@@ -249,8 +281,19 @@ class EventInjector:
             except Exception as e:
                 logger.warning("Skip invalid injected event #%d (%s): %s", idx, e, raw_ev)
 
+        # v2.18 Phase 8 — 解析 state_patches; 单条失败跳过, 不影响其他
+        state_patches: list[StatePatch] = []
+        for idx, raw_patch in enumerate(payload.get("state_patches", []) or []):
+            try:
+                state_patches.append(StatePatch.model_validate(raw_patch))
+            except Exception as e:
+                logger.warning(
+                    "Skip invalid state_patch #%d (%s): %s", idx, e, raw_patch
+                )
+
         return EventInjectorOutput(
             events=events,
             no_events_reason=payload.get("no_events_reason"),
             conflict_pool_count=open_loop_count,
+            state_patches=state_patches,
         )

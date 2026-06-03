@@ -327,6 +327,8 @@ class Orchestrator:
 
         # 阶段 2: 事件注入 ------------------------------------------------
         injected_events: list[Event] = []
+        # v2.18 Phase 8 — EventInjector 可携带 StatePatch 立即生效, 阶段 5d 应用
+        injector_state_patches: list[StatePatch] = []
         showrunner_recs: list[dict] = []
 
         if self._showrunner is not None and tick % SHOWRUNNER_CADENCE == 0:
@@ -365,6 +367,9 @@ class Orchestrator:
                     injected_events = list(injector_out.events)
                 elif isinstance(injector_out, list):
                     injected_events = list(injector_out)
+                # v2.18 Phase 8 — 同步收集 state_patches (阶段 5d 应用)
+                if hasattr(injector_out, "state_patches"):
+                    injector_state_patches = list(injector_out.state_patches or [])
                 events_generated_ids.extend(e.id for e in injected_events)
                 agents_called.append("event_injector")
                 if injected_events:
@@ -447,6 +452,24 @@ class Orchestrator:
         action_events = self._apply_actions(tick, resolved_actions)
         events_generated_ids.extend(e.id for e in action_events)
         all_events.extend(action_events)
+
+        # 阶段 5d: 应用 EventInjector 提交的 StatePatch (v2.18 Phase 8)
+        # 顺序: 角色意志 (_apply_actions) → 外部权威 (state_patches), 后者覆盖前者
+        # — 例如: 角色拿剑成功后, 紧接着被爆炸炸伤。
+        if injector_state_patches:
+            try:
+                patch_diag = self._apply_state_patches(
+                    tick=tick, patches=injector_state_patches
+                )
+                if patch_diag.applied or patch_diag.rejected:
+                    agents_called.append(
+                        f"state_patches(applied={patch_diag.applied},"
+                        f"rejected={patch_diag.rejected})"
+                    )
+            except Exception as e:
+                logger.warning(
+                    "Phase 5d _apply_state_patches failed (non-fatal): %s", e
+                )
 
         # 阶段 5a: 记录本 tick 的 CharacterAction 到环形缓冲, 供 v2.5 tracker --
         for action in resolved_actions:
