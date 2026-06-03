@@ -228,3 +228,27 @@ async def list_character_states() -> dict:
 async def list_novelty_warnings() -> dict:
     ts = _require_tick_state()
     return {"warnings": ts.get_novelty_warnings()}
+
+
+@router.get("/diagnostic/hallucination")
+async def hallucination_diagnostic() -> dict:
+    """v2.18 Phase 9 — Guardian 幻觉率 + AgentRuntimeState 监控数据。
+
+    返回每个被 Guardian 建议过降级的 agent 的统计 (degrade_recommendations /
+    hallucination_hits / last_degrade_recommended_tick / model_tier_override_active),
+    以及全局 HALLUCINATION_AUTO_DEGRADE 开关状态。
+
+    生产用法:
+    * shadow 期 (auto_degrade_active=False): 监控真阳率, 数据 N 天后再决定开关
+    * active 期 (auto_degrade_active=True): 实时观察 model_tier_override 命中分布
+    """
+    import os
+
+    ts = _require_tick_state()
+    stats = ts.get_hallucination_stats()
+    auto_degrade = os.environ.get("HALLUCINATION_AUTO_DEGRADE", "").strip()
+    return {
+        "stats": stats,
+        "total_agents_flagged": len(stats),
+        "auto_degrade_active": auto_degrade in {"1", "true", "TRUE", "yes"},
+    }
