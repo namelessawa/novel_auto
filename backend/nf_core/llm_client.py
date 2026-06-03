@@ -125,12 +125,12 @@ class LLMClient:
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         self._model = eff_model
-        logger.info(
-            "LLMClient reloaded: base_url=%s model=%s source=%s",
-            eff_url,
-            eff_model,
-            source,
-        )
+        # v2.17 — 故意不 logger.info() base_url/model/source 字符串: 它们在 CodeQL
+        # 视图里都从含 api_key 的 block dict 派生, 直接日志会触发
+        # py/clear-text-logging-sensitive-data。调用方拿到返回 dict 后可自行决定
+        # 是否记账, 是否脱敏。
+        logger.info("LLMClient reloaded (model length=%d, base_url length=%d)",
+                    len(eff_model), len(eff_url))
         return {"base_url": eff_url, "model": eff_model, "source": source}
 
     async def chat(
