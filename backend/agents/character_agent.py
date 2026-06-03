@@ -42,6 +42,25 @@ _ENGLISH_RUN_PATTERN = re.compile(r"(?:\b[A-Za-z]{2,}\b\s+){2}\b[A-Za-z]{2,}\b")
 logger = logging.getLogger(__name__)
 
 
+def _coerce_int(v: Any, default: int = 0) -> int:
+    """LLM 偶尔把 money_delta 写成 '50' / '+50' / '50元' / None, 容错转 int。
+    超出 [-1_000_000, 1_000_000] 被 Pydantic 在外层 clamp / reject。
+    """
+    if isinstance(v, int) and not isinstance(v, bool):
+        return v
+    if v is None or v == "":
+        return default
+    if isinstance(v, float):
+        return int(v)
+    if isinstance(v, str):
+        m = re.search(r"-?\d+", v)
+        return int(m.group(0)) if m else default
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
+
+
 def _default_concurrency() -> int:
     raw = os.environ.get("CHARACTER_AGENT_CONCURRENCY", "3").strip()
     try:
@@ -93,6 +112,7 @@ SYSTEM_PROMPT_TEMPLATE = """\
 * ``inventory_added`` / ``inventory_removed`` — 本 tick 获得 / 失去的物品 (字符串数组)
 * ``status_added`` / ``status_removed`` — 本 tick 新增 / 解除的状态效果 (受伤 / 疲惫 / 中毒 / 治愈)
 * ``relationship_deltas`` — 与他人关系的增量, 格式 {{"对方id": {{"trust_delta": -2, "new_type": "敌人", "history_entry": "..."}}}}
+* ``money_delta`` — 本 tick 钱币变化, +赚/抢/收 / -花/支/失; 仅 buy/sell/pay/earn/steal/loot/give 等经济动作下填非零, 否则保持 0
 
 留白字段比胡乱填好。但**真发生了的转移必须落字段**, 不能只写在 description 里。
 
@@ -118,7 +138,8 @@ SYSTEM_PROMPT_TEMPLATE = """\
   "inventory_removed": [],
   "status_added": [],
   "status_removed": [],
-  "relationship_deltas": {{}}
+  "relationship_deltas": {{}},
+  "money_delta": 0
 }}
 
 记住:你不是叙述者。你不"写小说"。你只**是**这个角色,做这个角色会做的事。
@@ -243,6 +264,7 @@ class CharacterAgent:
 【情绪】{state.emotional_state}
 【身体状态】{', '.join(state.status_effects) or '正常'}
 【手头物品】{', '.join(state.inventory) or '(无)'}
+【钱币】{state.money}
 
 # 你的当前短期目标
 
@@ -368,6 +390,7 @@ class CharacterAgent:
                     str(x) for x in (payload.get("status_removed", []) or []) if x
                 ],
                 relationship_deltas=rel_deltas,
+                money_delta=_coerce_int(payload.get("money_delta", 0)),
             )
         except Exception as e:
             logger.error(

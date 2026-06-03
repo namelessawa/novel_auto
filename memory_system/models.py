@@ -336,6 +336,13 @@ class CharacterState(_TickBase):
     emotional_state: str = "neutral"
     inventory: list[str] = Field(default_factory=list)
     status_effects: list[str] = Field(default_factory=list, description="受伤|生病|堕落中|...")
+    # v2.18 — 经济维度。int (不接受自然语言); 不允许 < 0, Orchestrator 在 apply
+    # 时 clamp 到 0 并打 money_overdraft flag。币种由 WorldState 隐含, 不区分多币种。
+    money: int = Field(
+        default=0,
+        ge=0,
+        description="角色当前持有的钱币数量, 不允许为负",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -502,6 +509,13 @@ class CharacterAction(_TickBase):
     relationship_deltas: dict[str, RelationshipDelta] = Field(
         default_factory=dict,
         description="key=对方 character_id, value=该关系本 tick 的增量更新",
+    )
+    # v2.18 — 经济动作的金额增量, +赚/抢/收 / -花/支/失。clamp 见 _apply_actions。
+    money_delta: int = Field(
+        default=0,
+        ge=-1_000_000,
+        le=1_000_000,
+        description="本 tick 钱币变化, 上下限防 LLM 输出天文数字",
     )
 
 

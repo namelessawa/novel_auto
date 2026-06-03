@@ -781,6 +781,14 @@ class Orchestrator:
                 if s and s not in new_status:
                     new_status.append(s)
 
+            # v2.18 — money. clamp 到 [0, +inf); 若 LLM 让你"花"超过你有的,
+            # 钱降到 0 并打 money_overdraft flag, 让 Guardian 后续监控。
+            money_overdraft = False
+            new_money = state.money + action.money_delta
+            if new_money < 0:
+                money_overdraft = True
+                new_money = 0
+
             # v2.16 — relationships
             new_relationships = dict(state.relationships)
             for other_id, delta in action.relationship_deltas.items():
@@ -812,6 +820,7 @@ class Orchestrator:
                     "inventory": new_inventory,
                     "status_effects": new_status,
                     "relationships": new_relationships,
+                    "money": new_money,
                 }
             )
             self._tick_state.upsert_character_state(updated)
@@ -861,7 +870,9 @@ class Orchestrator:
                 narrative_value=0,  # Narrator 自己评估精确值
                 narrative_value_hint=nv_hint,  # 启发式提示, 防止早期跳过
                 consequences=(
-                    ([location_flag] if location_flag else []) + consistency_flags
+                    ([location_flag] if location_flag else [])
+                    + (["money_overdraft"] if money_overdraft else [])
+                    + consistency_flags
                 ),
             )
             action_events.append(event)
@@ -878,10 +889,11 @@ class Orchestrator:
         * action_type ∈ {wait, speak, investigate, think, observe} 但 new_location
           非空 → ``location_without_move``
         * 同样的非交互动作但 inventory_added 非空 → ``inventory_without_action``
+        * 同样的非交互动作但 money_delta != 0 → ``money_without_action``
 
         合法组合不打 flag (take/steal/buy/craft + inventory_added,
-        move/flee/travel + new_location, 等)。status_added 在被动场景下
-        合法 (wait + 焦虑), 不参与一致性检查。
+        move/flee/travel + new_location, buy/sell/pay/earn + money_delta, 等)。
+        status_added 在被动场景下合法 (wait + 焦虑), 不参与一致性检查。
         """
         non_interactive = {"wait", "speak", "investigate", "think", "observe"}
         flags: list[str] = []
@@ -891,6 +903,8 @@ class Orchestrator:
                 flags.append("location_without_move")
             if action.inventory_added:
                 flags.append("inventory_without_action")
+            if action.money_delta != 0:
+                flags.append("money_without_action")
         return flags
 
     def _sync_location_membership(self) -> None:

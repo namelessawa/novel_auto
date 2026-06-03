@@ -219,3 +219,43 @@ def test_winner_with_single_contender_keeps_hard_fields() -> None:
     assert diag.conflict_groups == 0
     assert resolved[0].inventory_added == ["amulet"]
     assert resolved[0].new_location == "loc_tomb"
+
+
+def test_loser_money_delta_positive_is_cleared_negative_kept() -> None:
+    """两人同抢同一钱袋, 败者的 +money 不应到账, 但败者主动付出 (-money) 保留。
+
+    经济动作里, +money 是"成果"(steal/loot/earn 得到的钱), -money 是"付出"
+    (buy/pay/lose), 仲裁规则应与 inventory_added(成果) vs inventory_removed(主动)
+    保持同构。
+    """
+    ar = ActionResolver()
+    actions = [
+        CharacterAction(
+            character_id="winner",
+            action_type="steal",
+            target="purse",
+            money_delta=50,
+        ),
+        CharacterAction(
+            character_id="loser",
+            action_type="steal",
+            target="purse",
+            money_delta=50,  # 失败者也想抢 → 应被清零
+        ),
+        CharacterAction(
+            character_id="payer",
+            action_type="steal",
+            target="purse",
+            money_delta=-30,  # 不应被清零 — 即使竞争失败, 自愿支付意图仍可保留
+        ),
+    ]
+    profiles = {
+        "winner": _profile("winner", tier="A"),
+        "loser": _profile("loser", tier="B"),
+        "payer": _profile("payer", tier="B"),
+    }
+    resolved, _ = ar.resolve(actions, profiles=profiles)
+    by_id = {r.character_id: r for r in resolved}
+    assert by_id["winner"].money_delta == 50
+    assert by_id["loser"].money_delta == 0
+    assert by_id["payer"].money_delta == -30

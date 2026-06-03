@@ -104,8 +104,11 @@ class ActionResolver:
                 # 仍会把这些硬转移写回 CharacterState (例如两人同 take 同物品,
                 # 败者 action_type 改 wait 但 inventory_added=["剑"] 仍在,
                 # 导致两人都获得剑)。
-                # 主动卸下/解除 (inventory_removed / status_removed) 保留,
-                # 因为失败也可以"丢掉手里的剑"或"挣脱中毒"。
+                # 主动卸下/解除 (inventory_removed / status_removed / 负 money_delta)
+                # 保留 — 失败也允许"丢掉手里的剑"/"挣脱中毒"/"自愿支付意图"。
+                cleared_money = (
+                    loser.money_delta if loser.money_delta < 0 else 0
+                )
                 resolved[loser_idx] = loser.model_copy(
                     update={
                         "action_type": "wait",
@@ -118,6 +121,7 @@ class ActionResolver:
                         "inventory_added": [],
                         "status_added": [],
                         "relationship_deltas": {},
+                        "money_delta": cleared_money,
                     }
                 )
             logger.info(

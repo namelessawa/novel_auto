@@ -294,3 +294,65 @@ def test_apply_actions_take_with_inventory_added_no_flag(tmp_path):
 
     assert len(events) == 1
     assert "inventory_without_action" not in events[0].consequences
+
+
+def test_apply_actions_money_delta_applied_to_state(tmp_path):
+    """money_delta 应改写 CharacterState.money, 且仅当变化时记录。"""
+    ts = _make_state(tmp_path)
+    # 初始化 elara.money=100
+    elara = ts.get_character_state("elara")
+    assert elara is not None
+    ts.upsert_character_state(elara.model_copy(update={"money": 100}))
+
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="buy",
+        target="bread",
+        description="买一块面包",
+        money_delta=-15,
+    )
+
+    orch._apply_actions(tick=1, actions=[action])
+    new_state = ts.get_character_state("elara")
+    assert new_state is not None
+    assert new_state.money == 85
+
+
+def test_apply_actions_money_cannot_go_below_zero(tmp_path):
+    """money 不能为负 — 若 LLM 让你"花"超过你有的, clamp 到 0 并打 flag。"""
+    ts = _make_state(tmp_path)
+    elara = ts.get_character_state("elara")
+    assert elara is not None
+    ts.upsert_character_state(elara.model_copy(update={"money": 10}))
+
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="buy",
+        target="ring",
+        description="想买戒指",
+        money_delta=-100,
+    )
+
+    events = orch._apply_actions(tick=1, actions=[action])
+    new_state = ts.get_character_state("elara")
+    assert new_state is not None
+    assert new_state.money == 0
+    assert "money_overdraft" in events[0].consequences
+
+
+def test_apply_actions_money_without_action_flag(tmp_path):
+    """非交易类 action 带 money_delta 应打一致性 flag。"""
+    ts = _make_state(tmp_path)
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="speak",
+        target="zoe",
+        description="边说边收钱",
+        money_delta=50,
+    )
+
+    events = orch._apply_actions(tick=1, actions=[action])
+    assert "money_without_action" in events[0].consequences
