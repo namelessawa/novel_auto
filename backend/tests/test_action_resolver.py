@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from memory_system.models import CharacterAction, CharacterProfile, Goal
+from memory_system.models import (
+    CharacterAction,
+    CharacterProfile,
+    Goal,
+    RelationshipDelta,
+)
 from nf_core.action_resolver import ActionResolver
 
 
@@ -111,3 +116,106 @@ def test_missing_profile_falls_back_to_lowest_priority() -> None:
     by_id = {r.character_id: r for r in resolved}
     assert by_id["known"].action_type == "claim"
     assert by_id["unknown_orphan"].action_type == "wait"
+
+
+def test_loser_inventory_added_is_cleared() -> None:
+    """败者 take/fight 失败后, 不应仍写入 inventory_added — 否则两人都"拿到"同一物品。
+
+    建议核心: "失败者的状态变更必须被取消或降级, 不能仍然获得物品/完成行动"。
+    """
+    ar = ActionResolver()
+    actions = [
+        CharacterAction(
+            character_id="winner",
+            action_type="take",
+            target="sword",
+            inventory_added=["sword"],
+        ),
+        CharacterAction(
+            character_id="loser",
+            action_type="take",
+            target="sword",
+            inventory_added=["sword"],
+        ),
+    ]
+    profiles = {
+        "winner": _profile("winner", tier="A"),
+        "loser": _profile("loser", tier="B"),
+    }
+    resolved, diag = ar.resolve(actions, profiles=profiles)
+    assert diag.winner_by_group["take:sword"] == "winner"
+    by_id = {r.character_id: r for r in resolved}
+    assert by_id["winner"].inventory_added == ["sword"]
+    # 败者必须被清空, 否则阶段 5 _apply_actions 仍会把 sword 写入其 inventory
+    assert by_id["loser"].inventory_added == []
+
+
+def test_loser_hard_state_fields_are_all_cleared() -> None:
+    """败者的全部硬状态字段都应清零: new_location / status_added / relationship_deltas。
+
+    主动卸下/解除 (inventory_removed / status_removed) 不在清零之列 — 即使
+    冲突失败, 角色仍可决定"丢掉手里的剑"或"挣脱中毒状态"。
+    """
+    ar = ActionResolver()
+    actions = [
+        CharacterAction(
+            character_id="winner",
+            action_type="fight",
+            target="throne_room",
+            new_location="throne_room",
+            status_added=["王者光环"],
+            inventory_removed=["旧匕首"],
+        ),
+        CharacterAction(
+            character_id="loser",
+            action_type="fight",
+            target="throne_room",
+            new_location="throne_room",
+            inventory_added=["王冠"],
+            status_added=["胜利的喜悦"],
+            inventory_removed=["旧绳索"],
+            status_removed=["紧张"],
+            relationship_deltas={
+                "winner": RelationshipDelta(trust_delta=5, new_type="盟友"),
+            },
+        ),
+    ]
+    profiles = {
+        "winner": _profile("winner", tier="A"),
+        "loser": _profile("loser", tier="B"),
+    }
+    resolved, _ = ar.resolve(actions, profiles=profiles)
+    by_id = {r.character_id: r for r in resolved}
+
+    # 赢家原状态变更必须保留
+    assert by_id["winner"].new_location == "throne_room"
+    assert by_id["winner"].status_added == ["王者光环"]
+
+    # 败者: 改写得到的"成果"必须清零
+    assert by_id["loser"].new_location == ""
+    assert by_id["loser"].inventory_added == []
+    assert by_id["loser"].status_added == []
+    assert by_id["loser"].relationship_deltas == {}
+
+    # 败者: 主动"丢"的转移允许保留 — 失败也可以扔东西/挣脱
+    assert by_id["loser"].inventory_removed == ["旧绳索"]
+    assert by_id["loser"].status_removed == ["紧张"]
+
+
+def test_winner_with_single_contender_keeps_hard_fields() -> None:
+    """单一 contender (无冲突) 时, 硬字段绝对不能被清零。"""
+    ar = ActionResolver()
+    actions = [
+        CharacterAction(
+            character_id="solo",
+            action_type="take",
+            target="amulet",
+            inventory_added=["amulet"],
+            new_location="loc_tomb",
+        ),
+    ]
+    profiles = {"solo": _profile("solo", tier="A")}
+    resolved, diag = ar.resolve(actions, profiles=profiles)
+    assert diag.conflict_groups == 0
+    assert resolved[0].inventory_added == ["amulet"]
+    assert resolved[0].new_location == "loc_tomb"

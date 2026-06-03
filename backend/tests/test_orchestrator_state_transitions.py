@@ -196,7 +196,11 @@ def test_apply_actions_clamps_trust_within_range(tmp_path):
 
 
 def test_apply_actions_no_location_change_skips_sync(tmp_path):
-    """无 location 变化时不应触发 _sync_location_membership (此处仅验证不抛错)。"""
+    """无 location 变化时不应触发 _sync_location_membership (此处仅验证不抛错)。
+
+    注意: status_added=['焦虑'] 在 action_type='wait' 下是允许的 — 等待时仍可
+    产生情绪/疲惫等被动状态。这条用例的目的是验证 sync 不被触发, 不是一致性 flag。
+    """
     ts = _make_state(tmp_path)
     orch = _make_orchestrator(ts)
     action = CharacterAction(
@@ -212,3 +216,81 @@ def test_apply_actions_no_location_change_skips_sync(tmp_path):
     assert new_state is not None
     assert new_state.current_location == "loc_city"
     assert "焦虑" in new_state.status_effects
+
+
+def test_apply_actions_emits_inventory_without_action_flag(tmp_path):
+    """action_type 非交互类却带 inventory_added 时, Event.consequences 应打 flag。
+
+    LLM 偶尔会在 action_type='speak' 时随手加 inventory_added — 这往往是幻觉,
+    应通过 consequences flag 让 Guardian / NoveltyCritic 后续可观测, 但不阻止应用。
+    """
+    ts = _make_state(tmp_path)
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="speak",
+        target="zoe",
+        description="对佐伊抱怨天气",
+        inventory_added=["神秘卷轴"],  # speak 不应该让你获得物品
+    )
+
+    events = orch._apply_actions(tick=1, actions=[action])
+
+    assert len(events) == 1
+    assert "inventory_without_action" in events[0].consequences
+
+
+def test_apply_actions_emits_location_without_move_flag(tmp_path):
+    """action_type 非移动类却带 new_location 时, 应打 location_without_move flag。"""
+    ts = _make_state(tmp_path)
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="speak",
+        target="zoe",
+        description="边说边瞬移",
+        new_location="loc_forest",  # speak 不应该改变位置
+    )
+
+    events = orch._apply_actions(tick=1, actions=[action])
+
+    assert len(events) == 1
+    assert "location_without_move" in events[0].consequences
+
+
+def test_apply_actions_no_consistency_flag_on_legit_action(tmp_path):
+    """action_type 与硬字段一致时, 不应打任何一致性 flag。"""
+    ts = _make_state(tmp_path)
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="move",
+        target="loc_forest",
+        description="向北林行进",
+        new_location="loc_forest",
+    )
+
+    events = orch._apply_actions(tick=1, actions=[action])
+
+    assert len(events) == 1
+    for cons in events[0].consequences:
+        assert not cons.endswith("_without_action")
+        assert not cons.endswith("_without_move")
+
+
+def test_apply_actions_take_with_inventory_added_no_flag(tmp_path):
+    """action_type='take' 配 inventory_added 是合法组合, 不应打一致性 flag。"""
+    ts = _make_state(tmp_path)
+    orch = _make_orchestrator(ts)
+    action = CharacterAction(
+        character_id="elara",
+        action_type="take",
+        target="amulet",
+        description="拾起护符",
+        inventory_added=["护符"],
+    )
+
+    events = orch._apply_actions(tick=1, actions=[action])
+
+    assert len(events) == 1
+    assert "inventory_without_action" not in events[0].consequences
