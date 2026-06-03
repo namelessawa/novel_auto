@@ -62,12 +62,18 @@ def _coerce_int(v: Any, default: int = 0) -> int:
 
 
 def _default_concurrency() -> int:
-    raw = os.environ.get("CHARACTER_AGENT_CONCURRENCY", "3").strip()
+    """CharacterAgent.batch_decide 默认并发数。
+
+    v2.18 Phase 7 — 默认从 3 提到 6, 6 个 A/B 级角色一次并发跑完, 不再分两批
+    串行。mimo / deepseek provider 默认 rate limit 都 >> 6 并发, 安全。
+    若实际遇到 limit, 通过 ``CHARACTER_AGENT_CONCURRENCY`` 环境变量按需下调。
+    """
+    raw = os.environ.get("CHARACTER_AGENT_CONCURRENCY", "6").strip()
     try:
         n = int(raw)
-        return n if n > 0 else 3
+        return n if n > 0 else 6
     except ValueError:
-        return 3
+        return 6
 
 
 SYSTEM_PROMPT_TEMPLATE = """\

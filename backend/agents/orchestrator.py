@@ -464,8 +464,16 @@ class Orchestrator:
         # 阶段 5c: StoryArcDirector — 节奏曲线 + 节拍守护 (v2.4) ----------
         await self._run_story_arc_director(tick, all_events)
 
-        # 阶段 6: 叙述 ----------------------------------------------------
-        narrator_out = await self._narrate(tick, all_events)
+        # 阶段 6 + 阶段 7-readonly 并行 -----------------------------------
+        # v2.18 Phase 7 — 让 Narrator (写 narration 文件 / open_loops) 与只读类
+        # 周期 agent (Guardian / Critic / ArcTracker) 同步执行。三者只读外部状态,
+        # 各自只写不同字段, 互不冲突, 跟 Narrator 也无写冲突。
+        # MemoryCompressor 写 memory_store, 仍串行放后面 (sequential_agents)。
+        narrator_out, _readonly_result = await asyncio.gather(
+            self._narrate(tick, all_events),
+            self._phase7_readonly_agents(tick, agents_called),
+            return_exceptions=False,
+        )
         agents_called.append("narrator")
         if narrator_out.should_narrate:
             # v2.7 安全过滤 — block 级命中跳过落盘
@@ -519,8 +527,9 @@ class Orchestrator:
             if narrator_out.tick_summary_for_record:
                 self._recent_chapter_summaries.append(narrator_out.tick_summary_for_record)
 
-        # 阶段 7: 周期性维护 ---------------------------------------------
-        await self._phase7_periodic_maintenance(tick, agents_called)
+        # 阶段 7: 串行维护 (MemoryCompressor 写 memory_store, 避免与 Narrator
+        # 的 touch / mark_protected race) — readonly 部分已并行到阶段 6。
+        await self._phase7_sequential_agents(tick, agents_called)
 
         # OpenLoop 过期清理(防 prompt 膨胀)
         reaped = self._tick_state.reap_stale_open_loops(tick)
@@ -1327,87 +1336,135 @@ class Orchestrator:
     async def _phase7_periodic_maintenance(
         self, tick: int, agents_called: list[str]
     ) -> None:
-        """周期性维护,Showrunner 已在阶段 2 调度。"""
+        """周期性维护协调入口:
+
+        v2.18 Phase 7 — 拆成两段:
+        1. 只读类 (Guardian/Critic/ArcTracker) 并行 — 可被 Narrator 同步触发并行
+        2. MemoryCompressor 串行 — 因写 memory_store, 避免与 Narrator.touch 竞态
+
+        当前实现把只读三件套与 MemoryCompressor 都放在 Narrator 之后串行调度,
+        但 _phase7_readonly_agents 已是独立可调用方法; 调用方 (run_tick) 可选择
+        与 _narrate 并行执行 (asyncio.gather)。Showrunner 在阶段 2 已调度。
+        """
+        await self._phase7_readonly_agents(tick, agents_called)
+        await self._phase7_sequential_agents(tick, agents_called)
+
+    async def _phase7_readonly_agents(
+        self, tick: int, agents_called: list[str]
+    ) -> None:
+        """周期性维护的只读 LLM agent 子集 — 并发执行, 互不依赖。
+
+        Guardian / NoveltyCritic / ArcTracker 三者都满足:
+        * 只读 TickState 当前快照 (world_state / char_states / events)
+        * 各自只写不同字段 (Guardian → AgentRuntimeState; Critic → novelty_warnings;
+          ArcTracker → character_state.arc_stage), 互不写冲突
+        * 跟 Narrator 也无写冲突 (Narrator 不改 character_states 主字段, 只 mark
+          narration / open_loop)
+
+        单个 agent 抛异常被 gather 吞掉, 不阻塞其他。Showrunner 在阶段 2 已调度,
+        不在此处。
+        """
+        tasks: list = []
         if (
             self._novelty_critic is not None
             and tick % NOVELTY_CRITIC_CADENCE == 0
         ):
-            try:
-                action_patterns = (
-                    self._tick_db.get_action_patterns(last_n_ticks=100)
-                    if self._tick_db is not None
-                    else {}
-                )
-                critic_out = await self._novelty_critic.critique(
-                    recent_chapters=self._recent_chapter_summaries[-30:],
-                    recent_events=self._last_tick_events[-50:],
-                    action_patterns=action_patterns,
-                )
-                warnings = list(getattr(critic_out, "recommendations", [])) or []
-                self._tick_state.set_novelty_warnings(warnings)
-                agents_called.append("novelty_critic")
-            except Exception as e:
-                logger.error("NoveltyCritic.critique failed: %s", e)
-
+            tasks.append(self._run_novelty_critic(tick, agents_called))
         if (
             self._consistency_guardian is not None
             and tick % CONSISTENCY_GUARDIAN_CADENCE == 0
         ):
-            try:
-                guardian_out = await self._consistency_guardian.scan(
-                    world_state=self._tick_state.world_state,
-                    char_states=self._tick_state.list_character_states(),
-                    recent_events=self._last_tick_events,
-                    recent_chapter_text=self._recent_chapter_summaries[-10:],
-                )
-                # v2.18 Phase 5 — 把幻觉率 conflict 写到 AgentRuntimeState 统计;
-                # 默认 shadow mode, 仅 HALLUCINATION_AUTO_DEGRADE=1 时才设
-                # model_tier_override。失败不阻塞主流程。
-                try:
-                    self._ingest_guardian_conflicts(guardian_out, tick=tick)
-                except Exception as e:
-                    logger.warning(
-                        "Guardian conflicts ingest failed (non-fatal): %s", e
-                    )
-                agents_called.append("consistency_guardian")
-            except Exception as e:
-                logger.error("ConsistencyGuardian.scan failed: %s", e)
-
+            tasks.append(self._run_consistency_guardian(tick, agents_called))
         if (
             self._character_arc_tracker is not None
             and tick % CHARACTER_ARC_TRACKER_CADENCE == 0
         ):
+            tasks.append(self._run_character_arc_tracker(tick, agents_called))
+        if tasks:
+            # gather(return_exceptions=True) 让单 agent 失败不传播
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for r in results:
+                if isinstance(r, Exception):
+                    logger.error("phase7 readonly agent failed: %s", r)
+
+    async def _run_novelty_critic(
+        self, tick: int, agents_called: list[str]
+    ) -> None:
+        try:
+            action_patterns = (
+                self._tick_db.get_action_patterns(last_n_ticks=100)
+                if self._tick_db is not None
+                else {}
+            )
+            critic_out = await self._novelty_critic.critique(
+                recent_chapters=self._recent_chapter_summaries[-30:],
+                recent_events=self._last_tick_events[-50:],
+                action_patterns=action_patterns,
+            )
+            warnings = list(getattr(critic_out, "recommendations", [])) or []
+            self._tick_state.set_novelty_warnings(warnings)
+            agents_called.append("novelty_critic")
+        except Exception as e:
+            logger.error("NoveltyCritic.critique failed: %s", e)
+
+    async def _run_consistency_guardian(
+        self, tick: int, agents_called: list[str]
+    ) -> None:
+        try:
+            guardian_out = await self._consistency_guardian.scan(
+                world_state=self._tick_state.world_state,
+                char_states=self._tick_state.list_character_states(),
+                recent_events=self._last_tick_events,
+                recent_chapter_text=self._recent_chapter_summaries[-10:],
+            )
             try:
-                profiles = {
-                    cid: a.profile for cid, a in self._character_agents.items()
-                }
-                states = {
-                    s.character_id: s
-                    for s in self._tick_state.list_character_states()
-                }
-                tracker_out = await self._character_arc_tracker.evaluate(
-                    profiles=profiles,
-                    states=states,
-                    recent_actions_by_char=self._recent_actions_by_char,
-                    current_tick=tick,
-                )
-                self._last_arc_tracker_output = tracker_out
-                # 自动推进 suggested_stage (确定性推进, LLM 建议不自动应用)
-                for rep in tracker_out.reports:
-                    if rep.suggested_stage and rep.is_stalled:
-                        state = self._tick_state.get_character_state(rep.character_id)
-                        if state is not None:
-                            self._tick_state.upsert_character_state(
-                                state.model_copy(
-                                    update={
-                                        "arc_stage": rep.suggested_stage,
-                                        "arc_stage_entered_tick": tick,
-                                    }
-                                )
-                            )
-                agents_called.append("character_arc_tracker")
+                self._ingest_guardian_conflicts(guardian_out, tick=tick)
             except Exception as e:
-                logger.error("CharacterArcTracker.evaluate failed: %s", e)
+                logger.warning(
+                    "Guardian conflicts ingest failed (non-fatal): %s", e
+                )
+            agents_called.append("consistency_guardian")
+        except Exception as e:
+            logger.error("ConsistencyGuardian.scan failed: %s", e)
+
+    async def _run_character_arc_tracker(
+        self, tick: int, agents_called: list[str]
+    ) -> None:
+        try:
+            profiles = {
+                cid: a.profile for cid, a in self._character_agents.items()
+            }
+            states = {
+                s.character_id: s
+                for s in self._tick_state.list_character_states()
+            }
+            tracker_out = await self._character_arc_tracker.evaluate(
+                profiles=profiles,
+                states=states,
+                recent_actions_by_char=self._recent_actions_by_char,
+                current_tick=tick,
+            )
+            self._last_arc_tracker_output = tracker_out
+            for rep in tracker_out.reports:
+                if rep.suggested_stage and rep.is_stalled:
+                    state = self._tick_state.get_character_state(rep.character_id)
+                    if state is not None:
+                        self._tick_state.upsert_character_state(
+                            state.model_copy(
+                                update={
+                                    "arc_stage": rep.suggested_stage,
+                                    "arc_stage_entered_tick": tick,
+                                }
+                            )
+                        )
+            agents_called.append("character_arc_tracker")
+        except Exception as e:
+            logger.error("CharacterArcTracker.evaluate failed: %s", e)
+
+    async def _phase7_sequential_agents(
+        self, tick: int, agents_called: list[str]
+    ) -> None:
+        """周期性维护的写 memory_store 类 — 串行避免 race。"""
 
         if (
             self._memory_compressor is not None
