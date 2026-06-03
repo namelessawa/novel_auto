@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from memory_system.models import Event, WorldState
+from nf_core.json_utils import strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -134,15 +135,7 @@ class WorldSimulator:
         prior_world_state: WorldState,
         time_step: int,
     ) -> WorldSimulatorOutput:
-        text = raw.strip()
-        if text.startswith("```"):
-            # 去除 markdown 代码块
-            lines = text.split("\n")
-            lines = lines[1:]
-            if lines and lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines)
-
+        text = strip_code_fence(raw)
         try:
             payload: dict[str, Any] = json.loads(text)
         except json.JSONDecodeError as e:

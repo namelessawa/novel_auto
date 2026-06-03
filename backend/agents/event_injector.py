@@ -29,6 +29,7 @@ from memory_system.models import (
     StatePatch,
     WorldState,
 )
+from nf_core.json_utils import strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -253,13 +254,7 @@ class EventInjector:
         tick: int,
         open_loop_count: int,
     ) -> EventInjectorOutput:
-        text = raw.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            lines = lines[1:]
-            if lines and lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines)
+        text = strip_code_fence(raw)
         try:
             payload = json.loads(text)
         except json.JSONDecodeError as e:

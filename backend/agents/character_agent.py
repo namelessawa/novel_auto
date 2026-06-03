@@ -33,6 +33,7 @@ from memory_system.models import (
     Goal,
     RelationshipDelta,
 )
+from nf_core.json_utils import strip_code_fence
 from nf_core.llm_client import llm_client
 
 # v2.16 — 连续 ≥3 个英文单词 (≥2 个字母, 空格分隔) 视为语言污染。
@@ -307,13 +308,7 @@ class CharacterAgent:
 """
 
     def _parse_action(self, raw: str) -> CharacterAction:
-        text = raw.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            lines = lines[1:]
-            if lines and lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines)
+        text = strip_code_fence(raw)
         try:
             payload: dict[str, Any] = json.loads(text)
         except json.JSONDecodeError as e:

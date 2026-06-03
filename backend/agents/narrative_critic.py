@@ -39,6 +39,7 @@ from agents.quality_spec import (
     render_full_critique_block,
     render_show_dont_tell_block,
 )
+from nf_core.json_utils import strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -578,14 +579,9 @@ def _parse_text_field(raw: str, field_name: str) -> str:
 
 
 def _strip_code_fence(text: str) -> str:
-    t = text.strip()
-    if t.startswith("```"):
-        lines = t.split("\n")
-        lines = lines[1:]
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        t = "\n".join(lines)
-    return t
+    # v2.19.6 — 统一到 nf_core.json_utils.strip_code_fence; 保留本 wrapper 是
+    # 因为模块内多个调用方仍引用 _strip_code_fence 这个私有名 (向后兼容)。
+    return strip_code_fence(text)
 
 
 def _extract_blacklist_words(triggers: list[DeterministicTrigger]) -> list[str]:

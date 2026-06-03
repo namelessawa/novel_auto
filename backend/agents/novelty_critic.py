@@ -20,6 +20,7 @@ import logging
 from dataclasses import dataclass, field
 
 from memory_system.models import Event
+from nf_core.json_utils import strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -135,13 +136,7 @@ class NoveltyCritic:
 """
 
     def _parse_output(self, raw: str) -> NoveltyCriticOutput:
-        text = raw.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            lines = lines[1:]
-            if lines and lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines)
+        text = strip_code_fence(raw)
         try:
             payload = json.loads(text)
         except json.JSONDecodeError as e:

@@ -41,6 +41,7 @@ from memory_system.models import (
     StoryArcDirective,
     SuspenseLevel,
 )
+from nf_core.json_utils import strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -379,13 +380,7 @@ high_streak: {analysis.high_streak}
         except Exception as e:
             logger.warning("StoryArcDirector LLM hint failed: %s", e)
             return "", ""
-        text = resp.content.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            lines = lines[1:]
-            if lines and lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines)
+        text = strip_code_fence(resp.content)
         try:
             payload = json.loads(text)
         except json.JSONDecodeError:
