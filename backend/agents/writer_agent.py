@@ -86,6 +86,11 @@ class WriterAgent:
             user_prompt=user_prompt,
             temperature=0.85,
             max_tokens=163840,
+            # v2.19 — 节级 SSE 写作链路接入 token budget / 记账闭环。
+            # priority=critical 保证不被 budget 掐断 (节级管线已是 legacy, 单次成本
+            # 不被预算决策影响), 但 tracker 会准确记录 prompt/completion token 数。
+            agent_id="writer_agent",
+            priority="critical",
         ):
             yield chunk
 

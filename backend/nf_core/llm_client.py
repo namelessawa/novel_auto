@@ -224,9 +224,49 @@ class LLMClient:
         user_prompt: str,
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        # v2.19 — 与 chat() 对齐, 让节级 SSE (writer_agent.write_stream)
+        # 也走 budget pre-check + ContextVar tick + tracker 记账。
+        agent_id: str = "unknown",
+        priority: str = "medium",
+        tick: int = -1,
+        model_override: str | None = None,
     ) -> AsyncIterator[str]:
+        # v2.19 — 调用前 budget pre-check, 与 chat() 同源逻辑。
+        # 注意: async generator 的 body 在第一次 __anext__ 时才执行, 因此调用方
+        # `async for chunk in chat_stream(...)` 的第一次拉取就会触发 BudgetExceeded,
+        # 在底层 _client.chat.completions.create 被调用之前完成拦截。
+        tracker = get_global_tracker()
+        try:
+            allowed = tracker.can_afford(
+                priority=priority,  # type: ignore[arg-type]
+                estimated_tokens=max_tokens,
+            )
+        except Exception as e:  # pragma: no cover — tracker 故障不阻塞主流程
+            logger.debug("TokenBudgetTracker can_afford raised: %s", e)
+            allowed = True
+        if not allowed:
+            raise BudgetExceeded(
+                agent_id=agent_id,
+                priority=priority,
+                reason=(
+                    f"tracker rejected stream (max_total={tracker.max_total}, "
+                    f"max_per_tick={tracker.max_per_tick}, "
+                    f"used={tracker.snapshot.total_tokens})"
+                ),
+            )
+
+        effective_model = self._model
+        if model_override:
+            effective_model = model_override
+            logger.info(
+                "LLMClient.chat_stream override model: agent_id=%s priority=%s override length=%d",
+                agent_id,
+                priority,
+                len(model_override),
+            )
+
         stream = await self._client.chat.completions.create(
-            model=self._model,
+            model=effective_model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -234,11 +274,49 @@ class LLMClient:
             temperature=temperature,
             max_tokens=_clamp_max_tokens(max_tokens),
             stream=True,
+            # v2.19 — 请求提供商在最后一个 chunk 返回 usage; 提供商不支持时
+            # 自动忽略, 我们的 _capture_usage 静默兼容 None。
+            stream_options={"include_usage": True},
         )
+
+        usage_obj: object | None = None
         async for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta.content:
-                yield delta.content
+            # usage chunk 在 stream_options.include_usage=True 时通常 choices=[]
+            # 且 usage 非 None — 不要因为 choices 空就崩溃。
+            choices = getattr(chunk, "choices", None) or []
+            if choices:
+                delta = choices[0].delta
+                if getattr(delta, "content", None):
+                    yield delta.content
+            chunk_usage = getattr(chunk, "usage", None)
+            if chunk_usage is not None:
+                # 用最后一个含 usage 的 chunk — 提供商规范是最后一帧给最终统计
+                usage_obj = chunk_usage
+
+        # v2.19 — stream 结束后记账。usage 缺失时仍 record 0 token, 让调用频次
+        # 仍可被 snapshot.call_count 看到, 避免静默成无形成本。
+        effective_tick = tick if tick != -1 else _current_tick_var.get()
+        prompt_tokens = (
+            int(getattr(usage_obj, "prompt_tokens", 0) or 0)
+            if usage_obj is not None
+            else 0
+        )
+        completion_tokens = (
+            int(getattr(usage_obj, "completion_tokens", 0) or 0)
+            if usage_obj is not None
+            else 0
+        )
+        try:
+            tracker.record(
+                agent_id=agent_id,
+                priority=priority,  # type: ignore[arg-type]
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                model=effective_model,
+                tick=effective_tick,
+            )
+        except Exception as e:  # pragma: no cover
+            logger.debug("TokenBudgetTracker record (stream) failed: %s", e)
 
 
 llm_client = LLMClient()
