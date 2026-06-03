@@ -33,6 +33,20 @@ logger = logging.getLogger(__name__)
 AgentPriority = Literal["critical", "medium", "optional"]
 
 
+class BudgetExceeded(Exception):
+    """LLMClient.chat 在 token_budget 拒绝该次调用时抛出。
+
+    调用方既有 ``except Exception`` 兜底会自动 swallow,但保留独立子类让调用方
+    可以选择按 priority 重试或显式降级,不与真实 API 失败混在一起统计。
+    """
+
+    def __init__(self, *, agent_id: str, priority: str, reason: str) -> None:
+        self.agent_id = agent_id
+        self.priority = priority
+        self.reason = reason
+        super().__init__(f"budget rejected {agent_id}/{priority}: {reason}")
+
+
 @dataclass
 class TokenUsageRecord:
     timestamp: float
@@ -305,6 +319,7 @@ def set_global_tracker(tracker: TokenBudgetTracker) -> None:
 
 
 __all__ = [
+    "BudgetExceeded",
     "TokenBudgetTracker",
     "TokenUsageRecord",
     "BudgetSnapshot",

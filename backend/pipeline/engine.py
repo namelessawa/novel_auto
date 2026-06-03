@@ -406,8 +406,23 @@ class GenerationPipeline:
 
     # -- persistence ----------------------------------------------------------
 
+    # v2.17 — legacy pipeline 的 SummaryTree 与 tick runtime 共享 data_dir,
+    # 但概念上是两条平行的生成链路。用独立文件名避免「tick 关闭时写盘」与
+    # 「legacy 生成时写盘」互相覆盖。
+    _SUMMARY_TREE_FILENAME = "summary_tree_legacy.json"
+
+    def _summary_tree_path(self) -> str | None:
+        if not self._data_dir:
+            return None
+        return os.path.join(self._data_dir, self._SUMMARY_TREE_FILENAME)
+
     def save_state(self) -> None:
-        """Serialize pipeline state to data_dir/state.json."""
+        """Serialize pipeline state to data_dir/state.json + summary_tree + KG snapshot.
+
+        v2.17: 旧实现只把 chapter/section/sections 写到 state.json, 重启后
+        SummaryTree 与 KnowledgeGraph 全部空白 → /api/generate 上下文丢失。
+        现在 SummaryTree 通过原子写入持久化, KG 通过现有 snapshot 机制持久化。
+        """
         if not self._data_dir:
             return
         state = {
@@ -429,12 +444,33 @@ class GenerationPipeline:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=2)
 
+        # v2.17 — SummaryTree 增量摘要 (UpdateAgent 在每节后调用 add_section_summary)
+        tree_path = self._summary_tree_path()
+        if tree_path is not None:
+            try:
+                self.summary_tree.persist_to_disk(tree_path)
+            except Exception as e:
+                logger.error("SummaryTree persist failed (non-fatal): %s", e)
+
+        # v2.17 — KG 触发一次 snapshot, 保证下次 load_state 能 rollback 回这一刻
+        # _should_snapshot() 已经在每 5 节自动调用, 这里仅在 save_state 边界补一刀,
+        # 防止用户手动 reset 或异常退出 → 两次 snapshot 之间的实体修改丢失。
+        if self._generated_sections:
+            try:
+                self.knowledge_graph.take_snapshot(self._current_chapter)
+            except Exception as e:
+                logger.error("KG snapshot on save_state failed (non-fatal): %s", e)
+
     def load_state(self) -> None:
-        """Restore pipeline state from data_dir/state.json."""
+        """Restore pipeline state from data_dir/state.json + summary tree + latest KG snapshot."""
         if not self._data_dir:
             return
         path = os.path.join(self._data_dir, "state.json")
         if not os.path.isfile(path):
+            # 即使 state.json 不存在, 也尝试恢复 SummaryTree / KG —— 兼容只用 tick
+            # 流水线生成、后切回 legacy 看大纲的场景。
+            self._restore_summary_tree()
+            self._restore_kg_from_latest_snapshot()
             return
         with open(path, "r", encoding="utf-8") as f:
             state = json.load(f)
@@ -451,3 +487,30 @@ class GenerationPipeline:
             )
             for s in state.get("sections", [])
         ]
+        self._restore_summary_tree()
+        self._restore_kg_from_latest_snapshot()
+
+    def _restore_summary_tree(self) -> None:
+        tree_path = self._summary_tree_path()
+        if tree_path is None:
+            return
+        try:
+            self.summary_tree.load_from_disk(tree_path)
+        except Exception as e:
+            logger.error("SummaryTree load failed (non-fatal): %s", e)
+
+    def _restore_kg_from_latest_snapshot(self) -> None:
+        try:
+            snapshots = self.knowledge_graph.list_snapshots()
+        except Exception as e:
+            logger.error("KG list_snapshots failed (non-fatal): %s", e)
+            return
+        if not snapshots:
+            return
+        # list_snapshots 按文件名倒序, 最新一个最先出现
+        latest = snapshots[0]
+        try:
+            self.knowledge_graph.rollback(latest)
+            logger.info("KG restored from snapshot: %s", latest)
+        except Exception as e:
+            logger.error("KG rollback to %s failed (non-fatal): %s", latest, e)

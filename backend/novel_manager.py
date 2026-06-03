@@ -135,6 +135,22 @@ def get_novel(novel_id: str) -> dict | None:
     return None
 
 
+def resolve_default_novel_id() -> str:
+    """权威「启动默认 novel_id」解析。
+
+    顺序: legacy data migration → manifest 第一项 → 新建「未命名小说」。
+    main.py 启动钩子与 routes.py 的 ``_init_default_novel`` 必须共用此入口,
+    否则 tick runtime 与 legacy pipeline 会指向不同小说,UI 首屏数据错位。
+    """
+    migrated = migrate_legacy_data()
+    if migrated:
+        return migrated
+    entries = list_novels()
+    if entries:
+        return entries[0]["id"]
+    return create_novel("未命名小说")["id"]
+
+
 def migrate_legacy_data() -> str | None:
     """If legacy data dirs exist but no novels dir, migrate into a default novel."""
     _ensure_dir()

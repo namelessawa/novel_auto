@@ -12,7 +12,7 @@ import httpx
 from openai import AsyncOpenAI
 
 from config.settings import settings
-from nf_core.token_budget import get_global_tracker
+from nf_core.token_budget import BudgetExceeded, get_global_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,49 @@ class LLMClient:
         )
         self._model = settings.deepseek_model
 
+    # v2.17 — 热更新入口。PUT /api/config/llm 写完 config.json 后调用本方法,
+    # 调用方无需重启进程。注意: 主项目 .env 设置的 LLM_PROVIDER 仍然优先 ——
+    # _resolve_llm_block 的源优先级保持不变。
+    def reload(
+        self,
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        model: str | None = None,
+    ) -> dict:
+        """重建 AsyncOpenAI 客户端。
+
+        显式参数为 None 时,从 config.json/主项目 .env 重新解析当前值。
+        返回应用到客户端的有效配置(供调用方记日志)。
+        """
+        from config.settings import resolve_llm_block_now
+
+        if api_key is None or base_url is None or model is None:
+            block = resolve_llm_block_now()
+            eff_key = api_key if api_key is not None else block.get("api_key", "")
+            eff_url = base_url if base_url is not None else block.get("base_url", "")
+            eff_model = model if model is not None else block.get("model", "")
+            source = block.get("source", "unknown")
+        else:
+            eff_key, eff_url, eff_model, source = api_key, base_url, model, "explicit"
+
+        # AsyncOpenAI 没有显式 close() 同步方法; 释放旧 client 引用即可让 GC 接管
+        # httpx 连接池。下次 chat() 用新 _client 发起新连接,旧连接随 GC 释放。
+        self._client = AsyncOpenAI(
+            api_key=eff_key,
+            base_url=eff_url,
+            max_retries=1,
+            timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
+        )
+        self._model = eff_model
+        # v2.17 — 故意不 logger.info() base_url/model/source 字符串: 它们在 CodeQL
+        # 视图里都从含 api_key 的 block dict 派生, 直接日志会触发
+        # py/clear-text-logging-sensitive-data。调用方拿到返回 dict 后可自行决定
+        # 是否记账, 是否脱敏。
+        logger.info("LLMClient reloaded (model length=%d, base_url length=%d)",
+                    len(eff_model), len(eff_url))
+        return {"base_url": eff_url, "model": eff_model, "source": source}
+
     async def chat(
         self,
         system_prompt: str,
@@ -101,6 +144,33 @@ class LLMClient:
         priority: str = "medium",
         tick: int = -1,
     ) -> LLMResponse:
+        # v2.17 — 调用前硬拦截。token_budget 之前只「记账」, README 写的
+        # 「optional 退化、medium 拒绝」从未连到执行路径。现在: priority=critical
+        # 一律放行(Narrator/Guardian 不可被掐断); medium/optional 由 tracker
+        # 按全局/本 tick 预算阈值决定。被拒绝时抛 BudgetExceeded — 调用方既有的
+        # ``try/except`` 兜底会把它视作软失败, 自动落回降级输出。
+        tracker = get_global_tracker()
+        try:
+            allowed = tracker.can_afford(
+                priority=priority,  # type: ignore[arg-type]
+                # 用 max_tokens 作为开销上限的乐观估计 — 调用方传 4096 我们就
+                # 按 4096 占预算; 高估总好过低估让 critic/novelty 把 budget 吃光。
+                estimated_tokens=max_tokens,
+            )
+        except Exception as e:  # pragma: no cover — tracker 故障不应阻塞主流程
+            logger.debug("TokenBudgetTracker can_afford raised: %s", e)
+            allowed = True
+        if not allowed:
+            raise BudgetExceeded(
+                agent_id=agent_id,
+                priority=priority,
+                reason=(
+                    f"tracker rejected (max_total={tracker.max_total}, "
+                    f"max_per_tick={tracker.max_per_tick}, "
+                    f"used={tracker.snapshot.total_tokens})"
+                ),
+            )
+
         response = await self._client.chat.completions.create(
             model=self._model,
             messages=[

@@ -92,6 +92,15 @@ class Settings:
     cors_origins: list[str] = field(default_factory=lambda: ["*"])
 
 
+def resolve_llm_block_now() -> dict:
+    """重新解析 LLM 块,不复用模块导入期的快照。
+
+    供 hot-reload 路径调用 — 例如 PUT /api/config/llm 写入 config.json 后,
+    llm_client.reload() 通过本入口拿到 *当前* 真实的 api_key/base_url/model。
+    """
+    return _resolve_llm_block(_load_config())
+
+
 def _resolve_llm_block(cfg: dict) -> dict:
     """统一 LLM 配置来源：主项目 active provider → config.json llm 段。
 

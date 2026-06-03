@@ -275,6 +275,18 @@ class TickDB:
                     d[k] = json.loads(d[k])
                 except (TypeError, json.JSONDecodeError):
                     pass
+        # v2.17 — 兼容别名层。SQL 列名(insert_tick 路径写入)与应用层
+        # ``TickSummary`` 字段名不一致, 不在边界处对齐就会让消费方拿到 None:
+        #   * tick_id            ↔ tick
+        #   * narrator_produced  ↔ narrator_produced_text  (bool, DB 是 0/1)
+        #   * narrator_chars     ↔ narrator_output_chars
+        # 统一保留两个键, 旧/新调用方都不再踩坑。
+        if "tick_id" in d and "tick" not in d:
+            d["tick"] = d["tick_id"]
+        if "narrator_produced" in d and "narrator_produced_text" not in d:
+            d["narrator_produced_text"] = bool(d["narrator_produced"])
+        if "narrator_chars" in d and "narrator_output_chars" not in d:
+            d["narrator_output_chars"] = d["narrator_chars"]
         return d
 
     @staticmethod

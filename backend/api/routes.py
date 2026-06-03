@@ -25,14 +25,27 @@ _active_novel_id: str | None = None
 
 
 def _init_default_novel() -> str:
-    """Ensure at least one novel exists (migrate legacy data if needed)."""
-    migrated = novel_manager.migrate_legacy_data()
-    if migrated:
-        return migrated
-    novels = novel_manager.list_novels()
-    if novels:
-        return novels[0]["id"]
-    return novel_manager.create_novel("未命名小说")["id"]
+    """Ensure at least one novel exists; delegated to ``novel_manager``."""
+    return novel_manager.resolve_default_novel_id()
+
+
+def set_active_novel_id(novel_id: str) -> None:
+    """启动钩子用 — 把 legacy pipeline 的 active 指针对齐到 tick runtime。
+
+    旧实现: tick runtime 在 FastAPI startup 装配, ``_active_novel_id`` 直到
+    第一次 ``get_pipeline()`` 才赋值; manifest 第一项与 tick runtime 启动用的
+    ``ACTIVE_NOVEL_ID`` 不同步时, /api/stats 与 /api/tick/* 指向不同小说。
+    """
+    global _active_novel_id, _pipeline
+    if _active_novel_id == novel_id:
+        return
+    if _pipeline is not None:
+        try:
+            _pipeline.save_state()
+        except Exception:
+            logger.exception("save_state before active novel realign failed")
+        _pipeline = None
+    _active_novel_id = novel_id
 
 
 def get_pipeline() -> GenerationPipeline:
@@ -181,6 +194,18 @@ async def update_llm_config_route(req: LLMConfigUpdateRequest):
         base_url=req.base_url,
         model=req.model,
     )
+
+    # v2.17 — 真正热重建全局 llm_client; 之前只重置了 legacy pipeline, 但 tick
+    # runtime 与 SummaryTree.legendize 等所有路径共享同一个 llm_client singleton,
+    # 全部还指向旧 AsyncOpenAI 实例 → 配置改了等于没改。
+    try:
+        from nf_core.llm_client import llm_client
+        applied = llm_client.reload()
+        result["applied"] = applied
+    except Exception as e:
+        logger.error("llm_client.reload after config update failed: %s", e)
+        result["applied"] = None
+
     # Reset pipeline so it picks up new config on next use
     global _pipeline
     if _pipeline is not None:
