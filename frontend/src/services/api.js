@@ -249,6 +249,27 @@ export async function injectTickEvent(payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  // v2.19.1 — 后端在 422 (非法 type / 空 location + all_in_location) 或 409
+  // (重复 id) 时返回 JSON 错误体, 但 res.json() 自身不会抛, 调用方原本会拿到
+  // {detail: ...} 然后访问 .event?.tick → undefined, toast 仍显示"成功 (tick
+  // undefined)"。这里把非 2xx 显式翻成 Error, 让调用方 catch 分支真正生效。
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const body = await res.json()
+      if (body && typeof body.detail === 'string') {
+        detail = body.detail
+      } else if (body && Array.isArray(body.detail)) {
+        // FastAPI 422 详细列表 — 拼接 loc + msg
+        detail = body.detail
+          .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
+          .join('; ')
+      }
+    } catch {
+      /* 非 JSON 错误体保持 HTTP ${status} 默认值 */
+    }
+    throw new Error(detail)
+  }
   return res.json()
 }
 
