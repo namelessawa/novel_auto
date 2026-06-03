@@ -58,6 +58,8 @@ class WriterAgent:
             user_prompt=user_prompt,
             temperature=0.85,
             max_tokens=163840,
+            agent_id="writer_agent",
+            priority="critical",
         )
         content = resp.content.strip()
         return Section(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import AsyncIterator
 
@@ -14,6 +15,30 @@ from config.settings import settings
 from nf_core.token_budget import get_global_tracker
 
 logger = logging.getLogger(__name__)
+
+
+# v2.16 — Observability: current tick propagated via ContextVar so every LLM
+# call can be attributed to a tick without threading the value through every
+# agent signature. Orchestrator sets this at the start of run_tick(); inner
+# agents (CharacterAgent, NarratorAgent, ...) leave their chat() kwarg
+# ``tick`` at the default and the client resolves -1 → contextvar value.
+# asyncio gather/Task inherits the parent context, so batch_decide() and any
+# nested concurrent agent calls automatically see the right tick.
+_current_tick_var: ContextVar[int] = ContextVar("llm_current_tick", default=-1)
+
+
+def set_current_tick(tick: int) -> None:
+    """Set the tick attribution for subsequent llm_client.chat() calls.
+
+    Called by Orchestrator at the start of every run_tick. Safe to call from
+    any context (test setup also uses this to fix tick=0 / tick=42 ...).
+    """
+    _current_tick_var.set(tick)
+
+
+def get_current_tick() -> int:
+    """Read the tick attribution. Returns -1 when nobody has set it yet."""
+    return _current_tick_var.get()
 
 
 @dataclass(frozen=True)
@@ -92,6 +117,9 @@ class LLMClient:
             usage_prompt_tokens=usage.prompt_tokens if usage else 0,
             usage_completion_tokens=usage.completion_tokens if usage else 0,
         )
+        # v2.16 — 调用方未显式传 tick 时, 用 ContextVar 中 orchestrator 设的当前 tick。
+        # 这让 CharacterAgent / NarratorAgent 等内层 agent 无需修改签名也能正确归账。
+        effective_tick = tick if tick != -1 else _current_tick_var.get()
         # 记账 — 失败不阻塞主流程
         try:
             get_global_tracker().record(
@@ -100,7 +128,7 @@ class LLMClient:
                 prompt_tokens=result.usage_prompt_tokens,
                 completion_tokens=result.usage_completion_tokens,
                 model=self._model,
-                tick=tick,
+                tick=effective_tick,
             )
         except Exception as e:  # pragma: no cover
             logger.debug("TokenBudgetTracker record failed: %s", e)

@@ -526,6 +526,8 @@ async def _generate_title_async(novel_id: str, content: str) -> None:
             user_prompt=content[:2000],
             temperature=0.7,
             max_tokens=32,
+            agent_id="title_generator",
+            priority="optional",
         )
         title = resp.content.strip().strip("《》\"''""")[:20]
         if title:

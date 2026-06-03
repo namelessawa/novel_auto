@@ -319,3 +319,182 @@ def test_external_inject_event_appears_in_next_tick(tmp_path, mock_llm) -> None:
 
     assert "evt_external" in summary.events_generated
     assert summary.narrator_produced_text is True
+
+
+# ---------------------------------------------------------------------------
+# v2.16 — 端到端: 硬状态转移 + LLM 可观测性
+# ---------------------------------------------------------------------------
+
+
+def _world_sim_response_with_locations(world_time: int) -> dict:
+    """带多地点的 WorldSimulator 响应, 给硬状态转移测试用。"""
+    return {
+        "new_world_state": {
+            "world_time": world_time,
+            "era": "战国",
+            "current_season": "秋",
+            "weather": "晴",
+            "locations": [
+                {"id": "city", "name": "都城", "type": "city", "present_characters": []},
+                {"id": "forest", "name": "北林", "type": "wilderness", "present_characters": []},
+            ],
+            "factions": [],
+            "active_global_events": [],
+            "world_rules": [],
+        },
+        "natural_events": [
+            {
+                "id": f"evt_nat_{world_time}",
+                "tick": world_time,
+                "type": "exogenous",
+                "location": "city",
+                "participants": [],
+                "description": "城中夜火, 守军外调",
+                "visible_to": ["all_in_location"],
+                "narrative_value": 8,
+                "consequences": [],
+            }
+        ],
+        "delta_summary": "时间向前流逝一日。",
+    }
+
+
+def _character_action_with_hard_state(
+    *,
+    new_location: str,
+    inventory_added: list[str],
+    status_added: list[str],
+    rel_target: str,
+    trust_delta: int,
+) -> dict:
+    return {
+        "action_type": "move",
+        "target": new_location,
+        "description": "爱丽丝沿溪流向北林潜行, 怀里抱着旧匕首",
+        "dialogue_spoken": None,
+        "dialogue_to_whom": [],
+        "intent": "甩开守军跟踪",
+        "internal_monologue": "得快, 别让他追上",
+        "emotional_shift": "警觉",
+        "completed_goal_ids": [],
+        "new_goals": [],
+        "abandoned_goal_ids": [],
+        "newly_learned": ["北林深处有人留下记号"],
+        "newly_speculated": [],
+        "flags": [],
+        "new_location": new_location,
+        "inventory_added": inventory_added,
+        "inventory_removed": [],
+        "status_added": status_added,
+        "status_removed": [],
+        "relationship_deltas": {
+            rel_target: {
+                "trust_delta": trust_delta,
+                "new_type": "盟友",
+                "history_entry": "tick 1 林中相助",
+            }
+        },
+    }
+
+
+def test_tick_applies_hard_state_transitions_end_to_end(tmp_path, mock_llm) -> None:
+    """v2.16 端到端: CharacterAgent 输出硬状态字段 → Orchestrator 应用到 CharacterState
+    且同步 WorldState.locations.present_characters。
+
+    这是 P0-1 的回归保护 — 如果 _apply_actions 退回到只更新 goals/facts/emotion,
+    本测试会立刻挂掉。
+    """
+    mock_llm.set_responses(
+        [
+            _world_sim_response_with_locations(world_time=1),
+            _character_action_with_hard_state(
+                new_location="forest",
+                inventory_added=["旧匕首"],
+                status_added=["疲惫"],
+                rel_target="bob",
+                trust_delta=2,
+            ),
+            _character_action_response("wait", "city"),  # bob 留在城里
+            _narrator_response("爱丽丝消失在北林边缘, 鲍勃留在都城凝视火光。"),
+        ]
+    )
+
+    ts = _bootstrap_state(str(tmp_path))
+    orch = _build_orchestrator(ts)
+    summary = asyncio.run(orch.run_tick())
+
+    # 1. CharacterState 硬转移落地
+    alice = ts.get_character_state("alice")
+    assert alice is not None
+    assert alice.current_location == "forest", (
+        "new_location 应已写回 alice.current_location"
+    )
+    assert "旧匕首" in alice.inventory
+    assert "疲惫" in alice.status_effects
+    rel = alice.relationships.get("bob")
+    assert rel is not None
+    assert rel.type == "盟友"
+    assert rel.trust >= 2
+    assert "林中相助" in rel.history_summary
+    assert rel.last_interaction_tick == 1
+
+    # 2. WorldState.locations.present_characters 同步
+    by_id = {loc.id: loc for loc in ts.world_state.locations}
+    assert "alice" in by_id["forest"].present_characters
+    assert "alice" not in by_id["city"].present_characters
+    # bob 未移动, 仍在 city
+    bob = ts.get_character_state("bob")
+    assert bob is not None
+    assert bob.current_location == "city"
+
+    # 3. tick summary 链路无破坏
+    assert summary.narrator_produced_text is True
+
+
+def test_tick_records_agent_id_and_priority_to_token_budget(
+    tmp_path, mock_llm
+) -> None:
+    """v2.16 端到端: 一个 tick 跑完后, TokenBudgetTracker 里的记录不能再是
+    全 "unknown / medium / tick=-1" 的占位 — 这是 P0-2 的回归保护。
+
+    主要观测点:
+    * narrator 必须以 "critical" 入账 (主链路不能被掐)
+    * world_simulator 以 "medium" 入账
+    * character_agent:alice (A 级) 以 "critical" 入账
+    * character_agent:bob (B 级) 以 "medium" 入账
+    * tick 必须等于本 tick 编号 (1), 不再是 -1
+    """
+    mock_llm.set_responses(
+        [
+            _world_sim_response(world_time=1),
+            _character_action_response("speak", "bob"),
+            _character_action_response("speak", "alice"),
+            _narrator_response("二人对坐, 落叶簌簌。"),
+        ]
+    )
+    ts = _bootstrap_state(str(tmp_path))
+    orch = _build_orchestrator(ts)
+    asyncio.run(orch.run_tick())
+
+    tracker = orch._token_budget
+    agent_ids = {rec.agent_id for rec in tracker.records}
+    assert "narrator" in agent_ids
+    assert "world_simulator" in agent_ids
+    assert "character_agent:alice" in agent_ids
+    assert "character_agent:bob" in agent_ids
+    # 不应再有 unknown
+    assert "unknown" not in agent_ids
+
+    # 每条记录的 tick 都应是 1 (本 tick)
+    for rec in tracker.records:
+        assert rec.tick == 1, (
+            f"agent {rec.agent_id} 仍以 tick={rec.tick} 入账, "
+            "说明 ContextVar 注入失败"
+        )
+
+    # priority 标注正确
+    by_id = {rec.agent_id: rec for rec in tracker.records}
+    assert by_id["narrator"].priority == "critical"
+    assert by_id["world_simulator"].priority == "medium"
+    assert by_id["character_agent:alice"].priority == "critical"
+    assert by_id["character_agent:bob"].priority == "medium"

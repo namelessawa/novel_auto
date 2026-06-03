@@ -261,6 +261,9 @@ class NarratorAgent:
                 user_prompt=user_prompt,
                 temperature=0.85,
                 max_tokens=163840,
+                agent_id="narrator",
+                priority="critical",
+                tick=tick,
             )
         except Exception as e:
             logger.error("NarratorAgent LLM call failed: %s", e)

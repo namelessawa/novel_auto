@@ -22,6 +22,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 from typing import Any
 
 from memory_system.models import (
@@ -30,8 +31,13 @@ from memory_system.models import (
     CharacterState,
     Event,
     Goal,
+    RelationshipDelta,
 )
 from nf_core.llm_client import llm_client
+
+# v2.16 — 连续 ≥3 个英文单词 (≥2 个字母, 空格分隔) 视为语言污染。
+# 容忍单个英文专有名词 (角色名缩写、商标), 拦截大段英文动作描述。
+_ENGLISH_RUN_PATTERN = re.compile(r"(?:\b[A-Za-z]{2,}\b\s+){2}\b[A-Za-z]{2,}\b")
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +74,34 @@ SYSTEM_PROMPT_TEMPLATE = """\
 5. 保留秘密 - 在不合适的场合不脱口而出
 6. 如情节让你做"绝对不会做"的事,在 flags 中标出
 
+# 语言约束(强制)
+
+* 所有可读文本字段 (description / dialogue_spoken / intent / internal_monologue /
+  emotional_shift / newly_learned / newly_speculated / new_goals.description /
+  relationship_deltas.history_entry) 必须使用**中文**
+* 动作描述用中文动词, 不允许英文动作短语
+* 错误示例 ❌: "Diana uses sword to attack" / "alice moves to forest"
+* 正确示例 ✅: "戴安娜挥剑刺向北门守卫" / "爱丽丝沿溪流向西踏入林间"
+* JSON 字段名 (key) 保留英文; 仅字段值用中文
+* 专有名词 (角色名 / 地点名) 若已是中文则保持; 否则按系统已建立的命名
+
+# 硬状态转移(本 tick 你身体上发生了什么)
+
+如果你的行动会改变下列状态, 必须**显式**填入相应字段, 不然世界不知道你动了:
+
+* ``new_location`` — 移动到的目标 location_id; 不移动留空字符串
+* ``inventory_added`` / ``inventory_removed`` — 本 tick 获得 / 失去的物品 (字符串数组)
+* ``status_added`` / ``status_removed`` — 本 tick 新增 / 解除的状态效果 (受伤 / 疲惫 / 中毒 / 治愈)
+* ``relationship_deltas`` — 与他人关系的增量, 格式 {{"对方id": {{"trust_delta": -2, "new_type": "敌人", "history_entry": "..."}}}}
+
+留白字段比胡乱填好。但**真发生了的转移必须落字段**, 不能只写在 description 里。
+
 # 输出格式(严格 JSON, 不要 markdown 代码块)
 
 {{
   "action_type": "move|speak|fight|investigate|wait|...",
   "target": "目标(人物/地点/物品)",
-  "description": "具体动作的自然语言描述",
+  "description": "具体动作的中文自然语言描述",
   "dialogue_spoken": "如有说话,原话(用你的说话风格)" 或 null,
   "dialogue_to_whom": ["..."],
   "intent": "你的真实意图(其他人不知道)",
@@ -84,7 +112,13 @@ SYSTEM_PROMPT_TEMPLATE = """\
   "abandoned_goal_ids": ["..."],
   "newly_learned": ["你本 tick 新了解的事"],
   "newly_speculated": ["你的新猜测"],
-  "flags": []
+  "flags": [],
+  "new_location": "loc_xxx 或空字符串",
+  "inventory_added": [],
+  "inventory_removed": [],
+  "status_added": [],
+  "status_removed": [],
+  "relationship_deltas": {{}}
 }}
 
 记住:你不是叙述者。你不"写小说"。你只**是**这个角色,做这个角色会做的事。
@@ -107,6 +141,9 @@ class CharacterAgent:
         """
         self._profile = profile
         self._model_tier = model_tier
+        # v2.16 — 观测优先级: A 级角色推动主线 → critical (Narrator 都要看), B 级 → medium。
+        # 这让 TokenBudget 在紧预算时优先保 A 角的决策, 避免主角"哑火"。
+        self._priority = "critical" if profile.importance_tier == "A" else "medium"
         self._system_prompt = self._build_system_prompt()
 
     @property
@@ -137,6 +174,8 @@ class CharacterAgent:
                 user_prompt=user_prompt,
                 temperature=0.7,
                 max_tokens=30720,
+                agent_id=f"character_agent:{self._profile.id}",
+                priority=self._priority,
             )
         except Exception as e:
             logger.error("CharacterAgent[%s] LLM call failed: %s", self._profile.id, e)
@@ -270,12 +309,40 @@ class CharacterAgent:
             except Exception as e:
                 logger.warning("Skip invalid new_goal (%s): %s", e, g)
 
+        # v2.16 — relationship_deltas: dict[str, RelationshipDelta]
+        rel_deltas_raw = payload.get("relationship_deltas", {}) or {}
+        rel_deltas: dict[str, RelationshipDelta] = {}
+        if isinstance(rel_deltas_raw, dict):
+            for other_id, delta_raw in rel_deltas_raw.items():
+                if not other_id or not isinstance(delta_raw, dict):
+                    continue
+                try:
+                    rel_deltas[str(other_id)] = RelationshipDelta.model_validate(delta_raw)
+                except Exception as e:
+                    logger.warning(
+                        "CharacterAgent[%s] skip invalid relationship_delta for %s: %s",
+                        self._profile.id,
+                        other_id,
+                        e,
+                    )
+
+        # v2.16 — 语言污染检测: description / dialogue_spoken 出现连续 ≥3 英文词
+        # 触发 lang_contamination flag, Narrator / 测试可据此降权或忽略。
+        extra_flags: list[str] = []
+        description_val = str(payload.get("description", ""))
+        dialogue_val = payload.get("dialogue_spoken") or ""
+        if isinstance(dialogue_val, str) and (
+            _ENGLISH_RUN_PATTERN.search(description_val)
+            or _ENGLISH_RUN_PATTERN.search(dialogue_val)
+        ):
+            extra_flags.append("lang_contamination")
+
         try:
             return CharacterAction(
                 character_id=self._profile.id,
                 action_type=str(payload.get("action_type", "wait")),
                 target=str(payload.get("target", "")),
-                description=str(payload.get("description", "")),
+                description=description_val,
                 dialogue_spoken=payload.get("dialogue_spoken") or None,
                 dialogue_to_whom=list(payload.get("dialogue_to_whom", []) or []),
                 intent=str(payload.get("intent", "")),
@@ -286,7 +353,21 @@ class CharacterAgent:
                 abandoned_goal_ids=list(payload.get("abandoned_goal_ids", []) or []),
                 newly_learned=list(payload.get("newly_learned", []) or []),
                 newly_speculated=list(payload.get("newly_speculated", []) or []),
-                flags=list(payload.get("flags", []) or []),
+                flags=list(payload.get("flags", []) or []) + extra_flags,
+                new_location=str(payload.get("new_location", "") or ""),
+                inventory_added=[
+                    str(x) for x in (payload.get("inventory_added", []) or []) if x
+                ],
+                inventory_removed=[
+                    str(x) for x in (payload.get("inventory_removed", []) or []) if x
+                ],
+                status_added=[
+                    str(x) for x in (payload.get("status_added", []) or []) if x
+                ],
+                status_removed=[
+                    str(x) for x in (payload.get("status_removed", []) or []) if x
+                ],
+                relationship_deltas=rel_deltas,
             )
         except Exception as e:
             logger.error(

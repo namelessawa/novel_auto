@@ -429,6 +429,8 @@ viewpoint_character_id: {viewpoint_character_id or '(未指定)'}
                 user_prompt=user_prompt,
                 temperature=0.2,
                 max_tokens=8192,
+                agent_id="narrative_critic:critique",
+                priority="critical",
             )
         except Exception as e:
             logger.warning("NarrativeCritic LLM critique failed: %s", e)
@@ -466,6 +468,8 @@ scene_focus: {scene_focus or '(未指定)'}
                 user_prompt=user_prompt,
                 temperature=0.7,
                 max_tokens=32768,
+                agent_id="narrative_critic:revise",
+                priority="critical",
             )
         except Exception as e:
             logger.warning("NarrativeCritic LLM revise failed: %s", e)
@@ -506,6 +510,8 @@ scene_focus: {scene_focus or '(未指定)'}
                 user_prompt=user_prompt,
                 temperature=0.85,
                 max_tokens=32768,
+                agent_id="narrative_critic:rewrite",
+                priority="critical",
             )
         except Exception as e:
             logger.warning("NarrativeCritic LLM rewrite failed: %s", e)

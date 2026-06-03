@@ -49,6 +49,8 @@ class ValidationAgent:
             user_prompt=user_prompt,
             temperature=0.2,
             max_tokens=20480,
+            agent_id="validation_agent",
+            priority="medium",
         )
 
         return self._parse(resp.content)
