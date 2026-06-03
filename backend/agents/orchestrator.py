@@ -1559,11 +1559,19 @@ class Orchestrator:
         return hints
 
     async def _default_narrative_writer(self, tick: int, text: str) -> None:
+        # v2.19.4 — 把同步 IO (mkdir + open + write) 卸到 worker 线程, 避免
+        # 阻塞主 event loop。Narrator 写 1.5k-3k 字 narrative, 阻塞 5-50ms
+        # 不仅吃 tick latency, 还会推迟 phase 7 并行只读 agent (Guardian /
+        # Critic / ArcTracker) 的回调处理 — v2.18 Phase 7 的并发收益被打折。
         narratives_dir = os.path.join(self._tick_state.data_dir, "narratives")
-        os.makedirs(narratives_dir, exist_ok=True)
         path = os.path.join(narratives_dir, f"tick_{tick:06d}.txt")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(text)
+
+        def _sync_write() -> None:
+            os.makedirs(narratives_dir, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+
+        await asyncio.to_thread(_sync_write)
         logger.info(
             "Narrative for tick %d written: %d chars → %s",
             tick,
