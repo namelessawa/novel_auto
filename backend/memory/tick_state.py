@@ -180,6 +180,10 @@ class TickState:
     def add_open_loop(self, loop: OpenLoop) -> None:
         self._open_loops[loop.id] = loop
 
+    def has_open_loop(self, loop_id: str) -> bool:
+        """检查指定 id 是否已存在 — 管理 API 用于防 dup-id 静默覆盖。"""
+        return loop_id in self._open_loops
+
     def close_open_loop(self, loop_id: str) -> OpenLoop | None:
         return self._open_loops.pop(loop_id, None)
 

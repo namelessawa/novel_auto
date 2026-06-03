@@ -206,8 +206,24 @@ async def list_open_loops(min_urgency: int = 0, top_k: int = 50) -> dict:
 
 @router.post("/open-loops")
 async def add_open_loop(loop: OpenLoop) -> dict:
-    """管理员手动新增 OpenLoop。"""
+    """管理员手动新增 OpenLoop。
+
+    v2.19.3 — 重复 id 必须 409 (而不是静默覆盖)。原实现 ``ts.add_open_loop``
+    是 ``_open_loops[loop.id] = loop``, 二次 POST 同 id 会丢失 Narrator 累积的
+    ``last_referenced_tick`` 等运行时字段, 导致冷线索检测漂走。
+
+    RESTful 替换语义: 先 DELETE /open-loops/{id} 再 POST。
+    """
     ts = _require_tick_state()
+    if ts.has_open_loop(loop.id):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"open_loop id {loop.id!r} 已存在, 避免覆盖累积的运行时字段 "
+                f"(last_referenced_tick 等)。请先 DELETE /api/tick/open-loops/"
+                f"{loop.id} 或换一个 id。"
+            ),
+        )
     ts.add_open_loop(loop)
     ts.save()
     return {"ok": True, "loop": loop.model_dump(mode="json")}
