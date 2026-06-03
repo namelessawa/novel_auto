@@ -143,6 +143,11 @@ class LLMClient:
         agent_id: str = "unknown",
         priority: str = "medium",
         tick: int = -1,
+        # v2.18 Phase 6 — Guardian 监控建议降级时, Orchestrator 阶段 3 注入。
+        # 非 None / 非空字符串时用本值替代 self._model。当前生产仅支持单 model,
+        # 实际生效需在 provider 层做模型路由 (config.json llm.fallback_model);
+        # 当 fallback_model 未配置时本字段仅作为标签写入日志, 让调用方可观测。
+        model_override: str | None = None,
     ) -> LLMResponse:
         # v2.17 — 调用前硬拦截。token_budget 之前只「记账」, README 写的
         # 「optional 退化、medium 拒绝」从未连到执行路径。现在: priority=critical
@@ -171,8 +176,17 @@ class LLMClient:
                 ),
             )
 
+        effective_model = self._model
+        if model_override:
+            effective_model = model_override
+            logger.info(
+                "LLMClient.chat override model: agent_id=%s priority=%s override length=%d",
+                agent_id,
+                priority,
+                len(model_override),
+            )
         response = await self._client.chat.completions.create(
-            model=self._model,
+            model=effective_model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -197,7 +211,7 @@ class LLMClient:
                 priority=priority,  # type: ignore[arg-type]
                 prompt_tokens=result.usage_prompt_tokens,
                 completion_tokens=result.usage_completion_tokens,
-                model=self._model,
+                model=effective_model,
                 tick=effective_tick,
             )
         except Exception as e:  # pragma: no cover

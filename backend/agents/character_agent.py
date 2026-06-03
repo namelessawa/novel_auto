@@ -185,8 +185,14 @@ class CharacterAgent:
         self,
         state: CharacterState,
         all_tick_events: list[Event],
+        *,
+        model_override: str | None = None,
     ) -> CharacterAction:
-        """对本 tick 做出行动决策。``all_tick_events`` 会被自动过滤为可见子集。"""
+        """对本 tick 做出行动决策。``all_tick_events`` 会被自动过滤为可见子集。
+
+        ``model_override`` (v2.18 Phase 6): Guardian 监控建议降级时, Orchestrator
+        阶段 3 注入。None / 空时不影响, 非空时透传给 llm_client.chat。
+        """
         visible = self._filter_visible_events(all_tick_events)
         user_prompt = self._build_user_prompt(state, visible)
         try:
@@ -197,6 +203,7 @@ class CharacterAgent:
                 max_tokens=30720,
                 agent_id=f"character_agent:{self._profile.id}",
                 priority=self._priority,
+                model_override=model_override,
             )
         except Exception as e:
             logger.error("CharacterAgent[%s] LLM call failed: %s", self._profile.id, e)
@@ -419,16 +426,22 @@ class CharacterAgent:
         states: dict[str, CharacterState],
         all_tick_events: list[Event],
         concurrency: int | None = None,
+        *,
+        model_overrides: dict[str, str] | None = None,
     ) -> list[CharacterAction]:
         """并行调用多个 CharacterAgent.decide()。
 
         按 Semaphore 控制并发,A 级角色优先(profile.importance_tier == 'A' 排前)。
         缺失 state 的 agent 跳过,返回的列表与 agents 顺序对齐;跳过项为 fallback 行动。
+
+        ``model_overrides`` (v2.18 Phase 6): 按 character_id 分发的模型降级标记。
+        None 或缺失某 cid 时该 agent 不降级 (model_override=None)。
         """
         if not agents:
             return []
         if concurrency is None:
             concurrency = _default_concurrency()
+        overrides = model_overrides or {}
 
         # A 级优先排入 sem 队列
         prioritized = sorted(agents, key=lambda a: 0 if a.profile.importance_tier == "A" else 1)
@@ -444,8 +457,11 @@ class CharacterAgent:
                 )
                 results[index_map[agent]] = agent._fallback_action()
                 return
+            override = overrides.get(agent.character_id) or None
             async with sem:
-                action = await agent.decide(state, all_tick_events)
+                action = await agent.decide(
+                    state, all_tick_events, model_override=override
+                )
             results[index_map[agent]] = action
 
         await asyncio.gather(*(run_one(a) for a in prioritized))

@@ -408,8 +408,15 @@ class Orchestrator:
                 if st is not None
             }
             if agents_to_run:
+                # v2.18 Phase 6 — 从 AgentRuntimeState 读模型降级标记
+                model_overrides = self._collect_model_overrides(
+                    [a.character_id for a in agents_to_run], tick=tick
+                )
                 actions = await CharacterAgent.batch_decide(
-                    agents_to_run, states_map, all_events
+                    agents_to_run,
+                    states_map,
+                    all_events,
+                    model_overrides=model_overrides,
                 )
                 # 记录 invocation: action 含 "(LLM 不可用,维持现状)" 描述 →
                 # fallback path, 视为失败; 否则视为成功。
@@ -1052,6 +1059,27 @@ class Orchestrator:
                 cur.remove(op.value)
         else:  # pragma: no cover — Literal 限定
             raise _OpRejected(f"unknown_op:{op.op}")
+
+    # ------------------------------------------------------------------
+    # v2.18 Phase 6 — model_tier_override 读出
+    # ------------------------------------------------------------------
+
+    def _collect_model_overrides(
+        self, character_ids: list[str], tick: int
+    ) -> dict[str, str]:
+        """从 TickState.agent_runtime_states 读 model_tier_override, 按 cid 返回。
+
+        仅返回非空 override; 调用方 (batch_decide) 对缺失 cid 视为不降级。
+        本方法不写状态 — 单纯只读, 供阶段 3 在并发 batch_decide 前一次性收集。
+        """
+        out: dict[str, str] = {}
+        for cid in character_ids:
+            rs = self._tick_state.get_agent_runtime_state(f"character_agent:{cid}")
+            if rs is None:
+                continue
+            if rs.model_tier_override:
+                out[cid] = rs.model_tier_override
+        return out
 
     # ------------------------------------------------------------------
     # v2.18 Phase 5 — Guardian 幻觉 conflict 消费
