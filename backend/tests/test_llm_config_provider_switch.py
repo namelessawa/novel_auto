@@ -10,11 +10,45 @@
 
 from __future__ import annotations
 
+import importlib
+import json
 import os
 
 import pytest
 
 from config.settings import _VALID_PROVIDERS, update_llm_config
+
+# 私有访问: monkeypatch _save_config / _load_config 必须走模块对象, 不能用
+# settings 实例 (它是 frozen dataclass)。参见 test_llm_config_fallback.py 同因。
+_settings_mod = importlib.import_module("config.settings")
+
+
+@pytest.fixture(autouse=True)
+def isolate_config_json(tmp_path, monkeypatch):
+    """v2.21 — 重定向 config.json 读写到 tmp_path, 避免污染真实文件。
+
+    此前 update_llm_config 在 _save_config(cfg) 时无条件把项目根 config.json
+    rewrite 一次, 测试运行后真实文件被覆盖 (即便内容相同也会触发文件 mtime
+    与可能的换行 / 字段顺序变化, 进而干扰 git 状态与生产配置)。
+    """
+    fake_path = tmp_path / "config.json"
+    # 写一份最小可解析配置, 让 _load_config 不抛 FileNotFoundError
+    fake_path.write_text(
+        json.dumps({"llm": {"api_key": "", "base_url": "", "model": ""}}),
+        encoding="utf-8",
+    )
+
+    def _fake_load() -> dict:
+        with open(fake_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def _fake_save(cfg: dict) -> None:
+        with open(fake_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+
+    monkeypatch.setattr(_settings_mod, "_load_config", _fake_load)
+    monkeypatch.setattr(_settings_mod, "_save_config", _fake_save)
+    yield fake_path
 
 
 @pytest.fixture

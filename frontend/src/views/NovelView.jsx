@@ -61,6 +61,7 @@ export default function NovelView({ novel, onAfterGenerated }) {
           () => {},
           () => {},
           () => resolve(),
+          (err) => reject(err),
         )
         ctrl.signal.addEventListener('abort', () => reject(new Error('aborted')))
       })

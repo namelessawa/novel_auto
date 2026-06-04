@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 from typing import Iterable
 
 from memory_system.models import (
@@ -46,6 +47,24 @@ COOLDOWN_TICKS = 5
 logger = logging.getLogger(__name__)
 
 STATE_FILENAME = "tick_state.json"
+
+
+def _quarantine(path: str, reason: str) -> str | None:
+    """把损坏文件 rename 到 ``{path}.corrupt.{ts}``, 返回新路径或 None。
+
+    v2.21 — 避免 load 失败后 fresh start 的下一次 save() 用空状态覆盖
+    用户真实数据。文件不存在视为 noop, 不报错。
+    """
+    if not os.path.isfile(path):
+        return None
+    qpath = f"{path}.corrupt.{int(time.time())}"
+    try:
+        os.replace(path, qpath)
+        logger.error("Quarantined corrupted file %s → %s (%s)", path, qpath, reason)
+        return qpath
+    except OSError as e:
+        logger.error("Quarantine of %s failed (%s) - leaving in place", path, e)
+        return None
 
 
 class TickState:
@@ -436,7 +455,10 @@ class TickState:
             with open(self._path, "r", encoding="utf-8") as f:
                 payload = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
-            logger.error("TickState load failed (%s) - starting fresh", e)
+            # v2.21 — 损坏文件 quarantine, 否则下一次 save() 会原子覆盖到原路径,
+            # 真实状态永远丢失。隔离后下一轮按 fresh 状态继续, 但旧文件可人工恢复。
+            _quarantine(self._path, f"json-load: {e}")
+            logger.error("TickState load failed (%s) - quarantined, starting fresh", e)
             return False
 
         try:
@@ -487,8 +509,10 @@ class TickState:
                         "AgentRuntimeState load failed for %s: %s — skipped", aid, e
                     )
         except Exception as e:
+            # v2.21 — 校验失败同样 quarantine; 半截解析的 self 已被污染, __init__ 重建。
+            _quarantine(self._path, f"validation: {e}")
             logger.error(
-                "TickState payload validation failed (%s) - starting fresh", e
+                "TickState payload validation failed (%s) - quarantined, starting fresh", e
             )
             # 重置为干净状态,避免半截数据污染下游
             self.__init__(self._data_dir)

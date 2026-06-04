@@ -90,6 +90,8 @@ NARRATOR_SYSTEM_PROMPT = (
 ## 伏笔
 * 优先利用 open_loops_referenced 中的开放伏笔(本章呼应早期种下的种子)
 * 谨慎种新伏笔(newly_opened_loops 每次不超过 1 个)
+* 种新伏笔时,在 ``origin_event_ids`` 列出本 tick 触发该伏笔的事件 id
+  (来自上面 events_in_tick), 让系统保护这些源事件不被压缩
 
 ---
 
@@ -118,7 +120,7 @@ NARRATOR_SYSTEM_PROMPT = (
   "events_consumed": ["evt_001", "evt_002"],
   "open_loops_referenced": ["loop_id_1"],
   "newly_opened_loops": [
-    {"description": "...", "involved_characters": ["..."], "type": "mystery|conflict|promise|threat", "urgency": 5}
+    {"description": "...", "involved_characters": ["..."], "type": "mystery|conflict|promise|threat", "urgency": 5, "origin_event_ids": ["evt_001"]}
   ],
   "style_diagnostics": {
     "avg_sentence_length": 18,

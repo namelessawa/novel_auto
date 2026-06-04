@@ -8,7 +8,8 @@
 > 角色只能用自己知道的信息。最容易塌陷的失败模式是角色"什么都知道"。
 
 所以本类有两层 know-限制:
-1. ``_filter_visible_events()`` 只保留 ``visible_to`` 含本角色 id 的事件
+1. ``_filter_visible_events()`` 三档:本角色 id、``all``、``all_in_location`` 且
+   当前位置匹配。v2.21 修复:此前 ``all_in_location`` 不校验位置,等价于全局广播
 2. prompt 模板只暴露 ``state.known_facts`` 和过滤后的事件,不暴露 WorldState 全貌
 
 并发控制:
@@ -202,7 +203,7 @@ class CharacterAgent:
         ``model_override`` (v2.18 Phase 6): Guardian 监控建议降级时, Orchestrator
         阶段 3 注入。None / 空时不影响, 非空时透传给 llm_client.chat。
         """
-        visible = self._filter_visible_events(all_tick_events)
+        visible = self._filter_visible_events(all_tick_events, state.current_location)
         user_prompt = self._build_user_prompt(state, visible)
         try:
             resp = await llm_client.chat(
@@ -220,13 +221,32 @@ class CharacterAgent:
 
         return self._parse_action(resp.content)
 
-    def _filter_visible_events(self, events: list[Event]) -> list[Event]:
-        """戏剧性根基:角色只看到 ``visible_to`` 含自身 id 的事件。"""
+    def _filter_visible_events(
+        self, events: list[Event], cur_location: str = ""
+    ) -> list[Event]:
+        """戏剧性根基:角色只看到 ``visible_to`` 含自身 id 的事件。
+
+        三档可见性语义:
+        - ``cid in e.visible_to``        — 显式点名
+        - ``"all" in e.visible_to``      — 真·全局广播 (prompts 第 0 节)
+        - ``"all_in_location"`` in e.visible_to AND ``e.location == cur_location``
+          — 同地点广播:此前实现漏判位置,任何带此标记的事件都泄露给所有角色,
+          直接违反戏剧根基。v2.21 修复。
+
+        ``cur_location`` 留空 ("") 时 ``all_in_location`` 一律不可见 — 避免
+        把"位置未知"角色误并入任意地点广播。
+        """
         cid = self._profile.id
         return [
             e
             for e in events
-            if cid in e.visible_to or "all" in e.visible_to or "all_in_location" in e.visible_to
+            if cid in e.visible_to
+            or "all" in e.visible_to
+            or (
+                "all_in_location" in e.visible_to
+                and bool(cur_location)
+                and e.location == cur_location
+            )
         ]
 
     # ------------------------------------------------------------------

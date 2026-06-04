@@ -1,10 +1,12 @@
 """Settings loaded from the project-root config.json.
 
-Bridge note:
-LLM 凭据的真正来源是项目根 ``.env``;``core/config.py`` 的
-``get_active_llm_config()`` 暴露 active provider 给后端。
-``config.json`` 仍然作为 memory/vector_db/server 等非 LLM 配置的来源,
-当 ``.env`` 缺失时也可兜底 LLM 段。
+Bridge note (v2.21 优先级):
+1. ``config.json.llm.api_key`` 非空 → 整段以 config.json 为权威。这是 UI
+   PUT /api/config/llm 唯一能真正生效的入口。
+2. 否则回退到主项目 ``.env`` (经 ``core/config.py:get_active_llm_config()``)。
+3. 都缺失则用 config.json 默认 endpoint, api_key 为空 — 让上游显式报错。
+
+memory/vector_db/server 等非 LLM 段仅来自 config.json, 与 .env 无关。
 """
 
 from __future__ import annotations
@@ -102,11 +104,38 @@ def resolve_llm_block_now() -> dict:
 
 
 def _resolve_llm_block(cfg: dict) -> dict:
-    """统一 LLM 配置来源：主项目 active provider → config.json llm 段。
+    """统一 LLM 配置来源：config.json (用户态) → 主项目 active provider → 默认。
 
     返回结构：{api_key, base_url, model, provider, source}
     其中 source ∈ {"main_env", "config.json"}，用于诊断。
+
+    v2.21 — 优先级翻转: 此前 main_env 永远胜出 (即便 api_key 为空), 因为
+    core/config.py 的 DEEPSEEK_BASE_URL/MODEL 用 os.getenv 默认值填满了 base_url
+    与 model, 触发 main_env 分支总是命中。结果 PUT /api/config/llm 写入的
+    api_key 不会被读到, UI 上"保存成功"实际无效。
+
+    新规则:
+    1. ``config.json.llm.api_key`` 非空 → 视为用户通过 UI / 手工显式指定凭据,
+       config.json 整段(api_key/base_url/model)作为权威。这是 UI 写入路径
+       唯一能真正生效的入口。
+    2. 否则回退到 main_env (.env 经 core/config.py)。
+    3. 都空 → 最终 fallback 到 config.json 默认值 (api_key=""), 让上游
+       明确知道凭据缺失而非默默使用错误 key。
     """
+    llm = cfg.get("llm", {}) or {}
+
+    # Priority 1 — config.json 用户态(api_key 非空才视为有效用户配置)
+    if llm.get("api_key"):
+        return {
+            "api_key": llm["api_key"],
+            "base_url": llm.get("base_url") or "https://api.deepseek.com",
+            "model": llm.get("model") or "deepseek-chat",
+            "provider": llm.get("provider", "deepseek"),
+            "timeout": int(llm.get("timeout", 120)),
+            "source": "config.json",
+        }
+
+    # Priority 2 — main_env (.env 经 core/config.py)
     main = _try_load_main_project_llm()
     if main and main.get("base_url") and main.get("model"):
         return {
@@ -117,13 +146,13 @@ def _resolve_llm_block(cfg: dict) -> dict:
             "timeout": int(main.get("timeout", 120)),
             "source": "main_env",
         }
-    # 兜底：config.json
-    llm = cfg.get("llm", {})
+
+    # Priority 3 — 最终兜底 (api_key 显式为空, 让上游明确报错)
     return {
-        "api_key": llm.get("api_key", ""),
+        "api_key": "",
         "base_url": llm.get("base_url", "https://api.deepseek.com"),
         "model": llm.get("model", "deepseek-chat"),
-        "provider": "deepseek",  # config.json 默认是 deepseek
+        "provider": "deepseek",
         "timeout": int(llm.get("timeout", 120)),
         "source": "config.json",
     }
