@@ -392,7 +392,11 @@ async def get_graph():
 @router.get("/api/graph/entities")
 async def list_entities(entity_type: str | None = None):
     pipeline = get_pipeline()
-    et = EntityType(entity_type) if entity_type else None
+    # v2.22 — 把枚举越界翻成 422 而非未捕获 ValueError → 500。
+    try:
+        et = EntityType(entity_type) if entity_type else None
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     entities = pipeline.knowledge_graph.list_entities(et)
     return {
         "entities": [
@@ -410,10 +414,15 @@ async def list_entities(entity_type: str | None = None):
 @router.post("/api/graph/entities")
 async def create_entity(req: EntityCreateRequest):
     pipeline = get_pipeline()
+    # v2.22 — 非法 entity_type 走 422 而非 500
+    try:
+        entity_type = EntityType(req.entity_type)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     entity = Entity(
         id=req.id,
         name=req.name,
-        entity_type=EntityType(req.entity_type),
+        entity_type=entity_type,
         attributes=req.attributes,
     )
     pipeline.knowledge_graph.add_entity(entity)
@@ -456,13 +465,21 @@ async def get_entity(entity_id: str):
 @router.post("/api/graph/relations")
 async def create_relation(req: RelationCreateRequest):
     pipeline = get_pipeline()
+    # v2.22 — 非法 relation_type → 422; 端点不存在 → 404 (而非把空节点写进图)
+    try:
+        relation_type = RelationType(req.relation_type)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     relation = Relation(
         source_id=req.source_id,
         target_id=req.target_id,
-        relation_type=RelationType(req.relation_type),
+        relation_type=relation_type,
         label=req.label,
     )
-    pipeline.knowledge_graph.add_relation(relation)
+    try:
+        pipeline.knowledge_graph.add_relation(relation)
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     return {"status": "ok"}
 
 
