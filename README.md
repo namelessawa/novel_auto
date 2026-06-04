@@ -1,12 +1,15 @@
 # 无限小说生成系统 (Infinite Novel Generator)
 
-> **v2.1 单栈融合版** — FastAPI + React/Vite 直接住在项目根。
+> **当前版本: v2.19.6** (2026-06-04) — FastAPI + React/Vite 单栈,
 > 9 Agent + 7 阶段 Tick 调度的多智能体模拟系统(故事驱动)。
 > 设计哲学来自 [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
 > **故事是模拟的副产品,Narrator 选择性讲述**。
 
 > v1.x 章节驱动单体生成器已整体归档到 [`old/`](./old/),
 > 不再参与运行时,但可作为历史参考。
+
+> **状态**: 343 用例 GREEN, 真实 LLM smoke (mimo-v2.5-pro / DeepSeek) 端到端
+> 通过。完整版本历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
 
 ---
 
@@ -70,6 +73,85 @@
 | 7 | **MemoryCompressor** | 每 50 tick | ✅ small | L0→L1→L2→L3 压缩 + 传说化 |
 | 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
 | 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
+
+### v2.10 – v2.19 增量概览
+
+下表为后续 10 个版本的功能落地索引, 详情见 [`CHANGELOG.md`](./CHANGELOG.md):
+
+| 版本 | 主线 | 关键落地点 |
+|------|------|-----------|
+| v2.10 | TickRuntime 全装配 | 把 v2.3-v2.9 全部增强层显式注入 `tick_runtime.py`, FastAPI 启动即享受全部能力 |
+| v2.11 / v2.12 / v2.13 / v2.14 | 质量层实测迭代 | 基于真实 MIMO 输出修正 A1 误报、A4/A6/A7 黑名单、句长 E1 与段末升华禁忌 |
+| v2.15 | P0 sweep | 并发统一入口 / 路径安全 sanitizer / 记忆 touch 闭环 / runtime 注册表显式校验 |
+| v2.16 | 硬状态转移 + 可观测性 | `CharacterAction` 落 location/inventory/status/relationship 字段; 18 个 LLM 调用点标注 `agent_id+priority`; 中文输出约束; 多地点冷启动 |
+| v2.17 | runtime coherency sweep | LLM 配置热更新 (`PUT /api/config/llm` + `LLMClient.reload`); TokenBudget 调用前硬拦截; Tick 控制台前端; CodeQL path-injection / clear-text-logging 全部切断 |
+| **v2.18** | **状态硬转移 + Guardian 闭环 + tick 并行化** | 9 个 Phase: money_delta / `AgentRuntimeState` cooldown / `StateOp+StatePatch` / `scan_hallucination_rate` / Guardian shadow mode / `model_tier_override` / concurrency 3→6 + Narrator 并行 / EventInjector 产 patch / `GET /api/tick/diagnostic/hallucination` |
+| **v2.19** | **流式闭环 + 输入校验 + IO 优化** | `chat_stream` 接入 budget+observability+model_override; `inject-event` 加 422/409 边界; `POST /api/tick/open-loops` 防 dup-id 覆盖; `_default_narrative_writer` 卸 IO 到 worker 线程; `chat_stream` 异常路径也记账; LLM JSON fence helper 集中到 `nf_core.json_utils` |
+
+### Guardian 幻觉率诊断 (v2.18 Phase 9)
+
+```bash
+# 生产观察 - shadow 期: 看真阳率
+curl http://127.0.0.1:8762/api/tick/diagnostic/hallucination
+# {
+#   "auto_degrade_active": false,
+#   "stats": {
+#     "character_agent:elara": {
+#       "hallucination_hits": 12,
+#       "degrade_recommendations": 2,
+#       "last_degrade_recommended_tick": 87,
+#       "model_tier_override_active": false
+#     }
+#   }
+# }
+
+# 实战切 active 期 — Guardian 超阈值自动写 model_tier_override='haiku'
+export HALLUCINATION_AUTO_DEGRADE=1
+```
+
+### `model_tier_override` 闭环路径 (v2.18 Phase 5–6)
+
+```
+Guardian.scan_hallucination_rate (阈值 >0.3)
+  → GuardianConflict(priority='B', type='character',
+                     resolution_specifics='haiku')
+  → Orchestrator._ingest_guardian_conflicts
+  → AgentRuntimeState.degrade_recommendations++ / hallucination_hits++
+  → (HALLUCINATION_AUTO_DEGRADE=1) AgentRuntimeState.model_tier_override = 'haiku'
+  → Orchestrator._collect_model_overrides (阶段 3)
+  → CharacterAgent.batch_decide(model_overrides={cid: 'haiku'})
+  → LLMClient.chat(model_override='haiku')
+  → token budget 记账到降级 model
+```
+
+### TokenBudget 硬拦截 (v2.17)
+
+```python
+# 调用前 can_afford() 拦截 — critical 永不拒绝, medium/optional 超额抛
+# BudgetExceeded; 调用方既有 try/except 自动落回降级输出。
+try:
+    resp = await llm_client.chat(
+        system_prompt=..., user_prompt=...,
+        agent_id="character_agent:elara",
+        priority="medium",
+    )
+except BudgetExceeded:
+    return self._fallback_action()
+```
+
+环境变量: `LLM_BUDGET_MAX_TOTAL` / `LLM_BUDGET_MAX_PER_TICK`,
+持久化到 `data_dir/token_budget.json`。
+
+### `chat_stream` 流式记账 (v2.19)
+
+`writer_agent.write_stream` → `llm_client.chat_stream` 此前完全不入 tracker。
+v2.19 让 streaming 与非 streaming 同源:
+
+* 调用前 `can_afford()` 拦截 (`stream_options.include_usage=True` 透传)
+* 从最后含 usage 的 chunk 抽 prompt/completion token, 进 tracker
+* tick 默认 -1 时 fallback 到 `_current_tick_var` ContextVar
+* v2.19.5: `async for` 包 `try/finally`, 异常路径也 record 一次 (call_count
+  反映尝试次数), 防止失败的大段写作让生产监控的失败率虚低
 
 ### 读者互动分支管理 (v2.9 新增)
 
@@ -476,22 +558,48 @@ novel_auto/
 
 ## 测试
 
-50 个测试,2.8 秒全过:
+343 用例 (v2.19.6) 全过,全套 ~6 秒:
 
 ```bash
-python -m pytest backend/tests/ -v
+python -m pytest backend/tests/ -q
 ```
 
-| 测试文件 | 数量 | 覆盖 |
-|----------|------|------|
-| `test_knowledge_graph.py` | 7 | KnowledgeGraph CRUD + 快照 + 回滚 |
-| `test_working_memory.py` | 4 | WorkingMemory ring buffer + eviction |
-| `test_summary_tree_persistence.py` | 9 | 持久化 + 原子写 + legendize 兜底 |
-| `test_tick_state.py` | 8 | TickState + OpenLoop reap + arc_status |
-| `test_action_resolver.py` | 7 | 冲突解析(tier / goal priority) |
-| `test_orchestrator_p0.py` | 5 | 单 tick 全链路 + tick 跨进程恢复 |
-| `test_orchestrator_p1.py` | 4 | EventInjector / Showrunner cadence / NoveltyCritic |
-| `test_prompt_builder.py` | 6 | Token 预算 + 优先级裁剪 |
+核心覆盖 (摘录, 完整列表见 `backend/tests/`):
+
+| 测试文件 | 覆盖 |
+|----------|------|
+| `test_knowledge_graph.py` | KnowledgeGraph CRUD + 快照 + 回滚 |
+| `test_working_memory.py` | WorkingMemory ring buffer + eviction |
+| `test_summary_tree_persistence.py` | 持久化 + 原子写 + legendize 兜底 |
+| `test_tick_state.py` | TickState + OpenLoop reap + arc_status |
+| `test_action_resolver.py` | 冲突解析 (tier / goal priority) + 败者状态清零 |
+| `test_orchestrator_p0.py` / `test_orchestrator_p1.py` | 全链路 + EventInjector / Showrunner cadence / NoveltyCritic |
+| `test_prompt_builder.py` | Token 预算 + 优先级裁剪 |
+| `test_quality_spec.py` | A-G 触发条件 + 决策矩阵 + NarrativeCritic 4 路径 |
+| `test_memory_store.py` | PriorityMemoryStore CRUD / 多因子打分 / 防退化 / 保护机制 |
+| `test_story_arc_director.py` / `test_character_arc_tracker.py` | StoryArc + CharacterArc 检测与建议 |
+| `test_fact_ledger.py` | 事实账本 / 矛盾检测 / 时间线索引 |
+| `test_token_budget_safety.py` | TokenBudgetTracker 决策矩阵 + SafetyFilter PII/harm 规则 |
+| `test_creativity_scorer.py` | 词汇/结构/情感滑窗 + 退化警报 |
+| `test_branch_manager.py` | 分支 fork/archive/tree/canonical 切换 |
+| `test_v217_coherency_sweep.py` | LLM 热更新 / TokenBudget 拦截 / tick 默认 novel 对齐 |
+| `test_agent_runtime_state.py` | AgentRuntimeState 模型 + 持久化 (v2.18 Phase 2) |
+| `test_state_patch.py` | StateOp / StatePatch 校验 + Orchestrator 应用 (v2.18 Phase 3) |
+| `test_consistency_guardian_hallucination.py` | scan_hallucination_rate 边界 (v2.18 Phase 4) |
+| `test_hallucination_observation.py` | Guardian → AgentRuntimeState shadow 与 active (v2.18 Phase 5) |
+| `test_model_tier_override.py` | LLMClient/CharacterAgent/Orchestrator 闭环 (v2.18 Phase 6) |
+| `test_concurrency_phase7.py` | concurrency 3→6 + Narrator/只读 agent 并行 (v2.18 Phase 7) |
+| `test_event_injector_state_patches.py` | EventInjector 产 StatePatch (v2.18 Phase 8) |
+| `test_hallucination_diagnostic_api.py` | `GET /api/tick/diagnostic/hallucination` (v2.18 Phase 9) |
+| `test_chat_stream_observability.py` | chat_stream budget + observability + 异常记账 (v2.19 / v2.19.5) |
+| `test_inject_event_validation.py` | inject-event 422/409 边界 (v2.19.1) |
+| `test_open_loops_admin_api.py` | POST /api/tick/open-loops dup-id 防护 (v2.19.3) |
+| `test_narrative_writer_nonblocking.py` | `_default_narrative_writer` 卸 IO (v2.19.4) |
+| `test_json_utils.py` | LLM fence helper 边界 (v2.19.6) |
+
+> 真实 LLM smoke harness 不在单元测试里, 见
+> [`scripts/smoke_v218.py`](./scripts/smoke_v218.py) 与
+> [`scripts/smoke_v219.py`](./scripts/smoke_v219.py)。
 
 ---
 

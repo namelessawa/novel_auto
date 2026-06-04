@@ -5,6 +5,434 @@
 
 ---
 
+## [2.19.6] — 2026-06-04
+
+### Refactored — 抽 LLM JSON fence helper 到 `nf_core.json_utils`
+
+10 个 v2 agent (`character_agent` / `narrator_agent` / `novelty_critic` /
+`event_injector` / `memory_compressor` / `character_arc_tracker` / `showrunner` /
+`story_arc_director` / `world_simulator` / `narrative_critic`) 此前各自内联同
+一段 ~5 行 markdown fence stripping, 行为漂移风险。每次 LLM 输出格式变化要
+追 10 处, v2.16 加严输出约束时已经在两个 agent 之间出现细节差。
+
+* **新增** `backend/nf_core/json_utils.py:strip_code_fence(text) -> str` —
+  保持原 7 处实现行为不变, 不引入新语义, 避免跨 agent 回归
+* **替换** 9 个 v2 tick agent 的内联 fence 块为 `strip_code_fence(raw)`, 每文件
+  净 -5 行
+* **`narrative_critic._strip_code_fence`** 改为转调公共 helper, 保留私有别名
+  给模块内多个调用方 (向后兼容)
+* **`update_agent.py`** (legacy v1 节级管线) 保留原内联实现, 行为略不同
+  (`==` 而非 `startswith`), 不在 v2 tick 主路径暂不动
+
+### Tests
+
+* `backend/tests/test_json_utils.py` 新增 9 用例覆盖 helper 全部边界
+  (plain JSON / fenced / fenced+lang / 前后空白 / 内联反引号不剥 /
+  空字符串 / 仅空白 / 开但不闭 / 多行 JSON)
+* 全套 343 用例通过 (此前 334, +9, 0 回归); 净 -51 行
+
+---
+
+## [2.19.5] — 2026-06-04
+
+### Fixed — `chat_stream` 异常路径也记账
+
+v2.19 让 `chat_stream` 走 tracker 记账, 但 `record` 在 `async for` 循环之后才
+调用。若 stream 中途抛错 (provider 502 / 网络断 / safety filter mid-stream),
+异常正常传播给调用方, 但 `tracker.record` 永远不跑 — 失败的大段写作完全不进
+monitoring, 生产侧的失败率和 cost 数据全是虚低数据。
+
+`async for stream` 包进 `try/finally`, finally 路径无论成功/失败都尝试
+`tracker.record`。usage 缺失时记 0 token, 但 `snapshot.call_count` 和
+`by_agent` 仍能反映这次尝试。
+
+### Tests
+
+* `test_chat_stream_observability::exception_still_records_attempt` 新增 —
+  `_ExplodingStream` 在 partial 输出后抛 RuntimeError, 断言异常被传播 AND
+  `tracker.call_count == 1`
+* 全套 334 用例通过 (此前 333, +1, 0 回归)
+
+---
+
+## [2.19.4] — 2026-06-04
+
+### Perf — `_default_narrative_writer` 卸 IO 到 worker 线程
+
+Narrator 每 tick 产 1.5k-3k 字 narrative 后调 `_default_narrative_writer`
+落盘, 原实现是 `async def` + 内部裸 `os.makedirs` / `with open()` 同步 IO,
+await 时整个 event loop 被磁盘 IO 阻塞 5-50ms。
+
+v2.18 Phase 7 把 Narrator 与只读三件套 (Guardian / Critic / ArcTracker)
+`asyncio.gather` 起来, 预期重叠 LLM 等待时间。但 Narrator 写盘阶段仍在 event
+loop 上, 只读 agent 的 LLM 回调被推迟, 并发收益打折。
+
+把 `mkdir + open + write` 包进内部 `_sync_write` 闭包, `asyncio.to_thread`
+卸到 worker 线程。Python 3.9+ 的 `to_thread` 会自动 `copy_context()` 到 worker,
+ContextVar (含 `_current_tick_var`) 透传不变。
+
+### Tests
+
+* `backend/tests/test_narrative_writer_nonblocking.py` — 新增 3 用例
+  * `writes_file_correctly` — 黑盒回归 (文件 + 内容 + 编码)
+  * `runs_off_main_thread` — 白盒钉死 (`open` 调用所在 `thread.id != event loop tid`)
+  * `does_not_block_loop` — 端到端: monkeypatch 80ms 慢盘 + 并发 80ms
+    `asyncio.sleep`, 断言总耗时 < 130ms; patch 前实测 172ms (串行),
+    patch 后 ≤ 90ms (并行)
+* 全套 333 用例通过 (此前 330, +3, 0 回归)
+
+---
+
+## [2.19.3] — 2026-06-04
+
+### Added — `POST /api/tick/open-loops` 防 dup-id 静默覆盖
+
+`TickState.add_open_loop` 是 `_open_loops[loop.id] = loop`, 同 id 直接覆盖。
+路由从未做 id 检查, 管理员二次提交同 id 会丢失原 loop 的运行时累积:
+`last_referenced_tick` (Narrator 引用过的时点) / `opened_tick` / 累积的
+`max_age_ticks`。一旦覆盖, 冷线索检测会把其实很新的伏笔判为被遗忘,
+urgency 漂走。
+
+* `TickState.has_open_loop(loop_id)` — 新增轻量查询 API
+* `POST /api/tick/open-loops` 在 id 已存在时返回 **409**, 并提示 RESTful 替换
+  路径: 先 DELETE 再 POST
+
+### Tests
+
+* `backend/tests/test_open_loops_admin_api.py` — 新增 4 用例
+  * `first_time_ok` (happy path 回归)
+  * `duplicate_id_returns_409` — 模拟 Narrator `touch_open_loop` 后再 POST 同 id,
+    断言 409 且 `last_referenced_tick` 不被回零
+  * `delete_then_repost_ok` — RESTful 替换路径仍能工作
+  * `distinct_ids_independent` — 不同 id 不冲突
+* 全套 330 用例通过 (此前 326, +4, 0 回归)
+
+---
+
+## [2.19.2] — 2026-06-04
+
+### Fixed — `injectTickEvent` 错误响应翻译为 Error
+
+v2.19.1 在后端给 `/api/tick/inject-event` 加了 422/409 边界, 但前端 wrapper
+`res.json()` 不会因为非 2xx 抛错, 调用方拿到 `{detail: ...}` 然后访问
+`res?.event?.tick → undefined`, 上游 `TickControlPanel` 仍 toast
+"事件已注入 (tick undefined)"。等于服务端校验生效, 用户却完全感知不到。
+
+* 显式 `res.ok` 检查, 非 2xx 抛 `Error(detail)`
+* 兼容两种 FastAPI detail 形态:
+  * `HTTPException` → `detail: string` (我们自己抛的 422/409 走这条)
+  * Pydantic 422 → `detail: [{loc, msg, type, ...}]`, 拼接 `loc + msg`
+* `TickControlPanel.handleInject` 既有 catch 分支自动起作用, toast `error`
+  显示后端返回的真实原因
+
+### Verified
+
+* `npm run build` 通过 (1066 modules, 3.7s)
+* 后端 inject-event 错误响应结构已与前端 parser 对齐 (live curl 验证)
+* 后端测试套件无变化, 326 passed
+
+---
+
+## [2.19.1] — 2026-06-04
+
+### Added — `/api/tick/inject-event` 输入校验加固
+
+修补 3 个静默陷阱:
+
+1. **type 非法值返回 500** (而非 422) — `InjectEventRequest.type` 是 plain
+   `str`, 任何非 `EventKind` Literal 值都通过 FastAPI 边界, 直到
+   `Event(type=...)` 内部 Pydantic 校验时才抛 ValidationError, 被 FastAPI
+   包成 500 + 暴露内部模型路径
+2. **`visible_to=all_in_location` 配空 location → 静默丢弃** — `visible_to`
+   不传时 fallback 成 `['all_in_location']`; 若 location 也为空,
+   `Orchestrator._collect_affected_characters` 会因 location 不匹配跳过所有
+   角色, 事件最终对谁都不可见。调用方拿 200 而事件被悄悄吞掉
+3. **显式 id 与 `_injected_pending` 已有项冲突 → 静默覆盖** — 同 id 的两个
+   Event 同时进队列, 下游消费不可预知
+
+变更 (`backend/api/tick_routes.py`):
+
+* `InjectEventRequest.type` 改为 `EventKind` Literal → FastAPI 自动 422
+* 计算最终 `visible_to` 后, 若含 `all_in_location` 但 location 空 → 422
+* 显式 `req.id` 与 `_injected_pending` 中 id 重复 → 409
+* 自动生成 id 路径 (`req.id=None`) 沿用 `evt_user_{tick}_{len(pending)}`, 不变
+
+### Tests
+
+* `backend/tests/test_inject_event_validation.py` — 新增 8 用例覆盖
+  unknown_type_422 / valid_type / all_in_location_requires_location /
+  default_visible_to_empty_location / explicit_visible_to_no_location /
+  duplicate_id_409 / auto_generated_ids_no_collide /
+  narrative_value_out_of_range
+* 全套 326 用例通过 (此前 318, +8, 0 回归)
+
+---
+
+## [2.19.0] — 2026-06-04
+
+### Added — `chat_stream` 接入 budget / observability 闭环
+
+`chat()` 已有 budget pre-check + ContextVar tick + tracker 记账 +
+`model_override`, 但 `chat_stream()` 此前完全脱离: 不做 `can_afford`, 不
+`record`, 不读 ContextVar, 不支持 override。节级 SSE
+(`writer_agent.write_stream` → `llm_client.chat_stream`) 仍是活路径,
+每段 1.5k-3k 字写作的 prompt/completion token 完全不入 tracker — 生产成本
+不可见, 预算上限对 streaming 无效。
+
+变更:
+
+* `llm_client.chat_stream()` 新增 `agent_id` / `priority` / `tick` /
+  `model_override` 参数
+* 调用前 `tracker.can_afford()` 拦截; 非 critical 超额时抛 `BudgetExceeded`,
+  底层 `_client.chat.completions.create` 不被调
+* 透传 `stream_options={'include_usage': True}`, 从最后含 usage 的 chunk 提取
+  prompt/completion token 调用 `tracker.record()`; 提供商不返回 usage 时记 0
+* `tick` 默认 -1 时 fallback 到 `_current_tick_var` (与 `chat()` 同源)
+* `writer_agent.write_stream()` 标注 `agent_id='writer_agent'`
+  `priority='critical'`
+
+### Tests
+
+* `backend/tests/test_chat_stream_observability.py` — 新增 7 用例覆盖
+  records_usage_from_final_chunk / tick_falls_back_to_contextvar /
+  rejected_by_budget_does_not_call_create / critical_bypasses_budget /
+  handles_missing_usage / model_override_passed_to_create /
+  requests_usage_via_stream_options
+* 全套 318 用例通过 (此前 311, +7, 0 回归)
+
+---
+
+## [2.18.0] — 2026-06-03
+
+v2.18 是 9 个 Phase 的连续推进, 围绕 **"状态硬转移 + Guardian 闭环 + tick
+并行化"** 三条主线, 全程保持单进程 / 单仓库 / 不引入新依赖。
+
+### Phase 1 — `CharacterState.money` + `CharacterAction.money_delta`
+
+* `CharacterState` 加 `money: int` (clamp ≥ 0); `CharacterAction` 加
+  `money_delta: int` 表达角色意志中的金钱变动 (买/卖/赌/送)
+* `Orchestrator._apply_actions` 落 `money_delta`, 越界 clamp 并打
+  `money_overdraft` flag
+
+### Phase 2 — `AgentRuntimeState` + Orchestrator cooldown
+
+* 新增 `AgentRuntimeState(agent_id, last_invoked_tick, failure_count,
+  cooldown_until_tick, model_tier_override, summary_cache)`
+* `TickState` 新增 `upsert_agent_runtime_state` / `record_agent_invocation` /
+  `is_agent_in_cooldown`; `FAILURE_THRESHOLD=3`, `COOLDOWN_TICKS=5`
+* Orchestrator 阶段 3 调度前过滤 in-cooldown 的 character_agent, 进程重建后
+  从 `tick_state.json` 恢复 `failure_count`
+
+### Phase 3 — `StateOp` / `StatePatch` 外部权威补丁层
+
+* `StateOpKind = Literal['set','add','append','remove']`,
+  `StatePatchTarget = Literal['character','world','location','faction']`
+* `Orchestrator._apply_state_patches` 在阶段 5d 应用; `current_location` 设值
+  校验 `valid_location_ids`, `money` clamp 0+ 并打 `money_overdraft`
+* 设计原则: 角色意志 (`CharacterAction`) 与外部权威 (`StatePatch`) 分通路,
+  顺序"意志 → 权威", 让权威能"补一刀"
+
+### Phase 4 — `ConsistencyGuardian.scan_hallucination_rate`
+
+* `_HALLUCINATION_FLAGS = (inventory_without_action, location_without_move,
+  money_without_action)` — 与 `Orchestrator._consistency_flags` 输出对齐
+* `scan_hallucination_rate(events, threshold=0.3)` 纯计数, 100% 确定性, 按
+  `participants[0]` 归账; 严格 `>` 阈值才报, 防边界震荡
+* `async scan()` 总是先跑幻觉率扫描 (即使 LLM 评估器不可用),
+  结果合并进 `GuardianOutput.conflicts`
+
+### Phase 5 — Guardian → `AgentRuntimeState` 闭环观测 (默认 shadow mode)
+
+* `AgentRuntimeState` 增 `hallucination_hits` / `degrade_recommendations` /
+  `last_degrade_recommended_tick`; 旧持久化文件 load 时自动取默认 0
+* `TickState.record_degrade_recommendation(agent_id, tick, hits,
+  set_override=None)` — `set_override=None` 时仅写统计, shadow mode
+* `TickState.get_hallucination_stats()` — 仅返回曾被建议过降级的 agent, 含
+  `model_tier_override_active` 布尔
+* `Orchestrator._ingest_guardian_conflicts` 读 `HALLUCINATION_AUTO_DEGRADE`
+  env, shadow / active 双路径
+
+### Phase 6 — `model_tier_override` 激活路径
+
+* `LLMClient.chat` 加 `model_override: str | None`,
+  `effective_model = model_override or self._model`; token budget record 用
+  `effective_model` 让降级的 token 消费正确归账到 fallback model
+* `CharacterAgent.decide(... model_override=...)`,
+  `batch_decide(... model_overrides: dict[cid, tier]=None)`
+* `Orchestrator._collect_model_overrides` 阶段 3 一次性收集,
+  `batch_decide` 前注入
+* 生产路径: shadow 观察 N 天 (Phase 5) → `HALLUCINATION_AUTO_DEGRADE=1` 切
+  active → 实际生效仍需 provider 层 `fallback_model` 路由 (config.json)
+
+### Phase 7 — tick 提速 (concurrency 3→6 + Narrator 与只读 agent 并行)
+
+* `_default_concurrency` 3 → 6, 6 个 A/B 级角色一次并发 `batch_decide`
+* `_phase7_readonly_agents` — Guardian / NoveltyCritic / ArcTracker 用
+  `asyncio.gather(return_exceptions=True)` 并发, 单个失败不阻塞其他
+* `run_tick` 主流程: `asyncio.gather(_narrate, _phase7_readonly_agents)`,
+  Narrator LLM 等待与 Guardian 等 LLM 等待重叠
+* `MemoryCompressor` 仍串行 (写 memory_store, 防 race);
+  `Showrunner` / `EventInjector` / `StoryArcDirector` 仍串行 (数据依赖)
+* 预期: tick=60 (三件套全触发) 节省 ~3 个 LLM 等待
+
+### Phase 8 — `EventInjector` 产 `StatePatch`
+
+* `EventInjectorOutput.state_patches: list[StatePatch]` — P3 引入的补丁层
+  终于有 LLM 产源
+* SYSTEM_PROMPT 加 `state_patches` 字段说明 + 严格 JSON 示例, 明确"仅对强
+  因果、必须立即生效的事件添加 patches; 一般事件不需要"
+* 适用场景: 爆炸波及房间所有人 / 瘟疫扩散 / NPC 当场死亡; 不借道
+  CharacterAction (那是角色意志)
+* `Orchestrator` 阶段 5d 在 `_apply_actions` (角色意志) 之后调
+  `_apply_state_patches` (外部权威), `TickSummary.agents_called` 加
+  `state_patches(applied=X,rejected=Y)` 诊断
+* 单条 Pydantic validation 失败跳过, 其他保留 (与 events 解析容错策略一致)
+
+### Phase 9 — `GET /api/tick/diagnostic/hallucination` Guardian 闭环外露
+
+* 返回 `ts.get_hallucination_stats()` (按 agent_id 索引)
+* 字段: `degrade_recommendations` / `hallucination_hits` /
+  `last_degrade_recommended_tick` / `model_tier_override_active`
+* 顶层加 `auto_degrade_active: bool` — 反映 `HALLUCINATION_AUTO_DEGRADE` env
+* `tick_state` 未注入时返回 503 (与现有 endpoint 一致, 不崩)
+* 生产消费模式: shadow 期监控真阳率, active 期看 `model_tier_override` 命中分布
+
+### Tests (累计 v2.18 全程)
+
+* 263 (Phase 2) → 276 (Phase 3) → 282 (Phase 4) → 291 (Phase 5) →
+  295 (Phase 6) → 303 (Phase 7) → 307 (Phase 8) → 311 (Phase 9), 全程 GREEN
+
+### Tooling
+
+* `scripts/smoke_v218.py` — 真实 LLM smoke harness, 15 tick 实测发现 money 端到端
+  路径与 shadow mode 正确; 6 agent failure_count=0, override=""
+
+---
+
+## [2.17.0] — 2026-06-03
+
+### Runtime coherency sweep — 6 项修复 + CodeQL 切断
+
+1. **启动默认 novel 对齐** (`main.py` + `api/routes.py` + `novel_manager.py`)
+   * `novel_manager.resolve_default_novel_id()` 作为单一权威入口
+   * `main.py` startup 同时把 active id 注入 legacy pipeline 与 tick runtime
+   * `/api/stats` 与 `/api/tick/*` 首屏指向同一本小说
+2. **LLM 配置热更新** (`config/settings.py` + `nf_core/llm_client.py` +
+   `api/routes.py`)
+   * `resolve_llm_block_now()` + `LLMClient.reload()` — 不重启进程切 provider
+   * `PUT /api/config/llm` 调用 `reload()` 重建 `AsyncOpenAI` 实例
+   * 响应中新增 `applied` 字段, 调用方可见实际生效值
+3. **TokenBudget 调用前硬拦截** (`nf_core/llm_client.py` +
+   `nf_core/token_budget.py`)
+   * 新增 `BudgetExceeded` 异常类型
+   * `LLMClient.chat()` 在 OpenAI 调用前查询 `can_afford()`
+   * critical 始终放行; medium / optional 超额时抛 `BudgetExceeded`, 调用方
+     既有 try/except 自动降级
+4. **前端 Tick 控制台** (`frontend/src/components/TickControlPanel.jsx`)
+   * 接入 `runOneTick` / `pause` / `resume` / `inject-event` / `history` /
+     `open-loops`
+   * 每 3 秒轮询 status, 注入事件表单, 历史 15 tick 表格
+   * `App.jsx` 把"Tick 控制台"入口指向新组件
+5. **`agent_routes` tick 字段对齐** (`persistence/tick_db.py`)
+   * `TickDB._row_to_dict` 同时暴露 `tick_id` / `tick` /
+     `narrator_produced` / `narrator_produced_text` / `narrator_chars` /
+     `narrator_output_chars` 双键
+   * `agent_routes._scan_last_invoked` 不再返回 `tick=None`
+6. **legacy pipeline 持久化补全** (`pipeline/engine.py`)
+   * `save_state` 写 `summary_tree_legacy.json` + 触发 KG snapshot
+   * `load_state` 恢复 `SummaryTree` + 回滚 KG 到最新快照
+   * 与 tick runtime 的 `summary_tree.json` 用独立文件名, 不冲突
+
+### Security — CodeQL high severity 全部切断
+
+* **path-injection (3 处)**: `tick_state.py` / `tick_runtime.py` /
+  `tick_db.py` 的 `os.makedirs` 接受 `_resolve_novel_data_dir` 返回值,
+  CodeQL 视为受 `ACTIVE_NOVEL_ID` / `ACTIVE_NOVEL_DATA_DIR` 环境污染。
+  在 `_resolve_novel_data_dir` 入口增 `_sanitize_within_novels_root`
+  (realpath + commonpath 强制 candidate 落在 `backend/data/novels/` 下),
+  复用 `novel_manager._validate_novel_id` 正则白名单
+  (字母/数字/下划线/中文/-) 拒绝 `../etc` 之类越界 id
+* **clear-text-logging (3 处)**: `LLMClient.reload` 日志去掉 `base_url` /
+  `model` / `source` 字符串, 仅记长度 (整数, 非敏感); 它们都从含
+  `api_key` 的 dict 派生, 同一 dict 中其它字段也被 CodeQL 标污
+* `agent_routes` stack-trace-exposure (PR #6) + `_safe_summary`
+  clear-text-logging (PR #4) 同期修复
+
+### Tests
+
+* `backend/tests/test_v217_coherency_sweep.py` 新增 14 单元测试
+* 全套 245 用例通过 (231 现有 + 14 新增)
+* `npm run build` 通过 (vite 6.4, 6.5s)
+* 真实 LLM (mimo-v2.5-pro) bootstrap + 1 tick + 6 endpoint 端到端验证通过
+
+---
+
+## [2.16.0] — 2026-06-03
+
+### P0 — 硬状态转移落字段
+
+`CharacterAction` 加 `new_location` / `inventory_added` / `inventory_removed`
+/ `status_added` / `status_removed` / `relationship_deltas`,
+`Orchestrator._apply_actions` 落到对应 `CharacterState` 字段并同步
+`WorldState.locations.present_characters`。
+
+之前角色"去了安全屋"但 state 仍是原 location, 长期连贯性靠 Narrator 圆场不
+可持续; v2.18 Phase 4 的 hallucination flags
+(`location_without_move` / `inventory_without_action`) 就建立在本字段之上。
+
+### P0 — LLM 可观测性
+
+`nf_core.llm_client` 加 `ContextVar` 承载当前 tick, **18 个 LLM 调用点**全部
+标注 `agent_id` + `priority`。`TokenBudgetTracker` 不再全是
+`unknown/medium/tick=-1`, 能识别哪条 agent 最贵, 也为 v2.19 的 chat_stream
+观测打地基。
+
+### P1 — 中文输出约束
+
+* `CharacterAgent` system prompt 加显式语言要求
+* `_parse_action` 检测连续英文词污染时打 `lang_contamination` flag
+* 防止事件日志再出现 `Diana uses sword` 类英文动作句
+
+### P1 — 多地点冷启动
+
+`bootstrap_prompts.py` 的 `PROMPT_WORLD` 要求 ≥5 地点并按 城市 / 边境 / 秘所
+/ 旷野 / 聚会点 分类, 防止角色都挤在 `loc_1` 单一地点导致舞台感重复。
+
+### Tests
+
+* 4 个新测试文件 + `test_orchestrator_p0` 加 2 个端到端用例
+* 全套 231 用例通过 (此前 ~217 / 0 回归)
+
+---
+
+## [2.15.0] — 2026-06-03
+
+### P0 sweep — 并发/路径安全/记忆闭环/runtime 注册表
+
+针对实测发现的 4 类生产隐患, 不引入新依赖、不破契约, 全部低破坏面修复。
+
+* **并发**: `CharacterAgent.batch_decide` 用 `asyncio.Semaphore` 限并发已存
+  在, 但 `_default_concurrency` 来源不统一; 集中到环境变量
+  `CHARACTER_AGENT_CONCURRENCY`, 单一入口便于 v2.18 Phase 7 提到 6
+* **路径安全**: `novel_manager._assert_path_within_novels_root` 与
+  `_validate_novel_id` 联合校验, 拒绝 `../` / 绝对路径 / 非法字符 novel_id;
+  v2.17 path-injection 修复在此基础上扩展 (CodeQL 也认这条 sanitizer)
+* **记忆闭环**: `PriorityMemoryStore.touch()` / `mark_protected()` 调用点
+  对齐 Orchestrator 阶段 6, 防止 `events_consumed` 漏 touch 让保护事件被
+  压缩误删
+* **runtime 注册表**: `TickRuntime` 装配的 8 个可选层 (memory_store /
+  story_arc_director / character_arc_tracker / fact_ledger / safety_filter
+  / token_budget / creativity_scorer / branch_manager) 显式校验,
+  缺失参数立即抛, 不靠默认构造静默退化
+
+### Security
+
+* `agent_routes` stack-trace-exposure (CodeQL py/stack-trace-exposure) 修复 —
+  异常不再透传原始 traceback 到 HTTP 响应
+* `_safe_summary` 重构切断 CodeQL clear-text-logging taint flow
+
+---
+
 ## [2.14.0] — 2026-06-03
 
 ### 10 段实测发现 + A6 升华模式扩展

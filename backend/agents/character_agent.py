@@ -165,7 +165,9 @@ class CharacterAgent:
     def __init__(self, profile: CharacterProfile, model_tier: str = "medium") -> None:
         """``model_tier`` A 级建议 'strong' (Sonnet),B 级 'medium',C 级不应实例化。
 
-        当前 model_tier 仅记录,真实模型切换在 P1 集成。
+        基础 tier 在此固定; v2.18 Phase 6 起, Guardian 监测幻觉率会按 tick
+        通过 ``decide(... model_override=...)`` 临时替换为更低成本模型,
+        激活路径需 ``HALLUCINATION_AUTO_DEGRADE=1``。
         """
         self._profile = profile
         self._model_tier = model_tier

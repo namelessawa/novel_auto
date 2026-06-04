@@ -144,9 +144,10 @@ class LLMClient:
         priority: str = "medium",
         tick: int = -1,
         # v2.18 Phase 6 — Guardian 监控建议降级时, Orchestrator 阶段 3 注入。
-        # 非 None / 非空字符串时用本值替代 self._model。当前生产仅支持单 model,
-        # 实际生效需在 provider 层做模型路由 (config.json llm.fallback_model);
-        # 当 fallback_model 未配置时本字段仅作为标签写入日志, 让调用方可观测。
+        # 非 None / 非空字符串时直接替换 self._model 传给底层 OpenAI 客户端 ——
+        # 上层 provider (deepseek/mimo/custom) 暴露的 model 名是字符串, 替换后
+        # 直接被 chat.completions.create() 路由。调用方在 logger.info 里能看到
+        # override 长度作为可观测信号。
         model_override: str | None = None,
     ) -> LLMResponse:
         # v2.17 — 调用前硬拦截。token_budget 之前只「记账」, README 写的

@@ -83,10 +83,12 @@ class WorldSimulator:
     """每 tick 推进 WorldState 并产出自然事件。"""
 
     def __init__(self, model_tier: str = "small") -> None:
-        """``model_tier`` 当前透传到 llm_client 的 model field 之外,无效果。
+        """``model_tier`` 仅作标签记录, 不影响实际模型选择。
 
-        P1 集成时,会通过 llm_client 的 ``model`` 重写实现真正的小模型路由
-        (Haiku/Sonnet/Opus 三档)。P0 阶段先保持调用稳定。
+        模型选择由 ``LLMClient`` 的 provider 配置决定 (config.json llm.* 或
+        .env LLM_PROVIDER); v2.18 Phase 6 起, 个别调用点 (CharacterAgent) 会
+        通过 ``llm_client.chat(model_override=...)`` 按 tick 临时降级。
+        WorldSimulator 当前不参与降级路径, 始终用默认 provider model。
         """
         self._model_tier = model_tier
 
