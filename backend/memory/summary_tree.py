@@ -21,6 +21,7 @@ import os
 import tempfile
 from dataclasses import asdict, dataclass, field
 
+from memory.tick_state import _quarantine
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -281,7 +282,9 @@ class SummaryTree:
             with open(path, "r", encoding="utf-8") as f:
                 payload = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
-            logger.error("SummaryTree load failed (%s) - starting fresh", e)
+            # v2.21 — quarantine, 否则下次 persist_to_disk 用空 root 覆盖真实摘要树。
+            _quarantine(path, f"json-load: {e}")
+            logger.error("SummaryTree load failed (%s) - quarantined, starting fresh", e)
             return False
 
         try:
@@ -296,7 +299,8 @@ class SummaryTree:
             ]
             self._legends = [Legend.from_dict(d) for d in payload.get("legends", [])]
         except (KeyError, TypeError, ValueError) as e:
-            logger.error("SummaryTree payload corrupted (%s) - starting fresh", e)
+            _quarantine(path, f"validation: {e}")
+            logger.error("SummaryTree payload corrupted (%s) - quarantined, starting fresh", e)
             self.__init__(merge_threshold=self._merge_threshold)
             return False
 
