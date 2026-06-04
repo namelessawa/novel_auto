@@ -126,7 +126,11 @@ async def _exercise_chat_stream() -> dict:
     from nf_core.token_budget import get_global_tracker
 
     tracker = get_global_tracker()
-    before = tracker.snapshot
+    # tracker.snapshot 返回内部 BudgetSnapshot 引用, total_tokens 是 property
+    # 实时算; 不能 before=tracker.snapshot 然后比 before.total_tokens — 两端
+    # 解引用都拿到同一对象的最新值。捕快照时立即 int() 凝固数值。
+    before_total = int(tracker.snapshot.total_tokens)
+    before_smoke = int(tracker.snapshot.by_agent.get("smoke_v219:chat_stream", 0))
 
     set_current_tick(9999)  # 任意 sentinel tick, 让记账归到这里
     chunks_received = 0
@@ -144,13 +148,14 @@ async def _exercise_chat_stream() -> dict:
     except Exception as e:  # provider 不返 stream 也容忍
         return {"ok": False, "chunks": chunks_received, "error": repr(e)}
 
-    after = tracker.snapshot
-    smoke_total = after.by_agent.get("smoke_v219:chat_stream", 0)
+    after_total = int(tracker.snapshot.total_tokens)
+    after_smoke = int(tracker.snapshot.by_agent.get("smoke_v219:chat_stream", 0))
     return {
         "ok": True,
         "chunks": chunks_received,
-        "delta_total_tokens": after.total_tokens - before.total_tokens,
-        "smoke_agent_total_tokens": smoke_total,
+        "delta_total_tokens": after_total - before_total,
+        "delta_smoke_agent_tokens": after_smoke - before_smoke,
+        "smoke_agent_total_tokens": after_smoke,
     }
 
 
