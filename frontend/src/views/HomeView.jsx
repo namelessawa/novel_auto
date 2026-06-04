@@ -80,6 +80,7 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
         },
         (text) => setStreamText((prev) => prev + text),
         () => resolve(),
+        (err) => reject(err),
       )
       // pipe abort errors back as reject
       const ctrl = controllerRef.current

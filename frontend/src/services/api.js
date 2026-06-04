@@ -2,6 +2,28 @@
 // In local dev, empty string lets the vite proxy handle /api requests.
 const BASE = import.meta.env.VITE_API_BASE || ''
 
+// v2.21 — 写端点统一错误处理。此前 runOneTick / switchNovel / pauseTick 等
+// 全部裸 return res.json(); 后端 4xx/5xx 时调用方仍拿到 {detail: "..."},
+// UI 访问 .summary?.narrator_produced_text → undefined, toast 显示 "Tick
+// undefined 完成"。injectTickEvent (v2.19.1) 已实现等价语义, 这里抽公共 helper。
+async function assertOk(res) {
+  if (res.ok) return res.json()
+  let detail = `HTTP ${res.status}`
+  try {
+    const body = await res.json()
+    if (body && typeof body.detail === 'string') {
+      detail = body.detail
+    } else if (body && Array.isArray(body.detail)) {
+      detail = body.detail
+        .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
+        .join('; ')
+    }
+  } catch {
+    /* 非 JSON 错误体保留 HTTP ${status} 默认值 */
+  }
+  throw new Error(detail)
+}
+
 // ---------------------------------------------------------------------------
 // Legacy section pipeline
 // ---------------------------------------------------------------------------
@@ -45,8 +67,15 @@ export async function generateSection(outline = '') {
   return res.json()
 }
 
-export function generateSectionStream(outline = '', onEvent, onText, onDone) {
+// v2.21 — onError 可选。未传时维持旧行为(失败时也调用 onDone),已传则失败
+// 路径走 onError(err), onDone 只在真正完成时触发 — 让上层 NovelView /
+// HomeView 的 try/catch 真正区分成功与失败。
+export function generateSectionStream(outline = '', onEvent, onText, onDone, onError) {
   const controller = new AbortController()
+  const reportError = (err) => {
+    if (typeof onError === 'function') onError(err)
+    else onDone()
+  }
 
   fetch(`${BASE}/api/generate/stream`, {
     method: 'POST',
@@ -55,6 +84,18 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone) {
     signal: controller.signal,
   })
     .then(async (response) => {
+      if (!response.ok) {
+        // 后端 4xx/5xx 时 SSE body 是 JSON 错误体; 不应当作正常流处理
+        let detail = `HTTP ${response.status}`
+        try {
+          const body = await response.json()
+          if (typeof body?.detail === 'string') detail = body.detail
+        } catch {
+          /* 非 JSON: 保留默认 */
+        }
+        reportError(new Error(detail))
+        return
+      }
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -105,7 +146,7 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone) {
     .catch((err) => {
       if (err.name !== 'AbortError') {
         console.error('Stream error:', err)
-        onDone()
+        reportError(err)
       }
     })
 
@@ -212,17 +253,7 @@ export async function updateLLMConfig({ api_key, base_url, model, provider }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`
-    try {
-      const j = await res.json()
-      if (typeof j?.detail === 'string') detail = j.detail
-    } catch {
-      /* keep default */
-    }
-    throw new Error(detail)
-  }
-  return res.json()
+  return assertOk(res)
 }
 
 // ---------------------------------------------------------------------------
@@ -240,7 +271,7 @@ export async function createNovel(title = '未命名小说') {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
   })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function updateNovelTitle(novelId, title) {
@@ -249,14 +280,14 @@ export async function updateNovelTitle(novelId, title) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
   })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function deleteNovel(novelId) {
   const res = await fetch(`${BASE}/api/novels/${encodeURIComponent(novelId)}`, {
     method: 'DELETE',
   })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function switchNovel(novelId) {
@@ -264,7 +295,7 @@ export async function switchNovel(novelId) {
     `${BASE}/api/novels/${encodeURIComponent(novelId)}/switch`,
     { method: 'POST' }
   )
-  return res.json()
+  return assertOk(res)
 }
 
 // ---------------------------------------------------------------------------
@@ -279,52 +310,34 @@ export async function fetchTickStatus() {
 
 export async function runOneTick() {
   const res = await fetch(`${BASE}/api/tick/run`, { method: 'POST' })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function pauseTick() {
   const res = await fetch(`${BASE}/api/tick/pause`, { method: 'POST' })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function resumeTick() {
   const res = await fetch(`${BASE}/api/tick/resume`, { method: 'POST' })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function injectTickEvent(payload) {
+  // v2.19.1 / v2.21 — 后端 422 (非法 type / 空 location + all_in_location) /
+  // 409 (重复 id) 走错误体; assertOk 把 detail (string 或 FastAPI 422 list)
+  // 翻成 Error, 让 toast 真正落到失败分支。
   const res = await fetch(`${BASE}/api/tick/inject-event`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-  // v2.19.1 — 后端在 422 (非法 type / 空 location + all_in_location) 或 409
-  // (重复 id) 时返回 JSON 错误体, 但 res.json() 自身不会抛, 调用方原本会拿到
-  // {detail: ...} 然后访问 .event?.tick → undefined, toast 仍显示"成功 (tick
-  // undefined)"。这里把非 2xx 显式翻成 Error, 让调用方 catch 分支真正生效。
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`
-    try {
-      const body = await res.json()
-      if (body && typeof body.detail === 'string') {
-        detail = body.detail
-      } else if (body && Array.isArray(body.detail)) {
-        // FastAPI 422 详细列表 — 拼接 loc + msg
-        detail = body.detail
-          .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
-          .join('; ')
-      }
-    } catch {
-      /* 非 JSON 错误体保持 HTTP ${status} 默认值 */
-    }
-    throw new Error(detail)
-  }
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchTickHistory(lastN = 20) {
   const res = await fetch(`${BASE}/api/tick/history?last_n=${lastN}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchTickOpenLoops(topK = 30) {
