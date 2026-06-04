@@ -163,16 +163,30 @@ export async function fetchLLMConfig() {
   return res.json()
 }
 
-export async function updateLLMConfig({ api_key, base_url, model }) {
+export async function updateLLMConfig({ api_key, base_url, model, provider }) {
+  // v2.20 — provider 是 active provider 切换 (deepseek/mimo/custom), 后端
+  // 写 os.environ['LLM_PROVIDER']; 不传时保持当前值不变。
+  // api_key/base_url/model 写入 config.json.llm 兜底段, 与 provider 切换正交。
   const body = {}
   if (api_key !== undefined) body.api_key = api_key
   if (base_url !== undefined) body.base_url = base_url
   if (model !== undefined) body.model = model
+  if (provider !== undefined) body.provider = provider
   const res = await fetch(`${BASE}/api/config/llm`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const j = await res.json()
+      if (typeof j?.detail === 'string') detail = j.detail
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail)
+  }
   return res.json()
 }
 

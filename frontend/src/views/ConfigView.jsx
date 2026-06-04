@@ -73,11 +73,18 @@ export default function ConfigView() {
     setSaving(true)
     try {
       const body = {
+        // v2.20 — provider 一起发, 后端会切 os.environ['LLM_PROVIDER'] 让
+        // llm_client.reload() 真正路由到新 provider; 之前下拉只在前端
+        // useState, 保存时被丢弃, 实际 active provider 仍由 .env 决定。
+        provider,
         base_url: baseUrl,
         model: model,
       }
       if (apiKey) body.api_key = apiKey
       const result = await updateLLMConfig(body)
+      setProvider(result.provider || provider)
+      setBaseUrl(result.base_url || baseUrl)
+      setModel(result.model || model)
       setMaskedHint(result.api_key_masked || '')
       setSource(result.source || '')
       setApiKey('')
@@ -169,11 +176,9 @@ export default function ConfigView() {
             </select>
             <p className="input-hint">
               <i className="fas fa-info-circle" style={{ marginRight: 4 }}></i>
-              切换 provider 后请填入对应密钥并保存。后端会写入
-              <code style={{ color: 'var(--accent-purple)', margin: '0 4px' }}>
-                config.json
-              </code>
-              的 llm 段。
+              切换 provider 立即生效 (作用于本进程 <code style={{ color: 'var(--accent-purple)', margin: '0 4px' }}>os.environ['LLM_PROVIDER']</code>);
+              重启后回退到 <code style={{ color: 'var(--accent-purple)', margin: '0 4px' }}>.env</code> 静态值。下方 api_key / base_url / model 写入
+              <code style={{ color: 'var(--accent-purple)', margin: '0 4px' }}>config.json</code> 的 llm 段作为兜底。
             </p>
           </div>
 
@@ -231,14 +236,14 @@ export default function ConfigView() {
         </div>
         <div className="card" style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
           <p>
-            后端 <code style={{ color: 'var(--accent-purple)' }}>backend/config/settings.py</code> 优先桥接项目根 <code style={{ color: 'var(--accent-purple)' }}>.env</code> 的{' '}
-            <code style={{ color: 'var(--accent-purple)' }}>LLM_PROVIDER</code> active provider;此页面保存的字段写入{' '}
-            <code style={{ color: 'var(--accent-purple)' }}>config.json</code> 的 llm 段,作为 .env 不可用时的兜底。
+            <strong>active provider</strong> 来源优先级: <code style={{ color: 'var(--accent-purple)' }}>os.environ['LLM_PROVIDER']</code> (本页面切换写入)
+            → 进程启动时 <code style={{ color: 'var(--accent-purple)' }}>.env</code> 的 <code style={{ color: 'var(--accent-purple)' }}>LLM_PROVIDER</code>。
+            保存后 <code style={{ color: 'var(--accent-purple)' }}>llm_client.reload()</code> 立即重建 OpenAI 客户端, 无需重启进程。
           </p>
           <p style={{ marginTop: 8 }}>
-            如需切换全局提供商,推荐直接编辑项目根 <code style={{ color: 'var(--accent-purple)' }}>.env</code> 的{' '}
-            <code style={{ color: 'var(--accent-purple)' }}>LLM_PROVIDER=deepseek|mimo|custom</code>,
-            然后填入对应 <code style={{ color: 'var(--accent-purple)' }}>*_API_KEY</code>。
+            <strong>api_key / base_url / model</strong> 写入 <code style={{ color: 'var(--accent-purple)' }}>config.json</code> 的 llm 段, 作为 .env 不可用时的兜底。
+            如要让切换在重启后仍保留, 请同时编辑 <code style={{ color: 'var(--accent-purple)' }}>.env</code> 的{' '}
+            <code style={{ color: 'var(--accent-purple)' }}>LLM_PROVIDER</code>。
           </p>
         </div>
       </div>
