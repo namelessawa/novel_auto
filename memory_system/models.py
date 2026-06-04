@@ -395,6 +395,13 @@ class OpenLoop(_TickBase):
         default=0,
         description="Narrator 最近一次引用此 loop 的 tick,用于冷线索检测",
     )
+    # v2.21 — Narrator 种新 loop 时关联的源事件 id; Orchestrator 调用
+    # MemoryStore.mark_protected, 防 MemoryCompressor 压缩掉伏笔的因果根。
+    # 此前 prompt + 模型都未声明此字段, orchestrator 的保护分支是死代码。
+    origin_event_ids: list[str] = Field(
+        default_factory=list,
+        description="开 loop 时关联的源事件 id; mark_protected 跳过压缩",
+    )
 
 
 class MemoryEntry(_TickBase):
