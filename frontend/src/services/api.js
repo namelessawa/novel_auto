@@ -167,13 +167,16 @@ export async function rollback(chapter) {
   return res.json()
 }
 
+// v2.22 — 走 assertOk 才能把后端 404 (端点缺失) / 422 (枚举越界) 翻成 Error,
+// 否则 GraphView 在 res.json() 拿到 {detail: "..."} 仍走 success 分支, 误报
+// "实体已添加 / 关系已添加"。
 export async function createEntity(entity) {
   const res = await fetch(`${BASE}/api/graph/entities`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(entity),
   })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function createRelation(relation) {
@@ -182,7 +185,7 @@ export async function createRelation(relation) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(relation),
   })
-  return res.json()
+  return assertOk(res)
 }
 
 // v2.20 — Graph entity / relation delete + entity detail wrappers.

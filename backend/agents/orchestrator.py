@@ -378,8 +378,11 @@ class Orchestrator:
                 logger.error("EventInjector.inject failed: %s", e)
 
         # 外部手动注入
+        # v2.22 — 不立即 clear。此前 .clear() 之后任何阶段 (3-7) 抛错都会让
+        # 用户注入的事件永久丢失, 无法重试。改为快照 id 集合, tick 完整跑完
+        # (持久化完成、TickSummary 已构造) 后再从队列里把它们移除。
         externally_injected = list(self._injected_pending)
-        self._injected_pending.clear()
+        injected_event_ids = {e.id for e in externally_injected}
         events_generated_ids.extend(e.id for e in externally_injected)
 
         all_events: list[Event] = (
@@ -600,6 +603,15 @@ class Orchestrator:
                 self._tick_db.insert_tick(summary, events=all_events)
             except Exception as e:
                 logger.error("TickDB.insert_tick failed (non-fatal): %s", e)
+
+        # v2.22 — tick 已完整跑完 + 落盘, 现在才真正消费外部注入队列。
+        # 用 id 集合做差, 避免漏掉本 tick 期间新追加的事件 (虽然有 _tick_lock,
+        # inject_event 不在锁内, 理论上 HTTP 线程可在 tick 中途 append)。
+        if injected_event_ids:
+            self._injected_pending = [
+                e for e in self._injected_pending
+                if e.id not in injected_event_ids
+            ]
 
         return summary
 

@@ -276,6 +276,9 @@ function CharacterStatesCard({ states }) {
   )
 }
 
+// v2.22 — 字段对齐 /api/tick/event-stats 实际返回:
+// {by_type, high_value_count, avg_narrator_chars, narration_rate, ticks_sampled}
+// 此前误读 last_n_ticks / total_events, 头部数字全部 "0 / 50"。
 function EventStatsCard({ data }) {
   if (!data) {
     return (
@@ -289,10 +292,18 @@ function EventStatsCard({ data }) {
   }
   const byType = data.by_type || {}
   const types = Object.entries(byType)
+  const totalEvents = types.reduce((acc, [, n]) => acc + (Number(n) || 0), 0)
+  const ticksSampled = data.ticks_sampled ?? 0
+  const highValue = data.high_value_count ?? 0
+  const narrationRate =
+    typeof data.narration_rate === 'number'
+      ? `${(data.narration_rate * 100).toFixed(0)}%`
+      : '—'
   return (
     <div className="card">
       <div className="card-title">
-        事件统计 (最近 {data.last_n_ticks ?? 50} tick, 共 {data.total_events ?? 0} 条)
+        事件统计 ({ticksSampled} tick 采样, {totalEvents} 条事件, high-value{' '}
+        {highValue}, narrate {narrationRate})
       </div>
       {types.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
@@ -327,6 +338,8 @@ function EventStatsCard({ data }) {
   )
 }
 
+// v2.22 — /api/tick/action-patterns 实际返回 {frequent_prefixes: [{prefix, count}],
+// total_actions_sampled}; 此前 patterns/action_patterns 都不命中, 内容永远为空。
 function ActionPatternsCard({ data }) {
   if (!data) {
     return (
@@ -338,11 +351,13 @@ function ActionPatternsCard({ data }) {
       </div>
     )
   }
-  const patterns = data.patterns || data.action_patterns || []
+  const patterns =
+    data.frequent_prefixes || data.patterns || data.action_patterns || []
+  const totalSampled = data.total_actions_sampled ?? 0
   return (
     <div className="card">
       <div className="card-title">
-        行动模式 ({patterns.length} 条, 最近 {data.last_n_ticks ?? 100} tick)
+        行动模式 ({patterns.length} 条重复前缀, 共 {totalSampled} 次行动采样)
       </div>
       {patterns.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
@@ -369,7 +384,7 @@ function ActionPatternsCard({ data }) {
                 color: 'var(--text-secondary)',
               }}
             >
-              {p.pattern || p.description || JSON.stringify(p)}
+              {p.prefix || p.pattern || p.description || JSON.stringify(p)}
               {typeof p.count === 'number' && (
                 <span
                   style={{ color: 'var(--text-muted)', marginLeft: 8 }}
@@ -425,6 +440,9 @@ function NoveltyWarningsCard({ warnings }) {
   )
 }
 
+// v2.22 — StyleAnchor 模型字段是 excerpt / selection_reason / weight / scene_type
+// (memory_system/models.py); 此前误用 label/category/tag/example/snippet/score,
+// 标签全显示 #0/#1, hover 内容为空。
 function StyleAnchorsCard({ anchors }) {
   return (
     <div className="card">
@@ -435,25 +453,38 @@ function StyleAnchorsCard({ anchors }) {
         </p>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {anchors.map((a, i) => (
-            <span
-              key={i}
-              className="badge"
-              style={{
-                background: 'rgba(99, 102, 241, 0.12)',
-                color: 'var(--accent-purple)',
-                fontSize: 11,
-              }}
-              title={a.example || a.snippet || ''}
-            >
-              {a.label || a.category || a.tag || `#${i}`}
-              {typeof a.score === 'number' && (
-                <span style={{ marginLeft: 4 }}>
-                  ({a.score.toFixed(2)})
-                </span>
-              )}
-            </span>
-          ))}
+          {anchors.map((a, i) => {
+            const excerpt = a.excerpt || a.example || a.snippet || ''
+            const sceneType =
+              a.scene_type || a.label || a.category || a.tag || 'general'
+            const weight =
+              typeof a.weight === 'number'
+                ? a.weight
+                : typeof a.score === 'number'
+                  ? a.score
+                  : null
+            const tooltip = a.selection_reason
+              ? `[${a.selection_reason}] ${excerpt}`
+              : excerpt
+            return (
+              <span
+                key={i}
+                className="badge"
+                style={{
+                  background: 'rgba(99, 102, 241, 0.12)',
+                  color: 'var(--accent-purple)',
+                  fontSize: 11,
+                }}
+                title={tooltip}
+              >
+                {sceneType} {weight !== null && (
+                  <span style={{ marginLeft: 4 }}>
+                    ({weight.toFixed(2)})
+                  </span>
+                )}
+              </span>
+            )
+          })}
         </div>
       )}
     </div>

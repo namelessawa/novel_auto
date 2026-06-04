@@ -362,9 +362,13 @@ function RelationshipBlock({ graph }) {
   ;(graph?.entities || []).forEach((e) => {
     nameById[e.id] = e.name
   })
+  // v2.22 — /api/graph 的 to_dict 返回 {source, target, relation_type, label};
+  // 此前误用 source_id/target_id 让所有关系都归到 undefined, 侧栏几乎全空。
   relations.forEach((r) => {
-    const src = nameById[r.source_id] || r.source_id
-    const dst = nameById[r.target_id] || r.target_id
+    const srcId = r.source ?? r.source_id
+    const tgtId = r.target ?? r.target_id
+    const src = nameById[srcId] || srcId
+    const dst = nameById[tgtId] || tgtId
     if (!byName[src]) byName[src] = []
     byName[src].push({ to: dst, type: r.relation_type, label: r.label })
   })
