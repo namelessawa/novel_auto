@@ -297,6 +297,52 @@ export async function fetchTickOpenLoops(topK = 30) {
   return res.json()
 }
 
+// v2.20 — OpenLoop CRUD wrappers
+// 后端 POST 在 dup-id 时返 409 (v2.19.3), DELETE 在不存在时静默 200。
+// 两个 wrapper 都把非 2xx 翻成 Error, 让调用方 catch 显示真实原因。
+
+export async function addTickOpenLoop(loop) {
+  const res = await fetch(`${BASE}/api/tick/open-loops`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(loop),
+  })
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const j = await res.json()
+      if (typeof j?.detail === 'string') detail = j.detail
+      else if (Array.isArray(j?.detail)) {
+        detail = j.detail
+          .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
+          .join('; ')
+      }
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail)
+  }
+  return res.json()
+}
+
+export async function closeTickOpenLoop(loopId) {
+  const res = await fetch(
+    `${BASE}/api/tick/open-loops/${encodeURIComponent(loopId)}`,
+    { method: 'DELETE' }
+  )
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const j = await res.json()
+      if (typeof j?.detail === 'string') detail = j.detail
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail)
+  }
+  return res.json()
+}
+
 export async function fetchCharacterStates() {
   const res = await fetch(`${BASE}/api/tick/character-states`)
   return res.json()

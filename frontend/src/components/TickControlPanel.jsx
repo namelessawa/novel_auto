@@ -7,6 +7,8 @@ import {
   injectTickEvent,
   fetchTickHistory,
   fetchTickOpenLoops,
+  addTickOpenLoop,
+  closeTickOpenLoop,
 } from '../services/api'
 import { showToast } from '../utils/toast'
 
@@ -38,6 +40,13 @@ export default function TickControlPanel({ onAction, refreshKey }) {
   const [busy, setBusy] = useState(false)
   const [statusError, setStatusError] = useState('')
   const [form, setForm] = useState(DEFAULT_FORM)
+  // v2.20 — OpenLoop CRUD inline form
+  const [loopForm, setLoopForm] = useState({
+    id: '',
+    description: '',
+    urgency: 5,
+    involved_characters: '',
+  })
   const pollTimer = useRef(null)
 
   const refresh = useCallback(async () => {
@@ -56,12 +65,68 @@ export default function TickControlPanel({ onAction, refreshKey }) {
       // 历史不致命,容错
     }
     try {
-      const o = await fetchTickOpenLoops(5)
+      // v2.20 — top10 而非 5: 引入 CRUD UI 后用户需要看到更多伏笔以做关闭决策
+      const o = await fetchTickOpenLoops(10)
       setOpenLoops(o.loops || [])
     } catch (err) {
       // 同上
     }
   }, [])
+
+  const handleAddLoop = async (e) => {
+    e?.preventDefault?.()
+    if (!loopForm.id.trim()) {
+      showToast('请填写 OpenLoop id', 'error')
+      return
+    }
+    if (!loopForm.description.trim()) {
+      showToast('请填写 OpenLoop 描述', 'error')
+      return
+    }
+    setBusy(true)
+    try {
+      const involved = loopForm.involved_characters
+        .split(/[,，\s]+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+      const payload = {
+        id: loopForm.id.trim(),
+        description: loopForm.description.trim(),
+        urgency: Number(loopForm.urgency) || 5,
+        involved_characters: involved,
+        // opened_tick 由后端必填字段, 用当前 tick + 1 (下个 tick 开始有效)
+        opened_tick: (status?.current_tick ?? 0) + 1,
+      }
+      await addTickOpenLoop(payload)
+      showToast(`OpenLoop ${payload.id} 已添加`, 'success')
+      setLoopForm({ id: '', description: '', urgency: 5, involved_characters: '' })
+      await refresh()
+      onAction?.()
+    } catch (err) {
+      // 后端 409 (dup id) 与 422 (字段不全) 都走这条
+      showToast('添加失败:' + (err?.message || '未知错误'), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleCloseLoop = async (loopId) => {
+    if (!loopId) return
+    if (!window.confirm(`确认关闭 OpenLoop "${loopId}"? (无法恢复)`)) {
+      return
+    }
+    setBusy(true)
+    try {
+      await closeTickOpenLoop(loopId)
+      showToast(`OpenLoop ${loopId} 已关闭`, 'success')
+      await refresh()
+      onAction?.()
+    } catch (err) {
+      showToast('关闭失败:' + (err?.message || '未知错误'), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   useEffect(() => {
     refresh()
@@ -410,9 +475,74 @@ export default function TickControlPanel({ onAction, refreshKey }) {
         </form>
       </div>
 
-      {/* Open loops */}
+      {/* Open loops — v2.20 加 CRUD UI */}
       <div className="card">
-        <div className="card-title">活跃伏笔(Top 5)</div>
+        <div className="card-title">活跃伏笔(Top 10)</div>
+
+        {/* 新增伏笔表单 */}
+        <form
+          onSubmit={handleAddLoop}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            paddingBottom: 12,
+            marginBottom: 12,
+            borderBottom: '1px dashed var(--border)',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              className="input-field"
+              value={loopForm.id}
+              placeholder="loop_id (例如 ol_revenge)"
+              onChange={(e) =>
+                setLoopForm((f) => ({ ...f, id: e.target.value }))
+              }
+              style={{ flex: 1 }}
+            />
+            <input
+              type="number"
+              className="input-field"
+              min={0}
+              max={10}
+              value={loopForm.urgency}
+              onChange={(e) =>
+                setLoopForm((f) => ({ ...f, urgency: e.target.value }))
+              }
+              style={{ width: 90 }}
+              title="urgency 0-10"
+            />
+          </div>
+          <input
+            type="text"
+            className="input-field"
+            value={loopForm.description}
+            placeholder="伏笔描述 (例如:朝廷密令未交付)"
+            onChange={(e) =>
+              setLoopForm((f) => ({ ...f, description: e.target.value }))
+            }
+          />
+          <input
+            type="text"
+            className="input-field"
+            value={loopForm.involved_characters}
+            placeholder="涉及角色 (逗号/空格分隔, 可选): char_001, char_002"
+            onChange={(e) =>
+              setLoopForm((f) => ({ ...f, involved_characters: e.target.value }))
+            }
+          />
+          <button
+            type="submit"
+            className="btn btn-secondary"
+            disabled={busy}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            <i className="fas fa-plus"></i> 新增伏笔
+          </button>
+        </form>
+
         {openLoops.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
             暂无活跃伏笔。
@@ -453,11 +583,30 @@ export default function TickControlPanel({ onAction, refreshKey }) {
                   紧急 {l.urgency ?? '-'}
                 </span>
                 <span style={{ flex: 1 }}>
-                  {l.description || l.summary || l.id || '(无描述)'}
+                  <code
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--text-muted)',
+                      marginRight: 6,
+                    }}
+                  >
+                    {l.id}
+                  </code>
+                  {l.description || l.summary || '(无描述)'}
                 </span>
                 <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>
                   开自 tick {l.opened_tick ?? '?'}
                 </span>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={busy}
+                  onClick={() => handleCloseLoop(l.id)}
+                  title="关闭这个 OpenLoop"
+                  style={{ padding: '2px 8px' }}
+                >
+                  <i className="fas fa-times"></i> 关闭
+                </button>
               </li>
             ))}
           </ul>
