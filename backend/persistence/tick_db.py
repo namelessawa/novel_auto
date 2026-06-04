@@ -115,13 +115,22 @@ class TickDB:
         summary: TickSummary,
         events: list[Event] | None = None,
     ) -> None:
-        """事务写入 tick_log + 关联 events。Orchestrator 每 tick 调用一次。"""
+        """事务写入 tick_log + 关联 events。Orchestrator 每 tick 调用一次。
+
+        v2.21 — 冲突策略:
+        - tick_log: ``INSERT OR IGNORE`` — 同 tick_id 重复(Orchestrator 重入
+          或恢复后重放) 跳过, 保留首次记录, 不覆盖已生成事件统计。
+        - events:   ``INSERT OR IGNORE`` — LLM 复用 event_id 时不静默覆盖原始
+          事件; 改为 WARN 日志 + 跳过, Showrunner/NoveltyCritic 的历史统计保
+          持稳定。此前 INSERT OR REPLACE 会把旧 description/narrative_value
+          擦掉, 污染下游窗口聚合。
+        """
         now = datetime.now(timezone.utc).isoformat()
         try:
             self._conn.execute("BEGIN")
-            self._conn.execute(
+            cur = self._conn.execute(
                 """
-                INSERT OR REPLACE INTO tick_log (
+                INSERT OR IGNORE INTO tick_log (
                     tick_id, world_time, narrator_produced, narrator_chars,
                     agents_called, events_generated, state_changes_summary,
                     world_time_advanced, next_tick_recommendations, created_at
@@ -140,15 +149,20 @@ class TickDB:
                     now,
                 ),
             )
+            if cur.rowcount == 0:
+                logger.warning(
+                    "TickDB.insert_tick: tick_id=%d already exists, kept original record",
+                    summary.tick,
+                )
             if events:
-                self._conn.executemany(
-                    """
-                    INSERT OR REPLACE INTO events (
-                        event_id, tick_id, event_type, location, participants,
-                        description, visible_to, narrative_value, consequences
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    [
+                for e in events:
+                    cur = self._conn.execute(
+                        """
+                        INSERT OR IGNORE INTO events (
+                            event_id, tick_id, event_type, location, participants,
+                            description, visible_to, narrative_value, consequences
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
                         (
                             e.id,
                             e.tick,
@@ -159,10 +173,14 @@ class TickDB:
                             json.dumps(e.visible_to, ensure_ascii=False),
                             e.narrative_value,
                             json.dumps(e.consequences, ensure_ascii=False),
+                        ),
+                    )
+                    if cur.rowcount == 0:
+                        logger.warning(
+                            "TickDB.insert_tick: event_id=%s already exists at tick=%d, kept original",
+                            e.id,
+                            e.tick,
                         )
-                        for e in events
-                    ],
-                )
             self._conn.execute("COMMIT")
         except Exception:
             self._conn.execute("ROLLBACK")
