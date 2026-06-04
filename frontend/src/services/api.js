@@ -144,6 +144,41 @@ export async function createRelation(relation) {
   return res.json()
 }
 
+// v2.20 — Graph entity / relation delete + entity detail wrappers.
+// 后端 routes.py 一直支持, 前端缺。
+
+export async function deleteEntity(entityId) {
+  const res = await fetch(
+    `${BASE}/api/graph/entities/${encodeURIComponent(entityId)}`,
+    { method: 'DELETE' }
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function deleteRelation(sourceId, targetId) {
+  // 后端用 query string 而非 path 来定位关系 (一对实体可能有多种 relation_type
+  // 但 DELETE 接口只按 source+target 删除所有匹配)
+  const params = new URLSearchParams({
+    source_id: sourceId,
+    target_id: targetId,
+  })
+  const res = await fetch(
+    `${BASE}/api/graph/relations?${params.toString()}`,
+    { method: 'DELETE' }
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function fetchEntityDetail(entityId) {
+  const res = await fetch(
+    `${BASE}/api/graph/entities/${encodeURIComponent(entityId)}`
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
 export async function resetPipeline() {
   const res = await fetch(`${BASE}/api/reset`, { method: 'POST' })
   return res.json()
