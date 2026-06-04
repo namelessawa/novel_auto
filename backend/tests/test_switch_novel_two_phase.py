@@ -1,0 +1,117 @@
+"""POST /api/novels/{id}/switch 两阶段切换 (v2.21)。
+
+回归 P1:此前先切 legacy pipeline、再 set_active_novel(tick); tick 失败
+仅 warning 然后 return 200, UI 看到"切换成功"但 /api/tick/* 仍指向旧 novel,
+状态分歧难诊断。
+
+新顺序:
+1. tick 先切 — 失败立刻 503, legacy 还停在旧 novel (一致状态)
+2. tick 成功后再切 legacy
+"""
+
+from __future__ import annotations
+
+import sys
+import types
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from api import routes
+
+
+@pytest.fixture
+def client(monkeypatch, tmp_path):
+    """构造最小 FastAPI 应用 + 桩 novel_manager / tick_runtime。"""
+
+    # 桩 novel_manager
+    monkeypatch.setattr(
+        routes.novel_manager,
+        "get_novel",
+        lambda nid: {"id": nid, "title": f"《{nid}》"} if nid != "missing" else None,
+    )
+    monkeypatch.setattr(
+        routes.novel_manager,
+        "get_novel_data_dir",
+        lambda nid: str(tmp_path / nid),
+    )
+
+    # 桩 GenerationPipeline (load_state / save_state 都 noop)
+    class _StubPipe:
+        def __init__(self, data_dir):
+            self.data_dir = data_dir
+
+        def save_state(self):
+            pass
+
+        def load_state(self):
+            pass
+
+    monkeypatch.setattr(routes, "GenerationPipeline", _StubPipe)
+
+    # 重置全局
+    routes._pipeline = None
+    routes._active_novel_id = "old_novel"
+
+    app = FastAPI()
+    app.include_router(routes.router)
+    return TestClient(app)
+
+
+def _install_tick_runtime_stub(monkeypatch, *, succeed: bool):
+    """把 sys.modules['tick_runtime'] 替换为同步桩, 让 lazy import 命中它。"""
+    mod = types.ModuleType("tick_runtime")
+
+    if succeed:
+        def set_active_novel(novel_id: str) -> None:
+            mod.last_switched = novel_id
+        mod.last_switched = None
+    else:
+        def set_active_novel(novel_id: str) -> None:
+            raise RuntimeError(f"simulated tick failure for {novel_id}")
+
+    mod.set_active_novel = set_active_novel
+    monkeypatch.setitem(sys.modules, "tick_runtime", mod)
+    return mod
+
+
+def test_switch_succeeds_when_tick_runtime_ok(client, monkeypatch):
+    tick_mod = _install_tick_runtime_stub(monkeypatch, succeed=True)
+
+    resp = client.post("/api/novels/new_novel/switch")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert body["active_id"] == "new_novel"
+    # tick 实际切了
+    assert tick_mod.last_switched == "new_novel"
+    # legacy 也切了
+    assert routes._active_novel_id == "new_novel"
+    assert routes._pipeline is not None
+
+
+def test_switch_returns_503_when_tick_runtime_fails(client, monkeypatch):
+    """tick 切换失败 → 503; legacy 状态保持旧 novel。"""
+    _install_tick_runtime_stub(monkeypatch, succeed=False)
+
+    resp = client.post("/api/novels/new_novel/switch")
+    assert resp.status_code == 503, resp.text
+    body = resp.json()
+    assert "tick runtime 切换失败" in body["detail"]
+    # legacy 仍指向旧 novel
+    assert routes._active_novel_id == "old_novel"
+    # _pipeline 未被替换 (None 或 旧实例)
+    assert (
+        routes._pipeline is None
+        or not getattr(routes._pipeline, "data_dir", "").endswith("new_novel")
+    )
+
+
+def test_switch_404_for_missing_novel(client, monkeypatch):
+    """tick 桩存在但 novel_manager 返回 None — 404, 不进 tick 切换路径。"""
+    tick_mod = _install_tick_runtime_stub(monkeypatch, succeed=True)
+    resp = client.post("/api/novels/missing/switch")
+    assert resp.status_code == 404
+    # tick 不应被触动
+    assert tick_mod.last_switched is None

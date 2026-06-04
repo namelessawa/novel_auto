@@ -153,6 +153,16 @@ async def delete_novel(novel_id: str):
 
 @router.post("/api/novels/{novel_id}/switch")
 async def switch_novel(novel_id: str):
+    """两阶段小说切换 (v2.21 调整顺序):
+
+    1. tick runtime 先切 (失败 → 503, 不污染 legacy);
+    2. legacy pipeline 后切 (此时 tick 已成功, legacy save_state 是幂等的,
+       即便它失败 tick 也已落地, 下次启动会读 tick 状态恢复一致性)。
+
+    此前实现先 _pipeline 切到目标小说、再 set_active_novel; tick 失败时只
+    warning + return 200, 用户看到"切换成功"但 /api/tick/* 仍指向旧 novel,
+    UI 行为难以诊断 — 现修为显式 503。
+    """
     global _pipeline, _active_novel_id
 
     try:
@@ -162,24 +172,28 @@ async def switch_novel(novel_id: str):
     if target is None:
         raise HTTPException(status_code=404, detail="Novel not found")
 
-    # Save current pipeline state
+    # Save current pipeline state (旧 novel 的状态先落盘, 与 tick 切换是否成功无关)
     if _pipeline is not None:
         _pipeline.save_state()
 
-    # Load target novel
-    _active_novel_id = novel_id
-    data_dir = novel_manager.get_novel_data_dir(novel_id)
-    _pipeline = GenerationPipeline(data_dir=data_dir)
-    _pipeline.load_state()
-
-    # v2.15 — 同步把 tick runtime 切到目标小说; 否则 /api/tick/* 仍指向旧 novel。
-    # lazy import 防启动期循环依赖。tick runtime 装配 9 agent + 多个增强层,
-    # 失败不应阻塞 legacy pipeline 切换 — 仅记日志。
+    # 阶段 1 — tick runtime 优先切换。失败立刻报错, legacy 还停在旧 novel。
+    # lazy import 防启动期循环依赖。
     try:
         from tick_runtime import set_active_novel
         set_active_novel(novel_id)
     except Exception as e:
-        logger.warning("set_active_novel(%s) failed (non-fatal): %s", novel_id, e)
+        logger.error("set_active_novel(%s) failed - aborting switch: %s", novel_id, e)
+        raise HTTPException(
+            status_code=503,
+            detail=f"tick runtime 切换失败: {e}; legacy pipeline 未切换",
+        )
+
+    # 阶段 2 — legacy pipeline 跟进。到这里 tick 已切, 任何 legacy 失败都可在
+    # 下次启动恢复 (默认会读 tick 状态)。
+    _active_novel_id = novel_id
+    data_dir = novel_manager.get_novel_data_dir(novel_id)
+    _pipeline = GenerationPipeline(data_dir=data_dir)
+    _pipeline.load_state()
 
     return {"status": "ok", "active_id": novel_id, "title": target["title"]}
 
