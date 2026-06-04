@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import GraphView from './components/GraphView'
 import MemoryView from './components/MemoryView'
 import TickControlPanel from './components/TickControlPanel'
+import TickDiagnosticsPanel from './components/TickDiagnosticsPanel'
 import SectionsList from './components/SectionsList'
 import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
@@ -28,6 +29,8 @@ const TOOL_NAV = [
   { key: 'graph', label: '知识图谱', icon: 'fa-project-diagram' },
   { key: 'memory', label: '记忆系统', icon: 'fa-brain' },
   { key: 'control', label: 'Tick 控制台', icon: 'fa-gauge-high' },
+  // v2.20 — 新增诊断 Tab, 汇总 v2.16/v2.18/v2.19 引入的 6 个可观测端点
+  { key: 'diagnostics', label: 'Tick 诊断', icon: 'fa-stethoscope' },
 ]
 
 const VIEW_TITLES = {
@@ -39,6 +42,7 @@ const VIEW_TITLES = {
   graph: { label: '知识图谱', icon: 'fa-project-diagram' },
   memory: { label: '记忆系统', icon: 'fa-brain' },
   control: { label: 'Tick 控制台', icon: 'fa-gauge-high' },
+  diagnostics: { label: 'Tick 诊断', icon: 'fa-stethoscope' },
 }
 
 export default function App() {
@@ -317,6 +321,9 @@ export default function App() {
           </ViewSlot>
           <ViewSlot active={activeView === 'control'}>
             <TickControlPanel onAction={bumpRefresh} refreshKey={refreshKey} />
+          </ViewSlot>
+          <ViewSlot active={activeView === 'diagnostics'}>
+            <TickDiagnosticsPanel refreshKey={refreshKey} />
           </ViewSlot>
         </div>
       </main>

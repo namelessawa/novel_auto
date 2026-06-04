@@ -365,6 +365,22 @@ export async function fetchEventStats(lastNTicks = 50) {
   return res.json()
 }
 
+// v2.20 — Tick diagnostics wrappers (后端 v2.16 / v2.18 Phase 9 已上, 前端缺)
+
+export async function fetchActionPatterns(lastNTicks = 100) {
+  const res = await fetch(
+    `${BASE}/api/tick/action-patterns?last_n_ticks=${lastNTicks}`
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function fetchHallucinationDiagnostic() {
+  const res = await fetch(`${BASE}/api/tick/diagnostic/hallucination`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
 // ---------------------------------------------------------------------------
 // Agent registry (9 v2 tick agents + ActionResolver)
 // ---------------------------------------------------------------------------
