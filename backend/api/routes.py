@@ -96,6 +96,11 @@ class LLMConfigUpdateRequest(BaseModel):
     api_key: str | None = None
     base_url: str | None = None
     model: str | None = None
+    # v2.20 — 切换 active provider (deepseek / mimo / custom)。后端写
+    # os.environ['LLM_PROVIDER']; core/config.py 在 importlib 重 exec 时读到
+    # 新值, 让 llm_client.reload() 真正跑到新 provider。仅作用于当前进程,
+    # 重启后回退到 .env 静态值, 避免在线编辑 .env 带来的风险。
+    provider: str | None = None
 
 
 class NovelCreateRequest(BaseModel):
@@ -189,11 +194,16 @@ async def get_llm_config_route():
 
 @router.put("/api/config/llm")
 async def update_llm_config_route(req: LLMConfigUpdateRequest):
-    result = update_llm_config(
-        api_key=req.api_key,
-        base_url=req.base_url,
-        model=req.model,
-    )
+    try:
+        result = update_llm_config(
+            api_key=req.api_key,
+            base_url=req.base_url,
+            model=req.model,
+            provider=req.provider,
+        )
+    except ValueError as e:
+        # v2.20 — 非法 provider 等显式约束失败 → 422, 不掉 500/暴露 traceback
+        raise HTTPException(status_code=422, detail=str(e))
 
     # v2.17 — 真正热重建全局 llm_client; 之前只重置了 legacy pipeline, 但 tick
     # runtime 与 SummaryTree.legendize 等所有路径共享同一个 llm_client singleton,

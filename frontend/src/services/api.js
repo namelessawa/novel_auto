@@ -144,6 +144,41 @@ export async function createRelation(relation) {
   return res.json()
 }
 
+// v2.20 — Graph entity / relation delete + entity detail wrappers.
+// 后端 routes.py 一直支持, 前端缺。
+
+export async function deleteEntity(entityId) {
+  const res = await fetch(
+    `${BASE}/api/graph/entities/${encodeURIComponent(entityId)}`,
+    { method: 'DELETE' }
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function deleteRelation(sourceId, targetId) {
+  // 后端用 query string 而非 path 来定位关系 (一对实体可能有多种 relation_type
+  // 但 DELETE 接口只按 source+target 删除所有匹配)
+  const params = new URLSearchParams({
+    source_id: sourceId,
+    target_id: targetId,
+  })
+  const res = await fetch(
+    `${BASE}/api/graph/relations?${params.toString()}`,
+    { method: 'DELETE' }
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function fetchEntityDetail(entityId) {
+  const res = await fetch(
+    `${BASE}/api/graph/entities/${encodeURIComponent(entityId)}`
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
 export async function resetPipeline() {
   const res = await fetch(`${BASE}/api/reset`, { method: 'POST' })
   return res.json()
@@ -163,16 +198,30 @@ export async function fetchLLMConfig() {
   return res.json()
 }
 
-export async function updateLLMConfig({ api_key, base_url, model }) {
+export async function updateLLMConfig({ api_key, base_url, model, provider }) {
+  // v2.20 — provider 是 active provider 切换 (deepseek/mimo/custom), 后端
+  // 写 os.environ['LLM_PROVIDER']; 不传时保持当前值不变。
+  // api_key/base_url/model 写入 config.json.llm 兜底段, 与 provider 切换正交。
   const body = {}
   if (api_key !== undefined) body.api_key = api_key
   if (base_url !== undefined) body.base_url = base_url
   if (model !== undefined) body.model = model
+  if (provider !== undefined) body.provider = provider
   const res = await fetch(`${BASE}/api/config/llm`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const j = await res.json()
+      if (typeof j?.detail === 'string') detail = j.detail
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail)
+  }
   return res.json()
 }
 
@@ -283,6 +332,52 @@ export async function fetchTickOpenLoops(topK = 30) {
   return res.json()
 }
 
+// v2.20 — OpenLoop CRUD wrappers
+// 后端 POST 在 dup-id 时返 409 (v2.19.3), DELETE 在不存在时静默 200。
+// 两个 wrapper 都把非 2xx 翻成 Error, 让调用方 catch 显示真实原因。
+
+export async function addTickOpenLoop(loop) {
+  const res = await fetch(`${BASE}/api/tick/open-loops`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(loop),
+  })
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const j = await res.json()
+      if (typeof j?.detail === 'string') detail = j.detail
+      else if (Array.isArray(j?.detail)) {
+        detail = j.detail
+          .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
+          .join('; ')
+      }
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail)
+  }
+  return res.json()
+}
+
+export async function closeTickOpenLoop(loopId) {
+  const res = await fetch(
+    `${BASE}/api/tick/open-loops/${encodeURIComponent(loopId)}`,
+    { method: 'DELETE' }
+  )
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`
+    try {
+      const j = await res.json()
+      if (typeof j?.detail === 'string') detail = j.detail
+    } catch {
+      /* keep default */
+    }
+    throw new Error(detail)
+  }
+  return res.json()
+}
+
 export async function fetchCharacterStates() {
   const res = await fetch(`${BASE}/api/tick/character-states`)
   return res.json()
@@ -302,6 +397,22 @@ export async function fetchEventStats(lastNTicks = 50) {
   const res = await fetch(
     `${BASE}/api/tick/event-stats?last_n_ticks=${lastNTicks}`
   )
+  return res.json()
+}
+
+// v2.20 — Tick diagnostics wrappers (后端 v2.16 / v2.18 Phase 9 已上, 前端缺)
+
+export async function fetchActionPatterns(lastNTicks = 100) {
+  const res = await fetch(
+    `${BASE}/api/tick/action-patterns?last_n_ticks=${lastNTicks}`
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export async function fetchHallucinationDiagnostic() {
+  const res = await fetch(`${BASE}/api/tick/diagnostic/hallucination`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 

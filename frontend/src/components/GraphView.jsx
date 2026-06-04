@@ -1,5 +1,28 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { fetchGraph, createEntity, createRelation } from '../services/api'
+import {
+  fetchGraph,
+  createEntity,
+  createRelation,
+  deleteEntity,
+  deleteRelation,
+} from '../services/api'
+import { showToast } from '../utils/toast'
+
+// v2.20 — 解析 "key=value; key2=value2" 简易语法为 attributes 对象。
+// 设计取舍: 不引入 JSON 编辑器 (太重), 不引入 react-hook-form (本表单 4 字段)。
+// 用户可在前端表单填 "background=学者; loyalty=高" 这种轻量结构。
+function parseAttributesString(s) {
+  if (!s || !s.trim()) return {}
+  const out = {}
+  for (const pair of s.split(/[;；]/)) {
+    const idx = pair.indexOf('=')
+    if (idx <= 0) continue
+    const k = pair.slice(0, idx).trim()
+    const v = pair.slice(idx + 1).trim()
+    if (k) out[k] = v
+  }
+  return out
+}
 
 const TYPE_COLORS = {
   character: '#6366f1',
@@ -33,7 +56,7 @@ export default function GraphView({ refreshKey, isVisible }) {
 
   // Entity form
   const [entityForm, setEntityForm] = useState({
-    id: '', name: '', entity_type: 'character',
+    id: '', name: '', entity_type: 'character', attributes: '',
   })
   // Relation form
   const [relationForm, setRelationForm] = useState({
@@ -255,17 +278,71 @@ export default function GraphView({ refreshKey, isVisible }) {
   const handleAddEntity = async (e) => {
     e.preventDefault()
     if (!entityForm.id || !entityForm.name) return
-    await createEntity(entityForm)
-    setEntityForm({ id: '', name: '', entity_type: 'character' })
-    loadGraph()
+    try {
+      // v2.20 — 解析 attributes 字符串 (key=value 分号分隔), 不传送原始字符串
+      await createEntity({
+        id: entityForm.id,
+        name: entityForm.name,
+        entity_type: entityForm.entity_type,
+        attributes: parseAttributesString(entityForm.attributes),
+      })
+      setEntityForm({ id: '', name: '', entity_type: 'character', attributes: '' })
+      showToast('实体已添加', 'success')
+      loadGraph()
+    } catch (err) {
+      showToast('添加失败:' + (err?.message || '未知错误'), 'error')
+    }
   }
 
   const handleAddRelation = async (e) => {
     e.preventDefault()
     if (!relationForm.source_id || !relationForm.target_id) return
-    await createRelation(relationForm)
-    setRelationForm({ source_id: '', target_id: '', relation_type: 'knows', label: '' })
-    loadGraph()
+    try {
+      await createRelation(relationForm)
+      setRelationForm({ source_id: '', target_id: '', relation_type: 'knows', label: '' })
+      showToast('关系已添加', 'success')
+      loadGraph()
+    } catch (err) {
+      showToast('添加关系失败:' + (err?.message || '未知错误'), 'error')
+    }
+  }
+
+  // v2.20 — 删除操作
+  const handleDeleteEntity = async (entityId, entityName) => {
+    if (!entityId) return
+    if (
+      !window.confirm(
+        `确认删除实体 "${entityName || entityId}"? 关联的关系也会被一并删除, 无法恢复。`
+      )
+    ) {
+      return
+    }
+    try {
+      await deleteEntity(entityId)
+      setSelectedNode(null)
+      showToast(`实体 ${entityId} 已删除`, 'success')
+      loadGraph()
+    } catch (err) {
+      showToast('删除失败:' + (err?.message || '未知错误'), 'error')
+    }
+  }
+
+  const handleDeleteRelation = async (sourceId, targetId, label) => {
+    if (!sourceId || !targetId) return
+    if (
+      !window.confirm(
+        `确认删除关系 "${sourceId} → ${targetId}${label ? ` (${label})` : ''}"?`
+      )
+    ) {
+      return
+    }
+    try {
+      await deleteRelation(sourceId, targetId)
+      showToast('关系已删除', 'success')
+      loadGraph()
+    } catch (err) {
+      showToast('删除关系失败:' + (err?.message || '未知错误'), 'error')
+    }
   }
 
   const showGraph = isVisible && containerWidth > 0 && forceGraphData.nodes.length > 0
@@ -364,6 +441,20 @@ export default function GraphView({ refreshKey, isVisible }) {
             <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
               {selectedEntity.id}
             </span>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => handleDeleteEntity(selectedEntity.id, selectedEntity.name)}
+              title="删除该实体及关联关系"
+              style={{
+                marginLeft: 'auto',
+                padding: '4px 10px',
+                color: 'var(--accent-rose)',
+                borderColor: 'rgba(244, 63, 94, 0.4)',
+              }}
+            >
+              <i className="fas fa-trash"></i> 删除实体
+            </button>
           </div>
 
           {/* Attributes */}
@@ -396,7 +487,7 @@ export default function GraphView({ refreshKey, isVisible }) {
                     (e) => e.id === (isSource ? r.target : r.source)
                   )
                   return (
-                    <div key={i} className="entity-relation-row">
+                    <div key={i} className="entity-relation-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: TYPE_COLORS[selectedEntity.type], fontSize: 13 }}>
                         {selectedEntity.name}
                       </span>
@@ -411,9 +502,27 @@ export default function GraphView({ refreshKey, isVisible }) {
                       <span style={{
                         color: TYPE_COLORS[otherEntity?.type] || 'var(--text-secondary)',
                         fontSize: 13,
+                        flex: 1,
                       }}>
                         {otherEntity?.name || (isSource ? r.target : r.source)}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeleteRelation(r.source, r.target, r.label || r.relation_type)
+                        }
+                        title="删除这条关系"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          padding: '2px 6px',
+                          fontSize: 11,
+                        }}
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
                     </div>
                   )
                 })}
@@ -452,6 +561,16 @@ export default function GraphView({ refreshKey, isVisible }) {
                 <option value="faction">阵营</option>
               </select>
               <button type="submit" className="btn btn-primary">添加</button>
+            </div>
+            {/* v2.20 — attributes 输入 (key=value 分号分隔), 可选 */}
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="属性 (可选): background=学者; loyalty=高"
+                value={entityForm.attributes}
+                onChange={(e) => setEntityForm({ ...entityForm, attributes: e.target.value })}
+                style={{ flex: 1 }}
+              />
             </div>
           </form>
         </div>

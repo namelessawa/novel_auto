@@ -179,16 +179,24 @@ def get_llm_config() -> dict:
     }
 
 
+_VALID_PROVIDERS = ("deepseek", "mimo", "custom")
+
+
 def update_llm_config(
     api_key: str | None = None,
     base_url: str | None = None,
     model: str | None = None,
+    provider: str | None = None,
 ) -> dict:
-    """Update LLM config in config.json and return masked result.
+    """Update LLM config in config.json (+ active provider env) and return masked result.
 
-    Note: 当主项目 .env 提供了 active provider 时，``get_llm_config()`` 仍然
-    优先返回主项目的值；此处的更新仅影响 config.json 兜底段。如需切换全局提供商，
-    请直接编辑主项目 ``.env`` 的 ``LLM_PROVIDER``。
+    ``api_key`` / ``base_url`` / ``model`` 写入 ``config.json.llm`` 兜底段。
+    ``provider`` 切换 active provider, 写到 ``os.environ['LLM_PROVIDER']`` —
+    ``_try_load_main_project_llm`` 通过 importlib 在每次调用时重 exec
+    ``core/config.py``, 因此修改立即对下一次 ``llm_client.reload()`` 生效。
+
+    Provider 切换仅作用于当前进程: 重启会回退到 ``.env`` 静态值, 避免在线
+    编辑 ``.env`` 带来的副作用 (例如多服务共享 .env 时被互相覆盖)。
     """
     cfg = _load_config()
     llm_block = cfg.setdefault("llm", {})
@@ -199,6 +207,17 @@ def update_llm_config(
     if model is not None:
         llm_block["model"] = model
     _save_config(cfg)
+
+    if provider is not None:
+        normalized = provider.strip().lower()
+        if not normalized:
+            raise ValueError("provider 不可为空字符串; 留空则保持当前值不变")
+        if normalized not in _VALID_PROVIDERS:
+            raise ValueError(
+                f"provider {provider!r} 非法; 仅接受 {list(_VALID_PROVIDERS)}"
+            )
+        os.environ["LLM_PROVIDER"] = normalized
+
     # 重新走 resolve 链返回当前 active 值
     return get_llm_config()
 
