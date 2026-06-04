@@ -203,7 +203,7 @@ class CharacterAgent:
         ``model_override`` (v2.18 Phase 6): Guardian 监控建议降级时, Orchestrator
         阶段 3 注入。None / 空时不影响, 非空时透传给 llm_client.chat。
         """
-        visible = self._filter_visible_events(all_tick_events, state.location)
+        visible = self._filter_visible_events(all_tick_events, state.current_location)
         user_prompt = self._build_user_prompt(state, visible)
         try:
             resp = await llm_client.chat(
