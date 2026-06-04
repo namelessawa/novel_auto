@@ -19,8 +19,14 @@ const EVENT_TYPES = [
 
 const DEFAULT_FORM = {
   type: 'dramatic',
+  // v2.20 — 可选显式 id; 留空时后端自动生成 evt_user_{tick}_{idx}。重复 id 后端 409。
+  id: '',
   location: '',
   participants: '',
+  // v2.20 — visible_to 控制事件的可见性子集。逗号/空格分隔的 character_id 列表;
+  // 留空时后端 fallback 为 ['all_in_location'] (location 必须非空)。
+  // 特殊 token: 'all' (全部角色) / 'all_in_location' (location 内全员)。
+  visible_to: '',
   description: '',
   narrative_value: 8,
 }
@@ -130,6 +136,10 @@ export default function TickControlPanel({ onAction, refreshKey }) {
         .split(/[,，\s]+/)
         .map((p) => p.trim())
         .filter(Boolean)
+      const visible_to = form.visible_to
+        .split(/[,，\s]+/)
+        .map((v) => v.trim())
+        .filter(Boolean)
       const payload = {
         type: form.type,
         location: form.location.trim(),
@@ -137,6 +147,11 @@ export default function TickControlPanel({ onAction, refreshKey }) {
         description: form.description.trim(),
         narrative_value: Number(form.narrative_value) || 5,
       }
+      // v2.20 — 仅当用户填了 id / visible_to 才透传; 空字段交给后端默认逻辑
+      // (id 自动生成, visible_to fallback 到 ['all_in_location'])
+      const trimmedId = form.id.trim()
+      if (trimmedId) payload.id = trimmedId
+      if (visible_to.length > 0) payload.visible_to = visible_to
       const res = await injectTickEvent(payload)
       showToast(`事件已注入 (tick ${res?.event?.tick})`, 'success')
       setForm(DEFAULT_FORM)
@@ -326,6 +341,51 @@ export default function TickControlPanel({ onAction, refreshKey }) {
                 setForm((f) => ({ ...f, participants: e.target.value }))
               }
             />
+          </div>
+          <div>
+            <label className="input-label">
+              可见性 visible_to (逗号或空格分隔, 可选)
+            </label>
+            <input
+              type="text"
+              className="input-field"
+              value={form.visible_to}
+              placeholder="留空 = all_in_location (需配 location);  all / char_001, char_002"
+              onChange={(e) =>
+                setForm((f) => ({ ...f, visible_to: e.target.value }))
+              }
+            />
+            <p
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                marginTop: 4,
+              }}
+            >
+              填具体 character_id 让事件只对这些角色可见; 填 <code>all</code> 给所有角色;
+              留空默认 <code>all_in_location</code> (此时 location 必填)
+            </p>
+          </div>
+          <div>
+            <label className="input-label">事件 id (可选)</label>
+            <input
+              type="text"
+              className="input-field"
+              value={form.id}
+              placeholder="留空 = 后端自动生成 evt_user_{tick}_{idx}"
+              onChange={(e) =>
+                setForm((f) => ({ ...f, id: e.target.value }))
+              }
+            />
+            <p
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                marginTop: 4,
+              }}
+            >
+              填了想自己控制 id (例如方便后续按 id 关联剧情); 重复 id 后端返 409
+            </p>
           </div>
           <div>
             <label className="input-label">事件描述</label>
