@@ -5,6 +5,67 @@
 
 ---
 
+## [2.21] — 2026-06-04
+
+### Fixed — 一次性清掉 10 个 P0–P3 隐患
+
+P0:
+* **`CharacterAgent._filter_visible_events`** — 此前 `visible_to=['all_in_location']`
+  的事件被无条件下发给所有被唤醒角色, 直接违反 prompts.md 第 0 节"角色只能用
+  自己知道的信息"。修复: 接收 `cur_location` 参数, 仅当 `e.location == cur_location`
+  才可见。`'all'` 保留为真·全局广播
+* **`_resolve_llm_block` 优先级翻转** — `core/config.py` 给 `DEEPSEEK_BASE_URL/MODEL`
+  设了 `os.getenv` 默认值, main_env 分支任何场景都命中,
+  `config.json.llm.api_key` 实际从未被读到 → PUT `/api/config/llm`
+  写入的 key 静默无效。新规则: config.json.llm.api_key 非空 → config.json
+  整段为权威 (UI 写入路径唯一能生效的入口); 否则回退到 main_env
+
+P1:
+* **TickState / SummaryTree 损坏 quarantine** — 此前 load 失败只 log + return
+  False, 下次 `save()` 用 fresh 状态原子覆盖原路径, 真实数据永久丢失。
+  修复: 损坏文件 rename 到 `{path}.corrupt.{ts}`, 可人工恢复
+* **TickDB INSERT OR IGNORE** — events / tick_log 此前用 `INSERT OR REPLACE`,
+  LLM 复用 `event_id` 时旧记录被静默擦掉, 污染 Showrunner / NoveltyCritic 的
+  窗口聚合。改为 `INSERT OR IGNORE` + warning
+* **`switch_novel` 两阶段** — tick 切换失败仅 warning 然后 return 200, UI 看到
+  "成功"但 `/api/tick/*` 仍指向旧 novel。改为先切 tick, 失败显式 503,
+  legacy 仍停在旧 novel; tick 成功后再切 legacy
+
+P2:
+* **OpenLoop.origin_event_ids** — orchestrator.py:543 已经在每条新 loop 上
+  `mark_protected(origin_event_ids)`, 但模型没有此字段, `_TickModelConfig.extra="ignore"`
+  静默吃掉 LLM 输出 → 保护分支永远是空 list。加字段 + 更新 Narrator
+  system prompt 的输出 JSON 模板
+* **前端写端点统一 `assertOk`** — `runOneTick` / `switchNovel` / `pauseTick` /
+  `resumeTick` / `fetchTickHistory` / 各 novel CRUD 此前裸 `return res.json()`,
+  后端 4xx/5xx 时 toast 显示假成功 ("Tick undefined 完成")。抽公共
+  `assertOk(res)` helper 处理 string detail 与 FastAPI 422 list 两种错误体
+* **`generateSectionStream` 加 `onError`** — SSE 流失败时也走 `onDone()`,
+  UI 看不出区别。新增可选 `onError` 回调 + `response.ok` 校验; NovelView /
+  HomeView 已 wire `onError → reject`, GeneratePanel 不传 onError 保持兼容
+* **test_llm_config_provider_switch 不再改真实 config.json** — autouse
+  fixture monkeypatch `_load_config` / `_save_config` 重定向到 tmp_path
+
+P3:
+* **Vite proxy 强制 IPv4** — `localhost` 在 Windows/Node 某些环境下解析为
+  IPv6 (`::1`), 后端 uvicorn 默认只绑 IPv4 → 前端开发时 `/api/*` 全 ECONNREFUSED。
+  CLAUDE.md 早已约定 host=127.0.0.1, 此前实现遗漏
+
+### Security
+* README 顶部加 ⚠️ 警告: 管理 API 默认无鉴权, 仅适合本机 / 内网部署。
+  公网需自行加 reverse proxy 鉴权。token 鉴权开关排入后续版本路线
+
+### Tests
+* 新增 5 个测试文件, +26 用例覆盖本轮修复:
+  * `test_character_visibility.py` (8) — 可见性矩阵
+  * `test_open_loop_origin_events.py` (4) — OpenLoop 字段 + Narrator 解析
+  * `test_llm_config_fallback.py` (5) — 三优先级分支
+  * `test_state_quarantine.py` (6) — TickState / SummaryTree quarantine
+  * `test_tick_db_insert_ignore.py` (4) — 重复 event_id / tick_id
+  * `test_switch_novel_two_phase.py` (3) — tick 失败 503 路径
+
+---
+
 ## [2.19.6] — 2026-06-04
 
 ### Refactored — 抽 LLM JSON fence helper 到 `nf_core.json_utils`

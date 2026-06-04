@@ -1,6 +1,6 @@
 # 无限小说生成系统 (Infinite Novel Generator)
 
-> **当前版本: v2.19.6** (2026-06-04) — FastAPI + React/Vite 单栈,
+> **当前版本: v2.21** (2026-06-04) — FastAPI + React/Vite 单栈,
 > 9 Agent + 7 阶段 Tick 调度的多智能体模拟系统(故事驱动)。
 > 设计哲学来自 [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
 > **故事是模拟的副产品,Narrator 选择性讲述**。
@@ -8,8 +8,15 @@
 > v1.x 章节驱动单体生成器已整体归档到 [`old/`](./old/),
 > 不再参与运行时,但可作为历史参考。
 
-> **状态**: 343 用例 GREEN, 真实 LLM smoke (mimo-v2.5-pro / DeepSeek) 端到端
-> 通过。完整版本历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
+> **状态**: 全部 tick 架构用例 GREEN, 真实 LLM smoke (mimo-v2.5-pro /
+> DeepSeek) 端到端通过。完整版本历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
+
+> ⚠️ **安全提示 (deployment)**: 管理 API (`/api/config/llm`、`/api/tick/*`、
+> `DELETE /api/novels/{id}`、`/api/agents/*` 等) **默认无鉴权**, 任何可访问
+> 后端的客户端都能改 LLM 配置、推进 tick、删除小说、读取 Agent 上下文。
+> 默认 CORS 也是 `["*"]`。本项目目前**仅适合本机或可信内网**使用; 公网部署
+> 需自行加 reverse proxy 鉴权 (basic auth / OAuth) 或调整 `cors_origins` 与
+> 网络绑定。后续版本将提供 token 鉴权开关 (tracking in CHANGELOG v2.21)。
 
 ---
 
