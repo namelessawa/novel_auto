@@ -24,6 +24,7 @@ for p in (_PROJECT_ROOT, _BACKEND_DIR):
 from api.routes import router
 from api.tick_routes import router as tick_router
 from api.agent_routes import router as agent_router
+from api.section_routes import router as section_router
 from tasks import router as tasks_router
 from config.settings import settings
 
@@ -78,6 +79,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(tick_router)
 app.include_router(agent_router)
+app.include_router(section_router)
 app.include_router(tasks_router)
 
 

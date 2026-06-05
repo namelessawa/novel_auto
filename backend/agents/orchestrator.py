@@ -244,6 +244,11 @@ class Orchestrator:
         self._last_tick_events: list[Event] = []
         self._recent_chapter_summaries: list[str] = []  # NarratorOutput 累积
         self._injected_pending: list[Event] = []  # 外部 inject_event 注入的 Event
+        # v2.24 — 最近一次 Narrator 完整输出 (无论 should_narrate=True/False).
+        # SectionTask executor 在 run_tick 后读它累积本节正文 / 收集沉默 tick 摘要.
+        # TickSummary 只有 chars/bool, 拿不到原文本; 不放 TickSummary 是为了保持
+        # 公开契约稳定 (前端 SSE / TickDB schema 不变).
+        self._last_narrator_output: NarratorOutput | None = None
 
         # 暂停/恢复
         self._paused: bool = False
@@ -265,6 +270,20 @@ class Orchestrator:
     @property
     def is_paused(self) -> bool:
         return self._paused
+
+    @property
+    def last_narrator_output(self) -> NarratorOutput | None:
+        """v2.24 — 最近一次 Narrator 完整输出.
+
+        SectionTask executor 用法:
+            await orch.run_tick()
+            no = orch.last_narrator_output
+            if no and no.should_narrate:
+                accumulated_text += no.narrative_text
+            else:
+                silent_records.append(SilentTickRecord(tick=..., summary=no.tick_summary_for_record))
+        """
+        return self._last_narrator_output
 
     def pause(self) -> None:
         self._paused = True
@@ -582,6 +601,8 @@ class Orchestrator:
             self._recent_chapter_summaries = self._recent_chapter_summaries[-50:]
 
         self._last_tick_events = all_events
+        # v2.24 — 给 SectionTask executor 暴露完整 NarratorOutput.
+        self._last_narrator_output = narrator_out
 
         summary = TickSummary(
             tick=tick,

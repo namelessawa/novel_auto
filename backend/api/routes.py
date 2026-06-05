@@ -121,9 +121,78 @@ async def list_novels():
 
 
 @router.post("/api/novels")
-async def create_novel(req: NovelCreateRequest):
+async def create_novel(req: NovelCreateRequest, auto_bootstrap: bool = True):
+    """创建小说。
+
+    v2.24 — ``auto_bootstrap=True`` (默认) 时, 创建完立即入队一个
+    ``bootstrap_section`` 任务推首节; 前端用返回的 ``bootstrap_task_id``
+    订阅 /api/tasks/{id}/stream 看进度。
+
+    禁用 (auto_bootstrap=False) 用于:
+    * 测试场景, 仅创建空壳
+    * 用户想在节级管线 (legacy) 测试栏里手动生成
+    """
     entry = novel_manager.create_novel(req.title)
-    return entry
+    bootstrap_task_id = ""
+    if auto_bootstrap:
+        try:
+            bootstrap_task_id = await _spawn_bootstrap_section_task(
+                novel_id=entry["id"], novel_title=entry.get("title", "")
+            )
+        except Exception as e:
+            # 不阻塞 novel 创建 — 任务失败前端能从 task list 看到错因, 不必让
+            # POST /api/novels 整体 500。
+            logger.warning(
+                "auto bootstrap section task for novel '%s' failed: %s",
+                entry["id"],
+                e,
+            )
+    return {**entry, "bootstrap_task_id": bootstrap_task_id}
+
+
+async def _spawn_bootstrap_section_task(*, novel_id: str, novel_title: str) -> str:
+    """v2.24 — 创建小说时自动入队首节生成任务。
+
+    与 /api/section/generate 走同一份 executor + SectionStore + SectionCloser,
+    仅 kind 字段不同 (bootstrap_section), 方便前端区分"首节 / 续写"两种任务样式。
+    """
+    from agents.section_closer import SectionCloser
+    from api.section_routes import _make_section_executor
+    from sections.section_store import get_section_store
+    from tasks.task_manager import TaskConflict, get_task_manager
+    from tick_runtime import get_runtime
+
+    # runtime 预拉起 — 失败 (LLM provider 未配等) 直接抛, 由调用方吞掉
+    get_runtime(novel_id)
+    data_dir = novel_manager.get_novel_data_dir(novel_id)
+    store = get_section_store(novel_id, data_dir=data_dir)
+    next_chapter, next_section = store.next_position()
+
+    closer = SectionCloser()
+    executor = _make_section_executor(
+        closer=closer,
+        store=store,
+        novel_title=novel_title,
+        chapter=next_chapter,
+        section_no=next_section,
+    )
+    mgr = get_task_manager()
+    try:
+        snap = await mgr.create_task(
+            novel_id=novel_id,
+            novel_title=novel_title,
+            kind="bootstrap_section",
+            executor=executor,
+            target_words=closer.target_words,
+            min_words=closer.min_words,
+            max_ticks=closer.max_ticks,
+            chapter=next_chapter,
+            section_no=next_section,
+        )
+    except TaskConflict:
+        # 同一 novel 刚被创建, 不应该 conflict — 真发生说明前端连点 2 次
+        return ""
+    return snap.id
 
 
 @router.put("/api/novels/{novel_id}")
@@ -242,7 +311,15 @@ async def update_llm_config_route(req: LLMConfigUpdateRequest):
 
 
 @router.post("/api/generate")
+@router.post("/api/legacy/generate")
 async def generate_section(req: GenerateRequest):
+    """v2.24 — 节级管线 (legacy 一次性章节生成器)。
+
+    保留为前端"测试 → 节级管线"栏目的写入端点。新主路径是
+    POST /api/section/generate (tick 驱动 + 任务队列)。
+
+    /api/generate 旧路径保留为 alias, 后续清理可删。
+    """
     pipeline = get_pipeline()
     novel_title = _current_novel_title()
     section = await pipeline.generate_next_section(
@@ -261,6 +338,7 @@ async def generate_section(req: GenerateRequest):
 
 
 @router.post("/api/generate/stream")
+@router.post("/api/legacy/generate/stream")
 async def generate_section_stream(req: GenerateRequest):
     pipeline = get_pipeline()
     # v2.23 — 拿到当前活跃小说的真实标题, 传到 OutlineAgent / WriterAgent prompt;
@@ -335,6 +413,7 @@ async def generate_section_stream(req: GenerateRequest):
 
 
 @router.post("/api/chapter/advance")
+@router.post("/api/legacy/chapter/advance")
 async def advance_chapter():
     pipeline = get_pipeline()
     pipeline.advance_chapter()
@@ -346,6 +425,7 @@ async def advance_chapter():
 
 
 @router.post("/api/rollback")
+@router.post("/api/legacy/rollback")
 async def rollback(req: RollbackRequest):
     pipeline = get_pipeline()
     try:
@@ -514,6 +594,7 @@ async def list_snapshots():
 
 
 @router.post("/api/snapshots")
+@router.post("/api/legacy/snapshots")
 async def take_snapshot():
     pipeline = get_pipeline()
     sid = pipeline.knowledge_graph.take_snapshot(pipeline.current_chapter)
@@ -567,6 +648,7 @@ async def get_working_memory():
 
 
 @router.post("/api/reset")
+@router.post("/api/legacy/reset")
 async def reset_pipeline():
     global _pipeline
     _pipeline = None

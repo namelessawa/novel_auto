@@ -155,6 +155,17 @@ class SectionCloser:
                 tick_count=tick_count,
             )
 
+        # 上限保护优先 — words >= target*1.2 时不调 LLM, 直接切 (防止冗长 +
+        # 节约一次 LLM 调用; LLM 的"是否闭合"在 upper 路径用不上)
+        upper = int(self.target_words * 1.2)
+        if words >= upper:
+            return SectionClosureDecision(
+                should_close=True,
+                reason=f"words={words} >= upper={upper} (上限保护)",
+                words=words,
+                tick_count=tick_count,
+            )
+
         # 进入软判定区间 — 询问 LLM 内容是否闭合
         is_closed, llm_reason = await self._llm_judge_closure(
             narrative_text=narrative_text,
@@ -166,15 +177,6 @@ class SectionCloser:
             return SectionClosureDecision(
                 should_close=True,
                 reason=f"words={words} 达标, LLM 判定内容闭合: {llm_reason}",
-                words=words,
-                tick_count=tick_count,
-            )
-        # 字数超过 target * 1.2 时, 即使 LLM 觉得没闭合也强行切 — 防止冗长
-        upper = int(self.target_words * 1.2)
-        if words >= upper:
-            return SectionClosureDecision(
-                should_close=True,
-                reason=f"words={words} >= upper={upper} (上限保护)",
                 words=words,
                 tick_count=tick_count,
             )
