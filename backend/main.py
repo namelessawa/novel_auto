@@ -24,12 +24,41 @@ for p in (_PROJECT_ROOT, _BACKEND_DIR):
 from api.routes import router
 from api.tick_routes import router as tick_router
 from api.agent_routes import router as agent_router
+from tasks import router as tasks_router
 from config.settings import settings
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+
+
+# v2.24 — uvicorn access log 屏蔽 2xx/3xx 行, 让监控界面只显示真正需要关注的
+# 4xx / 5xx。默认 uvicorn 把所有请求都 INFO 打出来, 前端 3s 一次 /api/tick/status
+# 把日志冲得几乎只剩 "200 OK" 噪声 — 重要错误被淹没。
+#
+# uvicorn AccessFormatter 把 record.args 设为 (client_addr, request_line, status_code)。
+# 兜底任意 args 形态: 找不到 status_code 就保留这行 (宁可多打不漏)。
+class _AccessLogFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        args = record.args
+        status: int | None = None
+        if isinstance(args, tuple):
+            for item in args:
+                if isinstance(item, int) and 100 <= item < 600:
+                    status = item
+                    break
+        elif isinstance(args, dict):
+            raw = args.get("status_code")
+            if isinstance(raw, int):
+                status = raw
+        if status is None:
+            return True
+        # 200-399 视为正常 — 不显示
+        return not (200 <= status < 400)
+
+
+logging.getLogger("uvicorn.access").addFilter(_AccessLogFilter())
 
 app = FastAPI(
     title="AI 长篇小说生成 Agent 系统",
@@ -49,6 +78,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(tick_router)
 app.include_router(agent_router)
+app.include_router(tasks_router)
 
 
 @app.on_event("startup")
