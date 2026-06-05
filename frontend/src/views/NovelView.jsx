@@ -4,6 +4,7 @@ import {
   fetchMemory,
   fetchOutline,
   fetchSections,
+  listTickSections,
 } from '../services/api'
 import { showToast } from '../utils/toast'
 
@@ -25,22 +26,45 @@ export default function NovelView({ novel, onAfterGenerated, onNavigate }) {
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [sec, mem, out, gph] = await Promise.all([
-        fetchSections(),
+      // v2.24 — 同时拉 tick 驱动节 (主) 与 legacy 节 (测试栏产物). 按 (chapter, section)
+      // 升序合并, 同 key 时 tick 驱动优先, legacy 退让 — 保证 v2.24 主路径渲染稳定,
+      // 同时让旧数据不丢。
+      const [tickResp, legacyResp, mem, out, gph] = await Promise.all([
+        listTickSections().catch(() => ({ sections: [] })),
+        fetchSections().catch(() => ({ sections: [] })),
         fetchMemory().catch(() => null),
         fetchOutline().catch(() => null),
         fetchGraph().catch(() => null),
       ])
-      const list = sec.sections || []
-      setSections(list)
+      const tickList = tickResp.sections || []
+      const legacyList = legacyResp.sections || []
+      const merged = mergeSections(tickList, legacyList)
+      setSections(merged)
       setMemory(mem)
       setOutline(out)
       setGraph(gph)
-      if (list.length > 0) setSelected(list.length - 1)
+      if (merged.length > 0) setSelected(merged.length - 1)
     } catch (err) {
       console.error('load novel detail failed:', err)
     }
     setLoading(false)
+  }
+
+  // tick 驱动节优先, legacy 退让; 按 (chapter, section) 升序排
+  function mergeSections(tickList, legacyList) {
+    const map = new Map()
+    legacyList.forEach((s) => {
+      const k = `${s.chapter}-${s.section}`
+      map.set(k, { ...s, source: 'legacy' })
+    })
+    tickList.forEach((s) => {
+      const k = `${s.chapter}-${s.section}`
+      map.set(k, { ...s, source: 'tick' })
+    })
+    return Array.from(map.values()).sort(
+      (a, b) =>
+        (a.chapter - b.chapter) * 1000 + (a.section - b.section),
+    )
   }
 
   // v2.23 — 续写按钮不再就地弹模态生成, 而是直接跳到创作控制台 (home),

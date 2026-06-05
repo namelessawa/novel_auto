@@ -448,3 +448,133 @@ export async function fetchAgentDetail(agentId) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
+
+// ---------------------------------------------------------------------------
+// v2.24 — tick 驱动节 + 任务队列
+// ---------------------------------------------------------------------------
+//
+// 续写下一节的主路径: POST /api/section/generate → 入队任务 → SSE 看进度。
+// 旧的 generateSectionStream (节级管线) 仍可用于"测试 → 节级管线"栏目。
+
+/**
+ * 创建一个"续写下一节"后台任务。
+ * @param {string|null} novelId 不传时用当前活跃小说
+ * @returns {Promise<object>} 任务快照
+ */
+export async function createSectionTask(novelId = null) {
+  const body = novelId ? { novel_id: novelId } : {}
+  const res = await fetch(`${BASE}/api/section/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  return assertOk(res)
+}
+
+/**
+ * 列出 tick 驱动节 — 不传 novelId 用当前活跃。
+ */
+export async function listTickSections(novelId = null) {
+  const url = novelId
+    ? `${BASE}/api/section/list/${encodeURIComponent(novelId)}`
+    : `${BASE}/api/section/list`
+  const res = await fetch(url)
+  return assertOk(res)
+}
+
+/**
+ * 列出所有后台任务 (可按 novel 过滤)。
+ */
+export async function listTasks(novelId = null) {
+  const url = novelId
+    ? `${BASE}/api/tasks?novel_id=${encodeURIComponent(novelId)}`
+    : `${BASE}/api/tasks`
+  const res = await fetch(url)
+  return assertOk(res)
+}
+
+export async function fetchTask(taskId) {
+  const res = await fetch(`${BASE}/api/tasks/${encodeURIComponent(taskId)}`)
+  return assertOk(res)
+}
+
+export async function cancelTask(taskId) {
+  const res = await fetch(
+    `${BASE}/api/tasks/${encodeURIComponent(taskId)}/cancel`,
+    { method: 'POST' }
+  )
+  return assertOk(res)
+}
+
+/**
+ * SSE 订阅任务进度。回调 onSnapshot 接收完整 Task 对象;
+ * onError 接收 Error。返回 AbortController, 调 controller.abort()
+ * 中止订阅 (用户切走视图或任务终态)。
+ *
+ * @param {string} taskId
+ * @param {{ onSnapshot: (task) => void, onDone?: () => void, onError?: (err) => void }} cb
+ */
+export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
+  const controller = new AbortController()
+
+  fetch(`${BASE}/api/tasks/${encodeURIComponent(taskId)}/stream`, {
+    signal: controller.signal,
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        const err = new Error(`HTTP ${response.status}`)
+        if (typeof onError === 'function') onError(err)
+        return
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let currentEvent = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+            continue
+          }
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (currentEvent === 'snapshot') {
+              try {
+                const snap = JSON.parse(data)
+                onSnapshot(snap)
+                // 终态后服务端会关闭流, 这里也提前 done 让上层取消订阅
+                if (
+                  snap.status === 'completed' ||
+                  snap.status === 'failed' ||
+                  snap.status === 'cancelled'
+                ) {
+                  if (typeof onDone === 'function') onDone(snap)
+                }
+              } catch {
+                /* 单条 snapshot 解析失败不致命, 跳过 */
+              }
+            } else if (currentEvent === 'error') {
+              if (typeof onError === 'function') onError(new Error(data))
+            }
+            currentEvent = ''
+            continue
+          }
+          if (line.trim() === '') currentEvent = ''
+        }
+      }
+      if (typeof onDone === 'function') onDone(null)
+    })
+    .catch((err) => {
+      if (err.name === 'AbortError') return
+      if (typeof onError === 'function') onError(err)
+    })
+
+  return controller
+}

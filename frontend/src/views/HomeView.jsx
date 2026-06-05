@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createNovel,
+  createSectionTask,
   fetchNovels,
   fetchTickStatus,
   generateSectionStream,
@@ -125,31 +126,35 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       ctrl.signal.addEventListener('abort', () => reject(new Error('aborted')))
     })
 
+  // v2.24 — 创建小说 / 续写下一节都走任务队列, 不再就地 SSE 流。
+  // 进度由左侧「任务」面板展示 (TaskListPanel 自己订阅 SSE), HomeView
+  // 只负责创建任务 + 切换活跃小说 + toast 反馈。
   const handleCreate = async () => {
     const title = createTitle.trim() || '未命名小说'
     setMode('create')
-    setGenerating(true)
-    resetStream()
     setStatusText(`正在创建《${title}》…`)
 
     try {
+      // createNovel 默认 auto_bootstrap=true, 后端自动入队 bootstrap_section
       const entry = await createNovel(title)
       if (!entry || !entry.id) throw new Error('创建失败:返回无 id')
       await switchNovel(entry.id)
-      showToast(`已创建《${title}》,正在生成开篇…`, 'success')
-      setStatusText('正在生成开篇章节…')
-      await runStream(createOutline)
-      showToast('开篇生成完成', 'success')
+      if (entry.bootstrap_task_id) {
+        showToast(
+          `已创建《${title}》,首节生成已加入任务队列,可在左下「任务」面板查看进度`,
+          'success',
+        )
+      } else {
+        showToast(`已创建《${title}》(未自动生成首节)`, 'info')
+      }
       setCreateTitle('')
       setCreateOutline('')
       await loadNovels()
       onAfterCreated?.(entry.id)
     } catch (err) {
-      if (err.message !== 'aborted') {
-        showToast('创建失败:' + err.message, 'error')
-      }
+      showToast('创建失败:' + err.message, 'error')
     } finally {
-      setGenerating(false)
+      setStatusText('')
       onAfterGenerated?.()
     }
   }
@@ -160,22 +165,27 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       return
     }
     setMode('continue')
-    setGenerating(true)
-    resetStream()
-    setStatusText('正在续写下一节…')
+    setStatusText('正在创建续写任务…')
 
     try {
       await switchNovel(continueId)
-      await runStream(continuePrompt)
-      showToast('续写完成', 'success')
+      const snap = await createSectionTask(continueId)
+      showToast(
+        `已为 第${snap.chapter || '?'}章 第${snap.section_no || '?'}节 创建续写任务,可在左下「任务」面板查看进度`,
+        'success',
+      )
       setContinuePrompt('')
       onAfterCreated?.(continueId)
     } catch (err) {
-      if (err.message !== 'aborted') {
-        showToast('续写失败:' + err.message, 'error')
+      // 409 = 同 novel 已有续写任务
+      const msg = err.message || String(err)
+      if (msg.includes('已有') || msg.includes('409')) {
+        showToast('该作品已有续写任务在跑,等它完成再来', 'info')
+      } else {
+        showToast('续写失败:' + msg, 'error')
       }
     } finally {
-      setGenerating(false)
+      setStatusText('')
       onAfterGenerated?.()
     }
   }

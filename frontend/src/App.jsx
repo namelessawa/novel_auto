@@ -3,6 +3,8 @@ import GraphView from './components/GraphView'
 import MemoryView from './components/MemoryView'
 import TickDiagnosticsPanel from './components/TickDiagnosticsPanel'
 import SectionsList from './components/SectionsList'
+import TaskListPanel from './components/TaskListPanel'
+import ControlPanel from './components/ControlPanel'
 import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
 import ConfigView from './views/ConfigView'
@@ -16,8 +18,8 @@ import {
 } from './services/api'
 import { showToast } from './utils/toast'
 
-// v2.23 — 「创作工坊」改名「创作控制台」, Tick 控制台合并进 home 视图,
-// 工具栏移除 control / legacy 两项 (legacy 节级管线仅留 sections/graph/memory 入口)。
+// v2.24 — 导航三段式: 主视图 / 工具 / 测试 (legacy 节级管线)。
+// 任务列表常驻 sidebar 底部 — 不在 nav 里, 因为它一直在你眼前需要看到。
 const PRIMARY_NAV = [
   { key: 'home', label: '创作控制台', icon: 'fa-gauge-high' },
   { key: 'novel', label: '作品详情', icon: 'fa-book-open' },
@@ -29,8 +31,12 @@ const TOOL_NAV = [
   { key: 'sections', label: '章节速览', icon: 'fa-list-ul' },
   { key: 'graph', label: '知识图谱', icon: 'fa-project-diagram' },
   { key: 'memory', label: '记忆系统', icon: 'fa-brain' },
-  // v2.20 — 新增诊断 Tab, 汇总 v2.16/v2.18/v2.19 引入的 6 个可观测端点
   { key: 'diagnostics', label: 'Tick 诊断', icon: 'fa-stethoscope' },
+]
+
+// v2.24 — 测试分类。节级管线降级到这里, 仅供调试/对比, 不是主续写路径。
+const TEST_NAV = [
+  { key: 'legacy', label: '节级管线 (legacy)', icon: 'fa-flask' },
 ]
 
 const VIEW_TITLES = {
@@ -42,6 +48,7 @@ const VIEW_TITLES = {
   graph: { label: '知识图谱', icon: 'fa-project-diagram' },
   memory: { label: '记忆系统', icon: 'fa-brain' },
   diagnostics: { label: 'Tick 诊断', icon: 'fa-stethoscope' },
+  legacy: { label: '节级管线 (legacy)', icon: 'fa-flask' },
 }
 
 export default function App() {
@@ -176,6 +183,23 @@ export default function App() {
         <div className="nav-divider"></div>
 
         <div className="sidebar-topics-header">
+          <span>测试</span>
+        </div>
+        <nav className="sidebar-nav" style={{ paddingTop: 0 }}>
+          {TEST_NAV.map((item) => (
+            <button
+              key={item.key}
+              className={`nav-item ${activeView === item.key ? 'active' : ''}`}
+              onClick={() => setActiveView(item.key)}
+            >
+              <i className={`fas ${item.icon}`}></i> {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="nav-divider"></div>
+
+        <div className="sidebar-topics-header">
           <span>我的作品</span>
           <span style={{ color: 'var(--text-muted)', textTransform: 'none' }}>
             {novels.length}
@@ -238,6 +262,20 @@ export default function App() {
             ))
           )}
         </div>
+
+        <div className="nav-divider"></div>
+
+        <div className="sidebar-topics-header">
+          <span>任务</span>
+        </div>
+        {/* v2.24 — 后台任务列表 (续写 / 首节生成 / ...). SSE 实时进度,
+            终态保留 60s 后自动隐藏. 任务完成时刷新 stats + novels. */}
+        <TaskListPanel
+          onTaskComplete={() => {
+            refreshStats()
+            refreshNovels()
+          }}
+        />
 
         <div className="sidebar-footer">
           <span
@@ -346,6 +384,27 @@ export default function App() {
           </ViewSlot>
           <ViewSlot active={activeView === 'diagnostics'}>
             <TickDiagnosticsPanel refreshKey={refreshKey} />
+          </ViewSlot>
+          {/* v2.24 — 节级管线降级为测试栏. 保留 ControlPanel 让用户能跑 advance/
+              rollback/snapshot/reset 做对比实验; 主续写路径走 home → 任务队列. */}
+          <ViewSlot active={activeView === 'legacy'}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div
+                style={{
+                  padding: '10px 12px',
+                  background: 'var(--bg-card)',
+                  border: '1px dashed var(--accent-amber, #d97706)',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  color: 'var(--text-muted)',
+                }}
+              >
+                <i className="fas fa-flask" style={{ marginRight: 6 }}></i>
+                节级管线 (legacy 章节式生成器) — 测试用。主续写路径是「创作控制台
+                → 续写下一节」(tick 驱动 + 任务队列, 见左下「任务」面板)。
+              </div>
+              <ControlPanel onAfterAction={() => refreshStats()} />
+            </div>
           </ViewSlot>
         </div>
       </main>
