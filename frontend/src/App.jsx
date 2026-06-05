@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import GraphView from './components/GraphView'
 import MemoryView from './components/MemoryView'
-import TickControlPanel from './components/TickControlPanel'
 import TickDiagnosticsPanel from './components/TickDiagnosticsPanel'
-import ControlPanel from './components/ControlPanel'
 import SectionsList from './components/SectionsList'
 import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
@@ -18,8 +16,10 @@ import {
 } from './services/api'
 import { showToast } from './utils/toast'
 
+// v2.23 — 「创作工坊」改名「创作控制台」, Tick 控制台合并进 home 视图,
+// 工具栏移除 control / legacy 两项 (legacy 节级管线仅留 sections/graph/memory 入口)。
 const PRIMARY_NAV = [
-  { key: 'home', label: '创作工坊', icon: 'fa-pen-fancy' },
+  { key: 'home', label: '创作控制台', icon: 'fa-gauge-high' },
   { key: 'novel', label: '作品详情', icon: 'fa-book-open' },
   { key: 'agents', label: 'Agent 上下文', icon: 'fa-robot' },
   { key: 'config', label: '系统设置', icon: 'fa-sliders-h' },
@@ -29,26 +29,19 @@ const TOOL_NAV = [
   { key: 'sections', label: '章节速览', icon: 'fa-list-ul' },
   { key: 'graph', label: '知识图谱', icon: 'fa-project-diagram' },
   { key: 'memory', label: '记忆系统', icon: 'fa-brain' },
-  { key: 'control', label: 'Tick 控制台', icon: 'fa-gauge-high' },
   // v2.20 — 新增诊断 Tab, 汇总 v2.16/v2.18/v2.19 引入的 6 个可观测端点
   { key: 'diagnostics', label: 'Tick 诊断', icon: 'fa-stethoscope' },
-  // v2.20 — Legacy 章节式管线管理 (advance/rollback/snapshot/reset),
-  // 之前组件存在但未挂载。tick runtime 是主路径, 此 Tab 仅在节级实验/v1.x
-  // 兼容需求下使用。
-  { key: 'legacy', label: '节级管线', icon: 'fa-stream' },
 ]
 
 const VIEW_TITLES = {
-  home: { label: '创作工坊', icon: 'fa-pen-fancy' },
+  home: { label: '创作控制台', icon: 'fa-gauge-high' },
   novel: { label: '作品详情', icon: 'fa-book-open' },
   agents: { label: 'Agent 上下文', icon: 'fa-robot' },
   config: { label: '系统设置', icon: 'fa-sliders-h' },
   sections: { label: '章节速览', icon: 'fa-list-ul' },
   graph: { label: '知识图谱', icon: 'fa-project-diagram' },
   memory: { label: '记忆系统', icon: 'fa-brain' },
-  control: { label: 'Tick 控制台', icon: 'fa-gauge-high' },
   diagnostics: { label: 'Tick 诊断', icon: 'fa-stethoscope' },
-  legacy: { label: '节级管线', icon: 'fa-stream' },
 }
 
 export default function App() {
@@ -197,14 +190,17 @@ export default function App() {
                 color: 'var(--text-muted)',
               }}
             >
-              暂无作品,前往创作工坊创建
+              暂无作品,前往创作控制台创建
             </div>
           ) : (
             novels.map((n) => (
               <div
                 key={n.id}
+                // v2.23 — 高亮规则: 只要是当前活跃作品就常驻高亮 (无论位于哪个视图),
+                // 不再要求 activeView === 'novel'; 这样在 home/agents 等页面也能看到
+                // 自己正在编辑哪部书。
                 className={`topic-item ${
-                  activeNovelId === n.id && activeView === 'novel' ? 'active' : ''
+                  activeNovelId === n.id ? 'active' : ''
                 }`}
                 onMouseEnter={() => setHoveredNovelId(n.id)}
                 onMouseLeave={() => setHoveredNovelId(null)}
@@ -248,6 +244,24 @@ export default function App() {
             className={`status-dot ${backendOnline ? 'online' : 'offline'}`}
           ></span>
           <span>{backendOnline ? '在线' : '离线'}</span>
+          {/* v2.23 — 在线徽标右侧显示当前小说名, 与"我的作品"列表的活跃高亮形成
+              双重定位: 不进入作品详情也能确认自己当前的写作对象。 */}
+          {activeNovel && (
+            <span
+              style={{
+                marginLeft: 8,
+                color: 'var(--accent-purple)',
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 130,
+              }}
+              title={activeNovel.title || activeNovel.id}
+            >
+              · {activeNovel.title || activeNovel.id}
+            </span>
+          )}
           {stats && (
             <span style={{ marginLeft: 'auto' }}>
               {stats.total_sections || 0} 节 · {(stats.total_words || 0).toLocaleString()} 字
@@ -297,6 +311,7 @@ export default function App() {
               等组件内部状态。GraphView 通过 isVisible prop 知道何时暂停渲染。 */}
           <ViewSlot active={activeView === 'home'}>
             <HomeView
+              activeNovel={activeNovel}
               onAfterCreated={(id) => {
                 refreshNovels()
                 if (id) setActiveNovelId(id)
@@ -305,7 +320,11 @@ export default function App() {
             />
           </ViewSlot>
           <ViewSlot active={activeView === 'novel'}>
-            <NovelView novel={activeNovel} onAfterGenerated={bumpRefresh} />
+            <NovelView
+              novel={activeNovel}
+              onAfterGenerated={bumpRefresh}
+              onNavigate={setActiveView}
+            />
           </ViewSlot>
           <ViewSlot active={activeView === 'agents'}>
             <AgentContextView />
@@ -325,14 +344,8 @@ export default function App() {
           <ViewSlot active={activeView === 'memory'}>
             <MemoryView refreshKey={refreshKey} />
           </ViewSlot>
-          <ViewSlot active={activeView === 'control'}>
-            <TickControlPanel onAction={bumpRefresh} refreshKey={refreshKey} />
-          </ViewSlot>
           <ViewSlot active={activeView === 'diagnostics'}>
             <TickDiagnosticsPanel refreshKey={refreshKey} />
-          </ViewSlot>
-          <ViewSlot active={activeView === 'legacy'}>
-            <ControlPanel onAction={bumpRefresh} refreshKey={refreshKey} />
           </ViewSlot>
         </div>
       </main>

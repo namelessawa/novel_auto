@@ -49,9 +49,15 @@ class WriterAgent:
         historical_fragments: list[str],
         recent_text: str,
         scene_info: str,
+        novel_title: str = "",
     ) -> Section:
         user_prompt = self._build_prompt(
-            plan, entity_states, historical_fragments, recent_text, scene_info
+            plan,
+            entity_states,
+            historical_fragments,
+            recent_text,
+            scene_info,
+            novel_title,
         )
         resp = await llm_client.chat(
             system_prompt=SYSTEM_PROMPT,
@@ -77,9 +83,15 @@ class WriterAgent:
         historical_fragments: list[str],
         recent_text: str,
         scene_info: str,
+        novel_title: str = "",
     ) -> AsyncIterator[str]:
         user_prompt = self._build_prompt(
-            plan, entity_states, historical_fragments, recent_text, scene_info
+            plan,
+            entity_states,
+            historical_fragments,
+            recent_text,
+            scene_info,
+            novel_title,
         )
         async for chunk in llm_client.chat_stream(
             system_prompt=SYSTEM_PROMPT,
@@ -101,10 +113,30 @@ class WriterAgent:
         historical_fragments: list[str],
         recent_text: str,
         scene_info: str,
+        novel_title: str = "",
     ) -> str:
         states = "\n".join(entity_states) if entity_states else "（无）"
         history = "\n".join(historical_fragments) if historical_fragments else "（无）"
+        # v2.23 — novel_title 进 user prompt 顶部, 第一节时强约束题材。
+        # WriterAgent 是真正写正文的 agent, OutlineAgent 的题材锚定如果在
+        # 写作环节又丢失, 第一节仍会偏题 (上次出现"白毛猫娘"标题 + "上班族
+        # 公交车"正文就是这条链上漏了)。
+        is_opening = bool(plan.chapter == 1 and plan.section == 1)
+        title_block = ""
+        if novel_title and novel_title not in ("未命名小说", ""):
+            title_block = f"【小说标题】《{novel_title}》\n\n"
+            if is_opening:
+                title_block += (
+                    "【题材约束】这是第 1 章第 1 节, 必须按标题暗示的"
+                    "题材 / 世界观 / 人物关系开篇:\n"
+                    "  - 主要角色身份与标题暗示一致 (如标题点名了职业 / 物种 / 关系)\n"
+                    "  - 场景设定与标题题材呼应 (穿越文不要写普通都市, 修真文"
+                    "不要写公司加班)\n"
+                    "  - 即便用户的「主题 / 大纲」为空, 标题就是唯一题材锚点, "
+                    "严禁兜底写成「普通上班族奇遇」等公版开局\n\n"
+                )
         return (
+            f"{title_block}"
             f"【行动指南】\n{plan.plan_text}\n\n"
             f"【角色/实体当前状态】\n{states}\n\n"
             f"【相关历史细节】\n{history}\n\n"

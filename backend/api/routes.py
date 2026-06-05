@@ -244,7 +244,10 @@ async def update_llm_config_route(req: LLMConfigUpdateRequest):
 @router.post("/api/generate")
 async def generate_section(req: GenerateRequest):
     pipeline = get_pipeline()
-    section = await pipeline.generate_next_section(global_outline=req.outline)
+    novel_title = _current_novel_title()
+    section = await pipeline.generate_next_section(
+        global_outline=req.outline, novel_title=novel_title
+    )
     pipeline.save_state()
     _auto_generate_title(pipeline, section.content)
     return {
@@ -260,6 +263,9 @@ async def generate_section(req: GenerateRequest):
 @router.post("/api/generate/stream")
 async def generate_section_stream(req: GenerateRequest):
     pipeline = get_pipeline()
+    # v2.23 — 拿到当前活跃小说的真实标题, 传到 OutlineAgent / WriterAgent prompt;
+    # 此前完全没传, 标题"《白毛猫娘》"也被无视, 直接走"上班族公交车"开篇。
+    novel_title = _current_novel_title()
 
     async def event_generator():
         # Use an asyncio.Queue so we can send heartbeats while the
@@ -270,7 +276,7 @@ async def generate_section_stream(req: GenerateRequest):
         async def produce():
             try:
                 async for item in pipeline.generate_next_section_stream(
-                    global_outline=req.outline
+                    global_outline=req.outline, novel_title=novel_title
                 ):
                     await queue.put(item)
             except Exception as e:
@@ -316,6 +322,14 @@ async def generate_section_stream(req: GenerateRequest):
 
         # Save state after generation completes
         pipeline.save_state()
+
+        # v2.23 — SSE 流路径也触发自动标题 (仅当用户保留默认"未命名小说"时);
+        # 此前只有 /api/generate 非流式才补标题, 前端 HomeView 走的是 stream,
+        # 第一节生成后小说名永远停在"未命名小说"。
+        if pipeline._generated_sections:
+            _auto_generate_title(
+                pipeline, pipeline._generated_sections[-1].content
+            )
 
     return EventSourceResponse(event_generator())
 
@@ -561,6 +575,23 @@ async def reset_pipeline():
 
 
 # -- Helpers -----------------------------------------------------------------
+
+
+def _current_novel_title() -> str:
+    """当前活跃小说标题; 没有活跃小说或仍是默认名时返回 空串。
+
+    v2.23 — 给 OutlineAgent / WriterAgent 的 prompt 注入用; 空串 / 未命名
+    时让 prompt 走兜底分支, 而不是反过来约束 LLM 写"未命名小说"题材。
+    """
+    if _active_novel_id is None:
+        return ""
+    novel = novel_manager.get_novel(_active_novel_id)
+    if novel is None:
+        return ""
+    title = (novel.get("title") or "").strip()
+    if title == "未命名小说":
+        return ""
+    return title
 
 
 def _auto_generate_title(pipeline: GenerationPipeline, content: str) -> None:

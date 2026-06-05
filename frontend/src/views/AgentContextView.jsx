@@ -85,13 +85,17 @@ export default function AgentContextView() {
     )
   }
 
+  // v2.23 — 三栏布局: 列表 | 实时上下文 | Agent 详情。
+  //   原两栏让 system prompt / 输入输出 / live_context 全部串在右侧滚动条上,
+  //   用户调试时反复在 "prompt 文本" 与 "下一 tick 数据" 之间上下滚动,
+  //   实时上下文是首屏最高优先级 — 独立成中栏让两类数据互不挤占。
   return (
     <div style={{ display: 'flex', gap: 16, height: '100%', minHeight: 0 }}>
-      {/* 左侧:agent 列表 */}
+      {/* 左栏: agent 列表 */}
       <div
         style={{
-          width: 280,
-          minWidth: 280,
+          width: 260,
+          minWidth: 260,
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--bg-card)',
@@ -180,13 +184,42 @@ export default function AgentContextView() {
         </div>
       </div>
 
-      {/* 右侧:agent 详情 */}
-      <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+      {/* 中栏: 实时上下文 (下一 tick 该 agent 会读到的数据) */}
+      <div
+        style={{
+          flex: 1.1,
+          minWidth: 320,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+        }}
+      >
         {detailLoading && (
           <div className="card">
             <div className="generating-indicator">
               <span className="loading-spinner"></span>
-              <span>读取上下文中…</span>
+              <span>读取实时上下文…</span>
+            </div>
+          </div>
+        )}
+        {!detailLoading && detail && (
+          <LiveContextPane ctx={detail.live_context} agent={detail} />
+        )}
+        {!detailLoading && !detail && (
+          <div className="empty-state">
+            <i className="fas fa-arrow-left"></i>
+            <p>从左侧选择一个 agent 查看实时上下文</p>
+          </div>
+        )}
+      </div>
+
+      {/* 右栏: agent 元信息 / 输入 / 输出 / 最近调用 / system prompt */}
+      <div style={{ flex: 1.4, minWidth: 0, overflowY: 'auto' }}>
+        {detailLoading && (
+          <div className="card">
+            <div className="generating-indicator">
+              <span className="loading-spinner"></span>
+              <span>读取 Agent 详情…</span>
             </div>
           </div>
         )}
@@ -194,10 +227,39 @@ export default function AgentContextView() {
         {!detailLoading && !detail && (
           <div className="empty-state">
             <i className="fas fa-arrow-left"></i>
-            <p>从左侧选择一个 agent 查看完整上下文</p>
+            <p>选择一个 agent 查看详情</p>
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// v2.23 — 实时上下文独立为中栏。 与 AgentDetail 平级, 复用原 LiveContextBlock
+// 的字段渲染逻辑, 但顶部带 agent 名/cadence 帮助定位。
+function LiveContextPane({ ctx, agent }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        style={{
+          padding: '10px 14px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 10,
+          fontSize: 12,
+          color: 'var(--text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <i className="fas fa-database" style={{ color: 'var(--accent-cyan)' }}></i>
+        <span>
+          实时上下文 · <strong style={{ color: 'var(--text-primary)' }}>{agent.cn_name}</strong>
+        </span>
+        <span style={{ marginLeft: 'auto' }}>{agent.cadence}</span>
+      </div>
+      <LiveContextBlock ctx={ctx} />
     </div>
   )
 }
@@ -411,8 +473,7 @@ function AgentDetail({ detail }) {
         </div>
       )}
 
-      {/* 实时上下文(已喂进 agent 的数据) */}
-      <LiveContextBlock ctx={detail.live_context} />
+      {/* v2.23 — 实时上下文已移至中栏 LiveContextPane, 此处不再重复渲染。 */}
 
       {/* System Prompt */}
       {detail.prompt ? (

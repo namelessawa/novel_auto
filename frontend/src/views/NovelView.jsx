@@ -4,11 +4,10 @@ import {
   fetchMemory,
   fetchOutline,
   fetchSections,
-  generateSectionStream,
 } from '../services/api'
 import { showToast } from '../utils/toast'
 
-export default function NovelView({ novel, onAfterGenerated }) {
+export default function NovelView({ novel, onAfterGenerated, onNavigate }) {
   const [sections, setSections] = useState([])
   const [memory, setMemory] = useState(null)
   const [outline, setOutline] = useState(null)
@@ -16,8 +15,6 @@ export default function NovelView({ novel, onAfterGenerated }) {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
 
-  const [promptOpen, setPromptOpen] = useState(false)
-  const [continuePrompt, setContinuePrompt] = useState('')
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
@@ -46,34 +43,14 @@ export default function NovelView({ novel, onAfterGenerated }) {
     setLoading(false)
   }
 
+  // v2.23 — 续写按钮不再就地弹模态生成, 而是直接跳到创作控制台 (home),
+  // 由控制台的"续写小说"卡片承担生成。这样进度条 / Tick 状态 / 阶段明细
+  // 全部在一个面板, 用户不会在阅读视图里看到半截的实时正文。
   const startContinue = () => {
-    setContinuePrompt('')
-    setPromptOpen(true)
-  }
-
-  const submitContinue = async () => {
-    setPromptOpen(false)
-    setGenerating(true)
-    try {
-      await new Promise((resolve, reject) => {
-        const ctrl = generateSectionStream(
-          continuePrompt,
-          () => {},
-          () => {},
-          () => resolve(),
-          (err) => reject(err),
-        )
-        ctrl.signal.addEventListener('abort', () => reject(new Error('aborted')))
-      })
-      showToast('续写完成', 'success')
-      await loadAll()
-      onAfterGenerated?.()
-    } catch (err) {
-      if (err.message !== 'aborted') {
-        showToast('续写失败:' + err.message, 'error')
-      }
-    } finally {
-      setGenerating(false)
+    if (typeof onNavigate === 'function') {
+      onNavigate('home')
+    } else {
+      showToast('请前往创作控制台续写', 'info')
     }
   }
 
@@ -235,10 +212,14 @@ export default function NovelView({ novel, onAfterGenerated }) {
               <ReadingContent section={sections[selected]} />
             </div>
             <div className="reading-sidebar">
+              {/* v2.23 — 标题区可点击跳转到对应工具视图。jumpHint 让用户知道点击会跳走;
+                  graph/memory 在工具栏挂载, 由 App.jsx 的 onNavigate 直接切 view。 */}
               <MemoryPanel
                 title="角色关系"
                 icon="fa-users"
                 color="var(--accent-cyan)"
+                onJump={() => onNavigate?.('graph')}
+                jumpHint="打开知识图谱"
               >
                 <RelationshipBlock graph={graph} />
               </MemoryPanel>
@@ -247,6 +228,8 @@ export default function NovelView({ novel, onAfterGenerated }) {
                 title="人物与实体"
                 icon="fa-user-tag"
                 color="var(--accent-amber)"
+                onJump={() => onNavigate?.('graph')}
+                jumpHint="打开知识图谱"
               >
                 <EntitiesBlock graph={graph} />
               </MemoryPanel>
@@ -255,6 +238,8 @@ export default function NovelView({ novel, onAfterGenerated }) {
                 title="工作记忆"
                 icon="fa-layer-group"
                 color="var(--accent-emerald)"
+                onJump={() => onNavigate?.('memory')}
+                jumpHint="打开记忆系统"
               >
                 <WorkingMemoryBlock memory={memory} />
               </MemoryPanel>
@@ -264,6 +249,8 @@ export default function NovelView({ novel, onAfterGenerated }) {
                 icon="fa-align-left"
                 color="var(--accent-purple)"
                 defaultCollapsed
+                onJump={() => onNavigate?.('memory')}
+                jumpHint="打开记忆系统"
               >
                 <OutlineBlock outline={outline} />
               </MemoryPanel>
@@ -271,49 +258,6 @@ export default function NovelView({ novel, onAfterGenerated }) {
           </div>
         )}
       </div>
-
-      {promptOpen && (
-        <div className="modal-overlay" onClick={() => setPromptOpen(false)}>
-          <div
-            className="modal-content"
-            style={{ width: 500 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="modal-title" style={{ fontSize: 18 }}>
-              续写下一节
-            </h2>
-            <p className="modal-desc" style={{ marginBottom: 16 }}>
-              为 <strong>{novel.title || novel.id}</strong> 生成新的章节
-            </p>
-            <div style={{ marginBottom: 16 }}>
-              <label className="input-label">作者提示词 (可选)</label>
-              <textarea
-                className="input-field"
-                placeholder="留空则由 AI 自由发挥…"
-                value={continuePrompt}
-                onChange={(e) => setContinuePrompt(e.target.value)}
-                style={{ minHeight: 100 }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-                onClick={() => setPromptOpen(false)}
-              >
-                取消
-              </button>
-              <button
-                className="btn btn-success"
-                style={{ flex: 1 }}
-                onClick={submitContinue}
-              >
-                <i className="fas fa-play"></i> 开始续写
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -331,13 +275,38 @@ function ReadingContent({ section }) {
   )
 }
 
-function MemoryPanel({ title, icon, color, defaultCollapsed = false, children }) {
+function MemoryPanel({
+  title,
+  icon,
+  color,
+  defaultCollapsed = false,
+  onJump,
+  jumpHint,
+  children,
+}) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
+  // v2.23 — 标题区主体点击仍是折叠/展开; 右侧"跳转"图标 stopPropagation 进入工具视图。
   return (
     <div className="memory-panel">
       <div className="memory-panel-header" onClick={() => setCollapsed((c) => !c)}>
         <i className={`fas ${icon}`} style={{ color }}></i>
-        {title}
+        <span style={{ flex: 1 }}>{title}</span>
+        {typeof onJump === 'function' && (
+          <i
+            className="fas fa-arrow-up-right-from-square"
+            title={jumpHint || '打开详情'}
+            style={{
+              fontSize: 11,
+              opacity: 0.55,
+              cursor: 'pointer',
+              marginRight: 6,
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onJump()
+            }}
+          />
+        )}
         <i className={`fas fa-chevron-down toggle ${collapsed ? 'collapsed' : ''}`}></i>
       </div>
       <div className={`memory-panel-body ${collapsed ? 'collapsed' : ''}`}>
