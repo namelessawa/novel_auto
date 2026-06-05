@@ -25,6 +25,7 @@ from api.routes import router
 from api.tick_routes import router as tick_router
 from api.agent_routes import router as agent_router
 from api.section_routes import router as section_router
+from api.bootstrap_routes import router as bootstrap_router
 from tasks import router as tasks_router
 from config.settings import settings
 
@@ -80,6 +81,7 @@ app.include_router(router)
 app.include_router(tick_router)
 app.include_router(agent_router)
 app.include_router(section_router)
+app.include_router(bootstrap_router)
 app.include_router(tasks_router)
 
 

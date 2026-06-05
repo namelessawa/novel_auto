@@ -63,45 +63,43 @@ def isolate_runtime_and_stores(monkeypatch, tmp_novels_root):
 
 
 @pytest.mark.asyncio
-async def test_create_novel_default_auto_spawns_bootstrap_task(
+async def test_create_novel_default_skips_bootstrap_task_v225(
     isolate_runtime_and_stores, mock_llm
 ):
-    """默认 auto_bootstrap=True 时, POST /api/novels 返回 bootstrap_task_id 且任务可见。"""
+    """v2.25 默认 auto_bootstrap=False — POST /api/novels 仅创建空壳, 返回空 task_id。
+
+    v2.24 默认是 True, v2.25 反转: fresh novel 没种子 → 自动入 bootstrap_section
+    会产出空首节; 让前端显式走 bootstrap-world 端点。
+    """
     from api.routes import NovelCreateRequest, create_novel
     from tasks.task_manager import get_task_manager
 
-    # mock LLM 给一些回应防 supplement/title 卡住 (executor 实际不会跑很多 tick
-    # 因为 fake orchestrator 不增字数, 会走 max_ticks 兜底, 然后 close_section
-    # 只调用 1 次 title LLM)
-    mock_llm.set_responses(["首节" for _ in range(5)])
-
     resp = await create_novel(NovelCreateRequest(title="测试小说 A"))
-
     assert resp["title"] == "测试小说 A"
-    assert resp["bootstrap_task_id"], "auto_bootstrap=True 时应返回非空 task_id"
+    assert resp["bootstrap_task_id"] == ""
+    mgr = get_task_manager()
+    assert mgr.list_for_novel(resp["id"]) == []
+
+
+@pytest.mark.asyncio
+async def test_create_novel_with_auto_bootstrap_true_still_spawns_task(
+    isolate_runtime_and_stores, mock_llm
+):
+    """显式 ?auto_bootstrap=true 仍走 v2.24 路径 — 保留供测试 / 节级管线对照实验。"""
+    from api.routes import NovelCreateRequest, create_novel
+    from tasks.task_manager import get_task_manager
+
+    mock_llm.set_responses(["首节" for _ in range(5)])
+    resp = await create_novel(
+        NovelCreateRequest(title="测试小说 B"), auto_bootstrap=True
+    )
+    assert resp["title"] == "测试小说 B"
+    assert resp["bootstrap_task_id"], "显式 auto_bootstrap=True 时应返回非空 task_id"
 
     mgr = get_task_manager()
     snap = mgr.get(resp["bootstrap_task_id"])
     assert snap.kind == "bootstrap_section"
     assert snap.novel_id == resp["id"]
-
-
-@pytest.mark.asyncio
-async def test_create_novel_with_auto_bootstrap_false_skips_task(
-    isolate_runtime_and_stores, mock_llm
-):
-    """auto_bootstrap=False 时不入队任务, 返回空 task_id。"""
-    from api.routes import NovelCreateRequest, create_novel
-    from tasks.task_manager import get_task_manager
-
-    resp = await create_novel(
-        NovelCreateRequest(title="测试小说 B"), auto_bootstrap=False
-    )
-    assert resp["title"] == "测试小说 B"
-    assert resp["bootstrap_task_id"] == ""
-    mgr = get_task_manager()
-    # 不应有任何任务为该 novel
-    assert mgr.list_for_novel(resp["id"]) == []
 
 
 @pytest.mark.asyncio

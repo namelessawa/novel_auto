@@ -121,16 +121,19 @@ async def list_novels():
 
 
 @router.post("/api/novels")
-async def create_novel(req: NovelCreateRequest, auto_bootstrap: bool = True):
+async def create_novel(req: NovelCreateRequest, auto_bootstrap: bool = False):
     """创建小说。
 
-    v2.24 — ``auto_bootstrap=True`` (默认) 时, 创建完立即入队一个
-    ``bootstrap_section`` 任务推首节; 前端用返回的 ``bootstrap_task_id``
-    订阅 /api/tasks/{id}/stream 看进度。
+    v2.25 — 默认改为 ``auto_bootstrap=False``: POST 仅创建空壳, 由前端随后
+    显式调 POST /api/novels/{id}/bootstrap-world 跑 4 阶段冷启动 (世界 /
+    角色 / 伏笔 / 风格锚点)。bootstrap_world 完成后会链式触发首节生成。
 
-    禁用 (auto_bootstrap=False) 用于:
-    * 测试场景, 仅创建空壳
-    * 用户想在节级管线 (legacy) 测试栏里手动生成
+    根本原因: v2.24 默认自动入 bootstrap_section, 但 fresh novel 的 TickState
+    没有任何角色 / 事件种子 → Narrator 沉默到 max_ticks → 首节几乎空。
+    把"种子化"从"创建空壳"中拆出来, 让前端用户能填入世界种子 / 作品定位 /
+    参考作家这三类用户意图, 才有信息给 LLM 生成有意义的初始世界。
+
+    保留 ``auto_bootstrap=True`` 路径供测试 / 节级管线对照实验。
     """
     entry = novel_manager.create_novel(req.title)
     bootstrap_task_id = ""
