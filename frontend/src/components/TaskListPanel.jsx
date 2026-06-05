@@ -29,6 +29,7 @@ const STATUS_CONFIG = {
 const KIND_LABEL = {
   section_generation: '续写下一节',
   bootstrap_section: '首节生成',
+  bootstrap_world: '世界种子',
 }
 
 const POLL_INTERVAL_MS = 3000
@@ -162,11 +163,13 @@ function TaskRow({ task, onCancel }) {
   const status = STATUS_CONFIG[task.status] || STATUS_CONFIG.queued
   const kindLabel = KIND_LABEL[task.kind] || task.kind
   const progress = task.progress || {}
+  // v2.25 — bootstrap_world 没有"字数"概念 (target_words=0), 用 tick_count/max_ticks
+  // 当作 4 阶段进度. section_generation / bootstrap_section 仍按字数走.
+  const isBootstrapWorld = task.kind === 'bootstrap_world'
   const wordTarget = progress.target_words || 3000
-  const wordPct = Math.min(
-    100,
-    Math.round(((progress.current_words || 0) / wordTarget) * 100),
-  )
+  const wordPct = isBootstrapWorld
+    ? Math.min(100, Math.round(((progress.tick_count || 0) / (progress.max_ticks || 4)) * 100))
+    : Math.min(100, Math.round(((progress.current_words || 0) / wordTarget) * 100))
   const isActive = task.status === 'queued' || task.status === 'running'
 
   return (
@@ -253,12 +256,20 @@ function TaskRow({ task, onCancel }) {
               fontSize: 11,
             }}
           >
-            <span>
-              {progress.current_words || 0}/{wordTarget} 字
-            </span>
-            <span>
-              tick {progress.tick_count || 0}/{progress.max_ticks || 30}
-            </span>
+            {isBootstrapWorld ? (
+              <span>
+                阶段 {progress.tick_count || 0}/{progress.max_ticks || 4}
+              </span>
+            ) : (
+              <>
+                <span>
+                  {progress.current_words || 0}/{wordTarget} 字
+                </span>
+                <span>
+                  tick {progress.tick_count || 0}/{progress.max_ticks || 30}
+                </span>
+              </>
+            )}
           </div>
         </>
       )}

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  bootstrapWorld,
   createNovel,
   createSectionTask,
   fetchNovels,
@@ -7,6 +8,10 @@ import {
   generateSectionStream,
   switchNovel,
 } from '../services/api'
+
+// v2.25 — 与后端 bootstrap_routes DEFAULT_* 对齐, 用户留空就走这两个默认.
+const DEFAULT_POSITIONING = '古典含蓄、心理白描、节奏舒缓、避免华丽辞藻'
+const DEFAULT_REFERENCES = 'Le Guin / 古龙'
 import { showToast } from '../utils/toast'
 import TickControlPanel from '../components/TickControlPanel'
 
@@ -35,7 +40,12 @@ const PIPELINE_ORDER = [
 export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated }) {
   const [novels, setNovels] = useState([])
   const [createTitle, setCreateTitle] = useState('')
-  const [createOutline, setCreateOutline] = useState('')
+  // v2.25 — createOutline 改名为 createSeed 在语义上更准确 (它现在是 bootstrap_world
+  // 的 seed 参数, 不再是 generate_section 的 global_outline).
+  const [createSeed, setCreateSeed] = useState('')
+  const [createPositioning, setCreatePositioning] = useState('')
+  const [createReferences, setCreateReferences] = useState('')
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [continueId, setContinueId] = useState('')
   const [continuePrompt, setContinuePrompt] = useState('')
 
@@ -126,29 +136,48 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       ctrl.signal.addEventListener('abort', () => reject(new Error('aborted')))
     })
 
-  // v2.24 — 创建小说 / 续写下一节都走任务队列, 不再就地 SSE 流。
-  // 进度由左侧「任务」面板展示 (TaskListPanel 自己订阅 SSE), HomeView
-  // 只负责创建任务 + 切换活跃小说 + toast 反馈。
+  // v2.25 — 创建小说 = (1) 创建空壳 → (2) bootstrap-world (4 阶段种子化) →
+  // (3) bootstrap 完成后链式触发首节生成 (后端自动)。整条链由 TaskListPanel
+  // 展示, HomeView 只起头 + 反馈。
+  //
+  // 为什么不走 v2.24 的 auto_bootstrap: fresh novel 没角色 / 没事件 / 没风格
+  // 锚点, Narrator 沉默到 max_ticks 兜底切节, 首节几乎空。先 bootstrap_world
+  // 才有信息让 LLM 写有意义的首节。
   const handleCreate = async () => {
     const title = createTitle.trim() || '未命名小说'
+    const seed = createSeed.trim()
+    if (!seed) {
+      showToast('请填写「世界种子」— 它是冷启动给 LLM 的唯一题材锚点', 'error')
+      return
+    }
     setMode('create')
     setStatusText(`正在创建《${title}》…`)
 
     try {
-      // createNovel 默认 auto_bootstrap=true, 后端自动入队 bootstrap_section
+      // 1. 创建空壳 (默认 auto_bootstrap=false, 不会立即入队首节)
       const entry = await createNovel(title)
       if (!entry || !entry.id) throw new Error('创建失败:返回无 id')
       await switchNovel(entry.id)
-      if (entry.bootstrap_task_id) {
-        showToast(
-          `已创建《${title}》,首节生成已加入任务队列,可在左下「任务」面板查看进度`,
-          'success',
-        )
-      } else {
-        showToast(`已创建《${title}》(未自动生成首节)`, 'info')
-      }
+
+      // 2. 立即调 bootstrap-world — 后端默认 also_generate_first_section=true,
+      // 它内部跑完 4 阶段会链式入队 bootstrap_section, 首节自动生成。
+      setStatusText('正在为《' + title + '》生成世界种子…')
+      const bootstrapTask = await bootstrapWorld(entry.id, {
+        seed,
+        positioning: createPositioning.trim() || DEFAULT_POSITIONING,
+        references: createReferences.trim() || DEFAULT_REFERENCES,
+        also_generate_first_section: true,
+      })
+
+      showToast(
+        `已创建《${title}》。世界种子 (4 阶段) + 首节生成已加入任务队列, 在左下「任务」面板查看进度`,
+        'success',
+      )
       setCreateTitle('')
-      setCreateOutline('')
+      setCreateSeed('')
+      setCreatePositioning('')
+      setCreateReferences('')
+      setAdvancedOpen(false)
       await loadNovels()
       onAfterCreated?.(entry.id)
     } catch (err) {
@@ -235,16 +264,87 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
             />
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label className="input-label">主题 / 大纲 (可选)</label>
+            <label className="input-label">
+              世界种子 <span style={{ color: 'var(--accent-rose)' }}>*</span>
+            </label>
             <textarea
               className="input-field"
-              placeholder="例如:末世修仙、宋代仿古边境与中央的张力 …"
-              value={createOutline}
-              onChange={(e) => setCreateOutline(e.target.value)}
+              placeholder="例如:宋代仿古,边境与中央的张力 / 末世修仙,门派与凡人的撕裂 / ……"
+              value={createSeed}
+              onChange={(e) => setCreateSeed(e.target.value)}
               disabled={generating}
               style={{ minHeight: 64 }}
             />
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                marginTop: 4,
+              }}
+            >
+              冷启动 4 阶段 (世界 / 角色 / 伏笔 / 风格锚点) 的唯一题材锚点。留空将拒绝创建。
+            </div>
           </div>
+
+          {/* 高级配置: 文风 + 参考 折叠区 */}
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--accent-cyan)',
+              cursor: 'pointer',
+              padding: 0,
+              fontSize: 12,
+              marginBottom: 8,
+            }}
+            disabled={generating}
+          >
+            <i className={`fas ${advancedOpen ? 'fa-chevron-down' : 'fa-chevron-right'}`}></i>{' '}
+            高级配置 (作品定位 / 参考作家)
+          </button>
+          {advancedOpen && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: 10,
+                background: 'var(--bg-subtle, rgba(0,0,0,0.04))',
+                borderRadius: 6,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              <div>
+                <label className="input-label" style={{ fontSize: 12 }}>
+                  作品定位 (文风 / 节奏)
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={DEFAULT_POSITIONING}
+                  value={createPositioning}
+                  onChange={(e) => setCreatePositioning(e.target.value)}
+                  disabled={generating}
+                />
+              </div>
+              <div>
+                <label className="input-label" style={{ fontSize: 12 }}>
+                  参考作家 / 作品
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={DEFAULT_REFERENCES}
+                  value={createReferences}
+                  onChange={(e) => setCreateReferences(e.target.value)}
+                  disabled={generating}
+                />
+              </div>
+            </div>
+          )}
+
           <button
             className="btn btn-primary btn-full"
             onClick={handleCreate}

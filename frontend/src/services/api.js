@@ -457,6 +457,26 @@ export async function fetchAgentDetail(agentId) {
 // 旧的 generateSectionStream (节级管线) 仍可用于"测试 → 节级管线"栏目。
 
 /**
+ * v2.25 — 给一个空小说做冷启动 (4 阶段: 世界 / 角色 / 伏笔 / 风格锚点).
+ * 完成后默认链式入队一个 bootstrap_section 任务.
+ *
+ * @param {string} novelId
+ * @param {{seed: string, positioning?: string, references?: string, also_generate_first_section?: boolean}} payload
+ * @returns {Promise<object>} bootstrap_world 任务快照
+ */
+export async function bootstrapWorld(novelId, payload) {
+  const res = await fetch(
+    `${BASE}/api/novels/${encodeURIComponent(novelId)}/bootstrap-world`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  )
+  return assertOk(res)
+}
+
+/**
  * 创建一个"续写下一节"后台任务。
  * @param {string|null} novelId 不传时用当前活跃小说
  * @returns {Promise<object>} 任务快照
