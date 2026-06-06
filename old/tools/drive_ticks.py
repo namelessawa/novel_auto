@@ -1,6 +1,18 @@
-"""drive_ticks - 用真实 LLM 驱动 Orchestrator 跑 N 个 tick,做端到端冒烟。
+"""[ARCHIVED v2.22] drive_ticks — 不要再运行此脚本。
 
-用法:
+此脚本自 v2.15 起已与生产 tick_runtime 不兼容: 它直接写 _tr._runtime 单例
+(参见下方代码), 而真实运行时使用 _runtimes 注册表 + per-novel TickRuntime
+实例。继续运行会旁路 register_to_routes 的注册表查找, 且 close_runtime()
+的旧外壳只是 close_all_runtimes() 别名, 不保证清理本脚本创建的 runtime。
+
+要做真实 LLM 端到端冒烟, 请用 tools/run_ticks.py 或直接 POST /api/tick/run。
+保留此文件仅供历史参考。
+
+----- 历史文档 -----
+
+drive_ticks - 用真实 LLM 驱动 Orchestrator 跑 N 个 tick, 做端到端冒烟。
+
+历史用法:
 
     python tools/drive_ticks.py --novel-id test_story_A --max-ticks 30
 
@@ -9,6 +21,17 @@
 * 持久化写入 backend/data/novels/{novel_id}/  (tick_state.json / narratives/ / ticks.db)
 * 退出时打印汇总 + 各 agent 触发次数
 """
+
+import sys
+
+sys.stderr.write(
+    "[archived] tools/drive_ticks.py 已归档到 old/tools/, "
+    "不再与 v2.15+ tick_runtime 注册表兼容。"
+    "请用 tools/run_ticks.py 或 POST /api/tick/run 替代。\n"
+)
+sys.exit(2)
+
+# --- 以下历史代码保留供参考, 上方 sys.exit 已阻止执行 ---
 
 from __future__ import annotations
 

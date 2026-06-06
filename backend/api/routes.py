@@ -121,9 +121,81 @@ async def list_novels():
 
 
 @router.post("/api/novels")
-async def create_novel(req: NovelCreateRequest):
+async def create_novel(req: NovelCreateRequest, auto_bootstrap: bool = False):
+    """创建小说。
+
+    v2.25 — 默认改为 ``auto_bootstrap=False``: POST 仅创建空壳, 由前端随后
+    显式调 POST /api/novels/{id}/bootstrap-world 跑 4 阶段冷启动 (世界 /
+    角色 / 伏笔 / 风格锚点)。bootstrap_world 完成后会链式触发首节生成。
+
+    根本原因: v2.24 默认自动入 bootstrap_section, 但 fresh novel 的 TickState
+    没有任何角色 / 事件种子 → Narrator 沉默到 max_ticks → 首节几乎空。
+    把"种子化"从"创建空壳"中拆出来, 让前端用户能填入世界种子 / 作品定位 /
+    参考作家这三类用户意图, 才有信息给 LLM 生成有意义的初始世界。
+
+    保留 ``auto_bootstrap=True`` 路径供测试 / 节级管线对照实验。
+    """
     entry = novel_manager.create_novel(req.title)
-    return entry
+    bootstrap_task_id = ""
+    if auto_bootstrap:
+        try:
+            bootstrap_task_id = await _spawn_bootstrap_section_task(
+                novel_id=entry["id"], novel_title=entry.get("title", "")
+            )
+        except Exception as e:
+            # 不阻塞 novel 创建 — 任务失败前端能从 task list 看到错因, 不必让
+            # POST /api/novels 整体 500。
+            logger.warning(
+                "auto bootstrap section task for novel '%s' failed: %s",
+                entry["id"],
+                e,
+            )
+    return {**entry, "bootstrap_task_id": bootstrap_task_id}
+
+
+async def _spawn_bootstrap_section_task(*, novel_id: str, novel_title: str) -> str:
+    """v2.24 — 创建小说时自动入队首节生成任务。
+
+    与 /api/section/generate 走同一份 executor + SectionStore + SectionCloser,
+    仅 kind 字段不同 (bootstrap_section), 方便前端区分"首节 / 续写"两种任务样式。
+    """
+    from agents.section_closer import SectionCloser
+    from api.section_routes import _make_section_executor
+    from sections.section_store import get_section_store
+    from tasks.task_manager import TaskConflict, get_task_manager
+    from tick_runtime import get_runtime
+
+    # runtime 预拉起 — 失败 (LLM provider 未配等) 直接抛, 由调用方吞掉
+    get_runtime(novel_id)
+    data_dir = novel_manager.get_novel_data_dir(novel_id)
+    store = get_section_store(novel_id, data_dir=data_dir)
+    next_chapter, next_section = store.next_position()
+
+    closer = SectionCloser()
+    executor = _make_section_executor(
+        closer=closer,
+        store=store,
+        novel_title=novel_title,
+        chapter=next_chapter,
+        section_no=next_section,
+    )
+    mgr = get_task_manager()
+    try:
+        snap = await mgr.create_task(
+            novel_id=novel_id,
+            novel_title=novel_title,
+            kind="bootstrap_section",
+            executor=executor,
+            target_words=closer.target_words,
+            min_words=closer.min_words,
+            max_ticks=closer.max_ticks,
+            chapter=next_chapter,
+            section_no=next_section,
+        )
+    except TaskConflict:
+        # 同一 novel 刚被创建, 不应该 conflict — 真发生说明前端连点 2 次
+        return ""
+    return snap.id
 
 
 @router.put("/api/novels/{novel_id}")
@@ -242,9 +314,20 @@ async def update_llm_config_route(req: LLMConfigUpdateRequest):
 
 
 @router.post("/api/generate")
+@router.post("/api/legacy/generate")
 async def generate_section(req: GenerateRequest):
+    """v2.24 — 节级管线 (legacy 一次性章节生成器)。
+
+    保留为前端"测试 → 节级管线"栏目的写入端点。新主路径是
+    POST /api/section/generate (tick 驱动 + 任务队列)。
+
+    /api/generate 旧路径保留为 alias, 后续清理可删。
+    """
     pipeline = get_pipeline()
-    section = await pipeline.generate_next_section(global_outline=req.outline)
+    novel_title = _current_novel_title()
+    section = await pipeline.generate_next_section(
+        global_outline=req.outline, novel_title=novel_title
+    )
     pipeline.save_state()
     _auto_generate_title(pipeline, section.content)
     return {
@@ -258,8 +341,12 @@ async def generate_section(req: GenerateRequest):
 
 
 @router.post("/api/generate/stream")
+@router.post("/api/legacy/generate/stream")
 async def generate_section_stream(req: GenerateRequest):
     pipeline = get_pipeline()
+    # v2.23 — 拿到当前活跃小说的真实标题, 传到 OutlineAgent / WriterAgent prompt;
+    # 此前完全没传, 标题"《白毛猫娘》"也被无视, 直接走"上班族公交车"开篇。
+    novel_title = _current_novel_title()
 
     async def event_generator():
         # Use an asyncio.Queue so we can send heartbeats while the
@@ -270,7 +357,7 @@ async def generate_section_stream(req: GenerateRequest):
         async def produce():
             try:
                 async for item in pipeline.generate_next_section_stream(
-                    global_outline=req.outline
+                    global_outline=req.outline, novel_title=novel_title
                 ):
                     await queue.put(item)
             except Exception as e:
@@ -317,10 +404,19 @@ async def generate_section_stream(req: GenerateRequest):
         # Save state after generation completes
         pipeline.save_state()
 
+        # v2.23 — SSE 流路径也触发自动标题 (仅当用户保留默认"未命名小说"时);
+        # 此前只有 /api/generate 非流式才补标题, 前端 HomeView 走的是 stream,
+        # 第一节生成后小说名永远停在"未命名小说"。
+        if pipeline._generated_sections:
+            _auto_generate_title(
+                pipeline, pipeline._generated_sections[-1].content
+            )
+
     return EventSourceResponse(event_generator())
 
 
 @router.post("/api/chapter/advance")
+@router.post("/api/legacy/chapter/advance")
 async def advance_chapter():
     pipeline = get_pipeline()
     pipeline.advance_chapter()
@@ -332,6 +428,7 @@ async def advance_chapter():
 
 
 @router.post("/api/rollback")
+@router.post("/api/legacy/rollback")
 async def rollback(req: RollbackRequest):
     pipeline = get_pipeline()
     try:
@@ -392,7 +489,11 @@ async def get_graph():
 @router.get("/api/graph/entities")
 async def list_entities(entity_type: str | None = None):
     pipeline = get_pipeline()
-    et = EntityType(entity_type) if entity_type else None
+    # v2.22 — 把枚举越界翻成 422 而非未捕获 ValueError → 500。
+    try:
+        et = EntityType(entity_type) if entity_type else None
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     entities = pipeline.knowledge_graph.list_entities(et)
     return {
         "entities": [
@@ -410,10 +511,15 @@ async def list_entities(entity_type: str | None = None):
 @router.post("/api/graph/entities")
 async def create_entity(req: EntityCreateRequest):
     pipeline = get_pipeline()
+    # v2.22 — 非法 entity_type 走 422 而非 500
+    try:
+        entity_type = EntityType(req.entity_type)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     entity = Entity(
         id=req.id,
         name=req.name,
-        entity_type=EntityType(req.entity_type),
+        entity_type=entity_type,
         attributes=req.attributes,
     )
     pipeline.knowledge_graph.add_entity(entity)
@@ -456,13 +562,21 @@ async def get_entity(entity_id: str):
 @router.post("/api/graph/relations")
 async def create_relation(req: RelationCreateRequest):
     pipeline = get_pipeline()
+    # v2.22 — 非法 relation_type → 422; 端点不存在 → 404 (而非把空节点写进图)
+    try:
+        relation_type = RelationType(req.relation_type)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     relation = Relation(
         source_id=req.source_id,
         target_id=req.target_id,
-        relation_type=RelationType(req.relation_type),
+        relation_type=relation_type,
         label=req.label,
     )
-    pipeline.knowledge_graph.add_relation(relation)
+    try:
+        pipeline.knowledge_graph.add_relation(relation)
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     return {"status": "ok"}
 
 
@@ -483,6 +597,7 @@ async def list_snapshots():
 
 
 @router.post("/api/snapshots")
+@router.post("/api/legacy/snapshots")
 async def take_snapshot():
     pipeline = get_pipeline()
     sid = pipeline.knowledge_graph.take_snapshot(pipeline.current_chapter)
@@ -536,6 +651,7 @@ async def get_working_memory():
 
 
 @router.post("/api/reset")
+@router.post("/api/legacy/reset")
 async def reset_pipeline():
     global _pipeline
     _pipeline = None
@@ -544,6 +660,23 @@ async def reset_pipeline():
 
 
 # -- Helpers -----------------------------------------------------------------
+
+
+def _current_novel_title() -> str:
+    """当前活跃小说标题; 没有活跃小说或仍是默认名时返回 空串。
+
+    v2.23 — 给 OutlineAgent / WriterAgent 的 prompt 注入用; 空串 / 未命名
+    时让 prompt 走兜底分支, 而不是反过来约束 LLM 写"未命名小说"题材。
+    """
+    if _active_novel_id is None:
+        return ""
+    novel = novel_manager.get_novel(_active_novel_id)
+    if novel is None:
+        return ""
+    title = (novel.get("title") or "").strip()
+    if title == "未命名小说":
+        return ""
+    return title
 
 
 def _auto_generate_title(pipeline: GenerationPipeline, content: str) -> None:

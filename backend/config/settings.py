@@ -224,9 +224,23 @@ def update_llm_config(
     ``_try_load_main_project_llm`` 通过 importlib 在每次调用时重 exec
     ``core/config.py``, 因此修改立即对下一次 ``llm_client.reload()`` 生效。
 
-    Provider 切换仅作用于当前进程: 重启会回退到 ``.env`` 静态值, 避免在线
-    编辑 ``.env`` 带来的副作用 (例如多服务共享 .env 时被互相覆盖)。
+    Provider 切换同时落盘 ``config.json.llm.provider`` 与 ``os.environ['LLM_PROVIDER']``:
+    后者立即对当前进程生效, 前者保证 _resolve_llm_block 在 api_key 非空走 config.json
+    分支时返回新 provider — 否则 UI 保存后再读会拿到旧值。
     """
+    # v2.22 — 原子化: 先校验 provider, 再统一写盘。
+    # 此前 _save_config 在 provider 校验前执行, 非法 provider 会留下被部分修改
+    # 的 config.json (api_key/base_url/model 已写) 再抛错。
+    normalized_provider: str | None = None
+    if provider is not None:
+        normalized_provider = provider.strip().lower()
+        if not normalized_provider:
+            raise ValueError("provider 不可为空字符串; 留空则保持当前值不变")
+        if normalized_provider not in _VALID_PROVIDERS:
+            raise ValueError(
+                f"provider {provider!r} 非法; 仅接受 {list(_VALID_PROVIDERS)}"
+            )
+
     cfg = _load_config()
     llm_block = cfg.setdefault("llm", {})
     if api_key is not None:
@@ -235,17 +249,14 @@ def update_llm_config(
         llm_block["base_url"] = base_url
     if model is not None:
         llm_block["model"] = model
+    if normalized_provider is not None:
+        # 写回 config.json 是必要的: api_key 非空时 _resolve_llm_block 走 config.json
+        # 分支, 只读 llm.provider; 不写盘则下次 reload 仍是旧 provider。
+        llm_block["provider"] = normalized_provider
     _save_config(cfg)
 
-    if provider is not None:
-        normalized = provider.strip().lower()
-        if not normalized:
-            raise ValueError("provider 不可为空字符串; 留空则保持当前值不变")
-        if normalized not in _VALID_PROVIDERS:
-            raise ValueError(
-                f"provider {provider!r} 非法; 仅接受 {list(_VALID_PROVIDERS)}"
-            )
-        os.environ["LLM_PROVIDER"] = normalized
+    if normalized_provider is not None:
+        os.environ["LLM_PROVIDER"] = normalized_provider
 
     # 重新走 resolve 链返回当前 active 值
     return get_llm_config()

@@ -244,6 +244,11 @@ class Orchestrator:
         self._last_tick_events: list[Event] = []
         self._recent_chapter_summaries: list[str] = []  # NarratorOutput 累积
         self._injected_pending: list[Event] = []  # 外部 inject_event 注入的 Event
+        # v2.24 — 最近一次 Narrator 完整输出 (无论 should_narrate=True/False).
+        # SectionTask executor 在 run_tick 后读它累积本节正文 / 收集沉默 tick 摘要.
+        # TickSummary 只有 chars/bool, 拿不到原文本; 不放 TickSummary 是为了保持
+        # 公开契约稳定 (前端 SSE / TickDB schema 不变).
+        self._last_narrator_output: NarratorOutput | None = None
 
         # 暂停/恢复
         self._paused: bool = False
@@ -265,6 +270,20 @@ class Orchestrator:
     @property
     def is_paused(self) -> bool:
         return self._paused
+
+    @property
+    def last_narrator_output(self) -> NarratorOutput | None:
+        """v2.24 — 最近一次 Narrator 完整输出.
+
+        SectionTask executor 用法:
+            await orch.run_tick()
+            no = orch.last_narrator_output
+            if no and no.should_narrate:
+                accumulated_text += no.narrative_text
+            else:
+                silent_records.append(SilentTickRecord(tick=..., summary=no.tick_summary_for_record))
+        """
+        return self._last_narrator_output
 
     def pause(self) -> None:
         self._paused = True
@@ -378,8 +397,11 @@ class Orchestrator:
                 logger.error("EventInjector.inject failed: %s", e)
 
         # 外部手动注入
+        # v2.22 — 不立即 clear。此前 .clear() 之后任何阶段 (3-7) 抛错都会让
+        # 用户注入的事件永久丢失, 无法重试。改为快照 id 集合, tick 完整跑完
+        # (持久化完成、TickSummary 已构造) 后再从队列里把它们移除。
         externally_injected = list(self._injected_pending)
-        self._injected_pending.clear()
+        injected_event_ids = {e.id for e in externally_injected}
         events_generated_ids.extend(e.id for e in externally_injected)
 
         all_events: list[Event] = (
@@ -579,6 +601,8 @@ class Orchestrator:
             self._recent_chapter_summaries = self._recent_chapter_summaries[-50:]
 
         self._last_tick_events = all_events
+        # v2.24 — 给 SectionTask executor 暴露完整 NarratorOutput.
+        self._last_narrator_output = narrator_out
 
         summary = TickSummary(
             tick=tick,
@@ -600,6 +624,15 @@ class Orchestrator:
                 self._tick_db.insert_tick(summary, events=all_events)
             except Exception as e:
                 logger.error("TickDB.insert_tick failed (non-fatal): %s", e)
+
+        # v2.22 — tick 已完整跑完 + 落盘, 现在才真正消费外部注入队列。
+        # 用 id 集合做差, 避免漏掉本 tick 期间新追加的事件 (虽然有 _tick_lock,
+        # inject_event 不在锁内, 理论上 HTTP 线程可在 tick 中途 append)。
+        if injected_event_ids:
+            self._injected_pending = [
+                e for e in self._injected_pending
+                if e.id not in injected_event_ids
+            ]
 
         return summary
 

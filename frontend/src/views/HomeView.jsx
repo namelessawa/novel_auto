@@ -1,12 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  bootstrapWorld,
   createNovel,
+  createSectionTask,
   fetchNovels,
+  fetchTickStatus,
   generateSectionStream,
   switchNovel,
 } from '../services/api'
-import { showToast } from '../utils/toast'
 
+// v2.25 — 与后端 bootstrap_routes DEFAULT_* 对齐, 用户留空就走这两个默认.
+const DEFAULT_POSITIONING = '古典含蓄、心理白描、节奏舒缓、避免华丽辞藻'
+const DEFAULT_REFERENCES = 'Le Guin / 古龙'
+import { showToast } from '../utils/toast'
+import TickControlPanel from '../components/TickControlPanel'
+
+// 节级管线 6 个 stage 顺序固定; failed 单列。
 const STAGE_LABELS = {
   context_assembly: '组装上下文',
   planning: '意图规划',
@@ -18,10 +27,25 @@ const STAGE_LABELS = {
   failed: '失败',
 }
 
-export default function HomeView({ onAfterGenerated, onAfterCreated }) {
+const PIPELINE_ORDER = [
+  'context_assembly',
+  'planning',
+  'retrieval',
+  'validation',
+  'generation',
+  'state_sync',
+  'complete',
+]
+
+export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated }) {
   const [novels, setNovels] = useState([])
   const [createTitle, setCreateTitle] = useState('')
-  const [createOutline, setCreateOutline] = useState('')
+  // v2.25 — createOutline 改名为 createSeed 在语义上更准确 (它现在是 bootstrap_world
+  // 的 seed 参数, 不再是 generate_section 的 global_outline).
+  const [createSeed, setCreateSeed] = useState('')
+  const [createPositioning, setCreatePositioning] = useState('')
+  const [createReferences, setCreateReferences] = useState('')
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [continueId, setContinueId] = useState('')
   const [continuePrompt, setContinuePrompt] = useState('')
 
@@ -30,6 +54,10 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
   const [streamText, setStreamText] = useState('')
   const [stages, setStages] = useState([])
   const [logs, setLogs] = useState([])
+  const [mode, setMode] = useState('create')
+
+  // v2.23 — Tick runtime 状态用于 "当前小说生成进度" 展示
+  const [tickStatus, setTickStatus] = useState(null)
 
   const controllerRef = useRef(null)
   const textRef = useRef(null)
@@ -43,6 +71,28 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
       textRef.current.scrollTop = textRef.current.scrollHeight
     }
   }, [streamText])
+
+  const loadTick = useCallback(async () => {
+    try {
+      const s = await fetchTickStatus()
+      setTickStatus(s)
+    } catch {
+      setTickStatus(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTick()
+    const t = setInterval(loadTick, 3000)
+    return () => clearInterval(t)
+  }, [loadTick])
+
+  // v2.23 — App.jsx 切换活跃小说后, 续写下拉默认就跟着切, 减少误操作。
+  useEffect(() => {
+    if (activeNovel?.id) {
+      setContinueId(activeNovel.id)
+    }
+  }, [activeNovel?.id])
 
   const loadNovels = async () => {
     try {
@@ -82,35 +132,58 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
         () => resolve(),
         (err) => reject(err),
       )
-      // pipe abort errors back as reject
       const ctrl = controllerRef.current
       ctrl.signal.addEventListener('abort', () => reject(new Error('aborted')))
     })
 
+  // v2.25 — 创建小说 = (1) 创建空壳 → (2) bootstrap-world (4 阶段种子化) →
+  // (3) bootstrap 完成后链式触发首节生成 (后端自动)。整条链由 TaskListPanel
+  // 展示, HomeView 只起头 + 反馈。
+  //
+  // 为什么不走 v2.24 的 auto_bootstrap: fresh novel 没角色 / 没事件 / 没风格
+  // 锚点, Narrator 沉默到 max_ticks 兜底切节, 首节几乎空。先 bootstrap_world
+  // 才有信息让 LLM 写有意义的首节。
   const handleCreate = async () => {
     const title = createTitle.trim() || '未命名小说'
-    setGenerating(true)
-    resetStream()
+    const seed = createSeed.trim()
+    if (!seed) {
+      showToast('请填写「世界种子」— 它是冷启动给 LLM 的唯一题材锚点', 'error')
+      return
+    }
+    setMode('create')
     setStatusText(`正在创建《${title}》…`)
 
     try {
+      // 1. 创建空壳 (默认 auto_bootstrap=false, 不会立即入队首节)
       const entry = await createNovel(title)
       if (!entry || !entry.id) throw new Error('创建失败:返回无 id')
       await switchNovel(entry.id)
-      showToast(`已创建《${title}》,正在生成开篇…`, 'success')
-      setStatusText('正在生成开篇章节…')
-      await runStream(createOutline)
-      showToast('开篇生成完成', 'success')
+
+      // 2. 立即调 bootstrap-world — 后端默认 also_generate_first_section=true,
+      // 它内部跑完 4 阶段会链式入队 bootstrap_section, 首节自动生成。
+      setStatusText('正在为《' + title + '》生成世界种子…')
+      const bootstrapTask = await bootstrapWorld(entry.id, {
+        seed,
+        positioning: createPositioning.trim() || DEFAULT_POSITIONING,
+        references: createReferences.trim() || DEFAULT_REFERENCES,
+        also_generate_first_section: true,
+      })
+
+      showToast(
+        `已创建《${title}》。世界种子 (4 阶段) + 首节生成已加入任务队列, 在左下「任务」面板查看进度`,
+        'success',
+      )
       setCreateTitle('')
-      setCreateOutline('')
+      setCreateSeed('')
+      setCreatePositioning('')
+      setCreateReferences('')
+      setAdvancedOpen(false)
       await loadNovels()
       onAfterCreated?.(entry.id)
     } catch (err) {
-      if (err.message !== 'aborted') {
-        showToast('创建失败:' + err.message, 'error')
-      }
+      showToast('创建失败:' + err.message, 'error')
     } finally {
-      setGenerating(false)
+      setStatusText('')
       onAfterGenerated?.()
     }
   }
@@ -120,22 +193,28 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
       showToast('请选择要续写的作品', 'error')
       return
     }
-    setGenerating(true)
-    resetStream()
-    setStatusText('正在续写下一节…')
+    setMode('continue')
+    setStatusText('正在创建续写任务…')
 
     try {
       await switchNovel(continueId)
-      await runStream(continuePrompt)
-      showToast('续写完成', 'success')
+      const snap = await createSectionTask(continueId)
+      showToast(
+        `已为 第${snap.chapter || '?'}章 第${snap.section_no || '?'}节 创建续写任务,可在左下「任务」面板查看进度`,
+        'success',
+      )
       setContinuePrompt('')
       onAfterCreated?.(continueId)
     } catch (err) {
-      if (err.message !== 'aborted') {
-        showToast('续写失败:' + err.message, 'error')
+      // 409 = 同 novel 已有续写任务
+      const msg = err.message || String(err)
+      if (msg.includes('已有') || msg.includes('409')) {
+        showToast('该作品已有续写任务在跑,等它完成再来', 'info')
+      } else {
+        showToast('续写失败:' + msg, 'error')
       }
     } finally {
-      setGenerating(false)
+      setStatusText('')
       onAfterGenerated?.()
     }
   }
@@ -147,8 +226,26 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
     showToast('已停止生成', 'info')
   }
 
+  // v2.23 — 阶段进度: 已完成的 stage 数 / 7
+  const stageDoneCount = stages.filter((s) => s.status === 'done').length
+  const currentActiveStage = stages.find((s) => s.status === 'active')?.stage
+  const progressPct = generating
+    ? Math.min(100, Math.round((stageDoneCount / PIPELINE_ORDER.length) * 100))
+    : 0
+
   return (
-    <div style={{ maxWidth: 880 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1200 }}>
+      {/* v2.23 — 当前作品总览 + 进度 */}
+      <ActiveNovelOverview
+        novel={activeNovel}
+        tickStatus={tickStatus}
+        generating={generating}
+        mode={mode}
+        progressPct={progressPct}
+        statusText={statusText}
+        currentStage={currentActiveStage}
+      />
+
       <div className="grid-2">
         {/* 创建新小说 */}
         <div className="card">
@@ -167,16 +264,87 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
             />
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label className="input-label">主题 / 大纲 (可选)</label>
+            <label className="input-label">
+              世界种子 <span style={{ color: 'var(--accent-rose)' }}>*</span>
+            </label>
             <textarea
               className="input-field"
-              placeholder="例如:末世修仙、宋代仿古边境与中央的张力 …"
-              value={createOutline}
-              onChange={(e) => setCreateOutline(e.target.value)}
+              placeholder="例如:宋代仿古,边境与中央的张力 / 末世修仙,门派与凡人的撕裂 / ……"
+              value={createSeed}
+              onChange={(e) => setCreateSeed(e.target.value)}
               disabled={generating}
               style={{ minHeight: 64 }}
             />
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                marginTop: 4,
+              }}
+            >
+              冷启动 4 阶段 (世界 / 角色 / 伏笔 / 风格锚点) 的唯一题材锚点。留空将拒绝创建。
+            </div>
           </div>
+
+          {/* 高级配置: 文风 + 参考 折叠区 */}
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--accent-cyan)',
+              cursor: 'pointer',
+              padding: 0,
+              fontSize: 12,
+              marginBottom: 8,
+            }}
+            disabled={generating}
+          >
+            <i className={`fas ${advancedOpen ? 'fa-chevron-down' : 'fa-chevron-right'}`}></i>{' '}
+            高级配置 (作品定位 / 参考作家)
+          </button>
+          {advancedOpen && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: 10,
+                background: 'var(--bg-subtle, rgba(0,0,0,0.04))',
+                borderRadius: 6,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              <div>
+                <label className="input-label" style={{ fontSize: 12 }}>
+                  作品定位 (文风 / 节奏)
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={DEFAULT_POSITIONING}
+                  value={createPositioning}
+                  onChange={(e) => setCreatePositioning(e.target.value)}
+                  disabled={generating}
+                />
+              </div>
+              <div>
+                <label className="input-label" style={{ fontSize: 12 }}>
+                  参考作家 / 作品
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={DEFAULT_REFERENCES}
+                  value={createReferences}
+                  onChange={(e) => setCreateReferences(e.target.value)}
+                  disabled={generating}
+                />
+              </div>
+            </div>
+          )}
+
           <button
             className="btn btn-primary btn-full"
             onClick={handleCreate}
@@ -233,7 +401,7 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
       </div>
 
       {(generating || streamText || logs.length > 0) && (
-        <div style={{ marginTop: 20 }}>
+        <div>
           {generating && (
             <div className="generating-indicator">
               <span className="loading-spinner"></span>
@@ -304,6 +472,185 @@ export default function HomeView({ onAfterGenerated, onAfterCreated }) {
           )}
         </div>
       )}
+
+      {/* v2.23 — Tick 控制台完整迁入。原 工具栏 "Tick 控制台" Tab 已删, 此处是唯一入口。 */}
+      <div className="card" style={{ padding: 0 }}>
+        <div
+          className="card-title"
+          style={{
+            padding: '20px 24px 0',
+            marginBottom: 0,
+          }}
+        >
+          <i className="fas fa-gauge-high"></i> Tick 调度控制台
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 12,
+              color: 'var(--text-muted)',
+              fontWeight: 400,
+            }}
+          >
+            手动推进 / 注入事件 / 维护伏笔
+          </span>
+        </div>
+        <div style={{ padding: '16px 24px 24px' }}>
+          <TickControlPanel onAction={onAfterGenerated} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ActiveNovelOverview({
+  novel,
+  tickStatus,
+  generating,
+  mode,
+  progressPct,
+  statusText,
+  currentStage,
+}) {
+  if (!novel) {
+    return (
+      <div className="card">
+        <div className="card-title">
+          <i className="fas fa-book"></i> 当前作品
+        </div>
+        <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+          尚未选择作品。在下方"创建新小说"开始,或在左侧"我的作品"切换。
+        </div>
+      </div>
+    )
+  }
+
+  const currentTick = tickStatus?.current_tick ?? '—'
+  const isPaused = tickStatus?.is_paused
+  const openLoops = tickStatus?.open_loop_count ?? '—'
+  const charCount = tickStatus?.character_count ?? '—'
+
+  // 当前阶段中文
+  const stageLabel = currentStage ? STAGE_LABELS[currentStage] || currentStage : ''
+
+  return (
+    <div className="card">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              marginBottom: 4,
+            }}
+          >
+            当前作品
+          </div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 20,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <i
+              className="fas fa-book-open"
+              style={{ color: 'var(--accent-purple)' }}
+            ></i>
+            {novel.title || novel.id}
+          </h2>
+          <div
+            style={{
+              marginTop: 8,
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span className="badge badge-purple">tick #{currentTick}</span>
+            <span
+              className="badge"
+              style={{
+                background: isPaused
+                  ? 'rgba(245,158,11,0.15)'
+                  : 'rgba(16,185,129,0.15)',
+                color: isPaused ? 'var(--accent-amber)' : 'var(--accent-emerald)',
+              }}
+            >
+              {isPaused ? '已暂停' : '运行中'}
+            </span>
+            <span className="badge badge-emerald">活跃伏笔 {openLoops}</span>
+            <span className="badge badge-purple">角色 {charCount}</span>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 280 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              marginBottom: 4,
+            }}
+          >
+            {mode === 'continue' ? '续写进度' : '生成进度'}
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              marginBottom: 6,
+              minHeight: 18,
+            }}
+          >
+            {generating
+              ? `${statusText || '生成中…'}${stageLabel ? ` · 当前阶段: ${stageLabel}` : ''}`
+              : '空闲 — 在下方开始创作或续写'}
+          </div>
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: 8,
+              height: 10,
+              overflow: 'hidden',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <div
+              style={{
+                width: `${progressPct}%`,
+                height: '100%',
+                background: generating
+                  ? 'linear-gradient(90deg, var(--accent-purple), var(--accent-cyan))'
+                  : 'transparent',
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </div>
+          <div
+            style={{
+              marginTop: 4,
+              fontSize: 11,
+              color: 'var(--text-muted)',
+              textAlign: 'right',
+            }}
+          >
+            {generating ? `${progressPct}% · 6 阶段管线` : '—'}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -6,15 +6,16 @@ from nf_core.llm_client import llm_client
 from memory_system.models import ActionPlan
 
 SYSTEM_PROMPT = """\
-你是一位资深网文大纲策划师。根据提供的全书梗概、前文内容和当前场景信息，
+你是一位资深网文大纲策划师。根据提供的小说定位、全书梗概、前文内容和当前场景信息，
 为下一节撰写一份《100字行动指南》。
 
 要求：
-1. 明确本节的核心冲突或转折。
-2. 列出需要出场的关键角色（用"【角色名】"标注）。
-3. 列出涉及的关键道具/地点/技能（用"《道具名》"标注）。
-4. 控制在 100 字左右。
-5. 用简洁的叙事指令，而非完整的正文。
+1. 严格贴合"小说标题"暗示的题材、世界观和人物设定，不要写出与标题完全无关的开篇。
+2. 明确本节的核心冲突或转折。
+3. 列出需要出场的关键角色（用"【角色名】"标注）。
+4. 列出涉及的关键道具/地点/技能（用"《道具名》"标注）。
+5. 控制在 100 字左右。
+6. 用简洁的叙事指令，而非完整的正文。
 
 输出格式：
 行动指南: <指南文本>
@@ -31,10 +32,24 @@ class OutlineAgent:
         global_outline: str,
         recent_text: str,
         scene_info: str,
+        novel_title: str = "",
     ) -> ActionPlan:
+        # v2.23 — novel_title 显式入 prompt; 此前 OutlineAgent 完全感知不到
+        # 小说标题, 用户写 "和白毛猫娘结婚" 也会被无视, 第一节直接走 "公交车
+        # 上班族捡到玉佩"。第一节场景 (chapter=1 section=1) 时额外强调,
+        # 因为前文为空, 这是仅有的题材锚点。
+        title_hint = ""
+        if novel_title and novel_title not in ("未命名小说", ""):
+            title_hint = f"【小说标题】《{novel_title}》\n\n"
+            if chapter == 1 and section == 1:
+                title_hint += (
+                    "【特别注意】这是第一节, 前文为空。请严格按照标题暗示的"
+                    "题材 / 世界观 / 人物关系来开篇 — 题材不符的开头会被直接驳回。\n\n"
+                )
         user_prompt = (
+            f"{title_hint}"
             f"当前进度: 第{chapter}章 第{section}节\n\n"
-            f"【全书梗概】\n{global_outline}\n\n"
+            f"【全书梗概】\n{global_outline or '（无, 请基于标题与前文推断）'}\n\n"
             f"【前文与场景】\n{scene_info}\n\n"
             f"【最近正文】\n{recent_text[-2000:]}\n\n"
             "请生成下一节的《100字行动指南》。"

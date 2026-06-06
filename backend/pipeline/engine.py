@@ -19,9 +19,78 @@ from memory_system.models import ActionPlan, Section, ValidationResult
 from graph.knowledge_graph import KnowledgeGraph
 from memory.summary_tree import SummaryTree
 from memory.working_memory import ActiveCharacter, SceneContext, WorkingMemory
+from nf_core.llm_client import llm_client
 from vector.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
+
+
+# v2.23 — 小节标题生成器。
+#   旧实现 Section.title = plan.plan_text[:20] 直接截断"行动指南"指令文,
+#   产物例如 "开篇介绍主角【林风】，一个平凡上班族。在" — 半句话, 显然不是
+#   面向读者的章节标题。
+#   新实现用 LLM 单独总结一行短标题, 失败时回退到正文首句而不是 plan 截断。
+async def _generate_section_title(
+    *,
+    chapter: int,
+    section_no: int,
+    content: str,
+    novel_title: str,
+    plan_text: str,
+) -> str:
+    """生成一个 4-12 字的小节标题。失败时回退到正文首句。"""
+    fallback = _fallback_title_from_content(content) or f"第{section_no}节"
+
+    if not content.strip():
+        return fallback
+
+    title_hint = f"《{novel_title}》" if novel_title and novel_title != "未命名小说" else ""
+    try:
+        resp = await llm_client.chat(
+            system_prompt=(
+                "你是一位小说编辑。请基于本节正文为它取一个 4-12 字的小节标题。\n"
+                "要求:\n"
+                "1. 仅输出标题文字, 不要书名号、引号、章节编号、标点。\n"
+                "2. 不要使用「开篇介绍」「本节讲述」之类的元描述。\n"
+                "3. 与小说题材一致, 避免与正文内容明显冲突。\n"
+            ),
+            user_prompt=(
+                f"{title_hint}第{chapter}章 第{section_no}节\n\n"
+                f"【正文节选】\n{content[:1500]}\n\n"
+                "请输出标题:"
+            ),
+            temperature=0.6,
+            max_tokens=24,
+            agent_id="section_title_generator",
+            priority="optional",
+        )
+        title = resp.content.strip()
+        # 清洗: 去掉 LLM 可能附带的引号 / 书名号 / 多行
+        title = title.split("\n")[0].strip()
+        title = title.strip("《》\"'“”‘’").strip()
+        if 1 <= len(title) <= 20:
+            return title
+    except Exception as e:
+        logger.warning("Section title generation failed (non-fatal): %s", e)
+
+    return fallback
+
+
+def _fallback_title_from_content(content: str) -> str:
+    """正文首句 → 标题; 限 4-14 字。仅在 LLM 失败时调用。"""
+    text = content.strip()
+    if not text:
+        return ""
+    # 第一个标点前的内容
+    for sep in ("。", "！", "？", "!", "?", "\n"):
+        idx = text.find(sep)
+        if 0 < idx <= 30:
+            text = text[:idx]
+            break
+    text = text.strip()
+    if len(text) > 14:
+        text = text[:14]
+    return text
 
 
 class PipelineStage(str, Enum):
@@ -100,7 +169,7 @@ class GenerationPipeline:
         self._event_listeners.append(listener)
 
     async def generate_next_section(
-        self, global_outline: str = ""
+        self, global_outline: str = "", novel_title: str = ""
     ) -> Section:
         """Run the full pipeline to produce the next section."""
 
@@ -118,6 +187,7 @@ class GenerationPipeline:
             global_outline=outline,
             recent_text=recent_text,
             scene_info=scene_info,
+            novel_title=novel_title,
         )
         self._emit(
             PipelineStage.PLANNING,
@@ -127,7 +197,7 @@ class GenerationPipeline:
 
         # Stage 3 & 4: Retrieval + Validation loop
         section = await self._retrieve_validate_generate(
-            plan, outline, recent_text, scene_info
+            plan, outline, recent_text, scene_info, novel_title=novel_title
         )
 
         # Stage 6: State Sync
@@ -175,7 +245,7 @@ class GenerationPipeline:
         return section
 
     async def generate_next_section_stream(
-        self, global_outline: str = ""
+        self, global_outline: str = "", novel_title: str = ""
     ) -> AsyncIterator[str | PipelineEvent]:
         """Streaming variant that yields text chunks and pipeline events."""
 
@@ -195,6 +265,7 @@ class GenerationPipeline:
             global_outline=outline,
             recent_text=recent_text,
             scene_info=scene_info,
+            novel_title=novel_title,
         )
         yield PipelineEvent(
             PipelineStage.PLANNING,
@@ -227,15 +298,25 @@ class GenerationPipeline:
             historical_fragments=context.historical_fragments,
             recent_text=recent_text,
             scene_info=scene_info,
+            novel_title=novel_title,
         ):
             collected_text.append(chunk)
             yield chunk
 
         content = "".join(collected_text)
+        # v2.23 — title 用真正的小标题生成器替换 plan_text[:20] 截断,
+        # 避免出现"开篇介绍主角【林风】，一个平凡上班族。在" 这种被截断的指令文。
+        section_title = await _generate_section_title(
+            chapter=self._current_chapter,
+            section_no=self._current_section,
+            content=content,
+            novel_title=novel_title,
+            plan_text=plan.plan_text,
+        )
         section = Section(
             chapter=self._current_chapter,
             section=self._current_section,
-            title=plan.plan_text[:20],
+            title=section_title,
             content=content,
             word_count=len(content),
         )
@@ -335,6 +416,7 @@ class GenerationPipeline:
         outline: str,
         recent_text: str,
         scene_info: str,
+        novel_title: str = "",
     ) -> Section:
         for attempt in range(settings.max_validation_retries):
             # Stage 3: Retrieval
@@ -367,6 +449,7 @@ class GenerationPipeline:
                 ),
                 recent_text=recent_text,
                 scene_info=scene_info,
+                novel_title=novel_title,
             )
         else:
             self._emit(
@@ -382,6 +465,17 @@ class GenerationPipeline:
             historical_fragments=context.historical_fragments,
             recent_text=recent_text,
             scene_info=scene_info,
+            novel_title=novel_title,
+        )
+        # v2.23 — Section.title 升级: 不再用 plan_text 前 20 字截断 (那是「行动指南」
+        # 的指令文, 例如 "开篇介绍主角【林风】，一个平凡上班族。在" 这种半截句子),
+        # 改为基于正文 + 标题做小标题生成。
+        section.title = await _generate_section_title(
+            chapter=section.chapter,
+            section_no=section.section,
+            content=section.content,
+            novel_title=novel_title,
+            plan_text=plan.plan_text,
         )
         return section
 

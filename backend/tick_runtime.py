@@ -294,7 +294,8 @@ def close_all_runtimes() -> None:
 
 
 # ----- 向后兼容外壳 ---------------------------------------------------------
-# tools/drive_ticks.py / tools/run_ticks.py / 早期 main.py 调用 close_runtime()
+# tools/run_ticks.py / 早期 main.py 调用 close_runtime() (drive_ticks.py 自 v2.22
+# 起已归档到 old/tools/ — 它直接写 _runtime 单例, 与 v2.15+ 注册表实现不兼容)。
 # 旧 API "关闭那一个 runtime" 现在等价于"关闭注册表里所有 runtime"。
 
 def close_runtime() -> None:

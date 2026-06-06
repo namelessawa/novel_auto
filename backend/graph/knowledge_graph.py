@@ -82,6 +82,17 @@ class KnowledgeGraph:
     # -- relation CRUD --------------------------------------------------------
 
     def add_relation(self, relation: Relation) -> None:
+        # v2.22 — networkx.add_edge 会在端点不存在时自动创建空节点, 之后
+        # get_entity / list_entities 拿到没有 name/entity_type 的脏节点会直接
+        # KeyError。这里前置校验, 让 API 层能把它翻成 404 而非把图状态写坏。
+        if relation.source_id not in self._graph:
+            raise KeyError(
+                f"source entity {relation.source_id!r} not found"
+            )
+        if relation.target_id not in self._graph:
+            raise KeyError(
+                f"target entity {relation.target_id!r} not found"
+            )
         self._graph.add_edge(
             relation.source_id,
             relation.target_id,
