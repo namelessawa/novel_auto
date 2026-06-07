@@ -61,9 +61,14 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # ------------------------------------------------------------
 COPY --chown=app:app . /app
 
-# 容器内创建运行期写目录, 提前 chown — 否则首次写 bind mount 时权限会拧巴
-RUN mkdir -p /app/backend/data /app/data /home/app/.cache \
-    && chown -R app:app /app/backend/data /app/data /home/app/.cache
+# 容器内创建运行期写目录, 提前 chown — 否则首次写 bind mount 时权限会拧巴。
+# 注意: /app/results 与 /app/temp 是 core/config.py 模块级 mkdir 的目标,
+# WORKDIR 创的 /app 默认 root:755, 不 chown 到 app 用户的话 mkdir 会 EACCES,
+# 导致 backend/config/settings.py 的 _try_load_main_project_llm() 静默吞异常,
+# 最后 LLM 凭据解析回兜底 (api_key=""), 启动期报 openai Missing credentials。
+RUN mkdir -p /app/backend/data /app/data /home/app/.cache /app/results /app/temp \
+    && chown app:app /app \
+    && chown -R app:app /app/backend/data /app/data /home/app/.cache /app/results /app/temp
 
 USER app
 
