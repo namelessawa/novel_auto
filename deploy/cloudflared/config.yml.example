@@ -1,0 +1,41 @@
+# ============================================================
+# cloudflared tunnel 配置 — 把 127.0.0.1:8762 暴露给公网
+# 安装后落地: /etc/cloudflared/config.yml  (权限 644, owner root)
+# 凭据文件:   /etc/cloudflared/<TUNNEL_UUID>.json (权限 600)
+# ============================================================
+
+# >>> 改成你跑 `cloudflared tunnel create novel-agent` 拿到的 UUID <<<
+tunnel: 00000000-0000-0000-0000-000000000000
+
+# >>> 改成对应的凭据 JSON 路径 <<<
+credentials-file: /etc/cloudflared/00000000-0000-0000-0000-000000000000.json
+
+# 启用 metrics (Cloudflare 自带 dashboard 不依赖, 这是本地 prometheus 抓的)
+metrics: 127.0.0.1:30000
+
+# 启动后立即注册, 5 秒断线检测 — 利于 systemd 状态可读性
+no-autoupdate: true
+grace-period: 30s
+
+# ---------- 路由 ----------
+ingress:
+  # 主入口 — 改成你在 Cloudflare DNS 里创建的 CNAME
+  - hostname: api.novel.your-domain.com
+    service: http://127.0.0.1:8762
+    originRequest:
+      # SSE / 长连接关键: backend 的 /api/generate/stream 用 sse-starlette
+      # 默认 30s 会被 CF 干掉, 拉到 1h
+      connectTimeout: 30s
+      tlsTimeout: 10s
+      tcpKeepAlive: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+      noTLSVerify: false
+      noHappyEyeballs: false
+      # 关键: 关闭 chunked encoding 缓冲, 否则 SSE 会被攒着发
+      disableChunkedEncoding: false
+      # HTTP/2 origin 推荐打开 (减少 head-of-line 阻塞)
+      http2Origin: true
+
+  # 兜底 — 凡是不匹配上面的, 返回 404
+  - service: http_status:404
