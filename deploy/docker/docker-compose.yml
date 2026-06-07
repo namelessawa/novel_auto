@@ -1,0 +1,91 @@
+# ============================================================
+# 后端 + Cloudflare Tunnel 一站式编排
+#
+# 用法 (在项目根, 或在 deploy/docker/ 目录):
+#   docker compose -f deploy/docker/docker-compose.yml --env-file .env up -d --build
+#   docker compose -f deploy/docker/docker-compose.yml logs -f
+#   docker compose -f deploy/docker/docker-compose.yml down
+#
+# 数据卷:bind mount 在 项目根/data/ 下, 备份只需 tar 这一个目录
+# ============================================================
+
+name: novel-auto
+
+services:
+  backend:
+    image: novel-auto-backend:latest
+    container_name: novel-auto-backend
+    build:
+      # context 指向项目根 (compose 文件在 deploy/docker/, 上两级)
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    restart: unless-stopped
+
+    # ----- 网络 -----
+    # 只把 8762 暴露给宿主机本机, 公网入口走 cloudflared 容器, 不开 0.0.0.0
+    ports:
+      - "127.0.0.1:8762:8762"
+    networks:
+      - novel
+
+    # ----- 配置 -----
+    env_file:
+      # 项目根 .env — 后端读 DEEPSEEK_API_KEY 等
+      - ../../.env
+
+    volumes:
+      # 业务数据 (tick_state / chroma / sqlite / narratives) — 必须持久化
+      - ../../data/backend:/app/backend/data
+      - ../../data/storage:/app/data
+      # HF / sentence-transformers 模型缓存 — 持久化避免每次 rebuild 重下 150 MB
+      - ../../data/hf_cache:/home/app/.cache
+      # config.json 热改:bind mount + ro。改完容器内代码会重新 _load_config。
+      - ../../config.json:/app/config.json:ro
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8762/api/health',timeout=5).status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+
+    # ----- 资源上限 (按宿主机调整) -----
+    # mem_limit: 4g
+    # cpus: 2.0
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: novel-auto-cloudflared
+    restart: unless-stopped
+
+    # Token 模式 — 在 CF 控制台 Zero Trust → Networks → Tunnels 创建,
+    # 拿到的 token 写到 .env 的 CLOUDFLARED_TOKEN。路由 (hostname → service)
+    # 在 CF 网页配, 不需要本地 config.yml。
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    env_file:
+      - ../../.env
+
+    networks:
+      - novel
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+networks:
+  novel:
+    name: novel-auto-net
+    driver: bridge

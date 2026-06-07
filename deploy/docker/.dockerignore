@@ -1,0 +1,61 @@
+# ============================================================
+# Docker build 上下文白名单 — 让 image 尽量小、build 尽量快
+# 路径相对 build context (项目根)
+# ============================================================
+
+# VCS / IDE
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+
+# Python 运行期 / 缓存
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+*.egg-info
+
+# 前端 (Vercel 单独部署, 镜像里完全用不到)
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# 旧版归档 — 项目里有约 200 MB, 不进镜像
+old
+
+# 业务数据 — 全部走 volume bind mount, 不能 baked into image
+# 否则 image rebuild 会丢历史 tick
+backend/data
+data
+
+# 本地密钥 / 配置 — 走 env_file + bind mount
+.env
+.env.*
+!.env.example
+config.json
+
+# 构建产物 / 临时
+*.log
+*.sqlite
+*.sqlite3-journal
+*.swp
+.DS_Store
+
+# 文档 / Markdown (除项目根 README, 但 deploy/ 子文档可以也不进, 镜像里不需要)
+deploy/docker/README.md
+deploy/**/README.md
+docs
+
+# 测试与开发依赖在 Dockerfile 不装, requirements-dev.txt 也不进
+# (Dockerfile 只 pip install requirements.txt)
+requirements-dev.txt
