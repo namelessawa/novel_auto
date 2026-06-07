@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 启动后端 + 前端 dev 服务器
-# 后端: http://127.0.0.1:8762  前端: http://127.0.0.1:3143/nw/
+# 后端: http://127.0.0.1:8762  前端: http://127.0.0.1:3143/
 
 set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -16,6 +16,6 @@ trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true" INT TERM EXIT
 
 echo
 echo "Backend  PID=$BACKEND_PID  → http://127.0.0.1:8762"
-echo "Frontend PID=$FRONTEND_PID  → http://127.0.0.1:3143/nw/"
+echo "Frontend PID=$FRONTEND_PID  → http://127.0.0.1:3143/"
 echo
 wait

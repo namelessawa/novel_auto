@@ -1,0 +1,62 @@
+[Unit]
+Description=AI Novel Agent Backend (FastAPI tick runtime)
+Documentation=https://github.com/your-org/novel_auto/tree/main/deploy/backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# >>> 修改为运行用户/组 <<<
+# 推荐建一个无 shell 的服务账号: useradd -r -s /usr/sbin/nologin -d /opt/novel_auto novel
+User=novel
+Group=novel
+
+# >>> 项目根目录 (含 backend/ / frontend/ / config.json / .env) <<<
+WorkingDirectory=/opt/novel_auto
+
+# 启动命令 — 用项目根的 run.py, 自带 sys.path 处理 + 读 settings.host/port
+# 想换端口请改 .env 里的 AGENT_PORT 或 config.json.server.backend_port
+ExecStart=/opt/novel_auto/.venv/bin/python -u run.py --host 127.0.0.1 --port 8762
+
+# 关停信号: uvicorn 收到 SIGTERM 后会执行 FastAPI shutdown 钩子(关闭 TickDB)
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+Restart=on-failure
+RestartSec=5
+
+# 日志走 journald — 用 journalctl -u novel-agent -f 看
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=novel-agent
+
+# 关键环境变量 — 见 env.production.example
+EnvironmentFile=/opt/novel_auto/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+# ---------- 安全加固 ----------
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+# 只允许写入数据目录和缓存。如果你把 data/chroma 放别处, 这里也要补上。
+ReadWritePaths=/opt/novel_auto/backend/data
+ReadWritePaths=/opt/novel_auto/data
+
+# ---------- 资源上限 (按你的服务器调整) ----------
+# 9 Agent + chromadb + sentence-transformers 内存敏感
+LimitNOFILE=65536
+# MemoryMax=4G          # 取消注释以限制内存
+# CPUQuota=200%         # 取消注释以限制 CPU (2 核)
+
+[Install]
+WantedBy=multi-user.target

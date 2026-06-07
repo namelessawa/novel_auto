@@ -1,0 +1,41 @@
+[Unit]
+Description=Cloudflare Tunnel for novel-agent
+Documentation=https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/
+After=network-online.target novel-agent.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+
+# cloudflared 官方包默认装到 /usr/local/bin (deb) 或 /usr/bin (rpm)
+# 用 sh -c 让 systemd 找到 PATH 里的 cloudflared
+ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel --config /etc/cloudflared/config.yml run
+
+Restart=on-failure
+RestartSec=5s
+
+# 健康: cloudflared 自己会 reconnect, 我们只在崩溃时重启
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+# 不需要 root, 但需要读 /etc/cloudflared/<uuid>.json
+# 默认用 root 跑(凭据 600 root:root)。想下放权限可:
+#   sudo useradd -r -s /usr/sbin/nologin cloudflared
+#   chown cloudflared:cloudflared /etc/cloudflared/<uuid>.json
+# 然后取消下面两行注释
+# User=cloudflared
+# Group=cloudflared
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/cloudflared
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cloudflared
+
+[Install]
+WantedBy=multi-user.target
