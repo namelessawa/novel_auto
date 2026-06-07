@@ -88,26 +88,61 @@ PROVIDERS = {
 }
 
 
+# 备用 provider 搜索顺序 — 当 active provider 缺 api_key 时, 按这个顺序找
+# 第一个 endpoint + model + api_key 都齐的 provider 顶上。
+_FALLBACK_ORDER = ("deepseek", "mimo", "custom")
+
+
 def get_active_llm_config() -> dict:
     """
     返回当前生效的 LLM 配置。
 
-    根据 `LLM_PROVIDER` 选择对应提供商；若所选提供商缺少关键字段，回退到 DeepSeek
-    （保持向后兼容）。
+    选择优先级:
+      1. ``LLM_PROVIDER`` 指定的 provider, 且 base_url + model + api_key 全齐
+      2. 否则按 _FALLBACK_ORDER 顺序找第一个齐的 provider (warn log)
+      3. 都没齐 → 保持 active 为 LLM_PROVIDER 指定值, 让上游 OpenAI client
+         报清晰的 "Missing credentials" 而不是这里掩盖错误
 
     Returns:
         dict: 包含 provider/label/api_key/base_url/model/max_tokens/temperature/timeout
     """
-    provider = LLM_PROVIDER if LLM_PROVIDER in PROVIDERS else "deepseek"
-    cfg = PROVIDERS.get(provider, PROVIDERS["deepseek"])
+    import logging
 
-    if not cfg.get("base_url") or not cfg.get("model"):
-        # 配置不完整 → 回退到 DeepSeek
-        provider = "deepseek"
-        cfg = PROVIDERS["deepseek"]
+    requested = LLM_PROVIDER if LLM_PROVIDER in PROVIDERS else "deepseek"
+    cfg = PROVIDERS.get(requested, PROVIDERS["deepseek"])
+    active = requested
+
+    def _complete(c: dict) -> bool:
+        return bool(c.get("api_key") and c.get("base_url") and c.get("model"))
+
+    if not _complete(cfg):
+        # 找一个完整的 fallback provider
+        for name in _FALLBACK_ORDER:
+            fb = PROVIDERS.get(name) or {}
+            if name != active and _complete(fb):
+                logging.getLogger(__name__).warning(
+                    "LLM_PROVIDER=%s 配置不完整(api_key/base_url/model 缺一), "
+                    "自动 fallback 到 %s。要消除此警告: 在 .env 填齐该 provider 的凭据, "
+                    "或把 LLM_PROVIDER 改成 %s。",
+                    requested,
+                    name,
+                    name,
+                )
+                active = name
+                cfg = fb
+                break
+        # 全员都不齐: 保留原 cfg, 让 OpenAI client 给出 Missing credentials, 此处不掩盖
+        else:
+            if not _complete(cfg):
+                logging.getLogger(__name__).warning(
+                    "所有 provider (deepseek/mimo/custom) 都缺凭据。"
+                    ".env 至少填一个 *_API_KEY。当前 LLM_PROVIDER=%s 将原样返回, "
+                    "上游 LLM 调用会报 Missing credentials。",
+                    requested,
+                )
 
     return {
-        "provider": provider,
+        "provider": active,
         "label": cfg["label"],
         "api_key": cfg["api_key"],
         "base_url": cfg["base_url"],
