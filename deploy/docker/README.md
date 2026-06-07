@@ -271,7 +271,58 @@ docker builder prune -af    # 清构建缓存 (rebuild 会重做, 但能省 ~5 G
 
 ---
 
-## 7. 排错速查
+## 7. 镜像源 — 默认就是国内源
+
+为了避免 `docker.io` 拉镜像超时,这套 Docker 方案**默认**走国内源:
+
+| 资源 | 默认源 | Dockerfile / compose 里的变量 |
+|------|--------|-------------------------------|
+| `python:3.11-slim-bookworm` 基础镜像 | `docker.m.daocloud.io/library/...` | `REGISTRY` build arg |
+| `cloudflare/cloudflared` 镜像 | `docker.m.daocloud.io/cloudflare/...` | `CLOUDFLARED_IMAGE` env |
+| PyPI(pip install torch / 等等) | `pypi.tuna.tsinghua.edu.cn`(清华) | `PIP_INDEX_URL` build arg |
+| Debian apt(build-essential / git / curl) | `mirrors.tuna.tsinghua.edu.cn`(清华) | `APT_MIRROR` build arg |
+
+这些**不用改任何东西** — `docker compose up --build` 直接生效。
+
+### 想切换 / 走官方源
+
+打开 `.env`(项目根那个),把这几行注释解开,改值:
+
+```bash
+# 走官方源
+REGISTRY=
+PIP_INDEX_URL=https://pypi.org/simple
+APT_MIRROR=deb.debian.org
+CLOUDFLARED_IMAGE=cloudflare/cloudflared:latest
+
+# 换成阿里云
+PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+APT_MIRROR=mirrors.aliyun.com
+```
+
+改完**必须** `--build` 才能让 ARG 生效(env / runtime 变化不用):
+
+```powershell
+docker compose -f deploy/docker/docker-compose.yml --env-file .env up -d --build
+```
+
+### 默认 daocloud 挂了怎么办
+
+国内 docker hub 镜像更新换代频繁。如果 `docker.m.daocloud.io` 拉失败,
+试这些(`.env` 里改 `REGISTRY` 和 `CLOUDFLARED_IMAGE`):
+
+```
+docker.1panel.live
+dockerhub.icu
+hub.uuuadc.top
+docker.unsee.tech
+```
+
+完整备选清单见 `deploy/docker/env.production.example` 末尾。
+
+---
+
+## 8. 排错速查
 
 | 现象 | 排查 |
 |------|------|
@@ -288,7 +339,7 @@ docker builder prune -af    # 清构建缓存 (rebuild 会重做, 但能省 ~5 G
 
 ---
 
-## 8. 安全提醒
+## 9. 安全提醒
 
 - ✅ 后端只 bind `127.0.0.1:8762`(compose 已经这么写),不在公网 8762
 - ✅ Cloudflared token 走 `.env`,**已经在** `.gitignore` 里
@@ -300,7 +351,7 @@ docker builder prune -af    # 清构建缓存 (rebuild 会重做, 但能省 ~5 G
   bind mount 写到 Windows 盘符路径(`E:\...`)也支持,但 I/O 性能差 ~3 倍。
   推荐让 `data/` 留在 Windows 盘符上(项目根),性能够用,备份方便。
 
-## 9. 不需要的就别开
+## 10. 不需要的就别开
 
 cloudflared 容器跑起来就在产生流量(心跳 + DNS 注册)。如果暂时不想公网暴露,
 单独停掉它即可:

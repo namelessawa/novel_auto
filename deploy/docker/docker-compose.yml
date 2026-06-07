@@ -19,6 +19,11 @@ services:
       # context 指向项目根 (compose 文件在 deploy/docker/, 上两级)
       context: ../..
       dockerfile: deploy/docker/Dockerfile
+      args:
+        # 镜像源 — 国内默认走 daocloud + 清华 PyPI + 清华 apt, .env 可覆盖
+        REGISTRY: ${REGISTRY:-docker.m.daocloud.io}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+        APT_MIRROR: ${APT_MIRROR:-mirrors.tuna.tsinghua.edu.cn}
     restart: unless-stopped
 
     # ----- 网络 -----
@@ -60,7 +65,8 @@ services:
         max-file: "5"
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    # 走镜像源拉 cloudflared/cloudflared, 国内 docker.io 经常超时
+    image: ${CLOUDFLARED_IMAGE:-docker.m.daocloud.io/cloudflare/cloudflared:latest}
     container_name: novel-auto-cloudflared
     restart: unless-stopped
 

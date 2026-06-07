@@ -3,15 +3,33 @@
 # 无限小说生成系统 — 后端镜像
 # 基础:debian-slim + python 3.11
 # 跨平台:linux/amd64 + linux/arm64 (Apple Silicon / Windows ARM)
+#
+# 镜像源参数 (从 docker-compose.yml build.args 注入, 都能 .env 覆盖):
+#   REGISTRY        — docker hub 镜像源前缀, 默认 daocloud
+#   PIP_INDEX_URL   — PyPI 源, 默认清华
+#   APT_MIRROR      — debian apt 源主机, 默认清华
+# 想关掉(走官方 docker.io / pypi.org / deb.debian.org)就在 .env 里把这三个置空:
+#   REGISTRY=         PIP_INDEX_URL=https://pypi.org/simple   APT_MIRROR=deb.debian.org
 # ============================================================
-FROM python:3.11-slim-bookworm AS base
+ARG REGISTRY=docker.m.daocloud.io
+FROM ${REGISTRY}/library/python:3.11-slim-bookworm AS base
+
+ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG APT_MIRROR=mirrors.tuna.tsinghua.edu.cn
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
+    PIP_INDEX_URL=${PIP_INDEX_URL} \
     HF_HOME=/home/app/.cache/huggingface \
     SENTENCE_TRANSFORMERS_HOME=/home/app/.cache/sentence_transformers
+
+# bookworm 用 deb822 新格式 sources (/etc/apt/sources.list.d/debian.sources),
+# 把 deb.debian.org 整体替换为指定 APT_MIRROR 即可同时覆盖主源 + security。
+RUN if [ -n "$APT_MIRROR" ] && [ "$APT_MIRROR" != "deb.debian.org" ]; then \
+        sed -i "s|deb.debian.org|${APT_MIRROR}|g" /etc/apt/sources.list.d/debian.sources; \
+    fi
 
 # tini 作 PID1 处理信号; 其余是 sentence-transformers / chromadb 编译需要的工具链
 # (rust/cargo 给 tokenizers, gcc 给 chroma 的本地扩展)
@@ -31,6 +49,7 @@ WORKDIR /app
 
 # ------------------------------------------------------------
 # 依赖层 — 单独 COPY requirements 走 BuildKit 缓存
+# PIP_INDEX_URL 从环境变量继承(ENV 已设);要在容器运行时也用同一个源,保留在 ENV 里
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
