@@ -61,7 +61,7 @@ start.bat                    # Windows
 
 # 单独启动
 python run.py --reload                            # 后端 → http://127.0.0.1:8762
-cd frontend && npm run dev                        # 前端 → http://127.0.0.1:3143/nw/
+cd frontend && npm run dev                        # 前端 → http://127.0.0.1:3143/
 
 # 冷启动一个新世界
 python -m backend.bootstrap_prompts --novel-id mountain --seed "..."
@@ -93,7 +93,7 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term-missing
 
 ```bash
 cd frontend && npm run build      # 产物 → frontend/dist/
-python run.py                     # FastAPI 自动 mount frontend/dist 到 /nw/
+python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 ```
 
 ## 关键路径
@@ -112,7 +112,7 @@ python run.py                     # FastAPI 自动 mount frontend/dist 到 /nw/
 | `core/config.py` | 多 provider 路由,backend 通过 importlib 加载 |
 | `memory_system/models.py` | Pydantic v2 tick 契约 + 遗留 dataclass |
 | `evaluation/continuity_v2.py` | ConsistencyGuardian 复用的连贯性评估器 |
-| `frontend/vite.config.js` | base=/nw/,/api → 8762 proxy(host=127.0.0.1 强制 IPv4) |
+| `frontend/vite.config.js` | base=/(可通过 VITE_BASE_PATH 改),/api → 8762 proxy(host=127.0.0.1 强制 IPv4) |
 | `frontend/src/` | React 18 + react-force-graph-2d + react-markdown |
 | `run.py` | 根级启动入口,等价 uvicorn backend.main:app --app-dir backend |
 

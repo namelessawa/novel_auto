@@ -432,7 +432,7 @@ start.bat
 # 后端 (FastAPI, http://127.0.0.1:8762)
 python run.py --reload
 
-# 前端 (Vite, http://127.0.0.1:3143/nw/)
+# 前端 (Vite, http://127.0.0.1:3143/)
 cd frontend && npm run dev
 ```
 
@@ -463,10 +463,11 @@ curl http://127.0.0.1:8762/api/tick/history?last_n=20
 
 ```bash
 cd frontend && npm run build && cd ..    # 产物在 frontend/dist/
-python run.py                            # FastAPI 自动 mount frontend/dist 到 /nw/
+python run.py                            # FastAPI 把 frontend/dist 挂到根路径
 ```
 
-访问 `http://<host>:8762/nw/` 即可。`deploy/` 下提供了 nginx 与 systemd 样例。
+访问 `http://<host>:8762/` 即可。前后端分离方案 (Linux + systemd + Cloudflare
+Tunnel + Vercel) 见 `deploy/README.md`。
 
 ---
 

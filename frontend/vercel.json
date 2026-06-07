@@ -3,13 +3,6 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    {
-      "source": "/nw",
-      "destination": "/nw/index.html"
-    },
-    {
-      "source": "/nw/:match*",
-      "destination": "/nw/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

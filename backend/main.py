@@ -9,7 +9,6 @@ import sys
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -157,24 +156,21 @@ async def health() -> dict:
 # 前端静态资源
 # ---------------------------------------------------------------------------
 # 优先级:
-#   1. 若 frontend/dist 存在(npm run build 产物) → 由 FastAPI 直接 serve;
-#      根路径 / 重定向到 /nw/(Vite base);未匹配的前端路由回落到 index.html。
-#   2. 否则给一个简短提示 JSON,提醒先 build 或开 Vite dev server。
+#   1. 若 frontend/dist 存在(npm run build 产物) → 由 FastAPI 直接 serve 在根
+#      路径 /;StaticFiles(html=True) 会自动把 / 解析到 index.html。
+#   2. 否则给一个简短提示 JSON。
+#
+# 注意 mount 顺序: 必须在所有 router 之后注册, 否则 / mount 会覆盖 /api/*。
+# 此处 include_router(...) 都在文件上半部分, 所以这里 mount 是安全的。
 
 _FRONTEND_DIST = os.path.join(_PROJECT_ROOT, "frontend", "dist")
-_VITE_BASE = "/nw"
 
 if os.path.isdir(_FRONTEND_DIST):
-    # /nw/ 下挂载 SPA 静态资源(与 vite.config.js 的 base 对齐)
     app.mount(
-        f"{_VITE_BASE}/",
+        "/",
         StaticFiles(directory=_FRONTEND_DIST, html=True),
         name="frontend",
     )
-
-    @app.get("/")
-    async def _root_redirect() -> FileResponse:
-        return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))
 
 else:
 
