@@ -64,9 +64,10 @@ class ProgressUpdater:
         )
 
 
-# Executor 签名: (updater, novel_id) → 最终结果 dict (会合并进 Task.result_*)。
+# Executor 签名: (updater, user_id, novel_id) → 最终结果 dict (会合并进 Task.result_*)。
 # 必须可取消 — 内部应捕获 CancelledError 做清理后再 raise。
-Executor = Callable[[ProgressUpdater, str], Awaitable[dict[str, Any]]]
+# v2.26 — 第 2 参数从 novel_id 改为 (user_id, novel_id) 两个位置参数。
+Executor = Callable[[ProgressUpdater, str, str], Awaitable[dict[str, Any]]]
 
 
 class _TaskRecord:
@@ -94,6 +95,7 @@ class TaskManager:
     async def create_task(
         self,
         *,
+        user_id: str,
         novel_id: str,
         novel_title: str,
         kind: TaskKind,
@@ -106,14 +108,16 @@ class TaskManager:
     ) -> Task:
         """创建并立即启动一个后台任务。
 
-        同 novel + 同 kind 已存在 running/queued 时抛 TaskConflict, 路由层
-        转 409。
+        v2.26 — ``user_id`` 必填。同 user + 同 novel + 同 kind 已存在
+        running/queued 时抛 TaskConflict (路由层转 409)。跨用户的同 novel_id
+        不冲突 (multi-tenant 命名空间已隔离)。
         """
         async with self._lock:
             for rec in self._records.values():
                 snap = rec.snapshot
                 if (
-                    snap.novel_id == novel_id
+                    snap.user_id == user_id
+                    and snap.novel_id == novel_id
                     and snap.kind == kind
                     and snap.status in ("queued", "running")
                 ):
@@ -125,6 +129,7 @@ class TaskManager:
             now = Task.now_iso()
             snapshot = Task(
                 id=task_id,
+                user_id=user_id,
                 novel_id=novel_id,
                 novel_title=novel_title,
                 kind=kind,
@@ -143,7 +148,7 @@ class TaskManager:
 
         # 启动 asyncio task — 不放在 lock 内, 避免 executor 调 update 时死锁
         record.asyncio_task = asyncio.create_task(
-            self._run(task_id, executor, novel_id),
+            self._run(task_id, executor, user_id, novel_id),
             name=f"task-{task_id}",
         )
         return record.snapshot
@@ -159,6 +164,17 @@ class TaskManager:
 
     def list_for_novel(self, novel_id: str) -> list[Task]:
         return [r.snapshot for r in self._records.values() if r.snapshot.novel_id == novel_id]
+
+    def list_for_user(self, user_id: str) -> list[Task]:
+        """v2.26 — 仅返回该用户的任务 (含历史/终态)。"""
+        return [r.snapshot for r in self._records.values() if r.snapshot.user_id == user_id]
+
+    def list_for_user_and_novel(self, user_id: str, novel_id: str) -> list[Task]:
+        return [
+            r.snapshot
+            for r in self._records.values()
+            if r.snapshot.user_id == user_id and r.snapshot.novel_id == novel_id
+        ]
 
     # ------------------------------------------------------------------
     # 取消
@@ -197,7 +213,9 @@ class TaskManager:
     # 内部 — executor 包装
     # ------------------------------------------------------------------
 
-    async def _run(self, task_id: str, executor: Executor, novel_id: str) -> None:
+    async def _run(
+        self, task_id: str, executor: Executor, user_id: str, novel_id: str
+    ) -> None:
         rec = self._records.get(task_id)
         if rec is None:
             logger.error("_run: task %s vanished before start", task_id)
@@ -206,7 +224,7 @@ class TaskManager:
         self._set_status(task_id, "running", started_at=Task.now_iso())
         updater = ProgressUpdater(self, task_id)
         try:
-            result = await executor(updater, novel_id)
+            result = await executor(updater, user_id, novel_id)
             self._mark_completed(task_id, result)
         except asyncio.CancelledError:
             logger.info("Task %s cancelled", task_id)

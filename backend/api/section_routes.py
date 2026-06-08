@@ -1,4 +1,4 @@
-"""v2.24 — tick 驱动的节级 API。
+"""v2.24 — tick 驱动的节级 API (v2.26 加 user 隔离)。
 
 | Method | Path                                | 用途                                |
 |--------|-------------------------------------|-------------------------------------|
@@ -6,36 +6,23 @@
 | GET    | /api/section/list                   | 列出当前活跃 novel 的所有节            |
 | GET    | /api/section/list/{novel_id}        | 列出指定 novel 的所有节                |
 
-executor 控制流
----------------
-1. 解析 next_position (chapter, section_no) — SectionStore 持有
-2. 循环推 tick:
-   2.1 await orchestrator.run_tick() → 拿 TickSummary
-   2.2 读 orchestrator.last_narrator_output:
-       - should_narrate=True  → 累积 narrative_text
-       - should_narrate=False → 加入 SilentTickRecord
-   2.3 updater.set(current_words, tick_count, current_tick)
-   2.4 SectionCloser.decide_close → break if 切节
-3. SectionCloser.close_section → 终稿 + 标题 + 补叙
-4. SectionStore.append(TickSection) — JSONL 落盘
-5. 自动小说命名 — 若仍是"未命名小说"用首节内容补标题
+所有端点要求 ``Depends(get_current_user)`` —  novel_manager + runtime
+都按 user_id 隔离。
 """
 
 from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 import novel_manager
 from agents.section_closer import (
     SectionCloser,
     SilentTickRecord,
-    section_max_ticks,
-    section_min_words,
-    section_target_words,
 )
+from auth import User, get_current_user
 from sections.section_store import (
     SectionStore,
     TickSection,
@@ -47,7 +34,7 @@ from tasks.task_manager import (
     TaskKind,
     get_task_manager,
 )
-from tick_runtime import get_runtime
+from tick_runtime import get_active_novel_id, get_runtime
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +45,6 @@ router = APIRouter(prefix="/api/section", tags=["section"])
 
 
 class GenerateSectionRequest(BaseModel):
-    """续写下一节请求。
-
-    novel_id 不传时, 取 routes._active_novel_id (当前活跃小说)。
-    """
-
     novel_id: str | None = Field(default=None, description="目标 novel; 不传走当前活跃")
     kind: TaskKind = Field(default="section_generation", description="任务类型")
 
@@ -71,29 +53,24 @@ class GenerateSectionRequest(BaseModel):
 
 
 @router.post("/generate")
-async def generate_section_task(req: GenerateSectionRequest):
-    """创建一个"续写下一节"后台任务, 立即返回任务快照。
-
-    前端用返回的 task_id 订阅 /api/tasks/{id}/stream 看进度, 最终读
-    /api/section/list 拿到新节内容。
-    """
-    novel_id = req.novel_id or _resolve_active_novel_id()
+async def generate_section_task(
+    req: GenerateSectionRequest, current_user: User = Depends(get_current_user)
+):
+    novel_id = req.novel_id or get_active_novel_id(current_user.id)
     if not novel_id:
         raise HTTPException(status_code=400, detail="未指定 novel_id 且无活跃小说")
 
-    novel = novel_manager.get_novel(novel_id)
+    novel = novel_manager.get_novel(current_user.id, novel_id)
     if novel is None:
         raise HTTPException(status_code=404, detail=f"novel {novel_id!r} 不存在")
     novel_title = (novel.get("title") or "").strip()
 
-    # 预校验 — runtime 必须能起 (避免在 task 内部抛失败态)
     try:
-        get_runtime(novel_id)
+        get_runtime(current_user.id, novel_id)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"runtime init failed: {e}")
 
-    # 注册 SectionStore (如尚未注册)
-    data_dir = novel_manager.get_novel_data_dir(novel_id)
+    data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
     store = get_section_store(novel_id, data_dir=data_dir)
     next_chapter, next_section = store.next_position()
 
@@ -109,6 +86,7 @@ async def generate_section_task(req: GenerateSectionRequest):
     mgr = get_task_manager()
     try:
         snap = await mgr.create_task(
+            user_id=current_user.id,
             novel_id=novel_id,
             novel_title=novel_title,
             kind=req.kind,
@@ -121,40 +99,33 @@ async def generate_section_task(req: GenerateSectionRequest):
         )
     except TaskConflict as e:
         raise HTTPException(status_code=409, detail=str(e))
+    novel_manager.touch_last_accessed(current_user.id, novel_id)
     return snap.model_dump(mode="json")
 
 
 @router.get("/list")
-async def list_sections_active():
-    """列出活跃 novel 的全部 tick 驱动节。"""
-    novel_id = _resolve_active_novel_id()
+async def list_sections_active(current_user: User = Depends(get_current_user)):
+    novel_id = get_active_novel_id(current_user.id)
     if not novel_id:
         raise HTTPException(status_code=400, detail="无活跃小说")
-    return _dump_sections(novel_id)
+    return _dump_sections(current_user.id, novel_id)
 
 
 @router.get("/list/{novel_id}")
-async def list_sections_for_novel(novel_id: str):
-    novel = novel_manager.get_novel(novel_id)
+async def list_sections_for_novel(
+    novel_id: str, current_user: User = Depends(get_current_user)
+):
+    novel = novel_manager.get_novel(current_user.id, novel_id)
     if novel is None:
         raise HTTPException(status_code=404, detail=f"novel {novel_id!r} 不存在")
-    return _dump_sections(novel_id)
+    return _dump_sections(current_user.id, novel_id)
 
 
 # ---- 内部辅助 ---------------------------------------------------------------
 
 
-def _resolve_active_novel_id() -> str | None:
-    """从 routes 模块拿当前活跃 novel_id (循环 import 用延迟 import 防)。"""
-    try:
-        from api import routes as _routes
-        return _routes._active_novel_id
-    except Exception:
-        return None
-
-
-def _dump_sections(novel_id: str) -> dict:
-    data_dir = novel_manager.get_novel_data_dir(novel_id)
+def _dump_sections(user_id: str, novel_id: str) -> dict:
+    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
     store = get_section_store(novel_id, data_dir=data_dir)
     items = store.list_all()
     return {
@@ -172,10 +143,10 @@ def _make_section_executor(
     chapter: int,
     section_no: int,
 ):
-    """工厂 — 把 closer / store / 章节号封进闭包, 返回符合 Task Executor 签名的协程。"""
+    """v2.26 — executor 签名增加 user_id (位置参数 2)。"""
 
-    async def _executor(updater: ProgressUpdater, novel_id: str) -> dict:
-        runtime = get_runtime(novel_id)
+    async def _executor(updater: ProgressUpdater, user_id: str, novel_id: str) -> dict:
+        runtime = get_runtime(user_id, novel_id)
         orch = runtime.orchestrator
 
         tick_start = orch.current_tick
@@ -193,14 +164,12 @@ def _make_section_executor(
         )
 
         while True:
-            # 推一个 tick (run_tick 内部已有 asyncio.Lock 保证序列化)
             tick_summary = await orch.run_tick()
             tick_count += 1
             current_tick = tick_summary.tick
 
             no = orch.last_narrator_output
             if no is None:
-                # 极端 fallback — orchestrator 未设此字段 (不应发生)
                 silent_records.append(
                     SilentTickRecord(
                         tick=current_tick,
@@ -215,7 +184,8 @@ def _make_section_executor(
                 silent_records.append(
                     SilentTickRecord(
                         tick=current_tick,
-                        summary=no.tick_summary_for_record or f"tick {current_tick}: 平静.",
+                        summary=no.tick_summary_for_record
+                        or f"tick {current_tick}: 平静.",
                         skip_reason=no.skip_reason,
                     )
                 )
@@ -240,7 +210,6 @@ def _make_section_executor(
             if decision.should_close:
                 break
 
-        # 切节 — 生成补叙 + 标题 + 终稿
         updater.set(last_message="切节中: 生成补叙 + 标题")
         out = await closer.close_section(
             narrative_text=accumulated_text,
@@ -250,7 +219,6 @@ def _make_section_executor(
             novel_title=novel_title,
         )
 
-        # 落盘 TickSection
         tick_end = orch.current_tick
         section_record = TickSection(
             chapter=chapter,
@@ -267,16 +235,23 @@ def _make_section_executor(
         )
         store.append(section_record)
 
-        # 首节自动命名 — 若 novel 标题仍是 "未命名小说" 且这是第 1 章第 1 节
         if (
             chapter == 1
             and section_no == 1
             and novel_title in ("", "未命名小说")
         ):
             try:
-                _auto_rename_novel(novel_id, content=out.final_content)
+                _auto_rename_novel(user_id, novel_id, content=out.final_content)
             except Exception as e:
-                logger.warning("auto rename novel '%s' failed (non-fatal): %s", novel_id, e)
+                logger.warning(
+                    "auto rename novel '%s' failed (non-fatal): %s", novel_id, e
+                )
+
+        # 写入完成 → 刷新 last_accessed_at
+        try:
+            novel_manager.touch_last_accessed(user_id, novel_id)
+        except Exception as e:
+            logger.warning("touch_last_accessed failed: %s", e)
 
         updater.set(
             last_message=(
@@ -301,14 +276,7 @@ def _count_words(text: str) -> int:
     return sum(1 for ch in text if not ch.isspace())
 
 
-def _auto_rename_novel(novel_id: str, content: str) -> None:
-    """首节自动命名 — 取前 200 字让 LLM 起 4-8 字小说名。
-
-    仅当 novel.title 仍是 "未命名小说" 时调用 (调用方已校验)。
-    与 routes._auto_generate_title 复用同思路, 但走独立路径 — 避免 legacy
-    pipeline 状态泄漏到 tick 驱动节路径。
-    """
-    # 暂用确定性兜底: 取首句前 8 字。 LLM 命名 P3 / 后续可补。
+def _auto_rename_novel(user_id: str, novel_id: str, content: str) -> None:
     text = content.strip()
     if not text:
         return
@@ -321,7 +289,7 @@ def _auto_rename_novel(novel_id: str, content: str) -> None:
     if candidate == "未命名小说":
         return
     try:
-        novel_manager.update_title(novel_id, candidate)
+        novel_manager.update_title(user_id, novel_id, candidate)
         logger.info("Auto-renamed novel '%s' to '%s'", novel_id, candidate)
     except Exception as e:
         logger.warning("update_title failed: %s", e)

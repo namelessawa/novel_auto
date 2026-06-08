@@ -1,8 +1,7 @@
-"""agent_routes — 暴露 9 Agent 注册表 + 每个 agent 的完整上下文(系统 prompt /
-输入 / 输出 / 最近调用 tick)。供前端「Agent 上下文」视图消费。
+"""agent_routes — 暴露 9 Agent 注册表 + 每个 agent 的完整上下文。
 
-注册表是静态描述(从各 agent 模块的 SYSTEM_PROMPT 常量动态加载),不依赖运行时
-状态;最近调用 tick 来自 TickDB 扫描。
+v2.26 — 全部走 Depends(get_current_user) → runtime 解析, 不再依赖 tick_routes
+的旧 ``_container`` 单例。
 """
 
 from __future__ import annotations
@@ -14,7 +13,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,23 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 
 # ---------------------------------------------------------------------------
-# 注册表:9 个 v2 tick agent + 静态元数据
+# Depends — 当前用户的活跃 TickRuntime
+# ---------------------------------------------------------------------------
+def _resolve_runtime():
+    from auth import User, get_current_user
+    from tick_runtime import TickRuntime, get_runtime
+
+    def _resolve(user: User = Depends(get_current_user)) -> TickRuntime:
+        return get_runtime(user.id)
+
+    return _resolve
+
+
+_runtime_dep = _resolve_runtime()
+
+
+# ---------------------------------------------------------------------------
+# 注册表:9 个 tick agent + 静态元数据 (不变)
 # ---------------------------------------------------------------------------
 
 
@@ -34,8 +49,8 @@ class AgentSpec:
     cadence: str
     llm_tier: str | None
     module: str
-    prompt_attr: str | None  # 模块里的 SYSTEM_PROMPT 常量名;None 表示无 LLM
-    prompt_extras: list[str] = field(default_factory=list)  # 多 prompt 的额外常量名
+    prompt_attr: str | None
+    prompt_extras: list[str] = field(default_factory=list)
     inputs: list[str] = field(default_factory=list)
     outputs: list[str] = field(default_factory=list)
 
@@ -68,10 +83,7 @@ AGENT_REGISTRY: dict[str, AgentSpec] = {
         llm_tier="small",
         module="agents.world_simulator",
         prompt_attr="SYSTEM_PROMPT",
-        inputs=[
-            "WorldState (current_tick, world_time, weather, locations, factions)",
-            "world_rules",
-        ],
+        inputs=["WorldState (current_tick, world_time, weather, locations, factions)", "world_rules"],
         outputs=[
             "time_advance(分钟/小时/天)",
             "weather_event (可选)",
@@ -236,11 +248,6 @@ AGENT_REGISTRY: dict[str, AgentSpec] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# 加载 agent 模块的 SYSTEM_PROMPT 常量
-# ---------------------------------------------------------------------------
-
-
 def _safe_import(module_path: str) -> Any | None:
     try:
         return importlib.import_module(module_path)
@@ -250,7 +257,6 @@ def _safe_import(module_path: str) -> Any | None:
 
 
 def _get_prompt(spec: AgentSpec) -> dict | None:
-    """返回 {'primary': str, 'extras': {name: str, ...}} 或 None。"""
     if spec.prompt_attr is None:
         return None
     mod = _safe_import(spec.module)
@@ -271,17 +277,11 @@ def _module_file(spec: AgentSpec) -> str | None:
     mod = _safe_import(spec.module)
     if mod is None or not hasattr(mod, "__file__") or mod.__file__ is None:
         return None
-    # 转成项目相对路径
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     try:
         return os.path.relpath(mod.__file__, project_root).replace(os.sep, "/")
     except ValueError:
         return mod.__file__
-
-
-# ---------------------------------------------------------------------------
-# 最近调用 tick 扫描 — 依赖 tick_routes 的 TickDB 容器
-# ---------------------------------------------------------------------------
 
 
 _AGENT_NAME_ALIASES = {
@@ -298,21 +298,14 @@ _AGENT_NAME_ALIASES = {
 }
 
 
-def _scan_last_invoked(agent_id: str, last_n: int = 200) -> dict | None:
-    """从 TickDB 历史里找最近一次该 agent 被调用的 tick。"""
-    try:
-        from api.tick_routes import _container as tick_container
-    except Exception:
-        return None
-    db = getattr(tick_container, "tick_db", None)
-    if db is None:
-        return None
+def _scan_last_invoked(agent_id: str, runtime, last_n: int = 200) -> dict | None:
+    db = runtime.tick_db
     try:
         rows = db.get_recent_ticks(n=last_n)
     except Exception:
         return None
     aliases = set(_AGENT_NAME_ALIASES.get(agent_id, [agent_id]))
-    for row in rows:  # 已按 tick 倒序
+    for row in rows:
         called = row.get("agents_called") or []
         if isinstance(called, list) and any(c in aliases for c in called):
             return {
@@ -325,7 +318,6 @@ def _scan_last_invoked(agent_id: str, last_n: int = 200) -> dict | None:
 
 
 def _dump_pydantic(obj: Any) -> Any:
-    """Pydantic v2 / dataclass / dict 兼容 dump。"""
     if obj is None:
         return None
     if hasattr(obj, "model_dump"):
@@ -340,36 +332,19 @@ def _dump_pydantic(obj: Any) -> Any:
     return obj
 
 
-def _build_live_context(spec: AgentSpec) -> dict:
-    """对每个 agent 返回它在下一个 tick 会实际看到的数据切片。
-
-    不存在 / 不可达时统一返回 {available: False, reason}。
-    """
-    try:
-        from api.tick_routes import _container as tc
-    except Exception:
-        logger.warning("tick_routes 不可用", exc_info=True)
-        return {"available": False, "reason": "tick_routes 模块加载失败"}
-    ts = getattr(tc, "tick_state", None)
-    db = getattr(tc, "tick_db", None)
-    orch = getattr(tc, "orchestrator", None)
-    if ts is None:
-        return {
-            "available": False,
-            "reason": "TickState 未初始化(后端尚未引导 tick runtime)",
-        }
+def _build_live_context(spec: AgentSpec, runtime) -> dict:
+    """对每个 agent 返回它在下一个 tick 会实际看到的数据切片。"""
+    ts = runtime.tick_state
+    db = runtime.tick_db
+    orch = runtime.orchestrator
 
     def _recent_ticks(n: int) -> list[dict]:
-        if db is None:
-            return []
         try:
             return db.get_recent_ticks(n=n)
         except Exception:
             return []
 
     def _injected_pending() -> int:
-        if orch is None:
-            return 0
         pending = getattr(orch, "_injected_pending", None)
         if isinstance(pending, list):
             return len(pending)
@@ -382,7 +357,7 @@ def _build_live_context(spec: AgentSpec) -> dict:
         ctx.update({
             "current_tick": ts.current_tick,
             "world_time": ts.world_time,
-            "is_paused": bool(getattr(orch, "is_paused", False)) if orch else None,
+            "is_paused": bool(getattr(orch, "is_paused", False)),
             "character_count": len(ts.list_character_states()),
             "open_loop_count": ts.get_open_loop_count(),
             "style_anchor_count": len(ts.list_style_anchors()),
@@ -391,19 +366,13 @@ def _build_live_context(spec: AgentSpec) -> dict:
         })
 
     elif aid == "world_simulator":
-        ctx.update({
-            "world_state": _dump_pydantic(ts.world_state),
-        })
+        ctx.update({"world_state": _dump_pydantic(ts.world_state)})
 
     elif aid == "event_injector":
         ctx.update({
-            "open_loops_top_10": [
-                _dump_pydantic(l) for l in ts.get_open_loops(top_k=10)
-            ],
+            "open_loops_top_10": [_dump_pydantic(l) for l in ts.get_open_loops(top_k=10)],
             "open_loop_count": ts.get_open_loop_count(),
-            "last_event_tick_by_type": dict(
-                getattr(ts, "_last_event_tick_by_type", {})
-            ),
+            "last_event_tick_by_type": dict(getattr(ts, "_last_event_tick_by_type", {})),
             "recent_events_3_ticks": [
                 {"tick": r.get("tick"), "events": r.get("events_generated", [])}
                 for r in _recent_ticks(3)
@@ -416,10 +385,9 @@ def _build_live_context(spec: AgentSpec) -> dict:
         })
 
     elif aid == "character_agent":
-        # 每个 A/B 级角色的 profile + state
         ab_profiles = ts.list_character_profiles(tiers=["A", "B"])
         per_char = []
-        for p in ab_profiles[:6]:  # 前 6 个,避免 payload 爆炸
+        for p in ab_profiles[:6]:
             state = ts.get_character_state(p.id)
             per_char.append({
                 "character_id": p.id,
@@ -444,15 +412,9 @@ def _build_live_context(spec: AgentSpec) -> dict:
 
     elif aid == "narrator_agent":
         ctx.update({
-            "character_states": [
-                _dump_pydantic(s) for s in ts.list_character_states()[:8]
-            ],
-            "style_anchors_top_5": [
-                _dump_pydantic(a) for a in ts.get_style_anchors(top_k=5)
-            ],
-            "open_loops_top_10": [
-                _dump_pydantic(l) for l in ts.get_open_loops(top_k=10)
-            ],
+            "character_states": [_dump_pydantic(s) for s in ts.list_character_states()[:8]],
+            "style_anchors_top_5": [_dump_pydantic(a) for a in ts.get_style_anchors(top_k=5)],
+            "open_loops_top_10": [_dump_pydantic(l) for l in ts.get_open_loops(top_k=10)],
             "last_narration_tick": ts.last_narration_tick,
             "ticks_since_last_narration": (
                 ts.current_tick - ts.last_narration_tick
@@ -474,10 +436,7 @@ def _build_live_context(spec: AgentSpec) -> dict:
         ctx.update({
             "tick_history_20": _recent_ticks(20),
             "open_loops_with_age": [
-                {
-                    **_dump_pydantic(l),
-                    "age": ts.current_tick - l.opened_tick,
-                }
+                {**_dump_pydantic(l), "age": ts.current_tick - l.opened_tick}
                 for l in ts.get_open_loops(top_k=15)
             ],
             "arc_status": arc_status,
@@ -485,7 +444,6 @@ def _build_live_context(spec: AgentSpec) -> dict:
         })
 
     elif aid == "memory_compressor":
-        # SummaryTree 来自磁盘,从 data_dir 推断
         summary_path = os.path.join(ts.data_dir, "summary_tree.json")
         node_counts = None
         if os.path.isfile(summary_path):
@@ -512,9 +470,7 @@ def _build_live_context(spec: AgentSpec) -> dict:
     elif aid == "consistency_guardian":
         ctx.update({
             "recent_narrator_ticks": [
-                r
-                for r in _recent_ticks(10)
-                if r.get("narrator_produced_text")
+                r for r in _recent_ticks(10) if r.get("narrator_produced_text")
             ],
             "world_state": _dump_pydantic(ts.world_state),
             "character_count": len(ts.list_character_states()),
@@ -523,16 +479,13 @@ def _build_live_context(spec: AgentSpec) -> dict:
 
     elif aid == "novelty_critic":
         action_patterns: dict = {}
-        if db is not None:
-            try:
-                action_patterns = db.get_action_patterns(last_n_ticks=100)
-            except Exception:
-                pass
+        try:
+            action_patterns = db.get_action_patterns(last_n_ticks=100)
+        except Exception:
+            pass
         ctx.update({
             "recent_narrator_ticks": [
-                r
-                for r in _recent_ticks(20)
-                if r.get("narrator_produced_text")
+                r for r in _recent_ticks(20) if r.get("narrator_produced_text")
             ],
             "action_patterns_last_100": action_patterns,
             "current_novelty_warnings": list(ts.get_novelty_warnings()),
@@ -542,11 +495,6 @@ def _build_live_context(spec: AgentSpec) -> dict:
         ctx["note"] = "未配置的 agent,默认只展示通用 TickState 元信息"
 
     return ctx
-
-
-# ---------------------------------------------------------------------------
-# 路由
-# ---------------------------------------------------------------------------
 
 
 def _spec_to_brief(spec: AgentSpec) -> dict:
@@ -561,22 +509,20 @@ def _spec_to_brief(spec: AgentSpec) -> dict:
     }
 
 
-def _spec_to_detail(spec: AgentSpec) -> dict:
-    prompt_block = _get_prompt(spec)
-    last_invoked = _scan_last_invoked(spec.id)
-    live_context = _build_live_context(spec)
+def _spec_to_detail(spec: AgentSpec, runtime) -> dict:
     return {
         **_spec_to_brief(spec),
         "inputs": spec.inputs,
         "outputs": spec.outputs,
-        "prompt": prompt_block,
-        "last_invoked": last_invoked,
-        "live_context": live_context,
+        "prompt": _get_prompt(spec),
+        "last_invoked": _scan_last_invoked(spec.id, runtime),
+        "live_context": _build_live_context(spec, runtime),
     }
 
 
 @router.get("")
 async def list_agents() -> dict:
+    """列表不需要 runtime, 不强制登录态 — 公开元数据。"""
     return {
         "count": len(AGENT_REGISTRY),
         "agents": [_spec_to_brief(s) for s in AGENT_REGISTRY.values()],
@@ -584,8 +530,8 @@ async def list_agents() -> dict:
 
 
 @router.get("/{agent_id}")
-async def get_agent_detail(agent_id: str) -> dict:
+async def get_agent_detail(agent_id: str, runtime=Depends(_runtime_dep)) -> dict:
     spec = AGENT_REGISTRY.get(agent_id)
     if spec is None:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    return _spec_to_detail(spec)
+    return _spec_to_detail(spec, runtime)

@@ -30,5 +30,28 @@
       "https://novel.your-domain.com",
       "https://novel-frontend.vercel.app"
     ]
+  },
+  "auth": {
+    "enabled": true,
+    "jwt_secret": "REPLACE-ME-WITH-A-LONG-RANDOM-STRING-AT-LEAST-64-CHARS",
+    "jwt_algorithm": "HS256",
+    "jwt_ttl_days": 7,
+    "otp_ttl_seconds": 300,
+    "otp_send_per_ip_per_hour": 3,
+    "otp_send_per_email_per_hour": 3,
+    "otp_verify_per_ip_per_15min": 10,
+    "password_login_per_ip_per_15min": 5,
+    "password_login_per_email_per_15min": 5,
+    "ephemeral_ttl_hours": 24,
+    "cleanup_interval_seconds": 3600
+  },
+  "smtp": {
+    "host": "smtp.exmail.qq.com",
+    "port": 465,
+    "use_ssl": true,
+    "user": "noreply@your-company.com",
+    "password": "REPLACE-WITH-MAIL-AUTHORIZATION-CODE",
+    "from_addr": "noreply@your-company.com",
+    "from_name": "NovelAuto"
   }
 }

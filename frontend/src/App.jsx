@@ -9,6 +9,9 @@ import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
 import ConfigView from './views/ConfigView'
 import AgentContextView from './views/AgentContextView'
+import { AuthProvider, useAuth } from './auth/AuthContext'
+import LoginGate from './auth/LoginGate'
+import TopBar from './auth/TopBar'
 import {
   deleteNovel,
   fetchNovels,
@@ -52,6 +55,44 @@ const VIEW_TITLES = {
 }
 
 export default function App() {
+  // v2.26 — 顶层包 AuthProvider 让所有 view 能拿到 user。LoginGate 在未登录态
+  // 全屏遮罩, 但 sidebar/main 仍然渲染 (因为 API 请求都会被 401 拦下, 不污染)。
+  return (
+    <AuthProvider>
+      <TopBar />
+      <AuthGated>
+        <AppShell />
+      </AuthGated>
+    </AuthProvider>
+  )
+}
+
+function AuthGated({ children }) {
+  const { ready, hasToken } = useAuth()
+  if (!ready) {
+    // 初始化中 — 短暂的空白避免闪现登录框
+    return (
+      <div
+        style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text-muted, #888)',
+        }}
+      >
+        <i className="fas fa-spinner fa-spin"></i>
+      </div>
+    )
+  }
+  if (!hasToken) {
+    return <LoginGate />
+  }
+  return children
+}
+
+function AppShell() {
+  const { hasToken } = useAuth()
   const [activeView, setActiveView] = useState('home')
   const [stats, setStats] = useState(null)
   const [backendOnline, setBackendOnline] = useState(true)
@@ -61,6 +102,7 @@ export default function App() {
   const [hoveredNovelId, setHoveredNovelId] = useState(null)
 
   const refreshStats = useCallback(async () => {
+    if (!hasToken) return
     try {
       const data = await fetchStats()
       setStats(data)
@@ -72,9 +114,10 @@ export default function App() {
       console.error('Failed to fetch stats:', err)
       setBackendOnline(false)
     }
-  }, [activeNovelId])
+  }, [activeNovelId, hasToken])
 
   const refreshNovels = useCallback(async () => {
+    if (!hasToken) return
     try {
       const data = await fetchNovels()
       setNovels(data.novels || [])
@@ -82,7 +125,7 @@ export default function App() {
     } catch (err) {
       console.error('Failed to fetch novels:', err)
     }
-  }, [])
+  }, [hasToken])
 
   const bumpRefresh = useCallback(() => {
     refreshStats()
@@ -91,11 +134,12 @@ export default function App() {
   }, [refreshStats, refreshNovels])
 
   useEffect(() => {
+    if (!hasToken) return undefined
     refreshStats()
     refreshNovels()
     const interval = setInterval(refreshStats, 5000)
     return () => clearInterval(interval)
-  }, [refreshStats, refreshNovels])
+  }, [refreshStats, refreshNovels, hasToken])
 
   const handleOpenNovel = async (novelId) => {
     try {

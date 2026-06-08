@@ -24,3 +24,11 @@ networkx>=3.4
 sentence-transformers>=2.2.0
 numpy>=2.2.0
 posthog>=3.0.0  # chromadb telemetry shim
+
+# Auth (v2.26 — email-OTP register + optional password login)
+# bcrypt<5 — passlib 1.7.4 还不支持 bcrypt 5.0 的 API 变更, 装上会启动期 ValueError。
+passlib>=1.7.4
+bcrypt>=4.0,<5.0
+python-jose[cryptography]>=3.3.0
+aiosmtplib>=3.0.1
+email-validator>=2.1.0

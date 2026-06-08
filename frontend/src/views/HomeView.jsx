@@ -6,6 +6,9 @@ import {
   fetchNovels,
   fetchTickStatus,
   generateSectionStream,
+  getUserLLMConfig,
+  randomSeed,
+  randomTitle,
   switchNovel,
 } from '../services/api'
 
@@ -55,6 +58,10 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
   const [stages, setStages] = useState([])
   const [logs, setLogs] = useState([])
   const [mode, setMode] = useState('create')
+
+  // v2.26 — 随机生成按钮 busy 态
+  const [randomSeedBusy, setRandomSeedBusy] = useState(false)
+  const [randomTitleBusy, setRandomTitleBusy] = useState(false)
 
   // v2.23 — Tick runtime 状态用于 "当前小说生成进度" 展示
   const [tickStatus, setTickStatus] = useState(null)
@@ -226,6 +233,56 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     showToast('已停止生成', 'info')
   }
 
+  // v2.26 — 随机种子/标题. 联动: 一侧有内容 → 另一侧根据它客制化生成.
+  const _ensureLLMKey = () => {
+    const cfg = getUserLLMConfig()
+    if (!cfg.api_key) {
+      showToast('请先在右上角「设置」中填写您的 API Key', 'error')
+      return false
+    }
+    return true
+  }
+
+  const handleRandomSeed = async () => {
+    if (!_ensureLLMKey()) return
+    setRandomSeedBusy(true)
+    try {
+      const r = await randomSeed({ existing_title: createTitle.trim() })
+      if (r?.text) {
+        setCreateSeed(r.text)
+        showToast(
+          createTitle.trim()
+            ? `已根据《${createTitle.trim()}》生成匹配的种子`
+            : '已随机生成种子',
+          'success',
+        )
+      }
+    } catch (err) {
+      showToast('随机种子失败: ' + (err.message || err), 'error')
+    } finally {
+      setRandomSeedBusy(false)
+    }
+  }
+
+  const handleRandomTitle = async () => {
+    if (!_ensureLLMKey()) return
+    setRandomTitleBusy(true)
+    try {
+      const r = await randomTitle({ existing_seed: createSeed.trim() })
+      if (r?.text) {
+        setCreateTitle(r.text)
+        showToast(
+          createSeed.trim() ? '已根据种子生成匹配的标题' : '已随机生成标题',
+          'success',
+        )
+      }
+    } catch (err) {
+      showToast('随机标题失败: ' + (err.message || err), 'error')
+    } finally {
+      setRandomTitleBusy(false)
+    }
+  }
+
   // v2.23 — 阶段进度: 已完成的 stage 数 / 7
   const stageDoneCount = stages.filter((s) => s.status === 'done').length
   const currentActiveStage = stages.find((s) => s.status === 'active')?.stage
@@ -254,27 +311,97 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
           </div>
           <div style={{ marginBottom: 12 }}>
             <label className="input-label">小说标题</label>
-            <input
-              type="text"
-              className="input-field"
-              placeholder="留空将自动生成"
-              value={createTitle}
-              onChange={(e) => setCreateTitle(e.target.value)}
-              disabled={generating}
-            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="留空将自动生成"
+                value={createTitle}
+                onChange={(e) => setCreateTitle(e.target.value)}
+                disabled={generating || randomTitleBusy}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="btn"
+                onClick={handleRandomTitle}
+                disabled={generating || randomTitleBusy}
+                title={
+                  createSeed.trim()
+                    ? '根据下方种子生成匹配标题'
+                    : '随机生成标题'
+                }
+                style={{
+                  flexShrink: 0,
+                  padding: '0 12px',
+                  background: randomTitleBusy
+                    ? 'rgba(139, 92, 246, 0.3)'
+                    : 'var(--accent-purple, #8b5cf6)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor:
+                    generating || randomTitleBusy ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {randomTitleBusy ? (
+                  <i className="fas fa-spinner fa-spin"></i>
+                ) : (
+                  <>
+                    <i className="fas fa-dice" style={{ marginRight: 4 }}></i>
+                    随机
+                  </>
+                )}
+              </button>
+            </div>
           </div>
           <div style={{ marginBottom: 12 }}>
             <label className="input-label">
               世界种子 <span style={{ color: 'var(--accent-rose)' }}>*</span>
             </label>
-            <textarea
-              className="input-field"
-              placeholder="例如:宋代仿古,边境与中央的张力 / 末世修仙,门派与凡人的撕裂 / ……"
-              value={createSeed}
-              onChange={(e) => setCreateSeed(e.target.value)}
-              disabled={generating}
-              style={{ minHeight: 64 }}
-            />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <textarea
+                className="input-field"
+                placeholder="例如:宋代仿古,边境与中央的张力 / 末世修仙,门派与凡人的撕裂 / ……"
+                value={createSeed}
+                onChange={(e) => setCreateSeed(e.target.value)}
+                disabled={generating || randomSeedBusy}
+                style={{ minHeight: 64, flex: 1 }}
+              />
+              <button
+                type="button"
+                className="btn"
+                onClick={handleRandomSeed}
+                disabled={generating || randomSeedBusy}
+                title={
+                  createTitle.trim()
+                    ? '根据上方标题生成匹配种子'
+                    : '随机生成种子'
+                }
+                style={{
+                  flexShrink: 0,
+                  padding: '0 12px',
+                  height: 40,
+                  background: randomSeedBusy
+                    ? 'rgba(139, 92, 246, 0.3)'
+                    : 'var(--accent-purple, #8b5cf6)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor:
+                    generating || randomSeedBusy ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {randomSeedBusy ? (
+                  <i className="fas fa-spinner fa-spin"></i>
+                ) : (
+                  <>
+                    <i className="fas fa-dice" style={{ marginRight: 4 }}></i>
+                    随机
+                  </>
+                )}
+              </button>
+            </div>
             <div
               style={{
                 fontSize: 11,
@@ -283,6 +410,10 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
               }}
             >
               冷启动 4 阶段 (世界 / 角色 / 伏笔 / 风格锚点) 的唯一题材锚点。留空将拒绝创建。
+              <br />
+              <span style={{ opacity: 0.7 }}>
+                提示: 标题与种子两个 🎲 按钮联动 — 一侧已填会成为另一侧生成时的客制化输入。
+              </span>
             </div>
           </div>
 

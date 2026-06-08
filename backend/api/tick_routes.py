@@ -1,4 +1,11 @@
-"""tick_routes — FastAPI 路由,暴露 Orchestrator 的 tick 控制与诊断 API。
+"""tick_routes — FastAPI 路由, 暴露 Orchestrator 的 tick 控制与诊断 API。
+
+v2.26 multi-tenant 改造
+-----------------------
+* 旧 ``_container`` 单例彻底删除 — 每请求经 ``Depends(get_user_runtime)``
+  解析到 ``(current_user.id, user 的 active novel_id)`` → TickRuntime。
+* ``set_orchestrator_dependencies`` 保留为 no-op 兼容 (tick_runtime.register_to_routes
+  仍调用它, 但不再有实际作用)。
 
 | Method | Path                          | 用途                                  |
 |--------|-------------------------------|---------------------------------------|
@@ -8,13 +15,10 @@
 | POST   | /api/tick/resume              | 恢复                                  |
 | POST   | /api/tick/inject-event        | 手动注入 Event                        |
 | GET    | /api/tick/open-loops          | 当前所有开放伏笔                       |
-| GET    | /api/tick/history             | 最近 N 个 TickSummary (来自 TickDB)   |
+| GET    | /api/tick/history             | 最近 N 个 TickSummary                  |
 | GET    | /api/tick/event-stats         | Showrunner 视角的事件统计              |
 | GET    | /api/tick/style-anchors       | 已注册的风格锚点                       |
 | GET    | /api/tick/character-states    | 全部 CharacterState                   |
-
-注: 路由不在此模块中实例化 Orchestrator - main.py 启动时把全局实例注入到
-``set_orchestrator_dependencies()``,这样测试可以无依赖注入 mock。
 """
 
 from __future__ import annotations
@@ -22,27 +26,65 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from memory_system.models import Event, EventKind, OpenLoop
 
 logger = logging.getLogger(__name__)
 
-
-# --- 依赖注入容器 -----------------------------------------------------------
-
-
-class _OrchestratorContainer:
-    """Orchestrator + TickState + TickDB 的延迟绑定容器。"""
-
-    def __init__(self) -> None:
-        self.orchestrator: Any | None = None
-        self.tick_state: Any | None = None
-        self.tick_db: Any | None = None
+router = APIRouter(prefix="/api/tick", tags=["tick"])
 
 
-_container = _OrchestratorContainer()
+# --- 依赖解析 (request-scoped) ---------------------------------------------
+# tick_runtime 与 auth 在 Depends 内部 import — 避免模块加载期循环。
+def _resolve_runtime(*, _user_dep=None):
+    """Depends 入口: 解析当前请求用户 → 该用户活跃 novel 的 TickRuntime。
+
+    实际签名通过 _make_resolver() 在路由注册期注入 — 这层 wrapper 让模块
+    导入阶段不触发 tick_runtime / auth 的解析, 打破循环。
+    """
+    from auth import get_current_user  # noqa: F401 — Depends 注入时使用
+    from tick_runtime import get_runtime
+
+    # 这个分支永远不会直接被调; 真正生效的是 _make_resolver 返回的函数
+    raise RuntimeError("_resolve_runtime should not be called directly")
+
+
+def _make_resolver():
+    from auth import User, get_current_user
+    from tick_runtime import TickRuntime, get_runtime
+
+    def _resolve(user: User = Depends(get_current_user)) -> TickRuntime:
+        return get_runtime(user.id)
+
+    return _resolve
+
+
+# 路由 Depends 用这个 — 它在首次调用时才解析 tick_runtime / auth (避开模块加载循环)
+_runtime_dep = None
+
+
+def _get_runtime_dep():
+    global _runtime_dep
+    if _runtime_dep is None:
+        _runtime_dep = _make_resolver()
+    return _runtime_dep
+
+
+class _LegacyContainer:
+    """v2.26 兼容 shim — 旧测试 (test_orchestrator_concurrency / test_tick_runtime_registry)
+    通过 ``from api.tick_routes import _container`` 读取注入的引用。
+
+    新代码不再使用; 仅供旧测试 collection 通过。
+    """
+
+    orchestrator: Any = None
+    tick_state: Any = None
+    tick_db: Any = None
+
+
+_container = _LegacyContainer()
 
 
 def set_orchestrator_dependencies(
@@ -51,7 +93,10 @@ def set_orchestrator_dependencies(
     tick_state: Any | None = None,
     tick_db: Any | None = None,
 ) -> None:
-    """main.py 启动时调用,把全局实例注入路由层。"""
+    """v2.26 兼容 shim — multi-tenant 后由 Depends 完成实际解析。
+
+    为兼容旧测试, 把传入的引用同步到 ``_container`` 上 (但运行时路由不读它)。
+    """
     if orchestrator is not None:
         _container.orchestrator = orchestrator
     if tick_state is not None:
@@ -60,25 +105,11 @@ def set_orchestrator_dependencies(
         _container.tick_db = tick_db
 
 
-def _require_orchestrator():
-    if _container.orchestrator is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Orchestrator not initialized. Call set_orchestrator_dependencies() first.",
-        )
-    return _container.orchestrator
+# 让模块导入期就触发 _make_resolver (此时 tick_runtime 已不再 import 本模块, 安全)
+_resolve_runtime = _get_runtime_dep()
 
 
-def _require_tick_state():
-    if _container.tick_state is None:
-        raise HTTPException(status_code=503, detail="TickState not initialized.")
-    return _container.tick_state
-
-
-# --- 路由定义 ---------------------------------------------------------------
-
-
-router = APIRouter(prefix="/api/tick", tags=["tick"])
+# --- 路由 -----------------------------------------------------------------
 
 
 class TickStatusResponse(BaseModel):
@@ -92,9 +123,9 @@ class TickStatusResponse(BaseModel):
 
 
 @router.get("/status", response_model=TickStatusResponse)
-async def get_status() -> TickStatusResponse:
-    orch = _require_orchestrator()
-    ts = _require_tick_state()
+async def get_status(runtime=Depends(_resolve_runtime)) -> TickStatusResponse:
+    orch = runtime.orchestrator
+    ts = runtime.tick_state
     return TickStatusResponse(
         current_tick=ts.current_tick,
         world_time=ts.world_time,
@@ -107,11 +138,9 @@ async def get_status() -> TickStatusResponse:
 
 
 @router.post("/run")
-async def run_one_tick() -> dict:
-    orch = _require_orchestrator()
+async def run_one_tick(runtime=Depends(_resolve_runtime)) -> dict:
+    orch = runtime.orchestrator
     if orch.is_paused:
-        # v2.15 — pause() 必须真正阻止手动 /run; 否则 start_loop 暂停后用户仍可
-        # 通过 /run 推进 tick, 破坏暂停语义。
         raise HTTPException(
             status_code=409,
             detail="Orchestrator is paused. Call /api/tick/resume before /run.",
@@ -121,24 +150,19 @@ async def run_one_tick() -> dict:
 
 
 @router.post("/pause")
-async def pause_loop() -> dict:
-    orch = _require_orchestrator()
-    orch.pause()
+async def pause_loop(runtime=Depends(_resolve_runtime)) -> dict:
+    runtime.orchestrator.pause()
     return {"ok": True, "is_paused": True}
 
 
 @router.post("/resume")
-async def resume_loop() -> dict:
-    orch = _require_orchestrator()
-    orch.resume()
+async def resume_loop(runtime=Depends(_resolve_runtime)) -> dict:
+    runtime.orchestrator.resume()
     return {"ok": True, "is_paused": False}
 
 
 class InjectEventRequest(BaseModel):
     id: str | None = None
-    # v2.19.1 — 用 EventKind Literal 在 FastAPI 边界就拒非法值 (422 而非 500)。
-    # 此前 plain str 让 Event(type=...) 内部 Pydantic 校验失败时, 用户收到 500 +
-    # 内部模型路径泄露 traceback。
     type: EventKind = Field(default="dramatic")
     location: str = ""
     participants: list[str] = Field(default_factory=list)
@@ -148,13 +172,12 @@ class InjectEventRequest(BaseModel):
 
 
 @router.post("/inject-event")
-async def inject_event(req: InjectEventRequest) -> dict:
-    orch = _require_orchestrator()
-    ts = _require_tick_state()
+async def inject_event(
+    req: InjectEventRequest, runtime=Depends(_resolve_runtime)
+) -> dict:
+    orch = runtime.orchestrator
+    ts = runtime.tick_state
 
-    # v2.19.1 — 计算最终 visible_to (含空 → all_in_location 的 fallback), 然后
-    # 校验"all_in_location 必须有 location" 这一硬约束。否则事件对所有人不可见,
-    # 调用方拿 200 但事件被静默忽略 — 比 500 更难调试。
     visible_to = list(req.visible_to) or ["all_in_location"]
     if "all_in_location" in visible_to and not req.location.strip():
         raise HTTPException(
@@ -166,9 +189,6 @@ async def inject_event(req: InjectEventRequest) -> dict:
             ),
         )
 
-    # v2.19.1 — id 冲突检查。当前只校验 _injected_pending 范围 (即将被下一 tick
-    # 消费的批次), 这是冲突最常见的发生窗口。跨 tick 的历史 id 由 TickDB 唯一
-    # 约束兜底, 此处不重复扫 SQLite。
     candidate_id = req.id or (
         f"evt_user_{ts.current_tick}_{len(orch._injected_pending)}"
     )
@@ -185,7 +205,7 @@ async def inject_event(req: InjectEventRequest) -> dict:
 
     event = Event(
         id=candidate_id,
-        tick=ts.current_tick + 1,  # 注入到下一个 tick
+        tick=ts.current_tick + 1,
         type=req.type,
         location=req.location,
         participants=req.participants,
@@ -198,23 +218,21 @@ async def inject_event(req: InjectEventRequest) -> dict:
 
 
 @router.get("/open-loops")
-async def list_open_loops(min_urgency: int = 0, top_k: int = 50) -> dict:
-    ts = _require_tick_state()
+async def list_open_loops(
+    min_urgency: int = 0,
+    top_k: int = 50,
+    runtime=Depends(_resolve_runtime),
+) -> dict:
+    ts = runtime.tick_state
     loops = ts.get_open_loops(min_urgency=min_urgency, top_k=top_k)
     return {"count": len(loops), "loops": [l.model_dump(mode="json") for l in loops]}
 
 
 @router.post("/open-loops")
-async def add_open_loop(loop: OpenLoop) -> dict:
-    """管理员手动新增 OpenLoop。
-
-    v2.19.3 — 重复 id 必须 409 (而不是静默覆盖)。原实现 ``ts.add_open_loop``
-    是 ``_open_loops[loop.id] = loop``, 二次 POST 同 id 会丢失 Narrator 累积的
-    ``last_referenced_tick`` 等运行时字段, 导致冷线索检测漂走。
-
-    RESTful 替换语义: 先 DELETE /open-loops/{id} 再 POST。
-    """
-    ts = _require_tick_state()
+async def add_open_loop(
+    loop: OpenLoop, runtime=Depends(_resolve_runtime)
+) -> dict:
+    ts = runtime.tick_state
     if ts.has_open_loop(loop.id):
         raise HTTPException(
             status_code=409,
@@ -230,8 +248,10 @@ async def add_open_loop(loop: OpenLoop) -> dict:
 
 
 @router.delete("/open-loops/{loop_id}")
-async def close_open_loop(loop_id: str) -> dict:
-    ts = _require_tick_state()
+async def close_open_loop(
+    loop_id: str, runtime=Depends(_resolve_runtime)
+) -> dict:
+    ts = runtime.tick_state
     closed = ts.close_open_loop(loop_id)
     if closed is None:
         raise HTTPException(status_code=404, detail="loop not found")
@@ -240,62 +260,57 @@ async def close_open_loop(loop_id: str) -> dict:
 
 
 @router.get("/history")
-async def get_history(last_n: int = 20) -> dict:
-    if _container.tick_db is None:
-        raise HTTPException(status_code=503, detail="TickDB not initialized.")
-    rows = _container.tick_db.get_recent_ticks(n=last_n)
+async def get_history(
+    last_n: int = 20, runtime=Depends(_resolve_runtime)
+) -> dict:
+    rows = runtime.tick_db.get_recent_ticks(n=last_n)
     return {"count": len(rows), "ticks": rows}
 
 
 @router.get("/event-stats")
-async def get_event_stats(last_n_ticks: int = 50) -> dict:
-    if _container.tick_db is None:
-        raise HTTPException(status_code=503, detail="TickDB not initialized.")
-    return _container.tick_db.get_event_stats(last_n_ticks=last_n_ticks)
+async def get_event_stats(
+    last_n_ticks: int = 50, runtime=Depends(_resolve_runtime)
+) -> dict:
+    return runtime.tick_db.get_event_stats(last_n_ticks=last_n_ticks)
 
 
 @router.get("/action-patterns")
-async def get_action_patterns(last_n_ticks: int = 100) -> dict:
-    if _container.tick_db is None:
-        raise HTTPException(status_code=503, detail="TickDB not initialized.")
-    return _container.tick_db.get_action_patterns(last_n_ticks=last_n_ticks)
+async def get_action_patterns(
+    last_n_ticks: int = 100, runtime=Depends(_resolve_runtime)
+) -> dict:
+    return runtime.tick_db.get_action_patterns(last_n_ticks=last_n_ticks)
 
 
 @router.get("/style-anchors")
-async def list_style_anchors(top_k: int = 20) -> dict:
-    ts = _require_tick_state()
+async def list_style_anchors(
+    top_k: int = 20, runtime=Depends(_resolve_runtime)
+) -> dict:
+    ts = runtime.tick_state
     anchors = ts.get_style_anchors(top_k=top_k)
-    return {"count": len(anchors), "anchors": [a.model_dump(mode="json") for a in anchors]}
+    return {
+        "count": len(anchors),
+        "anchors": [a.model_dump(mode="json") for a in anchors],
+    }
 
 
 @router.get("/character-states")
-async def list_character_states() -> dict:
-    ts = _require_tick_state()
+async def list_character_states(runtime=Depends(_resolve_runtime)) -> dict:
+    ts = runtime.tick_state
     states = ts.list_character_states()
     return {"count": len(states), "states": [s.model_dump(mode="json") for s in states]}
 
 
 @router.get("/novelty-warnings")
-async def list_novelty_warnings() -> dict:
-    ts = _require_tick_state()
+async def list_novelty_warnings(runtime=Depends(_resolve_runtime)) -> dict:
+    ts = runtime.tick_state
     return {"warnings": ts.get_novelty_warnings()}
 
 
 @router.get("/diagnostic/hallucination")
-async def hallucination_diagnostic() -> dict:
-    """v2.18 Phase 9 — Guardian 幻觉率 + AgentRuntimeState 监控数据。
-
-    返回每个被 Guardian 建议过降级的 agent 的统计 (degrade_recommendations /
-    hallucination_hits / last_degrade_recommended_tick / model_tier_override_active),
-    以及全局 HALLUCINATION_AUTO_DEGRADE 开关状态。
-
-    生产用法:
-    * shadow 期 (auto_degrade_active=False): 监控真阳率, 数据 N 天后再决定开关
-    * active 期 (auto_degrade_active=True): 实时观察 model_tier_override 命中分布
-    """
+async def hallucination_diagnostic(runtime=Depends(_resolve_runtime)) -> dict:
     import os
 
-    ts = _require_tick_state()
+    ts = runtime.tick_state
     stats = ts.get_hallucination_stats()
     auto_degrade = os.environ.get("HALLUCINATION_AUTO_DEGRADE", "").strip()
     return {

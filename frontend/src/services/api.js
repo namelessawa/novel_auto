@@ -2,12 +2,72 @@
 // In local dev, empty string lets the vite proxy handle /api requests.
 const BASE = import.meta.env.VITE_API_BASE || ''
 
-// v2.21 — 写端点统一错误处理。此前 runOneTick / switchNovel / pauseTick 等
-// 全部裸 return res.json(); 后端 4xx/5xx 时调用方仍拿到 {detail: "..."},
-// UI 访问 .summary?.narrator_produced_text → undefined, toast 显示 "Tick
-// undefined 完成"。injectTickEvent (v2.19.1) 已实现等价语义, 这里抽公共 helper。
+// ---------------------------------------------------------------------------
+// v2.26 — Auth interceptor
+// ---------------------------------------------------------------------------
+// - Reads JWT from localStorage on every request
+// - Attaches Authorization: Bearer <token>
+// - On 401: clears token + dispatches "auth:expired" event so AuthContext logs out
+// - Skips /api/auth/* (login/register) and /api/health (public)
+
+const TOKEN_STORAGE_KEY = 'novel_auto_jwt'
+
+export function getStoredToken() {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+
+export function setStoredToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token)
+    else localStorage.removeItem(TOKEN_STORAGE_KEY)
+  } catch {
+    /* private mode etc — silent */
+  }
+}
+
+function _isPublicPath(path) {
+  return (
+    path.startsWith('/api/auth/register/') ||
+    path.startsWith('/api/auth/login/') ||
+    path === '/api/health'
+  )
+}
+
+function _emit401() {
+  try {
+    window.dispatchEvent(new CustomEvent('auth:expired'))
+  } catch {
+    /* SSR-safe noop */
+  }
+}
+
+async function authedFetch(path, init = {}) {
+  const headers = new Headers(init.headers || {})
+  if (!headers.has('Content-Type') && init.body && typeof init.body === 'string') {
+    headers.set('Content-Type', 'application/json')
+  }
+  const token = getStoredToken()
+  if (token && !_isPublicPath(path)) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+  const res = await fetch(`${BASE}${path}`, { ...init, headers })
+  if (res.status === 401 && !_isPublicPath(path)) {
+    setStoredToken('')
+    _emit401()
+  }
+  return res
+}
+
 async function assertOk(res) {
-  if (res.ok) return res.json()
+  if (res.ok) {
+    // 204 No Content
+    if (res.status === 204) return null
+    return res.json()
+  }
   let detail = `HTTP ${res.status}`
   try {
     const body = await res.json()
@@ -19,57 +79,181 @@ async function assertOk(res) {
         .join('; ')
     }
   } catch {
-    /* 非 JSON 错误体保留 HTTP ${status} 默认值 */
+    /* keep default */
   }
   throw new Error(detail)
 }
 
 // ---------------------------------------------------------------------------
-// Legacy section pipeline
+// v2.26 — Auth endpoints
+// ---------------------------------------------------------------------------
+
+export async function authRegisterSendOTP(email) {
+  const res = await authedFetch('/api/auth/register/send-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+  return assertOk(res)
+}
+
+export async function authRegisterVerify(email, otp) {
+  const res = await authedFetch('/api/auth/register/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp }),
+  })
+  return assertOk(res) // { token, user }
+}
+
+export async function authLoginSendOTP(email) {
+  const res = await authedFetch('/api/auth/login/send-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+  return assertOk(res)
+}
+
+export async function authLoginVerifyOTP(email, otp) {
+  const res = await authedFetch('/api/auth/login/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp }),
+  })
+  return assertOk(res) // { token, user }
+}
+
+export async function authLoginPassword(email, password) {
+  const res = await authedFetch('/api/auth/login/password', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+  return assertOk(res) // { token, user }
+}
+
+export async function authMe() {
+  const res = await authedFetch('/api/auth/me')
+  return assertOk(res) // user
+}
+
+export async function authSetPassword(password) {
+  const res = await authedFetch('/api/auth/me/set-password', {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  })
+  return assertOk(res)
+}
+
+export async function authUpdateSettings({ save_my_works }) {
+  const res = await authedFetch('/api/auth/me/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ save_my_works }),
+  })
+  return assertOk(res) // user
+}
+
+export async function authLogout() {
+  try {
+    await authedFetch('/api/auth/logout', { method: 'POST' })
+  } catch {
+    /* server-side noop; ignore failure */
+  }
+  setStoredToken('')
+}
+
+// ---------------------------------------------------------------------------
+// v2.26 — LLM random (uses user's API key from localStorage via headers)
+// ---------------------------------------------------------------------------
+
+const USER_LLM_STORAGE_KEY = 'novel_auto_user_llm'
+
+export function getUserLLMConfig() {
+  try {
+    const raw = localStorage.getItem(USER_LLM_STORAGE_KEY)
+    if (!raw) return { api_key: '', base_url: '', model: '' }
+    return JSON.parse(raw)
+  } catch {
+    return { api_key: '', base_url: '', model: '' }
+  }
+}
+
+export function setUserLLMConfig({ api_key, base_url, model }) {
+  try {
+    localStorage.setItem(
+      USER_LLM_STORAGE_KEY,
+      JSON.stringify({ api_key, base_url, model }),
+    )
+  } catch {
+    /* silent */
+  }
+}
+
+function _userLLMHeaders() {
+  const c = getUserLLMConfig()
+  const h = {}
+  if (c.api_key) h['X-User-LLM-Key'] = c.api_key
+  if (c.base_url) h['X-User-LLM-Base-Url'] = c.base_url
+  if (c.model) h['X-User-LLM-Model'] = c.model
+  return h
+}
+
+export async function randomSeed({ existing_title = '' } = {}) {
+  const res = await authedFetch('/api/llm/random-seed', {
+    method: 'POST',
+    headers: _userLLMHeaders(),
+    body: JSON.stringify({ existing_title }),
+  })
+  return assertOk(res) // { text }
+}
+
+export async function randomTitle({ existing_seed = '' } = {}) {
+  const res = await authedFetch('/api/llm/random-title', {
+    method: 'POST',
+    headers: _userLLMHeaders(),
+    body: JSON.stringify({ existing_seed }),
+  })
+  return assertOk(res) // { text }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy section pipeline (now JWT-gated by backend)
 // ---------------------------------------------------------------------------
 
 export async function fetchStats() {
-  const res = await fetch(`${BASE}/api/stats`)
+  const res = await authedFetch('/api/stats')
   return res.json()
 }
 
 export async function fetchSections() {
-  const res = await fetch(`${BASE}/api/sections`)
+  const res = await authedFetch('/api/sections')
   return res.json()
 }
 
 export async function fetchGraph() {
-  const res = await fetch(`${BASE}/api/graph`)
+  const res = await authedFetch('/api/graph')
   return res.json()
 }
 
 export async function fetchOutline() {
-  const res = await fetch(`${BASE}/api/outline`)
+  const res = await authedFetch('/api/outline')
   return res.json()
 }
 
 export async function fetchMemory() {
-  const res = await fetch(`${BASE}/api/memory`)
+  const res = await authedFetch('/api/memory')
   return res.json()
 }
 
 export async function fetchSnapshots() {
-  const res = await fetch(`${BASE}/api/snapshots`)
+  const res = await authedFetch('/api/snapshots')
   return res.json()
 }
 
 export async function generateSection(outline = '') {
-  const res = await fetch(`${BASE}/api/generate`, {
+  const res = await authedFetch('/api/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ outline }),
   })
   return res.json()
 }
 
-// v2.21 — onError 可选。未传时维持旧行为(失败时也调用 onDone),已传则失败
-// 路径走 onError(err), onDone 只在真正完成时触发 — 让上层 NovelView /
-// HomeView 的 try/catch 真正区分成功与失败。
 export function generateSectionStream(outline = '', onEvent, onText, onDone, onError) {
   const controller = new AbortController()
   const reportError = (err) => {
@@ -77,21 +261,30 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
     else onDone()
   }
 
+  const token = getStoredToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   fetch(`${BASE}/api/generate/stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ outline }),
     signal: controller.signal,
   })
     .then(async (response) => {
+      if (response.status === 401) {
+        setStoredToken('')
+        _emit401()
+        reportError(new Error('登录态已过期, 请重新登录'))
+        return
+      }
       if (!response.ok) {
-        // 后端 4xx/5xx 时 SSE body 是 JSON 错误体; 不应当作正常流处理
         let detail = `HTTP ${response.status}`
         try {
           const body = await response.json()
           if (typeof body?.detail === 'string') detail = body.detail
         } catch {
-          /* 非 JSON: 保留默认 */
+          /* keep default */
         }
         reportError(new Error(detail))
         return
@@ -154,106 +347,91 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
 }
 
 export async function advanceChapter() {
-  const res = await fetch(`${BASE}/api/chapter/advance`, { method: 'POST' })
+  const res = await authedFetch('/api/chapter/advance', { method: 'POST' })
   return res.json()
 }
 
 export async function rollback(chapter) {
-  const res = await fetch(`${BASE}/api/rollback`, {
+  const res = await authedFetch('/api/rollback', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chapter }),
   })
   return res.json()
 }
 
-// v2.22 — 走 assertOk 才能把后端 404 (端点缺失) / 422 (枚举越界) 翻成 Error,
-// 否则 GraphView 在 res.json() 拿到 {detail: "..."} 仍走 success 分支, 误报
-// "实体已添加 / 关系已添加"。
 export async function createEntity(entity) {
-  const res = await fetch(`${BASE}/api/graph/entities`, {
+  const res = await authedFetch('/api/graph/entities', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(entity),
   })
   return assertOk(res)
 }
 
 export async function createRelation(relation) {
-  const res = await fetch(`${BASE}/api/graph/relations`, {
+  const res = await authedFetch('/api/graph/relations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(relation),
   })
   return assertOk(res)
 }
 
-// v2.20 — Graph entity / relation delete + entity detail wrappers.
-// 后端 routes.py 一直支持, 前端缺。
-
 export async function deleteEntity(entityId) {
-  const res = await fetch(
-    `${BASE}/api/graph/entities/${encodeURIComponent(entityId)}`,
-    { method: 'DELETE' }
+  const res = await authedFetch(
+    `/api/graph/entities/${encodeURIComponent(entityId)}`,
+    { method: 'DELETE' },
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
 export async function deleteRelation(sourceId, targetId) {
-  // 后端用 query string 而非 path 来定位关系 (一对实体可能有多种 relation_type
-  // 但 DELETE 接口只按 source+target 删除所有匹配)
   const params = new URLSearchParams({
     source_id: sourceId,
     target_id: targetId,
   })
-  const res = await fetch(
-    `${BASE}/api/graph/relations?${params.toString()}`,
-    { method: 'DELETE' }
+  const res = await authedFetch(
+    `/api/graph/relations?${params.toString()}`,
+    { method: 'DELETE' },
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
 export async function fetchEntityDetail(entityId) {
-  const res = await fetch(
-    `${BASE}/api/graph/entities/${encodeURIComponent(entityId)}`
+  const res = await authedFetch(
+    `/api/graph/entities/${encodeURIComponent(entityId)}`,
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
 export async function resetPipeline() {
-  const res = await fetch(`${BASE}/api/reset`, { method: 'POST' })
+  const res = await authedFetch('/api/reset', { method: 'POST' })
   return res.json()
 }
 
 export async function takeSnapshot() {
-  const res = await fetch(`${BASE}/api/snapshots`, { method: 'POST' })
+  const res = await authedFetch('/api/snapshots', { method: 'POST' })
   return res.json()
 }
 
 // ---------------------------------------------------------------------------
-// LLM config
+// LLM config (server-side fallback config; user's own key lives in localStorage)
 // ---------------------------------------------------------------------------
 
 export async function fetchLLMConfig() {
-  const res = await fetch(`${BASE}/api/config/llm`)
+  const res = await authedFetch('/api/config/llm')
   return res.json()
 }
 
 export async function updateLLMConfig({ api_key, base_url, model, provider }) {
-  // v2.20 — provider 是 active provider 切换 (deepseek/mimo/custom), 后端
-  // 写 os.environ['LLM_PROVIDER']; 不传时保持当前值不变。
-  // api_key/base_url/model 写入 config.json.llm 兜底段, 与 provider 切换正交。
   const body = {}
   if (api_key !== undefined) body.api_key = api_key
   if (base_url !== undefined) body.base_url = base_url
   if (model !== undefined) body.model = model
   if (provider !== undefined) body.provider = provider
-  const res = await fetch(`${BASE}/api/config/llm`, {
+  const res = await authedFetch('/api/config/llm', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
   return assertOk(res)
@@ -264,39 +442,37 @@ export async function updateLLMConfig({ api_key, base_url, model, provider }) {
 // ---------------------------------------------------------------------------
 
 export async function fetchNovels() {
-  const res = await fetch(`${BASE}/api/novels`)
+  const res = await authedFetch('/api/novels')
   return res.json()
 }
 
 export async function createNovel(title = '未命名小说') {
-  const res = await fetch(`${BASE}/api/novels`, {
+  const res = await authedFetch('/api/novels', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
   })
   return assertOk(res)
 }
 
 export async function updateNovelTitle(novelId, title) {
-  const res = await fetch(`${BASE}/api/novels/${encodeURIComponent(novelId)}`, {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
   })
   return assertOk(res)
 }
 
 export async function deleteNovel(novelId) {
-  const res = await fetch(`${BASE}/api/novels/${encodeURIComponent(novelId)}`, {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}`, {
     method: 'DELETE',
   })
   return assertOk(res)
 }
 
 export async function switchNovel(novelId) {
-  const res = await fetch(
-    `${BASE}/api/novels/${encodeURIComponent(novelId)}/switch`,
-    { method: 'POST' }
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/switch`,
+    { method: 'POST' },
   )
   return assertOk(res)
 }
@@ -306,56 +482,47 @@ export async function switchNovel(novelId) {
 // ---------------------------------------------------------------------------
 
 export async function fetchTickStatus() {
-  const res = await fetch(`${BASE}/api/tick/status`)
+  const res = await authedFetch('/api/tick/status')
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
 export async function runOneTick() {
-  const res = await fetch(`${BASE}/api/tick/run`, { method: 'POST' })
+  const res = await authedFetch('/api/tick/run', { method: 'POST' })
   return assertOk(res)
 }
 
 export async function pauseTick() {
-  const res = await fetch(`${BASE}/api/tick/pause`, { method: 'POST' })
+  const res = await authedFetch('/api/tick/pause', { method: 'POST' })
   return assertOk(res)
 }
 
 export async function resumeTick() {
-  const res = await fetch(`${BASE}/api/tick/resume`, { method: 'POST' })
+  const res = await authedFetch('/api/tick/resume', { method: 'POST' })
   return assertOk(res)
 }
 
 export async function injectTickEvent(payload) {
-  // v2.19.1 / v2.21 — 后端 422 (非法 type / 空 location + all_in_location) /
-  // 409 (重复 id) 走错误体; assertOk 把 detail (string 或 FastAPI 422 list)
-  // 翻成 Error, 让 toast 真正落到失败分支。
-  const res = await fetch(`${BASE}/api/tick/inject-event`, {
+  const res = await authedFetch('/api/tick/inject-event', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   return assertOk(res)
 }
 
 export async function fetchTickHistory(lastN = 20) {
-  const res = await fetch(`${BASE}/api/tick/history?last_n=${lastN}`)
+  const res = await authedFetch(`/api/tick/history?last_n=${lastN}`)
   return assertOk(res)
 }
 
 export async function fetchTickOpenLoops(topK = 30) {
-  const res = await fetch(`${BASE}/api/tick/open-loops?top_k=${topK}`)
+  const res = await authedFetch(`/api/tick/open-loops?top_k=${topK}`)
   return res.json()
 }
 
-// v2.20 — OpenLoop CRUD wrappers
-// 后端 POST 在 dup-id 时返 409 (v2.19.3), DELETE 在不存在时静默 200。
-// 两个 wrapper 都把非 2xx 翻成 Error, 让调用方 catch 显示真实原因。
-
 export async function addTickOpenLoop(loop) {
-  const res = await fetch(`${BASE}/api/tick/open-loops`, {
+  const res = await authedFetch('/api/tick/open-loops', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(loop),
   })
   if (!res.ok) {
@@ -377,9 +544,9 @@ export async function addTickOpenLoop(loop) {
 }
 
 export async function closeTickOpenLoop(loopId) {
-  const res = await fetch(
-    `${BASE}/api/tick/open-loops/${encodeURIComponent(loopId)}`,
-    { method: 'DELETE' }
+  const res = await authedFetch(
+    `/api/tick/open-loops/${encodeURIComponent(loopId)}`,
+    { method: 'DELETE' },
   )
   if (!res.ok) {
     let detail = `HTTP ${res.status}`
@@ -395,56 +562,52 @@ export async function closeTickOpenLoop(loopId) {
 }
 
 export async function fetchCharacterStates() {
-  const res = await fetch(`${BASE}/api/tick/character-states`)
+  const res = await authedFetch('/api/tick/character-states')
   return res.json()
 }
 
 export async function fetchStyleAnchors(topK = 20) {
-  const res = await fetch(`${BASE}/api/tick/style-anchors?top_k=${topK}`)
+  const res = await authedFetch(`/api/tick/style-anchors?top_k=${topK}`)
   return res.json()
 }
 
 export async function fetchNoveltyWarnings() {
-  const res = await fetch(`${BASE}/api/tick/novelty-warnings`)
+  const res = await authedFetch('/api/tick/novelty-warnings')
   return res.json()
 }
 
 export async function fetchEventStats(lastNTicks = 50) {
-  const res = await fetch(
-    `${BASE}/api/tick/event-stats?last_n_ticks=${lastNTicks}`
+  const res = await authedFetch(
+    `/api/tick/event-stats?last_n_ticks=${lastNTicks}`,
   )
   return res.json()
 }
 
-// v2.20 — Tick diagnostics wrappers (后端 v2.16 / v2.18 Phase 9 已上, 前端缺)
-
 export async function fetchActionPatterns(lastNTicks = 100) {
-  const res = await fetch(
-    `${BASE}/api/tick/action-patterns?last_n_ticks=${lastNTicks}`
+  const res = await authedFetch(
+    `/api/tick/action-patterns?last_n_ticks=${lastNTicks}`,
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
 export async function fetchHallucinationDiagnostic() {
-  const res = await fetch(`${BASE}/api/tick/diagnostic/hallucination`)
+  const res = await authedFetch('/api/tick/diagnostic/hallucination')
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
 
 // ---------------------------------------------------------------------------
-// Agent registry (9 v2 tick agents + ActionResolver)
+// Agent registry
 // ---------------------------------------------------------------------------
 
 export async function fetchAgents() {
-  const res = await fetch(`${BASE}/api/agents`)
+  const res = await authedFetch('/api/agents')
   return res.json()
 }
 
 export async function fetchAgentDetail(agentId) {
-  const res = await fetch(
-    `${BASE}/api/agents/${encodeURIComponent(agentId)}`
-  )
+  const res = await authedFetch(`/api/agents/${encodeURIComponent(agentId)}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
@@ -452,95 +615,74 @@ export async function fetchAgentDetail(agentId) {
 // ---------------------------------------------------------------------------
 // v2.24 — tick 驱动节 + 任务队列
 // ---------------------------------------------------------------------------
-//
-// 续写下一节的主路径: POST /api/section/generate → 入队任务 → SSE 看进度。
-// 旧的 generateSectionStream (节级管线) 仍可用于"测试 → 节级管线"栏目。
 
-/**
- * v2.25 — 给一个空小说做冷启动 (4 阶段: 世界 / 角色 / 伏笔 / 风格锚点).
- * 完成后默认链式入队一个 bootstrap_section 任务.
- *
- * @param {string} novelId
- * @param {{seed: string, positioning?: string, references?: string, also_generate_first_section?: boolean}} payload
- * @returns {Promise<object>} bootstrap_world 任务快照
- */
 export async function bootstrapWorld(novelId, payload) {
-  const res = await fetch(
-    `${BASE}/api/novels/${encodeURIComponent(novelId)}/bootstrap-world`,
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/bootstrap-world`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     },
   )
   return assertOk(res)
 }
 
-/**
- * 创建一个"续写下一节"后台任务。
- * @param {string|null} novelId 不传时用当前活跃小说
- * @returns {Promise<object>} 任务快照
- */
 export async function createSectionTask(novelId = null) {
   const body = novelId ? { novel_id: novelId } : {}
-  const res = await fetch(`${BASE}/api/section/generate`, {
+  const res = await authedFetch('/api/section/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
   return assertOk(res)
 }
 
-/**
- * 列出 tick 驱动节 — 不传 novelId 用当前活跃。
- */
 export async function listTickSections(novelId = null) {
   const url = novelId
-    ? `${BASE}/api/section/list/${encodeURIComponent(novelId)}`
-    : `${BASE}/api/section/list`
-  const res = await fetch(url)
+    ? `/api/section/list/${encodeURIComponent(novelId)}`
+    : '/api/section/list'
+  const res = await authedFetch(url)
   return assertOk(res)
 }
 
-/**
- * 列出所有后台任务 (可按 novel 过滤)。
- */
 export async function listTasks(novelId = null) {
   const url = novelId
-    ? `${BASE}/api/tasks?novel_id=${encodeURIComponent(novelId)}`
-    : `${BASE}/api/tasks`
-  const res = await fetch(url)
+    ? `/api/tasks?novel_id=${encodeURIComponent(novelId)}`
+    : '/api/tasks'
+  const res = await authedFetch(url)
   return assertOk(res)
 }
 
 export async function fetchTask(taskId) {
-  const res = await fetch(`${BASE}/api/tasks/${encodeURIComponent(taskId)}`)
+  const res = await authedFetch(`/api/tasks/${encodeURIComponent(taskId)}`)
   return assertOk(res)
 }
 
 export async function cancelTask(taskId) {
-  const res = await fetch(
-    `${BASE}/api/tasks/${encodeURIComponent(taskId)}/cancel`,
-    { method: 'POST' }
+  const res = await authedFetch(
+    `/api/tasks/${encodeURIComponent(taskId)}/cancel`,
+    { method: 'POST' },
   )
   return assertOk(res)
 }
 
-/**
- * SSE 订阅任务进度。回调 onSnapshot 接收完整 Task 对象;
- * onError 接收 Error。返回 AbortController, 调 controller.abort()
- * 中止订阅 (用户切走视图或任务终态)。
- *
- * @param {string} taskId
- * @param {{ onSnapshot: (task) => void, onDone?: () => void, onError?: (err) => void }} cb
- */
 export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
   const controller = new AbortController()
+  const token = getStoredToken()
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
 
   fetch(`${BASE}/api/tasks/${encodeURIComponent(taskId)}/stream`, {
+    headers,
     signal: controller.signal,
   })
     .then(async (response) => {
+      if (response.status === 401) {
+        setStoredToken('')
+        _emit401()
+        if (typeof onError === 'function')
+          onError(new Error('登录态已过期'))
+        return
+      }
       if (!response.ok) {
         const err = new Error(`HTTP ${response.status}`)
         if (typeof onError === 'function') onError(err)
@@ -569,7 +711,6 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
               try {
                 const snap = JSON.parse(data)
                 onSnapshot(snap)
-                // 终态后服务端会关闭流, 这里也提前 done 让上层取消订阅
                 if (
                   snap.status === 'completed' ||
                   snap.status === 'failed' ||
@@ -578,7 +719,7 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
                   if (typeof onDone === 'function') onDone(snap)
                 }
               } catch {
-                /* 单条 snapshot 解析失败不致命, 跳过 */
+                /* skip */
               }
             } else if (currentEvent === 'error') {
               if (typeof onError === 'function') onError(new Error(data))

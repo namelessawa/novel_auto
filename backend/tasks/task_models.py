@@ -32,11 +32,15 @@ class Task(BaseModel):
     """前后端共享的任务快照。
 
     所有时间字段用 ISO-8601 字符串而非 datetime, 避免前端 JSON 反序列化时区出错。
+
+    v2.26 — 加 ``user_id`` 字段。空串 ("") 表示 pre-multi-tenant 期遗留任务,
+    属于 LEGACY_USER。
     """
 
     model_config = ConfigDict(extra="ignore")
 
     id: str
+    user_id: str = ""
     novel_id: str
     novel_title: str = ""
     kind: TaskKind
