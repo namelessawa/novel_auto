@@ -128,12 +128,17 @@ export default function TickControlPanel({ onAction, refreshKey }) {
     }
   }
 
+  // v2.30 — 去掉 3s 轮询. 触发时机:
+  //   1. 挂载 / refreshKey 变化: 拉一次
+  //   2. tab 切回前台: 拉一次
+  //   3. 用户操作 (run/pause/inject/close-loop) 完成后 handleX 已显式调 refresh()
   useEffect(() => {
     refresh()
-    pollTimer.current = setInterval(refresh, 3000)
-    return () => {
-      if (pollTimer.current) clearInterval(pollTimer.current)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
     }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [refresh, refreshKey])
 
   const handleRun = async () => {

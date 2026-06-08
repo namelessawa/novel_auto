@@ -88,21 +88,19 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     }
   }, [])
 
-  // v2.29 — 3s 改 15s + page-visibility, 减少后台 tab 的请求噪音
+  // v2.30 — 去掉 setInterval. 触发时机:
+  //   1. HomeView 挂载: 拉一次
+  //   2. tab 切回前台: 拉一次
+  //   3. 父组件触发 onAfterGenerated (创建/续写完成): App.jsx 会重渲染,
+  //      activeNovel.id 变化触发下方 effect
+  // 任务实时进度看 TaskListPanel (SSE), 不在这里轮询.
   useEffect(() => {
     loadTick()
-    const tick = () => {
-      if (document.visibilityState === 'visible') loadTick()
-    }
-    const t = setInterval(tick, 15000)
     const onVisible = () => {
       if (document.visibilityState === 'visible') loadTick()
     }
     document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      clearInterval(t)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [loadTick])
 
   // v2.23 — App.jsx 切换活跃小说后, 续写下拉默认就跟着切, 减少误操作。

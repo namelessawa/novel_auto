@@ -136,24 +136,23 @@ function AppShell() {
     setRefreshKey((k) => k + 1)
   }, [refreshStats, refreshNovels])
 
-  // v2.29 — 5s 太密, 后台 tab 也在拉, 网络面板刷屏. 拉长到 30s + 加 page-
-  // visibility 检测, tab 切到后台时暂停轮询.
+  // v2.30 — 彻底去掉保活轮询. 事件驱动:
+  //   1. 登录/挂载: 拉一次
+  //   2. 用户操作 (创建/切换/删除小说) 完成后: bumpRefresh 拉一次
+  //   3. tab 从后台切回前台: 拉一次 (相当于"用户回来了, 给点最新数据")
+  // 任务实时进度由 TaskListPanel 的 SSE 推, 不需要轮询.
   useEffect(() => {
     if (!hasToken) return undefined
     refreshStats()
     refreshNovels()
-    const tick = () => {
-      if (document.visibilityState === 'visible') refreshStats()
-    }
-    const interval = setInterval(tick, 30000)
     const onVisible = () => {
-      if (document.visibilityState === 'visible') refreshStats()
+      if (document.visibilityState === 'visible') {
+        refreshStats()
+        refreshNovels()
+      }
     }
     document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      clearInterval(interval)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [refreshStats, refreshNovels, hasToken])
 
   const handleOpenNovel = async (novelId) => {

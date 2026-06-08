@@ -32,7 +32,6 @@ const KIND_LABEL = {
   bootstrap_world: '世界种子',
 }
 
-const POLL_INTERVAL_MS = 3000
 // 已完成/失败/取消的任务在列表中保留多久 — 给用户看一眼结果, 然后自动隐藏
 const TERMINAL_RETAIN_MS = 60 * 1000
 
@@ -83,7 +82,11 @@ export default function TaskListPanel({ onTaskComplete }) {
     [updateOne],
   )
 
-  // 轮询
+  // v2.30 — 去掉 setInterval. 列表拉取改为:
+  //   1. 挂载时拉一次
+  //   2. tab 切回前台时拉一次
+  // 进行中任务的进度变化由各 task SSE 流推送 (subscribeIfNeeded)，
+  // 不需要轮询整个列表也能保持活动任务的实时更新.
   useEffect(() => {
     let cancelled = false
     const tick = async () => {
@@ -107,10 +110,13 @@ export default function TaskListPanel({ onTaskComplete }) {
       }
     }
     tick()
-    const timer = setInterval(tick, POLL_INTERVAL_MS)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick()
+    }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       cancelled = true
-      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
       // 卸载时关闭所有 SSE
       streamsRef.current.forEach((c) => c.abort())
       streamsRef.current.clear()
