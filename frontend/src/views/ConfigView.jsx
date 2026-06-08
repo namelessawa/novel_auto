@@ -44,7 +44,7 @@ const TEXT_LLM_PROVIDERS = {
 
 const IMAGE_PROVIDERS = {
   xfyun: {
-    label: '科大讯飞 (Spark 图片生成)',
+    label: '科大讯飞 (MaaS 图片生成)',
     docHref: 'https://www.xfyun.cn/doc/spark/%E5%9B%BE%E7%89%87%E7%94%9F%E6%88%90.html',
     fields: [
       { name: 'app_id', label: 'AppID', type: 'text', placeholder: '12345678' },
@@ -55,6 +55,13 @@ const IMAGE_PROVIDERS = {
         label: 'ModelID (domain)',
         type: 'text',
         placeholder: '例如: xopqwentti20b / general',
+      },
+      {
+        name: 'endpoint',
+        label: 'API 端点 (可选)',
+        type: 'text',
+        placeholder:
+          'https://maas-api.cn-huabei-1.xf-yun.com/v2.1/tti (默认) / xingchen-api... (Kolors)',
       },
     ],
   },

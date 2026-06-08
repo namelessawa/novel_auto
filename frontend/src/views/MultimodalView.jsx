@@ -9,15 +9,19 @@ import { showToast } from '../utils/toast'
 // 暂不接入小说内容, 单纯文本输入 → 图片输出, 让用户先把凭据跑通.
 // 凭据从「系统设置」localStorage 读, 不在后端持久化.
 
+// v2.32 — 讯飞 MaaS 文档支持的 6 档分辨率
 const PRESETS = [
-  { label: '512×512 (方形)', w: 512, h: 512 },
-  { label: '768×768 (方形 HD)', w: 768, h: 768 },
+  { label: '768×768 (方形)', w: 768, h: 768 },
+  { label: '1024×1024 (方形 HD)', w: 1024, h: 1024 },
   { label: '1024×576 (16:9)', w: 1024, h: 576 },
+  { label: '1024×768 (4:3)', w: 1024, h: 768 },
   { label: '576×1024 (9:16)', w: 576, h: 1024 },
+  { label: '768×1024 (3:4)', w: 768, h: 1024 },
 ]
 
 export default function MultimodalView() {
   const [prompt, setPrompt] = useState('')
+  const [negativePrompt, setNegativePrompt] = useState('')
   const [size, setSize] = useState(PRESETS[0])
   const [busy, setBusy] = useState(false)
   const [image, setImage] = useState(null)
@@ -40,6 +44,7 @@ export default function MultimodalView() {
         prompt: prompt.trim(),
         width: size.w,
         height: size.h,
+        negative_prompt: negativePrompt.trim(),
       })
       setImage(r)
     } catch (err) {
@@ -98,6 +103,25 @@ export default function MultimodalView() {
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="例如: 雪山下的古老村落, 黄昏, 油画风格"
           style={{ minHeight: 88, marginBottom: 12 }}
+          disabled={busy}
+        />
+
+        <label
+          style={{
+            display: 'block',
+            fontSize: 12,
+            color: 'var(--text-muted)',
+            marginBottom: 6,
+          }}
+        >
+          反向提示词 (可选)
+        </label>
+        <textarea
+          className="input-field"
+          value={negativePrompt}
+          onChange={(e) => setNegativePrompt(e.target.value)}
+          placeholder="不想出现的元素, 例: 黑白, 模糊, 低质量"
+          style={{ minHeight: 50, marginBottom: 12 }}
           disabled={busy}
         />
 

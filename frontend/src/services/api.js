@@ -231,19 +231,24 @@ export function getActiveImageProviderConfig() {
   return { active, config: providers[active] || {} }
 }
 
-// v2.28 — 文生图. header 一次性带凭据, 后端用完即丢 (与 /api/llm/random-* 同思路).
-export async function generateImage({ prompt, width = 512, height = 512 }) {
+// v2.32 — 文生图. header 一次性带凭据, 后端用完即丢.
+export async function generateImage({
+  prompt,
+  width = 768,
+  height = 768,
+  negative_prompt = '',
+}) {
   const { active, config } = getActiveImageProviderConfig()
   const headers = { 'X-Image-Provider': active }
   if (config.app_id) headers['X-Image-App-Id'] = config.app_id
   if (config.api_key) headers['X-Image-Api-Key'] = config.api_key
   if (config.api_secret) headers['X-Image-Api-Secret'] = config.api_secret
-  // v2.31 — model 用作讯飞 domain (xopqwentti20b / general / ...)
-  if (config.model) headers['X-Image-Model'] = config.model
+  if (config.model) headers['X-Image-Model'] = config.model // 讯飞 domain
+  if (config.endpoint) headers['X-Image-Endpoint'] = config.endpoint
   const res = await authedFetch('/api/image/generate', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ prompt, width, height }),
+    body: JSON.stringify({ prompt, width, height, negative_prompt }),
   })
   return assertOk(res) // { provider, image_base64, mime_type }
 }

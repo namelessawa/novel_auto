@@ -26,9 +26,11 @@ router = APIRouter(prefix="/api/image", tags=["image"])
 
 
 class GenerateImageRequest(BaseModel):
-    prompt: str = Field(min_length=1, max_length=2000)
-    width: int = Field(default=512, ge=128, le=2048)
-    height: int = Field(default=512, ge=128, le=2048)
+    prompt: str = Field(min_length=1, max_length=1024)
+    width: int = Field(default=768, ge=128, le=2048)
+    height: int = Field(default=768, ge=128, le=2048)
+    # v2.32 — 讯飞 MaaS 文档新增可选字段
+    negative_prompt: str = Field(default="", max_length=1024)
 
 
 class GenerateImageResponse(BaseModel):
@@ -46,6 +48,7 @@ async def generate_image(
     x_image_api_key: str = Header(default="", alias="X-Image-Api-Key"),
     x_image_api_secret: str = Header(default="", alias="X-Image-Api-Secret"),
     x_image_model: str = Header(default="", alias="X-Image-Model"),
+    x_image_endpoint: str = Header(default="", alias="X-Image-Endpoint"),
 ) -> GenerateImageResponse:
     provider = (x_image_provider or "xfyun").strip().lower()
 
@@ -64,8 +67,12 @@ async def generate_image(
                 detail="讯飞凭据缺失: " + ", ".join(missing),
             )
 
-        # model 即讯飞 domain — 用户没填走 general; 新模型如 xopqwentti20b 必须填
+        # model 即讯飞 domain — 没填走 general; 新模型如 xopqwentti20b 必须填
         domain = (x_image_model or "").strip() or "general"
+        endpoint = (
+            (x_image_endpoint or "").strip()
+            or xfyun_image.XFYUN_DEFAULT_ENDPOINT
+        )
 
         try:
             b64 = await xfyun_image.generate_image(
@@ -76,6 +83,8 @@ async def generate_image(
                 width=req.width,
                 height=req.height,
                 domain=domain,
+                endpoint=endpoint,
+                negative_prompt=req.negative_prompt,
             )
         except xfyun_image.XfyunImageError as e:
             # 显式 log 让 docker logs 能定位 — HTTPException.detail 不进 stdlib log

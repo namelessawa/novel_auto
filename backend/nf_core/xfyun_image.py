@@ -1,17 +1,25 @@
-"""科大讯飞 Spark 图片生成 (Text-to-Image) v2.1/tti — HTTPS POST 客户端.
+"""科大讯飞 MaaS 图片生成 (Text-to-Image) /v2.1/tti — HTTPS POST 客户端.
 
 文档: https://www.xfyun.cn/doc/spark/图片生成.html
 
 协议
 ----
-* 不是 WebSocket — Spark Chat 是 wss, 但图片生成 v2.1/tti 是 https POST
-* URL: ``https://spark-api.cn-huabei-1.xf-yun.com/v2.1/tti?authorization=...&date=...&host=...``
-* 鉴权: HMAC-SHA256 签名作为 query string (与 wss 鉴权同源, 只是 request-line 用 POST)
-* Body: header / parameter.chat / payload.message JSON
-* 响应: 单条 JSON, payload.choices.text[].content 是完整 base64 PNG
+* HTTPS POST (非 WebSocket)
+* 鉴权: HMAC-SHA256 签名作为 query string (host/date/request-line)
+* 默认 host: ``maas-api.cn-huabei-1.xf-yun.com`` (MaaS 平台, 跑 Qwen / 通用 模型)
+  备用 host: ``xingchen-api.cn-huabei-1.xf-yun.com`` (Kolors 模型专用)
+  老的 ``spark-api.cn-huabei-1.xf-yun.com`` 是 Spark Chat, 不是图片生成
 
-v2.30 前的实现用 wss:// 走 WebSocket 握手, 对端立即 RST (ConnectionResetError)
-就是因为协议错: tti 端点根本不支持 WebSocket upgrade.
+请求 body
+---------
+``header.app_id`` 必填; ``uid`` 可选; ``patch_id`` 可选 (LoRA 列表)
+``parameter.chat``: domain (= modelid), width, height, seed,
+  num_inference_steps, guidance_scale, scheduler 全部必填
+``payload.message.text[0]`` user content
+``payload.negative_prompts.text`` 可选
+
+支持的分辨率: 768x768 / 1024x1024 / 576x1024 / 768x1024 / 1024x576 / 1024x768
+支持的 scheduler: DPM++ 2M Karras / DPM++ SDE Karras / DDIM / Euler a / Euler
 """
 from __future__ import annotations
 
@@ -21,31 +29,57 @@ import hashlib
 import hmac
 import json
 import logging
+import secrets as _secrets
 from datetime import datetime, timezone
 from email.utils import format_datetime
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-XFYUN_DEFAULT_HOST = "spark-api.cn-huabei-1.xf-yun.com"
-XFYUN_DEFAULT_PATH = "/v2.1/tti"
+XFYUN_DEFAULT_ENDPOINT = "https://maas-api.cn-huabei-1.xf-yun.com/v2.1/tti"
 
+# 文档列出的合法分辨率组合 — 偏离这个集合 → code=10005
+SUPPORTED_RESOLUTIONS: frozenset[tuple[int, int]] = frozenset({
+    (768, 768),
+    (1024, 1024),
+    (576, 1024),
+    (768, 1024),
+    (1024, 576),
+    (1024, 768),
+})
 
-# 讯飞 spark 通用错误码 → 中文修复指引. 用户看到立刻知道下一步.
+SUPPORTED_SCHEDULERS: frozenset[str] = frozenset({
+    "DPM++ 2M Karras",
+    "DPM++ SDE Karras",
+    "DDIM",
+    "Euler a",
+    "Euler",
+})
+
+# 业务错误码 → 中文 hint, 用户看到立刻知道怎么修.
 _XFYUN_CODE_HINTS: dict[int, str] = {
-    10110: "鉴权失败 — APIKey/APISecret 错, 或容器时区/时钟与北京时间差 >5min",
-    10160: "AppID 不存在或填错位置 (注意 AppID/APIKey/APISecret 别填混)",
-    10163: "请求参数不合法 — 检查 width/height 是否在讯飞支持的尺寸列表里",
-    10165: "domain 字段不对",
-    11200: "服务无权限 — 讯飞控制台 → 我的应用 → 开通对应服务",
-    11201: (
-        "AppID 未开通图片生成服务 — 讯飞控制台 → 我的应用 → 服务列表 → "
-        "「图片生成」点开通 (通常有免费额度)"
+    10003: "消息格式错误 — 请求体 JSON 结构有问题",
+    10004: "schema 错误 — body 缺必填字段",
+    10005: (
+        "参数值错误 — width/height 必须是 768x768 / 1024x1024 / 576x1024 / "
+        "768x1024 / 1024x576 / 1024x768 之一; scheduler 必须在文档列表里"
     ),
-    11202: "授权额度已用完 / 已过期 — 控制台续费或申请扩量",
-    11203: "并发量超限 — 等几秒重试",
+    10008: "服务容量不足 — 讯飞侧拥堵, 重试",
+    10021: "输入审核不通过 — 提示词被讯飞内容审核拦截",
+    10022: "图片审核不通过 — 生成结果触发了讯飞内容审核",
+    # 旧码 (保留兼容老的错误)
+    10110: "鉴权失败 — APIKey/APISecret 错或容器时区漂移 (>5min)",
+    10160: "AppID 不存在或填错位置 (App ID/APIKey/APISecret 别填混)",
+    10165: "domain 字段不对 — 检查 ModelID 填的是否正确",
+    11200: "服务无权限 — 讯飞控制台开通对应服务",
+    11201: (
+        "AppID 未开通该模型服务 — 关键: 不同模型 (general/xopqwentti20b/Kolors) "
+        "需分别在讯飞 MaaS 平台开通; host 也要对应 (maas-api / xingchen-api)"
+    ),
+    11202: "授权额度用完 / 已过期",
+    11203: "并发限流 — 等几秒重试",
 }
 
 
@@ -68,12 +102,7 @@ def _sign_params(
     path: str,
     method: str = "POST",
 ) -> dict[str, str]:
-    """生成 HMAC-SHA256 query string 鉴权参数.
-
-    讯飞规范: signature_origin = "host: {host}\\ndate: {date}\\n{METHOD} {path} HTTP/1.1"
-    HMAC-SHA256(api_secret, signature_origin) → base64 → signature.
-    Authorization = base64('api_key="...", algorithm="hmac-sha256", headers="host date request-line", signature="..."')
-    """
+    """HMAC-SHA256 query string 鉴权参数 — 与 v2.1 鉴权同源."""
     date = format_datetime(datetime.now(timezone.utc), usegmt=True)
     signature_origin = f"host: {host}\ndate: {date}\n{method} {path} HTTP/1.1"
     signature_sha = hmac.new(
@@ -100,36 +129,67 @@ async def generate_image(
     api_key: str,
     api_secret: str,
     prompt: str,
-    width: int = 512,
-    height: int = 512,
-    host: str = XFYUN_DEFAULT_HOST,
-    path: str = XFYUN_DEFAULT_PATH,
-    timeout: float = 60.0,
+    width: int = 768,
+    height: int = 768,
     domain: str = "general",
+    endpoint: str = XFYUN_DEFAULT_ENDPOINT,
+    seed: int | None = None,
+    num_inference_steps: int = 20,
+    guidance_scale: float = 5.0,
+    scheduler: str = "DPM++ 2M Karras",
+    negative_prompt: str = "",
+    patch_id: list[str] | None = None,
+    uid: str = "novel_auto",
+    timeout: float = 60.0,
 ) -> str:
-    """调用 xfyun 图片生成, 返回 base64 编码的 PNG.
+    """调用 xfyun MaaS 图片生成, 返回 base64 编码的 PNG.
 
-    ``domain`` 决定使用哪个底层模型. 老 v2.1 默认 ``general``; 新开通的
-    Qwen-based 模型有专属 ID, 如 ``xopqwentti20b``. 用户在讯飞控制台「我的
-    应用 → 服务详情」能看到自己服务对应的 modelid, 必须填对否则 11201/10160.
-
-    raises XfyunImageError: 凭据缺失 / 鉴权失败 / 网络问题 / xfyun 业务错误码.
+    raises XfyunImageError: 凭据缺失 / 分辨率不合法 / 鉴权失败 / 业务错误码.
     """
     if not (app_id and api_key and api_secret):
         raise XfyunImageError("xfyun 凭据不完整 (需要 AppID + APISecret + APIKey)")
+
+    # 客户端预校验 — 不让讯飞侧 10005 浪费一次往返
+    if (int(width), int(height)) not in SUPPORTED_RESOLUTIONS:
+        raise XfyunImageError(
+            f"分辨率 {width}x{height} 不支持; 仅可选 "
+            "768x768 / 1024x1024 / 576x1024 / 768x1024 / 1024x576 / 1024x768"
+        )
+    if scheduler not in SUPPORTED_SCHEDULERS:
+        raise XfyunImageError(
+            f"scheduler {scheduler!r} 不支持; 仅可选 "
+            "DPM++ 2M Karras / DPM++ SDE Karras / DDIM / Euler a / Euler"
+        )
+
+    parsed = urlparse(endpoint)
+    if not parsed.netloc or not parsed.path:
+        raise XfyunImageError(f"endpoint URL 不合法: {endpoint!r}")
+    host = parsed.netloc
+    path = parsed.path
 
     params = _sign_params(
         api_key=api_key, api_secret=api_secret, host=host, path=path, method="POST"
     )
     url = f"https://{host}{path}?" + urlencode(params)
 
+    # seed 不给就随机 — 文档要求 0~INT_MAX
+    effective_seed = int(seed) if seed is not None else _secrets.randbelow(2**31)
+
+    header_block: dict[str, object] = {"app_id": app_id, "uid": uid}
+    if patch_id:
+        header_block["patch_id"] = list(patch_id)
+
     body = {
-        "header": {"app_id": app_id},
+        "header": header_block,
         "parameter": {
             "chat": {
                 "domain": domain or "general",
                 "width": int(width),
                 "height": int(height),
+                "seed": effective_seed,
+                "num_inference_steps": int(num_inference_steps),
+                "guidance_scale": float(guidance_scale),
+                "scheduler": scheduler,
             }
         },
         "payload": {
@@ -138,6 +198,8 @@ async def generate_image(
             }
         },
     }
+    if negative_prompt:
+        body["payload"]["negative_prompts"] = {"text": negative_prompt}
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -160,7 +222,7 @@ async def generate_image(
         if resp.status_code in (401, 403):
             hint = " — 多半是 AppID/APIKey/APISecret 错或不属于同一应用"
         elif resp.status_code == 404:
-            hint = " — 端点 path 不对, 讯飞控制台对照确认"
+            hint = " — endpoint URL path 不对"
         raise XfyunImageError(
             f"xfyun HTTP {resp.status_code}{hint}: {snippet}"
         )
@@ -168,15 +230,13 @@ async def generate_image(
     try:
         data = resp.json()
     except ValueError as e:
-        raise XfyunImageError(
-            f"xfyun 返回非 JSON: {resp.text[:300]}"
-        ) from e
+        raise XfyunImageError(f"xfyun 返回非 JSON: {resp.text[:300]}") from e
 
     header = data.get("header", {}) or {}
-    code = header.get("code", 0)
+    code = int(header.get("code", 0) or 0)
     if code != 0:
         raise XfyunImageError(
-            _format_business_error(int(code), str(header.get("message", "")))
+            _format_business_error(code, str(header.get("message", "")))
         )
 
     choices = (data.get("payload") or {}).get("choices") or {}
