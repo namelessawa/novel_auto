@@ -1,26 +1,22 @@
-"""科大讯飞 Spark 图片生成 (Text-to-Image) WebSocket 客户端。
+"""科大讯飞 Spark 图片生成 (Text-to-Image) v2.1/tti — HTTPS POST 客户端.
 
 文档: https://www.xfyun.cn/doc/spark/图片生成.html
 
-API 形态
---------
-WebSocket: ``wss://spark-api.cn-huabei-1.xf-yun.com/v2.1/tti``
-鉴权: URL query string 携带 HMAC-SHA256 签名 (host + date + request-line)。
+协议
+----
+* 不是 WebSocket — Spark Chat 是 wss, 但图片生成 v2.1/tti 是 https POST
+* URL: ``https://spark-api.cn-huabei-1.xf-yun.com/v2.1/tti?authorization=...&date=...&host=...``
+* 鉴权: HMAC-SHA256 签名作为 query string (与 wss 鉴权同源, 只是 request-line 用 POST)
+* Body: header / parameter.chat / payload.message JSON
+* 响应: 单条 JSON, payload.choices.text[].content 是完整 base64 PNG
 
-请求 JSON 结构 (单条):
-    {
-      "header": {"app_id": ..., "uid": "novel_auto"},
-      "parameter": {"chat": {"domain": "general", "width": 512, "height": 512}},
-      "payload": {"message": {"text": [{"role": "user", "content": "prompt"}]}}
-    }
-
-响应是若干 WebSocket 帧, 每帧 payload.choices.text[].content 是 base64 切片;
-header.status == 2 表示流结束, 拼接全部 content 即完整图。
+v2.30 前的实现用 wss:// 走 WebSocket 握手, 对端立即 RST (ConnectionResetError)
+就是因为协议错: tti 端点根本不支持 WebSocket upgrade.
 """
 from __future__ import annotations
 
-import asyncio
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -29,8 +25,7 @@ from datetime import datetime, timezone
 from email.utils import format_datetime
 from urllib.parse import urlencode
 
-import websockets
-import websockets.exceptions
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -39,30 +34,41 @@ XFYUN_DEFAULT_PATH = "/v2.1/tti"
 
 
 class XfyunImageError(Exception):
-    """通用 xfyun 调用错误 — routes 层 502/400 透传。"""
+    """通用 xfyun 调用错误 — routes 层 502/400 透传."""
 
 
-def _sign_url(api_key: str, api_secret: str, host: str, path: str) -> str:
-    """生成带 HMAC-SHA256 签名的 wss:// URL — xfyun spark 系列通用鉴权。"""
+def _sign_params(
+    *,
+    api_key: str,
+    api_secret: str,
+    host: str,
+    path: str,
+    method: str = "POST",
+) -> dict[str, str]:
+    """生成 HMAC-SHA256 query string 鉴权参数.
+
+    讯飞规范: signature_origin = "host: {host}\\ndate: {date}\\n{METHOD} {path} HTTP/1.1"
+    HMAC-SHA256(api_secret, signature_origin) → base64 → signature.
+    Authorization = base64('api_key="...", algorithm="hmac-sha256", headers="host date request-line", signature="..."')
+    """
     date = format_datetime(datetime.now(timezone.utc), usegmt=True)
-    signature_origin = f"host: {host}\ndate: {date}\nGET {path} HTTP/1.1"
+    signature_origin = f"host: {host}\ndate: {date}\n{method} {path} HTTP/1.1"
     signature_sha = hmac.new(
         api_secret.encode("utf-8"),
         signature_origin.encode("utf-8"),
         hashlib.sha256,
     ).digest()
     signature = base64.b64encode(signature_sha).decode()
-    authorization_origin = (
+    auth_origin = (
         f'api_key="{api_key}", algorithm="hmac-sha256", '
         f'headers="host date request-line", signature="{signature}"'
     )
-    authorization = base64.b64encode(authorization_origin.encode("utf-8")).decode()
-    params = {
+    authorization = base64.b64encode(auth_origin.encode("utf-8")).decode()
+    return {
         "authorization": authorization,
         "date": date,
         "host": host,
     }
-    return f"wss://{host}{path}?{urlencode(params)}"
 
 
 async def generate_image(
@@ -77,18 +83,20 @@ async def generate_image(
     path: str = XFYUN_DEFAULT_PATH,
     timeout: float = 60.0,
 ) -> str:
-    """调用 xfyun 文生图, 返回 base64 编码的 PNG 图像数据。
+    """调用 xfyun 图片生成, 返回 base64 编码的 PNG.
 
-    raises
-    ------
-    XfyunImageError — 凭据缺失 / 鉴权失败 / 网络问题 / xfyun 业务错误码。
+    raises XfyunImageError: 凭据缺失 / 鉴权失败 / 网络问题 / xfyun 业务错误码.
     """
     if not (app_id and api_key and api_secret):
         raise XfyunImageError("xfyun 凭据不完整 (需要 AppID + APISecret + APIKey)")
 
-    url = _sign_url(api_key, api_secret, host, path)
-    request_body = {
-        "header": {"app_id": app_id, "uid": "novel_auto"},
+    params = _sign_params(
+        api_key=api_key, api_secret=api_secret, host=host, path=path, method="POST"
+    )
+    url = f"https://{host}{path}?" + urlencode(params)
+
+    body = {
+        "header": {"app_id": app_id},
         "parameter": {
             "chat": {
                 "domain": "general",
@@ -103,61 +111,61 @@ async def generate_image(
         },
     }
 
-    chunks: list[str] = []
     try:
-        async with asyncio.timeout(timeout):
-            async with websockets.connect(url) as ws:
-                await ws.send(json.dumps(request_body, ensure_ascii=False))
-                async for message in ws:
-                    data = json.loads(message)
-                    header = data.get("header", {}) or {}
-                    code = header.get("code", 0)
-                    if code != 0:
-                        raise XfyunImageError(
-                            f"xfyun error code={code}: "
-                            f"{header.get('message', 'unknown')}"
-                        )
-                    choices = (data.get("payload") or {}).get("choices") or {}
-                    for t in choices.get("text", []) or []:
-                        content = t.get("content") or ""
-                        if content:
-                            chunks.append(content)
-                    if header.get("status") == 2:
-                        break
-    except asyncio.TimeoutError as e:
-        raise XfyunImageError(f"xfyun 调用超时 ({timeout}s)") from e
-    except XfyunImageError:
-        raise
-    except Exception as e:
-        # 不再细分异常类 — websockets 11/12/13 把 InvalidStatusCode 改名为
-        # InvalidStatus, 子类化也乱; 统一抓 + 把 type/status/message 全挖出来,
-        # 保证 detail 永远非空, 用户能定位.
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.post(url, json=body)
+    except httpx.TimeoutException as e:
+        raise XfyunImageError(f"xfyun HTTPS 请求超时 ({timeout}s)") from e
+    except httpx.HTTPError as e:
         type_name = type(e).__name__
         text = str(e).strip() or repr(e)
-        # 尝试多种 attribute path 提取 HTTP 状态码
-        status_code = (
-            getattr(e, "status_code", None)
-            or getattr(getattr(e, "response", None), "status_code", None)
-            or getattr(e, "code", None)
-        )
-        if status_code:
-            hint = ""
-            if status_code in (401, 403):
-                hint = " — 多半是 AppID/APIKey/APISecret 错或不属于同一应用"
-            raise XfyunImageError(
-                f"xfyun 握手失败 (HTTP {status_code}, {type_name}){hint}"
-            ) from e
-        # 最后 fallback — 至少给出 type + 文字
+        raise XfyunImageError(f"xfyun HTTPS 错误 ({type_name}): {text}") from e
+    except Exception as e:  # pragma: no cover
+        type_name = type(e).__name__
+        text = str(e).strip() or repr(e)
         logger.warning("xfyun unexpected exception type=%s text=%r", type_name, text)
         raise XfyunImageError(f"xfyun 调用失败 ({type_name}): {text}") from e
 
+    if resp.status_code != 200:
+        snippet = (resp.text or "(empty body)")[:400]
+        hint = ""
+        if resp.status_code in (401, 403):
+            hint = " — 多半是 AppID/APIKey/APISecret 错或不属于同一应用"
+        elif resp.status_code == 404:
+            hint = " — 端点 path 不对, 讯飞控制台对照确认"
+        raise XfyunImageError(
+            f"xfyun HTTP {resp.status_code}{hint}: {snippet}"
+        )
+
+    try:
+        data = resp.json()
+    except ValueError as e:
+        raise XfyunImageError(
+            f"xfyun 返回非 JSON: {resp.text[:300]}"
+        ) from e
+
+    header = data.get("header", {}) or {}
+    code = header.get("code", 0)
+    if code != 0:
+        raise XfyunImageError(
+            f"xfyun error code={code}: {header.get('message', 'unknown')}"
+        )
+
+    choices = (data.get("payload") or {}).get("choices") or {}
+    chunks: list[str] = []
+    for t in choices.get("text", []) or []:
+        content = t.get("content") or ""
+        if content:
+            chunks.append(content)
+
     if not chunks:
-        raise XfyunImageError("xfyun 未返回图像数据 (response empty)")
+        raise XfyunImageError(
+            f"xfyun 未返回图像数据; 响应 head: {json.dumps(data)[:300]}"
+        )
 
     full = "".join(chunks)
-    # 简单合法性校验 — base64 不合法直接报错
     try:
         base64.b64decode(full, validate=True)
-    except (ValueError, base64.binascii.Error) as e:
+    except (ValueError, binascii.Error) as e:
         raise XfyunImageError(f"xfyun 返回非法 base64: {e}") from e
     return full
