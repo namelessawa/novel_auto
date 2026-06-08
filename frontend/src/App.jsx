@@ -136,12 +136,24 @@ function AppShell() {
     setRefreshKey((k) => k + 1)
   }, [refreshStats, refreshNovels])
 
+  // v2.29 — 5s 太密, 后台 tab 也在拉, 网络面板刷屏. 拉长到 30s + 加 page-
+  // visibility 检测, tab 切到后台时暂停轮询.
   useEffect(() => {
     if (!hasToken) return undefined
     refreshStats()
     refreshNovels()
-    const interval = setInterval(refreshStats, 5000)
-    return () => clearInterval(interval)
+    const tick = () => {
+      if (document.visibilityState === 'visible') refreshStats()
+    }
+    const interval = setInterval(tick, 30000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshStats()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [refreshStats, refreshNovels, hasToken])
 
   const handleOpenNovel = async (novelId) => {

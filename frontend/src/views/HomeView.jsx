@@ -88,10 +88,21 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     }
   }, [])
 
+  // v2.29 — 3s 改 15s + page-visibility, 减少后台 tab 的请求噪音
   useEffect(() => {
     loadTick()
-    const t = setInterval(loadTick, 3000)
-    return () => clearInterval(t)
+    const tick = () => {
+      if (document.visibilityState === 'visible') loadTick()
+    }
+    const t = setInterval(tick, 15000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadTick()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(t)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [loadTick])
 
   // v2.23 — App.jsx 切换活跃小说后, 续写下拉默认就跟着切, 减少误操作。

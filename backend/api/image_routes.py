@@ -49,6 +49,20 @@ async def generate_image(
     provider = (x_image_provider or "xfyun").strip().lower()
 
     if provider == "xfyun":
+        # 校验凭据存在 — 缺一律 400, 别让讯飞侧 401 浪费一次握手往返
+        missing = []
+        if not x_image_app_id.strip():
+            missing.append("X-Image-App-Id (AppID)")
+        if not x_image_api_key.strip():
+            missing.append("X-Image-Api-Key (APIKey)")
+        if not x_image_api_secret.strip():
+            missing.append("X-Image-Api-Secret (APISecret)")
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail="讯飞凭据缺失: " + ", ".join(missing),
+            )
+
         try:
             b64 = await xfyun_image.generate_image(
                 app_id=x_image_app_id.strip(),
@@ -59,6 +73,12 @@ async def generate_image(
                 height=req.height,
             )
         except xfyun_image.XfyunImageError as e:
+            # 显式 log 让 docker logs 能定位 — HTTPException.detail 不进 stdlib log
+            logger.warning(
+                "xfyun image generation failed for user=%s: %s",
+                current_user.id,
+                e,
+            )
             raise HTTPException(status_code=502, detail=str(e))
         except Exception as e:  # pragma: no cover
             logger.exception("xfyun image generation crashed")
