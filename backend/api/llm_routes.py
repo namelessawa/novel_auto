@@ -30,6 +30,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 
 from auth import User, get_current_user
+from nf_core.llm_client import extract_message_text
 
 logger = logging.getLogger(__name__)
 
@@ -67,11 +68,16 @@ async def _one_shot_complete(
     model: str,
     system_prompt: str,
     user_prompt: str,
-    max_tokens: int = 200,
+    max_tokens: int = 2048,
 ) -> str:
-    """一次性 LLM 调用 — 不复用全局 llm_client, 用调用方 key。
+    """一次性 LLM 调用 — 不复用全局 llm_client, 用调用方 key.
 
-    出错时把错误细节透传给前端 (脱敏 key)。
+    出错时把错误细节透传给前端 (脱敏 key).
+
+    max_tokens 默认 2048 — 给 reasoning 模型 (MiMo / DeepSeek-Reasoner)
+    留足思维链空间. 之前 200 / 32 太小, 推理过程把 budget 吃完, content
+    返回空字符串 → 502. 兼容: 非 reasoning 模型也不会输出 2048 字 (system
+    prompt 已限定 60-150 字 / 2-6 字).
     """
     try:
         client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=30)
@@ -84,8 +90,26 @@ async def _one_shot_complete(
             temperature=0.95,
             max_tokens=max_tokens,
         )
-        content = (resp.choices[0].message.content or "").strip()
-        return content
+        # 抽文本 — content 空时退到 reasoning_content, 兼容推理模型
+        choice = resp.choices[0]
+        text = extract_message_text(choice.message)
+        if not text:
+            finish_reason = getattr(choice, "finish_reason", "?")
+            logger.warning(
+                "LLM 返回空: model=%s finish_reason=%s — 可能 reasoning 模型 "
+                "max_tokens 不够或上游审核拦截", model, finish_reason,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    f"LLM 返回为空 (finish_reason={finish_reason}). "
+                    "若用 reasoning 模型 (MiMo / DeepSeek-Reasoner / QwQ), "
+                    "建议换非推理变体, 或检查是否被内容审核拦截."
+                ),
+            )
+        return text
+    except HTTPException:
+        raise
     except Exception as e:
         # 不暴露 key 痕迹
         msg = str(e).replace(api_key, "<redacted>") if api_key else str(e)
@@ -141,10 +165,9 @@ async def random_seed(
         model=model,
         system_prompt=_SEED_SYSTEM_PROMPT,
         user_prompt=user_prompt,
-        max_tokens=300,
+        max_tokens=2048,
     )
-    if not text:
-        raise HTTPException(status_code=502, detail="LLM 返回为空")
+    # _one_shot_complete 已经处理空 content → 502, 此处不需要再判
     return RandomResponse(text=text)
 
 
@@ -178,13 +201,15 @@ async def random_title(
         model=model,
         system_prompt=_TITLE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
-        max_tokens=32,
+        max_tokens=1024,  # reasoning 模型留思维链空间; 非 reasoning 模型也不会输出这么多
     )
-    # 清理标题: 去书名号, 去标点, 取首行
-    cleaned = text.strip().split("\n")[0].strip()
+    # reasoning 模型可能在 reasoning_content 里有多段, 取最后一段非空行作为标题
+    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
+    cleaned = lines[-1] if lines else ""
+    # 清理: 去书名号, 取前 20 字
     for ch in "《》<>「」『』\"'`":
         cleaned = cleaned.replace(ch, "")
     cleaned = cleaned.strip()[:20]
     if not cleaned:
-        raise HTTPException(status_code=502, detail="LLM 返回为空")
+        raise HTTPException(status_code=502, detail="LLM 返回为空 (清理后)")
     return RandomResponse(text=cleaned)

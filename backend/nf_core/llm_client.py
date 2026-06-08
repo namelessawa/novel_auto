@@ -139,6 +139,29 @@ def _clamp_max_tokens(n: int) -> int:
     return min(n, _MAX_TOKENS_CAP) if n > 0 else _MAX_TOKENS_CAP
 
 
+def extract_message_text(message) -> str:
+    """OpenAI 响应 message 抽正文 — 兼容 reasoning 模型.
+
+    DeepSeek-Reasoner / MiMo / QwQ 等推理模型在 max_tokens 不够时, 思维链
+    会占满 budget, ``message.content`` 是空字符串, 真正答案在
+    ``message.reasoning_content``. 这种情况下取 reasoning_content 的尾段
+    比向上抛 "LLM 返回为空" 友好得多.
+
+    OpenAI 官方 SDK 的 ChatCompletionMessage 是 pydantic 模型, 未知字段
+    塞 ``model_extra``; 部分二改 SDK 直接挂属性. 两路都试.
+    """
+    content = (getattr(message, "content", None) or "").strip()
+    if content:
+        return content
+    extra = getattr(message, "model_extra", None) or {}
+    rc = (
+        extra.get("reasoning_content")
+        or getattr(message, "reasoning_content", None)
+        or ""
+    )
+    return str(rc).strip()
+
+
 class LLMClient:
     """Async wrapper around any OpenAI-compatible API (DeepSeek / mimo / custom)."""
 
@@ -269,8 +292,10 @@ class LLMClient:
         )
         choice = response.choices[0]
         usage = response.usage
+        # extract_message_text: content 空时退到 reasoning_content, 兼容
+        # MiMo / DeepSeek-Reasoner 等推理模型在 max_tokens 不够时正文丢失.
         result = LLMResponse(
-            content=choice.message.content or "",
+            content=extract_message_text(choice.message),
             usage_prompt_tokens=usage.prompt_tokens if usage else 0,
             usage_completion_tokens=usage.completion_tokens if usage else 0,
         )
