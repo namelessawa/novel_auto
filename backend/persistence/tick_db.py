@@ -42,6 +42,7 @@ import json
 import logging
 import os
 import sqlite3
+import threading
 from collections import Counter
 from datetime import datetime, timezone
 
@@ -83,22 +84,39 @@ CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type);
 
 
 class TickDB:
-    """SQLite 持久化的 tick 日志 + 事件存储。线程不安全 - 单实例单线程使用。"""
+    """SQLite 持久化的 tick 日志 + 事件存储。
+
+    v2.26 — 多租户改造后, 同一 TickDB 实例可能被 FastAPI thread pool 的不同
+    worker 线程同时访问 (Depends 解析 runtime → runtime.tick_db.query 在 sync
+    handler 里走 thread executor)。SQLite 默认 ``check_same_thread=True`` 会
+    抛 ProgrammingError; 必须显式关掉 + 上互斥锁。
+
+    锁粒度: 整个 ``_conn`` 操作串行。读写都不重叠 — autocommit 模式下并发
+    ``BEGIN`` 会冲突 (transaction within transaction), 直接 lock 最稳。
+    tick 操作频次很低 (秒级), 锁竞争不是瓶颈。
+    """
 
     def __init__(self, db_path: str) -> None:
         self._db_path = os.path.abspath(db_path)
         os.makedirs(os.path.dirname(self._db_path), exist_ok=True)
-        self._conn = sqlite3.connect(self._db_path, isolation_level=None)
+        # check_same_thread=False — 允许跨线程使用 (锁保证安全, 见上注释)
+        self._conn = sqlite3.connect(
+            self._db_path, isolation_level=None, check_same_thread=False
+        )
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
+        # 所有操作必须经过这把锁 — 包括 init_schema / 查询 / 写入。
+        self._lock = threading.Lock()
         self.init_schema()
 
     def init_schema(self) -> None:
-        self._conn.executescript(_SCHEMA)
+        with self._lock:
+            self._conn.executescript(_SCHEMA)
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()
 
     def __enter__(self) -> "TickDB":
         return self
@@ -126,81 +144,84 @@ class TickDB:
           擦掉, 污染下游窗口聚合。
         """
         now = datetime.now(timezone.utc).isoformat()
-        try:
-            self._conn.execute("BEGIN")
-            cur = self._conn.execute(
-                """
-                INSERT OR IGNORE INTO tick_log (
-                    tick_id, world_time, narrator_produced, narrator_chars,
-                    agents_called, events_generated, state_changes_summary,
-                    world_time_advanced, next_tick_recommendations, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    summary.tick,
-                    summary.world_time,
-                    1 if summary.narrator_produced_text else 0,
-                    summary.narrator_output_chars,
-                    json.dumps(summary.agents_called, ensure_ascii=False),
-                    json.dumps(summary.events_generated, ensure_ascii=False),
-                    summary.state_changes_summary,
-                    summary.world_time_advanced,
-                    json.dumps(summary.next_tick_recommendations, ensure_ascii=False),
-                    now,
-                ),
-            )
-            if cur.rowcount == 0:
-                logger.warning(
-                    "TickDB.insert_tick: tick_id=%d already exists, kept original record",
-                    summary.tick,
+        with self._lock:
+            try:
+                self._conn.execute("BEGIN")
+                cur = self._conn.execute(
+                    """
+                    INSERT OR IGNORE INTO tick_log (
+                        tick_id, world_time, narrator_produced, narrator_chars,
+                        agents_called, events_generated, state_changes_summary,
+                        world_time_advanced, next_tick_recommendations, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        summary.tick,
+                        summary.world_time,
+                        1 if summary.narrator_produced_text else 0,
+                        summary.narrator_output_chars,
+                        json.dumps(summary.agents_called, ensure_ascii=False),
+                        json.dumps(summary.events_generated, ensure_ascii=False),
+                        summary.state_changes_summary,
+                        summary.world_time_advanced,
+                        json.dumps(summary.next_tick_recommendations, ensure_ascii=False),
+                        now,
+                    ),
                 )
-            if events:
-                for e in events:
-                    cur = self._conn.execute(
-                        """
-                        INSERT OR IGNORE INTO events (
-                            event_id, tick_id, event_type, location, participants,
-                            description, visible_to, narrative_value, consequences
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            e.id,
-                            e.tick,
-                            e.type,
-                            e.location,
-                            json.dumps(e.participants, ensure_ascii=False),
-                            e.description,
-                            json.dumps(e.visible_to, ensure_ascii=False),
-                            e.narrative_value,
-                            json.dumps(e.consequences, ensure_ascii=False),
-                        ),
+                if cur.rowcount == 0:
+                    logger.warning(
+                        "TickDB.insert_tick: tick_id=%d already exists, kept original record",
+                        summary.tick,
                     )
-                    if cur.rowcount == 0:
-                        logger.warning(
-                            "TickDB.insert_tick: event_id=%s already exists at tick=%d, kept original",
-                            e.id,
-                            e.tick,
+                if events:
+                    for e in events:
+                        cur = self._conn.execute(
+                            """
+                            INSERT OR IGNORE INTO events (
+                                event_id, tick_id, event_type, location, participants,
+                                description, visible_to, narrative_value, consequences
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                e.id,
+                                e.tick,
+                                e.type,
+                                e.location,
+                                json.dumps(e.participants, ensure_ascii=False),
+                                e.description,
+                                json.dumps(e.visible_to, ensure_ascii=False),
+                                e.narrative_value,
+                                json.dumps(e.consequences, ensure_ascii=False),
+                            ),
                         )
-            self._conn.execute("COMMIT")
-        except Exception:
-            self._conn.execute("ROLLBACK")
-            raise
+                        if cur.rowcount == 0:
+                            logger.warning(
+                                "TickDB.insert_tick: event_id=%s already exists at tick=%d, kept original",
+                                e.id,
+                                e.tick,
+                            )
+                self._conn.execute("COMMIT")
+            except Exception:
+                self._conn.execute("ROLLBACK")
+                raise
 
     # ------------------------------------------------------------------
     # 查询(Showrunner / NoveltyCritic 用)
     # ------------------------------------------------------------------
 
     def get_recent_ticks(self, n: int = 20) -> list[dict]:
-        rows = self._conn.execute(
-            "SELECT * FROM tick_log ORDER BY tick_id DESC LIMIT ?", (n,)
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM tick_log ORDER BY tick_id DESC LIMIT ?", (n,)
+            ).fetchall()
         return [self._row_to_dict(r) for r in rows]
 
     def get_events_in_range(self, from_tick: int, to_tick: int) -> list[dict]:
-        rows = self._conn.execute(
-            "SELECT * FROM events WHERE tick_id BETWEEN ? AND ? ORDER BY tick_id",
-            (from_tick, to_tick),
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM events WHERE tick_id BETWEEN ? AND ? ORDER BY tick_id",
+                (from_tick, to_tick),
+            ).fetchall()
         return [self._event_row_to_dict(r) for r in rows]
 
     def get_event_stats(self, last_n_ticks: int = 50) -> dict:
@@ -208,36 +229,36 @@ class TickDB:
 
         供 Showrunner 评估宏观节奏: 是否平静、最近 narrator 强度等。
         """
-        # 找出最近 N 个 tick_id
-        tick_rows = self._conn.execute(
-            "SELECT tick_id, narrator_produced, narrator_chars FROM tick_log "
-            "ORDER BY tick_id DESC LIMIT ?",
-            (last_n_ticks,),
-        ).fetchall()
-        if not tick_rows:
-            return {
-                "by_type": {},
-                "high_value_count": 0,
-                "avg_narrator_chars": 0,
-                "narration_rate": 0.0,
-                "ticks_sampled": 0,
-            }
-        tick_ids = [r["tick_id"] for r in tick_rows]
-        placeholders = ",".join("?" * len(tick_ids))
+        with self._lock:
+            tick_rows = self._conn.execute(
+                "SELECT tick_id, narrator_produced, narrator_chars FROM tick_log "
+                "ORDER BY tick_id DESC LIMIT ?",
+                (last_n_ticks,),
+            ).fetchall()
+            if not tick_rows:
+                return {
+                    "by_type": {},
+                    "high_value_count": 0,
+                    "avg_narrator_chars": 0,
+                    "narration_rate": 0.0,
+                    "ticks_sampled": 0,
+                }
+            tick_ids = [r["tick_id"] for r in tick_rows]
+            placeholders = ",".join("?" * len(tick_ids))
 
-        type_rows = self._conn.execute(
-            f"SELECT event_type, COUNT(*) AS c FROM events "
-            f"WHERE tick_id IN ({placeholders}) GROUP BY event_type",
-            tick_ids,
-        ).fetchall()
-        by_type = {r["event_type"]: r["c"] for r in type_rows}
+            type_rows = self._conn.execute(
+                f"SELECT event_type, COUNT(*) AS c FROM events "
+                f"WHERE tick_id IN ({placeholders}) GROUP BY event_type",
+                tick_ids,
+            ).fetchall()
+            by_type = {r["event_type"]: r["c"] for r in type_rows}
 
-        high_value_row = self._conn.execute(
-            f"SELECT COUNT(*) AS c FROM events "
-            f"WHERE tick_id IN ({placeholders}) AND narrative_value >= 7",
-            tick_ids,
-        ).fetchone()
-        high_value_count = high_value_row["c"] if high_value_row else 0
+            high_value_row = self._conn.execute(
+                f"SELECT COUNT(*) AS c FROM events "
+                f"WHERE tick_id IN ({placeholders}) AND narrative_value >= 7",
+                tick_ids,
+            ).fetchone()
+            high_value_count = high_value_row["c"] if high_value_row else 0
 
         narrator_chars_sum = sum(r["narrator_chars"] for r in tick_rows)
         narrator_produced_count = sum(1 for r in tick_rows if r["narrator_produced"])
@@ -256,13 +277,14 @@ class TickDB:
 
         简单实现:按 description 的前 12 字符做 token 化统计。
         """
-        rows = self._conn.execute(
-            "SELECT description FROM events "
-            "WHERE event_type='character_action' "
-            "AND tick_id > (SELECT MAX(tick_id) FROM tick_log) - ? "
-            "ORDER BY tick_id DESC",
-            (last_n_ticks,),
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT description FROM events "
+                "WHERE event_type='character_action' "
+                "AND tick_id > (SELECT MAX(tick_id) FROM tick_log) - ? "
+                "ORDER BY tick_id DESC",
+                (last_n_ticks,),
+            ).fetchall()
         prefix_counter: Counter = Counter()
         for r in rows:
             desc = r["description"] or ""
@@ -279,7 +301,8 @@ class TickDB:
         return {"placeholder": True}
 
     def count_ticks(self) -> int:
-        row = self._conn.execute("SELECT COUNT(*) AS c FROM tick_log").fetchone()
+        with self._lock:
+            row = self._conn.execute("SELECT COUNT(*) AS c FROM tick_log").fetchone()
         return int(row["c"]) if row else 0
 
     # ------------------------------------------------------------------
