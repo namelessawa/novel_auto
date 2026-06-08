@@ -1,0 +1,73 @@
+"""v2.28 — 多模态: 文生图端点。
+
+| Method | Path                  | 用途                       |
+|--------|-----------------------|----------------------------|
+| POST   | /api/image/generate   | 文本 → 图片 (base64 PNG)   |
+
+凭据通过 header 一次性传递, 后端用完即丢, 与 /api/llm/random-* 同思路:
+* X-Image-Provider — 默认 xfyun, 可选 openai / stability / custom
+* X-Image-App-Id   — xfyun 需要
+* X-Image-Api-Key  — 必填
+* X-Image-Api-Secret — xfyun 需要
+"""
+from __future__ import annotations
+
+import logging
+
+from fastapi import APIRouter, Depends, Header, HTTPException
+from pydantic import BaseModel, Field
+
+from auth import User, get_current_user
+from nf_core import xfyun_image
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/image", tags=["image"])
+
+
+class GenerateImageRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=2000)
+    width: int = Field(default=512, ge=128, le=2048)
+    height: int = Field(default=512, ge=128, le=2048)
+
+
+class GenerateImageResponse(BaseModel):
+    provider: str
+    image_base64: str
+    mime_type: str = "image/png"
+
+
+@router.post("/generate", response_model=GenerateImageResponse)
+async def generate_image(
+    req: GenerateImageRequest,
+    current_user: User = Depends(get_current_user),
+    x_image_provider: str = Header(default="xfyun", alias="X-Image-Provider"),
+    x_image_app_id: str = Header(default="", alias="X-Image-App-Id"),
+    x_image_api_key: str = Header(default="", alias="X-Image-Api-Key"),
+    x_image_api_secret: str = Header(default="", alias="X-Image-Api-Secret"),
+) -> GenerateImageResponse:
+    provider = (x_image_provider or "xfyun").strip().lower()
+
+    if provider == "xfyun":
+        try:
+            b64 = await xfyun_image.generate_image(
+                app_id=x_image_app_id.strip(),
+                api_key=x_image_api_key.strip(),
+                api_secret=x_image_api_secret.strip(),
+                prompt=req.prompt,
+                width=req.width,
+                height=req.height,
+            )
+        except xfyun_image.XfyunImageError as e:
+            raise HTTPException(status_code=502, detail=str(e))
+        except Exception as e:  # pragma: no cover
+            logger.exception("xfyun image generation crashed")
+            raise HTTPException(status_code=500, detail=f"图片生成失败: {e}")
+        return GenerateImageResponse(
+            provider="xfyun", image_base64=b64, mime_type="image/png"
+        )
+
+    raise HTTPException(
+        status_code=501,
+        detail=f"暂未实现 provider={provider!r} (目前仅 xfyun)",
+    )

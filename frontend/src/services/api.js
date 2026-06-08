@@ -54,6 +54,17 @@ async function authedFetch(path, init = {}) {
   if (token && !_isPublicPath(path)) {
     headers.set('Authorization', `Bearer ${token}`)
   }
+  // v2.28 — 总是带上用户的 LLM 凭据 header. 后端 middleware 写入 ContextVar,
+  // 让所有 LLM 调用 (主创作链 / 随机种子 / 续写) 都用用户的 key 而非 config.json.
+  // 公开路径 (登录/注册) 不发, 减少 noise.
+  if (!_isPublicPath(path)) {
+    const llm = getUserLLMConfig()
+    if (llm.api_key && !headers.has('X-User-LLM-Key')) {
+      headers.set('X-User-LLM-Key', llm.api_key)
+      if (llm.base_url) headers.set('X-User-LLM-Base-Url', llm.base_url)
+      if (llm.model) headers.set('X-User-LLM-Model', llm.model)
+    }
+  }
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (res.status === 401 && !_isPublicPath(path)) {
     setStoredToken('')
@@ -218,6 +229,21 @@ export function setUserImageConfig({ active, providers }) {
 export function getActiveImageProviderConfig() {
   const { active, providers } = getUserImageConfig()
   return { active, config: providers[active] || {} }
+}
+
+// v2.28 — 文生图. header 一次性带凭据, 后端用完即丢 (与 /api/llm/random-* 同思路).
+export async function generateImage({ prompt, width = 512, height = 512 }) {
+  const { active, config } = getActiveImageProviderConfig()
+  const headers = { 'X-Image-Provider': active }
+  if (config.app_id) headers['X-Image-App-Id'] = config.app_id
+  if (config.api_key) headers['X-Image-Api-Key'] = config.api_key
+  if (config.api_secret) headers['X-Image-Api-Secret'] = config.api_secret
+  const res = await authedFetch('/api/image/generate', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ prompt, width, height }),
+  })
+  return assertOk(res) // { provider, image_base64, mime_type }
 }
 
 function _userLLMHeaders() {

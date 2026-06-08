@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
+from collections import OrderedDict
 from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import AsyncIterator
@@ -39,6 +41,65 @@ def set_current_tick(tick: int) -> None:
 def get_current_tick() -> int:
     """Read the tick attribution. Returns -1 when nobody has set it yet."""
     return _current_tick_var.get()
+
+
+# v2.28 — 用户态 LLM 凭据 ContextVar.
+#
+# 设计: middleware (backend/middleware/user_llm.py) 在请求入口读 header
+# (X-User-LLM-Key / Base-Url / Model) 写入这个 ContextVar; LLMClient.chat()
+# 在调用前检查 — 有值就用用户的 key, 没值就退回 self._client (config.json
+# 兜底)。
+#
+# 与 _current_tick_var 同样原理 — asyncio.create_task 默认拷贝 context,
+# 用户在 /api/section/generate 触发的后台任务自动继承请求时的凭据。
+@dataclass(frozen=True)
+class UserLLMConfig:
+    api_key: str
+    base_url: str = ""
+    model: str = ""
+
+
+_user_llm_var: ContextVar[UserLLMConfig | None] = ContextVar(
+    "llm_user_config", default=None
+)
+
+
+def set_user_llm_config(*, api_key: str, base_url: str = "", model: str = "") -> None:
+    """Middleware 调用 — 把请求里的用户凭据写入 ContextVar。"""
+    _user_llm_var.set(
+        UserLLMConfig(api_key=api_key, base_url=base_url, model=model)
+    )
+
+
+def get_user_llm_config() -> UserLLMConfig | None:
+    return _user_llm_var.get()
+
+
+# 客户端缓存: 按 (api_key, base_url) 缓存 AsyncOpenAI; 避免每请求重建连接池。
+# LRU + 上限 — 防止恶意 / 误传大量不同 key 造成内存膨胀。
+_USER_CLIENT_CACHE_MAX = 32
+_user_client_cache: "OrderedDict[tuple[str, str], AsyncOpenAI]" = OrderedDict()
+_user_client_lock = threading.Lock()
+
+
+def _get_user_client(cfg: UserLLMConfig) -> AsyncOpenAI:
+    base = cfg.base_url or "https://api.deepseek.com"
+    key = (cfg.api_key, base)
+    with _user_client_lock:
+        client = _user_client_cache.get(key)
+        if client is not None:
+            _user_client_cache.move_to_end(key)
+            return client
+        client = AsyncOpenAI(
+            api_key=cfg.api_key,
+            base_url=base,
+            max_retries=1,
+            timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
+        )
+        _user_client_cache[key] = client
+        while len(_user_client_cache) > _USER_CLIENT_CACHE_MAX:
+            _user_client_cache.popitem(last=False)
+        return client
 
 
 @dataclass(frozen=True)
@@ -177,16 +238,27 @@ class LLMClient:
                 ),
             )
 
-        effective_model = self._model
+        # v2.28 — 优先用 ContextVar 里的用户 LLM 凭据 (per-request),
+        # 没有才退回 self._client (config.json 兜底, 兼容 dev / 后台任务)。
+        user_cfg = get_user_llm_config()
+        if user_cfg and user_cfg.api_key:
+            client = _get_user_client(user_cfg)
+            effective_model = (
+                model_override
+                or user_cfg.model
+                or self._model
+            )
+        else:
+            client = self._client
+            effective_model = model_override or self._model
         if model_override:
-            effective_model = model_override
             logger.info(
                 "LLMClient.chat override model: agent_id=%s priority=%s override length=%d",
                 agent_id,
                 priority,
                 len(model_override),
             )
-        response = await self._client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=effective_model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -256,9 +328,19 @@ class LLMClient:
                 ),
             )
 
-        effective_model = self._model
+        # v2.28 — 同 chat(): 用户凭据优先
+        user_cfg = get_user_llm_config()
+        if user_cfg and user_cfg.api_key:
+            client = _get_user_client(user_cfg)
+            effective_model = (
+                model_override
+                or user_cfg.model
+                or self._model
+            )
+        else:
+            client = self._client
+            effective_model = model_override or self._model
         if model_override:
-            effective_model = model_override
             logger.info(
                 "LLMClient.chat_stream override model: agent_id=%s priority=%s override length=%d",
                 agent_id,
@@ -266,7 +348,7 @@ class LLMClient:
                 len(model_override),
             )
 
-        stream = await self._client.chat.completions.create(
+        stream = await client.chat.completions.create(
             model=effective_model,
             messages=[
                 {"role": "system", "content": system_prompt},

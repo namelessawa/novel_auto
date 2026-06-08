@@ -9,6 +9,7 @@ import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
 import ConfigView from './views/ConfigView'
 import AgentContextView from './views/AgentContextView'
+import MultimodalView from './views/MultimodalView'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import LoginGate from './auth/LoginGate'
 import TopBar from './auth/TopBar'
@@ -26,6 +27,7 @@ import { showToast } from './utils/toast'
 const PRIMARY_NAV = [
   { key: 'home', label: '创作控制台', icon: 'fa-gauge-high' },
   { key: 'novel', label: '作品详情', icon: 'fa-book-open' },
+  { key: 'multimodal', label: '多模态生成', icon: 'fa-image' },
   { key: 'agents', label: 'Agent 上下文', icon: 'fa-robot' },
   { key: 'config', label: '系统设置', icon: 'fa-sliders-h' },
 ]
@@ -45,6 +47,7 @@ const TEST_NAV = [
 const VIEW_TITLES = {
   home: { label: '创作控制台', icon: 'fa-gauge-high' },
   novel: { label: '作品详情', icon: 'fa-book-open' },
+  multimodal: { label: '多模态生成', icon: 'fa-image' },
   agents: { label: 'Agent 上下文', icon: 'fa-robot' },
   config: { label: '系统设置', icon: 'fa-sliders-h' },
   sections: { label: '章节速览', icon: 'fa-list-ul' },
@@ -405,6 +408,9 @@ function AppShell() {
               onAfterGenerated={bumpRefresh}
               onNavigate={setActiveView}
             />
+          </ViewSlot>
+          <ViewSlot active={activeView === 'multimodal'}>
+            <MultimodalView />
           </ViewSlot>
           <ViewSlot active={activeView === 'agents'}>
             <AgentContextView />

@@ -25,9 +25,11 @@ from api.agent_routes import router as agent_router
 from api.section_routes import router as section_router
 from api.bootstrap_routes import router as bootstrap_router
 from api.llm_routes import router as llm_router
+from api.image_routes import router as image_router
 from auth import router as auth_router
 from cleanup_task import cleanup_loop
 from config.settings import settings
+from middleware.user_llm import UserLLMHeadersMiddleware
 from tasks import router as tasks_router
 
 logging.basicConfig(
@@ -71,11 +73,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# v2.28 — 必须在 CORS 之后注册 (Starlette middleware 栈是 LIFO; 后注册的先执行
+# 入站请求); 这样 CORS 先处理 preflight, 再轮到 user-llm middleware 提取 header.
+app.add_middleware(UserLLMHeadersMiddleware)
 
 # v2.26 — auth_router 必须在所有受保护 router 之前注册 (FastAPI 路由匹配顺序无关
 # 但日志可读性: 让 /api/auth/* 优先出现)
 app.include_router(auth_router)
 app.include_router(llm_router)
+app.include_router(image_router)
 app.include_router(router)
 app.include_router(tick_router)
 app.include_router(agent_router)
