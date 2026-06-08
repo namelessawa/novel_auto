@@ -421,7 +421,7 @@ function AppShell() {
             />
           </ViewSlot>
           <ViewSlot active={activeView === 'multimodal'}>
-            <MultimodalView />
+            <MultimodalView novel={activeNovel} />
           </ViewSlot>
           <ViewSlot active={activeView === 'agents'}>
             <AgentContextView />

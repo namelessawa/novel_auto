@@ -40,6 +40,17 @@ logger = logging.getLogger(__name__)
 
 XFYUN_DEFAULT_ENDPOINT = "https://maas-api.cn-huabei-1.xf-yun.com/v2.1/tti"
 
+# v2.33 安全 — endpoint hostname 白名单. 用户传 X-Image-Endpoint header 时,
+# 必须命中这里, 否则拒掉. 防 SSRF: 攻击者把 endpoint 指到 169.254.169.254 / 内网
+# 也能拿到我们签出去的 HMAC headers, 从而盗用讯飞凭据.
+# 讯飞官方有多个 region host, 全部列出 — 用户走哪个 region 都行.
+_ALLOWED_ENDPOINT_HOSTS: frozenset[str] = frozenset({
+    "maas-api.cn-huabei-1.xf-yun.com",
+    "maas-api.cn-huabei-3.xf-yun.com",
+    "xingchen-api.cn-huabei-1.xf-yun.com",  # Kolors 专用
+    "spark-api.cn-huabei-1.xf-yun.com",     # 部分模型保留
+})
+
 # 文档列出的合法分辨率组合 — 偏离这个集合 → code=10005
 SUPPORTED_RESOLUTIONS: frozenset[tuple[int, int]] = frozenset({
     (768, 768),
@@ -164,6 +175,15 @@ async def generate_image(
     parsed = urlparse(endpoint)
     if not parsed.netloc or not parsed.path:
         raise XfyunImageError(f"endpoint URL 不合法: {endpoint!r}")
+    # 安全 — 防 SSRF. parsed.hostname 是小写不带端口的 host, 不能用 netloc
+    # (后者可能含 user:pass@host:port, 绕过白名单).
+    if parsed.scheme != "https":
+        raise XfyunImageError(f"endpoint 必须是 https: {endpoint!r}")
+    if (parsed.hostname or "") not in _ALLOWED_ENDPOINT_HOSTS:
+        raise XfyunImageError(
+            f"endpoint host 不在白名单: {parsed.hostname!r}. "
+            f"允许: {sorted(_ALLOWED_ENDPOINT_HOSTS)}"
+        )
     host = parsed.netloc
     path = parsed.path
 

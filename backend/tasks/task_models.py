@@ -10,7 +10,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-TaskKind = Literal["section_generation", "bootstrap_section", "bootstrap_world"]
+TaskKind = Literal[
+    "section_generation",
+    "bootstrap_section",
+    "bootstrap_world",
+    "multimodal_generation",  # v2.33 — 分段 + 图 + TTS + 视频
+]
 TaskStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
 

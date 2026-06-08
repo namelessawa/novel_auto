@@ -32,3 +32,11 @@ bcrypt>=4.0,<5.0
 python-jose[cryptography]>=3.3.0
 aiosmtplib>=3.0.1
 email-validator>=2.1.0
+
+# v2.33 — 多模态: 分段文本 → 图片 + TTS → 视频
+# edge-tts: 开源 (MIT), 走微软 Edge 免费接口, 不需要 GPU / 模型下载
+# imageio-ffmpeg: pip 装个静态 ffmpeg 二进制, 跨平台不依赖系统 ffmpeg
+# mutagen: 读 mp3 时长 (imageio-ffmpeg 不带 ffprobe, 用 mutagen 替代)
+edge-tts>=6.1.0
+imageio-ffmpeg>=0.5.0
+mutagen>=1.47.0

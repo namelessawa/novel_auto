@@ -105,6 +105,11 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | `backend/bootstrap_prompts.py` | 5 prompt 冷启动 CLI |
 | `backend/api/tick_routes.py` | 14 条 tick 控制 REST 端点 |
 | `backend/api/routes.py` | 节级管线 REST + SSE(legacy 节级管线) |
+| `backend/api/multimodal_routes.py` | v2.33 多模态: 分段 + 图 + TTS + 视频 (复用 task_manager SSE) |
+| `backend/nf_core/text_segmenter.py` | 中文分段, 按句/逗号切, 段长 15-60 字 |
+| `backend/nf_core/edge_tts_client.py` | edge-tts wrapper, 文本 → mp3, WordBoundary 拿时长 |
+| `backend/nf_core/video_composer.py` | imageio-ffmpeg + libx264 把图/音频/字幕拼成 mp4 |
+| `backend/multimedia/asset_store.py` | per-novel-per-section 资产: manifest.json + img/audio/mp4 |
 | `backend/config/settings.py` | `.env` + `config.json` 双源配置 |
 | `backend/nf_core/llm_client.py` | OpenAI SDK 包装,支持 streaming + JSON mode |
 | `backend/nf_core/action_resolver.py` | 纯 Python 行动冲突解析 |

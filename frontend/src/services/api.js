@@ -253,6 +253,94 @@ export async function generateImage({
   return assertOk(res) // { provider, image_base64, mime_type }
 }
 
+// ---------------------------------------------------------------------------
+// v2.33 — 多模态: 分段 + 图 + TTS + 视频
+// ---------------------------------------------------------------------------
+
+function _imageCredsHeaders() {
+  const { active, config } = getActiveImageProviderConfig()
+  const h = { 'X-Image-Provider': active }
+  if (config.app_id) h['X-Image-App-Id'] = config.app_id
+  if (config.api_key) h['X-Image-Api-Key'] = config.api_key
+  if (config.api_secret) h['X-Image-Api-Secret'] = config.api_secret
+  if (config.model) h['X-Image-Model'] = config.model
+  if (config.endpoint) h['X-Image-Endpoint'] = config.endpoint
+  return h
+}
+
+export async function listTTSVoices() {
+  const res = await authedFetch('/api/multimodal/voices')
+  return assertOk(res) // { voices: [{id,label}], default: '...' }
+}
+
+export async function previewMultimodalSegments({ novel_id, chapter, section }) {
+  const res = await authedFetch('/api/multimodal/segment-preview', {
+    method: 'POST',
+    body: JSON.stringify({ novel_id, chapter, section }),
+  })
+  return assertOk(res) // { source_chars, segments: [{index,text,char_count}] }
+}
+
+export async function generateMultimodal({
+  novel_id,
+  chapter,
+  section,
+  voice,
+  image_width = 768,
+  image_height = 768,
+  image_prompt_suffix = '电影感画面, 写实细节, 高质量插画',
+  negative_prompt = '低质量, 模糊, 水印, 字幕, 文字',
+}) {
+  const res = await authedFetch('/api/multimodal/generate', {
+    method: 'POST',
+    headers: _imageCredsHeaders(),
+    body: JSON.stringify({
+      novel_id,
+      chapter,
+      section,
+      voice,
+      image_width,
+      image_height,
+      image_prompt_suffix,
+      negative_prompt,
+    }),
+  })
+  return assertOk(res) // task snapshot
+}
+
+export async function getMultimodalManifest(novel_id, chapter, section) {
+  const res = await authedFetch(
+    `/api/multimodal/${encodeURIComponent(novel_id)}/${chapter}/${section}/manifest`,
+  )
+  return assertOk(res)
+}
+
+export async function listMultimodalSections(novel_id) {
+  const res = await authedFetch(
+    `/api/multimodal/${encodeURIComponent(novel_id)}/list`,
+  )
+  return assertOk(res) // { items: [{chapter, section, video_status, ...}] }
+}
+
+// 资产 (mp4/png/mp3) 需要 JWT, 不能直接 <video src=...>; 用 fetch 拿 blob.
+// 不能复用 authedFetch — 它假设 JSON 响应, 这里要 .blob(). 手工复刻 401 处理逻辑.
+export async function fetchMultimodalAssetBlobUrl(novel_id, chapter, section, filename) {
+  const token = getStoredToken()
+  const url = `${BASE}/api/multimodal/${encodeURIComponent(novel_id)}/${chapter}/${section}/asset/${encodeURIComponent(filename)}`
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  const res = await fetch(url, { headers })
+  if (res.status === 401) {
+    // 与 authedFetch 同步, 防止登录态过期后所有资产加载静默失败, 用户卡在"加载中…"
+    setStoredToken('')
+    _emit401()
+    throw new Error('登录态已过期, 请重新登录')
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${filename}`)
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}
+
 function _userLLMHeaders() {
   const c = getUserLLMConfig()
   const h = {}

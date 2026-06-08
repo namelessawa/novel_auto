@@ -26,6 +26,7 @@ from api.section_routes import router as section_router
 from api.bootstrap_routes import router as bootstrap_router
 from api.llm_routes import router as llm_router
 from api.image_routes import router as image_router
+from api.multimodal_routes import router as multimodal_router
 from auth import router as auth_router
 from cleanup_task import cleanup_loop
 from config.settings import settings
@@ -82,6 +83,7 @@ app.add_middleware(UserLLMHeadersMiddleware)
 app.include_router(auth_router)
 app.include_router(llm_router)
 app.include_router(image_router)
+app.include_router(multimodal_router)
 app.include_router(router)
 app.include_router(tick_router)
 app.include_router(agent_router)
