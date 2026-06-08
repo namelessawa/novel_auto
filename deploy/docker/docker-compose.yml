@@ -32,6 +32,14 @@ services:
       - "127.0.0.1:8762:8762"
     networks:
       - novel
+    # v2.30 — 显式 DNS. 默认走 Docker 内嵌 127.0.0.11, 它转发到宿主机 resolv.conf,
+    # 但 Windows Docker Desktop 的 DNS 转发对部分国内域名 (讯飞 / 阿里云内网等)
+    # 会偶发 "No address associated with hostname". 直接配多 DNS 兜底:
+    # 阿里 > 腾讯 > Cloudflare. 任一可用即可, 跨链路冗余.
+    dns:
+      - 223.5.5.5
+      - 119.29.29.29
+      - 1.1.1.1
 
     # ----- 配置 -----
     env_file:
@@ -84,6 +92,13 @@ services:
 
     networks:
       - novel
+    # v2.30 — 同 backend, cloudflared 也走稳定 DNS. 之前日志显示
+    # "lookup _v2-origintunneld._tcp.argotunnel.com on 127.0.0.11:53: server misbehaving"
+    # 就是 Docker 内嵌 DNS 偶发挂的症状.
+    dns:
+      - 1.1.1.1
+      - 223.5.5.5
+      - 8.8.8.8
 
     logging:
       driver: json-file
