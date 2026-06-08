@@ -5,6 +5,8 @@ requests>=2.28.0
 # LLM client
 openai>=1.59.0
 tenacity>=8.0.0
+# LLM JSON 输出修复 — 兜底未转义引号 / 字面换行 / 尾随逗号 (v2.34)
+json-repair>=0.45.0
 
 # Tokenization
 tiktoken>=0.5.0

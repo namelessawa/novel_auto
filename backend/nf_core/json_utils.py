@@ -1,26 +1,43 @@
 """LLM 输出 → JSON 的统一解析管道 (v2.34 强化)。
 
 历史: v2.19.6 抽出 ``strip_code_fence`` 把 8 处 markdown 围栏剥离统一到一处.
-本次 (v2.34): MiMo 等 reasoning 模型经常把 reasoning chain 当 content 返回
-(extract_message_text fallback 取 reasoning_content 后), 文本完全不是 JSON,
-原管道只剥围栏 → ``json.loads`` 在所有 11 个 agent 站点炸成一片. 把鲁棒
-``extract_json_object`` + ``parse_llm_json`` 上提到这里, 所有 agent / bootstrap
-共用同一个解析入口.
+本次 (v2.34): MiMo 等 reasoning 模型经常:
+
+1. 把 reasoning chain 当 content 返回 → 文本完全不是 JSON
+2. 在 JSON 字符串里塞未转义的 ``"`` / 字面换行 / 尾随逗号
+   → 严格 json.loads 在所有 11 agent 站点炸成一片
+
+把鲁棒 ``extract_json_object`` + ``parse_llm_json`` 上提到这里, 增加
+``json_repair`` 兜底, 所有 agent / bootstrap 共用同一个解析入口.
 
 API:
 * :func:`strip_code_fence` — 历史接口, 仅剥首尾 ``` fence
 * :func:`extract_json_object` — 深度平衡扫描第一个 ``{...}`` 子串
-* :func:`parse_llm_json` — 完整管道 (strip + extract + parse), 是新代码默认入口
+* :func:`parse_llm_json` — 完整管道 (strip + extract + json.loads + json_repair 兜底)
 
-设计原则:
-* 解析失败时 raise ``json.JSONDecodeError`` — 保留调用方既有的
-  ``try/except json.JSONDecodeError`` 控制流不动
-* 不在本模块做日志 — 调用方自己 log raw[:N] 上下文更丰富
+解析策略 (parse_llm_json):
+1. strip_code_fence + extract_json_object 拿到候选子串
+2. 先 json.loads — 干净 JSON 走 fast path (绝大多数 agent 输出)
+3. 失败时降级 json_repair — 修复未转义引号 / 字面换行 / 尾随逗号 / 缺逗号
+4. 两层都失败 raise 原 ``json.JSONDecodeError``, 调用方既有 try/except 兜底不动
 """
 
 from __future__ import annotations
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+# json_repair 兜底脏 JSON. 缺包时降级为只走 json.loads (向后兼容旧镜像).
+try:
+    from json_repair import repair_json as _repair_json
+except ImportError:  # pragma: no cover — Docker 镜像未 rebuild 时降级
+    logger.warning(
+        "json_repair not installed; parse_llm_json will only use stdlib json.loads. "
+        "Install with: pip install json-repair>=0.45.0"
+    )
+    _repair_json = None  # type: ignore[assignment]
 
 
 def strip_code_fence(text: str) -> str:
@@ -99,22 +116,37 @@ def parse_llm_json(raw: str) -> dict:
     管道:
     1. :func:`strip_code_fence` — 剥首尾 markdown 围栏
     2. :func:`extract_json_object` — 提取第一个平衡 ``{...}`` 子串 (跳过前后散文)
-    3. :func:`json.loads`
+    3. ``json.loads`` (fast path, 干净 JSON 直接出结果)
+    4. 失败时 ``json_repair`` 兜底 (修复未转义引号 / 字面换行 / 尾随逗号 / 缺逗号 / ...)
+    5. 都失败 raise 原 ``json.JSONDecodeError``
 
-    解析失败时直接 raise ``json.JSONDecodeError``, 调用方既有的 try/except
-    控制流不需要改. 调用方应在 except 分支记录 ``raw[:N]`` 用于诊断 ——
-    本模块**故意不打日志**, 因为 raw 的语义只有调用方知道 (agent_id /
-    stage / character_id ...).
+    本模块**故意不打日志** —— raw 的语义只有调用方知道 (agent_id / stage /
+    character_id ...). 调用方应在 except 分支记录 ``raw[:N]`` 用于诊断.
 
     返回:
         解析后的 dict (顶层 JSON 对象).
 
     Raises:
-        json.JSONDecodeError: 当输出不是有效 JSON 对象时.
+        json.JSONDecodeError: 当输出不是有效 JSON 对象且 json_repair 也无法修复时.
     """
     text = strip_code_fence(raw)
     text = extract_json_object(text)
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        if _repair_json is None:
+            raise
+        # json_repair 容错: 未转义引号 / 字面换行 / 单引号 / 尾随逗号 / 缺逗号.
+        # 注意它 *几乎不抛错* — 修不出就吐 {} 或 []. 因此返回非 dict 时仍要
+        # raise 原 json.JSONDecodeError, 让调用方走 fallback 而不是误吃空对象.
+        try:
+            repaired = _repair_json(text, return_objects=True)
+        except Exception:
+            raise e from None
+        if isinstance(repaired, dict):
+            return repaired
+        # 顶层 [] 或 标量 — 调用方期望 dict, 视作解析失败
+        raise e from None
 
 
 __all__ = ["strip_code_fence", "extract_json_object", "parse_llm_json"]
