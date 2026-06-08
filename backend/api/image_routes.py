@@ -45,6 +45,7 @@ async def generate_image(
     x_image_app_id: str = Header(default="", alias="X-Image-App-Id"),
     x_image_api_key: str = Header(default="", alias="X-Image-Api-Key"),
     x_image_api_secret: str = Header(default="", alias="X-Image-Api-Secret"),
+    x_image_model: str = Header(default="", alias="X-Image-Model"),
 ) -> GenerateImageResponse:
     provider = (x_image_provider or "xfyun").strip().lower()
 
@@ -63,6 +64,9 @@ async def generate_image(
                 detail="讯飞凭据缺失: " + ", ".join(missing),
             )
 
+        # model 即讯飞 domain — 用户没填走 general; 新模型如 xopqwentti20b 必须填
+        domain = (x_image_model or "").strip() or "general"
+
         try:
             b64 = await xfyun_image.generate_image(
                 app_id=x_image_app_id.strip(),
@@ -71,6 +75,7 @@ async def generate_image(
                 prompt=req.prompt,
                 width=req.width,
                 height=req.height,
+                domain=domain,
             )
         except xfyun_image.XfyunImageError as e:
             # 显式 log 让 docker logs 能定位 — HTTPException.detail 不进 stdlib log

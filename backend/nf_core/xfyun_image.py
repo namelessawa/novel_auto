@@ -105,8 +105,13 @@ async def generate_image(
     host: str = XFYUN_DEFAULT_HOST,
     path: str = XFYUN_DEFAULT_PATH,
     timeout: float = 60.0,
+    domain: str = "general",
 ) -> str:
     """调用 xfyun 图片生成, 返回 base64 编码的 PNG.
+
+    ``domain`` 决定使用哪个底层模型. 老 v2.1 默认 ``general``; 新开通的
+    Qwen-based 模型有专属 ID, 如 ``xopqwentti20b``. 用户在讯飞控制台「我的
+    应用 → 服务详情」能看到自己服务对应的 modelid, 必须填对否则 11201/10160.
 
     raises XfyunImageError: 凭据缺失 / 鉴权失败 / 网络问题 / xfyun 业务错误码.
     """
@@ -122,7 +127,7 @@ async def generate_image(
         "header": {"app_id": app_id},
         "parameter": {
             "chat": {
-                "domain": "general",
+                "domain": domain or "general",
                 "width": int(width),
                 "height": int(height),
             }

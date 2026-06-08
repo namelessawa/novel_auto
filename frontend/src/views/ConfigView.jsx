@@ -50,6 +50,12 @@ const IMAGE_PROVIDERS = {
       { name: 'app_id', label: 'AppID', type: 'text', placeholder: '12345678' },
       { name: 'api_secret', label: 'APISecret', type: 'password', placeholder: '' },
       { name: 'api_key', label: 'APIKey', type: 'password', placeholder: '' },
+      {
+        name: 'model',
+        label: 'ModelID (domain)',
+        type: 'text',
+        placeholder: '例如: xopqwentti20b / general',
+      },
     ],
   },
   openai: {

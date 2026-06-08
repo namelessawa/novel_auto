@@ -238,6 +238,8 @@ export async function generateImage({ prompt, width = 512, height = 512 }) {
   if (config.app_id) headers['X-Image-App-Id'] = config.app_id
   if (config.api_key) headers['X-Image-Api-Key'] = config.api_key
   if (config.api_secret) headers['X-Image-Api-Secret'] = config.api_secret
+  // v2.31 — model 用作讯飞 domain (xopqwentti20b / general / ...)
+  if (config.model) headers['X-Image-Model'] = config.model
   const res = await authedFetch('/api/image/generate', {
     method: 'POST',
     headers,
