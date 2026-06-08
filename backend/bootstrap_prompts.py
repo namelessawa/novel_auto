@@ -50,6 +50,7 @@ from memory_system.models import (
     TickLocation,
     WorldState,
 )
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -250,50 +251,6 @@ PROMPT_STYLE = """\
 # ---------------------------------------------------------------------------
 
 
-def _extract_json_object(text: str) -> str:
-    """从 LLM 输出中提取第一个深度平衡的 {...} 子串。
-
-    reasoning 模型常在 JSON 前后塞散文 / markdown / 注释, prompt 里写 "不要
-    markdown 代码块" 仅是约定, 实际输出形式包括但不限于:
-
-        Here is the JSON:
-        ```json
-        {...}
-        ```
-        Done.
-
-    本函数找到第一个 `{`, 扫描到深度归零的对应 `}` 返回该子串。字符串字面量
-    内的 `{}` 不计入深度, 转义引号正确处理。没找到 `{` 时原样返回, 让上游
-    json.loads 报清晰的 "Expecting value" 错误。
-    """
-    start = text.find("{")
-    if start < 0:
-        return text
-    depth = 0
-    in_string = False
-    escape = False
-    for i in range(start, len(text)):
-        ch = text[i]
-        if escape:
-            escape = False
-            continue
-        if ch == "\\":
-            escape = True
-            continue
-        if ch == '"':
-            in_string = not in_string
-            continue
-        if in_string:
-            continue
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                return text[start : i + 1]
-    return text[start:]
-
-
 async def _llm_json(
     system_prompt: str,
     user_prompt: str,
@@ -312,26 +269,17 @@ async def _llm_json(
         tick=0,
     )
     raw = resp.content.strip()
-    text = raw
-    if text.startswith("```"):
-        lines = text.split("\n")
-        lines = lines[1:]
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        text = "\n".join(lines)
-    text = _extract_json_object(text)
     try:
-        return json.loads(text)
+        return parse_llm_json(raw)
     except json.JSONDecodeError as e:
         logger.error(
             "bootstrap stage=%s JSON parse failed at line %d col %d: %s\n"
-            "  raw[:500]=%r\n  extracted[:500]=%r",
+            "  raw[:500]=%r",
             stage,
             e.lineno,
             e.colno,
             e.msg,
             raw[:500],
-            text[:500],
         )
         raise
 

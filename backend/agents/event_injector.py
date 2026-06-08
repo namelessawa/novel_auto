@@ -29,7 +29,7 @@ from memory_system.models import (
     StatePatch,
     WorldState,
 )
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -254,14 +254,13 @@ class EventInjector:
         tick: int,
         open_loop_count: int,
     ) -> EventInjectorOutput:
-        text = strip_code_fence(raw)
         try:
-            payload = json.loads(text)
+            payload = parse_llm_json(raw)
         except json.JSONDecodeError as e:
             logger.error(
-                "EventInjector JSON parse failed: %s — first 200: %s",
+                "EventInjector JSON parse failed: %s — raw[:300]=%r",
                 e,
-                text[:200],
+                raw[:300],
             )
             return EventInjectorOutput(events=[], no_events_reason="JSON parse error")
 

@@ -32,7 +32,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -235,12 +235,12 @@ class SectionCloser:
             return False, f"LLM 不可用, 字数 {words} 未达 target 不切"
 
         try:
-            payload = json.loads(strip_code_fence(resp.content))
+            payload = parse_llm_json(resp.content)
             closed = bool(payload.get("closed", False))
             reason = str(payload.get("reason", "")).strip() or "(LLM 未给理由)"
             return closed, reason
         except Exception as e:
-            logger.warning("SectionCloser LLM 输出解析失败 (%s): %s", e, resp.content[:200])
+            logger.warning("SectionCloser LLM 输出解析失败 (%s): raw[:300]=%r", e, resp.content[:300])
             # 解析失败时保守: 字数达 target 就切, 否则不切
             if words >= self.target_words:
                 return True, "LLM 输出无法解析, 字数达 target 兜底切"

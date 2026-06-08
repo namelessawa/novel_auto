@@ -39,7 +39,7 @@ from agents.quality_spec import (
     render_full_critique_block,
     render_show_dont_tell_block,
 )
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -541,11 +541,10 @@ def _merge_triggers(
 
 def _parse_critic_triggers(raw: str) -> list[DeterministicTrigger]:
     """LLM critic 返回的 JSON → DeterministicTrigger 列表。"""
-    text = _strip_code_fence(raw)
     try:
-        payload = json.loads(text)
+        payload = parse_llm_json(raw)
     except json.JSONDecodeError as e:
-        logger.warning("NarrativeCritic critique JSON parse failed: %s", e)
+        logger.warning("NarrativeCritic critique JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
         return []
     out: list[DeterministicTrigger] = []
     for item in payload.get("triggers", []) or []:
@@ -567,21 +566,14 @@ def _parse_critic_triggers(raw: str) -> list[DeterministicTrigger]:
 
 
 def _parse_text_field(raw: str, field_name: str) -> str:
-    text = _strip_code_fence(raw)
     try:
-        payload = json.loads(text)
-    except json.JSONDecodeError:
+        payload = parse_llm_json(raw)
+    except json.JSONDecodeError as e:
         logger.warning(
-            "NarrativeCritic revise/rewrite JSON parse failed; fallback raw"
+            "NarrativeCritic revise/rewrite JSON parse failed: %s — raw[:300]=%r", e, raw[:300],
         )
         return ""
     return str(payload.get(field_name, "")).strip()
-
-
-def _strip_code_fence(text: str) -> str:
-    # v2.19.6 — 统一到 nf_core.json_utils.strip_code_fence; 保留本 wrapper 是
-    # 因为模块内多个调用方仍引用 _strip_code_fence 这个私有名 (向后兼容)。
-    return strip_code_fence(text)
 
 
 def _extract_blacklist_words(triggers: list[DeterministicTrigger]) -> list[str]:

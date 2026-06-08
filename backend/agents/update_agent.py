@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 from memory_system.models import Entity, EntityType, Relation, RelationType, Section
 from graph.knowledge_graph import KnowledgeGraph
@@ -157,14 +158,8 @@ class UpdateAgent:
 
     @staticmethod
     def _parse_json(raw: str) -> dict:
-        text = raw.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            text = "\n".join(lines)
         try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            return {"summary": text[:50], "scene": {}}
+            return parse_llm_json(raw)
+        except json.JSONDecodeError as e:
+            logger.warning("UpdateAgent JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
+            return {"summary": raw.strip()[:50], "scene": {}}

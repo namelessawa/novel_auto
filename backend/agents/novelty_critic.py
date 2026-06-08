@@ -20,7 +20,7 @@ import logging
 from dataclasses import dataclass, field
 
 from memory_system.models import Event
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -136,11 +136,10 @@ class NoveltyCritic:
 """
 
     def _parse_output(self, raw: str) -> NoveltyCriticOutput:
-        text = strip_code_fence(raw)
         try:
-            payload = json.loads(text)
+            payload = parse_llm_json(raw)
         except json.JSONDecodeError as e:
-            logger.error("NoveltyCritic JSON parse failed: %s — first 200: %s", e, text[:200])
+            logger.error("NoveltyCritic JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
             return NoveltyCriticOutput()
 
         return NoveltyCriticOutput(

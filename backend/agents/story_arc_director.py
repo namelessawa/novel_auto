@@ -41,7 +41,7 @@ from memory_system.models import (
     StoryArcDirective,
     SuspenseLevel,
 )
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -380,11 +380,10 @@ high_streak: {analysis.high_streak}
         except Exception as e:
             logger.warning("StoryArcDirector LLM hint failed: %s", e)
             return "", ""
-        text = strip_code_fence(resp.content)
         try:
-            payload = json.loads(text)
-        except json.JSONDecodeError:
-            logger.warning("StoryArcDirector LLM hint JSON parse failed")
+            payload = parse_llm_json(resp.content)
+        except json.JSONDecodeError as e:
+            logger.warning("StoryArcDirector LLM hint JSON parse failed: %s — raw[:300]=%r", e, resp.content[:300])
             return "", ""
         return (
             str(payload.get("theme_reminder", ""))[:200],

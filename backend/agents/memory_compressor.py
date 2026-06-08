@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 
 from memory.summary_tree import SummaryTree
 from memory_system.models import MemoryEntry
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -263,11 +263,10 @@ class MemoryCompressor:
         target_tier: str,
         fallback_entries: list[MemoryEntry],
     ) -> list[MemoryEntry]:
-        text = strip_code_fence(raw)
         try:
-            payload = json.loads(text)
+            payload = parse_llm_json(raw)
         except json.JSONDecodeError as e:
-            logger.error("MemoryCompressor parse failed (%s): %s", e, text[:200])
+            logger.error("MemoryCompressor parse failed (%s): raw[:300]=%r", e, raw[:300])
             return []
 
         key = "l1_entries" if target_tier == "L1" else "l2_entries"

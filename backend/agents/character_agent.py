@@ -34,7 +34,7 @@ from memory_system.models import (
     Goal,
     RelationshipDelta,
 )
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 # v2.16 — 连续 ≥3 个英文单词 (≥2 个字母, 空格分隔) 视为语言污染。
@@ -330,15 +330,14 @@ class CharacterAgent:
 """
 
     def _parse_action(self, raw: str) -> CharacterAction:
-        text = strip_code_fence(raw)
         try:
-            payload: dict[str, Any] = json.loads(text)
+            payload: dict[str, Any] = parse_llm_json(raw)
         except json.JSONDecodeError as e:
             logger.error(
-                "CharacterAgent[%s] JSON parse failed: %s — first 200 chars: %s",
+                "CharacterAgent[%s] JSON parse failed: %s — raw[:300]=%r",
                 self._profile.id,
                 e,
-                text[:200],
+                raw[:300],
             )
             return self._fallback_action()
 

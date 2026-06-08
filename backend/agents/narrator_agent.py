@@ -28,7 +28,7 @@ from memory_system.models import (
     OpenLoop,
     StyleAnchor,
 )
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -458,15 +458,14 @@ tick={tick}, world_time={world_time}
         tick: int,
         tick_events: list[Event],
     ) -> NarratorOutput:
-        text = strip_code_fence(raw)
         try:
-            payload = json.loads(text)
+            payload = parse_llm_json(raw)
         except json.JSONDecodeError as e:
-            logger.error("NarratorAgent JSON parse failed: %s — first 200: %s", e, text[:200])
+            logger.error("NarratorAgent JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
             # 兜底:把 LLM 原文当 narrative_text,不解析 metadata
             return NarratorOutput(
                 should_narrate=True,
-                narrative_text=text,
+                narrative_text=strip_code_fence(raw),
                 estimated_length=estimated_length,
                 tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
                 consistency_flags=["narrator_output_not_json"],

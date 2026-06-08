@@ -32,7 +32,7 @@ from memory_system.models import (
     CharacterProfile,
     CharacterState,
 )
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -398,11 +398,10 @@ class CharacterArcTracker:
             agent_id="character_arc_tracker",
             priority="optional",
         )
-        text = strip_code_fence(resp.content)
         try:
-            payload = json.loads(text)
-        except json.JSONDecodeError:
-            logger.warning("CharacterArcTracker LLM JSON parse failed")
+            payload = parse_llm_json(resp.content)
+        except json.JSONDecodeError as e:
+            logger.warning("CharacterArcTracker LLM JSON parse failed: %s — raw[:300]=%r", e, resp.content[:300])
             return {}
         out: dict[str, dict] = {}
         for item in payload.get("reports", []) or []:

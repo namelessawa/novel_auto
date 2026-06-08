@@ -26,7 +26,7 @@ import logging
 from dataclasses import dataclass, field
 
 from memory_system.models import OpenLoop
-from nf_core.json_utils import strip_code_fence
+from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
@@ -204,11 +204,10 @@ class Showrunner:
 """
 
     def _parse_output(self, raw: str) -> ShowrunnerOutput:
-        text = strip_code_fence(raw)
         try:
-            payload = json.loads(text)
+            payload = parse_llm_json(raw)
         except json.JSONDecodeError as e:
-            logger.error("Showrunner JSON parse failed: %s — first 200: %s", e, text[:200])
+            logger.error("Showrunner JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
             return ShowrunnerOutput()
 
         return ShowrunnerOutput(
