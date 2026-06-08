@@ -321,11 +321,9 @@ function AppShell() {
 
         <div className="nav-divider"></div>
 
-        <div className="sidebar-topics-header">
-          <span>任务</span>
-        </div>
         {/* v2.24 — 后台任务列表 (续写 / 首节生成 / ...). SSE 实时进度,
-            终态保留 60s 后自动隐藏. 任务完成时刷新 stats + novels. */}
+            终态保留 60s 后自动隐藏. 任务完成时刷新 stats + novels.
+            标题 ⟳ 在 TaskListPanel 内部, 不在这里再画一次. */}
         <TaskListPanel
           onTaskComplete={() => {
             refreshStats()

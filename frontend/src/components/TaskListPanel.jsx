@@ -35,6 +35,9 @@ const KIND_LABEL = {
 // 已完成/失败/取消的任务在列表中保留多久 — 给用户看一眼结果, 然后自动隐藏
 const TERMINAL_RETAIN_MS = 60 * 1000
 
+// 列表自动刷新间隔 — SSE 是流式但用户主动失焦/网络抖动可能漏推, 15s 兜底拉一次
+const AUTO_REFRESH_MS = 15 * 1000
+
 export default function TaskListPanel({ onTaskComplete }) {
   const [tasks, setTasks] = useState([])
   // 每个 active 任务的 SSE controller, 任务 id → AbortController
@@ -82,46 +85,58 @@ export default function TaskListPanel({ onTaskComplete }) {
     [updateOne],
   )
 
-  // v2.30 — 去掉 setInterval. 列表拉取改为:
+  // 提到 useEffect 外 — 顶部 ⟳ 按钮也要触发同一段刷新逻辑
+  const cancelledRef = useRef(false)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const refreshList = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      const data = await listTasks()
+      if (cancelledRef.current) return
+      const nowMs = Date.now()
+      const filtered = (data.tasks || []).filter((t) => {
+        if (t.status === 'queued' || t.status === 'running') return true
+        // 终态任务超过保留窗口就隐藏 — 仍可在 /api/tasks 列表里查到
+        if (!t.completed_at) return true
+        const completed = Date.parse(t.completed_at)
+        if (Number.isNaN(completed)) return true
+        return nowMs - completed < TERMINAL_RETAIN_MS
+      })
+      setTasks(filtered)
+      filtered.forEach(subscribeIfNeeded)
+    } catch {
+      /* 后端临时下线 — 保留上一次列表, 不弹 toast */
+    } finally {
+      if (!cancelledRef.current) setRefreshing(false)
+    }
+  }, [subscribeIfNeeded])
+
+  // 列表拉取:
   //   1. 挂载时拉一次
   //   2. tab 切回前台时拉一次
-  // 进行中任务的进度变化由各 task SSE 流推送 (subscribeIfNeeded)，
-  // 不需要轮询整个列表也能保持活动任务的实时更新.
+  //   3. 15s 兜底自动刷新 (AUTO_REFRESH_MS) — 防 SSE 漏推 / 失败任务被 60s 窗口截走前补一帧
+  //   4. 顶部 ⟳ 按钮手动拉一次
+  // 进行中任务的进度变化由各 task SSE 流推送 (subscribeIfNeeded), 兜底轮询不影响实时性.
   useEffect(() => {
-    let cancelled = false
-    const tick = async () => {
-      try {
-        const data = await listTasks()
-        if (cancelled) return
-        const nowMs = Date.now()
-        const filtered = (data.tasks || []).filter((t) => {
-          if (t.status === 'queued' || t.status === 'running') return true
-          // 终态任务超过保留窗口就隐藏 — 仍可在 /api/tasks 列表里查到
-          if (!t.completed_at) return true
-          const completed = Date.parse(t.completed_at)
-          if (Number.isNaN(completed)) return true
-          return nowMs - completed < TERMINAL_RETAIN_MS
-        })
-        setTasks(filtered)
-        // 给每个 active 任务起 SSE
-        filtered.forEach(subscribeIfNeeded)
-      } catch {
-        /* 后端临时下线 — 保留上一次列表, 不弹 toast */
-      }
-    }
-    tick()
+    cancelledRef.current = false
+    refreshList()
     const onVisible = () => {
-      if (document.visibilityState === 'visible') tick()
+      if (document.visibilityState === 'visible') refreshList()
     }
     document.addEventListener('visibilitychange', onVisible)
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') refreshList()
+    }, AUTO_REFRESH_MS)
     return () => {
-      cancelled = true
+      cancelledRef.current = true
       document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(interval)
       // 卸载时关闭所有 SSE
       streamsRef.current.forEach((c) => c.abort())
       streamsRef.current.clear()
     }
-  }, [subscribeIfNeeded])
+  }, [refreshList])
 
   const handleCancel = useCallback(async (taskId) => {
     try {
@@ -132,35 +147,62 @@ export default function TaskListPanel({ onTaskComplete }) {
     }
   }, [])
 
-  if (tasks.length === 0) {
-    return (
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div
+        className="sidebar-topics-header"
         style={{
-          padding: '12px',
-          fontSize: 12,
-          color: 'var(--text-muted)',
-          fontStyle: 'italic',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        暂无后台任务
+        <span>任务{tasks.length > 0 ? ` · ${tasks.length}` : ''}</span>
+        <button
+          onClick={refreshList}
+          disabled={refreshing}
+          title="刷新任务列表"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: refreshing ? 'wait' : 'pointer',
+            fontSize: 12,
+            padding: '2px 6px',
+            opacity: refreshing ? 0.5 : 1,
+          }}
+        >
+          <i className={`fas fa-rotate ${refreshing ? 'fa-spin' : ''}`}></i>
+        </button>
       </div>
-    )
-  }
 
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        padding: '4px 8px 8px',
-        maxHeight: 280,
-        overflowY: 'auto',
-      }}
-    >
-      {tasks.map((t) => (
-        <TaskRow key={t.id} task={t} onCancel={handleCancel} />
-      ))}
+      {tasks.length === 0 ? (
+        <div
+          style={{
+            padding: '12px',
+            fontSize: 12,
+            color: 'var(--text-muted)',
+            fontStyle: 'italic',
+          }}
+        >
+          暂无后台任务
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            padding: '4px 8px 8px',
+            maxHeight: 280,
+            overflowY: 'auto',
+          }}
+        >
+          {tasks.map((t) => (
+            <TaskRow key={t.id} task={t} onCancel={handleCancel} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

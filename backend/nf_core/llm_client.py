@@ -93,7 +93,7 @@ def _get_user_client(cfg: UserLLMConfig) -> AsyncOpenAI:
         client = AsyncOpenAI(
             api_key=cfg.api_key,
             base_url=base,
-            max_retries=1,
+            max_retries=0,
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         _user_client_cache[key] = client
@@ -169,7 +169,7 @@ class LLMClient:
         self._client = AsyncOpenAI(
             api_key=settings.deepseek_api_key,
             base_url=settings.deepseek_base_url,
-            max_retries=1,
+            max_retries=0,
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         self._model = settings.deepseek_model
@@ -205,7 +205,7 @@ class LLMClient:
         self._client = AsyncOpenAI(
             api_key=eff_key,
             base_url=eff_url,
-            max_retries=1,
+            max_retries=0,
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         self._model = eff_model
