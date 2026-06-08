@@ -110,3 +110,9 @@ networks:
   novel:
     name: novel-auto-net
     driver: bridge
+    # v2.33 — 默认 1500 在 Cloudflare Tunnel / VPN / 部分国内出口下,
+    # TLS Client Hello 大包会被分片丢弃 → handshake timeout.
+    # 1380 是 Cloudflare WARP / 多数 VPN 兼容值, 留出 IPSec / GRE 头开销.
+    # 症状: ssl.do_handshake() 超时, 但 TCP connect 正常.
+    driver_opts:
+      com.docker.network.driver.mtu: 1380
