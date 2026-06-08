@@ -294,7 +294,7 @@ async def bootstrap_world(
     world_resp = await _llm_json(
         system_prompt="你是一个虚构世界设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_WORLD.format(seed=seed),
-        max_tokens=61440,
+        max_tokens=24576,
         stage="world",
     )
     ws = WorldState.model_validate(world_resp.get("world_state", {}))
@@ -327,7 +327,7 @@ async def bootstrap_world(
         user_prompt=PROMPT_CHARACTERS.format(
             world_state=ws.model_dump_json(indent=2)
         ),
-        max_tokens=122880,
+        max_tokens=32768,
         stage="characters",
     )
     main_tracking_id: str | None = None
@@ -363,7 +363,7 @@ async def bootstrap_world(
                 indent=2,
             ),
         ),
-        max_tokens=40960,
+        max_tokens=12288,
         stage="open_loops",
     )
     for loop_raw in loops_resp.get("open_loops", []) or []:
@@ -383,7 +383,7 @@ async def bootstrap_world(
             positioning=positioning,
             references=references,
         ),
-        max_tokens=81920,
+        max_tokens=16384,
         stage="style",
     )
     for anchor_raw in style_resp.get("style_anchors", []) or []:
