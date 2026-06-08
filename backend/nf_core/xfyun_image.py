@@ -175,9 +175,14 @@ async def generate_image(
     # seed 不给就随机 — 文档要求 0~INT_MAX
     effective_seed = int(seed) if seed is not None else _secrets.randbelow(2**31)
 
-    header_block: dict[str, object] = {"app_id": app_id, "uid": uid}
-    if patch_id:
-        header_block["patch_id"] = list(patch_id)
+    # patch_id 文档写"可选", 实测必填 (10004 SchemaCheckError) — 永远存在,
+    # 没值就空数组. 全量模型 (xopqwentti20b 等) 用 []; 非全量 LoRA 微调模型
+    # 从讯飞星辰平台拿 patch_id 数组填进来.
+    header_block: dict[str, object] = {
+        "app_id": app_id,
+        "uid": uid,
+        "patch_id": list(patch_id) if patch_id else [],
+    }
 
     body = {
         "header": header_block,
