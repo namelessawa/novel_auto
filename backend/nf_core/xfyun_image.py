@@ -33,6 +33,29 @@ XFYUN_DEFAULT_HOST = "spark-api.cn-huabei-1.xf-yun.com"
 XFYUN_DEFAULT_PATH = "/v2.1/tti"
 
 
+# 讯飞 spark 通用错误码 → 中文修复指引. 用户看到立刻知道下一步.
+_XFYUN_CODE_HINTS: dict[int, str] = {
+    10110: "鉴权失败 — APIKey/APISecret 错, 或容器时区/时钟与北京时间差 >5min",
+    10160: "AppID 不存在或填错位置 (注意 AppID/APIKey/APISecret 别填混)",
+    10163: "请求参数不合法 — 检查 width/height 是否在讯飞支持的尺寸列表里",
+    10165: "domain 字段不对",
+    11200: "服务无权限 — 讯飞控制台 → 我的应用 → 开通对应服务",
+    11201: (
+        "AppID 未开通图片生成服务 — 讯飞控制台 → 我的应用 → 服务列表 → "
+        "「图片生成」点开通 (通常有免费额度)"
+    ),
+    11202: "授权额度已用完 / 已过期 — 控制台续费或申请扩量",
+    11203: "并发量超限 — 等几秒重试",
+}
+
+
+def _format_business_error(code: int, message: str) -> str:
+    hint = _XFYUN_CODE_HINTS.get(code)
+    if hint:
+        return f"xfyun error code={code} ({message}) — {hint}"
+    return f"xfyun error code={code}: {message or 'unknown'}"
+
+
 class XfyunImageError(Exception):
     """通用 xfyun 调用错误 — routes 层 502/400 透传."""
 
@@ -148,7 +171,7 @@ async def generate_image(
     code = header.get("code", 0)
     if code != 0:
         raise XfyunImageError(
-            f"xfyun error code={code}: {header.get('message', 'unknown')}"
+            _format_business_error(int(code), str(header.get("message", "")))
         )
 
     choices = (data.get("payload") or {}).get("choices") or {}
