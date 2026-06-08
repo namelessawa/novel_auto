@@ -126,14 +126,30 @@ async def generate_image(
                         break
     except asyncio.TimeoutError as e:
         raise XfyunImageError(f"xfyun 调用超时 ({timeout}s)") from e
-    except websockets.exceptions.InvalidStatusCode as e:
-        # 鉴权失败时 xfyun 直接关 WebSocket, 给 401/403
-        raise XfyunImageError(
-            f"xfyun WebSocket 握手失败 (status={e.status_code}); "
-            "请检查 AppID/APIKey/APISecret 是否正确"
-        ) from e
-    except (websockets.exceptions.WebSocketException, OSError) as e:
-        raise XfyunImageError(f"xfyun WebSocket 错误: {e}") from e
+    except XfyunImageError:
+        raise
+    except Exception as e:
+        # 不再细分异常类 — websockets 11/12/13 把 InvalidStatusCode 改名为
+        # InvalidStatus, 子类化也乱; 统一抓 + 把 type/status/message 全挖出来,
+        # 保证 detail 永远非空, 用户能定位.
+        type_name = type(e).__name__
+        text = str(e).strip() or repr(e)
+        # 尝试多种 attribute path 提取 HTTP 状态码
+        status_code = (
+            getattr(e, "status_code", None)
+            or getattr(getattr(e, "response", None), "status_code", None)
+            or getattr(e, "code", None)
+        )
+        if status_code:
+            hint = ""
+            if status_code in (401, 403):
+                hint = " — 多半是 AppID/APIKey/APISecret 错或不属于同一应用"
+            raise XfyunImageError(
+                f"xfyun 握手失败 (HTTP {status_code}, {type_name}){hint}"
+            ) from e
+        # 最后 fallback — 至少给出 type + 文字
+        logger.warning("xfyun unexpected exception type=%s text=%r", type_name, text)
+        raise XfyunImageError(f"xfyun 调用失败 ({type_name}): {text}") from e
 
     if not chunks:
         raise XfyunImageError("xfyun 未返回图像数据 (response empty)")
