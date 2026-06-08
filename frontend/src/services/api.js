@@ -163,6 +163,7 @@ export async function authLogout() {
 // ---------------------------------------------------------------------------
 
 const USER_LLM_STORAGE_KEY = 'novel_auto_user_llm'
+const USER_IMAGE_STORAGE_KEY = 'novel_auto_user_image'
 
 export function getUserLLMConfig() {
   try {
@@ -183,6 +184,40 @@ export function setUserLLMConfig({ api_key, base_url, model }) {
   } catch {
     /* silent */
   }
+}
+
+// v2.27 — 图片生成多 provider 配置 (科大讯飞 / OpenAI DALL·E / Stability / 自定义).
+// schema: { active: <provider-id>, providers: { <id>: {field: value, ...}, ... } }
+// 各 provider 字段不同, 完全由 ConfigView 的 IMAGE_PROVIDERS 表驱动.
+export function getUserImageConfig() {
+  try {
+    const raw = localStorage.getItem(USER_IMAGE_STORAGE_KEY)
+    if (!raw) return { active: 'xfyun', providers: {} }
+    const parsed = JSON.parse(raw)
+    return {
+      active: parsed.active || 'xfyun',
+      providers: parsed.providers || {},
+    }
+  } catch {
+    return { active: 'xfyun', providers: {} }
+  }
+}
+
+export function setUserImageConfig({ active, providers }) {
+  try {
+    localStorage.setItem(
+      USER_IMAGE_STORAGE_KEY,
+      JSON.stringify({ active, providers }),
+    )
+  } catch {
+    /* silent */
+  }
+}
+
+// 取当前 active provider 的凭据 — 后续 image 调用要用
+export function getActiveImageProviderConfig() {
+  const { active, providers } = getUserImageConfig()
+  return { active, config: providers[active] || {} }
 }
 
 function _userLLMHeaders() {

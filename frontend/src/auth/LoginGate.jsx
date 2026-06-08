@@ -76,7 +76,6 @@ export default function LoginGate() {
           ? await authRegisterVerify(email, otp)
           : await authLoginVerifyOTP(email, otp)
       setSession(result)
-      showToast(mode === 'register' ? '注册成功' : '登录成功', 'success')
     } catch (err) {
       showToast(err.message || '验证失败', 'error')
     } finally {
@@ -97,7 +96,6 @@ export default function LoginGate() {
     try {
       const result = await authLoginPassword(email, password)
       setSession(result)
-      showToast('登录成功', 'success')
     } catch (err) {
       showToast(err.message || '登录失败', 'error')
     } finally {

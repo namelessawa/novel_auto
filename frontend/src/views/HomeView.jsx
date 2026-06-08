@@ -176,10 +176,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
         also_generate_first_section: true,
       })
 
-      showToast(
-        `已创建《${title}》。世界种子 (4 阶段) + 首节生成已加入任务队列, 在左下「任务」面板查看进度`,
-        'success',
-      )
+      // 任务进度在左下「任务」面板自动滚动, 不再 toast 长说明
       setCreateTitle('')
       setCreateSeed('')
       setCreatePositioning('')
@@ -205,11 +202,8 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
 
     try {
       await switchNovel(continueId)
-      const snap = await createSectionTask(continueId)
-      showToast(
-        `已为 第${snap.chapter || '?'}章 第${snap.section_no || '?'}节 创建续写任务,可在左下「任务」面板查看进度`,
-        'success',
-      )
+      await createSectionTask(continueId)
+      // 任务进度在左下「任务」面板自动显示
       setContinuePrompt('')
       onAfterCreated?.(continueId)
     } catch (err) {
@@ -230,14 +224,13 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     controllerRef.current?.abort()
     setGenerating(false)
     setStatusText('')
-    showToast('已停止生成', 'info')
   }
 
   // v2.26 — 随机种子/标题. 联动: 一侧有内容 → 另一侧根据它客制化生成.
   const _ensureLLMKey = () => {
     const cfg = getUserLLMConfig()
     if (!cfg.api_key) {
-      showToast('请先在右上角「设置」中填写您的 API Key', 'error')
+      showToast('请先在「系统设置」中填写 API Key', 'error')
       return false
     }
     return true
@@ -248,15 +241,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     setRandomSeedBusy(true)
     try {
       const r = await randomSeed({ existing_title: createTitle.trim() })
-      if (r?.text) {
-        setCreateSeed(r.text)
-        showToast(
-          createTitle.trim()
-            ? `已根据《${createTitle.trim()}》生成匹配的种子`
-            : '已随机生成种子',
-          'success',
-        )
-      }
+      if (r?.text) setCreateSeed(r.text)
     } catch (err) {
       showToast('随机种子失败: ' + (err.message || err), 'error')
     } finally {
@@ -269,13 +254,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     setRandomTitleBusy(true)
     try {
       const r = await randomTitle({ existing_seed: createSeed.trim() })
-      if (r?.text) {
-        setCreateTitle(r.text)
-        showToast(
-          createSeed.trim() ? '已根据种子生成匹配的标题' : '已随机生成标题',
-          'success',
-        )
-      }
+      if (r?.text) setCreateTitle(r.text)
     } catch (err) {
       showToast('随机标题失败: ' + (err.message || err), 'error')
     } finally {

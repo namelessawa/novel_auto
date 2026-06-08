@@ -120,7 +120,7 @@ export default function TaskListPanel({ onTaskComplete }) {
   const handleCancel = useCallback(async (taskId) => {
     try {
       await cancelTask(taskId)
-      showToast('已请求取消', 'info')
+      // 取消成功 — SSE 会推回状态变化, 不需要 toast
     } catch (e) {
       showToast(`取消失败: ${e.message || e}`, 'error')
     }

@@ -159,7 +159,6 @@ function AppShell() {
     if (!next || !next.trim()) return
     try {
       await updateNovelTitle(novelId, next.trim())
-      showToast('标题已更新', 'success')
       await refreshNovels()
     } catch (err) {
       showToast('更新失败:' + err.message, 'error')
@@ -177,7 +176,6 @@ function AppShell() {
     if (!window.confirm(`确定删除《${label}》?该操作不可撤销。`)) return
     try {
       await deleteNovel(novelId)
-      showToast('已删除', 'success')
       await refreshNovels()
     } catch (err) {
       showToast('删除失败:' + err.message, 'error')

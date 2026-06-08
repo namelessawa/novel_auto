@@ -287,7 +287,6 @@ export default function GraphView({ refreshKey, isVisible }) {
         attributes: parseAttributesString(entityForm.attributes),
       })
       setEntityForm({ id: '', name: '', entity_type: 'character', attributes: '' })
-      showToast('实体已添加', 'success')
       loadGraph()
     } catch (err) {
       showToast('添加失败:' + (err?.message || '未知错误'), 'error')
@@ -300,7 +299,6 @@ export default function GraphView({ refreshKey, isVisible }) {
     try {
       await createRelation(relationForm)
       setRelationForm({ source_id: '', target_id: '', relation_type: 'knows', label: '' })
-      showToast('关系已添加', 'success')
       loadGraph()
     } catch (err) {
       showToast('添加关系失败:' + (err?.message || '未知错误'), 'error')
