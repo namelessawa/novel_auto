@@ -44,6 +44,8 @@ from agents.character_arc_tracker import (
 from agents.narrator_agent import NarratorAgent, NarratorOutput
 from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
+from graph.knowledge_graph import KnowledgeGraph
+from graph.tick_kg_sync import sync_tick_state_to_kg
 from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.tick_state import TickState
 from narrative.creativity_scorer import CreativityReport, CreativityScorer
@@ -164,8 +166,18 @@ class Orchestrator:
         safety_filter: SafetyFilter | None = None,
         token_budget: TokenBudgetTracker | None = None,
         creativity_scorer: CreativityScorer | None = None,
+        knowledge_graph: KnowledgeGraph | None = None,
+        knowledge_graph_path: str | None = None,
     ) -> None:
         self._tick_state = tick_state
+        # v2.34 — 知识图谱接入 tick 架构 (此前是 v1.x 章节链路遗留, 从不被 tick
+        # 写入, 导致前端 KG tab 永远 0 实体 0 关系). 调用 sync_tick_state_to_kg
+        # 在每 tick 末把当前 char_states + world_state 同步到图, 不依赖 LLM,
+        # 也不写 token budget; kg 为空时整段静默跳过, 保持向后兼容。
+        # knowledge_graph_path 非空时, 每 tick 同步后落盘, 防进程崩失用户手动
+        # 添加的实体/关系。
+        self._knowledge_graph = knowledge_graph
+        self._knowledge_graph_path = knowledge_graph_path
         self._world_simulator = world_simulator
         self._character_agents = character_agents
         self._narrator = narrator
@@ -580,6 +592,33 @@ class Orchestrator:
         reaped = self._tick_state.reap_stale_open_loops(tick)
         if reaped:
             agents_called.append(f"loop_reaper(-{len(reaped)})")
+
+        # v2.34 — 知识图谱同步 (纯 Python, 无 LLM). 在持久化前做, 让 KG 反映
+        # 本 tick 应用后的状态; 同时落盘, 防进程中途崩失。
+        if self._knowledge_graph is not None:
+            try:
+                kg_stats = sync_tick_state_to_kg(
+                    self._knowledge_graph,
+                    self._tick_state,
+                    all_events,
+                )
+                if (
+                    kg_stats.entities_added
+                    or kg_stats.relations_added
+                    or kg_stats.entities_updated
+                ):
+                    agents_called.append(
+                        f"kg_sync(+{kg_stats.entities_added}e/"
+                        f"+{kg_stats.relations_added}r/"
+                        f"~{kg_stats.entities_updated}e)"
+                    )
+            except Exception as e:  # pragma: no cover
+                logger.warning("KG sync failed (non-fatal): %s", e)
+            if self._knowledge_graph_path:
+                try:
+                    self._knowledge_graph.save_to_disk(self._knowledge_graph_path)
+                except Exception as e:  # pragma: no cover
+                    logger.warning("KG save_to_disk failed (non-fatal): %s", e)
 
         # 持久化(原子写)
         self._tick_state.save()

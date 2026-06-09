@@ -219,8 +219,104 @@ class KnowledgeGraph:
                 "target": tgt,
                 "relation_type": data.get("relation_type", ""),
                 "label": data.get("label", ""),
+                "weight": data.get("weight", 1.0),
             })
         return {"entities": entities, "relations": edges}
+
+    # -- single-file persistence (v2.34) --------------------------------------
+    #
+    # snapshot 是历史回滚用的"完整快照"; 与之并列的 ``knowledge_graph.json`` 是
+    # 单文件持久化, 用于 tick 架构在每次 tick 末写盘 + 进程启动时载入"当前图"。
+    # 两者数据格式同源 (entities/relations), 但保存目录不同, 不会互相覆盖。
+
+    def save_to_disk(self, path: str) -> None:
+        """把当前图原子写入 single JSON file (供 TickRuntime 每 tick 末调用)。
+
+        失败抛 ``OSError`` 给上游决定; 调用方一般 try/except 降级 warning,
+        不让 KG 持久化挂掉整个 tick。
+        """
+        import tempfile
+
+        payload = {
+            "entities": [
+                {
+                    "id": e.id,
+                    "name": e.name,
+                    "entity_type": e.entity_type.value,
+                    "attributes": e.attributes,
+                }
+                for e in self.list_entities()
+            ],
+            "relations": [
+                {
+                    "source_id": src,
+                    "target_id": tgt,
+                    "relation_type": data.get("relation_type", "custom"),
+                    "label": data.get("label", ""),
+                    "weight": data.get("weight", 1.0),
+                    "attributes": data.get("attributes", {}),
+                }
+                for src, tgt, data in self._graph.edges(data=True)
+            ],
+        }
+        parent = os.path.dirname(path) or "."
+        os.makedirs(parent, exist_ok=True)
+        fd, tmp_path = tempfile.mkstemp(
+            prefix=".kg_", suffix=".tmp.json", dir=parent
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, path)
+        except Exception:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+            raise
+
+    def load_from_disk(self, path: str) -> bool:
+        """从 single JSON file 重建图. 文件不存在静默返回 False (空图继续)。
+
+        JSON 损坏时清空内部图并返回 False, 不抛, 让 tick 架构跳过 KG 但继续跑。
+        """
+        if not os.path.isfile(path):
+            return False
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return False
+        self._graph.clear()
+        for e in data.get("entities", []):
+            try:
+                self.add_entity(
+                    Entity(
+                        id=e["id"],
+                        name=e.get("name", e["id"]),
+                        entity_type=EntityType(e.get("entity_type", "character")),
+                        attributes=e.get("attributes", {}),
+                    )
+                )
+            except (KeyError, ValueError):
+                continue
+        for r in data.get("relations", []):
+            try:
+                self.add_relation(
+                    Relation(
+                        source_id=r["source_id"],
+                        target_id=r["target_id"],
+                        relation_type=RelationType(
+                            r.get("relation_type", "custom")
+                        ),
+                        label=r.get("label", ""),
+                        weight=r.get("weight", 1.0),
+                        attributes=r.get("attributes", {}),
+                    )
+                )
+            except (KeyError, ValueError):
+                continue
+        return True
 
     # -- helpers --------------------------------------------------------------
 

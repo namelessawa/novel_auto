@@ -35,6 +35,8 @@ from agents.orchestrator import Orchestrator
 from agents.showrunner import Showrunner
 from agents.story_arc_director import StoryArcDirector
 from agents.world_simulator import WorldSimulator
+from graph.knowledge_graph import KnowledgeGraph
+from graph.tick_kg_sync import sync_tick_state_to_kg
 from memory.memory_store import PriorityMemoryStore
 from memory.summary_tree import SummaryTree
 from memory.tick_state import TickState
@@ -78,6 +80,23 @@ class TickRuntime:
         self.summary_tree.load_from_disk(
             os.path.join(self.data_dir, "summary_tree.json")
         )
+
+        # v2.34 — 知识图谱: tick 架构在 _run_tick_unlocked 末尾自动同步。
+        # snapshot_dir 用 per-novel 路径, 与 config.json 的全局 graph_snapshot_dir
+        # 解耦, 避免多 novel 写到同一目录互相覆盖。
+        self.kg_path = os.path.join(self.data_dir, "knowledge_graph.json")
+        self.knowledge_graph = KnowledgeGraph(
+            snapshot_dir=os.path.join(self.data_dir, "snapshots")
+        )
+        self.knowledge_graph.load_from_disk(self.kg_path)
+        # 首次启动 (或上轮 KG 空) 时, 立即从当前 tick_state 灌一次种子图,
+        # 让用户即便还没跑 tick 就能在前端看到 bootstrap 出来的角色/地点/势力。
+        try:
+            sync_tick_state_to_kg(
+                self.knowledge_graph, self.tick_state, tick_events=None
+            )
+        except Exception as e:
+            logger.warning("initial KG seed failed (non-fatal): %s", e)
 
         # 9 agents
         self.world_simulator = WorldSimulator()
@@ -127,6 +146,8 @@ class TickRuntime:
             safety_filter=self.safety_filter,
             token_budget=self.token_budget,
             creativity_scorer=self.creativity_scorer,
+            knowledge_graph=self.knowledge_graph,
+            knowledge_graph_path=self.kg_path,
         )
 
     def _rebuild_character_agents(self) -> None:
@@ -159,6 +180,10 @@ class TickRuntime:
             ("FactLedger", self.fact_ledger.save),
             ("TokenBudgetTracker", self.token_budget.save),
             ("BranchManager", self.branch_manager.save),
+            (
+                "KnowledgeGraph",
+                lambda: self.knowledge_graph.save_to_disk(self.kg_path),
+            ),
             ("TickDB", self.tick_db.close),
         ]:
             try:

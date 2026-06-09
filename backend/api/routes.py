@@ -456,12 +456,48 @@ async def get_sections(current_user: User = Depends(get_current_user)):
 
 
 # -- Knowledge Graph Routes --------------------------------------------------
+#
+# v2.34 — 优先用 tick 架构的 KnowledgeGraph (从 char_states / world_state 自动
+# 喂图); 老 v1.x GenerationPipeline 仅作 fallback (用户从未启动过 tick runtime
+# 时, 例如纯 legacy 节生成回退场景). 用户手动添加的实体/关系会同时落到 tick KG,
+# 下次重启从 tick KG 恢复。
+
+
+def _get_active_kg(user_id: str):
+    """返回当前用户活跃 (user, novel) 的 KnowledgeGraph + 用于 save_to_disk 的 path.
+
+    优先级:
+    1. 当前已 active 的 TickRuntime.knowledge_graph (tick 架构, 自动喂图)
+    2. 否则 fallback 到 legacy GenerationPipeline.knowledge_graph
+
+    返回 ``(kg, kg_path_or_None)`` — path 仅在 tick KG 时有效, legacy pipeline
+    不暴露独立路径 (GenerationPipeline 自管理 save_state).
+    """
+    try:
+        from tick_runtime import get_active_runtime
+        rt = get_active_runtime(user_id)
+        if rt is not None:
+            return rt.knowledge_graph, rt.kg_path
+    except Exception as e:
+        logger.debug("tick KG lookup failed, falling back to legacy: %s", e)
+    pipeline = _get_pipeline(user_id)
+    return pipeline.knowledge_graph, None
+
+
+def _persist_active_kg(user_id: str, kg, kg_path) -> None:
+    """tick KG 改动后落盘. legacy fallback (kg_path is None) 静默跳过。"""
+    if not kg_path:
+        return
+    try:
+        kg.save_to_disk(kg_path)
+    except Exception as e:
+        logger.warning("KG save_to_disk failed (non-fatal): %s", e)
 
 
 @router.get("/api/graph")
 async def get_graph(current_user: User = Depends(get_current_user)):
-    pipeline = _get_pipeline(current_user.id)
-    return pipeline.knowledge_graph.to_dict()
+    kg, _ = _get_active_kg(current_user.id)
+    return kg.to_dict()
 
 
 @router.get("/api/graph/entities")
@@ -469,12 +505,12 @@ async def list_entities(
     entity_type: str | None = None,
     current_user: User = Depends(get_current_user),
 ):
-    pipeline = _get_pipeline(current_user.id)
+    kg, _ = _get_active_kg(current_user.id)
     try:
         et = EntityType(entity_type) if entity_type else None
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
-    entities = pipeline.knowledge_graph.list_entities(et)
+    entities = kg.list_entities(et)
     return {
         "entities": [
             {
@@ -492,7 +528,7 @@ async def list_entities(
 async def create_entity(
     req: EntityCreateRequest, current_user: User = Depends(get_current_user)
 ):
-    pipeline = _get_pipeline(current_user.id)
+    kg, kg_path = _get_active_kg(current_user.id)
     try:
         entity_type = EntityType(req.entity_type)
     except ValueError as e:
@@ -503,7 +539,8 @@ async def create_entity(
         entity_type=entity_type,
         attributes=req.attributes,
     )
-    pipeline.knowledge_graph.add_entity(entity)
+    kg.add_entity(entity)
+    _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok", "entity_id": req.id}
 
 
@@ -511,8 +548,9 @@ async def create_entity(
 async def delete_entity(
     entity_id: str, current_user: User = Depends(get_current_user)
 ):
-    pipeline = _get_pipeline(current_user.id)
-    pipeline.knowledge_graph.remove_entity(entity_id)
+    kg, kg_path = _get_active_kg(current_user.id)
+    kg.remove_entity(entity_id)
+    _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok"}
 
 
@@ -520,11 +558,11 @@ async def delete_entity(
 async def get_entity(
     entity_id: str, current_user: User = Depends(get_current_user)
 ):
-    pipeline = _get_pipeline(current_user.id)
-    entity = pipeline.knowledge_graph.get_entity(entity_id)
+    kg, _ = _get_active_kg(current_user.id)
+    entity = kg.get_entity(entity_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
-    relations = pipeline.knowledge_graph.get_relations(entity_id)
+    relations = kg.get_relations(entity_id)
     return {
         "entity": {
             "id": entity.id,
@@ -548,7 +586,7 @@ async def get_entity(
 async def create_relation(
     req: RelationCreateRequest, current_user: User = Depends(get_current_user)
 ):
-    pipeline = _get_pipeline(current_user.id)
+    kg, kg_path = _get_active_kg(current_user.id)
     try:
         relation_type = RelationType(req.relation_type)
     except ValueError as e:
@@ -560,9 +598,10 @@ async def create_relation(
         label=req.label,
     )
     try:
-        pipeline.knowledge_graph.add_relation(relation)
+        kg.add_relation(relation)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok"}
 
 
@@ -572,8 +611,9 @@ async def delete_relation(
     target_id: str,
     current_user: User = Depends(get_current_user),
 ):
-    pipeline = _get_pipeline(current_user.id)
-    pipeline.knowledge_graph.remove_relation(source_id, target_id)
+    kg, kg_path = _get_active_kg(current_user.id)
+    kg.remove_relation(source_id, target_id)
+    _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok"}
 
 
