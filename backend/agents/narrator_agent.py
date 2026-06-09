@@ -80,7 +80,10 @@ NARRATOR_SYSTEM_PROMPT = (
 * 视角切换每场景不超过 2 次
 
 ## 风格一致性
-你的语言风格必须与 style_anchors 保持一致:词汇密度、句长分布、修辞密度相似。
+你的句长分布、词汇密度、修辞密度可向 style_anchors 看齐 — 但锚点只是语感参考,
+不是题材或场景的约束。当本 tick 的事件性质 (动作 / 对峙 / 奇景 / 揭示) 与锚点
+示例的场景类型 (静景 / 对话 / 独白) 显著不符时, 内容性质优先 — 不要为了贴合
+锚点而把动作场写成纯意境片段, 也不要把奇景或对抗强拗成静景白描。
 
 ## 信息一致性
 * 严格只使用提供的 character_states / known_facts / events 中的信息
@@ -396,7 +399,11 @@ class NarratorAgent:
                 f"(选用理由: {a.selection_reason})"
                 for a in style_anchors[:5]  # 严格 top-3 到 top-5
             )
-            prompt = prompt + "\n\n# 风格锚点(以下示例段落决定你的腔调)\n\n" + anchor_text
+            prompt = prompt + (
+                "\n\n# 风格锚点(以下示例段落仅作语感参考: 句长 / 词汇密度 / "
+                "修辞密度。题材、场景、张力以作品标题与本 tick 事件为准, "
+                "锚点不约束内容选择)\n\n"
+            ) + anchor_text
         return prompt
 
     def _build_user_prompt(
@@ -443,12 +450,10 @@ class NarratorAgent:
         title_block = ""
         if novel_title and novel_title not in ("未命名小说", "(未命名)"):
             title_block = (
-                f"# 作品标题 (主题锚点 — 必须呼应)\n\n"
+                f"# 作品标题\n\n"
                 f"《{novel_title}》\n\n"
-                f"本作的设定、人物、事件氛围, 都应在精神上呼应这个标题。\n"
-                f"如果标题暗示了类型 (奇幻 / 科幻 / 武侠 / 神秘 / 修真 / ...)\n"
-                f"或具体意象 (神明 / 魔法 / 星舰 / 江湖 / ...), 你的叙述必须\n"
-                f"忠实于该方向, 不要把它写成普通现实题材。\n\n"
+                f"这是作品的灵魂。你笔下的世界、人物、场景、张力, 都自然从这\n"
+                f"个标题里生长出来 — 它该是什么, 你最清楚。\n\n"
             )
 
         return f"""\

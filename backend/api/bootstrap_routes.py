@@ -1,8 +1,9 @@
 """v2.25 — bootstrap_world 端点 + 链式首节触发 (v2.26 加 user 隔离)。
 
-| Method | Path                                       | 用途                       |
-|--------|--------------------------------------------|----------------------------|
-| POST   | /api/novels/{novel_id}/bootstrap-world     | 冷启动世界 (4 阶段 LLM)     |
+| Method | Path                                                | 用途                              |
+|--------|-----------------------------------------------------|-----------------------------------|
+| POST   | /api/novels/{novel_id}/bootstrap-world              | 冷启动世界 (4 阶段 LLM)            |
+| POST   | /api/novels/{novel_id}/regenerate-style-anchors     | 单独重生成风格锚点 (复用 PROMPT_STYLE) |
 
 novel_id 路径参数下, 强制校验当前用户拥有该 novel — 否则 404 (不泄露存在性)。
 """
@@ -17,7 +18,8 @@ from pydantic import BaseModel, Field
 
 import novel_manager
 from auth import User, get_current_user
-from bootstrap_prompts import bootstrap_world
+from bootstrap_prompts import bootstrap_world, generate_style_anchors
+from memory.tick_state import TickState
 from tasks.task_manager import (
     ProgressUpdater,
     TaskConflict,
@@ -158,6 +160,76 @@ def _reload_runtime(user_id: str, novel_id: str) -> None:
     from tick_runtime import reload_cache
 
     reload_cache(user_id, novel_id)
+
+
+# ---- 重生成 style_anchors --------------------------------------------------
+
+
+class RegenerateStyleAnchorsRequest(BaseModel):
+    positioning: str = Field(
+        default=DEFAULT_POSITIONING,
+        description="作品定位 (语感: 句长 / 修辞密度 / 节奏)",
+    )
+    references: str = Field(
+        default=DEFAULT_REFERENCES,
+        description="参考作家 / 作品 (语感偏好)",
+    )
+
+
+@router.post("/api/novels/{novel_id}/regenerate-style-anchors")
+async def regenerate_style_anchors_endpoint(
+    novel_id: str,
+    req: RegenerateStyleAnchorsRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """重新生成当前 novel 的 style_anchors —
+    复用 bootstrap PROMPT_STYLE, 用 novel 的当前 title + 请求里的 positioning /
+    references 重跑文风那一阶段, 替换 TickState 里旧的锚点。
+
+    用于当前 novel 的 style_anchors 与标题语感脱节时 (例如标题是奇幻动作向,
+    锚点却被默认的"古典含蓄"模板生成成了茶室静景), 用户在 UI 触发后端
+    immediately 用新 prompt 重写锚点, 下一 tick narrator 即拿到新锚点。"""
+    novel = novel_manager.get_novel(current_user.id, novel_id)
+    if novel is None:
+        raise HTTPException(status_code=404, detail=f"novel {novel_id!r} 不存在")
+    novel_title = (novel.get("title") or "").strip()
+
+    data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
+    ts = TickState(data_dir=data_dir)
+
+    try:
+        new_anchors = await generate_style_anchors(
+            title=novel_title,
+            positioning=req.positioning,
+            references=req.references,
+        )
+    except Exception as e:
+        logger.exception(
+            "regenerate_style_anchors failed for novel '%s'", novel_id
+        )
+        raise HTTPException(
+            status_code=502, detail=f"LLM 生成风格锚点失败: {e}"
+        )
+
+    if not new_anchors:
+        raise HTTPException(
+            status_code=502,
+            detail="LLM 返回的 style_anchors 全部无效, 未替换原有锚点",
+        )
+
+    ts.replace_style_anchors(new_anchors)
+    ts.save()
+
+    # 让 runtime 立即重读 (若该 novel 当前在内存中)
+    _reload_runtime(current_user.id, novel_id)
+    novel_manager.touch_last_accessed(current_user.id, novel_id)
+
+    return {
+        "novel_id": novel_id,
+        "style_anchors_count": len(new_anchors),
+        "message": f"已重新生成 {len(new_anchors)} 段风格锚点",
+        "scene_types": [a.scene_type for a in new_anchors],
+    }
 
 
 async def _spawn_chained_first_section(user_id: str, novel_id: str) -> str:

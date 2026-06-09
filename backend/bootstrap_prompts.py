@@ -226,20 +226,29 @@ PROMPT_LOOPS = """\
 PROMPT_STYLE = """\
 以下是这部连载小说的风格设定。
 
-# 作品定位
+# 作品标题 (首要锚 — 决定锚点示例的题材与场景)
+
+{title}
+
+# 作品定位 (语感偏好 — 只影响句长 / 词汇密度 / 修辞密度)
 
 {positioning}
 
-# 参考作家/作品
+# 参考作家/作品 (语感偏好)
 
 {references}
 
 请生成 3-5 段风格锚点示例,每段约 300 字,模拟 Narrator 未来产出时应有的腔调。
 这些段落将作为 Narrator 每次调用时的 style_anchors 参数。
 
+锚点示例的角色、场景、张力, 都应当能在《标题》所暗示的世界里真实发生 ——
+不要写出与标题题材无关的场景 (例如标题是奇幻/动作向, 却写茶室静坐)。
+positioning 与 references 只决定句长、词汇密度、修辞密度等语感层面。
+
 # 要求
 
 * 不同类型的场景各一段(对话场、动作场、独处心理场、自然描写场)
+* 每段都应能在该作品的真实世界中发生 (角色 / 场景 / 张力贴合标题)
 * 体现明确的句长偏好和修辞密度
 * 避免任何"AI 写作癖好"
 
@@ -294,6 +303,34 @@ async def _llm_json(
             raw[:500],
         )
         raise
+
+
+async def generate_style_anchors(
+    *,
+    title: str,
+    positioning: str,
+    references: str,
+) -> list[StyleAnchor]:
+    """单独执行 Step 4 (风格锚点生成). 供 regenerate-style-anchors 端点复用 —
+    bootstrap 全流程不变, 这里只跑文风那一阶段, 让上层用新的 prompt 与 title
+    重新生成 style_anchors 替换盘上的旧数据."""
+    style_resp = await _llm_json(
+        system_prompt="你是一个文风顾问。严格按要求输出 JSON。",
+        user_prompt=PROMPT_STYLE.format(
+            title=title or "(未指定标题 — 根据 positioning / references 自由发挥)",
+            positioning=positioning,
+            references=references,
+        ),
+        max_tokens=16384,
+        stage="regenerate_style",
+    )
+    anchors: list[StyleAnchor] = []
+    for anchor_raw in style_resp.get("style_anchors", []) or []:
+        try:
+            anchors.append(StyleAnchor.model_validate(anchor_raw))
+        except Exception as e:
+            logger.warning("Skip invalid StyleAnchor (%s): %s", e, anchor_raw)
+    return anchors
 
 
 async def bootstrap_world(
@@ -410,6 +447,7 @@ async def bootstrap_world(
     style_resp = await _llm_json(
         system_prompt="你是一个文风顾问。严格按要求输出 JSON。",
         user_prompt=PROMPT_STYLE.format(
+            title=title or "(未指定标题 — 根据 positioning / references 自由发挥)",
             positioning=positioning,
             references=references,
         ),

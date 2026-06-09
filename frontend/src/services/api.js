@@ -368,6 +368,29 @@ export async function randomTitle({ existing_seed = '' } = {}) {
   return assertOk(res) // { text }
 }
 
+export async function randomPositioning({
+  existing_title = '',
+  existing_seed = '',
+} = {}) {
+  const res = await authedFetch('/api/llm/random-positioning', {
+    method: 'POST',
+    headers: _userLLMHeaders(),
+    body: JSON.stringify({ existing_title, existing_seed }),
+  })
+  return assertOk(res) // { text }
+}
+
+export async function regenerateStyleAnchors(novelId, payload = {}) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/regenerate-style-anchors`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+  )
+  return assertOk(res) // { novel_id, style_anchors_count, message, scene_types }
+}
+
 // ---------------------------------------------------------------------------
 // Legacy section pipeline (now JWT-gated by backend)
 // ---------------------------------------------------------------------------

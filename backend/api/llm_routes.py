@@ -1,12 +1,13 @@
-"""v2.26 — /api/llm/random-seed + /api/llm/random-title。
+"""v2.26 — /api/llm/random-seed + /api/llm/random-title + /api/llm/random-positioning。
 
 用户的 API key 通过请求 header 一次性传递, 后端用完即丢, 不持久化 / 不缓存 /
 不写日志。这是 "登录不保存任何东西" 设计的核心实现点。
 
-| Method | Path                       | 用途                            |
-|--------|----------------------------|---------------------------------|
-| POST   | /api/llm/random-seed       | 生成随机世界种子 (可基于已有标题) |
-| POST   | /api/llm/random-title      | 生成随机小说标题 (可基于已有种子) |
+| Method | Path                          | 用途                                  |
+|--------|-------------------------------|---------------------------------------|
+| POST   | /api/llm/random-seed          | 生成随机世界种子 (可基于已有标题)      |
+| POST   | /api/llm/random-title         | 生成随机小说标题 (可基于已有种子)      |
+| POST   | /api/llm/random-positioning   | 生成作品定位 (基于已有标题 / 种子)     |
 
 请求 header
 -----------
@@ -43,6 +44,11 @@ class RandomSeedRequest(BaseModel):
 
 class RandomTitleRequest(BaseModel):
     existing_seed: str = Field(default="", description="已有种子, 用于客制化标题")
+
+
+class RandomPositioningRequest(BaseModel):
+    existing_title: str = Field(default="", description="作品标题")
+    existing_seed: str = Field(default="", description="世界种子描述")
 
 
 class RandomResponse(BaseModel):
@@ -134,6 +140,19 @@ _TITLE_SYSTEM_PROMPT = (
     "- 有意境, 避免直白说明"
 )
 
+_POSITIONING_SYSTEM_PROMPT = (
+    "你是小说文风顾问。根据用户给出的标题 (可能也给出种子), 推断一句"
+    "**贴合该作品的作品定位描述** — 描述这部小说应有的语感:"
+    "句长偏好 + 修辞密度 + 节奏 + 调性。\n"
+    "示例: '动作密集, 短句为主, 比喻克制, 节奏紧张' / "
+    "'古典含蓄, 心理白描, 节奏舒缓, 避免华丽辞藻' / "
+    "'冷峻干净, 信息密度高, 节奏明快, 偶有黑色幽默'。\n"
+    "要求:\n"
+    "- 直接输出定位描述本体, 不解释, 不加引号, 不分段\n"
+    "- 不超过 30 字\n"
+    "- 题材决定语感: 奇幻动作向就该短句紧凑, 言情就该细腻, 不要套模板"
+)
+
 
 @router.post("/random-seed", response_model=RandomResponse)
 async def random_seed(
@@ -210,6 +229,59 @@ async def random_title(
     for ch in "《》<>「」『』\"'`":
         cleaned = cleaned.replace(ch, "")
     cleaned = cleaned.strip()[:20]
+    if not cleaned:
+        raise HTTPException(status_code=502, detail="LLM 返回为空 (清理后)")
+    return RandomResponse(text=cleaned)
+
+
+@router.post("/random-positioning", response_model=RandomResponse)
+async def random_positioning(
+    req: RandomPositioningRequest,
+    current_user: User = Depends(get_current_user),
+    x_user_llm_key: str | None = Header(default=None, alias="X-User-LLM-Key"),
+    x_user_llm_base_url: str | None = Header(
+        default=None, alias="X-User-LLM-Base-Url"
+    ),
+    x_user_llm_model: str | None = Header(
+        default=None, alias="X-User-LLM-Model"
+    ),
+) -> RandomResponse:
+    """根据标题 (+ 可选种子) 推一段适合该题材的作品定位字符串.
+
+    用于"标题已填 → 随机种子"联动: 同时把高级配置里的作品定位也自动填好,
+    免得用户拿到一个奇幻动作题材的标题, 还在用默认的"古典含蓄"模板生成
+    style_anchors, 最终 narrator 产出与标题脱节。"""
+    api_key = _validate_header_key(x_user_llm_key)
+    base_url = (x_user_llm_base_url or "https://api.deepseek.com").strip()
+    model = (x_user_llm_model or "deepseek-chat").strip()
+
+    title = req.existing_title.strip()
+    seed = req.existing_seed.strip()
+    if not title and not seed:
+        raise HTTPException(
+            status_code=400,
+            detail="random-positioning 需要 existing_title 或 existing_seed 至少一项",
+        )
+    parts: list[str] = []
+    if title:
+        parts.append(f"标题:《{title}》")
+    if seed:
+        parts.append(f"种子: {seed[:500]}")
+    user_prompt = "为以下作品推一段作品定位:\n" + "\n".join(parts)
+
+    text = await _one_shot_complete(
+        api_key=api_key,
+        base_url=base_url,
+        model=model,
+        system_prompt=_POSITIONING_SYSTEM_PROMPT,
+        user_prompt=user_prompt,
+        max_tokens=1024,
+    )
+    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
+    cleaned = lines[-1] if lines else ""
+    for ch in "《》<>「」『』\"'`":
+        cleaned = cleaned.replace(ch, "")
+    cleaned = cleaned.strip()[:60]
     if not cleaned:
         raise HTTPException(status_code=502, detail="LLM 返回为空 (清理后)")
     return RandomResponse(text=cleaned)

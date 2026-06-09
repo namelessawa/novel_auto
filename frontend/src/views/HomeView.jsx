@@ -7,8 +7,10 @@ import {
   fetchTickStatus,
   generateSectionStream,
   getUserLLMConfig,
+  randomPositioning,
   randomSeed,
   randomTitle,
+  regenerateStyleAnchors,
   switchNovel,
 } from '../services/api'
 
@@ -62,6 +64,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
   // v2.26 — 随机生成按钮 busy 态
   const [randomSeedBusy, setRandomSeedBusy] = useState(false)
   const [randomTitleBusy, setRandomTitleBusy] = useState(false)
+  const [regenAnchorsBusy, setRegenAnchorsBusy] = useState(false)
 
   // v2.23 — Tick runtime 状态用于 "当前小说生成进度" 展示
   const [tickStatus, setTickStatus] = useState(null)
@@ -249,12 +252,62 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     if (!_ensureLLMKey()) return
     setRandomSeedBusy(true)
     try {
-      const r = await randomSeed({ existing_title: createTitle.trim() })
-      if (r?.text) setCreateSeed(r.text)
+      const titleNow = createTitle.trim()
+      const r = await randomSeed({ existing_title: titleNow })
+      const newSeed = r?.text || ''
+      if (newSeed) setCreateSeed(newSeed)
+
+      // 标题已知 + 作品定位仍为空 → 顺便把高级配置里的"作品定位"也自动生成填入,
+      // 让 bootstrap PROMPT_STYLE 拿到贴合题材的语感, 避免最终 narrator 走偏。
+      // 用户已手填 positioning 则保留, 不覆盖。
+      if (titleNow && !createPositioning.trim()) {
+        try {
+          const p = await randomPositioning({
+            existing_title: titleNow,
+            existing_seed: newSeed,
+          })
+          if (p?.text) {
+            setCreatePositioning(p.text)
+            setAdvancedOpen(true)
+          }
+        } catch (err) {
+          // 联动失败不影响主流程
+          console.warn('random-positioning 联动失败:', err)
+        }
+      }
     } catch (err) {
       showToast('随机种子失败: ' + (err.message || err), 'error')
     } finally {
       setRandomSeedBusy(false)
+    }
+  }
+
+  const handleRegenerateAnchors = async () => {
+    if (!continueId) {
+      showToast('请先在「选择作品」里挑一部作品', 'error')
+      return
+    }
+    const novel = novels.find((n) => n.id === continueId)
+    const title = novel?.title || continueId
+    if (
+      !window.confirm(
+        `将为《${title}》重新生成全部风格锚点 (会覆盖现有锚点)。\n` +
+          '\n用于标题与现有锚点语感脱节时 (例如奇幻动作题材却生成了茶室静景锚点)。\n' +
+          '\n确定继续?',
+      )
+    )
+      return
+    setRegenAnchorsBusy(true)
+    try {
+      const r = await regenerateStyleAnchors(continueId, {
+        positioning: createPositioning.trim() || DEFAULT_POSITIONING,
+        references: createReferences.trim() || DEFAULT_REFERENCES,
+      })
+      showToast(r?.message || '已重新生成风格锚点', 'success')
+    } catch (err) {
+      showToast('重生成失败: ' + (err.message || err), 'error')
+    } finally {
+      setRegenAnchorsBusy(false)
     }
   }
 
@@ -516,6 +569,56 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
           >
             <i className="fas fa-play"></i> 续写下一节
           </button>
+
+          {/* 维护工具: 重生成风格锚点 (用于现有锚点与标题语感脱节时) */}
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 10,
+              borderTop: '1px dashed var(--border-soft, rgba(0,0,0,0.12))',
+            }}
+          >
+            <button
+              type="button"
+              className="btn"
+              onClick={handleRegenerateAnchors}
+              disabled={generating || regenAnchorsBusy || !continueId}
+              title="复用 bootstrap 文风阶段, 根据当前标题 + 高级配置(作品定位 / 参考)重写所选作品的全部风格锚点。"
+              style={{
+                width: '100%',
+                background: regenAnchorsBusy
+                  ? 'rgba(139, 92, 246, 0.3)'
+                  : 'transparent',
+                color: 'var(--accent-purple, #8b5cf6)',
+                border: '1px solid var(--accent-purple, #8b5cf6)',
+                cursor:
+                  generating || regenAnchorsBusy || !continueId
+                    ? 'not-allowed'
+                    : 'pointer',
+                fontSize: 12,
+                padding: '6px 12px',
+              }}
+            >
+              {regenAnchorsBusy ? (
+                <>
+                  <i className="fas fa-spinner fa-spin" style={{ marginRight: 6 }}></i>
+                  正在重生成风格锚点…
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-paint-brush" style={{ marginRight: 6 }}></i>
+                  重新生成风格锚点 (使用上方"高级配置")
+                </>
+              )}
+            </button>
+            <p
+              className="input-hint"
+              style={{ fontSize: 11, marginTop: 6, opacity: 0.7 }}
+            >
+              当现有锚点与标题题材脱节时使用 (例如奇幻动作题材却生成了茶室静景)。
+              会覆盖所选作品现有全部锚点, 下一 tick narrator 即拿到新锚点。
+            </p>
+          </div>
         </div>
       </div>
 

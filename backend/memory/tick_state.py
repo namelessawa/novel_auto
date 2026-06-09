@@ -273,6 +273,11 @@ class TickState:
     def list_style_anchors(self) -> list[StyleAnchor]:
         return list(self._style_anchors)
 
+    def replace_style_anchors(self, anchors: list[StyleAnchor]) -> None:
+        """整组替换 (regenerate 端点用). 替换后按 weight 降序保持 invariant."""
+        self._style_anchors = list(anchors)
+        self._style_anchors.sort(key=lambda a: -a.weight)
+
     # ------------------------------------------------------------------
     # EventInjector / Narrator 调度参考
     # ------------------------------------------------------------------
