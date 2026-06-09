@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import AsyncIterator
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -150,8 +151,44 @@ _POSITIONING_SYSTEM_PROMPT = (
     "要求:\n"
     "- 直接输出定位描述本体, 不解释, 不加引号, 不分段\n"
     "- 不超过 30 字\n"
-    "- 题材决定语感: 奇幻动作向就该短句紧凑, 言情就该细腻, 不要套模板"
+    "- 题材决定语感: 奇幻动作向就该短句紧凑, 言情就该细腻, 不要套模板\n"
+    "- 严禁输出任何 meta 元描述: 不要写'计算字数' / '字数:' / '共X字' / "
+    "'约X字' / '(X 字)' / '— 约X' / '思考' / '分析' 之类自言自语;\n"
+    "- 输出末尾不要带括号字数说明, 不要带破折号 + 字数, 用逗号分隔的"
+    "短语本身即可"
 )
+
+
+_META_PREFIX_RE = re.compile(
+    r"^(?:计算字数|字数|结果|输出|定位|思考|分析|答案|回答)\s*[::\-—]\s*"
+)
+_META_SUFFIX_RES = (
+    # "— 约15." / "— 约15字" / "—约15"
+    re.compile(r"\s*[—\-–]+\s*约?\s*\d+\s*字?\s*[.。]?\s*$"),
+    # "(约15字)" / "(15 字)" / "(共 15 字)"
+    re.compile(r"\s*[(（]\s*共?约?\s*\d+\s*字\s*[)）]\s*[.。]?\s*$"),
+    # 末尾纯 "共15字" / "约15字"
+    re.compile(r"\s*(?:共|约)\s*\d+\s*字\s*[.。]?\s*$"),
+)
+
+
+def _clean_meta_artifacts(text: str) -> str:
+    """清掉 reasoning 模型在短单行输出里夹带的 meta (字数计算 / 思考标签)。
+
+    用于 random-positioning / random-seed 这类一句话输出。命中 marker 即砍掉,
+    多轮砍直到稳定 (防止 '字数:动作密集 — 约15字' 之类前后都带 meta)。
+    """
+    if not text:
+        return text
+    out = text.strip()
+    for _ in range(4):  # 最多 4 轮防 pathological
+        prev = out
+        out = _META_PREFIX_RE.sub("", out).strip()
+        for pat in _META_SUFFIX_RES:
+            out = pat.sub("", out).strip()
+        if out == prev:
+            break
+    return out
 
 
 @router.post("/random-seed", response_model=RandomResponse)
@@ -186,8 +223,8 @@ async def random_seed(
         user_prompt=user_prompt,
         max_tokens=2048,
     )
-    # _one_shot_complete 已经处理空 content → 502, 此处不需要再判
-    return RandomResponse(text=text)
+    # _one_shot_complete 已经处理空 content → 502, 此处只做 meta 兜底
+    return RandomResponse(text=_clean_meta_artifacts(text) or text)
 
 
 @router.post("/random-title", response_model=RandomResponse)
@@ -277,8 +314,13 @@ async def random_positioning(
         user_prompt=user_prompt,
         max_tokens=1024,
     )
-    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
+    # 先在原 text 上整体清掉 meta 包装 (前缀 "计算字数:" / 后缀 "— 约X 字"),
+    # 再按行取最后一段非空内容。两步顺序很重要 — 颠倒就会把"计算字数:正文"
+    # 的整行当结果, 后续仅去标点扛不住。
+    cleaned_text = _clean_meta_artifacts(text)
+    lines = [ln.strip() for ln in cleaned_text.strip().splitlines() if ln.strip()]
     cleaned = lines[-1] if lines else ""
+    cleaned = _clean_meta_artifacts(cleaned)
     for ch in "《》<>「」『』\"'`":
         cleaned = cleaned.replace(ch, "")
     cleaned = cleaned.strip()[:60]
