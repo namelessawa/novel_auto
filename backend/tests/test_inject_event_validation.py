@@ -42,6 +42,15 @@ class _StubOrchestrator:
         self._injected_pending.append(event)
 
 
+class _StubRuntime:
+    """v2.26 — _resolve_runtime 期望返回 TickRuntime, 但本测试只需 .orchestrator
+    + .tick_state, 用 stub 替代避免 TickRuntime 完整构造 (9 agents + DB)。"""
+
+    def __init__(self, orchestrator, tick_state):
+        self.orchestrator = orchestrator
+        self.tick_state = tick_state
+
+
 @pytest.fixture
 def client(tmp_path):
     app = FastAPI()
@@ -51,11 +60,11 @@ def client(tmp_path):
         WorldState(locations=[TickLocation(id="city", name="都城")])
     )
     orch = _StubOrchestrator()
-    set_orchestrator_dependencies(orchestrator=orch, tick_state=ts)
+    # v2.26 — 用 dependency_overrides 绕过 get_current_user + _resolve_runtime
+    stub_rt = _StubRuntime(orchestrator=orch, tick_state=ts)
+    app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
     yield TestClient(app), ts, orch
-    set_orchestrator_dependencies(orchestrator=None, tick_state=None)
-    tick_routes._container.orchestrator = None
-    tick_routes._container.tick_state = None
+    app.dependency_overrides.clear()
 
 
 # ------------------------------------------------------------------

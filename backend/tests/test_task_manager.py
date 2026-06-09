@@ -1,4 +1,7 @@
-"""v2.24 任务管理器 — 生命周期 / 并发 / 取消 / SSE 订阅。"""
+"""v2.24 任务管理器 — 生命周期 / 并发 / 取消 / SSE 订阅。
+
+v2.26 — create_task 加 user_id 参数, executor 签名 (updater, user_id, novel_id)。
+"""
 
 from __future__ import annotations
 
@@ -28,12 +31,14 @@ def manager():
 async def test_create_runs_executor_and_marks_completed(manager):
     seen: dict = {}
 
-    async def executor(updater: ProgressUpdater, novel_id: str):
+    async def executor(updater: ProgressUpdater, user_id: str, novel_id: str):
+        seen["user_id"] = user_id
         seen["novel_id"] = novel_id
         updater.set(current_words=100, tick_count=1)
         return {"result_title": "完成", "result_word_count": 100}
 
     snap = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="测试",
         kind="section_generation",
@@ -49,15 +54,17 @@ async def test_create_runs_executor_and_marks_completed(manager):
     assert final.result_title == "完成"
     assert final.result_word_count == 100
     assert final.progress.current_words == 100
+    assert seen["user_id"] == "u1"
     assert seen["novel_id"] == "nv1"
 
 
 @pytest.mark.asyncio
 async def test_executor_raises_marks_failed(manager):
-    async def boom(updater, novel_id):
+    async def boom(updater, user_id, novel_id):
         raise RuntimeError("LLM 挂了")
 
     snap = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -78,11 +85,12 @@ async def test_executor_raises_marks_failed(manager):
 
 @pytest.mark.asyncio
 async def test_same_novel_same_kind_conflict(manager):
-    async def slow(updater, novel_id):
+    async def slow(updater, user_id, novel_id):
         await asyncio.sleep(0.2)
         return {}
 
     await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -93,6 +101,7 @@ async def test_same_novel_same_kind_conflict(manager):
     )
     with pytest.raises(TaskConflict):
         await manager.create_task(
+            user_id="u1",
             novel_id="nv1",
             novel_title="",
             kind="section_generation",
@@ -105,11 +114,12 @@ async def test_same_novel_same_kind_conflict(manager):
 
 @pytest.mark.asyncio
 async def test_different_novels_parallel_ok(manager):
-    async def slow(updater, novel_id):
+    async def slow(updater, user_id, novel_id):
         await asyncio.sleep(0.1)
         return {}
 
     a = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -119,6 +129,7 @@ async def test_different_novels_parallel_ok(manager):
         max_ticks=30,
     )
     b = await manager.create_task(
+        user_id="u1",
         novel_id="nv2",
         novel_title="",
         kind="section_generation",
@@ -135,10 +146,11 @@ async def test_different_novels_parallel_ok(manager):
 
 @pytest.mark.asyncio
 async def test_completed_does_not_block_new_task(manager):
-    async def fast(updater, novel_id):
+    async def fast(updater, user_id, novel_id):
         return {}
 
     a = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -152,6 +164,7 @@ async def test_completed_does_not_block_new_task(manager):
 
     # 同 novel 同 kind 再起一个 — 不应冲突
     b = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -168,11 +181,12 @@ async def test_completed_does_not_block_new_task(manager):
 
 @pytest.mark.asyncio
 async def test_cancel_in_flight_task(manager):
-    async def slow(updater, novel_id):
+    async def slow(updater, user_id, novel_id):
         await asyncio.sleep(10)
         return {}
 
     snap = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -199,7 +213,7 @@ async def test_cancel_unknown_raises(manager):
 
 @pytest.mark.asyncio
 async def test_watch_yields_initial_then_progress_then_terminal(manager):
-    async def staged(updater, novel_id):
+    async def staged(updater, user_id, novel_id):
         await asyncio.sleep(0.02)
         updater.set(current_words=1000, tick_count=5)
         await asyncio.sleep(0.02)
@@ -207,6 +221,7 @@ async def test_watch_yields_initial_then_progress_then_terminal(manager):
         return {"result_title": "完结", "result_word_count": 2500}
 
     snap = await manager.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -239,10 +254,11 @@ async def test_watch_unknown_raises(manager):
 
 @pytest.mark.asyncio
 async def test_list_for_novel_filters(manager):
-    async def fast(updater, novel_id):
+    async def fast(updater, user_id, novel_id):
         return {}
 
     await manager.create_task(
+        user_id="u1",
         novel_id="A",
         novel_title="",
         kind="section_generation",
@@ -252,6 +268,7 @@ async def test_list_for_novel_filters(manager):
         max_ticks=30,
     )
     await manager.create_task(
+        user_id="u1",
         novel_id="B",
         novel_title="",
         kind="section_generation",

@@ -1,4 +1,10 @@
-"""v2.25 — bootstrap_world 端点 + 链式首节触发。"""
+"""v2.26 — bootstrap_world 端点 + 链式首节触发 (multi-tenant 重写).
+
+旧测试用 ``_NOVELS_DIR`` / ``tick_runtime._active_novel_id`` / 单参 get_runtime
+/ 不带 user_id 的 novel_manager API — 全部不再存在。本文件适配 v2.26
+multi-tenant API: ``_DATA_ROOT`` + ``_USERS_ROOT``, 每个 endpoint 调用都需要传
+current_user。
+"""
 
 from __future__ import annotations
 
@@ -6,17 +12,34 @@ import asyncio
 import os
 import shutil
 import tempfile
+from datetime import datetime, timezone
 
 import pytest
+
+from auth.models import User
+
+
+def _fake_user(user_id: str = "test_user") -> User:
+    return User(
+        id=user_id,
+        email=f"{user_id}@local",
+        has_password=False,
+        save_my_works=True,
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+    )
 
 
 @pytest.fixture
 def isolated_env(monkeypatch):
-    """全局状态隔离: novels_dir / TaskManager / SectionStore / TickRuntime。"""
-    tmp = tempfile.mkdtemp(prefix="v225_test_")
+    """v2.26 — 隔离数据根 + 清 TaskManager + 清 tick_runtime registry."""
+    tmp = tempfile.mkdtemp(prefix="v226_test_")
 
     import novel_manager
-    monkeypatch.setattr(novel_manager, "_NOVELS_DIR", tmp)
+    monkeypatch.setattr(novel_manager, "_DATA_ROOT", tmp)
+    monkeypatch.setattr(novel_manager, "_USERS_ROOT", os.path.join(tmp, "users"))
+    monkeypatch.setattr(
+        novel_manager, "_LEGACY_NOVELS_DIR", os.path.join(tmp, "novels")
+    )
 
     from tasks.task_manager import get_task_manager
     get_task_manager()._clear_for_tests()
@@ -24,10 +47,8 @@ def isolated_env(monkeypatch):
     from sections import section_store as _ss
     _ss._stores.clear()
 
-    # tick_runtime 注册表清空 — 让 _reload_runtime 在测试里也走 dict.pop 安全分支
     import tick_runtime
-    tick_runtime._runtimes.clear()
-    tick_runtime._active_novel_id = None
+    tick_runtime._clear_for_tests()
 
     yield tmp
     shutil.rmtree(tmp, ignore_errors=True)
@@ -37,7 +58,7 @@ def isolated_env(monkeypatch):
 def patch_bootstrap_world(monkeypatch):
     """跳过真实 LLM 的 bootstrap_world — 直接构造一个有 1 角色 1 锚点的 TickState。"""
 
-    async def _fake(*, novel_id, data_dir, seed, positioning, references):
+    async def _fake(*, novel_id, data_dir, seed, positioning, references, title=""):
         os.makedirs(data_dir, exist_ok=True)
         from memory.tick_state import TickState
         from memory_system.models import (
@@ -73,10 +94,6 @@ def patch_bootstrap_world(monkeypatch):
             StyleAnchor(excerpt="风格示例 " * 5, scene_type="general", weight=1.0)
         )
         ts.save()
-        # 把 seed/positioning/references 偷渡到属性, 测试方便断言
-        ts._test_seed = seed
-        ts._test_positioning = positioning
-        ts._test_references = references
         return ts
 
     monkeypatch.setattr("api.bootstrap_routes.bootstrap_world", _fake)
@@ -96,16 +113,19 @@ def patch_section_runtime(monkeypatch):
             return _S()
 
     class _FakeRuntime:
-        def __init__(self, novel_id):
+        def __init__(self, user_id, novel_id):
+            self.user_id = user_id
+            self.novel_id = novel_id
             self.orchestrator = _FakeOrch()
 
     rt_cache = {}
 
-    def _fake_get_runtime(novel_id=None):
+    def _fake_get_runtime(user_id, novel_id=None):
         nid = novel_id or "default"
-        if nid not in rt_cache:
-            rt_cache[nid] = _FakeRuntime(nid)
-        return rt_cache[nid]
+        key = (user_id, nid)
+        if key not in rt_cache:
+            rt_cache[key] = _FakeRuntime(user_id, nid)
+        return rt_cache[key]
 
     monkeypatch.setattr("tick_runtime.get_runtime", _fake_get_runtime)
     monkeypatch.setattr("api.section_routes.get_runtime", _fake_get_runtime)
@@ -125,7 +145,9 @@ async def test_bootstrap_world_endpoint_404_when_novel_missing(isolated_env):
 
     with pytest.raises(HTTPException) as exc:
         await bootstrap_world_endpoint(
-            "ghost", BootstrapWorldRequest(seed="任意")
+            "ghost",
+            BootstrapWorldRequest(seed="任意"),
+            current_user=_fake_user(),
         )
     assert exc.value.status_code == 404
 
@@ -142,7 +164,8 @@ async def test_bootstrap_world_creates_task_and_completes(
     )
     from tasks.task_manager import get_task_manager
 
-    novel = novel_manager.create_novel("测试")
+    user = _fake_user("u_complete")
+    novel = novel_manager.create_novel(user.id, "测试")
     nid = novel["id"]
 
     snap = await bootstrap_world_endpoint(
@@ -153,6 +176,7 @@ async def test_bootstrap_world_creates_task_and_completes(
             references="Le Guin",
             also_generate_first_section=False,
         ),
+        current_user=user,
     )
     assert snap["kind"] == "bootstrap_world"
     assert snap["novel_id"] == nid
@@ -164,7 +188,7 @@ async def test_bootstrap_world_creates_task_and_completes(
     assert final.status == "completed", f"err={final.error}"
     assert final.result_title == "世界种子已就位"
     # 仅 1 个任务 — also_generate_first_section=False
-    assert len(mgr.list_for_novel(nid)) == 1
+    assert len(mgr.list_for_user_and_novel(user.id, nid)) == 1
 
 
 @pytest.mark.asyncio
@@ -179,10 +203,10 @@ async def test_bootstrap_world_chains_first_section_task(
     )
     from tasks.task_manager import get_task_manager
 
-    # section executor 跑 max_ticks 兜底, 标题 LLM 一次
     mock_llm.set_responses(["首节"] * 5)
 
-    novel = novel_manager.create_novel("测试链式")
+    user = _fake_user("u_chain")
+    novel = novel_manager.create_novel(user.id, "测试链式")
     nid = novel["id"]
 
     snap = await bootstrap_world_endpoint(
@@ -191,12 +215,12 @@ async def test_bootstrap_world_chains_first_section_task(
             seed="任意",
             also_generate_first_section=True,
         ),
+        current_user=user,
     )
     await asyncio.sleep(0.3)
 
     mgr = get_task_manager()
-    # 应当有 2 个任务: bootstrap_world + bootstrap_section
-    tasks = mgr.list_for_novel(nid)
+    tasks = mgr.list_for_user_and_novel(user.id, nid)
     kinds = sorted(t.kind for t in tasks)
     assert kinds == ["bootstrap_section", "bootstrap_world"], (
         f"应当链式触发 bootstrap_section, 实际 kinds={kinds}"
@@ -216,12 +240,12 @@ async def test_bootstrap_world_passes_user_inputs_to_seed_function(
         BootstrapWorldRequest,
         bootstrap_world_endpoint,
     )
-    from tasks.task_manager import get_task_manager
 
-    novel = novel_manager.create_novel("透传测试")
+    user = _fake_user("u_pass")
+    novel = novel_manager.create_novel(user.id, "透传测试")
     nid = novel["id"]
 
-    snap = await bootstrap_world_endpoint(
+    await bootstrap_world_endpoint(
         nid,
         BootstrapWorldRequest(
             seed="自定义种子文本",
@@ -229,13 +253,14 @@ async def test_bootstrap_world_passes_user_inputs_to_seed_function(
             references="自定义参考",
             also_generate_first_section=False,
         ),
+        current_user=user,
     )
     await asyncio.sleep(0.2)
 
     # 验证 bootstrap_world 内部确实拿到这些值 — 通过读 tick_state.json
     # (fake 把 seed 写到了 OpenLoop.description)
     from memory.tick_state import TickState
-    data_dir = novel_manager.get_novel_data_dir(nid)
+    data_dir = novel_manager.get_novel_data_dir(user.id, nid)
     ts2 = TickState(data_dir=data_dir)
     ts2.load()
     loops = ts2.get_open_loops()
@@ -270,7 +295,7 @@ async def test_bootstrap_world_conflict_409_for_same_novel(
     from fastapi import HTTPException
 
     # 让 fake bootstrap_world 不要立即完成 — sleep 一会儿模拟真实 LLM
-    async def _slow(*, novel_id, data_dir, seed, positioning, references):
+    async def _slow(*, novel_id, data_dir, seed, positioning, references, title=""):
         os.makedirs(data_dir, exist_ok=True)
         from memory.tick_state import TickState
         from memory_system.models import WorldState
@@ -282,13 +307,18 @@ async def test_bootstrap_world_conflict_409_for_same_novel(
 
     monkeypatch.setattr("api.bootstrap_routes.bootstrap_world", _slow)
 
-    novel = novel_manager.create_novel("冲突测试")
+    user = _fake_user("u_conf")
+    novel = novel_manager.create_novel(user.id, "冲突测试")
     nid = novel["id"]
 
-    await bootstrap_world_endpoint(nid, BootstrapWorldRequest(seed="种子"))
+    await bootstrap_world_endpoint(
+        nid, BootstrapWorldRequest(seed="种子"), current_user=user
+    )
     # 立即再发一次
     with pytest.raises(HTTPException) as exc:
-        await bootstrap_world_endpoint(nid, BootstrapWorldRequest(seed="种子"))
+        await bootstrap_world_endpoint(
+            nid, BootstrapWorldRequest(seed="种子"), current_user=user
+        )
     assert exc.value.status_code == 409
 
 
@@ -304,17 +334,19 @@ async def test_bootstrap_world_failure_marks_task_failed(
     )
     from tasks.task_manager import get_task_manager
 
-    async def _boom(*, novel_id, data_dir, seed, positioning, references):
+    async def _boom(*, novel_id, data_dir, seed, positioning, references, title=""):
         raise RuntimeError("LLM 配额耗尽")
 
     monkeypatch.setattr("api.bootstrap_routes.bootstrap_world", _boom)
 
-    novel = novel_manager.create_novel("失败测试")
+    user = _fake_user("u_fail")
+    novel = novel_manager.create_novel(user.id, "失败测试")
     nid = novel["id"]
 
     snap = await bootstrap_world_endpoint(
         nid,
         BootstrapWorldRequest(seed="种子", also_generate_first_section=True),
+        current_user=user,
     )
     await asyncio.sleep(0.1)
 
@@ -323,7 +355,7 @@ async def test_bootstrap_world_failure_marks_task_failed(
     assert final.status == "failed"
     assert "LLM 配额耗尽" in final.error
     # 只应当有这 1 个任务 — 失败不链式
-    assert len(mgr.list_for_novel(nid)) == 1
+    assert len(mgr.list_for_user_and_novel(user.id, nid)) == 1
 
 
 @pytest.mark.asyncio

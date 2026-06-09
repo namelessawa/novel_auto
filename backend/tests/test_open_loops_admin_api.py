@@ -25,16 +25,24 @@ from memory.tick_state import TickState
 from memory_system.models import OpenLoop, WorldState
 
 
+class _StubRuntime:
+    """v2.26 — _resolve_runtime 桩, 仅暴露 tick_state (open-loops 路由只用它)。"""
+
+    def __init__(self, tick_state):
+        self.tick_state = tick_state
+        self.orchestrator = None  # open-loops 路由不需要
+
+
 @pytest.fixture
 def client(tmp_path):
     app = FastAPI()
     app.include_router(router)
     ts = TickState(data_dir=str(tmp_path))
     ts.set_world_state(WorldState())
-    set_orchestrator_dependencies(tick_state=ts)
+    stub_rt = _StubRuntime(tick_state=ts)
+    app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
     yield TestClient(app), ts
-    set_orchestrator_dependencies(tick_state=None)
-    tick_routes._container.tick_state = None
+    app.dependency_overrides.clear()
 
 
 def _loop_payload(loop_id: str = "loop_x", urgency: int = 7) -> dict:

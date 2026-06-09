@@ -23,6 +23,14 @@ from memory_system.models import (
 )
 
 
+class _StubRuntime:
+    """v2.26 — _resolve_runtime stub, 暴露 tick_state (diagnostic 路由仅用它)."""
+
+    def __init__(self, tick_state):
+        self.tick_state = tick_state
+        self.orchestrator = None
+
+
 @pytest.fixture
 def client(tmp_path):
     from fastapi import FastAPI
@@ -35,11 +43,10 @@ def client(tmp_path):
         CharacterProfile(id="elara", name="Elara", importance_tier="A")
     )
     ts.upsert_character_state(CharacterState(character_id="elara"))
-    set_orchestrator_dependencies(tick_state=ts)
+    stub_rt = _StubRuntime(tick_state=ts)
+    app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
     yield TestClient(app), ts
-    # cleanup — 防 fixture 污染后续测试
-    set_orchestrator_dependencies(tick_state=None)
-    tick_routes._container.tick_state = None
+    app.dependency_overrides.clear()
 
 
 def test_diagnostic_hallucination_empty(client) -> None:
@@ -88,13 +95,14 @@ def test_diagnostic_hallucination_auto_degrade_flag(client, monkeypatch) -> None
     assert r.json()["auto_degrade_active"] is True
 
 
-def test_diagnostic_hallucination_returns_503_when_no_tick_state() -> None:
-    """tick_state 未注入时, 路由应返回 503 而不是崩溃。"""
+def test_diagnostic_hallucination_requires_auth() -> None:
+    """v2.26 — 未登录时端点应返回 401 (跟其他受保护端点一致),
+    而不是泄露内部状态。原 503-without-tick_state 路径在 multi-tenant 改造后已
+    由 Depends(get_current_user) 替代 — 没注入 runtime 等价于 '没认证'。"""
     from fastapi import FastAPI
 
-    tick_routes._container.tick_state = None
     app = FastAPI()
     app.include_router(router)
     c = TestClient(app)
     r = c.get("/api/tick/diagnostic/hallucination")
-    assert r.status_code == 503
+    assert r.status_code == 401

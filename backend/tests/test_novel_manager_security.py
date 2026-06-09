@@ -1,4 +1,4 @@
-"""novel_manager 输入校验与 path 边界测试 (v2.15)。
+"""novel_manager 输入校验与 path 边界测试 (v2.26 multi-tenant 更新).
 
 覆盖:
 1. ``_validate_novel_id`` 拒绝 path traversal / 特殊字符 / 超长。
@@ -8,15 +8,28 @@
 
 from __future__ import annotations
 
-import os
+import tempfile
 
 import pytest
 
 import novel_manager
 from novel_manager import (
-    _assert_path_within_novels_root,
+    _assert_path_within,
     _validate_novel_id,
 )
+
+
+@pytest.fixture
+def isolated_data_root(monkeypatch):
+    """v2.26 — _DATA_ROOT / _USERS_ROOT 指向 tmp."""
+    import os
+    td = tempfile.mkdtemp()
+    monkeypatch.setattr(novel_manager, "_DATA_ROOT", td)
+    monkeypatch.setattr(novel_manager, "_USERS_ROOT", os.path.join(td, "users"))
+    monkeypatch.setattr(
+        novel_manager, "_LEGACY_NOVELS_DIR", os.path.join(td, "novels")
+    )
+    yield td
 
 
 @pytest.mark.parametrize(
@@ -57,37 +70,36 @@ def test_validate_accepts_normal(good_id: str) -> None:
     assert _validate_novel_id(good_id) == good_id
 
 
-def test_assert_path_within_root_rejects_escape(tmp_path, monkeypatch) -> None:
-    """模拟 novels 根在 tmp_path 下, 越界路径必须被拒绝。"""
+def test_assert_path_within_root_rejects_escape(tmp_path) -> None:
+    """v2.26 — _assert_path_within 通用 sanitizer 验证 commonpath 模式."""
     fake_root = tmp_path / "novels"
     fake_root.mkdir()
-    monkeypatch.setattr(novel_manager, "_NOVELS_DIR", str(fake_root))
 
     # 同目录内合法
-    novel_manager._assert_path_within_novels_root(str(fake_root / "story_a"))
+    _assert_path_within(str(fake_root / "story_a"), str(fake_root))
 
     # 越界路径必须抛
     outside = tmp_path / "evil"
     with pytest.raises(ValueError):
-        novel_manager._assert_path_within_novels_root(str(outside))
+        _assert_path_within(str(outside), str(fake_root))
 
 
-def test_delete_novel_rejects_invalid_id() -> None:
+def test_delete_novel_rejects_invalid_id(isolated_data_root) -> None:
     """delete_novel 必须先 _validate_novel_id, 不让 ../etc 落到 shutil.rmtree。"""
     with pytest.raises(ValueError):
-        novel_manager.delete_novel("../etc/passwd")
+        novel_manager.delete_novel("alice", "../etc/passwd")
 
 
-def test_get_novel_data_dir_rejects_invalid_id() -> None:
+def test_get_novel_data_dir_rejects_invalid_id(isolated_data_root) -> None:
     with pytest.raises(ValueError):
-        novel_manager.get_novel_data_dir("../../tmp")
+        novel_manager.get_novel_data_dir("alice", "../../tmp")
 
 
-def test_update_title_rejects_invalid_id() -> None:
+def test_update_title_rejects_invalid_id(isolated_data_root) -> None:
     with pytest.raises(ValueError):
-        novel_manager.update_title("foo/bar", "新标题")
+        novel_manager.update_title("alice", "foo/bar", "新标题")
 
 
-def test_get_novel_rejects_invalid_id() -> None:
+def test_get_novel_rejects_invalid_id(isolated_data_root) -> None:
     with pytest.raises(ValueError):
-        novel_manager.get_novel("..")
+        novel_manager.get_novel("alice", "..")

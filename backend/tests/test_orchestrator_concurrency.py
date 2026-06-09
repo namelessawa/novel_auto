@@ -107,28 +107,32 @@ def test_run_tick_serializes_concurrent_calls(tmp_path, mock_llm) -> None:
 
 
 def test_paused_route_rejects_manual_run(tmp_path, mock_llm) -> None:
-    """pause() 后调用 /api/tick/run 必须返回 409, 不推进 tick。"""
+    """pause() 后调用 /api/tick/run 必须返回 409, 不推进 tick。
+
+    v2.26 — route handler 签名改为 (runtime=Depends(_resolve_runtime)), 测试直接
+    构造 stub runtime 并以 keyword arg 传入。"""
     ts, orch = _bootstrap(tmp_path)
-    set_orchestrator_dependencies(orchestrator=orch, tick_state=ts)
+
+    class _StubRuntime:
+        def __init__(self, orch, ts):
+            self.orchestrator = orch
+            self.tick_state = ts
+
+    stub_rt = _StubRuntime(orch, ts)
 
     async def _scenario() -> None:
-        await pause_loop()
+        await pause_loop(runtime=stub_rt)
         assert orch.is_paused is True
         with pytest.raises(HTTPException) as exc:
-            await run_one_tick()
+            await run_one_tick(runtime=stub_rt)
         assert exc.value.status_code == 409
         # 验证 tick 没有推进
         assert ts.current_tick == 0
         # resume 后恢复能跑
-        await resume_loop()
+        await resume_loop(runtime=stub_rt)
         mock_llm.set_responses([_world_sim_response(world_time=1)])
-        res = await run_one_tick()
+        res = await run_one_tick(runtime=stub_rt)
         assert res["ok"] is True
         assert ts.current_tick == 1
 
     asyncio.run(_scenario())
-
-    # 清理 — set_orchestrator_dependencies 不接受 None, 直接清容器避免污染其他测试
-    _container.orchestrator = None
-    _container.tick_state = None
-    _container.tick_db = None

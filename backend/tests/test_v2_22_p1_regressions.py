@@ -160,23 +160,29 @@ def test_add_relation_rejects_missing_endpoint():
 
 @pytest.fixture
 def api_client(monkeypatch, tmp_path):
-    """绑定一个最小可用的 FastAPI app + KnowledgeGraph 双实例 pipeline。"""
+    """v2.26 — 绑最小 FastAPI app + 桩 KG (multi-tenant: 桩 _get_active_kg)."""
+    from datetime import datetime, timezone
+
     from graph.knowledge_graph import KnowledgeGraph
     from api import routes as routes_mod
+    from auth import get_current_user
+    from auth.models import User
 
     kg = KnowledgeGraph(snapshot_dir=str(tmp_path / "snapshots"))
-
-    class _StubPipeline:
-        def __init__(self) -> None:
-            self.knowledge_graph = kg
-
-    stub = _StubPipeline()
-    monkeypatch.setattr(routes_mod, "get_pipeline", lambda: stub)
+    monkeypatch.setattr(routes_mod, "_get_active_kg", lambda uid: (kg, None))
+    monkeypatch.setattr(routes_mod, "_persist_active_kg", lambda *a, **kw: None)
 
     from fastapi import FastAPI
 
     app = FastAPI()
     app.include_router(routes_mod.router)
+    app.dependency_overrides[get_current_user] = lambda: User(
+        id="u1",
+        email="u1@local",
+        has_password=False,
+        save_my_works=True,
+        created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+    )
     return TestClient(app), kg
 
 

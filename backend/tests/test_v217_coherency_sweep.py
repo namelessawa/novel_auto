@@ -29,66 +29,50 @@ from persistence.tick_db import TickDB
 # ---------------------------------------------------------------------------
 
 
-def _redirect_novels_dir(monkeypatch, tmp_path) -> None:
-    novels_dir = tmp_path / "novels"
-    novels_dir.mkdir()
-    monkeypatch.setattr(novel_manager, "_NOVELS_DIR", str(novels_dir))
+def _redirect_data_root(monkeypatch, tmp_path) -> None:
+    """v2.26 — 重定向 _DATA_ROOT/_USERS_ROOT 隔离全局 manifest."""
+    data_root = tmp_path / "data"
+    monkeypatch.setattr(novel_manager, "_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(novel_manager, "_USERS_ROOT", str(data_root / "users"))
     monkeypatch.setattr(
-        novel_manager, "_MANIFEST_PATH", str(novels_dir / "manifest.json")
+        novel_manager, "_LEGACY_NOVELS_DIR", str(data_root / "novels")
     )
 
 
 def test_resolve_default_returns_manifest_first_when_present(tmp_path, monkeypatch):
-    _redirect_novels_dir(monkeypatch, tmp_path)
-    a = novel_manager.create_novel("A")
-    b = novel_manager.create_novel("B")
+    _redirect_data_root(monkeypatch, tmp_path)
+    uid = "alice"
+    a = novel_manager.create_novel(uid, "A")
+    b = novel_manager.create_novel(uid, "B")
     # 后建的也存在,但 resolve 应当返回 manifest 第一项
-    assert novel_manager.resolve_default_novel_id() == a["id"]
+    assert novel_manager.resolve_default_novel_id(uid) == a["id"]
     # 第二次调用幂等,不会创建新条目
-    assert novel_manager.resolve_default_novel_id() == a["id"]
-    entries = novel_manager.list_novels()
+    assert novel_manager.resolve_default_novel_id(uid) == a["id"]
+    entries = novel_manager.list_novels(uid)
     assert {e["id"] for e in entries} == {a["id"], b["id"]}
 
 
 def test_resolve_default_creates_when_empty(tmp_path, monkeypatch):
-    _redirect_novels_dir(monkeypatch, tmp_path)
-    assert novel_manager.list_novels() == []
-    nid = novel_manager.resolve_default_novel_id()
-    entries = novel_manager.list_novels()
+    _redirect_data_root(monkeypatch, tmp_path)
+    uid = "alice"
+    assert novel_manager.list_novels(uid) == []
+    nid = novel_manager.resolve_default_novel_id(uid)
+    entries = novel_manager.list_novels(uid)
     assert len(entries) == 1
     assert entries[0]["id"] == nid
 
 
-def test_set_active_novel_id_realigns_legacy_pipeline(tmp_path, monkeypatch):
-    """set_active_novel_id 必须重置 legacy pipeline 单例 + 更新 active id。"""
-    _redirect_novels_dir(monkeypatch, tmp_path)
-    n = novel_manager.create_novel("A")
+def test_set_active_novel_id_is_noop_v226(tmp_path, monkeypatch):
+    """v2.26 — set_active_novel_id 是兼容 shim, 已 no-op. 真正切换通过
+    set_active_novel(user_id, novel_id) 完成 (见 test_tick_runtime_registry)."""
+    _redirect_data_root(monkeypatch, tmp_path)
 
     import api.routes as routes
 
-    # 模拟启动前: _active_novel_id=None, _pipeline=None
-    monkeypatch.setattr(routes, "_active_novel_id", None)
-    monkeypatch.setattr(routes, "_pipeline", None)
-
-    routes.set_active_novel_id(n["id"])
-    assert routes._active_novel_id == n["id"]
-
-    # 同一 id 再次设置应为 no-op,不重置 pipeline
-    class DummyPipe:
-        def save_state(self):
-            self.saved = True
-
-    fake_pipe = DummyPipe()
-    monkeypatch.setattr(routes, "_pipeline", fake_pipe)
-    routes.set_active_novel_id(n["id"])
-    assert routes._pipeline is fake_pipe  # 未触发重置
-
-    # 不同 id 触发 save + 清空 pipeline
-    n2 = novel_manager.create_novel("B")
-    routes.set_active_novel_id(n2["id"])
-    assert getattr(fake_pipe, "saved", False) is True
-    assert routes._pipeline is None
-    assert routes._active_novel_id == n2["id"]
+    # 调用兼容 shim 不应抛
+    routes.set_active_novel_id("anything")
+    # 实际状态不被改变 — _active_by_user 仍为初始
+    assert "anything" not in routes._active_by_user.values()
 
 
 # ---------------------------------------------------------------------------
@@ -318,9 +302,9 @@ def test_tick_db_row_to_dict_exposes_tick_alias(tmp_path):
 def test_agent_routes_scan_last_invoked_finds_with_alias(tmp_path):
     """以前的 bug: agent_routes 用 row.get('tick') 始终是 None。
 
-    这个测试通过 _scan_last_invoked 间接验证: 必须返回非 None 的 tick 字段。
+    v2.26 — _scan_last_invoked 签名改为 (agent_id, runtime, last_n),
+    通过 runtime.tick_db 取 db, 不再走 _container 单例。
     """
-    import api.tick_routes as tick_routes
     from api.agent_routes import _scan_last_invoked
 
     db = TickDB(db_path=str(tmp_path / "ticks.db"))
@@ -332,15 +316,19 @@ def test_agent_routes_scan_last_invoked_finds_with_alias(tmp_path):
         narrator_output_chars=200,
     )
     db.insert_tick(summary)
-    tick_routes._container.tick_db = db
 
+    # 桩 runtime — _scan_last_invoked 只用 runtime.tick_db
+    class _StubRuntime:
+        def __init__(self, tick_db):
+            self.tick_db = tick_db
+
+    runtime = _StubRuntime(db)
     try:
-        info = _scan_last_invoked("narrator_agent")
+        info = _scan_last_invoked("narrator_agent", runtime)
         assert info is not None
         assert info["tick"] == 7
         assert info["narrator_produced"] is True
     finally:
-        tick_routes._container.tick_db = None
         db.close()
 
 

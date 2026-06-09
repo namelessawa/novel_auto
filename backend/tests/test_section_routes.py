@@ -55,13 +55,13 @@ class _FakeRuntime:
 
 @pytest.fixture
 def patch_runtime(monkeypatch):
-    """让 section_routes.get_runtime 返回 fake runtime。"""
+    """让 section_routes.get_runtime 返回 fake runtime (v2.26 multi-tenant 签名)。"""
     holder: dict = {}
 
     def _set(orch: _FakeOrchestrator) -> None:
         holder["runtime"] = _FakeRuntime(orch)
 
-    def _fake_get_runtime(novel_id=None):
+    def _fake_get_runtime(user_id, novel_id=None):
         return holder["runtime"]
 
     monkeypatch.setattr("api.section_routes.get_runtime", _fake_get_runtime)
@@ -111,6 +111,7 @@ async def test_executor_accumulates_narrative_and_closes_at_target_words(
     )
 
     snap = await mgr.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="测试",
         kind="section_generation",
@@ -188,6 +189,7 @@ async def test_executor_collects_silent_ticks_and_appends_supplement(
         section_no=1,
     )
     snap = await mgr.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
@@ -237,6 +239,7 @@ async def test_executor_hits_hard_tick_limit_below_min_words(
         closer=closer, store=store, novel_title="", chapter=1, section_no=1
     )
     snap = await mgr.create_task(
+        user_id="u1",
         novel_id="nv1",
         novel_title="",
         kind="section_generation",
