@@ -247,15 +247,31 @@ def get_active_novel_id(user_id: str) -> str | None:
 
 
 def drop_runtime(user_id: str, novel_id: str) -> None:
-    """从注册表中移除并 close 指定 runtime — bootstrap_world 完成后用,
-    强制下次 get 时重读盘上的 tick_state.json。"""
+    """从注册表中丢弃指定 runtime, 让下次 get_runtime 重新从盘载入。
+
+    # 不会 save in-memory 状态
+
+    两个调用方都需要"纯丢弃缓存"语义:
+
+    1. ``bootstrap_routes._reload_runtime`` — bootstrap_world 把整套 TickState /
+       SummaryTree / KnowledgeGraph 直写盘后调用, 目的是让 cached runtime 重读;
+       若此处 save, 会用 bootstrap 之前缓存的空 (or stale) in-memory 状态原子
+       覆盖盘上的 bootstrap 数据 — 世界设定 / 角色 / 伏笔 / 风格锚点全部丢失,
+       Narrator 上场只能瞎写。
+
+    2. ``cleanup_task`` — 24h ephemeral 过期清理, 紧接 ``delete_novel`` 删整个
+       目录, save 是浪费 IO。
+
+    只调 ``tick_db.close()`` 释放 SQLite 文件锁 — Windows 上不关连接会卡住
+    后续目录删除 / 文件 rename。
+    """
     key = (user_id, novel_id)
     rt = _runtimes.pop(key, None)
     if rt is not None:
         try:
-            rt.close()
+            rt.tick_db.close()
         except Exception as e:
-            logger.warning("drop_runtime close failed for %s: %s", key, e)
+            logger.warning("drop_runtime tick_db.close failed for %s: %s", key, e)
     # 若它是该用户的 active, 重新构造以保证后续请求拿到新 state
     if _active_by_user.get(user_id) == novel_id:
         try:
