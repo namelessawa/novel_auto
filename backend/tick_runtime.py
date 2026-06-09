@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 
 import novel_manager
 from agents.character_agent import CharacterAgent
@@ -148,6 +149,11 @@ class TickRuntime:
             creativity_scorer=self.creativity_scorer,
             knowledge_graph=self.knowledge_graph,
             knowledge_graph_path=self.kg_path,
+            # v2.36 — orchestrator 每 tick 持久化 summary_tree / branch_manager,
+            # 让 drop / cleanup / 进程崩失场景不再丢 MemoryCompressor 累积的 leaves
+            # 和 branch 元数据。
+            summary_tree=self.summary_tree,
+            branch_manager=self.branch_manager,
         )
 
     def _rebuild_character_agents(self) -> None:
@@ -195,6 +201,12 @@ class TickRuntime:
 # ----- 全局注册表 ----------------------------------------------------------
 _runtimes: dict[tuple[str, str], TickRuntime] = {}
 _active_by_user: dict[str, str] = {}
+# 注册表互斥锁 — 串行化 _runtimes / _active_by_user 的 check-then-set 模式,
+# 防止两个并发 get_runtime 同时通过 `if key not in _runtimes` 后各自构造一份
+# TickRuntime, 第二份覆盖第一份留下被孤立的 SQLite 连接 (Windows: WAL 互锁).
+# 锁内允许做 TickRuntime() 构造 (秒级), 因为这是低频操作; 高频路径 (tick run)
+# 拿到 rt 引用后就不再持锁。
+_registry_lock = threading.RLock()
 # tick_routes 容器最后一次注入的 (user_id, novel_id) — 仅供诊断
 _last_injected: tuple[str, str] | None = None
 
@@ -210,11 +222,12 @@ def get_runtime(user_id: str, novel_id: str | None = None) -> TickRuntime:
     if nid is None:
         nid = novel_manager.resolve_default_novel_id(user_id)
     key = (user_id, nid)
-    if key not in _runtimes:
-        _runtimes[key] = TickRuntime(user_id=user_id, novel_id=nid)
-    if user_id not in _active_by_user:
-        set_active_novel(user_id, nid)
-    return _runtimes[key]
+    with _registry_lock:
+        if key not in _runtimes:
+            _runtimes[key] = TickRuntime(user_id=user_id, novel_id=nid)
+        if user_id not in _active_by_user:
+            set_active_novel(user_id, nid)
+        return _runtimes[key]
 
 
 def set_active_novel(user_id: str, novel_id: str) -> TickRuntime:
@@ -223,72 +236,122 @@ def set_active_novel(user_id: str, novel_id: str) -> TickRuntime:
     if not isinstance(novel_id, str) or not novel_id:
         raise ValueError(f"invalid novel_id for set_active_novel: {novel_id!r}")
     key = (user_id, novel_id)
-    if key not in _runtimes:
-        _runtimes[key] = TickRuntime(user_id=user_id, novel_id=novel_id)
-    _active_by_user[user_id] = novel_id
-    _runtimes[key].register_to_routes()
-    _last_injected = key
-    logger.info(
-        "Active novel switched: user=%s novel=%s (%d runtimes loaded)",
-        user_id, novel_id, len(_runtimes),
-    )
-    return _runtimes[key]
+    with _registry_lock:
+        if key not in _runtimes:
+            _runtimes[key] = TickRuntime(user_id=user_id, novel_id=novel_id)
+        _active_by_user[user_id] = novel_id
+        _runtimes[key].register_to_routes()
+        _last_injected = key
+        logger.info(
+            "Active novel switched: user=%s novel=%s (%d runtimes loaded)",
+            user_id, novel_id, len(_runtimes),
+        )
+        return _runtimes[key]
 
 
 def get_active_runtime(user_id: str) -> TickRuntime | None:
-    nid = _active_by_user.get(user_id)
-    if nid is None:
-        return None
-    return _runtimes.get((user_id, nid))
+    with _registry_lock:
+        nid = _active_by_user.get(user_id)
+        if nid is None:
+            return None
+        return _runtimes.get((user_id, nid))
 
 
 def get_active_novel_id(user_id: str) -> str | None:
     return _active_by_user.get(user_id)
 
 
-def drop_runtime(user_id: str, novel_id: str) -> None:
-    """从注册表中丢弃指定 runtime, 让下次 get_runtime 重新从盘载入。
+def reload_cache(user_id: str, novel_id: str) -> None:
+    """丢弃缓存 → 释放 SQLite 文件锁 → (若 active) 重新构造以从盘载入新状态。
+
+    用于 ``bootstrap_routes._reload_runtime`` 等"外部刚直写盘, 让缓存重读"场景。
 
     # 不会 save in-memory 状态
 
-    两个调用方都需要"纯丢弃缓存"语义:
+    保证: cached runtime 持有的 in-memory state 在外部直写盘场景下通常是空 / 过时
+    的; 直接 save 会原子覆盖盘上新数据 (bootstrap 链路曾因此丢失整套世界设定 +
+    5 角色 + 5 伏笔 + 4 风格锚点)。
 
-    1. ``bootstrap_routes._reload_runtime`` — bootstrap_world 把整套 TickState /
-       SummaryTree / KnowledgeGraph 直写盘后调用, 目的是让 cached runtime 重读;
-       若此处 save, 会用 bootstrap 之前缓存的空 (or stale) in-memory 状态原子
-       覆盖盘上的 bootstrap 数据 — 世界设定 / 角色 / 伏笔 / 风格锚点全部丢失,
-       Narrator 上场只能瞎写。
+    每 tick 已经 save 了 TickState / MemoryStore / FactLedger / TokenBudget /
+    KnowledgeGraph; SummaryTree / BranchManager 也在 orchestrator 末尾 save (v2.36).
+    因此丢弃缓存不会丢失数据。
 
-    2. ``cleanup_task`` — 24h ephemeral 过期清理, 紧接 ``delete_novel`` 删整个
-       目录, save 是浪费 IO。
-
-    只调 ``tick_db.close()`` 释放 SQLite 文件锁 — Windows 上不关连接会卡住
-    后续目录删除 / 文件 rename。
+    重建失败时 (盘上 JSON 损坏等), 清掉 ``_active_by_user[user_id]`` 让调用方 fail
+    cleanly, 而非保留孤儿指针让 ``get_active_runtime`` 静默返回 None。
     """
     key = (user_id, novel_id)
-    rt = _runtimes.pop(key, None)
-    if rt is not None:
-        try:
-            rt.tick_db.close()
-        except Exception as e:
-            logger.warning("drop_runtime tick_db.close failed for %s: %s", key, e)
-    # 若它是该用户的 active, 重新构造以保证后续请求拿到新 state
-    if _active_by_user.get(user_id) == novel_id:
-        try:
-            set_active_novel(user_id, novel_id)
-        except Exception as e:
-            logger.warning("re-set_active_novel %s failed: %s", key, e)
+    with _registry_lock:
+        rt = _runtimes.pop(key, None)
+        if rt is not None:
+            try:
+                rt.tick_db.close()
+            except Exception as e:
+                logger.warning("reload_cache tick_db.close failed for %s: %s", key, e)
+        # 若它是该用户的 active, 重新构造以保证后续请求拿到新 state
+        if _active_by_user.get(user_id) == novel_id:
+            try:
+                set_active_novel(user_id, novel_id)
+            except Exception as e:
+                logger.error(
+                    "reload_cache rebuild failed for %s: %s — clearing _active_by_user "
+                    "to avoid orphan pointer; next get_runtime will retry.",
+                    key, e,
+                )
+                _active_by_user.pop(user_id, None)
 
 
-def close_all_runtimes() -> None:
-    """FastAPI shutdown 钩子用 — 关闭所有, 清空注册表。"""
-    for key, rt in list(_runtimes.items()):
-        try:
-            rt.close()
-        except Exception as e:
-            logger.error("close runtime %s failed: %s", key, e)
-    _runtimes.clear()
-    _active_by_user.clear()
+def drop_cache(user_id: str, novel_id: str) -> None:
+    """纯丢弃缓存, 不重建 — 用于 ``cleanup_task`` 等"紧接 delete_novel 删整个目录"场景。
+
+    与 ``reload_cache`` 的区别: 不调 ``set_active_novel`` 重建。重建会重新打开
+    ticks.db (Windows: 文件锁), 紧跟其后的 ``shutil.rmtree`` 会因被占用而失败,
+    ``ignore_errors=True`` 又会静默吞掉报错, 留下孤儿目录 + 已开 SQLite 句柄。
+
+    顺手清掉 ``_active_by_user[user_id]`` (若指向本 novel), 防止之后 get_runtime
+    用同一 novel_id 访问已删除目录。
+    """
+    key = (user_id, novel_id)
+    with _registry_lock:
+        rt = _runtimes.pop(key, None)
+        if rt is not None:
+            try:
+                rt.tick_db.close()
+            except Exception as e:
+                logger.warning("drop_cache tick_db.close failed for %s: %s", key, e)
+        if _active_by_user.get(user_id) == novel_id:
+            _active_by_user.pop(user_id, None)
+
+
+# 兼容旧名 — 等同 reload_cache (原 drop_runtime 的语义)
+def drop_runtime(user_id: str, novel_id: str) -> None:
+    """Deprecated 别名 — 转发到 ``reload_cache``。新代码请用 ``reload_cache`` /
+    ``drop_cache`` 显式表达意图 (见 v2.36)。"""
+    reload_cache(user_id, novel_id)
+
+
+def close_all_runtimes(persist: bool = False) -> None:
+    """FastAPI shutdown 钩子用 — 关闭所有 runtime, 清空注册表。
+
+    ``persist=False`` (默认): 仅 ``tick_db.close()`` 释放 SQLite 句柄, 不 save
+    其他 in-memory state — 因为 orchestrator 每 tick 已经持久化全部 7 个子系统
+    (tick_state / memory_store / fact_ledger / token_budget / knowledge_graph /
+    summary_tree / branch_manager, 见 v2.36), shutdown 时再 save 是多余且危险
+    (若有外部进程在 bootstrap 阶段直写盘, save 会用 stale in-memory 覆盖).
+
+    ``persist=True``: 与旧行为兼容, 显式调用 ``rt.close()`` 全 8 项 save —
+    仅用于明确知道无外部写入的离线工具.
+    """
+    with _registry_lock:
+        for key, rt in list(_runtimes.items()):
+            try:
+                if persist:
+                    rt.close()
+                else:
+                    rt.tick_db.close()
+            except Exception as e:
+                logger.error("close runtime %s failed: %s", key, e)
+        _runtimes.clear()
+        _active_by_user.clear()
 
 
 # ----- 向后兼容外壳 -------------------------------------------------------

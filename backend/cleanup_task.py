@@ -23,7 +23,7 @@ import novel_manager
 from auth import LEGACY_USER_ID
 from auth.config import get_auth_config
 from auth.store import get_user_store
-from tick_runtime import drop_runtime
+from tick_runtime import drop_cache
 
 logger = logging.getLogger(__name__)
 
@@ -72,9 +72,12 @@ def run_once() -> int:
             if last >= cutoff:
                 continue
             try:
-                drop_runtime(user_id, entry["id"])
+                # v2.36 — 用 drop_cache (不重建) 而非 reload_cache, 否则会在
+                # rmtree 前重新打开 ticks.db, Windows 上 rmtree(ignore_errors=True)
+                # 静默吞掉 PermissionError 留下孤儿目录。
+                drop_cache(user_id, entry["id"])
             except Exception as e:
-                logger.debug("drop_runtime during cleanup failed: %s", e)
+                logger.debug("drop_cache during cleanup failed: %s", e)
             try:
                 if novel_manager.delete_novel(user_id, entry["id"]):
                     total_deleted += 1

@@ -47,7 +47,9 @@ from agents.world_simulator import WorldSimulator
 from graph.knowledge_graph import KnowledgeGraph
 from graph.tick_kg_sync import sync_tick_state_to_kg
 from memory.memory_store import PriorityMemoryStore, RetrievalQuery
+from memory.summary_tree import SummaryTree
 from memory.tick_state import TickState
+from narrative.branch_manager import BranchManager
 from narrative.creativity_scorer import CreativityReport, CreativityScorer
 from narrative.fact_ledger import Fact, FactLedger
 from narrative.safety_filter import SafetyFilter
@@ -168,6 +170,8 @@ class Orchestrator:
         creativity_scorer: CreativityScorer | None = None,
         knowledge_graph: KnowledgeGraph | None = None,
         knowledge_graph_path: str | None = None,
+        summary_tree: SummaryTree | None = None,
+        branch_manager: BranchManager | None = None,
     ) -> None:
         self._tick_state = tick_state
         # v2.34 — 知识图谱接入 tick 架构 (此前是 v1.x 章节链路遗留, 从不被 tick
@@ -178,6 +182,11 @@ class Orchestrator:
         # 添加的实体/关系。
         self._knowledge_graph = knowledge_graph
         self._knowledge_graph_path = knowledge_graph_path
+        # v2.36 — summary_tree + branch_manager 也接入 per-tick 持久化。
+        # 之前仅在 TickRuntime.close() 才 save, 任何 drop / cleanup / 进程崩失场景
+        # 都会丢失 MemoryCompressor 累积的 leaves / branch 元数据。
+        self._summary_tree = summary_tree
+        self._branch_manager = branch_manager
         self._world_simulator = world_simulator
         self._character_agents = character_agents
         self._narrator = narrator
@@ -333,6 +342,18 @@ class Orchestrator:
 
     async def _run_tick_unlocked(self) -> TickSummary:
         """run_tick 原始实现 — 不加锁版本, 仅供 run_tick 与测试直接调用。"""
+        # v2.36 — sane-world precondition (warning level, 不 raise). 上次 bootstrap
+        # 数据被覆盖的 bug 让 30 个 tick 在空世界跑出 unnamed_traveler / 通用 wilderness
+        # 这类无角色无地点的垃圾内容. 这里告警让运维有信号去查 (而不是用错误强行
+        # 阻断, 测试 setup 可能合法地从空世界起步)。
+        if not self._tick_state.list_character_states() or not self._tick_state.world_state.locations:
+            logger.warning(
+                "Tick %d running on degenerate world: %d chars / %d locations — "
+                "world may not be bootstrapped; Narrator output will be drift-only.",
+                self._tick_state.current_tick + 1,
+                len(self._tick_state.list_character_states()),
+                len(self._tick_state.world_state.locations),
+            )
         tick = self._tick_state.advance_tick()
         # v2.16 Observability — 把当前 tick 注入 ContextVar, 让所有 LLM 调用
         # (CharacterAgent / NarratorAgent / WorldSimulator / ...) 自动归账到本 tick。
@@ -634,6 +655,21 @@ class Orchestrator:
             self._token_budget.save()
         except Exception as e:  # pragma: no cover
             logger.warning("TokenBudgetTracker.save failed (non-fatal): %s", e)
+        # v2.36 — summary_tree / branch_manager 也加入 per-tick 持久化
+        # (此前仅 TickRuntime.close() 路径 save, 任何缓存 drop / 进程崩失都会丢
+        # MemoryCompressor 累积的 leaves 和 branch 元数据)。
+        if self._summary_tree is not None:
+            try:
+                self._summary_tree.persist_to_disk(
+                    os.path.join(self._tick_state.data_dir, "summary_tree.json")
+                )
+            except Exception as e:  # pragma: no cover
+                logger.warning("SummaryTree.persist_to_disk failed (non-fatal): %s", e)
+        if self._branch_manager is not None:
+            try:
+                self._branch_manager.save()
+            except Exception as e:  # pragma: no cover
+                logger.warning("BranchManager.save failed (non-fatal): %s", e)
 
         # 维持 recent_chapter_summaries 上限
         if len(self._recent_chapter_summaries) > 100:

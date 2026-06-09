@@ -152,10 +152,12 @@ def _make_bootstrap_world_executor(
 
 
 def _reload_runtime(user_id: str, novel_id: str) -> None:
-    """v2.26 — drop + 重建该 (user, novel) runtime, 强制重读盘。"""
-    from tick_runtime import drop_runtime
+    """v2.36 — 用 reload_cache: drop 缓存 + 若 active 则重建, 强制重读 bootstrap
+    刚写的盘。reload_cache 不会用 stale in-memory state 覆盖新盘 (历史教训:
+    bootstrap → drop+save → 整个世界设定丢失)。"""
+    from tick_runtime import reload_cache
 
-    drop_runtime(user_id, novel_id)
+    reload_cache(user_id, novel_id)
 
 
 async def _spawn_chained_first_section(user_id: str, novel_id: str) -> str:

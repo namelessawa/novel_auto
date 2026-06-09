@@ -115,8 +115,15 @@ class TickDB:
             self._conn.executescript(_SCHEMA)
 
     def close(self) -> None:
+        # 幂等: 多个路径都可能 close (drop_cache / reload_cache / close_all_runtimes /
+        # __exit__ / FastAPI shutdown), 避免 Python 3.10- 的双关报 ProgrammingError.
         with self._lock:
-            self._conn.close()
+            if self._conn is None:
+                return
+            try:
+                self._conn.close()
+            finally:
+                self._conn = None
 
     def __enter__(self) -> "TickDB":
         return self
