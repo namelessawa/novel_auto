@@ -1,22 +1,27 @@
 # 无限小说生成系统 (Infinite Novel Generator)
 
-> **当前版本: v2.21** (2026-06-04) — FastAPI + React/Vite 单栈,
-> 9 Agent + 7 阶段 Tick 调度的多智能体模拟系统(故事驱动)。
+> **当前版本: v2.34** (2026-06-09) — FastAPI + React/Vite 单栈,
+> 10 Agent + 7 阶段 Tick 调度的多智能体模拟系统 (故事驱动),
+> 节级管线已任务化, 自带邮箱 OTP 多租户认证、Tick 驱动节、多模态视频生成、
+> 知识图谱 tick 同步。
 > 设计哲学来自 [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
-> **故事是模拟的副产品,Narrator 选择性讲述**。
+> **故事是模拟的副产品, Narrator 选择性讲述**。
 
 > v1.x 章节驱动单体生成器已整体归档到 [`old/`](./old/),
-> 不再参与运行时,但可作为历史参考。
+> 不再参与运行时, 但可作为历史参考。
 
-> **状态**: 全部 tick 架构用例 GREEN, 真实 LLM smoke (mimo-v2.5-pro /
-> DeepSeek) 端到端通过。完整版本历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
+> **状态**: 全部 tick 架构用例 GREEN (541 用例 collect 通过, 全套 ~6s),
+> 真实 LLM smoke (mimo-v2.5-pro / DeepSeek) 端到端通过。
+> 完整版本历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
 
-> ⚠️ **安全提示 (deployment)**: 管理 API (`/api/config/llm`、`/api/tick/*`、
-> `DELETE /api/novels/{id}`、`/api/agents/*` 等) **默认无鉴权**, 任何可访问
-> 后端的客户端都能改 LLM 配置、推进 tick、删除小说、读取 Agent 上下文。
-> 默认 CORS 也是 `["*"]`。本项目目前**仅适合本机或可信内网**使用; 公网部署
-> 需自行加 reverse proxy 鉴权 (basic auth / OAuth) 或调整 `cors_origins` 与
-> 网络绑定。后续版本将提供 token 鉴权开关 (tracking in CHANGELOG v2.21)。
+> ⚠️ **安全提示 (deployment)**: v2.26 起已落地邮箱 OTP / JWT 鉴权与多租户
+> 数据隔离 (`backend/auth/`), 业务端点全部经 `Depends(get_current_user)`
+> 校验, 数据按 `data/users/{uid}/novels/{nid}/` 隔离。但 **管理面 API** —
+> `/api/config/llm` 、`/api/tick/*` 、`/api/agents/*` 等 — 仍**默认无鉴权**;
+> 默认 `cors_origins` 也是 `["*"]`。公网部署需自行加 reverse proxy 鉴权
+> (basic auth / OAuth) 或收紧 `cors_origins` 与网络绑定。生产推荐 v2.28
+> 后的「服务端 LLM 改读用户 key」模式: `config.json.llm.api_key` 留空,
+> 前端请求带 `X-User-LLM-*` header 一次性传递, 服务端用完即丢。
 
 ---
 
@@ -66,34 +71,45 @@
                  (重复模式检测)
 ```
 
-### 9 个 Agent + 7 阶段 Tick 循环
+### 10 个 Agent + 7 阶段 Tick 循环
 
 | # | Agent | 频率 | LLM | 职责 |
 |---|-------|------|-----|------|
-| 0 | **Orchestrator** | 每 tick | ❌ 纯调度 | 协调 7 阶段流程 |
-| 1 | **WorldSimulator** | 每 tick | ✅ small | 推进时间/天气/社会演化 |
-| 2 | **EventInjector** | 3-5 tick | ✅ medium | 内生/外生/戏剧事件注入 |
-| 3 | **CharacterAgent×N** | 每 tick | ✅ A=strong / B=medium | 单角色基于 known_facts 决策 |
-| 4 | **ActionResolver** | 每 tick | ❌ 纯逻辑 | 解析独占行动冲突 |
-| 5 | **Narrator** | 每 tick | ✅ strongest→medium | 选材 + 写作,可主动沉默 |
+| 0 | **Orchestrator** | 每 tick | ❌ 纯调度 | 协调 7 阶段流程, 末尾 KG 同步 + 持久化 |
+| 1 | **WorldSimulator** | 每 tick | ✅ small | 推进时间/天气/社会演化 (稳态字段反清空保护) |
+| 2 | **EventInjector** | 3-5 tick | ✅ medium | 内生/外生/戏剧事件 + `state_patches` 外部权威补丁 |
+| 3 | **CharacterAgent×N** | 每 tick | ✅ A=strong / B=medium | 基于 `known_facts` 决策, cooldown + `model_tier_override` |
+| 4 | **ActionResolver** | 每 tick | ❌ 纯逻辑 | 解析独占行动冲突, 落 state 转移字段 |
+| 5 | **Narrator** | 每 tick | ✅ strongest→medium | 选材 + 写作, 可主动沉默, 反 reasoning 泄漏, 标题锚定 |
 | 6 | **Showrunner** | 每 5 tick | ✅ medium | 节奏曲线 + 冷线索 + 弧线监控 |
 | 7 | **MemoryCompressor** | 每 50 tick | ✅ small | L0→L1→L2→L3 压缩 + 传说化 |
-| 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 |
-| 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测,反馈 Narrator |
+| 8 | **ConsistencyGuardian** | 每 30 tick | ✅ continuity_v2 | 5 类矛盾扫描 + 幻觉率统计 |
+| 9 | **NoveltyCritic** | 每 20 tick | ✅ small | 重复模式检测, 反馈 Narrator |
+| 10 | **SectionCloser** *(v2.24)* | tick 后 | ✅ medium | 判定切节; `words >= upper` 不调 LLM 直接切 |
 
-### v2.10 – v2.19 增量概览
+> 知识图谱 (`backend/graph/`): tick 末尾纯 Python 同步 (无 LLM),
+> `CharacterProfile / WorldState.locations / factions /
+> CharacterState.{current_location, relationships}` → `Entity + Relation`,
+> 与 `agents_called` 一起诊断 (`kg_sync(+Ne/+Nr/~Ne)`).
 
-下表为后续 10 个版本的功能落地索引, 详情见 [`CHANGELOG.md`](./CHANGELOG.md):
+### v2.20 – v2.34 增量概览
 
 | 版本 | 主线 | 关键落地点 |
 |------|------|-----------|
-| v2.10 | TickRuntime 全装配 | 把 v2.3-v2.9 全部增强层显式注入 `tick_runtime.py`, FastAPI 启动即享受全部能力 |
-| v2.11 / v2.12 / v2.13 / v2.14 | 质量层实测迭代 | 基于真实 MIMO 输出修正 A1 误报、A4/A6/A7 黑名单、句长 E1 与段末升华禁忌 |
-| v2.15 | P0 sweep | 并发统一入口 / 路径安全 sanitizer / 记忆 touch 闭环 / runtime 注册表显式校验 |
-| v2.16 | 硬状态转移 + 可观测性 | `CharacterAction` 落 location/inventory/status/relationship 字段; 18 个 LLM 调用点标注 `agent_id+priority`; 中文输出约束; 多地点冷启动 |
-| v2.17 | runtime coherency sweep | LLM 配置热更新 (`PUT /api/config/llm` + `LLMClient.reload`); TokenBudget 调用前硬拦截; Tick 控制台前端; CodeQL path-injection / clear-text-logging 全部切断 |
-| **v2.18** | **状态硬转移 + Guardian 闭环 + tick 并行化** | 9 个 Phase: money_delta / `AgentRuntimeState` cooldown / `StateOp+StatePatch` / `scan_hallucination_rate` / Guardian shadow mode / `model_tier_override` / concurrency 3→6 + Narrator 并行 / EventInjector 产 patch / `GET /api/tick/diagnostic/hallucination` |
-| **v2.19** | **流式闭环 + 输入校验 + IO 优化** | `chat_stream` 接入 budget+observability+model_override; `inject-event` 加 422/409 边界; `POST /api/tick/open-loops` 防 dup-id 覆盖; `_default_narrative_writer` 卸 IO 到 worker 线程; `chat_stream` 异常路径也记账; LLM JSON fence helper 集中到 `nf_core.json_utils` |
+| v2.20 | 前后端缺口对齐 | LLM provider 切换 / `inject-event` 字段补 / OpenLoop CRUD UI / Tick 诊断面板 (6 端点) / Graph 删除按钮 + entity attributes / legacy ControlPanel 挂「节级管线」Tab |
+| **v2.21** | P0–P3 隐患清扫 | `CharacterAgent` `all_in_location` 校验 / `_resolve_llm_block` 优先级翻转 (config.json 用户态优先) / TickState/SummaryTree 损坏 quarantine / TickDB `INSERT OR IGNORE` / `switch_novel` 两阶段 / `OpenLoop.origin_event_ids` 字段 / 前端写端点 `assertOk` / Vite proxy 强制 IPv4 |
+| **Deploy** | 多目标生产部署 | Linux+systemd+CF Tunnel+Vercel 三段式 / Windows+Docker Desktop / 默认国内镜像源 (daocloud+清华) / `core/config` provider fallback / 前端 `base` 默认根路径 |
+| v2.22 | P1-P3 收敛 | `provider 落盘原子化` / 图端点校验 / API 4xx 收敛 / UI 字段对齐 / Orchestrator 注入事件 try/finally |
+| v2.23 | 节级管线最终修 | 题材锚定透传 (`seed/title/positioning` → `OutlineAgent`) / 节标题独立 LLM 产出 / UI 集中化 |
+| **v2.24** | **SectionCloser + 任务队列 + per-novel TickRuntime** | `SectionCloser` agent / `backend/tasks/` (`TaskManager` + `task_routes` SSE) / `backend/sections/` / `POST /api/section/generate` / 节级管线降级 `/api/legacy/*` 别名 / 前端常驻 `TaskListPanel` |
+| v2.25 | `bootstrap_world` 任务化 | 创建空壳 / 4 阶段冷启动 / 链式触发首节 分两步; `TaskKind=bootstrap_world` / `POST /api/novels/{id}/bootstrap-world` / 前端「世界种子」必填 |
+| **v2.26** | **邮箱 OTP 认证 + 多租户隔离 + 随机种子/标题** | `backend/auth/` 包 (9 端点) / sha256 OTP + 5 min TTL + per-IP rate limit / `data/users/{uid}/novels/{nid}/` 隔离 / `POST /api/llm/random-{seed,title}` / 前端 `AuthContext` + `LoginGate` + `SettingsModal` |
+| v2.27 | HTML 邮件 + 图片 provider + 本地 LLM 配置 | multipart text+HTML OTP 模板 / `ConfigView` 重写 schema 驱动多 provider / LLM 配置改 `localStorage` / Toast 精简 |
+| **v2.28** | **多模态文生图 (讯飞) + 服务端 LLM 改读用户 key** | `xfyun_image.py` HMAC-SHA256 / `/api/image/generate` / `UserLLMConfig` `ContextVar` + LRU 32 缓存 `AsyncOpenAI` / `UserLLMHeadersMiddleware` 透传 `X-User-LLM-*` |
+| v2.29 / v2.30 | 中间件 + 轮询治理 | `UserLLMHeadersMiddleware` 改纯 ASGI 修 502 CORS 头丢 / 彻底删除所有 `setInterval`, 事件驱动 (`visibilitychange` + 用户操作触发) |
+| v2.31 / v2.32 | 讯飞图片生成对齐 | `modelid` (domain) 切换 / `wss → https POST` / 业务错误码中文 hint / MaaS host+body+分辨率约束 / `patch_id` 永远 set / Docker bridge MTU 1380 |
+| **v2.33** | **多模态视频生成** | `text_segmenter`(中文按句切, 15-60 字) + `edge_tts_client`(WordBoundary 时长) + `video_composer`(`imageio-ffmpeg` 单条 filter_complex, `Semaphore(2)`) + `multimedia/asset_store` + `MultimodalView` 前端 + 6 REST 端点 + 36 安全/性能用例 |
+| **v2.34** | **KG tick 同步 + LLM JSON 兜底 + 4 类用户 bug 治根** | `backend/graph/tick_kg_sync.py` 自动喂图 + `KnowledgeGraph.save/load_to_disk` / `parse_llm_json` 11 agent + bootstrap 统一 + `json_repair` 兜底 / `WorldSimulator` 稳态字段反清空 / `SectionCloser` 接共享 reasoning 反泄漏 / `bootstrap` 空世界完整性闸 / `TickState.novel_title` 主题锚点 / 终态任务保留 60s → 30 min |
 
 ### Guardian 幻觉率诊断 (v2.18 Phase 9)
 
@@ -441,9 +457,17 @@ cd frontend && npm run dev
 
 ### 4. 冷启动一个新世界
 
+**推荐路径 (v2.25+ 任务化)**: 直接在前端 `HomeView` 创建小说, 填「世界种子」
+(必填) 与折叠的「作品定位 / 参考作家」高级配置, 一次提交触发
+`bootstrap_world → bootstrap_section` 两段任务, 在左下 `TaskListPanel` 看
+4 阶段进度 + 后续字数进度。
+
+**CLI 替代** (单租户开发模式, 跳过认证):
+
 ```bash
 python -m backend.bootstrap_prompts \
     --novel-id mountain \
+    --title "山阵" \
     --seed "宋代仿古,边境与中央的张力,存在低调方术传统" \
     --positioning "古典含蓄、心理白描、节奏舒缓" \
     --references "Le Guin / 古龙"
@@ -457,54 +481,139 @@ curl http://127.0.0.1:8762/api/tick/status
 curl http://127.0.0.1:8762/api/tick/history?last_n=20
 ```
 
-也可在前端 Tick 控制面板里手动推进、注入事件、查看 OpenLoop。
+或在前端 Tick 控制面板里手动推进、注入事件、查看 OpenLoop / 幻觉率诊断。
 
-### 5. 生产部署(SPA + API 同源)
+### 5. 生产部署 (SPA + API 同源)
 
 ```bash
 cd frontend && npm run build && cd ..    # 产物在 frontend/dist/
-python run.py                            # FastAPI 把 frontend/dist 挂到根路径
+python run.py                            # FastAPI 把 frontend/dist 挂到根 /
 ```
 
-访问 `http://<host>:8762/` 即可。前后端分离方案 (Linux + systemd + Cloudflare
-Tunnel + Vercel) 见 `deploy/README.md`。
+访问 `http://<host>:8762/` 即可 (v2.21 起 base 默认根路径)。三种部署方案:
+
+* **Linux + systemd + Cloudflare Tunnel + Vercel** — `deploy/{backend,
+  cloudflared,frontend}/README.md`
+* **Windows + Docker Desktop + CF Tunnel (token 模式)** — `deploy/docker/README.md`
+* 默认国内镜像源 (daocloud + 清华 PyPI/apt), 可通过 `.env` 切回官方
 
 ---
 
-## tick API 速查
+## API 速查
 
+业务端点都经 `Depends(get_current_user)` 校验 JWT (v2.26+), 数据按
+`(user_id, novel_id)` 隔离。管理 API (`/api/config/*` / `/api/tick/*` /
+`/api/agents/*`) 默认无鉴权 — 仅适合本机/内网部署。
+
+### 认证 (`/api/auth/*` — v2.26)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| POST | `/register/send-otp` | 注册前发邮箱 OTP (204, 一次性, 5 min TTL) |
+| POST | `/register/verify` | 验证 OTP → JWT |
+| POST | `/login/send-otp` | 登录发 OTP (枚举防御静默 204) |
+| POST | `/login/verify-otp` | OTP 登录 → JWT |
+| POST | `/login/password` | 密码登录 → JWT |
+| POST | `/me/set-password` | 设置/更换密码 (bcrypt) |
+| GET | `/me` | 当前用户信息 |
+| PUT | `/me/settings` | `save_my_works` 等用户设置 |
+| POST | `/logout` | 客户端清 JWT (服务端无 session) |
+
+### 小说生命周期 (`/api/novels` — v2.25/v2.26)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| GET | `/api/novels` | 当前用户小说列表 |
+| POST | `/api/novels` | 创建空壳 (默认 `auto_bootstrap=false`) |
+| PUT | `/api/novels/{id}` | 改名 / 描述 (同步活跃 runtime title) |
+| DELETE | `/api/novels/{id}` | 删除 |
+| POST | `/api/novels/{id}/switch` | 切换活跃小说 (两阶段, tick 失败 503) |
+| POST | `/api/novels/{id}/bootstrap-world` | 4 阶段冷启动 (`seed` 必填, 可链式触发首节) |
+
+### 节驱动 (`/api/section` — v2.24)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| POST | `/api/section/generate` | 续写下一节, 入队任务 (返回 task_id) |
+| GET | `/api/section/list` | tick 驱动节列表 |
+| GET | `/api/section/list/{novel_id}` | 指定小说节列表 |
+
+### Tick 控制 (`/api/tick/*`)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| GET | `/status` | 当前 tick / 暂停态 / OpenLoop 数 |
+| POST | `/run` | 推进 1 个 tick (返回 TickSummary) |
+| POST | `/pause` / `/resume` | 暂停 / 恢复后续自动循环 |
+| POST | `/inject-event` | 手动注入 Event (422 校验 / 409 防 dup-id) |
+| GET / POST / DELETE | `/open-loops{,/:id}` | 开放伏笔 CRUD (POST 防 dup-id 409) |
+| GET | `/history?last_n=20` | 最近 N 个 TickSummary |
+| GET | `/event-stats?last_n_ticks=50` | 事件统计 |
+| GET | `/action-patterns?last_n_ticks=100` | 重复模式 |
+| GET | `/style-anchors?top_k=20` | 风格锚点列表 |
+| GET | `/character-states` | 全部 CharacterState |
+| GET | `/novelty-warnings` | NoveltyCritic 输出 |
+| GET | `/diagnostic/hallucination` | Guardian 幻觉率统计 + auto_degrade 状态 (v2.18 Phase 9) |
+
+### 任务队列 (`/api/tasks/*` — v2.24)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| GET | `/api/tasks?novel_id=` | 全量任务集 |
+| GET | `/api/tasks/{id}` | 单个任务快照 |
+| POST | `/api/tasks/{id}/cancel` | 取消任务 |
+| GET | `/api/tasks/{id}/stream` | SSE 实时进度 |
+
+任务类型 (`TaskKind`): `section` / `bootstrap_section` / `bootstrap_world` /
+`multimodal_generation`。
+
+### 图像生成 (`/api/image` — v2.28)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| POST | `/api/image/generate` | 文生图 (header 带 `X-Image-AppID/APIKey/APISecret`, 后端用完即丢) |
+
+### 多模态视频 (`/api/multimodal/*` — v2.33)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| GET | `/voices` | 中文 voice 白名单 |
+| POST | `/segment-preview` | 分段预览 (不落盘) |
+| POST | `/generate` | 入队多模态任务 (节文本 → 图 + TTS → 字幕视频) |
+| GET | `/{novel_id}/list` | 已生成段列表 |
+| GET | `/{novel_id}/{ch}/{s}/manifest` | 段 manifest |
+| GET | `/{novel_id}/{ch}/{s}/asset/{filename}` | 段资产 (img/audio/srt/mp4) |
+
+### LLM 辅助 (`/api/llm/*` — v2.26)
+| 方法 | 路径 | 用途 |
+|------|------|------|
+| POST | `/random-seed` | 随机世界种子 (X-User-LLM-* 一次性传 key) |
+| POST | `/random-title` | 随机标题 (与 seed 联动客制化) |
+
+### 配置 & 其他
 | 方法 | 路径 | 用途 |
 |------|------|------|
 | GET | `/api/health` | 健康检查 |
-| GET | `/api/tick/status` | 当前 tick / 暂停态 / OpenLoop 数 |
-| POST | `/api/tick/run` | 推进 1 个 tick (返回 TickSummary) |
-| POST | `/api/tick/pause` | 暂停后续自动循环 |
-| POST | `/api/tick/resume` | 恢复 |
-| POST | `/api/tick/inject-event` | 手动注入 Event |
-| GET | `/api/tick/open-loops` | 开放伏笔列表(按 urgency 降序) |
-| POST | `/api/tick/open-loops` | 管理员手动新增 OpenLoop |
-| DELETE | `/api/tick/open-loops/:id` | 关闭 OpenLoop |
-| GET | `/api/tick/history?last_n=20` | 最近 N 个 TickSummary |
-| GET | `/api/tick/event-stats?last_n_ticks=50` | 事件统计 |
-| GET | `/api/tick/action-patterns?last_n_ticks=100` | 重复模式 |
-| GET | `/api/tick/style-anchors?top_k=20` | 风格锚点列表 |
-| GET | `/api/tick/character-states` | 全部 CharacterState |
-| GET | `/api/tick/novelty-warnings` | NoveltyCritic 输出 |
+| GET | `/api/stats` | 全局统计 |
+| GET | `/api/config/llm` / PUT | LLM 配置查询/热更新 (原子写) |
+| GET | `/api/graph` / `/api/graph/entities` / `/api/graph/relations` | KG 查询 (v2.34 优先读 tick KG) |
+| GET / POST | `/api/snapshots` | KG 快照 |
+| GET | `/api/agents{,/:id}` | Agent 上下文 (v2.20 诊断面板用) |
+| POST | `/api/legacy/{generate,chapter/advance,rollback,reset,snapshots}` | 节级管线 (v2.24 别名) |
 
 ---
 
 ## 持久化分层
 
+v2.26 起按用户隔离, 根路径 `backend/data/users/{uid}/novels/{nid}/` (被 `.gitignore`):
+
 | 层 | 存储 | 内容 |
 |----|------|------|
-| 1 | SQLite WAL `ticks.db` | tick_log + events 两表,按 tick_id 主键 |
-| 2 | JSON `tick_state.json` | WorldState / CharacterProfile×N / OpenLoop / StyleAnchor / novelty_warnings |
+| 1 | SQLite WAL `ticks.db` | tick_log + events 两表, 按 tick_id 主键; `check_same_thread=False` + `threading.Lock` 串行化 (v2.26) |
+| 2 | JSON `tick_state.json` | WorldState / CharacterProfile×N / OpenLoop / StyleAnchor / `novel_title` (v2.34) / AgentRuntimeState |
 | 3 | JSON `summary_tree.json` | 分层摘要 + L3 传说 |
-| 4 | NetworkX JSON `knowledge_graph.json` + `snapshots/` | 实体/关系图 + 每 50 tick 快照 |
-| 5 | ChromaDB | 向量索引(L0 事件 / L1 摘要) |
+| 4 | NetworkX JSON `knowledge_graph.json` + `snapshots/` | 实体/关系图; tick 末尾从 char_states + world_state 自动同步 (v2.34); 每 50 tick 快照 |
+| 5 | ChromaDB `chroma_db/` | 向量索引 (L0 事件 / L1 摘要) |
 | 6 | 文本文件 `narratives/tick_NNNNNN.txt` | Narrator 产出 |
+| 7 | JSON `sections/section_NNNN.json` | Tick 驱动节内容 (`TickSection`, v2.24) |
+| 8 | `multimedia/sec_{ch}_{s}/` | `manifest.json` + `img_NN.png` + `audio_NN.mp3` + `subtitles.srt` + `output.mp4` (v2.33) |
+| 9 | JSON `token_budget.json` / `fact_ledger.json` / `memory_store.json` | 全局账本 |
 
-所有数据存放在 `backend/data/novels/{novel_id}/`(被 `.gitignore`)。
+用户态认证数据落 `backend/auth.db` (SQLite); 默认无效会话 24h cleanup
+后台 task 按 `save_my_works=False && last_accessed > 24h` 删除小说数据。
 
 ---
 
@@ -512,98 +621,106 @@ Tunnel + Vercel) 见 `deploy/README.md`。
 
 ```
 novel_auto/
-├── .env                              ← LLM 凭据(优先来源)
-├── config.json                       ← memory/vector/server 配置 + LLM 兜底
+├── .env                              ← LLM 凭据 (优先来源)
+├── config.json                       ← memory/vector/server/auth/smtp 配置 + LLM 兜底
 ├── config.example.json
 ├── run.py                            ← 根级启动入口 (uvicorn backend.main:app)
 ├── start.bat / start.sh              ← 一键启动后端 + 前端
 ├── requirements.txt / requirements-dev.txt
 ├── infinite-novel-multiagent-prompts.md ← 9 agent 设计 prompt 集
-├── core/
-│   ├── __init__.py
-│   └── config.py                     ← 多 provider 路由,backend 通过 importlib 加载
-├── memory_system/
-│   ├── __init__.py
-│   └── models.py                     ← Pydantic v2 tick 契约 + 遗留 dataclass
-├── evaluation/
-│   ├── __init__.py
-│   └── continuity_v2.py              ← ConsistencyGuardian 复用
-├── backend/                          ← FastAPI + 9 Agent + Tick 引擎
-│   ├── main.py                       ← FastAPI 入口 + 静态资源 mount
-│   ├── tick_runtime.py               ← Orchestrator 单例
-│   ├── bootstrap_prompts.py          ← 5 prompt 冷启动
-│   ├── novel_manager.py
+├── core/config.py                    ← 多 provider 路由, backend 通过 importlib 加载
+├── memory_system/models.py           ← Pydantic v2 tick 契约
+├── evaluation/continuity_v2.py       ← ConsistencyGuardian 复用
+├── backend/                          ← FastAPI + 10 Agent + Tick 引擎
+│   ├── main.py                       ← FastAPI 入口 + middleware + 静态资源 mount
+│   ├── tick_runtime.py               ← Orchestrator + KG + 多租户注册表
+│   ├── bootstrap_prompts.py          ← 4 阶段冷启动 (世界/角色/伏笔/风格)
+│   ├── novel_manager.py              ← 多租户路径管理 + 路径安全 sanitizer
+│   ├── cleanup_task.py               ← 24h 删除非保留小说的后台任务
 │   ├── config/settings.py            ← 桥接 .env + config.json
-│   ├── nf_core/                      ← LLM client + ActionResolver + PromptBuilder
-│   ├── agents/                       ← Orchestrator / 9 个 Agent + 节级管线 5 个
-│   ├── memory/                       ← TickState / SummaryTree / WorkingMemory
-│   ├── persistence/                  ← TickDB (SQLite WAL)
-│   ├── graph/                        ← KnowledgeGraph (NetworkX)
+│   ├── nf_core/                      ← LLM client + 行动解析 + Prompt 构建 +
+│   │                                   reasoning_filter + json_utils +
+│   │                                   text_segmenter + edge_tts_client +
+│   │                                   video_composer + xfyun_image
+│   ├── agents/                       ← Orchestrator / 10 个 Agent + 节级管线 5 个
+│   │                                   (含 v2.24 SectionCloser)
+│   ├── memory/                       ← TickState / SummaryTree / WorkingMemory /
+│   │                                   PriorityMemoryStore
+│   ├── persistence/                  ← TickDB (SQLite WAL, 跨线程互斥锁 v2.26)
+│   ├── graph/                        ← KnowledgeGraph (NetworkX) + tick_kg_sync (v2.34)
 │   ├── vector/                       ← VectorStore (ChromaDB)
-│   ├── pipeline/                     ← 节级管线
-│   ├── api/                          ← routes.py (节级 REST+SSE) + tick_routes.py
-│   ├── data/novels/{id}/             ← 运行时数据(gitignored)
-│   └── tests/                        ← 50 个测试
+│   ├── pipeline/                     ← 节级管线 (legacy, /api/legacy/*)
+│   ├── auth/                         ← v2.26 邮箱 OTP + JWT + bcrypt + rate_limit
+│   ├── tasks/                        ← v2.24 任务队列 (TaskManager + SSE)
+│   ├── sections/                     ← v2.24 TickSection 存储
+│   ├── multimedia/                   ← v2.33 多模态资产仓 (asset_store)
+│   ├── middleware/                   ← v2.28 UserLLMHeadersMiddleware (纯 ASGI)
+│   ├── narrative/                    ← branch_manager / safety_filter / fact_ledger /
+│   │                                   creativity_scorer
+│   ├── api/                          ← routes.py (核心 REST + 节级管线) +
+│   │                                   tick_routes / section_routes /
+│   │                                   bootstrap_routes / multimodal_routes /
+│   │                                   image_routes / llm_routes / agent_routes
+│   ├── data/users/{uid}/novels/{nid}/ ← 运行时数据 (gitignored, v2.26 起按用户隔离)
+│   └── tests/                        ← 63 个测试文件, 541 用例
 ├── frontend/                         ← React + Vite 6
-│   ├── index.html
-│   ├── vite.config.js                ← base=/nw/, /api → 8762 proxy
+│   ├── vite.config.js                ← base=/, /api → 127.0.0.1:8762 proxy (强制 IPv4)
 │   ├── src/
 │   │   ├── App.jsx / main.jsx
-│   │   ├── pages/ components/ services/ styles/
+│   │   ├── auth/                     ← AuthContext / LoginGate (v2.26)
+│   │   ├── views/                    ← HomeView / NovelView / ConfigView /
+│   │   │                                MultimodalView / AgentContextView
+│   │   ├── components/               ← TaskListPanel / TickControlPanel /
+│   │   │                                TickDiagnosticsPanel / GraphView /
+│   │   │                                ControlPanel (legacy) / GeneratePanel /
+│   │   │                                MemoryView / SectionsList
+│   │   └── services/api.js           ← authedFetch + 6 多模态 + 任务 SSE
 │   └── package.json
-├── deploy/                           ← nginx / systemd 样例
-└── old/                              ← v1.x 归档(不参与运行)
-    ├── docs/                         ← IMPLEMENTATION_PLAN / MIGRATION / ...
-    ├── core/ memory_system/          ← v1 生成器与记忆模块
-    ├── experimental/ utils/ tests/   ← 实验性 / 工具 / 旧测试
-    ├── multimedia/ results/ vercel/ public/ views/ temp/
-    ├── frontend_express/             ← v1 Express+ejs 前端
-    ├── agent_backend/                ← v2 subprocess 启动器(已被 run.py 替代)
-    └── create_novel.py / continue_novel.py / main.py / validate_system.py
+├── deploy/
+│   ├── docker/                       ← Windows + Docker Desktop + CF Tunnel (token 模式)
+│   ├── backend/                      ← Linux + systemd + nginx
+│   ├── cloudflared/                  ← CF Tunnel (named tunnel + credentials.json)
+│   └── frontend/                     ← Vercel (SPA rewrites + 安全头)
+└── old/                              ← v1.x 归档 (不参与运行)
 ```
 
 ---
 
 ## 测试
 
-343 用例 (v2.19.6) 全过,全套 ~6 秒:
+541 用例 (v2.34) 全过, 全套 ~6 秒:
 
 ```bash
 python -m pytest backend/tests/ -q
 ```
 
-核心覆盖 (摘录, 完整列表见 `backend/tests/`):
+核心覆盖 (摘录 v2.20+ 新增, 完整 63 个文件见 `backend/tests/`):
 
 | 测试文件 | 覆盖 |
 |----------|------|
-| `test_knowledge_graph.py` | KnowledgeGraph CRUD + 快照 + 回滚 |
-| `test_working_memory.py` | WorkingMemory ring buffer + eviction |
-| `test_summary_tree_persistence.py` | 持久化 + 原子写 + legendize 兜底 |
-| `test_tick_state.py` | TickState + OpenLoop reap + arc_status |
-| `test_action_resolver.py` | 冲突解析 (tier / goal priority) + 败者状态清零 |
-| `test_orchestrator_p0.py` / `test_orchestrator_p1.py` | 全链路 + EventInjector / Showrunner cadence / NoveltyCritic |
-| `test_prompt_builder.py` | Token 预算 + 优先级裁剪 |
-| `test_quality_spec.py` | A-G 触发条件 + 决策矩阵 + NarrativeCritic 4 路径 |
-| `test_memory_store.py` | PriorityMemoryStore CRUD / 多因子打分 / 防退化 / 保护机制 |
-| `test_story_arc_director.py` / `test_character_arc_tracker.py` | StoryArc + CharacterArc 检测与建议 |
-| `test_fact_ledger.py` | 事实账本 / 矛盾检测 / 时间线索引 |
-| `test_token_budget_safety.py` | TokenBudgetTracker 决策矩阵 + SafetyFilter PII/harm 规则 |
-| `test_creativity_scorer.py` | 词汇/结构/情感滑窗 + 退化警报 |
-| `test_branch_manager.py` | 分支 fork/archive/tree/canonical 切换 |
-| `test_v217_coherency_sweep.py` | LLM 热更新 / TokenBudget 拦截 / tick 默认 novel 对齐 |
-| `test_agent_runtime_state.py` | AgentRuntimeState 模型 + 持久化 (v2.18 Phase 2) |
-| `test_state_patch.py` | StateOp / StatePatch 校验 + Orchestrator 应用 (v2.18 Phase 3) |
-| `test_consistency_guardian_hallucination.py` | scan_hallucination_rate 边界 (v2.18 Phase 4) |
-| `test_hallucination_observation.py` | Guardian → AgentRuntimeState shadow 与 active (v2.18 Phase 5) |
-| `test_model_tier_override.py` | LLMClient/CharacterAgent/Orchestrator 闭环 (v2.18 Phase 6) |
-| `test_concurrency_phase7.py` | concurrency 3→6 + Narrator/只读 agent 并行 (v2.18 Phase 7) |
-| `test_event_injector_state_patches.py` | EventInjector 产 StatePatch (v2.18 Phase 8) |
-| `test_hallucination_diagnostic_api.py` | `GET /api/tick/diagnostic/hallucination` (v2.18 Phase 9) |
-| `test_chat_stream_observability.py` | chat_stream budget + observability + 异常记账 (v2.19 / v2.19.5) |
-| `test_inject_event_validation.py` | inject-event 422/409 边界 (v2.19.1) |
-| `test_open_loops_admin_api.py` | POST /api/tick/open-loops dup-id 防护 (v2.19.3) |
-| `test_narrative_writer_nonblocking.py` | `_default_narrative_writer` 卸 IO (v2.19.4) |
-| `test_json_utils.py` | LLM fence helper 边界 (v2.19.6) |
+| `test_character_visibility.py` | `all_in_location` 矩阵 (v2.21) |
+| `test_open_loop_origin_events.py` | OpenLoop 字段 + Narrator 解析 (v2.21) |
+| `test_llm_config_fallback.py` | provider fallback 三优先级分支 (v2.21+Deploy) |
+| `test_state_quarantine.py` | TickState / SummaryTree 损坏 quarantine (v2.21) |
+| `test_tick_db_insert_ignore.py` | 重复 event_id / tick_id 不覆盖 (v2.21) |
+| `test_switch_novel_two_phase.py` | tick 失败 503 路径 (v2.21) |
+| `test_v2_22_p1_regressions.py` / `test_v2_22_p2_regressions.py` | provider 落盘 / UI 字段对齐 (v2.22) |
+| `test_section_closer.py` | 切节判定 + 上限保护优先 LLM (v2.24) |
+| `test_section_routes.py` / `test_section_store.py` | `POST /api/section/generate` + `TickSection` (v2.24) |
+| `test_task_manager.py` | TaskManager 单例 + SSE 推送 (v2.24) |
+| `test_main_wiring_v224.py` / `test_tick_runtime_registry.py` | per-novel/per-user runtime 装配 (v2.24) |
+| `test_create_novel_bootstrap.py` / `test_bootstrap_routes.py` | `auto_bootstrap=False` 默认 + bootstrap-world 链式 (v2.25) |
+| `test_auth_jwt.py` / `test_auth_otp.py` / `test_auth_password.py` / `test_auth_rate_limit.py` | 认证全栈 (v2.26) |
+| `test_multi_tenant_isolation.py` | A 用户看不到 B 用户 novel (v2.26) |
+| `test_llm_random_routes.py` | header key 流转 + 联动 prompt 客制化 (v2.26) |
+| `test_text_segmenter.py` | 中文按句切, 段长 15-60 字 (v2.33) |
+| `test_video_composer.py` | SRT 时间戳 / ffmpeg args / 字体样式 (v2.33) |
+| `test_multimodal_security.py` | SSRF 白名单 / voice / 线程池并发 / 路径穿越 (v2.33) |
+| `test_extract_message_text.py` | reasoning_content fallback 边界 (v2.34) |
+
+(以及 v2.0–v2.19 时期的 40+ 个测试, 含 KG / Memory / Quality / TokenBudget /
+StateOp / Hallucination / Chat-stream observability / inject-event validation /
+open_loops admin / narrative_writer nonblocking / json_utils fence helper.)
 
 > 真实 LLM smoke harness 不在单元测试里, 见
 > [`scripts/smoke_v218.py`](./scripts/smoke_v218.py) 与
@@ -629,24 +746,48 @@ python -m pytest backend/tests/ -q
 
 | 变量 | 默认 | 说明 |
 |------|------|------|
-| `ACTIVE_NOVEL_ID` | `default` | 当前小说 id(决定数据目录) |
-| `ACTIVE_NOVEL_DATA_DIR` | — | 显式数据目录路径(覆盖 ACTIVE_NOVEL_ID) |
+| `ACTIVE_NOVEL_ID` | `default` | 当前小说 id (决定数据目录) |
+| `ACTIVE_NOVEL_DATA_DIR` | — | 显式数据目录路径 (覆盖 ACTIVE_NOVEL_ID) |
 | `MAIN_TRACKING_CHARACTER_ID` | — | Narrator 默认跟随的视角角色 |
 | `NARRATOR_STRONG_MODEL_TICKS` | 100 | 前 N tick 用最强模型 |
-| `CHARACTER_AGENT_CONCURRENCY` | 3 | Semaphore 并发上限 |
+| `CHARACTER_AGENT_CONCURRENCY` | 6 | Semaphore 并发上限 (v2.18 Phase 7) |
+| `HALLUCINATION_AUTO_DEGRADE` | `0` | `1` 时 Guardian 超阈值自动写 `model_tier_override='haiku'` (v2.18 Phase 5) |
+| `NARRATOR_ENABLE_CRITIC` | — | 显式开启 NarrativeCritic (留空时 pytest 关 / 生产开) |
+| `LLM_BUDGET_MAX_TOTAL` / `LLM_BUDGET_MAX_PER_TICK` | — | token 预算上限, 持久化 `data_dir/token_budget.json` |
 | `DISABLE_TICK_RUNTIME` | `0` | `1` 时禁用 tick runtime |
 | `AGENT_HOST` / `AGENT_PORT` / `AGENT_RELOAD` / `AGENT_LOG_LEVEL` | — | uvicorn 配置 |
+
+### 认证 & 多租户 (`config.json`, v2.26)
+
+| 字段 | 说明 |
+|------|------|
+| `auth.enabled` | 启用 JWT + 多租户; 关闭后退回单租户 legacy 路径 |
+| `auth.jwt_secret` | 建议 ≥ 64 字符随机串, 留空时启动期注入但每次重启 token 失效 |
+| `auth.access_token_ttl_minutes` | JWT 有效期, 默认 60×24×7 |
+| `auth.allow_registration` | 关掉可锁住新用户注册 (留邀请制 stub) |
+| `smtp.host` / `port` / `username` / `password` / `from_addr` | OTP 邮件发送 (推荐腾讯企业邮箱 465 SSL) |
+
+### 多模态 / 图像生成
+
+| 变量 / 字段 | 说明 |
+|------|------|
+| `X-Image-Endpoint` / `X-Image-AppID` / `X-Image-APIKey` / `X-Image-APISecret` (header) | `POST /api/image/generate` 的一次性凭据, hostname 白名单校验 (v2.33) |
+| `X-User-LLM-Key` / `X-User-LLM-Base-Url` / `X-User-LLM-Model` (header) | v2.28 起服务端 LLM 改读用户 key |
+| `MULTIMODAL_VIDEO_CONCURRENCY` | `video_composer` 全局 `Semaphore`, 默认 2 |
+| `TTS_VOICE` / `TTS_RATE` / `TTS_VOLUME` | edge-tts 默认参数 (在 `.env`) |
 
 ---
 
 ## 文档
 
 * [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md)
-  — 9 agent 完整 prompt 集 + 设计哲学(必读)
+  — 9 agent 完整 prompt 集 + 设计哲学 (必读)
 * [`CHANGELOG.md`](./CHANGELOG.md) — 完整版本历史
 * [`CLAUDE.md`](./CLAUDE.md) — Claude Code 工作指南
-* [`backend/tests/`](./backend/tests/) — 50 个测试,即文档
-* [`old/docs/`](./old/docs/) — v1.x 历史规划文档(MIGRATION / IMPLEMENTATION_PLAN / ...)
+* [`backend/tests/`](./backend/tests/) — 63 个测试文件 / 541 用例, 即文档
+* [`deploy/README.md`](./deploy/README.md) — Linux+systemd / Docker / Vercel
+  三段式部署
+* [`old/docs/`](./old/docs/) — v1.x 历史规划文档 (MIGRATION / IMPLEMENTATION_PLAN / ...)
 
 ---
 

@@ -5,6 +5,535 @@
 
 ---
 
+## [2.34] — 2026-06-09
+
+### Added
+* **`feat(kg)`** 知识图谱接入 tick 架构 — 新增 `backend/graph/tick_kg_sync.py`
+  纯 Python 同步 (无 LLM), 自动从 `CharacterProfile` /
+  `WorldState.{locations,factions}` / `CharacterState.{current_location,
+  relationships}` / `Faction.{leader,allied,hostile}_*` 喂图。中文关系类型
+  (`恋人/盟友/敌人/师徒/...`) → `RelationType` 映射, 兜底 `KNOWS+label`
+* `KnowledgeGraph` 加 single-file 持久化 `save_to_disk` / `load_from_disk`,
+  与 snapshot 历史回滚目录解耦; 原子写 + 损坏文件静默跳过
+* `TickRuntime.__init__` 装载 KG (per-novel `data_dir/knowledge_graph.json`),
+  并立即跑一次 seed sync; `Orchestrator` 加 `knowledge_graph` +
+  `knowledge_graph_path` 参数, `_run_tick_unlocked` 末尾持久化前同步 + 落盘,
+  累积到 `agents_called` 以 `kg_sync(+Ne/+Nr/~Ne)` 形式诊断
+* `/api/graph*` 路由优先读 tick KG, fallback 到 legacy GenerationPipeline,
+  POST/DELETE 后同步落盘。修前端 KG tab 永远 0 实体 0 关系的存量问题
+* **`feat(tasks)`** 任务面板独立分段 + 15s 兜底刷新 (`TaskListPanel.jsx`) —
+  内嵌标题 + ⟳ 刷新按钮, 15s `setInterval` 仅在 tab 可见时跑, 防 SSE 漏推;
+  终态任务保留窗口 60s → **30 分钟** (实测一节生成 ~30 分钟, 60s 太短)
+
+### Fixed
+* **bug 1 (标题穿通根因)** — `WorldSimulator._parse_output` 把 LLM 输出的
+  `new_world_state` 整个替换 `prior_world_state`; MiMo 偷工只给
+  `{era, weather}` 时, `model_validate` 用 `default_factory=list` 兜底,
+  bootstrap 写入的 5 locations / 3 factions / 6 world_rules 被空 list
+  整个擦掉。修法: 稳态字段反清空保护, `locations/factions/world_rules`
+  为空但 prior 非空 → 保留 prior + warning, 真要删走 events
+* **bug 2 (supplement 元话语泄漏)** — `SectionCloser._draft_closure_supplement`
+  漏掉 v2.34 早期给 NarratorAgent 加的 `_strip_reasoning_leak`, 补叙段
+  末尾出现 "首先, 用户提供了..." 一整段 reasoning 复述落盘。抽 reasoning
+  反泄漏到共享模块 `nf_core/reasoning_filter.py`, marker 35 → 47
+  (补"我的任务是" / "用户提供了" / "需要快速带过" / "要求包括"),
+  `NarratorAgent` / `SectionCloser` 同接一道闸
+* **bug 3 (bootstrap 空世界)** — 4 阶段 LLM 都返回 `{}` 时, 角色 / 地点 /
+  伏笔 / 风格锚点全为空但 task 仍标 `completed`, 续写时 Narrator 完全失锚。
+  新增完整性闸: 4 集合任一为 0 直接 raise, task 变 `failed`,
+  用户可见可重跑
+* **bug 4 (4 类用户报 bug — 数据兜底 + Narrator 反泄漏 + 标题穿通)**:
+  * `secrets_kept` / `active_global_events` 等 `list[str]` 字段被 reject —
+    `models._coerce_llm_payload` 加元素级兜底, dict 项抽
+    `content/description/text/value/summary/name/title/label/id`,
+    仅在 `typing.get_args` 判定目标元素类型为 `str` 时介入
+  * `WorldSimulator` 自然事件 `evt_001/evt_002` 跨 tick 重复 + 缺 type —
+    `_parse_output setdefault type=exogenous` + 强制重写 id 为
+    `evt_nat_{world_time}_{idx}_{6 位 hex}`, 不依赖 LLM 给 unique id
+  * `Narrator narrative_text` 末尾接 reasoning prologue —
+    `_strip_reasoning_leak` 段落起点扫 35 个 CoT 标记
+    (`首先,理解任务` / `从 tick 摘要看` / `关键点包括` / `好的, 以下是` / ...)
+    命中即砍; prompt 加「输出禁区」段, leak 后 <40 字才退化为不叙述
+  * 标题"被遗忘的神明..."跑成现实村庄 — `TickState` 加 `novel_title`
+    字段 + `bootstrap_world(title=...)` + `NarratorAgent.narrate(novel_title=...)`
+    渲染到 user_prompt 顶部「作品标题 (主题锚点 — 必须呼应)」块;
+    `PUT /api/novels` 改名时同步活跃 runtime
+* **`fix(llm-json)`** `json_repair` 兜底 (`requirements.txt` +
+  `json-repair>=0.45.0`) — `parse_llm_json` 加 fast path (`json.loads`)
+  + 降级 (`json_repair`, 修复未转义引号 / 字面换行 / 单引号 /
+  尾随逗号), 顶层不是 dict 时仍 raise 避免误吃空对象, 包未安装时
+  降级到 stdlib (向后兼容旧 Docker 镜像)
+* **`fix(llm-json)`** 11 个 agent + `bootstrap` 统一走 `parse_llm_json` —
+  新增 `nf_core/json_utils.py:extract_json_object + parse_llm_json` 深度
+  平衡扫描第一个 `{...}` (字符串内 brace / 转义引号正确处理), 12 处调用
+  全切; 失败日志改用 `raw[:300]`, 直接看 MiMo 原始返回排障
+* **`fix(bootstrap)`** 鲁棒 JSON 提取 + 失败时打印原文 —
+  `_extract_json_object` 深度平衡扫描第一个 `{...}` 子串, `_llm_json` 解析
+  失败时记 `stage + 错误位置 + raw[:500] + extracted[:500]`
+* **`fix(bootstrap)`** `max_tokens` 砍到 16K-32K, 修 MiMo reasoning 5 分钟
+  服务端超时 — `mimo-v2.5-pro` reasoning chain 在 61K-122K 下展开过长,
+  MiMo 平台 5 分钟硬超时 → `APITimeoutError`。降到 reasoning + JSON 都能
+  塞下、5 分钟算得完的折中: `world 24576 / characters 32768 /
+  open_loops 12288 / style 16384`
+* **`fix(llm)`** reasoning 模型 (MiMo) `content` 空导致 502, fallback 到
+  `reasoning_content` — `random-title max_tokens=32` / `random-seed=300`
+  对推理模型严重不够, 思维链吃光 budget 让 `content` 返空字符串,
+  `if not text` 抛 502 但答案其实在 `reasoning_content` 里。新增
+  `extract_message_text`, `content` 空时退到 `reasoning_content`
+  (attribute 或 `model_extra`); `random-seed` 默认 2048,
+  `random-title` 1024; 502 错误信息带 `finish_reason`, 让用户区分
+  "上游 length 截断" vs "上游审核拦截"; title 清理改为取最后一段非空行
+* **`fix(llm_client)`** `AsyncOpenAI max_retries: 1 → 0` (3 处: 主 client /
+  reload / 用户态 client) — MiMo 单次 5 分钟服务端超时, 重试又一次
+  5 分钟没意义, fail fast 让上层 (bootstrap / writer / ...) 直接拿到
+  `APITimeoutError` 处理
+
+### Tests
+* `test_extract_message_text.py` (9) — `content` 正常/空/None/全空白 分别
+  fallback, `reasoning_content` 在 attribute 与 `model_extra` 两种位置
+* `parse_llm_json` 6 edge case (干净/markdown/前后散文/嵌套/字符串内 brace/
+  纯 reasoning) 本地全过, 14 个 modified 模块 importlib 全 OK
+* 全套 541 个测试可被收集 (`pytest --collect-only`); 32 个
+  orchestrator/narrator/tick_state/graph 测试在 KG 接入后仍全过
+
+---
+
+## [2.33] — 2026-06-08
+
+### Added — 多模态生成: 节文本 → 分段图 + TTS → 字幕视频
+
+后端
+* `backend/nf_core/text_segmenter.py` — 中文按句/逗号切, 段长 15-60 字, 纯 Python
+* `backend/nf_core/edge_tts_client.py` — `edge-tts` + `WordBoundary` 拿时长,
+  voice 白名单
+* `backend/nf_core/video_composer.py` — `imageio-ffmpeg` + libx264 单条
+  `filter_complex` 合成, `compose_video_async` + 全局 `Semaphore(2)` 限并发
+* `backend/multimedia/asset_store.py` — per-novel-per-section 资产
+  (`manifest.json` + `img_NN.png` + `audio_NN.mp3` + `subtitles.srt` +
+  `output.mp4`), `update_segment_status` read-modify-write 在锁内
+* `backend/api/multimodal_routes.py` — 6 REST 端点 (`/api/multimodal/voices`,
+  `/segment-preview`, `/generate`, `/{novel}/list`,
+  `/{novel}/{ch}/{s}/manifest`, `/{novel}/{ch}/{s}/asset/{filename}`),
+  复用 `task_manager` SSE
+* `backend/tasks/task_models.py` `TaskKind` 加 `multimodal_generation`
+
+前端
+* `frontend/src/views/MultimodalView.jsx` — 完整新视图: 节列表 + 分段预览 +
+  配置 + SSE 进度 + 视频播放器 + 段缩略图
+* `frontend/src/services/api.js` — 6 个多模态 API + 401-aware blob URL helper
+
+依赖: `edge-tts` (MIT) + `imageio-ffmpeg` (静态二进制) + `mutagen`
+(mp3 时长兜底)
+
+### Security & Fixed (3 reviewer 并行 + 手动)
+* **CRITICAL** SSRF — `X-Image-Endpoint` 接受任意 URL 把讯飞凭据签发到
+  攻击者主机, `xfyun_image` 加 hostname 白名单 + 强制 https
+* **CRITICAL** `progress_state` 每个 task 各创独立 dict, 进度永远 `1/N`,
+  改为 `_run_executor` 共享 + `asyncio.Lock` 保护
+* **HIGH** voice 参数无校验 → `GenerateRequest field_validator` 白名单
+* **HIGH** `image_creds` 在 task 闭包里长期持有 `APISecret` → finally 清零
+* **HIGH** SSE controller unmount 不 abort → `useEffect cleanup` 显式 abort
+* **HIGH** `assetUrls cleanup` 闭包捕获初始空对象 → ref 同步, unmount 时
+  revoke 真实 blob URL
+* **HIGH** `handleGenerate` 双击 race → `generatingRef` 同步锁
+* **MEDIUM** `get_asset endswith` 多扩展名绕过 → `Path(filename).suffix`
+* **MEDIUM** `datetime.utcnow()` 3.12+ 弃用 → `datetime.now(timezone.utc)`
+* **MEDIUM** `fetchMultimodalAssetBlobUrl 401` 不刷登录态 → 复刻 `_emit401`
+
+### Tests
+* `test_text_segmenter.py` (11) — 空/单/多句/超长/碎片/末段兜底
+* `test_video_composer.py` (13) — SRT 时间戳/ffmpeg args/字体样式
+* `test_multimodal_security.py` (12) — SSRF 白名单/voice/线程池并发不丢更新/
+  路径穿越
+
+### Data Layout
+```
+data/users/{uid}/novels/{nid}/multimedia/sec_{ch}_{s}/
+  manifest.json + img_NN.png + audio_NN.mp3 + subtitles.srt + output.mp4
+```
+
+---
+
+## [2.32] — 2026-06-08
+
+### Fixed — 讯飞图片生成对齐 MaaS 平台文档
+* `host` + body 必填字段 + 分辨率约束 (`512/640/768/1024/1280/1536/2048`)
+  对齐讯飞 [Spark v2.1/tti] 文档
+* `patch_id` 永远 set, 空数组兜底 — 实测 schema validator 报
+  `'$.header.patch_id' field is required`, 全量模型 (`xopqwentti20b` 等)
+  不需要 LoRA 也得给空数组
+
+### Fixed — Docker bridge MTU 降到 1380, 修讯飞 TLS 握手超时
+* DNS / TCP 443 都通, TLS Client Hello 第一帧丢, 根因是 Docker 默认 bridge
+  MTU 1500 > 讯飞 GFW 路径 MTU
+* `docker-compose.yml` 加 `driver_opts: com.docker.network.driver.mtu: 1380`
+
+---
+
+## [2.31] — 2026-06-08
+
+### Added — 讯飞图片生成支持 `modelid` (domain) 切换
+* `xfyun_image` 接受 `modelid` 参数 (默认 `xopqwentti20b`), 透传到请求体
+  `header.domain`
+* 业务错误码加中文 hint 映射 (`10004 → "缺字段, 看 detail"`,
+  `10013 → "审核拦截, 改 prompt"`, …), 用户一眼看出怎么修
+
+### Fixed — 讯飞协议与域名解析
+* 端点协议从 `wss://` 改为 `https:// POST`, 修 `ConnectionResetError`
+  (讯飞星辰 MaaS 平台已切到 REST, WebSocket 端点稳定性差)
+* 兼容 `websockets 11+` `InvalidStatus` 改名, 异常 `detail` 永不为空
+* `backend + cloudflared` 显式 DNS (`8.8.8.8` / `1.1.1.1`), 修讯飞域名
+  解析失败 (Cloudflare Tunnel 容器默认走 DNS-over-HTTPS, 国内 GFW 偶发拦截)
+
+---
+
+## [2.30] — 2026-06-08
+
+### Refactored — 彻底去掉所有保活轮询, 事件驱动
+
+之前每秒 ~1 个请求 (`App.jsx /api/stats` 30s + `HomeView.jsx /api/tick/status`
+15s + `TaskListPanel.jsx /api/tasks` 3s + `TickControlPanel.jsx
+/api/tick/status` 3s), idle 也在拉, devtools 网络面板刷屏。
+
+现在
+* 全部 `setInterval` 删除, 死常量 `POLL_INTERVAL_MS` 清掉
+* 触发时机:
+  1. 组件挂载时拉一次
+  2. tab 从后台切回前台时拉一次 (`visibilitychange → visible`)
+  3. 用户操作完成后由现有 `onAfterGenerated` / `refreshKey` / `handleX` 触发
+* 进行中任务的实时进度仍走 `TaskListPanel` 的 SSE 流 (事件驱动, 不算轮询)
+
+idle 时网络面板完全静音。
+
+---
+
+## [2.29] — 2026-06-08
+
+### Fixed — 502 缺 CORS 头
+* `UserLLMHeadersMiddleware` 从 `BaseHTTPMiddleware` 改成**纯 ASGI middleware** —
+  `BaseHTTPMiddleware` 在错误响应路径有已知边缘案例: CORS 头偶尔丢失, 浏览器
+  读不到 502 body, 用户看不到讯飞具体错误。纯 ASGI 直接走 `scope/receive/send`,
+  不破坏中间件链
+* `image_routes` 缺凭据时直接 400 (避免浪费一次讯飞握手往返);
+  `XfyunImageError` 分支显式 `logger.warning` 让具体错落到 docker logs
+
+### Tuned — 后台保活轮询过密 (此后 v2.30 完全删除)
+* `/api/stats` 5s → 30s, `/api/tick/status` 3s → 15s
+* `document.visibilitychange` 监听, tab 切到后台暂停轮询, 后台 tab 网络
+  噪音降 ~80%
+
+---
+
+## [2.28] — 2026-06-08
+
+### Added — 多模态文生图 (科大讯飞) + 服务端 LLM 改读用户 key
+
+**多模态生成 tab**
+* `backend/nf_core/xfyun_image.py` — 科大讯飞 Spark v2.1/tti 客户端,
+  HMAC-SHA256 鉴权 + 流式收 base64 切片 + 错误码透传
+* `backend/api/image_routes.py:POST /api/image/generate` —
+  header 一次性带 `AppID/APIKey/APISecret`, 后端用完即丢
+* `frontend/src/views/MultimodalView.jsx` — 文本框 → 尺寸选择 → 生成 →
+  图片预览 + 下载 (v2.28 占位让用户先跑通凭据, v2.33 接小说内容)
+* `App.jsx` 主导航加「多模态生成」tab
+
+**服务端 LLM 改用用户 key (彻底去掉项目内 api key 兜底)**
+* `nf_core/llm_client` 加 `UserLLMConfig` `ContextVar` +
+  `set_user_llm_config` / `get_user_llm_config` helper + 按
+  `(api_key, base_url)` 缓存 `AsyncOpenAI` (LRU 32 上限防内存膨胀);
+  `chat()` / `chat_stream()` 优先用 `ContextVar` 凭据, 没值才退回
+  `self._client`
+* `backend/middleware/user_llm.py` ASGI middleware — 请求入口读
+  `X-User-LLM-Key/Base-Url/Model` 写入 `ContextVar`,
+  `asyncio.create_task` 默认拷贝 context, 后台 tick/section 任务自动继承
+* `main.py` 注册 `UserLLMHeadersMiddleware` (CORS 之后, 先 CORS 后 user-llm)
+* `frontend/src/services/api.js` `authedFetch` 所有非公开请求都带
+  `X-User-LLM-*` header
+
+兼容性: 用户没配 key 时仍走 `config.json` 兜底 (legacy/dev); 生产强制模式
+→ `config.json` 留空 `api_key` 即可
+
+---
+
+## [2.27] — 2026-06-08
+
+### Added — HTML 邮件 + 图片生成多 provider + LLM 配置改本地存储 + toast 精简
+
+**邮件**
+* `smtp_client` multipart text + HTML, 紫青渐变品牌色 + 大字号 OTP
+* 显式 `Message-ID` 提升 Gmail 反垃圾打分
+
+**系统设置 (`ConfigView` 重写)**
+* 文本 LLM: provider (`deepseek/mimo/custom`) + key/url/model, 全 `localStorage`
+* 图片生成: 新增, 默认科大讯飞 (`AppID + APISecret + APIKey` 三段式)
+* schema 驱动多 provider 字段; 预留 OpenAI DALL·E / Stability / 自定义
+* 服务端不再有 LLM 兜底 key; 未配置时相关功能直接报错
+
+**SettingsModal 精简** — 移除「个人 LLM API 配置」段 (迁到 ConfigView),
+仅保留: 保存我的作品 / 设置密码 / 退出登录
+
+**Toast 精简** — 删除可被 UI 自然感知的 success/info; 保留全部错误 +
+验证码已发送 + 密码设置成功 + 已保存
+
+---
+
+## [2.26] — 2026-06-08
+
+### Added — 邮箱 OTP 认证 + 多租户数据隔离 + 随机种子/标题按钮
+
+5 phase 一次性实现:
+
+**后端 — 认证**
+* `backend/auth/` 包: `models` / `store` (SQLite) / `jwt_utils` / `otp` /
+  `password` (bcrypt) / `smtp_client` (aiosmtplib) / `rate_limit`
+  (per-IP+per-email) / `dependencies` / `routes`
+* 9 个端点: `register/send-otp` & `verify` / `login/send-otp` &
+  `verify-otp` & `password` / `me` / `me/set-password` / `me/settings` /
+  `logout`
+* 邮箱枚举防御: `login/send-otp` 静默 204, `login/verify` 错误文案统一
+* 一次性 OTP, 5 分钟 TTL, 5 次尝试上限, sha256 + 常数时间比较
+
+**后端 — 多租户**
+* `novel_manager` 全 API 加 `user_id` 参数, 路径
+  `data/users/{uid}/novels/{nid}/`
+* `tick_runtime` 注册表 key `(user_id, novel_id)`, active 状态 per-user
+* 启动时一次性迁移 `data/novels/` → `data/users/_legacy/novels/`
+* 所有路由经 `Depends(get_current_user)`, task 加 `user_id` 字段 + ownership
+  检查
+* 24h cleanup 后台 task: `save_my_works=False` 且 `last_accessed` 超期 → 删
+
+**后端 — 随机生成**
+* `POST /api/llm/random-seed` + `POST /api/llm/random-title` —
+  `X-User-LLM-Key/Base-Url/Model` header 一次性传递, 后端用完即丢
+* 联动: 一侧已填 → 另一侧客制化生成
+
+**前端 — 认证 UI**
+* `AuthContext` — `localStorage JWT` + 401 自动 logout
+* `LoginGate` 全屏遮罩: OTP / 密码 / 注册 三 tab
+* `SettingsModal` — API key (localStorage) + `save_my_works` 开关 + 设置密码
+* `TopBar` — 右上角邮箱徽章 + 设置齿轮
+* `App.jsx` 包 `AuthProvider`, 未登录全屏拦截
+
+**前端 — 随机按钮**
+* `HomeView` 标题/种子输入框右侧 🎲 按钮, 联动客制化
+* `services/api.js` 全部走 `authedFetch` (自动注入 `Bearer` + 401 处理)
+
+依赖
+* `requirements.txt`: `passlib` + `bcrypt<5` + `python-jose` +
+  `aiosmtplib` + `email-validator`
+* `config.example.json` + deploy 模板: 新增 `auth` + `smtp` 段
+* 腾讯企业邮箱 SMTP: `smtp.exmail.qq.com:465` SSL
+
+### Fixed — TickDB 跨线程 `ProgrammingError`
+
+多租户改造后 FastAPI `Depends` 解析 runtime 并把 `runtime.tick_db.X(...)`
+在 sync handler 的 thread executor 里执行, 同一 `TickDB._conn` 被不同 worker
+线程触达 → sqlite3 默认 `check_same_thread=True` 抛 `ProgrammingError`,
+`/api/tick/{history,event-stats,action-patterns}` 全 500。
+
+* `sqlite3.connect(check_same_thread=False)` 关掉守卫
+* `threading.Lock` 串行所有 `_conn` 操作 (autocommit 模式下并发 BEGIN 也会
+  transaction within transaction)
+* 验证: 8 线程 × 20 op 跨线程压测无报错
+
+### Tests
+* 45 用例新增 — `test_auth_password / jwt / rate_limit / otp /
+  multi_tenant_isolation / llm_random_routes`
+* `416 → 461` 用例; 60+ legacy 测试因 API 签名变化需后续迁移
+* 兼容 shim 保留 `_container` / `_assert_path_within_novels_root` 让旧测试
+  collection 通过
+
+---
+
+## [2.25] — 2026-06-06
+
+### Added — `bootstrap_world` 任务化 + 链式触发首节
+
+v2.24 默认 `auto_bootstrap=True` 把"创建空壳"与"种子化首节"并成一步,
+冷启动一个 fresh novel (zero CharacterAgent / OpenLoop / StyleAnchor)
+立刻入 `bootstrap_section`, executor 推 30 tick 全沉默到硬上限切节,
+首节几乎空 — 烟测真实复现了这个失败模式。
+
+v2.25 把两步拆开:
+1. `POST /api/novels` (默认 `auto_bootstrap=False`) — 仅创建空壳
+2. `POST /api/novels/{id}/bootstrap-world` — 4 阶段冷启动后链式入队首节
+
+### v2.25-a (后端)
+* `TaskKind` 加 `bootstrap_world`, `max_ticks=4` 借用为阶段总数
+* `backend/api/bootstrap_routes.py` 新增
+  `POST /api/novels/{id}/bootstrap-world` — `seed` 必填,
+  `positioning/references/also_generate_first_section` 可选, 后三者默认值
+  与 `bootstrap_prompts.py main()` 对齐
+* `_reload_runtime` — bootstrap 改了 `tick_state.json`, 注册表里那个内存空
+  state 的 runtime 实例必须丢掉, 下次 `get_runtime` 重读盘
+* `_spawn_chained_first_section` — bootstrap 完成后入队
+  `kind=bootstrap_section` 任务, 复用 `section_routes._make_section_executor`
+* `routes.create_novel` 默认改 `auto_bootstrap=False`, 保留显式 True
+  路径供测试 / 节级管线对照实验
+
+### v2.25-b (前端)
+* `HomeView` 创建表单加「世界种子」必填 textarea + 折叠的「作品定位 /
+  参考作家」高级配置, 一次提交触发 `bootstrap_world → bootstrap_section`
+  两段任务
+* `TaskListPanel` 对 `bootstrap_world` 任务用 `tick_count/max_ticks` (4 阶段)
+  代替字数进度条, 显示「阶段 N/4」
+* `bootstrapWorld(novelId, {seed, positioning?, references?,
+  also_generate_first_section?})` API 封装
+
+### Tests
+* `test_bootstrap_routes.py` (8) — 404/409/失败态/端到端/链式触发/字段透传/
+  字段默认/router 已注册
+* `test_create_novel_bootstrap.py` — `default_skips_bootstrap_task_v225` /
+  `with_auto_bootstrap_true_still_spawns_task`
+* 全套 **451** 通过
+
+---
+
+## [2.24] — 2026-06-05
+
+### Added — SectionCloser Agent + 任务队列 + per-novel TickRuntime
+
+**P1 — 后端铺底**
+* `backend/agents/section_closer.py` — 新增 SectionCloser, 判定 tick 流是否
+  应当切节: `lower <= words < upper` 调 LLM judge,
+  `words >= upper` 不调 LLM 直接切 (上限保护优先于 LLM); `words < lower`
+  强制继续
+* `backend/tasks/` 模块 — `TaskManager` 单例 (内存) + `task_models.py`
+  (`TaskKind`) + `task_routes.py`:
+  * `GET /api/tasks{?novel_id}` — 全量任务集
+  * `GET /api/tasks/{id}` — 单个任务
+  * `POST /api/tasks/{id}/cancel`
+  * SSE `GET /api/tasks/{id}/stream`
+* `backend/sections/section_store.py` — `TickSection` (Pydantic):
+  `chapter/section/title/content/word_count/...`, JSON 持久化
+* `Orchestrator.last_narrator_output` 公开 — `SectionTask` executor 在每
+  tick 后区分 `narrate` / `silent`
+* access log 过滤 — `/api/tasks` 与 `/api/tick/status` 高频轮询不上日志
+
+**P2 — API 改造**
+* `POST /api/section/generate` — 续写下一节, 走任务队列 + 自动首节
+* 节级管线端点加 `/api/legacy/` 别名 (原 `/api/generate` /
+  `/api/generate/stream` / `/api/chapter/advance` / `/api/rollback` /
+  `/api/snapshots` / `/api/reset` 同时保留), 让前端测试栏使用
+* `TickRuntime` 注册表 key 由 `novel_id` 升级到 `(user_id, novel_id)`
+
+**P3 — 前端**
+* `frontend/src/components/TaskListPanel.jsx` (新) — 轮询 `/api/tasks` 3s +
+  per-task SSE 替换轮询; 终态保留 60s (v2.34 改 30 分钟); 进度条 +
+  cancel 按钮
+* `App.jsx` 工具栏「测试」分类挂「节级管线 (legacy)」, 主路径常驻
+  `TaskListPanel`
+* `HomeView.handleCreate` / `handleContinue` 改任务流, 不再就地 SSE;
+  toast「已加入任务队列, 见左下面板」
+* `NovelView` 同时拉 `/api/section/list` 与 `/api/sections`, 按
+  `(chapter, section)` 合并, tick 驱动优先, legacy 退让
+
+### Tests
+* `test_section_closer.py` / `test_section_routes.py` /
+  `test_section_store.py` / `test_task_manager.py` /
+  `test_main_wiring_v224.py` / `test_tick_runtime_registry.py`
+* **443/443** 通过, 无 v2.24 之前用例回归
+
+---
+
+## [2.23] — 2026-06-05
+
+### Fixed — 节级管线最终修
+
+* **题材锚定** — 节级管线生成时透传 `seed / title / positioning` 给
+  `OutlineAgent`, 防止节级管线脱离主题漂走
+* **节标题生成** — 每节调 LLM 单独产 `title` 字段 (而非沿用 chapter 标题)
+* **UI 集中化** — 节级管线 (legacy) 与 tick 驱动节统一在 `NovelView`
+  展示 (v2.24 P3 进一步合并视图)
+
+---
+
+## [2.22] — 2026-06-04
+
+### Fixed (P1)
+* `provider 落盘 + 原子化` — `PUT /api/config/llm` 写 `config.json` 改
+  `tempfile + os.replace` 原子写, 防止崩溃留下半截文件
+* 图端点校验 — `/api/graph/entities POST` 加 entity_id 唯一性 + attributes
+  类型校验; `/api/graph/relations POST` 校验 from/to 实体存在
+* API 4xx 收敛 — 多个端点把内部 `KeyError` / `ValueError` 包成 404/422,
+  不再裸 500
+
+### Fixed (P2)
+* 前端 UI 字段对齐 — `EventInjector` 注入事件表单字段名与后端
+  `InjectEventRequest` 对齐 (`type / visible_to / narrative_value / ...`)
+* Orchestrator 注入事件不丢失 — `_injected_pending` 在 tick 入口被 drain,
+  `_run_tick_unlocked` 异常时改为 try/finally 保护
+
+### Refactored (P3)
+* `tools/drive_ticks.py` 归档到 `old/tools/` — 历史 smoke 工具, 已被
+  pytest harness 取代
+
+### Fixed (v2.21.1)
+* `CharacterState` 字段名是 `current_location` 不是 `location` — v2.18 落
+  state 转移字段时混了, 修齐
+
+### Tests
+* `test_v2_22_p1_regressions.py` / `test_v2_22_p2_regressions.py`
+
+---
+
+## [Deploy] — 2026-06-07 to 2026-06-08
+
+### Added — 多目标生产部署
+
+**Linux + systemd + Cloudflare Tunnel + Vercel** (`deploy/{backend,
+cloudflared,frontend}/`)
+* `backend/install.sh` 一键装系统依赖 + venv + pip + 用户 + systemd, 留空
+  API Key 等手动填
+* `backend/update.sh` git pull + 条件 pip + 重启 + 健康检查
+* `backend/backup.sh` zstd/gz 备份 `data/` + 滚动清理
+* `novel-agent.service` 沙箱加固 (`ProtectSystem=strict` +
+  `ReadWritePaths`)
+* `cloudflared/install.sh` 装 cloudflared + tunnel create + 凭据落地 + systemd
+* `cloudflared/config.yml.example` SSE 友好 (`connectTimeout 30s`,
+  `keepAliveTimeout 90s`, `disableChunkedEncoding=false`)
+* `frontend/vercel.json` SPA rewrites + 长缓存 + 安全头
+* `frontend/env.production.example` `VITE_API_BASE` + `VITE_BASE_PATH`
+
+**Windows + Docker Desktop (token 模式 CF Tunnel)** (`deploy/docker/`)
+* `Dockerfile` python:3.11-slim, 非 root (uid 1001), tini PID1,
+  healthcheck 用 urllib (slim 没 curl), HF cache 走环境变量到
+  `/home/app/.cache`
+* `docker-compose.yml` backend + cloudflared 两容器编排, token 模式无需
+  本地 `config.yml`, backend 只 bind `127.0.0.1:8762`, cloudflared
+  `depends_on healthy`, 业务数据全部走 bind mount
+  (`../../data/{backend,storage,hf_cache}`), `config.json :ro` mount 支持
+  热改
+* `.dockerignore` 排除 `.git / .venv / node_modules / data/ / old/`
+* Windows 详细步骤 README (CF 网页拿 token → 填 `.env` → `up -d` →
+  网页配 hostname), 含资源占用 / 备份 / 升级 / 排错 9 节
+
+### Refactored — 前端 `base` 默认根路径
+* `frontend/vite.config.js` `base = process.env.VITE_BASE_PATH || '/'`
+  (此前 `/nw/`)
+* `backend/main.py` `app.mount('/', StaticFiles(..., html=True))`, 删多余
+  root redirect
+* `frontend/vercel.json` SPA rewrites 改根路径 (`/(.*) → /index.html`)
+* 同源部署直接 `http://host:8762/` 即可, Vercel 部署不再需要
+  `VITE_BASE_PATH=/`
+
+### Fixed
+* `deploy(docker)` 默认走国内镜像源 (daocloud + 清华 PyPI/apt) — docker.io
+  在国内频繁超时, 基础镜像 / cloudflared / PyPI / debian apt 四处都切到
+  国内, 全部参数化 (`REGISTRY` / `PIP_INDEX_URL` / `APT_MIRROR` /
+  `CLOUDFLARED_IMAGE`)
+* `fix(core/config)` active provider 缺凭据时按顺序 fallback 到完整 provider —
+  `_complete(c) = api_key + base_url + model 三者全齐`, 按 `_FALLBACK_ORDER`
+  (`deepseek → mimo → custom`) 找第一个完整的; 全员不完整时保留请求的
+  provider, 让上游 "Missing credentials" 错误清晰
+* `fix(deploy/docker)` `chown /app` + 预建 `results/temp` — `USER app
+  (uid 1001)` 在 `/app` 下 mkdir 子目录 `EACCES`, 导致 `core/config.py`
+  模块级 `RESULTS_DIR.mkdir()` 抛 PermissionError, 被
+  `backend/config/settings.py` 裸 except 静默吞掉, LLM 凭据解析回兜底
+  (`api_key=""`), 启动期 openai SDK 报 Missing credentials, 容器无限 restart
+
+---
+
 ## [2.21] — 2026-06-04
 
 ### Fixed — 一次性清掉 10 个 P0–P3 隐患
