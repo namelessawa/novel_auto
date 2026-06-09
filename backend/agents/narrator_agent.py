@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 from dataclasses import dataclass, field
 
 from agents.narrative_critic import CritiqueOutput, NarrativeCritic
@@ -31,85 +30,9 @@ from memory_system.models import (
 )
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
+from nf_core.reasoning_filter import strip_reasoning_leak as _strip_reasoning_leak
 
 logger = logging.getLogger(__name__)
-
-
-# v2.34 — Reasoning 模型 (MiMo / DeepSeek-Reasoner) 偶尔把 chain-of-thought
-# 接在 narrative_text 末尾或前面。这些短语只会出现在 meta-思考里 ("首先,理解
-# 任务"/"从tick摘要看"/"关键点包括"), 不会进入真正的小说正文。命中即从该位置
-# 把后续全部砍掉, 并加 ``consistency_flag=reasoning_leak`` 报警。
-_REASONING_LEAK_MARKERS = (
-    "首先,理解任务",
-    "首先,理解一下",
-    "首先,我需要",
-    "首先,分析",
-    "首先,让我",
-    "首先,要分析",
-    "首先,我来分析",
-    "首先,我要",
-    "首先,确认",
-    "首先,这是",
-    "从tick摘要",
-    "从tick 摘要",
-    "关键点包括",
-    "tick摘要",
-    "好的,以下是",
-    "好的,我来",
-    "好的,让我",
-    "好的,首先",
-    "让我先",
-    "让我来",
-    "我应该",
-    "我需要为",
-    "我需要写",
-    "我需要先",
-    "因此,我",
-    "考虑到这些",
-    "考虑到上述",
-    "现在,我开始",
-    "现在开始写",
-    "**思考过程**",
-    "**分析过程**",
-    "**任务理解**",
-)
-
-
-def _normalise_punct(s: str) -> str:
-    """全 → 半角逗号, 仅做匹配用; 不改原文。"""
-    return s.replace("，", ",")
-
-
-_REASONING_LEAK_PATTERN = re.compile(
-    "(" + "|".join(re.escape(_normalise_punct(m)) for m in _REASONING_LEAK_MARKERS) + ")"
-)
-
-
-def _strip_reasoning_leak(text: str) -> tuple[str, bool]:
-    """从 narrative_text 砍掉 reasoning prologue/epilogue 泄漏。
-
-    策略: 标准化全角逗号为半角后, 在文本里找第一个 reasoning marker 命中点。
-    命中位置位于一个段落开头 (前面是 ``\\n\\n`` 或位于文本开头) 才算泄漏,
-    避免把"首先"这种合法散文起始词误伤。
-
-    返回 ``(clean_text, leaked)`` — leaked=True 时调用方加 consistency_flag。
-    """
-    if not text:
-        return text, False
-    norm = _normalise_punct(text)
-    m = _REASONING_LEAK_PATTERN.search(norm)
-    if not m:
-        return text, False
-    pos = m.start()
-    # 段落起点 = 文本开头 / 前两个字符是 \n\n / 前一字符是 \n 且更早是空白
-    at_para_start = pos == 0 or norm[max(0, pos - 2) : pos] == "\n\n"
-    if not at_para_start:
-        # 不在段落起点 — 不算泄漏 (合法的"首先"散文起头)
-        return text, False
-    # 命中位置之前是 narration; 之后整段 reasoning + 可能的 narration 都砍掉。
-    # 不再尝试找后续 narrative — reasoning 模型一旦泄漏, 后续基本都污染。
-    clean = text[:pos].rstrip()
-    return clean, True
 
 
 @dataclass

@@ -154,6 +154,29 @@ class WorldSimulator:
                 update={"world_time": prior_world_state.world_time + time_step}
             )
 
+        # v2.35 — 稳态字段反清空保护:
+        # MiMo / reasoning 模型偶发只输出 era/weather 等少数字段, model_validate
+        # 用 default_factory=list 兜底, 整个 locations/factions/world_rules 被
+        # 空 list 替换 → bootstrap 写入的 5 地点/3 派系/6 规则**整个被擦掉**,
+        # 几个 tick 后世界完全坍塌 (现场证据: era="科技奇点后纪元" 被某 tick LLM
+        # 改回 "初始纪元", 同 tick 5 locations/3 factions/6 rules 全归零)。
+        # 策略: LLM 给空 list 但 prior 非空 → 保留 prior (这是明显的偷工模式,
+        # 真的想删 location/faction 应该走 events 而不是凭空清空整个列表)。
+        merged_updates: dict = {}
+        if not new_ws.locations and prior_world_state.locations:
+            merged_updates["locations"] = prior_world_state.locations
+        if not new_ws.factions and prior_world_state.factions:
+            merged_updates["factions"] = prior_world_state.factions
+        if not new_ws.world_rules and prior_world_state.world_rules:
+            merged_updates["world_rules"] = prior_world_state.world_rules
+        if merged_updates:
+            logger.warning(
+                "WorldSimulator dropped stable fields (locations/factions/rules), "
+                "restoring from prior: %s",
+                list(merged_updates.keys()),
+            )
+            new_ws = new_ws.model_copy(update=merged_updates)
+
         # natural_events 解析(逐条尝试,跳过坏数据)
         # v2.34 — 兜底 LLM 常见漏写:
         #   * 缺 ``type`` 字段 → 自然事件按定义都是 ``exogenous``, 注入而非靠

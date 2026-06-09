@@ -436,6 +436,21 @@ async def bootstrap_world(
 
     ts.save()
     logger.info("Bootstrap complete. tick=%d", ts.current_tick)
+
+    # v2.35 — 完整性闸: 4 阶段表面成功但内容近乎空 (LLM 返回形对内空的残缺
+    # JSON, model_validate 用默认值兜底, task 被无声标 completed 留下"标题+
+    # 空设定"的垃圾世界) — Narrator 上场只能瞎写, 内容与标题完全脱钩。
+    # 任一关键集合空 = 视为失败, 抛出让 task 状态变 failed, 用户可见可重跑。
+    n_chars = len(ts.list_character_profiles())
+    n_locs = len(ts.world_state.locations)
+    n_loops = ts.get_open_loop_count()
+    n_anchors = len(ts.list_style_anchors())
+    if n_chars == 0 or n_locs == 0 or n_loops == 0 or n_anchors == 0:
+        raise RuntimeError(
+            "bootstrap 完成但世界几乎为空 — LLM 返回形对内空的 JSON, "
+            f"角色={n_chars} / 地点={n_locs} / 伏笔={n_loops} / 风格锚点={n_anchors}; "
+            "请检查 LLM provider / max_tokens 设置或重新触发 bootstrap"
+        )
     return ts
 
 

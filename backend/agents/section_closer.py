@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
+from nf_core.reasoning_filter import strip_reasoning_leak
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +340,16 @@ class SectionCloser:
         text = resp.content.strip()
         # 兜底清洗
         text = strip_code_fence(text).strip()
-        if not text:
+        # 反 reasoning 泄漏 — MiMo / DeepSeek-Reasoner 偶发把 "首先, 用户提供了..."
+        # / "我的任务是写..." 等 chain-of-thought 写进 supplement 文本, 砍掉,
+        # 砍后若几乎为空则退到 fallback (避免拼一段元话语进正文)
+        text, leaked = strip_reasoning_leak(text)
+        if leaked:
+            logger.warning(
+                "SectionCloser supplement reasoning leak stripped (clean_len=%d)",
+                len(text),
+            )
+        if not text or (leaked and len(text) < 40):
             return _fallback_supplement(silent_ticks)
         # 限长保护 (按字符, 中文场景下 ~= 字)
         if len(text) > 240:
