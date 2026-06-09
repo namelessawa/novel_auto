@@ -32,8 +32,9 @@ const KIND_LABEL = {
   bootstrap_world: '世界种子',
 }
 
-// 已完成/失败/取消的任务在列表中保留多久 — 给用户看一眼结果, 然后自动隐藏
-const TERMINAL_RETAIN_MS = 60 * 1000
+// 已完成/失败/取消的任务在列表中保留多久 — 够用户切走再回来仍能看到结果,
+// 过了就自动隐藏避免列表无限增长 (后端 /api/tasks 仍可查全量)
+const TERMINAL_RETAIN_MS = 30 * 60 * 1000
 
 // 列表自动刷新间隔 — SSE 是流式但用户主动失焦/网络抖动可能漏推, 15s 兜底拉一次
 const AUTO_REFRESH_MS = 15 * 1000
