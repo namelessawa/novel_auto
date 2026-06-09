@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -154,9 +155,23 @@ class WorldSimulator:
             )
 
         # natural_events 解析(逐条尝试,跳过坏数据)
+        # v2.34 — 兜底 LLM 常见漏写:
+        #   * 缺 ``type`` 字段 → 自然事件按定义都是 ``exogenous``, 注入而非靠
+        #     Event.model_validate 抛 missing-field error 整条丢弃
+        #   * id 撞车 (``evt_001`` / ``evt_002`` 跨 tick 重复, 上 tick log 会被
+        #     UNIQUE 约束顶掉) → 强制重写为 ``evt_nat_{tick}_{idx}_{6位 hex}``,
+        #     保留 LLM 原 id 写入 description 末尾仅供诊断不丢失
         events: list[Event] = []
-        for raw_ev in payload.get("natural_events", []) or []:
+        prior_world_time = prior_world_state.world_time + time_step
+        for idx, raw_ev in enumerate(payload.get("natural_events", []) or []):
             try:
+                if isinstance(raw_ev, dict):
+                    raw_ev.setdefault("type", "exogenous")
+                    raw_ev.setdefault("tick", prior_world_time)
+                    # 强制 unique id, 避免 LLM 反复输出 evt_001/evt_002
+                    raw_ev["id"] = (
+                        f"evt_nat_{prior_world_time}_{idx}_{uuid.uuid4().hex[:6]}"
+                    )
                 events.append(Event.model_validate(raw_ev))
             except Exception as e:
                 logger.warning("Skip invalid natural event (%s): %s", e, raw_ev)

@@ -64,6 +64,7 @@ async def bootstrap_world_endpoint(
         seed=req.seed,
         positioning=req.positioning,
         references=req.references,
+        title=novel_title,
         also_generate_first_section=req.also_generate_first_section,
     )
 
@@ -93,6 +94,7 @@ def _make_bootstrap_world_executor(
     seed: str,
     positioning: str,
     references: str,
+    title: str,
     also_generate_first_section: bool,
 ):
     async def _executor(
@@ -113,6 +115,7 @@ def _make_bootstrap_world_executor(
                 seed=seed,
                 positioning=positioning,
                 references=references,
+                title=title,
             )
         except Exception:
             logger.exception("bootstrap_world failed for novel '%s'", novel_id)

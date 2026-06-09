@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 
 from agents.narrative_critic import CritiqueOutput, NarrativeCritic
@@ -32,6 +33,83 @@ from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 
 logger = logging.getLogger(__name__)
+
+
+# v2.34 — Reasoning 模型 (MiMo / DeepSeek-Reasoner) 偶尔把 chain-of-thought
+# 接在 narrative_text 末尾或前面。这些短语只会出现在 meta-思考里 ("首先,理解
+# 任务"/"从tick摘要看"/"关键点包括"), 不会进入真正的小说正文。命中即从该位置
+# 把后续全部砍掉, 并加 ``consistency_flag=reasoning_leak`` 报警。
+_REASONING_LEAK_MARKERS = (
+    "首先,理解任务",
+    "首先,理解一下",
+    "首先,我需要",
+    "首先,分析",
+    "首先,让我",
+    "首先,要分析",
+    "首先,我来分析",
+    "首先,我要",
+    "首先,确认",
+    "首先,这是",
+    "从tick摘要",
+    "从tick 摘要",
+    "关键点包括",
+    "tick摘要",
+    "好的,以下是",
+    "好的,我来",
+    "好的,让我",
+    "好的,首先",
+    "让我先",
+    "让我来",
+    "我应该",
+    "我需要为",
+    "我需要写",
+    "我需要先",
+    "因此,我",
+    "考虑到这些",
+    "考虑到上述",
+    "现在,我开始",
+    "现在开始写",
+    "**思考过程**",
+    "**分析过程**",
+    "**任务理解**",
+)
+
+
+def _normalise_punct(s: str) -> str:
+    """全 → 半角逗号, 仅做匹配用; 不改原文。"""
+    return s.replace("，", ",")
+
+
+_REASONING_LEAK_PATTERN = re.compile(
+    "(" + "|".join(re.escape(_normalise_punct(m)) for m in _REASONING_LEAK_MARKERS) + ")"
+)
+
+
+def _strip_reasoning_leak(text: str) -> tuple[str, bool]:
+    """从 narrative_text 砍掉 reasoning prologue/epilogue 泄漏。
+
+    策略: 标准化全角逗号为半角后, 在文本里找第一个 reasoning marker 命中点。
+    命中位置位于一个段落开头 (前面是 ``\\n\\n`` 或位于文本开头) 才算泄漏,
+    避免把"首先"这种合法散文起始词误伤。
+
+    返回 ``(clean_text, leaked)`` — leaked=True 时调用方加 consistency_flag。
+    """
+    if not text:
+        return text, False
+    norm = _normalise_punct(text)
+    m = _REASONING_LEAK_PATTERN.search(norm)
+    if not m:
+        return text, False
+    pos = m.start()
+    # 段落起点 = 文本开头 / 前两个字符是 \n\n / 前一字符是 \n 且更早是空白
+    at_para_start = pos == 0 or norm[max(0, pos - 2) : pos] == "\n\n"
+    if not at_para_start:
+        # 不在段落起点 — 不算泄漏 (合法的"首先"散文起头)
+        return text, False
+    # 命中位置之前是 narration; 之后整段 reasoning + 可能的 narration 都砍掉。
+    # 不再尝试找后续 narrative — reasoning 模型一旦泄漏, 后续基本都污染。
+    clean = text[:pos].rstrip()
+    return clean, True
 
 
 @dataclass
@@ -109,6 +187,16 @@ NARRATOR_SYSTEM_PROMPT = (
 4. 未知优先: 同样能写明白或留白时, 留白更佳
 5. 收尾禁忌: 段末不允许出现"反思 / 升华 / 总结"句, 改让段落停在动作 / 物件 / 对话上
 6. 直接说情绪 = D4 触发 (高严重度) — 改为身体动作 + 周遭物件的反应
+
+# 输出禁区 (反 reasoning 泄漏 — 极重要)
+
+* ``narrative_text`` 字段**只放小说正文本身**, 不要写任何 meta 思考
+* 不要写"首先, 理解任务" / "从 tick 摘要看, 关键点包括" / "我需要为给定的几个
+  tick 摘要写一段..." / "好的, 以下是..." / "让我先..." 这类自言自语
+* 不要在 narrative_text 里出现 "tick" / "tick摘要" / "事件摘要" / "task" 这些
+  系统术语 (这是给读者看的文学作品, 不是给 PM 看的工单)
+* 不要列编号清单解释你打算怎么写 — 直接给段落本身
+* 思考过程留在你模型内部, 不要复制到 JSON 字段里
 
 # 输出格式(严格 JSON, 不要 markdown 代码块)
 
@@ -211,8 +299,13 @@ class NarratorAgent:
         open_loops: list[OpenLoop],
         style_anchors: list[StyleAnchor],
         last_narration_tick: int,
+        novel_title: str = "",
     ) -> NarratorOutput:
-        """主入口。无事件或事件价值过低时返回 should_narrate=False。"""
+        """主入口。无事件或事件价值过低时返回 should_narrate=False。
+
+        ``novel_title`` (v2.34) — 作品标题, 渲染到 user_prompt 顶部. 默认空字符串
+        保持与旧调用方的二进制兼容; Orchestrator 应总是传入非空值。
+        """
         if not tick_events:
             return NarratorOutput(
                 should_narrate=False,
@@ -256,6 +349,7 @@ class NarratorAgent:
             recent_chapter_summaries=recent_chapter_summaries,
             open_loops=open_loops,
             target_chars=target_chars,
+            novel_title=novel_title,
         )
 
         try:
@@ -393,6 +487,7 @@ class NarratorAgent:
         recent_chapter_summaries: list[str],
         open_loops: list[OpenLoop],
         target_chars: str,
+        novel_title: str = "",
     ) -> str:
         events_dump = json.dumps(
             [e.model_dump(mode="json") for e in tick_events],
@@ -422,8 +517,19 @@ class NarratorAgent:
                 f"  - {s}" for s in recent_chapter_summaries[-10:]
             )
 
+        title_block = ""
+        if novel_title and novel_title not in ("未命名小说", "(未命名)"):
+            title_block = (
+                f"# 作品标题 (主题锚点 — 必须呼应)\n\n"
+                f"《{novel_title}》\n\n"
+                f"本作的设定、人物、事件氛围, 都应在精神上呼应这个标题。\n"
+                f"如果标题暗示了类型 (奇幻 / 科幻 / 武侠 / 神秘 / 修真 / ...)\n"
+                f"或具体意象 (神明 / 魔法 / 星舰 / 江湖 / ...), 你的叙述必须\n"
+                f"忠实于该方向, 不要把它写成普通现实题材。\n\n"
+            )
+
         return f"""\
-# 当前 tick
+{title_block}# 当前 tick
 
 tick={tick}, world_time={world_time}
 主跟踪角色: {tracking_character_id}
@@ -480,6 +586,34 @@ tick={tick}, world_time={world_time}
                 consistency_flags=list(payload.get("consistency_flags", []) or []),
             )
 
+        # v2.34 — 反 reasoning 泄漏: 砍掉 narrative_text 里的 chain-of-thought
+        # (MiMo / DeepSeek-Reasoner 偶发把"首先,理解任务..." 接在正文末尾)。
+        narrative_text, leaked = _strip_reasoning_leak(narrative_text)
+        extra_flags = ["reasoning_leak"] if leaked else []
+        if leaked:
+            logger.warning(
+                "NarratorAgent[tick=%d] reasoning leak detected, stripped %d chars",
+                tick,
+                len(payload.get("narrative_text", "")) - len(narrative_text),
+            )
+        # leak 后正文几乎为空 — 退化为不叙述. 阈值只在 leaked=True 时强制, 平时
+        # 不应破坏正常短输出 (mock 测试也常用 < 80 字短文本)。
+        if leaked and (not narrative_text or len(narrative_text) < 40):
+            return NarratorOutput(
+                should_narrate=False,
+                skip_reason="Narrator 输出仅含 reasoning 泄漏, 砍后正文为空",
+                tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
+                consistency_flags=list(payload.get("consistency_flags", []) or [])
+                + extra_flags,
+            )
+        if not narrative_text:
+            return NarratorOutput(
+                should_narrate=False,
+                skip_reason="Narrator 主动留空叙述(品味决定跳过)",
+                tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
+                consistency_flags=list(payload.get("consistency_flags", []) or []),
+            )
+
         # newly_opened_loops 解析(逐条 validate)
         new_loops: list[OpenLoop] = []
         for idx, loop_raw in enumerate(payload.get("newly_opened_loops", []) or []):
@@ -501,6 +635,7 @@ tick={tick}, world_time={world_time}
             open_loops_referenced=list(payload.get("open_loops_referenced", []) or []),
             newly_opened_loops=new_loops,
             style_diagnostics=dict(payload.get("style_diagnostics", {}) or {}),
-            consistency_flags=list(payload.get("consistency_flags", []) or []),
+            consistency_flags=list(payload.get("consistency_flags", []) or [])
+            + extra_flags,
             tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
         )

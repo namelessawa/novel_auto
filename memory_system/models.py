@@ -22,9 +22,10 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Literal
+from typing import Any, Literal, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -120,13 +121,73 @@ _TickModelConfig = ConfigDict(
 )
 
 
+# list[str] 字段被 LLM 误塞 dict 时优先抓取的 content 字段, 按读取优先级排列。
+# 顺序: 自然语言内容 → 标识 → 兜底 json.dumps。
+_DICT_TO_STR_FALLBACK_KEYS = (
+    "content",
+    "description",
+    "text",
+    "value",
+    "summary",
+    "name",
+    "title",
+    "label",
+    "id",
+)
+
+
+def _flatten_dict_to_str(item: dict) -> str:
+    """从一个 dict 项里抽出最像自然语言摘要的字符串字段。
+
+    LLM 偶尔把 ``secrets_kept`` / ``active_global_events`` 这种 list[str] 字段
+    塞成 ``[{"id": "s_xxx", "content": "..."}]``。整体 reject 会让角色/世界事件
+    被静默丢弃, 因此 fall back 时优先取常见自然语言字段, 全部缺席时退化为
+    JSON 字面量 (而不是 ``"<dict>"``), 保留可观测性。
+    """
+    for k in _DICT_TO_STR_FALLBACK_KEYS:
+        v = item.get(k)
+        if isinstance(v, str) and v.strip():
+            return v
+    # 没有任何字符串字段 — 用 json 字面量兜底, 方便后续诊断
+    try:
+        return json.dumps(item, ensure_ascii=False)
+    except Exception:
+        return str(item)
+
+
+def _coerce_list_of_str(val: list) -> list[str]:
+    """list[str] 字段的元素级兜底。
+
+    * str 项: 非空保留, 全空白丢弃
+    * dict 项: 走 :func:`_flatten_dict_to_str` 抽自然语言字段
+    * None: 丢弃
+    * 其他 scalar (int/float/bool): ``str(...)`` 后保留 (LLM 偶尔写数字)
+    """
+    out: list[str] = []
+    for item in val:
+        if isinstance(item, str):
+            if item.strip():
+                out.append(item)
+        elif isinstance(item, dict):
+            out.append(_flatten_dict_to_str(item))
+        elif item is None:
+            continue
+        else:
+            s = str(item).strip()
+            if s:
+                out.append(s)
+    return out
+
+
 def _coerce_llm_payload(cls, values):
     """Tolerate quirks of LLM-generated JSON before strict pydantic validation.
 
     LLMs commonly emit ``None`` for optional string fields (instead of ``""``)
-    stringly-typed numbers for ``age``/``priority``, and a single scalar where a
+    stringly-typed numbers for ``age``/``priority``, a single scalar where a
     list is required (e.g. ``"all_in_location"`` instead of
-    ``["all_in_location"]``). Without this, the whole model is rejected and the
+    ``["all_in_location"]``), or — for reasoning models — a list of dicts where
+    a list of strings is required (``secrets_kept = [{"id": ..., "content": ...}]``
+    instead of ``["..."]``). Without coercion the whole model is rejected and the
     character/state/event is silently dropped during bootstrap or injection.
     We coerce just enough to keep valid payloads usable, while leaving genuinely
     malformed values to fail downstream validation.
@@ -165,6 +226,15 @@ def _coerce_llm_payload(cls, values):
                 values[fname] = [val]
             elif val == "":
                 values[fname] = []
+            continue
+
+        # list[str] 元素级兜底: 容错 list[dict] / 混合类型。
+        # 仅当目标元素类型确为 ``str`` 时启用; list[Goal] / list[KeyBeat] 等
+        # 复杂子模型保持严格校验, 不在此处妥协。
+        if is_list and isinstance(val, (list, tuple)):
+            elem_args = get_args(ann)
+            if elem_args and elem_args[0] is str:
+                values[fname] = _coerce_list_of_str(list(val))
     return values
 
 

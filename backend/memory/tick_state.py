@@ -82,6 +82,10 @@ class TickState:
         # 核心 tick 计数
         self._current_tick: int = 0
         self._world_state: WorldState = WorldState()
+        # v2.34 — 作品标题. 由 bootstrap 写入, 让 Narrator 在每 tick 拿到主题
+        # 锚点 ("被遗忘的神明与最后的魔法少女" 这种关键设定信息此前完全
+        # 隔离在 novel_manager 里, 跟生成链路无连接, 导致标题与正文脱节)。
+        self._novel_title: str = ""
 
         # 角色档案与状态(by id)
         self._character_profiles: dict[str, CharacterProfile] = {}
@@ -129,6 +133,17 @@ class TickState:
     @property
     def data_dir(self) -> str:
         return self._data_dir
+
+    @property
+    def novel_title(self) -> str:
+        return self._novel_title
+
+    def set_novel_title(self, title: str) -> None:
+        """更新作品标题. bootstrap 写入 / rename 端点同步.
+
+        空字符串视为"清空" (rename 到空名也允许, 防止 TickState 持有过时标题)。
+        """
+        self._novel_title = (title or "").strip()
 
     # ------------------------------------------------------------------
     # tick 推进
@@ -402,6 +417,7 @@ class TickState:
             "version": 1,
             "current_tick": self._current_tick,
             "last_narration_tick": self._last_narration_tick,
+            "novel_title": self._novel_title,
             "world_state": self._world_state.model_dump(mode="json"),
             "character_profiles": {
                 cid: p.model_dump(mode="json")
@@ -464,6 +480,7 @@ class TickState:
         try:
             self._current_tick = int(payload.get("current_tick", 0))
             self._last_narration_tick = int(payload.get("last_narration_tick", 0))
+            self._novel_title = str(payload.get("novel_title", "") or "")
             self._world_state = WorldState.model_validate(
                 payload.get("world_state", {})
             )

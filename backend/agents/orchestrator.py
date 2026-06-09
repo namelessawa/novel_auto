@@ -1290,6 +1290,7 @@ class Orchestrator:
             open_loops=self._tick_state.get_open_loops(top_k=15),
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
+            novel_title=getattr(self._tick_state, "novel_title", "") or "",
         )
 
     def _build_creativity_hints(self) -> list[str]:

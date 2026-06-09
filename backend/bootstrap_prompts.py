@@ -63,9 +63,21 @@ logger = logging.getLogger(__name__)
 PROMPT_WORLD = """\
 你即将设计一个用于无限小说生成的虚构世界的初始设定。
 
+# 作品标题
+
+{title}
+
 # 世界种子
 
 {seed}
+
+# 标题约束 (强制)
+
+* 世界设计**必须**与作品标题语义一致。例如标题含"神明 / 魔法 / 龙 / 仙"
+  必须给出对应的奇幻 / 修真 / 神话设定; 标题含"星舰 / 殖民地 / AI" 必须
+  给出科幻设定; 标题含"民国 / 武侠" 必须给出对应历史背景
+* 不要因为种子描述简短就退化为"普通中世纪村庄"或"现代都市"
+* era / world_rules 至少有一条直接呼应标题中的关键词
 
 # 要求
 
@@ -291,16 +303,27 @@ async def bootstrap_world(
     seed: str,
     positioning: str,
     references: str,
+    title: str = "",
 ) -> TickState:
-    """完整冷启动序列。返回填充好的 TickState 实例(已 save)。"""
+    """完整冷启动序列。返回填充好的 TickState 实例(已 save)。
+
+    ``title`` v2.34 — 作品标题. 同步写入 TickState 让 Narrator 每 tick 拿到,
+    并注入 PROMPT_WORLD 强制世界设定与标题语义一致 (修"被遗忘的神明与最后的
+    魔法少女" 跑出现实村庄的脱节问题)。
+    """
     logger.info("Bootstrapping novel '%s' (data_dir=%s)", novel_id, data_dir)
     ts = TickState(data_dir=data_dir)
+    # 早早写入标题, 即便后续 LLM 阶段炸了也不丢
+    if title:
+        ts.set_novel_title(title)
 
     # === Step 1: WorldState ============================================
     logger.info("[1/4] Generating WorldState…")
     world_resp = await _llm_json(
         system_prompt="你是一个虚构世界设计师。严格按要求输出 JSON。",
-        user_prompt=PROMPT_WORLD.format(seed=seed),
+        user_prompt=PROMPT_WORLD.format(
+            seed=seed, title=title or "(未指定 — 请根据 seed 自由发挥)"
+        ),
         max_tokens=24576,
         stage="world",
     )
@@ -426,6 +449,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--seed", required=True, help="世界种子描述")
     parser.add_argument(
+        "--title",
+        default="",
+        help="作品标题 (v2.34 — 注入 PROMPT_WORLD + 后续 Narrator user_prompt)",
+    )
+    parser.add_argument(
         "--positioning",
         default="古典含蓄、心理白描、节奏舒缓、避免华丽辞藻",
         help="作品定位",
@@ -455,6 +483,7 @@ def main(argv: list[str] | None = None) -> int:
             seed=args.seed,
             positioning=args.positioning,
             references=args.references,
+            title=args.title,
         )
     )
     # Windows GBK 控制台无法编码 ✓ — 用 ASCII 替代

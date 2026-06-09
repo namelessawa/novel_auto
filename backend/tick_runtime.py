@@ -62,6 +62,16 @@ class TickRuntime:
         # 基础设施
         self.tick_state = TickState(data_dir=self.data_dir)
         self.tick_state.load()
+        # v2.34 — 把 novel_manager 里的最新标题强同步到 TickState, 修正:
+        # (a) 老 tick_state.json 没 novel_title 字段; (b) 用户 PUT 改名时
+        # 该 runtime 已 close 过, 下一次构造时拿到的是磁盘上旧版。
+        try:
+            novel = novel_manager.get_novel(user_id, novel_id)
+            current_title = (novel.get("title") if novel else "") or ""
+            if current_title and current_title != self.tick_state.novel_title:
+                self.tick_state.set_novel_title(current_title)
+        except Exception as e:
+            logger.warning("seed novel_title from novel_manager failed: %s", e)
 
         self.tick_db = TickDB(db_path=os.path.join(self.data_dir, "ticks.db"))
         self.summary_tree = SummaryTree(merge_threshold=10)

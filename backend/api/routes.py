@@ -182,6 +182,19 @@ async def update_novel(
         raise HTTPException(status_code=400, detail=str(e))
     if entry is None:
         raise HTTPException(status_code=404, detail="Novel not found")
+    # v2.34 — 同步活跃 runtime 的 TickState.novel_title, 让 Narrator 立刻看到新标题.
+    # runtime 不存在时 (从未启动过) 静默跳过, 下次 get_runtime 会从 novel_manager
+    # 元数据初始化时把标题写入。
+    try:
+        from tick_runtime import _runtimes  # noqa: WPS437 — 跨模块协作
+        rt = _runtimes.get((current_user.id, novel_id))
+        if rt is not None:
+            rt.tick_state.set_novel_title(req.title)
+            rt.tick_state.save()
+    except Exception as e:
+        logger.warning(
+            "sync novel_title to active runtime failed (non-fatal): %s", e
+        )
     return entry
 
 
