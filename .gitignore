@@ -40,3 +40,10 @@ old/memory_system/entity_snapshots/
 # Windows / git-bash crash dumps
 bash.exe.stackdump
 **/bash.exe.stackdump
+
+# Markdown 文档默认不追踪, 仅保留根 README/CHANGELOG/structure + deploy 下的 README
+*.md
+!/README.md
+!/CHANGELOG.md
+!/structure.md
+!deploy/**/README.md
