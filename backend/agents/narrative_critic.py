@@ -36,7 +36,7 @@ from agents.quality_spec import (
     RULES_BY_CODE,
     decide_action,
     render_blacklist_block,
-    render_full_critique_block,
+    render_critique_block_semantic,
     render_show_dont_tell_block,
 )
 from nf_core.json_utils import parse_llm_json
@@ -110,7 +110,7 @@ C (情节) / D (描写) / E (语言) / F (结构) / G 其余.
 ---
 
 """
-    + render_full_critique_block()
+    + render_critique_block_semantic()
     + "\n\n"
     + render_show_dont_tell_block()
     + """

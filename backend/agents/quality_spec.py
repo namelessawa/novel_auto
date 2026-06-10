@@ -307,7 +307,7 @@ def render_diversity_block() -> str:
 
 
 def render_full_critique_block() -> str:
-    """完整 A-G 7 类触发条件清单 (供 NarrativeCritic 使用)。"""
+    """完整 A-G 7 类触发条件清单 (老入口, 保留以防外部使用)。"""
     lines = []
     by_cat: dict[str, list[TriggerRule]] = {}
     for r in TRIGGER_RULES:
@@ -326,6 +326,31 @@ def render_full_critique_block() -> str:
         for r in by_cat[cat]:
             lines.append(f"  | {r.code} | {r.description} | {r.severity} |")
     return "# 质量不良判定清单 (A-G 共 50 项)\n" + "\n".join(lines)
+
+
+def render_critique_block_semantic() -> str:
+    """v2.38 (iter#18) — 仅列 B-G 语义/结构类规则供 NarrativeCritic LLM 使用.
+    A 类 (重复) 由 det 检查器处理, 不需要 LLM 重复识别. 节省 ~30% 输入 token."""
+    lines = []
+    by_cat: dict[str, list[TriggerRule]] = {}
+    for r in TRIGGER_RULES:
+        by_cat.setdefault(r.category, []).append(r)
+    cat_names = {
+        "B": "角色失真 (CHARACTER)",
+        "C": "情节 (PLOT)",
+        "D": "描写 (PROSE)",
+        "E": "语言 (LANGUAGE)",
+        "F": "结构 (STRUCTURE)",
+        "G": "AI 特有失败模式 (AI-PATTERN)",
+    }
+    for cat in "BCDEFG":
+        lines.append(f"\n## {cat}. {cat_names[cat]}")
+        for r in by_cat[cat]:
+            lines.append(f"{r.code} | {r.description} | {r.severity}")
+    return (
+        "# 质量判定清单 (B-G 语义类; A 类重复由 det 检查器处理, 你不需要列 A1-A7)\n"
+        + "\n".join(lines)
+    )
 
 
 def render_narrator_quality_block() -> str:
@@ -412,6 +437,7 @@ __all__ = [
     "render_anti_pattern_block",
     "render_diversity_block",
     "render_full_critique_block",
+    "render_critique_block_semantic",
     "render_narrator_quality_block",
     "render_narrator_discipline_block",
     "decide_action",
