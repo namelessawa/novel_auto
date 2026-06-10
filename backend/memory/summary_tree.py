@@ -388,7 +388,8 @@ class SummaryTree:
             agent_id="summary_tree:volume_compress",
             priority="optional",
         )
-        return resp.content.strip()
+        # v2.38 (iter#34 review fix) — 长度护栏同 _compress_root.
+        return resp.content.strip()[:600]
 
     async def _compress_root(self) -> str:
         if not self._root.children:
@@ -408,7 +409,9 @@ class SummaryTree:
             agent_id="summary_tree:root_compress",
             priority="optional",
         )
-        return resp.content.strip()
+        # v2.38 (iter#34 review fix) — 长度护栏: LLM 偶发输出 chain-of-thought
+        # 前缀挤占 token, 截到 1000 字以内防异常长摘要污染 storage.
+        return resp.content.strip()[:1000]
 
     def _walk(
         self,
