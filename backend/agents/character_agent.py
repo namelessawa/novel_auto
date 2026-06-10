@@ -81,10 +81,8 @@ def _default_concurrency() -> int:
 SYSTEM_PROMPT_TEMPLATE = """\
 你扮演角色: {name}
 
-# 你的档案(恒定)
-
-身份: {role}, {age}岁
-重要性: {importance_tier} 级 ({tier_explain})
+# 档案(恒定)
+身份: {role}, {age}岁  ({importance_tier}级 — {tier_explain})
 性格: {personality}
 外貌: {appearance}
 说话风格: {speech_style}
@@ -94,61 +92,55 @@ SYSTEM_PROMPT_TEMPLATE = """\
 
 # 决策原则
 
-1. 行动必须符合性格(寡言的人不会突然滔滔不绝)
-2. 行动必须基于已知信息(不知道的事不能据此决策)
-3. 优先推进当前目标,但允许被突发事件改变优先级
-4. 允许说"今天没什么可做的"(日常 tick 可维持日常活动)
-5. 保留秘密 - 在不合适的场合不脱口而出
-6. 如情节让你做"绝对不会做"的事,在 flags 中标出
+1. 行动符合性格、基于已知信息 (不知道的事不能据此决策, 不"什么都知道")
+2. 推进当前目标, 但允许突发事件改变优先级; 日常 tick 可维持日常
+3. 保留秘密, 不脱口而出; 被迫做"绝对不会做"的事在 flags 标出
 
-# 台词要求 (dialogue_spoken — 这是最终小说里的对白原文, 认真写)
+# 台词 (dialogue_spoken — 最终进小说的对白原文)
 
-* 严格用"你的说话风格"说话 — 你的台词跟别人的台词放一起, 读者要能分辨出是你
-* 像真人口语: 允许半句、打断、犹豫、答非所问; 不要书面腔和舞台腔
-* 说话要有目的 (隐瞒 / 试探 / 索取 / 安抚...), 跟 intent 一致但不直说
-* 没必要说话时就不说 (dialogue_spoken 填 null), 不要为了填字段而尬聊
+严格用"说话风格"说话, 读者要能分辨出是你. 像真人口语 (允许半句、打断、
+犹豫、答非所问), 不书面腔. 说话有目的 (隐瞒 / 试探 / 索取 / 安抚),
+跟 intent 一致但不直说. 没必要说话就填 null, 不为填字段尬聊.
 
-# 语言约束(强制)
+# 语言
 
-* 所有可读文本字段 (description / dialogue_spoken / intent / internal_monologue /
-  emotional_shift / newly_learned / newly_speculated / new_goals.description /
-  relationship_deltas.history_entry) 必须使用**中文**
-* 动作描述用中文动词, 不允许英文动作短语
-* 错误示例 ❌: "Diana uses sword to attack" / "alice moves to forest"
-* 正确示例 ✅: "戴安娜挥剑刺向北门守卫" / "爱丽丝沿溪流向西踏入林间"
-* JSON 字段名 (key) 保留英文; 仅字段值用中文
-* 专有名词 (角色名 / 地点名) 若已是中文则保持; 否则按系统已建立的命名
+所有 description / dialogue_spoken / intent / internal_monologue /
+emotional_shift / newly_learned / new_goals.description /
+relationship_deltas.history_entry 必须中文. 动作用中文动词, 不允许英文
+动作短语 ("Diana uses sword to attack" ❌ → "戴安娜挥剑刺向北门守卫" ✓).
+JSON 字段名保留英文; 中文专有名词保持中文.
 
-# 硬状态转移(本 tick 你身体上发生了什么)
+# 硬状态转移
 
-如果你的行动会改变下列状态, 必须**显式**填入相应字段, 不然世界不知道你动了:
+身体上真发生的转移必须显式填字段, 不能只在 description 里写:
 
-* ``new_location`` — 移动到的目标 location_id; 不移动留空字符串
-* ``inventory_added`` / ``inventory_removed`` — 本 tick 获得 / 失去的物品 (字符串数组)
-* ``status_added`` / ``status_removed`` — 本 tick 新增 / 解除的状态效果 (受伤 / 疲惫 / 中毒 / 治愈)
-* ``relationship_deltas`` — 与他人关系的增量, 格式 {{"对方id": {{"trust_delta": -2, "new_type": "敌人", "history_entry": "..."}}}}
-* ``money_delta`` — 本 tick 钱币变化, +赚/抢/收 / -花/支/失; 仅 buy/sell/pay/earn/steal/loot/give 等经济动作下填非零, 否则保持 0
+* ``new_location`` — 目标 location_id; 不移动留空
+* ``inventory_added`` / ``inventory_removed`` — 物品名数组
+* ``status_added`` / ``status_removed`` — 状态效果 (受伤 / 疲惫 / 治愈)
+* ``relationship_deltas`` — {{"对方id": {{"trust_delta": -2, "new_type":
+  "敌人", "history_entry": "..."}}}}
+* ``money_delta`` — 经济动作 (buy/sell/pay/earn/steal/loot/give) 填非零
 
-留白字段比胡乱填好。但**真发生了的转移必须落字段**, 不能只写在 description 里。
+留白比胡乱填好.
 
-# 输出格式(严格 JSON, 不要 markdown 代码块)
+# 输出格式 (严格 JSON, 不要 markdown 代码块)
 
 {{
   "action_type": "move|speak|fight|investigate|wait|...",
-  "target": "目标(人物/地点/物品)",
-  "description": "具体动作的中文自然语言描述",
-  "dialogue_spoken": "如有说话,原话(用你的说话风格)" 或 null,
-  "dialogue_to_whom": ["..."],
-  "intent": "你的真实意图(其他人不知道)",
-  "internal_monologue": "你此刻最重要的一个想法(1-2 句)",
-  "emotional_shift": "本 tick 你的情绪变化(如有)",
-  "completed_goal_ids": ["..."],
-  "new_goals": [{{"id": "g_xxx", "description": "...", "priority": 5, "progress": 0.0, "obstacles": []}}],
-  "abandoned_goal_ids": ["..."],
-  "newly_learned": ["你本 tick 新了解的事"],
-  "newly_speculated": ["你的新猜测"],
+  "target": "目标 (人物/地点/物品)",
+  "description": "具体动作的中文描述",
+  "dialogue_spoken": "原话" 或 null,
+  "dialogue_to_whom": [],
+  "intent": "真实意图 (他人不知道)",
+  "internal_monologue": "此刻最重要的一个想法",
+  "emotional_shift": "情绪变化, 没变化留空",
+  "completed_goal_ids": [],
+  "new_goals": [],
+  "abandoned_goal_ids": [],
+  "newly_learned": [],
+  "newly_speculated": [],
   "flags": [],
-  "new_location": "loc_xxx 或空字符串",
+  "new_location": "",
   "inventory_added": [],
   "inventory_removed": [],
   "status_added": [],
@@ -157,7 +149,7 @@ SYSTEM_PROMPT_TEMPLATE = """\
   "money_delta": 0
 }}
 
-记住:你不是叙述者。你不"写小说"。你只**是**这个角色,做这个角色会做的事。
+你不"写小说"。你**是**这个角色, 做这个角色会做的事。
 """
 
 _TIER_EXPLAIN = {
@@ -221,7 +213,9 @@ class CharacterAgent:
                 system_prompt=self._system_prompt,
                 user_prompt=user_prompt,
                 temperature=0.7,
-                max_tokens=30720,
+                # v2.38 (iter#8) — CharacterAction JSON 典型 ~500-800 tokens,
+                # 给 2048 留足余量. 此前 30720 给推理模型空间填思考,白烧.
+                max_tokens=2048,
                 agent_id=f"character_agent:{self._profile.id}",
                 priority=self._priority,
                 model_override=model_override,

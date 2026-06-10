@@ -1,0 +1,68 @@
+{
+  "label": "v7-character-trim",
+  "novel_id": "bench_v7-character-trim_1781121656",
+  "ticks": 3,
+  "bootstrap_sec": 323.71,
+  "tick_durations_sec": [
+    75.84,
+    87.98,
+    112.63
+  ],
+  "total_tokens": 31152,
+  "by_agent_cumulative": {
+    "world_simulator": 6838,
+    "narrator": 15759,
+    "narrative_critic:critique": 8555
+  },
+  "by_priority": {
+    "medium": 6838,
+    "critical": 24314
+  },
+  "call_count": 8,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 7167,
+      "duration_sec": 75.84,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 2096,
+        "narrator": 5071
+      }
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 11274,
+      "duration_sec": 87.98,
+      "narrator_chars": 296,
+      "agents": {
+        "world_simulator": 1767,
+        "narrator": 5219,
+        "narrative_critic:critique": 4288
+      }
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 12711,
+      "duration_sec": 112.63,
+      "narrator_chars": 281,
+      "agents": {
+        "world_simulator": 2975,
+        "narrator": 5469,
+        "narrative_critic:critique": 4267
+      }
+    }
+  ],
+  "narratives": [
+    {
+      "tick": 2,
+      "chars": 296,
+      "text": "汽笛声又响了，比刚才更哑，拖着断续的尾音沉进雾里。陈守默停在道旁，靴子陷进泥泞。山道被雨水冲出几道深沟，泥浆稠得发亮，裹住脚踝时发出黏腻的声响。他低头看一眼，没拔腿，反而从怀里摸出半截蜡烛，划亮火折子。火苗在雾气中跳了两下，照出前方十来步的路面——那里塌了半边，露出底下生锈的管道，雨水正从裂缝里渗出来，汇成小股泥流冲向山沟。\n\n火光移向左侧。齿轮集市边缘那块金属告示板还在，但刻在上面的线路图已经糊成一片锈红的水渍。雨水顺着板面往下淌，带走最后几道清晰的刻痕，只剩金属接缝处还留着些凹凸的纹路，像被虫子啃过的骨头。他吹熄蜡烛，塞回内袋。火折子的余温还烫着手指。\n\n远处的灯火在雾里洇开，一团"
+    },
+    {
+      "tick": 3,
+      "chars": 281,
+      "text": "远处的灯火在雾里洇开，一团一团，像落进水里的纸花，轮廓还没成形就散了。雾气浓得几乎能攥出水来，三步之外就只剩灰白色的虚影。他站在塌陷的路沿往下看。泥浆裹着碎石往下淌，咕嘟咕嘟灌进管道裂缝里。沼泽在更深处翻着气泡，一个接一个鼓起来，破裂时散出腐烂的水腥味，钻进鼻腔，黏在喉咙里。\n\n齿轮的转动声变得沉闷，像隔着湿布敲铁桶。蒸汽管道从雾里探出半截，管壁挂着水珠，嘶嘶喷着白气，和雨滴敲击金属的叮当声混成一片。他往左侧走，翻过告示板后面的土坡。坡顶有条窄道，勉强容一个人通过。脚下的石板被雨水冲得只剩薄薄一层，泥浆从缝隙里往上涌。他弯腰，避开头顶悬着的蒸汽管，一步步往"
+    }
+  ]
+}

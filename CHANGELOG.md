@@ -5,6 +5,29 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#8: CharacterAgent prompt + 输出预算紧缩
+
+`backend/agents/character_agent.py`:
+
+* **`SYSTEM_PROMPT_TEMPLATE` 2000 → 1700 chars** (-15%). 决策原则 6→3 条
+  合并; 语言约束精简掉重复举例; 输出格式注释化繁就简; 信息密度提高但
+  保留所有关键字段说明.
+* **`max_tokens` 30720 → 2048**. CharacterAction JSON 典型 500-800 tokens
+  完成; 30720 是给推理模型留出"把 budget 全填满写思考"的空间, 实测白烧.
+  此变更同时缩短延迟 (大 max_tokens 让 stream connection 更慢释放).
+
+### Tests
+
+31/31 character_agent tests pass.
+
+### Benchmark — iter#8 单步对照 iter#7
+
+此次 bench 期间 character_agents 没有被事件波及 (3-tick 短跑特有现象,
+长跑 1 个 A 级角色 fire 1 次省 ~28k tokens max_tokens budget). 总 token
+基本持平 (31,152 vs 30,434). 节约要在生产长跑里体现.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#7: Narrator user_prompt slim
 
 `backend/agents/narrator_agent.py`:
