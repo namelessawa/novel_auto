@@ -61,49 +61,41 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 PROMPT_WORLD = """\
-你即将设计一个用于无限小说生成的虚构世界的初始设定。
+设计无限连载小说的虚构世界初始设定.
 
 # 作品标题
-
 {title}
 
 # 世界种子
-
 {seed}
 
 # 标题约束 (强制)
 
-* 世界设计**必须**与作品标题语义一致。例如标题含"神明 / 魔法 / 龙 / 仙"
-  必须给出对应的奇幻 / 修真 / 神话设定; 标题含"星舰 / 殖民地 / AI" 必须
-  给出科幻设定; 标题含"民国 / 武侠" 必须给出对应历史背景
-* 不要因为种子描述简短就退化为"普通中世纪村庄"或"现代都市"
-* era / world_rules 至少有一条直接呼应标题中的关键词
+世界设计**必须**与作品标题语义一致 — 含"神明/魔法/龙/仙"→奇幻/修真;
+含"星舰/AI/殖民"→科幻; 含"民国/武侠"→对应历史. 不要因种子简短就退化
+为"中世纪村庄"或"现代都市". era / world_rules 至少一条呼应标题关键词.
 
 # 要求
 
-1. 不要过度设定 - 世界应有"留白"
-2. **至少 5 个有名字的地点 (locations)** — 分散在不同类型, 至少要覆盖:
-   * 1 个主要城市 / 据点 (角色起点)
-   * 1 个边境 / 前线 (冲突地)
-   * 1 个秘所 / 神殿 / 旧址 (悬念锚)
-   * 1 个旷野 / 自然地 (旅行通道)
-   * 1 个聚会点 / 市集 / 港口 (信息交换)
-   * 地点 id 用语义化前缀 (loc_city / loc_frontier / loc_temple / loc_wild / loc_market 等),
-     不要全用 loc_1, loc_2, ...; 不要把所有角色都堆在一个地点
-3. 至少 3 个相互对立的势力 (factions, 支撑长期冲突)
-4. 至少 3 个潜在火药桶 (future 可激活的张力)
-5. 世界规则不超过 10 条
-6. 每个地点的 current_state 至少 20 个汉字, 让 Narrator 一眼能写出气氛
+1. 世界要有"留白", 不过度设定
+2. **≥5 个有名字的地点** — 覆盖: 1 主城/据点 (角色起点) / 1 边境前线
+   (冲突地) / 1 秘所神殿旧址 (悬念锚) / 1 旷野自然 (旅行通道) /
+   1 市集港口 (信息交换). id 用语义前缀 (loc_city / loc_frontier /
+   loc_temple / loc_wild / loc_market), 不要 loc_1/loc_2.
+3. ≥3 个相互对立的势力 (factions, 支撑长期冲突)
+4. ≥3 个潜在火药桶 (future 可激活张力)
+5. world_rules ≤ 10 条
+6. 每个 location.current_state ≥ 20 字, 让 Narrator 一眼写得出气氛
 
-# 输出格式(严格 JSON,不要 markdown 代码块)
+# 输出格式 (严格 JSON, 不要 markdown 代码块)
 
 {{
   "world_state": {{
-    "era": "...",
-    "current_season": "...",
-    "weather": "...",
+    "era": "蒸汽朋克纪元末期",
+    "current_season": "深秋",
+    "weather": "酸雨低雾",
     "locations": [
-      {{"id": "loc_city", "name": "...", "type": "city", "current_state": "...至少 20 字...", "notable_features": []}},
+      {{"id": "loc_city", "name": "锈幕城", "type": "city", "current_state": "(≥20 字描述当前状态、氛围、可见物)", "notable_features": []}},
       {{"id": "loc_frontier", "name": "...", "type": "frontier", "current_state": "...", "notable_features": []}},
       {{"id": "loc_temple", "name": "...", "type": "ruin", "current_state": "...", "notable_features": []}},
       {{"id": "loc_wild", "name": "...", "type": "wilderness", "current_state": "...", "notable_features": []}},
@@ -112,8 +104,8 @@ PROMPT_WORLD = """\
     "factions": [
       {{"id": "f_1", "name": "...", "description": "...", "territory": ["loc_city"]}}
     ],
-    "active_global_events": ["..."],
-    "world_rules": ["..."]
+    "active_global_events": [],
+    "world_rules": []
   }}
 }}
 """
@@ -124,7 +116,7 @@ PROMPT_WORLD = """\
 # ---------------------------------------------------------------------------
 
 PROMPT_CHARACTERS = """\
-基于以下 WorldState 设计 6-10 个起始角色。
+基于以下 WorldState 设计 6-10 个起始角色.
 
 ```json
 {world_state}
@@ -132,49 +124,45 @@ PROMPT_CHARACTERS = """\
 
 # 要求
 
-* 3 个 A 级角色(主角候选,深度建模)
-* 3-4 个 B 级角色(重要配角)
-* 2-3 个 C 级角色(NPC,仅标签)
-* 角色间必须已有关系(不要互不相识)
-* 每个 A 级角色都要有 arc_goal 和至少 1 个 secret
-* 角色与势力的关系应预埋张力
-* **名字**: 与世界观语言一致 (中文世界用中文名); id 用拼音/英文 slug (如 char_linxue)
-* **speech_style 必须含 2 句示例台词** — 这是该角色的"声纹", 后续所有对白都
-  要对齐它。格式: "特征描述。例: 「...」「...」"。两个不同角色的示例台词
-  放在一起必须一眼能分辨 (用词 / 句长 / 语气差异要大)
-* **personality 写行为倾向而非标签** — "谨慎" ❌; "先数清出口再进屋, 不信
-  口头承诺" ✅
-* A/B 级角色之间的欲望要互相冲突 (至少两对角色想要的东西不能同时成立)
+* 3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / 2-3 个 C 级 (NPC)
+* 角色间必须已有关系 (不要互不相识); A 级必须有 arc_goal 和 ≥1 secret
+* 角色与势力关系要预埋张力; A/B 之间至少两对欲望互相冲突
+* **名字**: 与世界观语言一致 (中文世界用中文名); id 用拼音 slug
+  (char_linxue, char_sumo)
+* **speech_style 含 2 句示例台词** ("特征描述. 例: 「...」「...」") —
+  两个角色台词放一起必须一眼能分辨 (用词/句长/语气差异)
+* **personality 写行为倾向, 不写标签** — "谨慎"❌; "先数清出口再进屋,
+  不信口头承诺"✓
 
-# 输出格式(严格 JSON,不要 markdown 代码块)
+# 输出格式 (严格 JSON, 不要 markdown 代码块)
 
 {{
   "characters": [
     {{
       "profile": {{
-        "id": "char_alice",
-        "name": "...",
+        "id": "char_linxue",
+        "name": "林雪",
         "age": 30,
-        "role": "主角|配角|NPC",
-        "importance_tier": "A|B|C",
-        "personality": "...",
+        "role": "主角",
+        "importance_tier": "A",
+        "personality": "(行为倾向, 不写标签)",
         "appearance": "...",
-        "speech_style": "...",
-        "core_values": ["..."],
-        "fears": ["..."],
-        "desires": ["..."]
+        "speech_style": "(特征描述. 例: 「...」「...」)",
+        "core_values": [],
+        "fears": [],
+        "desires": []
       }},
       "state": {{
-        "character_id": "char_alice",
-        "current_location": "loc_1",
+        "character_id": "char_linxue",
+        "current_location": "loc_city",
         "current_goals": [
           {{"id": "g1", "description": "...", "priority": 7, "progress": 0.0, "obstacles": []}}
         ],
         "arc_goal": "...",
-        "known_facts": ["..."],
-        "secrets_kept": ["..."],
+        "known_facts": [],
+        "secrets_kept": [],
         "relationships": {{
-          "char_bob": {{"with_character_id": "char_bob", "type": "朋友|敌人|恋人|...", "trust": 5, "history_summary": "...", "last_interaction_tick": 0}}
+          "char_other": {{"with_character_id": "char_other", "type": "朋友", "trust": 5, "history_summary": "...", "last_interaction_tick": 0}}
         }},
         "emotional_state": "...",
         "inventory": [],
