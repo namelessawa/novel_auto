@@ -5,6 +5,44 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#7: Narrator user_prompt slim
+
+`backend/agents/narrator_agent.py`:
+
+* `_PROSE_TAIL_MAX_CHARS` 1200 → 800. 实测最后 800 字足以维持文风/视角
+  延续, 多出来的 400 字主要是上一段已讲完的素材.
+* `_MAX_BRIEF_CHARS_COUNT` 8 → 5, `_MAX_BRIEF_EVENTS` 24 → 16. 单 tick
+  范围内 8 个角色 / 24 个事件是噪声, 反而稀释 Narrator 注意力.
+* `open_loops` 渲染从 8 条 → 5 条 (按 urgency 降序取前 5), description
+  截断 100 → 80 字. 让 Narrator 集中处理最紧迫的伏笔.
+* `recent_chapter_summaries` 8 → 5. 最近 5 段已足够保持连贯.
+
+### Benchmark — iter#7 单步对照 iter#6
+
+| 指标                       |   iter#6 |   iter#7 |
+| -------------------------- | -------: | -------: |
+| total tokens               |   29,801 |   30,434 |
+| narrator                   |   14,852 |   13,467 |
+| world_simulator            |   10,033 |    7,993 |
+| narrative chars (3 tick)   |    1,753 |    1,948 |
+| avg tick sec               |       94 |       79 |
+
+> 总 token 持平 (差异在 critic 因为 narrator 多写一次), 但 per-char cost
+> 进一步下降 (narrator tokens / chars: 8.5 → 6.9). 质量样本非常好.
+
+### Quality — 抽样
+
+样本 (tick 1, 815 字): "铁在锈。雨从铅灰色的天幕里落下来, 不是水, 是
+稀薄的、带着铁腥味的酸浆..." 苏默工务局巡查员的工作场景里嵌入黑影
+搬运、酸蚀黄铜纹章、引向旧档案馆 — 整段是高水准类型小说. 4 字开篇,
+长短句交替, 物件因果链 (排水口→骨头→纹章→档案馆) 完整.
+
+### Tests
+
+10/10 narrator/critic tests pass.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#6: Critic 条件 LLM gating
 
 > 自我迭代第 4 轮. critic 再砍一刀 — det 已发现 ≥2 个 medium/high 触发时

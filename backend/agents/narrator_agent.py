@@ -136,10 +136,14 @@ _NARRATE_FULL_THRESHOLD = 30
 _TIME_LAPSE_TICKS = 10
 
 # 前文结尾注入上限 (字符)。再长对衔接没有边际收益, 反而稀释素材权重。
-_PROSE_TAIL_MAX_CHARS = 1200
+# v2.38 (iter#7) — 1200 → 800. 实测最后 800 字足以维持文风/视角延续,
+# 多出来的 400 字主要是上一段已经讲完的素材, 占 input prompt 体积。
+_PROSE_TAIL_MAX_CHARS = 800
 # 场景简报里渲染的最大角色数 / 事件素材数
-_MAX_BRIEF_CHARS_COUNT = 8
-_MAX_BRIEF_EVENTS = 24
+# v2.38 (iter#7) — char 8→5, events 24→16. 多于此数对单段 tick 是噪声,
+# 反而稀释 Narrator 注意力, 同时占 input prompt 体积。
+_MAX_BRIEF_CHARS_COUNT = 5
+_MAX_BRIEF_EVENTS = 16
 
 
 class NarratorAgent:
@@ -586,17 +590,23 @@ class NarratorAgent:
             char_profiles=char_profiles,
         )
 
+        # v2.38 (iter#7) — loops 8→5, summaries 8→5. 焦点放在最紧迫/最近的;
+        # 旧 8 条对应单段 tick 是噪声, 模型会试图全部呼应导致内容散乱.
         loops_text = "(无开放伏笔)"
         if open_loops:
+            # 按 urgency 降序排, 取前 5 紧迫
+            top_loops = sorted(
+                open_loops, key=lambda l: -getattr(l, "urgency", 0)
+            )[:5]
             loops_text = "\n".join(
-                f"- [{l.id}] ({l.type}, 紧迫{l.urgency}) {l.description[:100]}"
-                for l in open_loops[:8]
+                f"- [{l.id}] ({l.type}, 紧迫{l.urgency}) {l.description[:80]}"
+                for l in top_loops
             )
 
         summaries_text = "(连载刚开始, 尚无前情)"
         if recent_chapter_summaries:
             summaries_text = "\n".join(
-                f"- {s}" for s in recent_chapter_summaries[-8:]
+                f"- {s}" for s in recent_chapter_summaries[-5:]
             )
 
         title_line = ""
