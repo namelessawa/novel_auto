@@ -74,6 +74,45 @@ event_injector 在 3-tick bench 没触发, 所以效果要在生产长跑里看.
 
 ---
 
+## [2.38] — 2026-06-11 — iter#16-18 三轮 + review fix
+
+### iter#16 — NoveltyCritic prompt 减重
+
+`backend/agents/novelty_critic.py` SYSTEM_PROMPT 1200→636 chars (-47%).
+5 类检测模式合并到 numbered list, JSON 输出 schema 用具体值, severity
+枚举与 examples 真实化.
+
+### iter#17 — Bootstrap PROMPT_WORLD / PROMPT_CHARACTERS slim
+
+`backend/bootstrap_prompts.py`:
+* PROMPT_WORLD 1636→1465 chars (-10%)
+* PROMPT_CHARACTERS 1519→1437 chars (-5%)
+
+review fix HIGH: 实测 schema 示例用具体值 "锈幕城"/"林雪"/"char_linxue"
+会让 instruction-tuned 模型把这些当 soft default 直接 copy. 改用明显占
+位符 "<...>" + 显式禁止 copy 指令.
+
+### iter#18 — render_critique_block_semantic — A 类不进 LLM prompt
+
+`backend/agents/quality_spec.py` 新增 `render_critique_block_semantic()`
+只列 B-G 6 类 (38 条规则), 跳过 A 类 (7 条, det 检查器已覆盖). 节省
+~600 input tokens 每次 critique 调用.
+
+CRITIC_SYSTEM_PROMPT 3278→2675 chars (-18%). render_full_critique_block
+标记 LEGACY. 累计 CRITIC prompt vs baseline: 3887→2675 (-31%).
+
+### Review fix CRITICAL — revise/rewrite schema placeholder leak
+
+实测 tick 1 narrative_text 变成 "完整修订后的段落正文" 10 字 — REVISE
+JSON schema 示例占位符被 LLM 直接 copy 进 revised_text 写盘. 三路修复:
+1. REVISE/REWRITE schema 占位符改成自描述性 "(此处放真正修订后的...)"
+2. _parse_text_field 新增 _REVISE_REWRITE_PLACEHOLDERS 检测
+3. 最小长度护栏 (≥ 40 字) — 短于此几乎肯定是损坏输出
+
+577/577 tests pass.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#9: 全仓 max_tokens 减重 + iter#6-8 review fix
 
 ### Changed — iter#9 max_tokens repo-wide slim
