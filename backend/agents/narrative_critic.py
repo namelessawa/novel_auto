@@ -705,6 +705,16 @@ def _parse_text_field(raw: str, field_name: str) -> str:
                 val[:50],
             )
             return ""
+    # v2.38 (iter#18 review fix) — 最小长度护栏: schema 说"不少于 80 字" 但
+    # 模型偶发只回一两个字截断响应. 短于 40 字几乎肯定是损坏输出, 退化让
+    # 调用方 fallback 到 original.
+    if len(val) < 40:
+        logger.warning(
+            "NarrativeCritic revise/rewrite output too short (<40 chars), "
+            "discarding: %r",
+            val[:50],
+        )
+        return ""
     return val
 
 

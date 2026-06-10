@@ -205,7 +205,11 @@ async def test_critic_accepts_clean_text(mock_llm) -> None:
 @pytest.mark.asyncio
 async def test_critic_revises_on_medium_only(mock_llm) -> None:
     """3 个中触发 → REVISE 路径, LLM 返回修订后的 text。"""
-    revised = "他把钥匙放在桌上。"
+    # v2.38 (iter#18 review fix) — 长度 ≥ 40 字 (parser 最小长度护栏)
+    revised = (
+        "他把钥匙放在桌上, 没去擦水渍。雨停了, 远处汽笛拖长了一下。"
+        "他坐了片刻, 没开灯。"
+    )
     mock_llm.set_responses(
         [
             # round 1 critic: 0 high, 3 medium → REVISE
@@ -242,7 +246,12 @@ async def test_critic_rewrites_on_high(mock_llm) -> None:
     新 gating 跳过 LLM critique 直接进入 REWRITE. 测试也跟着调整 mock 序列:
     第一个 mock 直接是 rewrite output, 不再前置 critic JSON.
     """
-    rewritten = "他把钥匙放在桌上, 没有去擦水渍。"
+    # v2.38 (iter#18 review fix) — 长度 ≥ 40 字 (parser 拒绝过短输出, 见
+    # _parse_text_field 的 minimum-length guard)
+    rewritten = (
+        "他把钥匙放在桌上, 没有去擦水渍。窗外的雨停了, 风从纱门缝隙吹进来,"
+        "带着夜里的潮气和远处汽笛的尾音。"
+    )
     mock_llm.set_responses(
         [
             # round 1 rewrite output (det 已发现 A4 high, 跳过 LLM critique)

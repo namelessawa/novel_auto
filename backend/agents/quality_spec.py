@@ -307,7 +307,11 @@ def render_diversity_block() -> str:
 
 
 def render_full_critique_block() -> str:
-    """完整 A-G 7 类触发条件清单 (老入口, 保留以防外部使用)。"""
+    """完整 A-G 7 类触发条件清单 (LEGACY, 不推荐).
+
+    v2.38 (iter#18) — A 类规则由 det 检查器处理, LLM critique 不需要再列.
+    新代码请用 ``render_critique_block_semantic()`` (省 ~30% input token).
+    本函数仅保留作老入口防外部模块仍 import 后崩溃."""
     lines = []
     by_cat: dict[str, list[TriggerRule]] = {}
     for r in TRIGGER_RULES:

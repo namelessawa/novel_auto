@@ -89,20 +89,23 @@ PROMPT_WORLD = """\
 
 # 输出格式 (严格 JSON, 不要 markdown 代码块)
 
+所有 "<...>" 都是占位符 — 必须替换为根据本作品标题+种子真正设计的内容,
+绝不可保留 "<...>" 或任何示意性字符串.
+
 {{
   "world_state": {{
-    "era": "蒸汽朋克纪元末期",
-    "current_season": "深秋",
-    "weather": "酸雨低雾",
+    "era": "<根据本作品标题/种子设计的纪元名>",
+    "current_season": "<季节>",
+    "weather": "<本季典型天气>",
     "locations": [
-      {{"id": "loc_city", "name": "锈幕城", "type": "city", "current_state": "(≥20 字描述当前状态、氛围、可见物)", "notable_features": []}},
-      {{"id": "loc_frontier", "name": "...", "type": "frontier", "current_state": "...", "notable_features": []}},
-      {{"id": "loc_temple", "name": "...", "type": "ruin", "current_state": "...", "notable_features": []}},
-      {{"id": "loc_wild", "name": "...", "type": "wilderness", "current_state": "...", "notable_features": []}},
-      {{"id": "loc_market", "name": "...", "type": "port", "current_state": "...", "notable_features": []}}
+      {{"id": "loc_city", "name": "<主城名>", "type": "city", "current_state": "<≥20 字描述当前状态、氛围、可见物>", "notable_features": []}},
+      {{"id": "loc_frontier", "name": "<边境地名>", "type": "frontier", "current_state": "<...>", "notable_features": []}},
+      {{"id": "loc_temple", "name": "<秘所名>", "type": "ruin", "current_state": "<...>", "notable_features": []}},
+      {{"id": "loc_wild", "name": "<旷野名>", "type": "wilderness", "current_state": "<...>", "notable_features": []}},
+      {{"id": "loc_market", "name": "<市集名>", "type": "port", "current_state": "<...>", "notable_features": []}}
     ],
     "factions": [
-      {{"id": "f_1", "name": "...", "description": "...", "territory": ["loc_city"]}}
+      {{"id": "f_1", "name": "<势力名>", "description": "<...>", "territory": ["loc_city"]}}
     ],
     "active_global_events": [],
     "world_rules": []
@@ -136,35 +139,39 @@ PROMPT_CHARACTERS = """\
 
 # 输出格式 (严格 JSON, 不要 markdown 代码块)
 
+所有 "<...>" 都是占位符 — 必须替换为根据 WorldState 真正设计的角色字段,
+id 用真实的拼音 slug (char_xxx, xxx 是角色真名拼音), 绝不保留 "<...>" 或
+示意性字符串.
+
 {{
   "characters": [
     {{
       "profile": {{
-        "id": "char_linxue",
-        "name": "林雪",
-        "age": 30,
-        "role": "主角",
-        "importance_tier": "A",
-        "personality": "(行为倾向, 不写标签)",
-        "appearance": "...",
-        "speech_style": "(特征描述. 例: 「...」「...」)",
+        "id": "char_<角色名拼音>",
+        "name": "<角色中文名>",
+        "age": 0,
+        "role": "<主角|配角|NPC>",
+        "importance_tier": "<A|B|C>",
+        "personality": "<行为倾向描写, 不写'谨慎'这种标签>",
+        "appearance": "<...>",
+        "speech_style": "<特征描述. 例: 「...」「...」>",
         "core_values": [],
         "fears": [],
         "desires": []
       }},
       "state": {{
-        "character_id": "char_linxue",
-        "current_location": "loc_city",
+        "character_id": "char_<同上>",
+        "current_location": "<现所在 location_id>",
         "current_goals": [
-          {{"id": "g1", "description": "...", "priority": 7, "progress": 0.0, "obstacles": []}}
+          {{"id": "g1", "description": "<...>", "priority": 7, "progress": 0.0, "obstacles": []}}
         ],
-        "arc_goal": "...",
+        "arc_goal": "<...>",
         "known_facts": [],
         "secrets_kept": [],
         "relationships": {{
-          "char_other": {{"with_character_id": "char_other", "type": "朋友", "trust": 5, "history_summary": "...", "last_interaction_tick": 0}}
+          "char_<其他人>": {{"with_character_id": "char_<其他人>", "type": "<朋友|敌人|...>", "trust": 5, "history_summary": "<...>", "last_interaction_tick": 0}}
         }},
-        "emotional_state": "...",
+        "emotional_state": "<...>",
         "inventory": [],
         "status_effects": []
       }}
