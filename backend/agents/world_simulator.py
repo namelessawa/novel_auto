@@ -131,12 +131,14 @@ class WorldSimulator:
         # v2.38 (iter#5) — 紧凑视图: 只送 LLM 需要看的字段, 不再回灌整个
         # WorldState (locations/factions/world_rules 占体积大且每 tick 几乎
         # 不变). 模型按 delta 模式只输出变了的字段, 稳态字段沿用 prior.
+        # v2.38 (iter#34) — events 20→10 (世界推进只需最近上下文; 20 含太多
+        # 历史事件实际影响极小), description 80→60 字 (够说明事件性质).
         ws = world_state
         loc_names = ", ".join(loc.name for loc in ws.locations[:8]) or "(无)"
         events_compact = []
-        for e in last_tick_events[:20]:
+        for e in last_tick_events[:10]:
             events_compact.append(
-                f"- [{e.type}] {e.description[:80]} "
+                f"- [{e.type}] {e.description[:60]} "
                 f"(loc={e.location or '-'}, value={e.narrative_value or 0})"
             )
         events_block = "\n".join(events_compact) or "(无)"
