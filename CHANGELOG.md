@@ -5,6 +5,25 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#12: EventInjector prompt compression
+
+`backend/agents/event_injector.py`:
+
+* SYSTEM_PROMPT 1700 → 1290 chars (-24%). 三类事件 / 原则 / 禁区合并精简
+  描述, state_patches 段紧凑化, 输出格式占位符具体化 (与 narrator
+  iter#4 同思路, 用具体 char_id / location_id 替换 `<int>` 之类占位符).
+
+### Tests
+
+5/5 event_injector + world_sim tests pass, 574/574 全测试.
+
+### Benchmark
+
+event_injector 在 3-tick bench 没触发, 所以效果要在生产长跑里看. 直观
+节省: 每次 inject 输入 prompt 节省 ~400 chars = ~200 tokens.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#11: Bootstrap max_tokens slim
 
 `backend/bootstrap_prompts.py`:
