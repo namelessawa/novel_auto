@@ -104,28 +104,22 @@ class NoveltyCritic:
         recent_events: list[Event],
         action_patterns: dict,
     ) -> str:
+        # v2.38 (iter#27) — 紧凑视图: indent 去掉, fence 去掉, 章节 30→20.
         recent_evt_lite = [
             {"type": e.type, "desc": e.description[:60], "participants": e.participants}
             for e in recent_events[-50:]
         ]
         return f"""\
-# 最近 30 章摘要
-
-{chr(10).join(f'  - {s}' for s in recent_chapters[-30:]) or '  (尚无)'}
+# 最近 20 章摘要
+{chr(10).join(f'  - {s}' for s in recent_chapters[-20:]) or '  (尚无)'}
 
 # 最近 50 事件
-
-```json
-{json.dumps(recent_evt_lite, ensure_ascii=False, indent=2)}
-```
+{json.dumps(recent_evt_lite, ensure_ascii=False)}
 
 # 角色行动模式统计 (TickDB 提供)
+{json.dumps(action_patterns, ensure_ascii=False)}
 
-```json
-{json.dumps(action_patterns, ensure_ascii=False, indent=2)}
-```
-
-请按 system 提示输出严格 JSON。recommendations 数组每条不超过 50 字。
+按 system 提示输出严格 JSON, recommendations 每条 ≤ 50 字.
 """
 
     def _parse_output(self, raw: str) -> NoveltyCriticOutput:
