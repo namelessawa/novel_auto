@@ -532,7 +532,8 @@ class ContinuityEvaluatorAdapter:
             api_key=api_key,
             base_url=base_url,
             model_name=model_name,
-            max_tokens=40960,
+            # v2.38 (iter#9) — continuity 检查输出是 JSON 报告, 几千 tokens 够.
+            max_tokens=4096,
             temperature=0.2
         )
 

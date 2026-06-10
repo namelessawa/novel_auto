@@ -94,7 +94,8 @@ class NoveltyCritic:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.3,
-                max_tokens=20480,
+                # v2.38 (iter#9) — verdict + suggestions JSON, ~1000 tokens.
+                max_tokens=2048,
                 agent_id="novelty_critic",
                 priority="optional",
             )

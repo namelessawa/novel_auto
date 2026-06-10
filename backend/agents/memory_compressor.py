@@ -191,7 +191,9 @@ class MemoryCompressor:
                     system_prompt=SYSTEM_PROMPT_L0_L1,
                     user_prompt=user_prompt,
                     temperature=0.3,
-                    max_tokens=40960,
+                    # v2.38 (iter#9) — L0→L1 输出是 20 条 entry 压缩到 5-10 条
+                    # summary, ~3000 tokens. 40960 是反推理浪费值.
+                    max_tokens=4096,
                     agent_id="memory_compressor:l0_l1",
                     priority="optional",
                 )
@@ -217,7 +219,8 @@ class MemoryCompressor:
                     system_prompt=SYSTEM_PROMPT_L1_L2,
                     user_prompt=user_prompt,
                     temperature=0.3,
-                    max_tokens=20480,
+                    # v2.38 (iter#9) — L1→L2 同上, 更高层级摘要更短.
+                    max_tokens=4096,
                     agent_id="memory_compressor:l1_l2",
                     priority="optional",
                 )

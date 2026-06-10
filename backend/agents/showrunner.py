@@ -132,7 +132,9 @@ class Showrunner:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.4,
-                max_tokens=30720,
+                # v2.38 (iter#9) — Showrunner 输出是 5-10 条建议 JSON, ~1500
+                # tokens. 此前 30720 给 reasoning model 留出全填满空间.
+                max_tokens=3072,
                 agent_id="showrunner",
                 priority="medium",
             )

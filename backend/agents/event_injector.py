@@ -156,7 +156,9 @@ class EventInjector:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.6,
-                max_tokens=40960,
+                # v2.38 (iter#9) — Event injection 输出是 1-3 events + 可选
+                # state_patches, ~2000-3000 tokens. 40960 是反推理浪费值.
+                max_tokens=4096,
                 agent_id="event_injector",
                 priority="medium",
             )

@@ -5,6 +5,38 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#9: 全仓 max_tokens 减重 + iter#6-8 review fix
+
+### Changed — iter#9 max_tokens repo-wide slim
+
+防 reasoning 模型 "把 budget 全填满写思考" 浪费。所有 LLM 调用按实际输出
+体积重新估算上限:
+
+| 调用点                          |   before |    after |
+| ------------------------------- | -------: | -------: |
+| showrunner                      |   30,720 |    3,072 |
+| event_injector                  |   40,960 |    4,096 |
+| memory_compressor L0→L1         |   40,960 |    4,096 |
+| memory_compressor L1→L2         |   20,480 |    4,096 |
+| novelty_critic                  |   20,480 |    2,048 |
+| evaluation/continuity_v2        |   40,960 |    4,096 |
+
+> 这些 agent 不每 tick 跑 (showrunner 每 5 tick / event_injector 每 3-5 tick
+> / memory_compressor 每 50 tick / novelty_critic 每 20 tick), 但每次"被 LLM
+> 填满 budget" 是 10-40k token 损失. 累计长跑 100+ tick 节省可观.
+
+574/574 tests pass.
+
+### Fixed — iter#6-8 code-review
+
+| 严重度    | 文件                          | 修复                                                   |
+| --------- | ----------------------------- | ------------------------------------------------------ |
+| HIGH      | narrative_critic.py           | det-substantive (medium+high) gate 误判: 改成 `det_high >= 1` 才跳 LLM (REWRITE 已确定). det 仅 medium 时 LLM 仍需找语义触发 (B/C/F/G — show-don't-tell / 视角漂移 / 对话潜台词). 配套修测试 mock 序列. |
+| HIGH      | character_agent.py            | max_tokens=2048 对 reasoning 模型太紧, chain-of-thought 与 message.content 共享 budget. 改 A 级 8192 / B 级 4096. |
+| MEDIUM    | narrator_agent.py             | open_loops 排序 `getattr(l, "urgency", 0)` 防御默认 — OpenLoop.urgency 非 nullable, 改用 `l.urgency` 直接访问. |
+
+---
+
 ## [2.38] — 2026-06-11 — iter#8: CharacterAgent prompt + 输出预算紧缩
 
 `backend/agents/character_agent.py`:
