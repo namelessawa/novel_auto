@@ -232,7 +232,7 @@ class EventInjector:
 {json.dumps(dormant_lite, ensure_ascii=False)}
 
 按 system 提示输出严格 JSON, events 含完整字段. 不需注入时 events=[]
-+ 填 no_events_reason.
+并填 no_events_reason.
 """
 
     def _parse_output(
