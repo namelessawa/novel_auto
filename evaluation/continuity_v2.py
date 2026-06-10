@@ -299,20 +299,23 @@ class EnhancedContinuityEvaluator:
         memory_section = ""
         # 仅接受 dict — 误传字符串时跳过而非 `'key' in str` 子串误命中后
         # str['key'] 抛 TypeError (ConsistencyGuardianAdapter 修复前的事故模式)。
+        # v2.38 (iter#26) — json indent 去掉, 节省 30% memory_section 体积.
         if isinstance(memory_context, dict) and memory_context:
             # Include key memory info — 'characters' 与 'character_states' 两个键
             # 都识别 (旧节级管线用前者, tick 架构 guardian 曾用后者)。
             char_states = memory_context.get("characters") or memory_context.get("character_states")
             if char_states:
-                memory_section += f"\n已知角色状态:\n{json.dumps(char_states, ensure_ascii=False, indent=2, default=str)}\n"
+                memory_section += f"\n已知角色状态:\n{json.dumps(char_states, ensure_ascii=False, default=str)}\n"
             if memory_context.get("world_state"):
-                memory_section += f"\n世界状态:\n{json.dumps(memory_context['world_state'], ensure_ascii=False, indent=2, default=str)}\n"
+                memory_section += f"\n世界状态:\n{json.dumps(memory_context['world_state'], ensure_ascii=False, default=str)}\n"
             if "relationships" in memory_context:
-                memory_section += f"\n已知角色关系:\n{json.dumps(memory_context['relationships'], ensure_ascii=False, indent=2, default=str)}\n"
+                memory_section += f"\n已知角色关系:\n{json.dumps(memory_context['relationships'], ensure_ascii=False, default=str)}\n"
             if "recent_events" in memory_context:
                 memory_section += f"\n最近事件:\n{memory_context['recent_events']}\n"
 
-        prompt = f"""请作为专业小说编辑，对新章节进行全面的连续性评估。
+        # v2.38 (iter#26) — 8 维度详细子项压缩到单行 ~80 chars/dim. 节省
+        # ~400 chars 总体. 评估精度保留.
+        prompt = f"""请作为专业小说编辑, 对新章节进行连续性评估.
 
 ## 前文上下文
 {prev_preview}
@@ -321,43 +324,16 @@ class EnhancedContinuityEvaluator:
 {new_preview}
 {memory_section}
 
-## 评估要求
-请从以下维度评估连续性（每项0.0-1.0分）：
+## 评估要求 (每维度 0.0-1.0 分)
 
-1. **character_continuity**: 人物连续性
-   - 人物行为是否符合已建立的性格
-   - 人物状态是否与前一章节一致
-   - 对话风格是否保持一致
-
-2. **plot_continuity**: 情节连续性
-   - 情节发展是否自然衔接
-   - 是否存在逻辑漏洞
-   - 因果关系是否合理
-
-3. **setting_continuity**: 场景连续性
-   - 地点转换是否合理
-   - 环境描述是否一致
-   - 场景细节是否连贯
-
-4. **theme_continuity**: 主题连续性
-   - 主题思想是否保持一致
-   - 核心冲突是否持续推进
-
-5. **style_continuity**: 文风连续性
-   - 叙述风格是否一致
-   - 语言特色是否保持
-
-6. **temporal_continuity**: 时间连续性
-   - 时间线是否连贯
-   - 时间跳跃是否合理
-
-7. **relationship_continuity**: 关系连续性
-   - 角色关系是否与已知状态一致
-   - 关系变化是否有铺垫
-
-8. **foreshadowing_continuity**: 伏笔连续性
-   - 是否有未回收的伏笔
-   - 新伏笔是否自然
+1. **character_continuity**: 人物行为/状态/对话风格是否一致
+2. **plot_continuity**: 情节衔接、逻辑漏洞、因果关系
+3. **setting_continuity**: 地点转换、环境描述、场景细节
+4. **theme_continuity**: 主题与核心冲突推进
+5. **style_continuity**: 叙述风格、语言特色
+6. **temporal_continuity**: 时间线、时间跳跃合理性
+7. **relationship_continuity**: 角色关系与铺垫
+8. **foreshadowing_continuity**: 伏笔回收与新伏笔自然度
 
 ## 输出格式
 请返回JSON格式：
