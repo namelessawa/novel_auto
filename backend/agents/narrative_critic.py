@@ -177,11 +177,15 @@ REVISE_SYSTEM_PROMPT = (
 ---
 
 # 输出格式 (严格 JSON, 不要 markdown 代码块)
+#
+# revised_text 必须是真正修订过的段落正文中文小说本身,
+# **绝不能 copy 这段 schema 描述里的字面字符串** —
+# 不要写 "完整修订后的段落正文" / "原文片段" / 省略号占位符.
 
 {
-  "revised_text": "完整修订后的段落正文",
+  "revised_text": "(此处放真正修订后的中文小说正文, 不少于 80 字)",
   "diffs": [
-    {"trigger_code": "A4", "before": "...原文片段...", "after": "...改后片段..."}
+    {"trigger_code": "A4", "before": "雪粉仿佛笑了一下", "after": "雪粉嘴角弯了半寸"}
   ],
   "removed_words": ["仿佛", "缓缓地"]
 }
@@ -216,10 +220,14 @@ REWRITE_SYSTEM_PROMPT = (
 ---
 
 # 输出格式 (严格 JSON, 不要 markdown 代码块)
+#
+# rewritten_text 必须是真正重写过的段落正文中文小说本身,
+# **绝不能 copy 这段 schema 描述里的字面字符串** —
+# 不要写 "完整重写后的段落正文" / "节奏由X变为Y" 这类占位符.
 
 {
-  "rewritten_text": "完整重写后的段落正文",
-  "dimension_shift": "节奏由X变为Y / 感官由X变为Y / ...",
+  "rewritten_text": "(此处放真正重写后的中文小说正文, 不少于 80 字)",
+  "dimension_shift": "节奏由慢变快; 主导感官由视觉转触觉",
   "avoided_codes": ["A4", "A6"]
 }
 """
@@ -669,6 +677,14 @@ def _parse_critic_triggers(raw: str) -> list[DeterministicTrigger]:
     return out
 
 
+_REVISE_REWRITE_PLACEHOLDERS = (
+    "完整修订后的段落正文",
+    "完整重写后的段落正文",
+    "此处放真正修订",
+    "此处放真正重写",
+)
+
+
 def _parse_text_field(raw: str, field_name: str) -> str:
     try:
         payload = parse_llm_json(raw)
@@ -677,7 +693,19 @@ def _parse_text_field(raw: str, field_name: str) -> str:
             "NarrativeCritic revise/rewrite JSON parse failed: %s — raw[:300]=%r", e, raw[:300],
         )
         return ""
-    return str(payload.get(field_name, "")).strip()
+    val = str(payload.get(field_name, "")).strip()
+    # v2.38 (iter#15 review fix) — 占位符检测: 模型偶发直接 copy system prompt 里
+    # 的 JSON schema 示例字符串作为 revised_text / rewritten_text, 用户得到的
+    # narrative 是 "完整修订后的段落正文" 这种 schema 残骸. 命中即视作未产生新文本.
+    for p in _REVISE_REWRITE_PLACEHOLDERS:
+        if p in val:
+            logger.warning(
+                "NarrativeCritic revise/rewrite output is a schema placeholder, "
+                "discarding: %r",
+                val[:50],
+            )
+            return ""
+    return val
 
 
 def _extract_blacklist_words(triggers: list[DeterministicTrigger]) -> list[str]:
