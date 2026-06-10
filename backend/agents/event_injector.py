@@ -207,41 +207,32 @@ class EventInjector:
             for p in dormant_characters[:10]
         ]
 
+        # v2.38 (iter#22) — 紧凑视图: json indent 去掉, ```json 围栏去掉
+        # (system prompt 已说严格 JSON 输出, fence 是冗余). 节省 ~40% prompt
+        # 体积.
         return f"""\
 # 当前 tick={tick}, open_loops={len(open_loops)}
 
 ## WorldState 摘要
-```json
-{json.dumps(ws_lite, ensure_ascii=False, indent=2)}
-```
+{json.dumps(ws_lite, ensure_ascii=False)}
 
 ## 最近 20 tick 事件摘要
-```json
-{json.dumps(recent_evt_lite, ensure_ascii=False, indent=2)}
-```
+{json.dumps(recent_evt_lite, ensure_ascii=False)}
 
 ## 主跟踪角色状态
-```json
-{json.dumps(chars_lite, ensure_ascii=False, indent=2)}
-```
+{json.dumps(chars_lite, ensure_ascii=False)}
 
 ## 当前开放伏笔
-```json
-{json.dumps(loops_lite, ensure_ascii=False, indent=2)}
-```
+{json.dumps(loops_lite, ensure_ascii=False)}
 
 ## Showrunner 建议
-```json
-{json.dumps(showrunner_recs, ensure_ascii=False, indent=2)}
-```
+{json.dumps(showrunner_recs, ensure_ascii=False)}
 
 ## 非活跃角色池 (可作为外生事件素材)
-```json
-{json.dumps(dormant_lite, ensure_ascii=False, indent=2)}
-```
+{json.dumps(dormant_lite, ensure_ascii=False)}
 
-请按 system 提示输出严格 JSON,events 数组每个事件含完整字段。
-若判定本 tick 不需要注入(节奏需要平静),将 events=[] 并填 no_events_reason。
+按 system 提示输出严格 JSON, events 含完整字段. 不需注入时 events=[]
++ 填 no_events_reason.
 """
 
     def _parse_output(
