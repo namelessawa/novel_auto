@@ -209,13 +209,18 @@ class CharacterAgent:
         visible = self._filter_visible_events(all_tick_events, state.current_location)
         user_prompt = self._build_user_prompt(state, visible, recent_actions or [])
         try:
+            # v2.38 (iter#8) — CharacterAction JSON 典型 ~500-800 tokens.
+            # v2.38 (iter#8 review fix) — 此前直接砍到 2048 对 reasoning 模型
+            # (DeepSeek-Reasoner / MiMo) 太紧: 它们的 chain-of-thought 与
+            # message.content 共享 budget. 2048 让 reasoning 占满后 content 为
+            # 空, extract_message_text 退到 reasoning_content 不是 JSON, 解析
+            # 必败, 角色静默 fallback wait. A 级用更宽 budget 容下推理.
+            cap = 8192 if self._profile.importance_tier == "A" else 4096
             resp = await llm_client.chat(
                 system_prompt=self._system_prompt,
                 user_prompt=user_prompt,
                 temperature=0.7,
-                # v2.38 (iter#8) — CharacterAction JSON 典型 ~500-800 tokens,
-                # 给 2048 留足余量. 此前 30720 给推理模型空间填思考,白烧.
-                max_tokens=2048,
+                max_tokens=cap,
                 agent_id=f"character_agent:{self._profile.id}",
                 priority=self._priority,
                 model_override=model_override,

@@ -594,10 +594,9 @@ class NarratorAgent:
         # 旧 8 条对应单段 tick 是噪声, 模型会试图全部呼应导致内容散乱.
         loops_text = "(无开放伏笔)"
         if open_loops:
-            # 按 urgency 降序排, 取前 5 紧迫
-            top_loops = sorted(
-                open_loops, key=lambda l: -getattr(l, "urgency", 0)
-            )[:5]
+            # 按 urgency 降序排, 取前 5 紧迫. OpenLoop.urgency 是非 nullable
+            # int (默认 5), 不需要 getattr 防御性默认.
+            top_loops = sorted(open_loops, key=lambda l: -l.urgency)[:5]
             loops_text = "\n".join(
                 f"- [{l.id}] ({l.type}, 紧迫{l.urgency}) {l.description[:80]}"
                 for l in top_loops

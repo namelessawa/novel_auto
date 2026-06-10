@@ -236,26 +236,22 @@ async def test_critic_revises_on_medium_only(mock_llm) -> None:
 
 @pytest.mark.asyncio
 async def test_critic_rewrites_on_high(mock_llm) -> None:
-    """高触发 → REWRITE, LLM 返回重写文本。"""
+    """高触发 → REWRITE, LLM 返回重写文本。
+
+    v2.38 (iter#6 + review fix) — draft 含 "仿佛" / "缓缓地" 触发 det A4 high,
+    新 gating 跳过 LLM critique 直接进入 REWRITE. 测试也跟着调整 mock 序列:
+    第一个 mock 直接是 rewrite output, 不再前置 critic JSON.
+    """
     rewritten = "他把钥匙放在桌上, 没有去擦水渍。"
     mock_llm.set_responses(
         [
-            # round 1 critic: 1 high → REWRITE
-            {
-                "triggers": [
-                    {"code": "A4", "severity": "high", "evidence": '仿佛'},
-                ],
-                "rationale": "AI 套话",
-                "red_team_critiques": [],
-            },
-            # round 1 rewrite output
+            # round 1 rewrite output (det 已发现 A4 high, 跳过 LLM critique)
             {
                 "rewritten_text": rewritten,
                 "dimension_shift": "节奏 慢 → 快",
                 "avoided_codes": ["A4"],
             },
-            # round 2 critic: 全清
-            {"triggers": [], "rationale": "", "red_team_critiques": []},
+            # round 2 critic 也被 det-only 路径跳过, 直接 ACCEPT
         ]
     )
     critic = NarrativeCritic()
