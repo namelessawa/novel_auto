@@ -347,29 +347,16 @@ class StoryArcDirector:
             analysis.next_beat.description if analysis.next_beat else ""
         )
 
+        # v2.38 (iter#28) — 合并三段 header 到单段, header label 节流.
         user_prompt = f"""\
-# 当前 StoryArc
+# StoryArc
+title: {arc.title} | theme: {arc.theme} | Q: {arc.central_question}
+act: {arc.current_act} | progress: {analysis.progress_ratio:.0%}
+active_beat: {active_title} — {active_desc[:100]}
+next_beat: {next_title} — {next_desc[:100]}
+overdue: {len(analysis.overdue_beat_ids)} 个 | expected: {analysis.expected_intensity} | sampled: {sampled_intensity} | flat/high streak: {analysis.flat_streak}/{analysis.high_streak}
 
-- title: {arc.title}
-- theme: {arc.theme}
-- central_question: {arc.central_question}
-- current_act: {arc.current_act}
-- progress: {analysis.progress_ratio:.0%}
-
-# 节拍状态
-
-active_beat: {active_title} — {active_desc[:120]}
-next_pending_beat: {next_title} — {next_desc[:120]}
-overdue: {len(analysis.overdue_beat_ids)} 个
-
-# 节奏
-
-expected: {analysis.expected_intensity}
-sampled: {sampled_intensity}
-flat_streak: {analysis.flat_streak}
-high_streak: {analysis.high_streak}
-
-请按 system 提示输出严格 JSON。narrator_hint ≤30 字。
+输出严格 JSON, narrator_hint ≤ 30 字.
 """
         try:
             resp = await llm_client.chat(
