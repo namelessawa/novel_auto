@@ -252,10 +252,12 @@ def _env_int(name: str, default: int) -> int:
 
 MAX_REVISE_ROUNDS = _env_int("CRITIC_MAX_REVISE_ROUNDS", 1)
 MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 1)
-# rewrite + revise 累计修订轮次硬上限。v2.38 (iter#3) — 默认从 4 降到 2。
-# 实测两轮以上的修订对最终质量收益已经饱和,但 token 是线性 ×2-3x 增长。
-# 通过 env CRITIC_MAX_TOTAL_ROUNDS 可手动提高。
-MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 2)
+# rewrite + revise 累计修订轮次硬上限。
+# v2.38 (iter#3) — 默认从 4 降到 2.
+# v2.38 (iter#33) — 进一步降到 1: 1 次 critique + 1 次 modify (revise OR
+# rewrite) 后直接接受, 不再做 2nd critique. 实测 2nd critique 几乎总是
+# POLISH (modify 已清掉高触发), 等于纯浪费. 通过 env 可恢复为 2/3/4.
+MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 1)
 ENABLE_LLM_CRITIC = os.environ.get("CRITIC_ENABLE_LLM", "1").strip() != "0"
 
 # v2.38 (iter#3) — critique 输出上限。triggers JSON 极其紧凑, 1500 tokens 足够
