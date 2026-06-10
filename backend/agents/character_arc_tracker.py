@@ -377,21 +377,16 @@ class CharacterArcTracker:
                 }
             )
 
+        # v2.38 (iter#24) — indent + fence strip
         user_prompt = f"""\
 # 待评估角色清单
-
-```json
-{json.dumps(char_blobs, ensure_ascii=False, indent=2)}
-```
+{json.dumps(char_blobs, ensure_ascii=False)}
 
 # 检测要求
 
-对每个角色:
-1. 判断 B1/B2/B4/B5/B6 是否触发, 给出 evidence (引用 recent_actions 的具体内容)
-2. 判断 speech_compliance: ok (符合) / loose (略偏) / mismatch (不像本人)
-3. 若 arc 状态需调整, 给出 suggested_stage
-
-请按 system 提示输出严格 JSON。
+对每个角色: (1) 判断 B1/B2/B4/B5/B6 是否触发, 给 evidence (引用 recent_
+actions 原文); (2) speech_compliance: ok | loose | mismatch;
+(3) arc 需调整时给 suggested_stage. 按 system 提示输出严格 JSON.
 """
         resp = await llm_client.chat(
             system_prompt=SYSTEM_PROMPT,
