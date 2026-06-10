@@ -5,6 +5,37 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#10: Critic length-gated
+
+`backend/agents/narrator_agent.py`:
+
+* **narrative_text < 400 字时跳过 critic 整段** (`_CRITIC_MIN_NARRATIVE_LEN`).
+  一次 critique+rewrite ~4500 tokens 比短段落本身还多, 收益不成比例. 短段
+  落的语感由 Narrator 自身的 system prompt + 反 reasoning filter 已经管住,
+  critic 主要价值在长段落的结构性纠错.
+
+### Benchmark — iter#10 vs iter#9-baseline
+
+| 指标                       | iter#9-baseline | iter#10 (length-gate) |
+| -------------------------- | --------------: | --------------------: |
+| total tokens               |          34,806 |                31,286 |
+| narrative_critic:critique  |          13,564 |                 4,719 |
+| narrator                   |          13,216 |                18,041 |
+| world_simulator            |           8,026 |                 8,526 |
+
+> critic -65% (length gate 在 tick 2/3 短段落生效).  narrator 自然增长是
+> tick 1 产了 896 字长段落. 总 -10% / 累计 vs baseline -77%.
+
+### Quality — 抽样
+
+样本 (tick 1, 896 字): "齿轮的嗡鸣声突然拔高了半个音阶..." 苏默乘汽轮抵达
+锈幕城, 沼泽里蓝绿色光点 / 背包里像心跳的震颤 / 老头抱编织袋打盹 — 长段
+落充分调动悬疑与世界感, 完全保留 baseline 的质量基线.
+
+10/10 narrator+critic tests pass.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#9: 全仓 max_tokens 减重 + iter#6-8 review fix
 
 ### Changed — iter#9 max_tokens repo-wide slim

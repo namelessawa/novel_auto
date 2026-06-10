@@ -313,7 +313,17 @@ class NarratorAgent:
 
         parsed = self._parse_output(resp.content, estimated_length, tick, tick_events)
         # 4. CRITIQUE → REVISE/REWRITE 循环
-        if parsed.should_narrate and self._critic is not None and parsed.narrative_text:
+        # v2.38 (iter#10) — 短段落跳过 critic. < 400 字的 narrative critic 收益
+        # 不成比例: 一次 critique+rewrite ~4500 tokens 比 narrative 自身还多,
+        # 而短段落本来就少有 critic 能纠正的结构性问题. 短段落的语感由 Narrator
+        # 自己的 system prompt 已经管住 (反 AI 套话 / 段末 / 开头多样性).
+        _CRITIC_MIN_NARRATIVE_LEN = 400
+        if (
+            parsed.should_narrate
+            and self._critic is not None
+            and parsed.narrative_text
+            and len(parsed.narrative_text) >= _CRITIC_MIN_NARRATIVE_LEN
+        ):
             parsed = await self._run_critique(parsed)
         return parsed
 
