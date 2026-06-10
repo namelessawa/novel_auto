@@ -326,7 +326,9 @@ async def generate_style_anchors(
             positioning=positioning,
             references=references,
         ),
-        max_tokens=16384,
+        # v2.38 (iter#31) — 与正常 bootstrap style stage 一致 (4096), 此前
+        # regenerate-style 单走的 path 漏修.
+        max_tokens=4096,
         stage="regenerate_style",
     )
     anchors: list[StyleAnchor] = []
