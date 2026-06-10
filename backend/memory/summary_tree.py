@@ -187,7 +187,8 @@ class SummaryTree:
                 ),
                 user_prompt=combined,
                 temperature=0.5,
-                max_tokens=10240,
+                # v2.38 (iter#30) — legend 200 字 ~400 tokens, 10240 远过.
+                max_tokens=1024,
                 agent_id="summary_tree:legendize",
                 priority="optional",
             )
@@ -382,7 +383,8 @@ class SummaryTree:
             ),
             user_prompt=text,
             temperature=0.3,
-            max_tokens=10240,
+            # v2.38 (iter#30) — 200-300 字摘要 ~600 tokens 足.
+            max_tokens=1024,
             agent_id="summary_tree:volume_compress",
             priority="optional",
         )
@@ -401,7 +403,8 @@ class SummaryTree:
             ),
             user_prompt=parts,
             temperature=0.3,
-            max_tokens=10240,
+            # v2.38 (iter#30) — 200-300 字摘要 ~600 tokens 足.
+            max_tokens=1024,
             agent_id="summary_tree:root_compress",
             priority="optional",
         )
