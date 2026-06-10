@@ -400,7 +400,8 @@ async def bootstrap_world(
     chars_resp = await _llm_json(
         system_prompt="你是一个角色设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_CHARACTERS.format(
-            world_state=ws.model_dump_json(indent=2)
+            # v2.38 (iter#29) — 不缩进 JSON, 节省 ~30% input tokens.
+            world_state=ws.model_dump_json()
         ),
         # v2.38 (iter#11) — characters JSON 4-6 角色 × ~700 tokens = ~4000.
         max_tokens=6144,
@@ -429,14 +430,14 @@ async def bootstrap_world(
     loops_resp = await _llm_json(
         system_prompt="你是一个剧情设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_LOOPS.format(
-            world_state=ws.model_dump_json(indent=2),
+            # v2.38 (iter#29) — 不缩进 JSON.
+            world_state=ws.model_dump_json(),
             characters=json.dumps(
                 [
                     {"id": p.id, "name": p.name, "tier": p.importance_tier}
                     for p in ts.list_character_profiles()
                 ],
                 ensure_ascii=False,
-                indent=2,
             ),
         ),
         # v2.38 (iter#11) — 3-5 loops × ~500 tokens ≈ 2500 (实测部分模型 loop
