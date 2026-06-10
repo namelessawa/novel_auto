@@ -321,6 +321,17 @@ class CharacterAgent:
 
         status = ", ".join(state.status_effects) or "正常"
         inv = ", ".join(state.inventory) or "无"
+
+        # v2.38 (iter#21 review fix) — 按 item 截断, 不在中间砍字. 单条 80 字
+        # 上限保留语义完整, 总条数控在 4 条防 prompt 爆 (剩余条数显式标注省略).
+        def _fact_list(items: list[str]) -> str:
+            if not items:
+                return "(无)"
+            kept = [it[:80] for it in items[:4]]
+            if len(items) > 4:
+                kept.append(f"…(还有 {len(items) - 4} 条省略)")
+            return "; ".join(kept)
+
         return f"""\
 # 当前状态
 位置: {state.current_location or '(未指定)'} | 情绪: {state.emotional_state} | 身体: {status} | 物品: {inv} | 钱: {state.money}
@@ -332,8 +343,8 @@ class CharacterAgent:
 {state.arc_goal or '(尚未明确)'} (进度 {state.arc_progress:.0%})
 
 # 知识范围 (极重要 — 不知道的事不能据此决策)
-亲历/已知: {('; '.join(state.known_facts)[:200]) or '(无)'}
-保守秘密: {('; '.join(state.secrets_kept)[:200]) or '(无)'}
+亲历/已知: {_fact_list(state.known_facts)}
+保守秘密: {_fact_list(state.secrets_kept)}
 
 # 关系网
 {rels_text}
