@@ -5,6 +5,25 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#11: Bootstrap max_tokens slim
+
+`backend/bootstrap_prompts.py`:
+
+| stage       | before  | after   |
+| ----------- | ------: | ------: |
+| world       | 24,576  | 4,096   |
+| characters  | 32,768  | 6,144   |
+| open_loops  | 12,288  | 5,120 (3072 太紧截断, 已 bump 到 5120 安全) |
+| style       | 16,384  | 4,096   |
+| **总额**    | **85,016** | **19,456** (-77%) |
+
+实测: bootstrap_sec 361 → 299 (-17%), 总 token 28,318 (vs iter#10
+31,286). 累计 vs baseline: total -79.5%, bootstrap -40%.
+
+12/12 bootstrap tests pass.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#10: Critic length-gated
 
 `backend/agents/narrator_agent.py`:

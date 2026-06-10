@@ -371,7 +371,10 @@ async def bootstrap_world(
         user_prompt=PROMPT_WORLD.format(
             seed=seed, title=title or "(未指定 — 请根据 seed 自由发挥)"
         ),
-        max_tokens=24576,
+        # v2.38 (iter#11) — WorldState JSON ~3000 tokens 完成 (era/locations/
+        # factions/world_rules 加起来 ~5 个地点 + 3 派系 + 6 规则). 24576 是
+        # reasoning 浪费值.
+        max_tokens=4096,
         stage="world",
     )
     ws = WorldState.model_validate(world_resp.get("world_state", {}))
@@ -404,7 +407,8 @@ async def bootstrap_world(
         user_prompt=PROMPT_CHARACTERS.format(
             world_state=ws.model_dump_json(indent=2)
         ),
-        max_tokens=32768,
+        # v2.38 (iter#11) — characters JSON 4-6 角色 × ~700 tokens = ~4000.
+        max_tokens=6144,
         stage="characters",
     )
     main_tracking_id: str | None = None
@@ -440,7 +444,9 @@ async def bootstrap_world(
                 indent=2,
             ),
         ),
-        max_tokens=12288,
+        # v2.38 (iter#11) — 3-5 loops × ~500 tokens ≈ 2500 (实测部分模型 loop
+        # description 偏长). 3072 太紧会截断, 5120 安全余量.
+        max_tokens=5120,
         stage="open_loops",
     )
     for loop_raw in loops_resp.get("open_loops", []) or []:
@@ -461,7 +467,8 @@ async def bootstrap_world(
             positioning=positioning,
             references=references,
         ),
-        max_tokens=16384,
+        # v2.38 (iter#11) — 3-5 style_anchors × ~400 tokens ≈ 2000.
+        max_tokens=4096,
         stage="style",
     )
     for anchor_raw in style_resp.get("style_anchors", []) or []:
