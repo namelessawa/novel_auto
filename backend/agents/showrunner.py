@@ -160,33 +160,40 @@ class Showrunner:
                     }
                 )
 
+        # v2.38 (iter#21) — 紧凑视图: indent=2 → 不缩进 (节省 ~30% JSON 体积),
+        # 最近章节摘要从 20 截到 10 (10 段足够看节奏趋势, 20 段有 ~2-3k chars
+        # 净浪费), 开放伏笔 description 截 60 (从 80).
+        loops_view = [
+            {
+                "id": l.id,
+                "urgency": l.urgency,
+                "type": l.type,
+                "desc": l.description[:60],
+                "stale_ticks": current_tick - max(
+                    l.last_referenced_tick or 0, l.opened_tick or 0
+                ),
+            }
+            for l in open_loops
+        ]
         return f"""\
 # 当前 tick={current_tick}, 累计 ticks={total_ticks}
 
 ## 角色弧线进度 (A/B 级)
-```json
-{json.dumps(character_arcs, ensure_ascii=False, indent=2)}
-```
+{json.dumps(character_arcs, ensure_ascii=False)}
 
 ## 开放伏笔
-```json
-{json.dumps([{"id": l.id, "urgency": l.urgency, "type": l.type, "desc": l.description[:80], "stale_ticks": current_tick - max(l.last_referenced_tick or 0, l.opened_tick or 0)} for l in open_loops], ensure_ascii=False, indent=2)}
-```
+{json.dumps(loops_view, ensure_ascii=False)}
 
 ## 候选冷线索 (>20 tick 未推进)
-```json
-{json.dumps(cold_candidates, ensure_ascii=False, indent=2)}
-```
+{json.dumps(cold_candidates, ensure_ascii=False)}
 
-## 最近章节摘要 (last 20)
-{chr(10).join(f'  - {s}' for s in recent_chapters[-20:]) or '  (尚无)'}
+## 最近章节摘要 (last 10)
+{chr(10).join(f'  - {s}' for s in recent_chapters[-10:]) or '  (尚无)'}
 
 ## 事件统计 (最近 50 tick)
-```json
-{json.dumps(event_stats, ensure_ascii=False, indent=2)}
-```
+{json.dumps(event_stats, ensure_ascii=False)}
 
-请按 system 提示输出严格 JSON,recommendations 数组按 urgency 降序。
+按 system 提示输出严格 JSON, recommendations 按 urgency 降序.
 """
 
     def _parse_output(self, raw: str) -> ShowrunnerOutput:
