@@ -63,6 +63,65 @@ REASONING_LEAK_MARKERS: tuple[str, ...] = (
     "**思考过程**",
     "**分析过程**",
     "**任务理解**",
+    # v2.38 (iter#4) — Custom MaaS qwen / 其他 reasoning 模型偶发用英文
+    # 把 chain-of-thought 写进 narrative_text. 实测样本:
+    # "Let me analyze the素材 and determine what to write."
+    # "I'll write the opening segment based on..."
+    "Let me analyze",
+    "Let me carefully",
+    "Let me read",
+    "Let me check",
+    "Let me start",
+    "Let me first",
+    "Let me think",
+    "Let me go",
+    "Let me write",
+    "Let's analyze",
+    "Let's check",
+    "Let's start",
+    "I'll write",
+    "I'll start",
+    "I need to write",
+    "I need to analyze",
+    "I'll analyze",
+    "First, let me",
+    "First, I",
+    "First, this",
+    # v2.38 (iter#4) — 新 reasoning 变种 (qwen36v35b 实测):
+    # "首先,任务是写小说的下一段" / "首先,这是本书的第一段" / "首先,本段任务"
+    "首先,任务",
+    "首先,本段",
+    "首先,这是本",
+    "首先,这部",
+    "首先,我看",
+    "首先,场景",
+    "首先,我注意",
+    "首先,简报",
+    "首先,前文",
+)
+
+
+# v2.38 (iter#4) — JSON-schema 字段名作为高置信度 reasoning 信号.
+# 模型把 chain-of-thought 写进 narrative_text 时, 经常引用 system prompt 里
+# 的字段名 ("narrative_text", "estimated_length") 或写作方法 / 任务列表.
+# 这些不可能出现在真正的小说正文中, 命中即视为完整泄漏.
+_HIGH_CONFIDENCE_LEAK_MARKERS: tuple[str, ...] = (
+    "narrative_text",
+    "estimated_length",
+    "viewpoint_characters",
+    "scene_focus",
+    "open_loops_referenced",
+    "newly_opened_loops",
+    "consistency_flags",
+    "写作方法:",
+    "写作方法：",
+    "本段任务",
+    "任务理解:",
+    "任务理解：",
+    "## 写作",
+    "**写作方法",
+    "我需要决定视点",
+    "我应该选择视点",
 )
 
 
@@ -79,15 +138,22 @@ _PATTERN = re.compile(
 def strip_reasoning_leak(text: str) -> tuple[str, bool]:
     """从 narrative 文本砍掉 reasoning prologue/epilogue 泄漏。
 
-    策略: 标准化全角逗号为半角后, 在文本里找第一个 reasoning marker 命中点。
-    命中位置位于一个段落开头 (前面是 ``\\n\\n`` 或位于文本开头) 才算泄漏,
-    避免把"首先"这种合法散文起始词误伤。
+    策略:
+    1. 高置信度信号 (JSON 字段名 / "写作方法:" / "任务理解:") 出现在文本任
+       何位置都视作完整泄漏, 返回空字符串.
+    2. 普通 marker 标准化全角逗号为半角后, 在文本里找第一个命中点; 命中位置
+       位于段落开头 (前面是 ``\\n\\n`` 或位于文本开头) 才算泄漏, 避免把"首先"
+       这种合法散文起始词误伤.
 
     返回 ``(clean_text, leaked)`` — leaked=True 时调用方应加 consistency
     flag 或视情况退化输出。
     """
     if not text:
         return text, False
+    # 高置信度信号 — 真小说正文不会含 JSON schema 字段名 / 写作方法标题
+    for hi_marker in _HIGH_CONFIDENCE_LEAK_MARKERS:
+        if hi_marker in text:
+            return "", True
     norm = _normalise_punct(text)
     m = _PATTERN.search(norm)
     if not m:

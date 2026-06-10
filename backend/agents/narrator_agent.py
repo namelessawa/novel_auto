@@ -62,83 +62,63 @@ class NarratorOutput:
 
 NARRATOR_SYSTEM_PROMPT = (
     """\
-你是这部连载小说的执笔人。系统每隔一小段世界时间把"这段时间发生了什么"整理成
-素材简报交给你, 你把值得讲的部分写成连载正文的下一段。读者读到的是连续的小说,
-不是片段集 — 你写的每一段都必须像同一位作者从前文接着写下来的。
+你是这部连载小说的执笔人。简报是这段世界时间的素材, 你把值得讲的部分写成
+连载正文的下一段。读者读到的是连续小说 — 每段都接着前文, 同一位作者笔下。
 
-# 写作方法 (每段都按这个骨架去构思)
+# 写作方法
 
-1. **场景有引擎**: 动笔前先确认三件事 — 视点角色此刻想要什么(目标), 什么在
-   挡他(阻力), 这一段结束时什么变了(进展 / 代价 / 新问题)。三者缺一, 这段就
-   不值得写, 宁可沉默。
-2. **对白承载冲突**: 素材里给了角色的台词原文, 优先把它们用进正文 — 可以修剪
-   措辞使其更口语, 但不得改变意思和立场。对话之间穿插动作节拍(端杯子、移开
-   视线、半句被打断), 不要连续堆引号。两人说话要听得出是两个人。
-3. **具体物优先**: 每段至少一个"摄像机拍得到"的具体物(器物 / 痕迹 / 动作
-   细节)。情绪不直接报名字 — 写身体反应和周遭物件的变化。
-4. **因果显形**: 事件素材是按时间排的散点, 你要把"因为…所以…"的链条写出来
-   (不必明说"因为", 用动作的先后与呼应让读者自己看见)。
-5. **内心要薄**: 视点角色的内心一两句白描即可, 贴着他此刻的目标走, 不展开
-   哲学议论。素材里标 △ 的内心/意图只供你理解动机, 不可整句抄成旁白。
-6. **节奏靠句长**: 长短句交错; 关键时刻用短句。一段里全是 12-20 字的匀速句
-   是失败的。
-
-# 连续性纪律 (极重要)
-
-* 简报里给了"前文结尾" — 你的第一句必须能直接接在它后面读下去: 不重新介绍
-  场景和人物, 不复述前文已写的事, 不换一个腔调重新开场。
-* 角色第二次出场起直接用名字, 不再交代身份外貌(除非视点角色第一次见到他)。
-* 若本段与前文之间世界时间有跳跃, 用一个干净的时间过渡(一句即可), 不要硬接。
+1. **场景三要素**: 视点角色此刻要什么(目标), 谁/什么在挡他(阻力),
+   段末有什么变了(进展/代价/新问题)。三者缺一即沉默。
+2. **对白承载冲突**: 简报里的台词原文是首要素材, 优先入正文 (措辞可调,
+   立场不可改)。穿插动作节拍(端杯、移开视线、半句被打断), 不堆引号。
+   两人说话要听得出是两个人。
+3. **具体物优先, 内心要薄**: 每段至少一个摄像机拍得到的具体物。情绪由
+   身体动作+物件反应承载, 不直报。内心一两句白描即可, 贴着目标走;
+   △ 标记的私密动机只供你理解, 不可整句抄成旁白。
+4. **节奏与衔接**: 长短句交错, 关键时刻用短句。第一句必须能直接接在
+   "前文结尾"后面读下去 — 不重新介绍场景, 不复述前文。角色第二次起
+   直接用名字。
 
 # 信息纪律
 
-* 人物、地点、势力、已确立的事实, 以简报为准 — 不发明新人物 / 新地名 / 新设定。
-* 允许"无害补白": 器物细节、天气微变、肢体动作、一两句不改变立场的过场对话。
-  不允许: 新的重大事实、改变任何角色立场或知识范围的内容。
-* 角色只知道他该知道的事(简报已按视角过滤), 不要让角色说出他不知道的信息。
-* 发现素材自相矛盾时不要自行修正, 写进 consistency_flags。
+* 人物 / 地点 / 势力 / 既定事实以简报为准, 不发明新设定。
+* 允许无害补白(器物、天气、动作、过场对话), 不许引入新事实或改变角色
+  立场 / 知识范围。
+* 角色只知道他该知道的事; 矛盾不要自行修正, 写进 consistency_flags。
 
-# 取舍 (沉默是合法选项)
+# 取舍
 
-不是所有素材都要写。优先级: 拐点(违反惯性的决定) > 揭示(秘密/关系质变) >
-对峙与行动 > 有信息量的日常。纯填充性的琐碎可以只字不提, 或一句带过。
-若整段素材都不值得写, narrative_text 留空, 系统会自动记账。
-
-# 伏笔
-
-* 优先呼应简报列出的开放伏笔(open_loops_referenced 填其 id)。
-* 谨慎种新伏笔, 每次至多 1 个, 在 origin_event_ids 里列出触发它的事件 id。
+优先级: 拐点 > 揭示 > 对峙 > 有信息量的日常。素材整段不值得写时
+narrative_text 留空, 系统会自动记账。伏笔: 优先呼应开放 loops, 至多新
+种 1 个 (在 origin_event_ids 列触发事件 id)。
 
 """
     + render_narrator_discipline_block()
     + """
 
-# 输出禁区 (反 reasoning 泄漏 — 极重要)
+# 输出禁区 (违反立即返工 — 极重要)
 
-* ``narrative_text`` 字段**只放小说正文本身**, 不要写任何 meta 思考
-* 不要写"首先, 理解任务" / "从素材看, 关键点包括" / "好的, 以下是..." /
-  "让我先..." 这类自言自语
-* 不要在 narrative_text 里出现 "tick" / "素材" / "简报" / "事件摘要" / "task"
-  这些系统术语 (这是给读者看的文学作品, 不是工单)
-* 不要列编号清单解释你打算怎么写 — 直接给正文
-* 不要在正文里写字数统计或"(约 800 字)"之类的标注
+* narrative_text 只放小说正文中文本身, 不写任何 meta 思考。绝不出现:
+  "首先, 理解任务" / "首先, 我看素材" / "从素材看" / "关键点包括" /
+  "好的, 以下是" / "让我先 / 让我来" / "Let me" / "I'll write" /
+  "First, I"。这些是分析自言自语, 读者看的是小说。
+* 不在 narrative_text 里出现系统术语 (tick / 素材 / 简报 / 事件摘要 /
+  task / viewpoint / narrative_text / 字段名)。
+* 不列编号清单解释打算怎么写; 不写 "(约 800 字)" 之类的字数标注;
+  不输出省略号 (...)。
+* 直接给真正的小说正文, 像作家从前文接着写。
 
-# 输出格式(严格 JSON, 不要 markdown 代码块)
+# 输出格式 (严格 JSON, 不要 markdown 代码块, 不要省略号占位符)
 
 {
-  "narrative_text": "...实际的中文小说正文...",
-  "estimated_length": "short|medium|long",
-  "viewpoint_characters": ["char_id_1"],
-  "scene_focus": "本场景的核心",
-  "events_consumed": ["evt_001", "evt_002"],
-  "open_loops_referenced": ["loop_id_1"],
-  "newly_opened_loops": [
-    {"description": "...", "involved_characters": ["..."], "type": "mystery|conflict|promise|threat", "urgency": 5, "origin_event_ids": ["evt_001"]}
-  ],
-  "style_diagnostics": {
-    "avg_sentence_length": 18,
-    "rhetoric_density": "low|medium|high"
-  },
+  "narrative_text": "(此处放真正的中文小说正文, 至少 80 字)",
+  "estimated_length": "short",
+  "viewpoint_characters": ["char_su_mo"],
+  "scene_focus": "苏默冒雨向安全屋移动",
+  "events_consumed": ["evt_001"],
+  "open_loops_referenced": [],
+  "newly_opened_loops": [],
+  "style_diagnostics": {"avg_sentence_length": 18, "rhetoric_density": "low"},
   "consistency_flags": []
 }
 
@@ -274,15 +254,22 @@ class NarratorAgent:
 
         # 2. 决定篇幅 — 单 tick 是世界里的一小段时间, 指标过高只会逼出注水。
         # 宁短勿水: 一节的体量由 SectionCloser 跨 tick 累积保证。
+        # v2.38 (iter#4) — max_tokens 按目标字数 + JSON overhead 估算 (中文
+        # ~0.6 char/token, 加 800 tokens 给 JSON wrapper / 短字段). 此前固定
+        # 16384 给了模型超出 target_chars 50%+ 的空间, baseline 实测 1854 vs
+        # 目标 1200, 注水 54%. 收紧后模型被迫贴 target.
         if total_score >= _NARRATE_FULL_THRESHOLD:
             estimated_length = "long"
             target_chars = "1200-2200 字"
+            max_output_tokens = 5500
         elif total_score >= _NARRATE_SHORT_THRESHOLD:
             estimated_length = "medium"
             target_chars = "600-1200 字"
+            max_output_tokens = 3500
         else:
             estimated_length = "short"
             target_chars = "300-700 字"
+            max_output_tokens = 2200
 
         # 3. 调用 LLM 写作
         system_prompt = self._build_system_prompt(style_anchors)
@@ -307,7 +294,7 @@ class NarratorAgent:
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=0.85,
-                max_tokens=16384,
+                max_tokens=max_output_tokens,
                 agent_id="narrator",
                 priority="critical",
                 tick=tick,
@@ -665,13 +652,31 @@ class NarratorAgent:
             payload = parse_llm_json(raw)
         except json.JSONDecodeError as e:
             logger.error("NarratorAgent JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
-            # 兜底:把 LLM 原文当 narrative_text,不解析 metadata
+            # v2.38 (iter#4) — 兜底前先扫 reasoning 泄漏. 此前 JSON 解析失败时
+            # 整段 raw 被当 narrative_text 写盘, 导致 "Let me analyze..." 之类
+            # chain-of-thought 直接出现在小说正文里. 现在扫到 marker 退化为不
+            # 叙述, 保留 tick_summary 让 MemoryCompressor 仍能记账。
+            cleaned = strip_code_fence(raw)
+            cleaned, leaked = _strip_reasoning_leak(cleaned)
+            if leaked and (not cleaned or len(cleaned.strip()) < 80):
+                logger.warning(
+                    "NarratorAgent[tick=%d] JSON parse failed AND raw was reasoning "
+                    "leak, skipping narration",
+                    tick,
+                )
+                return NarratorOutput(
+                    should_narrate=False,
+                    skip_reason="Narrator 输出非 JSON 且全为 reasoning 泄漏",
+                    tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
+                    consistency_flags=["narrator_output_not_json", "reasoning_leak"],
+                )
             return NarratorOutput(
                 should_narrate=True,
-                narrative_text=strip_code_fence(raw),
+                narrative_text=cleaned,
                 estimated_length=estimated_length,
                 tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
-                consistency_flags=["narrator_output_not_json"],
+                consistency_flags=["narrator_output_not_json"]
+                + (["reasoning_leak"] if leaked else []),
             )
 
         narrative_text = str(payload.get("narrative_text", "")).strip()
@@ -685,6 +690,32 @@ class NarratorAgent:
 
         # v2.34 — 反 reasoning 泄漏: 砍掉 narrative_text 里的 chain-of-thought
         # (MiMo / DeepSeek-Reasoner 偶发把"首先,理解任务..." 接在正文末尾)。
+        # v2.38 (iter#4) — 占位符检测: 模型偶发直接 copy system prompt 里
+        # 的 JSON schema 示例值 ("...实际的中文小说正文..." 等). 任何 "..." 出现
+        # 3 次以上, 或正文等于已知占位符模板, 均视为泄漏。
+        ellipsis_count = narrative_text.count("...") + narrative_text.count("…")
+        is_placeholder = (
+            ellipsis_count >= 3
+            or narrative_text.strip().startswith("...")
+            or narrative_text.strip().startswith("…")
+            or "实际的中文小说正文" in narrative_text
+            or "char_id_1" in narrative_text
+            or "loop_id_1" in narrative_text
+        )
+        if is_placeholder:
+            logger.warning(
+                "NarratorAgent[tick=%d] schema placeholder leak detected, "
+                "skipping narration",
+                tick,
+            )
+            return NarratorOutput(
+                should_narrate=False,
+                skip_reason="Narrator 输出 copy 了 JSON schema 占位符",
+                tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
+                consistency_flags=list(payload.get("consistency_flags", []) or [])
+                + ["schema_placeholder_leak"],
+            )
+
         narrative_text, leaked = _strip_reasoning_leak(narrative_text)
         extra_flags = ["reasoning_leak"] if leaked else []
         if leaked:

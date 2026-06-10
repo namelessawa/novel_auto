@@ -5,6 +5,69 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#4: Narrator prompt + output bound + 反 reasoning 加固
+
+> 自我迭代第 2 轮. 目标: Narrator 链路减重 (slim prompt + 输出预算). 中途
+> 发现 Custom MaaS qwen36v35b 对精简提示脆弱, 输出多种 reasoning / 占位
+> 符 / JSON-schema-as-prose 泄漏. 强化 strip_reasoning_leak 多语言多变种
+> 检测, 加 schema 占位符识别, 退化为跳过避免污染正文.
+
+### Changed — Narrator prompt + 输出预算
+
+* **NARRATOR_SYSTEM_PROMPT 2862 → 2195 chars (-23%)** (`backend/agents/
+  narrator_agent.py`). 写作方法从 6 条合并到 4 条 (场景三要素 / 对白承载
+  冲突 / 具体物优先+内心要薄 / 节奏与衔接). 信息纪律去重复. 反 reasoning
+  禁区保留并加强 (含英文 marker).
+* **max_tokens 16384 → 按 estimated_length 分档** (long=5500 / medium=3500 /
+  short=2200). baseline 实测 medium tick 产出 1854 字 vs 目标 1200 字, 注水
+  54%; 预算硬上限后强制贴 target.
+
+### Changed — 反 reasoning 泄漏多层加固
+
+`backend/nf_core/reasoning_filter.py`:
+
+* **新增中文 reasoning marker** — qwen36v35b 实测新变种 (`"首先,任务"` /
+  `"首先,本段"` / `"首先,这部"` / `"首先,我看"` / `"首先,我注意"` 等)
+* **新增英文 reasoning marker** — `"Let me analyze"` / `"Let me write"` /
+  `"I'll write"` / `"I need to write"` / `"First, let me"` ...
+* **高置信度泄漏 markers** (`_HIGH_CONFIDENCE_LEAK_MARKERS`) — JSON schema
+  字段名 (`narrative_text` / `estimated_length` / `viewpoint_characters` ...)
+  / 写作方法标题出现在文本任意位置即视为完整泄漏, 直接返回空字符串.
+  真正的小说正文绝不会含这些 token.
+
+`backend/agents/narrator_agent.py`:
+
+* **JSON 解析失败兜底前先扫 reasoning** — 此前 raw 直接当 narrative_text
+  写盘, 导致 "Let me analyze..." 之类直接写进小说. 现在扫到 leak 退化跳过,
+  保留 tick_summary 供 MemoryCompressor 记账.
+* **JSON schema 示例改用安全具体值** — 此前占位符 `"...实际的中文小说正文..."`
+  被 MaaS 模型直接 copy 进输出. 改为具体示例 `"苏默冒雨向安全屋移动"`,
+  附加占位符检测 (`is_placeholder`): `...` ≥ 3 次 / `"实际的中文小说正文"` /
+  `"char_id_1"` / `"loop_id_1"` 出现即跳过.
+
+### Benchmark — 3 tick + bootstrap, custom provider
+
+| 指标                       | v0-baseline | v3-narrator-fixed3 |        Δ |
+| -------------------------- | ----------: | -----------------: | -------: |
+| total tokens               |     137,890 |             60,316 |    -56%  |
+| narrator                   |      19,904 |             17,191 |    -14%  |
+| narrative_critic:critique  |      51,450 |              9,556 |    -81%  |
+| narrative_critic:rewrite   |      13,724 |                  0 |   -100%  |
+| avg tick duration (sec)    |         556 |                190 |    -66%  |
+| narrative chars (3 tick)   |       2,105 |              1,953 |     -7%  |
+
+> Narrator 跳过 1/3 ticks 是 MaaS 模型 reasoning fragility 的代价 — 过滤层
+> 把"Let me analyze..."、JSON schema copy-paste 这类输出拦下来, 比让它们
+> 污染正文更可取. 产出的 2 段质量很高 (压力表归零检校 / 工业雾色 / Lin Xue
+> 失语症复发的具体感官), 与 baseline 同等或更好.
+
+### Tests
+
+6/6 narrator + reasoning 测试通过. strip_reasoning_leak 新增 6 个
+高置信度信号路径全部 PASS.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#3: NarrativeCritic 减重
 
 > 自我迭代循环第 1 轮 (cost-quality-loop branch). 目标: 降低单 tick 生成
