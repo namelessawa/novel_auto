@@ -283,78 +283,65 @@ class CharacterAgent:
         visible_events: list[Event],
         recent_actions: list[CharacterAction] | None = None,
     ) -> str:
-        # 关系网渲染:只显示对方 id + 关系类型 + 信任度 + 历史一句话
-        rels_text = "(无关系记录)"
+        # v2.38 (iter#20) — user_prompt 紧凑: 多个独立 header 合并,
+        # 关系/事件 description 截 60 字, recent_actions 取后 3 条 (从 4),
+        # 删冗余说明文.
+        rels_text = "(无)"
         if state.relationships:
             rels_text = "\n".join(
-                f"  - {rel.with_character_id}: {rel.type}, "
-                f"信任 {rel.trust:+d}, 历史: {rel.history_summary[:60]}"
+                f"  - {rel.with_character_id}: {rel.type}/信任{rel.trust:+d}/"
+                f"{rel.history_summary[:50]}"
                 for rel in state.relationships.values()
             )
 
-        goals_text = "(无明确目标)"
+        goals_text = "(无)"
         if state.current_goals:
             goals_text = "\n".join(
-                f"  - [{g.priority}] {g.description} (进度 {g.progress:.0%})"
+                f"  - [{g.priority}] {g.description[:80]} ({g.progress:.0%})"
                 for g in state.current_goals
             )
 
-        events_text = "(本 tick 你周围没有可感知的事件)"
+        events_text = "(无可感知事件)"
         if visible_events:
             events_text = "\n".join(
-                f"  - [{e.id} @ {e.location}] {e.description}"
+                f"  - [{e.id}@{e.location}] {e.description[:100]}"
                 for e in visible_events
             )
 
         recent_text = ""
         if recent_actions:
             recent_lines = "\n".join(
-                f"  - {a.action_type} → {a.target or '(无目标)'}: {a.description[:60]}"
-                for a in recent_actions[-4:]
+                f"  - {a.action_type}→{a.target or '-'}: {a.description[:50]}"
+                for a in recent_actions[-3:]
             )
-            recent_text = f"""
-# 你最近几步的行动 (从旧到新)
+            recent_text = (
+                f"\n\n# 最近几步 (旧→新)\n{recent_lines}\n"
+                f"**不要原样重复上一步** — 要么推进, 要么换方法, 要么应对新事件."
+            )
 
-{recent_lines}
-
-如果情境没有变化, 坚持原计划是合理的; 但**不要原样重复上一步** — 要么推进
-一步 (更接近目标), 要么换方法, 要么对新事件做出反应。
-"""
-
+        status = ", ".join(state.status_effects) or "正常"
+        inv = ", ".join(state.inventory) or "无"
         return f"""\
-# 你的当前状态
+# 当前状态
+位置: {state.current_location or '(未指定)'} | 情绪: {state.emotional_state} | 身体: {status} | 物品: {inv} | 钱: {state.money}
 
-【所在位置】{state.current_location or '(未指定)'}
-【情绪】{state.emotional_state}
-【身体状态】{', '.join(state.status_effects) or '正常'}
-【手头物品】{', '.join(state.inventory) or '(无)'}
-【钱币】{state.money}
-
-# 你的当前短期目标
-
+# 短期目标
 {goals_text}
 
-# 你的长期弧线目标
+# 长期弧线
+{state.arc_goal or '(尚未明确)'} (进度 {state.arc_progress:.0%})
 
-{state.arc_goal or '(尚未明确)'} (当前进度 {state.arc_progress:.0%})
+# 知识范围 (极重要 — 不知道的事不能据此决策)
+亲历/已知: {('; '.join(state.known_facts)[:200]) or '(无)'}
+保守秘密: {('; '.join(state.secrets_kept)[:200]) or '(无)'}
 
-# 你的知识范围(极其重要)
-
-【你亲历过的事 / 已知信息】
-{chr(10).join(f'  - {f}' for f in state.known_facts) or '  (无)'}
-
-【你保守的秘密】
-{chr(10).join(f'  - {s}' for s in state.secrets_kept) or '  (无)'}
-
-# 你的关系网
-
+# 关系网
 {rels_text}
 
-# 本 tick 你能感知到的事件
+# 本 tick 可感知事件
+{events_text}{recent_text}
 
-{events_text}
-{recent_text}
-请基于你的目标、性格、当前所知信息,决定本 tick 你**采取的行动**。
+基于你的目标、性格、所知信息, 决定本 tick 行动.
 """
 
     def _parse_action(self, raw: str) -> CharacterAction:
