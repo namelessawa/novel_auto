@@ -175,12 +175,19 @@ class WorldSimulator:
             if delta_raw and isinstance(delta_raw, dict):
                 # delta 模式: prior + LLM 给的字段
                 base = prior_world_state.model_dump(mode="json")
-                # 只接受 delta 里非空的字段, 防 LLM 把 era="" 这种值覆盖掉
+                # 只接受 delta 里非空的字段, 防 LLM 把 era="" 这种值覆盖掉.
+                # v2.38 (iter#5 review fix) — 用 None / "" / [] / {} 精确判, 不
+                # 用 truthy 测试: world_time=0 / False 之类合法零值不应被当空.
                 for k, v in delta_raw.items():
-                    if v not in (None, "", [], {}):
-                        base[k] = v
-                # world_time 兜底 — delta 没给就 prior + time_step
-                if "world_time" not in delta_raw or not delta_raw.get("world_time"):
+                    if v is None:
+                        continue
+                    if isinstance(v, (str, list, dict)) and len(v) == 0:
+                        continue
+                    base[k] = v
+                # world_time 兜底 — delta 显式没给 (键缺失或 None) 才补 prior +
+                # time_step. v2.38 (iter#5 review fix) — 此前用 `not delta_raw.
+                # get("world_time")` 把 0 误判为缺失, 会双倍推进时间.
+                if delta_raw.get("world_time") is None:
                     base["world_time"] = prior_world_state.world_time + time_step
                 new_ws = WorldState.model_validate(base)
             elif full_raw:

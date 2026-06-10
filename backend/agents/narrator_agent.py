@@ -691,13 +691,19 @@ class NarratorAgent:
         # v2.34 — 反 reasoning 泄漏: 砍掉 narrative_text 里的 chain-of-thought
         # (MiMo / DeepSeek-Reasoner 偶发把"首先,理解任务..." 接在正文末尾)。
         # v2.38 (iter#4) — 占位符检测: 模型偶发直接 copy system prompt 里
-        # 的 JSON schema 示例值 ("...实际的中文小说正文..." 等). 任何 "..." 出现
-        # 3 次以上, 或正文等于已知占位符模板, 均视为泄漏。
-        ellipsis_count = narrative_text.count("...") + narrative_text.count("…")
+        # 的 JSON schema 示例值 ("...实际的中文小说正文..." 等). 已知占位符片段
+        # 出现即泄漏; 大量 ASCII 三连点 / 中文双省略号也视作 schema 痕迹.
+        # v2.38 (iter#5 review fix) — 中文文学常用 "……" (双省略号), 把 "…" 单
+        # glyph 当连续点会把悬念句 "她停下……他也停下……灯灭了……" 误杀.
+        # 改为按"……" / "..." 整组算 1 次, 阈值放到 6 (一段里 ≥6 组省略号才
+        # 真有可能是 schema dump). 同时分别检查 ASCII "..." 三连点 >= 4 组
+        # (中文正文几乎不用 ASCII 三连点, 4 组及以上是强信号).
+        ascii_groups = narrative_text.count("...")
+        cjk_groups = narrative_text.count("……")
         is_placeholder = (
-            ellipsis_count >= 3
+            ascii_groups >= 4
+            or cjk_groups + ascii_groups >= 6
             or narrative_text.strip().startswith("...")
-            or narrative_text.strip().startswith("…")
             or "实际的中文小说正文" in narrative_text
             or "char_id_1" in narrative_text
             or "loop_id_1" in narrative_text

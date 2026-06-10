@@ -307,6 +307,13 @@ class NarrativeCritic:
         # 验证修订是否把结构性触发清掉. 之前每轮都跑 LLM critique, 第二/三轮
         # 几乎都是冗余的二次确认 (语义触发在第一轮已识别, revise 阶段已带入
         # avoid_codes), 占基线 critic 开支 60-70%.
+        #
+        # v2.38 (iter#5 review fix) — 关于"第一次 LLM critique 失败"的显式
+        # 约定: 即便首次 _llm_critique 因 reasoning leak / 解析失败 / 异常
+        # 返回 [], llm_critique_done 仍置 True. 整个 draft 的语义检查降级为
+        # det-only. 这是有意权衡 — 反复 retry 撞同一个错误浪费 token, 比保
+        # 留语义盲点更糟. det 层已覆盖大部分结构性问题 (重复 / 开头 / 段末
+        # / AI 套话), 语义失败的边际损失可接受.
         llm_critique_done = False
 
         while True:
