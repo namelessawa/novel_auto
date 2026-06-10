@@ -233,12 +233,29 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-MAX_REVISE_ROUNDS = _env_int("CRITIC_MAX_REVISE_ROUNDS", 2)
-MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 2)
-# rewrite + revise 累计修订轮次硬上限 — 即使 env 把单项上限调大,
-# 也不允许单段触发超过 4 次修订 LLM 调用 (每轮还伴随 1 次 critique 调用)。
-MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 4)
+MAX_REVISE_ROUNDS = _env_int("CRITIC_MAX_REVISE_ROUNDS", 1)
+MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 1)
+# rewrite + revise 累计修订轮次硬上限。v2.38 (iter#3) — 默认从 4 降到 2。
+# 实测两轮以上的修订对最终质量收益已经饱和,但 token 是线性 ×2-3x 增长。
+# 通过 env CRITIC_MAX_TOTAL_ROUNDS 可手动提高。
+MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 2)
 ENABLE_LLM_CRITIC = os.environ.get("CRITIC_ENABLE_LLM", "1").strip() != "0"
+
+# v2.38 (iter#3) — critique 输出上限。triggers JSON 极其紧凑, 1500 tokens 足够
+# 列 10+ 条触发; 之前的 8192 给推理模型留了把 budget 全填满的空间, 浪费且超时。
+_CRITIQUE_MAX_OUTPUT = _env_int("CRITIC_CRITIQUE_MAX_TOKENS", 1500)
+# revise / rewrite 输出上限。narrative_text 上限 ~2200 字 (≈3300 tokens),
+# 给到 4096 留余量, 比之前的 32768 直接砍到 1/8。
+_REVISE_MAX_OUTPUT = _env_int("CRITIC_REVISE_MAX_TOKENS", 4096)
+
+# v2.38 (iter#3) — 推理模型泄漏前缀: critique 调用偶发被 MaaS Qwen / DeepSeek-R1
+# 类模型当作开放问答, 输出 "Let me analyze..." / "好的, 让我..." 等 reasoning
+# 前缀, 整次调用 JSON 解析失败,~6k tokens 白烧。检测到则直接 return []
+# (退回 det-only), 不重试。
+_REASONING_LEAK_PREFIXES = (
+    "let me", "let's ", "first,", "i'll ", "i will ",
+    "好的", "我先", "我来", "让我", "首先", "下面我",
+)
 
 
 class NarrativeCritic:
@@ -286,6 +303,11 @@ class NarrativeCritic:
         current_text = draft_text
         revise_used = 0
         rewrite_used = 0
+        # v2.38 (iter#3) — LLM critique 只在第一轮调用. 后续轮只跑 det 检查
+        # 验证修订是否把结构性触发清掉. 之前每轮都跑 LLM critique, 第二/三轮
+        # 几乎都是冗余的二次确认 (语义触发在第一轮已识别, revise 阶段已带入
+        # avoid_codes), 占基线 critic 开支 60-70%.
+        llm_critique_done = False
 
         while True:
             # === Step 1: 确定性 + LLM 触发合并 =========================
@@ -295,10 +317,11 @@ class NarrativeCritic:
                 exempt_words=exempt_words,
             )
             llm_triggers: list[DeterministicTrigger] = []
-            if use_llm:
+            if use_llm and not llm_critique_done:
                 llm_triggers = await self._llm_critique(
                     current_text, scene_focus, viewpoint_character_id
                 )
+                llm_critique_done = True
             all_triggers = _merge_triggers(det_triggers, llm_triggers)
             summary = summarize_triggers(all_triggers)
 
@@ -458,12 +481,22 @@ viewpoint_character_id: {viewpoint_character_id or '(未指定)'}
                 system_prompt=CRITIC_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.2,
-                max_tokens=8192,
+                max_tokens=_CRITIQUE_MAX_OUTPUT,
                 agent_id="narrative_critic:critique",
                 priority="critical",
             )
         except Exception as e:
             logger.warning("NarrativeCritic LLM critique failed: %s", e)
+            return []
+        # v2.38 (iter#3) — 推理前缀检测: 提供商 reasoning 模型把 JSON 系统提示
+        # 当开放问答,输出 "Let me analyze..." 类 prefix。这种响应解析必失败,
+        # 浪费整次 budget。提前拦截退回 det-only,避免重试浪费。
+        head = (resp.content or "").lstrip().lower()[:32]
+        if any(head.startswith(p) for p in _REASONING_LEAK_PREFIXES):
+            logger.info(
+                "NarrativeCritic critique skipped due to reasoning leak prefix: %r",
+                head[:40],
+            )
             return []
         return _parse_critic_triggers(resp.content)
 
@@ -497,7 +530,7 @@ scene_focus: {scene_focus or '(未指定)'}
                 system_prompt=REVISE_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.7,
-                max_tokens=32768,
+                max_tokens=_REVISE_MAX_OUTPUT,
                 agent_id="narrative_critic:revise",
                 priority="critical",
             )
@@ -539,7 +572,7 @@ scene_focus: {scene_focus or '(未指定)'}
                 system_prompt=REWRITE_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.85,
-                max_tokens=32768,
+                max_tokens=_REVISE_MAX_OUTPUT,
                 agent_id="narrative_critic:rewrite",
                 priority="critical",
             )

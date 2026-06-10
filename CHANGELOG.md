@@ -5,6 +5,62 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#3: NarrativeCritic 减重
+
+> 自我迭代循环第 1 轮 (cost-quality-loop branch). 目标: 降低单 tick 生成
+> token 开支, 不损质量. 实测 critic 链路占 baseline 47% 的总 token 开支,
+> 本轮专攻该路径.
+
+### Changed — NarrativeCritic 减重
+
+* **LLM critique 只在第一轮跑** (`backend/agents/narrative_critic.py`) —
+  此前 critique → revise → critique → revise 每轮都跑 LLM critique 重新评估
+  修订后的全段, 占 critic 开支 60-70%. 改为: 第一轮 det+LLM 合并判定,
+  后续轮只跑 deterministic 检查验证结构性触发是否清掉. 语义触发在第一轮
+  已识别, revise 阶段已带 `avoid_codes`, 不需要二次确认
+* **MAX_TOTAL_ROUNDS 4 → 2** (env `CRITIC_MAX_TOTAL_ROUNDS` 可恢复). 实测两
+  轮以上的修订质量收益已饱和, token 是线性 ×2-3 增长
+* **critique max_tokens 8192 → 1500** (env `CRITIC_CRITIQUE_MAX_TOKENS`).
+  triggers JSON 极紧凑, 1500 足够列 10+ 触发; 之前的 8192 给推理模型留了
+  把 budget 全填满的空间
+* **revise/rewrite max_tokens 32768 → 4096** (env `CRITIC_REVISE_MAX_TOKENS`).
+  narrative_text 上限 ~2200 字 (≈3300 tokens), 给 4096 留余量
+* **推理前缀拦截** — MaaS Qwen / DeepSeek-R1 偶发把 JSON 提示当开放问答,
+  输出 `Let me analyze...` / `好的, 让我...` 前缀, 整次调用 JSON 解析必失败.
+  baseline 实测 2 次此类失败, ~10k tokens 白烧. 新增前缀检测, 命中即退回
+  det-only, 不重试
+
+### Benchmark — 3 tick + bootstrap, custom provider (讯飞 MaaS qwen36v35b)
+
+| 指标                       | v0-baseline | v1-critic-trim |       Δ |
+| -------------------------- | ----------: | -------------: | ------: |
+| total tokens               |     137,890 |        120,588 |  -12.5% |
+| narrative_critic:critique  |      51,450 |         14,652 |  -71.5% |
+| narrative_critic:rewrite   |      13,724 |              0 |   -100% |
+| avg tick duration (sec)    |         556 |            329 |   -41%  |
+| narrative chars produced   |       2,105 |          3,216 |   +53%  |
+
+> narrator 自身 token 增长 (19k → 29k) 是因为产出文本长度 +53%, 不是回归.
+> per-character cost 下降幅度远大于 12.5%.
+
+### Quality — 抽样保持
+
+样本 (tick 1, 522 chars): 具象意象 (齿轮停摆/油污/疫源追溯/复写墨) 到位,
+角色嗓音区分明显 (苏绣的细致 vs 阿黄的"哎呦"嘟囔), 神秘钩子自然.
+风格未退化至 baseline 那种"安全感官碎片" 老问题.
+
+### Tests
+
+15/15 critic 相关测试通过, 无需修改既有测试.
+
+### Infra
+
+* `scripts/bench_tick.py` — bootstrap + N tick + 按 agent 拆解 token 开支
+  的基线测量脚本. 输出 `docs/iter/bench-<label>.{json,md}`
+* 提交时 working tree 工作分支: `iter/cost-quality-loop`
+
+---
+
 ## [2.37] — 2026-06-10
 
 > 三线大修: 叙事质量架构重写 + 全项目 4 路并行 code review (10 CRITICAL /
