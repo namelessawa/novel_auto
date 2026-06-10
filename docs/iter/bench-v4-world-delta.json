@@ -1,0 +1,49 @@
+{
+  "label": "v4-world-delta",
+  "novel_id": "bench_v4-world-delta_1781118080",
+  "ticks": 3,
+  "bootstrap_sec": 351.55,
+  "tick_durations_sec": [
+    44.08,
+    41.59,
+    49.88
+  ],
+  "total_tokens": 8088,
+  "by_agent_cumulative": {
+    "world_simulator": 8088
+  },
+  "by_priority": {
+    "medium": 8088
+  },
+  "call_count": 3,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 2600,
+      "duration_sec": 44.08,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 2600
+      }
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 2580,
+      "duration_sec": 41.59,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 2580
+      }
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 2908,
+      "duration_sec": 49.88,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 2908
+      }
+    }
+  ],
+  "narratives": []
+}

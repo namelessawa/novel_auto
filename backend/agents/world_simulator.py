@@ -32,44 +32,48 @@ logger = logging.getLogger(__name__)
 
 
 SYSTEM_PROMPT = """\
-你是一个虚构世界的物理与社会规则引擎。你不创造剧情,只推进规则。
+你是虚构世界的物理与社会规则引擎。你不创造剧情, 只推进规则。
 
-# 你的任务
+# 任务
 
-1. 推进时间(更新 world_time / current_season / weather)
-2. 模拟自然变化:天气演变(依据季节/地理/概率)、自然事件(潮汐、月相、罕见现象)
-3. 模拟社会规模的演变:势力间的资源流动、领土微调、技术与文化的缓慢演进、远方传闻
-4. 应用上 tick 事件的物理后果:火灾蔓延、建筑倒塌、伤病演变、经济连锁
+1. 推进时间 (world_time / current_season / weather)
+2. 模拟自然变化与上 tick 事件的物理后果 (天气演变、火势蔓延、伤病演变、
+   势力间资源流动、远方传闻); 自然事件 narrative_value ≤ 4 (背景级别)
+3. **每 tick 至少产出 1-3 条 natural_events** — 即便世界状态变化轻微, 也
+   要把环境里能被角色感知到的细节列成 event (脚下泥泞 / 远处汽笛 / 雾里
+   人影一闪 / 街角告示牌新换 / 邻巷传来争吵). 这些事件是 CharacterAgent
+   做决策的输入, 没有事件链路下游全部冻结.
 
-# 严格约束
+# 禁区
 
-* 不引入新的世界设定(魔法规则、地理、新种族)
-* 不创造新角色(那是 Event Injector 的工作)
-* 不模拟具体角色的决策(那是 Character Agent 的工作)
-* 一切变化必须可量化或可描述为状态字段的修改
-* 自然事件 narrative_value 通常 ≤ 4(背景级别)
+不引入新设定 / 不创造新角色 / 不模拟具体角色决策 / 一切变化必须可量化。
 
-# 输出格式(严格 JSON, 不要 markdown 代码块)
+# 输出格式 (严格 JSON, 不要 markdown 代码块, 不要省略号)
+#
+# v2.38 (iter#5) — 改成 DELTA 输出: world_state_delta 只列实际变更的字段,
+# 未变的字段不要写出来. natural_events 必须非空 (见上 #3).
 
 {
-  "new_world_state": { 完整的 WorldState 对象,字段名同输入 },
+  "world_state_delta": {
+    "world_time": 12,
+    "current_season": "深秋",
+    "weather": "酸雨加剧"
+  },
   "natural_events": [
     {
-      "id": "evt_xxx",
       "type": "exogenous",
-      "tick": <int>,
-      "location": "location_id",
+      "location": "<location_id>",
       "participants": [],
-      "description": "雨势加大,山道泥泞",
+      "description": "雨势加大, 山道泥泞",
       "visible_to": ["all_in_location"],
       "narrative_value": 2,
       "consequences": []
     }
   ],
-  "delta_summary": "本 tick 世界变化的一句话总结"
+  "delta_summary": "本 tick 世界变化的一句话"
 }
 
-记住:你是宇宙规则,不是编剧。
+记住: 你是宇宙规则, 不是编剧。delta 只填变了的字段, 但 natural_events 必须有。
 """
 
 
@@ -106,7 +110,9 @@ class WorldSimulator:
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.4,
-                max_tokens=81920,
+                # v2.38 (iter#5) — delta-output 让 4096 远够 (实测 ~800-1500
+                # tokens). 此前 81920 给推理模型留了把 budget 全填满的空间.
+                max_tokens=4096,
                 agent_id="world_simulator",
                 priority="medium",
             )
@@ -122,14 +128,29 @@ class WorldSimulator:
     def _build_user_prompt(
         self, world_state: WorldState, last_tick_events: list[Event], time_step: int
     ) -> str:
-        ws_dump = world_state.model_dump(mode="json")
-        events_dump = [e.model_dump(mode="json") for e in last_tick_events]
+        # v2.38 (iter#5) — 紧凑视图: 只送 LLM 需要看的字段, 不再回灌整个
+        # WorldState (locations/factions/world_rules 占体积大且每 tick 几乎
+        # 不变). 模型按 delta 模式只输出变了的字段, 稳态字段沿用 prior.
+        ws = world_state
+        loc_names = ", ".join(loc.name for loc in ws.locations[:8]) or "(无)"
+        events_compact = []
+        for e in last_tick_events[:20]:
+            events_compact.append(
+                f"- [{e.type}] {e.description[:80]} "
+                f"(loc={e.location or '-'}, value={e.narrative_value or 0})"
+            )
+        events_block = "\n".join(events_compact) or "(无)"
         return (
-            f"# 当前 WorldState\n```json\n{json.dumps(ws_dump, ensure_ascii=False, indent=2)}\n```\n\n"
-            f"# 上 tick 所有事件 ({len(events_dump)} 条)\n```json\n"
-            f"{json.dumps(events_dump, ensure_ascii=False, indent=2)}\n```\n\n"
-            f"# 时间步长\n{time_step} tick(请将 world_time + {time_step})\n\n"
-            "请按系统提示要求,输出严格 JSON 格式的 new_world_state、natural_events、delta_summary。"
+            f"# 世界当前快照 (volatile 字段)\n"
+            f"world_time: {ws.world_time}  (本 tick 推到 {ws.world_time + time_step})\n"
+            f"era: {ws.era}\n"
+            f"current_season: {ws.current_season}\n"
+            f"weather: {ws.weather}\n"
+            f"地点: {loc_names}\n"
+            f"\n# 上 tick 事件 ({len(last_tick_events)} 条)\n{events_block}\n\n"
+            f"按系统提示输出 world_state_delta + natural_events + delta_summary。"
+            f"world_state_delta 只列实际变了的字段, era/locations/factions/"
+            f"world_rules 一般留空让系统沿用上 tick。"
         )
 
     def _parse_output(
@@ -145,23 +166,38 @@ class WorldSimulator:
             return self._fallback_output(prior_world_state, time_step)
 
         # WorldState 解析
-        ws_raw = payload.get("new_world_state") or {}
+        # v2.38 (iter#5) — 优先读 world_state_delta (delta-output, 只列变了
+        # 的字段, 与 prior 合并). 老 new_world_state (全量回传) 仍支持作
+        # backward-compatible 兜底.
+        delta_raw = payload.get("world_state_delta")
+        full_raw = payload.get("new_world_state")
         try:
-            new_ws = WorldState.model_validate(ws_raw)
+            if delta_raw and isinstance(delta_raw, dict):
+                # delta 模式: prior + LLM 给的字段
+                base = prior_world_state.model_dump(mode="json")
+                # 只接受 delta 里非空的字段, 防 LLM 把 era="" 这种值覆盖掉
+                for k, v in delta_raw.items():
+                    if v not in (None, "", [], {}):
+                        base[k] = v
+                # world_time 兜底 — delta 没给就 prior + time_step
+                if "world_time" not in delta_raw or not delta_raw.get("world_time"):
+                    base["world_time"] = prior_world_state.world_time + time_step
+                new_ws = WorldState.model_validate(base)
+            elif full_raw:
+                new_ws = WorldState.model_validate(full_raw)
+            else:
+                # 两个字段都没有, 仅推时间
+                new_ws = prior_world_state.model_copy(
+                    update={"world_time": prior_world_state.world_time + time_step}
+                )
         except Exception as e:
-            logger.warning("WorldSimulator new_world_state invalid (%s),保留旧值仅推进时间", e)
+            logger.warning("WorldSimulator state parse invalid (%s),保留旧值仅推进时间", e)
             new_ws = prior_world_state.model_copy(
                 update={"world_time": prior_world_state.world_time + time_step}
             )
 
-        # v2.35 — 稳态字段反清空保护:
-        # MiMo / reasoning 模型偶发只输出 era/weather 等少数字段, model_validate
-        # 用 default_factory=list 兜底, 整个 locations/factions/world_rules 被
-        # 空 list 替换 → bootstrap 写入的 5 地点/3 派系/6 规则**整个被擦掉**,
-        # 几个 tick 后世界完全坍塌 (现场证据: era="科技奇点后纪元" 被某 tick LLM
-        # 改回 "初始纪元", 同 tick 5 locations/3 factions/6 rules 全归零)。
-        # 策略: LLM 给空 list 但 prior 非空 → 保留 prior (这是明显的偷工模式,
-        # 真的想删 location/faction 应该走 events 而不是凭空清空整个列表)。
+        # v2.35 — 稳态字段反清空保护 (delta 模式下其实已经天然成立, 但保留作
+        # 全量回传路径的兜底).
         merged_updates: dict = {}
         if not new_ws.locations and prior_world_state.locations:
             merged_updates["locations"] = prior_world_state.locations

@@ -5,6 +5,55 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#5: WorldSimulator delta-output + 紧凑输入
+
+> 自我迭代第 3 轮. 目标: WorldSimulator (v3 后排名 #1 31%) 减重. 改成
+> delta-output + 紧凑输入视图, 砍 max_tokens 81920→4096.
+
+### Changed — WorldSimulator delta-output
+
+`backend/agents/world_simulator.py`:
+
+* **输出从 `new_world_state` (整段 WorldState 回灌) 改成 `world_state_delta`**
+  (只列实际变更字段). WorldState 90% 字段每 tick 不变, 回灌等于把
+  locations/factions/world_rules 重写一遍, 占 6-10k tokens/tick.
+* **解析器同时支持两种 schema** — `world_state_delta` 优先, fallback 到
+  `new_world_state`. 与 prior 合并时只接受非空字段, 防 LLM 把 era="" 之类
+  覆盖掉 (沿用 v2.35 反清空保护).
+* **max_tokens 81920 → 4096** — delta 模式下 4096 远够 (实测 ~800-1500
+  tokens 出齐).
+* **input prompt 紧凑视图** — 不再 dump 整个 WorldState; 只送
+  world_time / era / season / weather / 地点名 + 事件描述 (truncated 80 字).
+* **强制 1-3 条 natural_events** — 第一版砍得太狠, 模型干脆 0 events, 下游
+  CharacterAgent/Narrator 链路全静默 (无事件→无角色波及→无叙述). 加硬性
+  要求即便世界变化轻微也要产出可感知的环境事件 (脚下泥泞/雾里人影/告示
+  牌新换), 保住下游驱动.
+
+### Benchmark — 3 tick + bootstrap, custom provider
+
+| 指标                       | v0-baseline | v3 (iter#4) | v4 (iter#5) | Δ vs baseline |
+| -------------------------- | ----------: | ----------: | ----------: | ------------: |
+| total tokens               |     137,890 |      60,316 |      41,292 |         -70%  |
+| world_simulator            |      19,427 |      18,909 |       8,149 |         -58%  |
+| narrator                   |      19,904 |      17,191 |      13,833 |         -31%  |
+| narrative_critic (all)     |      65,174 |       9,556 |      19,310 |         -70%  |
+| avg tick duration (sec)    |         556 |         190 |         123 |         -78%  |
+| narrative chars (3 tick)   |       2,105 |       1,953 |       1,821 |         -13%  |
+
+### Quality — 抽样
+
+样本 (tick 1, 525 chars): "雾气从档案馆的通风口涌进来 / 灰白色的, 带着铁锈和
+湿土的气味...提灯挂在肘弯, 灯焰在潮湿里跳了跳, 投下抖动的影子...". 林雪持灯
+探档案, 发现 卷宗预言 残卷 + 铜版拓片 (齿轮与藤蔓), 远处铁柜门刮擦声埋下
+钩子. 具体物 + 嗓音 + 神秘弯钩齐全, 完全没有回退.
+
+### Tests
+
+20/20 orchestrator + WorldSimulator-related tests pass (parser 双 schema
+兼容).
+
+---
+
 ## [2.38] — 2026-06-11 — iter#4: Narrator prompt + output bound + 反 reasoning 加固
 
 > 自我迭代第 2 轮. 目标: Narrator 链路减重 (slim prompt + 输出预算). 中途
