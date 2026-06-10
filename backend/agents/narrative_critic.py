@@ -101,12 +101,16 @@ CRITIC_SYSTEM_PROMPT = (
 你不能跳过任何一条规则, 不能用"基本通过"、"瑕不掩瑜"等模糊措辞。
 任何触发必须给出原文证据 (引用片段)。
 
+# 分工
+
+A 类 (重复) / G4 段末升华句 由 det 检查器先扫一遍, 你不需要再列 A1/A4/
+A5/A6/A7/G4. 你聚焦在 LLM 才能察觉的语义/结构问题: B (角色失真) /
+C (情节) / D (描写) / E (语言) / F (结构) / G 其余.
+
 ---
 
 """
     + render_full_critique_block()
-    + "\n\n"
-    + render_blacklist_block()
     + "\n\n"
     + render_show_dont_tell_block()
     + """
@@ -161,9 +165,11 @@ REVISE_SYSTEM_PROMPT = (
 | D5 | 替换 (而非追加) 部分视觉为其他感官 |
 | D6 | 强制引入至少一个可视化的具体物 |
 
+# 黑名单
+原稿命中的具体词条已在 user prompt 的 "removed_words" 里给你, 你只需避开
+即可; 不再在 system prompt 里重复完整清单 (节省 token).
+
 """
-    + render_blacklist_block()
-    + "\n\n"
     + render_show_dont_tell_block()
     + """
 
@@ -198,9 +204,11 @@ REWRITE_SYSTEM_PROMPT = (
 3. 必须严格避开 避免清单 中的触发项
 4. 必须严格遵守原稿想表达的事件骨架 — 事件 / 角色 / 地点不变
 
+# 黑名单
+原稿命中的具体词条已在 user prompt 的 "avoid_codes" 里给你, 避开即可;
+不再在 system prompt 里重复完整清单 (节省 token).
+
 """
-    + render_blacklist_block()
-    + "\n\n"
     + render_show_dont_tell_block()
     + """
 
