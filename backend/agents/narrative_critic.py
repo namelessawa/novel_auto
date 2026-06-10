@@ -323,12 +323,34 @@ class NarrativeCritic:
                 recent_openings=recent_openings,
                 exempt_words=exempt_words,
             )
+            # v2.38 (iter#6) — LLM critique 条件触发: det 已找到 ≥2 个触发
+            # (含 medium / high) 时跳过 LLM critique, 直接进入修订. LLM 主要
+            # 价值在 det 静默时检 B/C/F/G 语义类问题; det 非静默时 LLM 找的
+            # 多半是同一类问题的换皮版本, revise 的 avoid_codes 已覆盖.
+            #
+            # 用 CRITIC_FORCE_LLM=1 可强制总跑 (用于调试 / 严格场景).
             llm_triggers: list[DeterministicTrigger] = []
-            if use_llm and not llm_critique_done:
+            det_substantive = sum(
+                1 for t in det_triggers if t.severity in {"high", "medium"}
+            )
+            force_llm = os.environ.get("CRITIC_FORCE_LLM", "0") == "1"
+            should_call_llm = (
+                use_llm
+                and not llm_critique_done
+                and (det_substantive < 2 or force_llm)
+            )
+            if should_call_llm:
                 llm_triggers = await self._llm_critique(
                     current_text, scene_focus, viewpoint_character_id
                 )
                 llm_critique_done = True
+            elif use_llm and not llm_critique_done and det_substantive >= 2:
+                # 跳过本次 LLM critique, 标记已用 (避免后续 round 再跑)
+                llm_critique_done = True
+                trail.append(
+                    f"  ~ det 已发现 {det_substantive} 个 medium/high 触发, "
+                    f"跳过 LLM critique 直接修订"
+                )
             all_triggers = _merge_triggers(det_triggers, llm_triggers)
             summary = summarize_triggers(all_triggers)
 

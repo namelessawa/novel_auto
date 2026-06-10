@@ -5,6 +5,62 @@
 
 ---
 
+## [2.38] — 2026-06-11 — iter#6: Critic 条件 LLM gating
+
+> 自我迭代第 4 轮. critic 再砍一刀 — det 已发现 ≥2 个 medium/high 触发时
+> 直接进入修订, 跳过 LLM critique. LLM 主要价值在 det 静默时检语义类问
+> 题; det 非静默时 LLM 找的多半是同类问题换皮版本.
+
+### Changed — NarrativeCritic 条件 LLM gating
+
+`backend/agents/narrative_critic.py`:
+
+* **`det_substantive >= 2` 时跳过 LLM critique** — 直接拿 det 触发清单
+  进入 REVISE/REWRITE. 仍然记 `llm_critique_done=True` 保证后续 round
+  也不再 retry LLM.
+* **`CRITIC_FORCE_LLM=1` env 强制开关** — 调试或严格模式可以恢复总跑.
+
+### Benchmark — 累计 vs baseline
+
+| 指标                       | v0-baseline | iter#5 | iter#6 | Δ vs baseline |
+| -------------------------- | ----------: | -----: | -----: | ------------: |
+| total tokens               |     137,890 | 41,292 | 29,801 |         -78%  |
+| narrative_critic (all)     |      65,174 | 19,310 |  4,916 |         -92%  |
+| world_simulator            |      19,427 |  8,149 | 10,033 |         -48%  |
+| narrator                   |      19,904 | 13,833 | 14,852 |         -25%  |
+| avg tick duration (sec)    |         556 |    123 |     94 |         -83%  |
+| narrative chars (3 tick)   |       2,105 |  1,821 |  1,753 |         -17%  |
+
+### Quality — 抽样
+
+样本 (tick 1, 590 chars): "苏默指尖划过书脊。羊皮粗糙, 湿气黏手...
+卷宗不在原位。标签新, 墨未干: 「预言存录·第三类·锈钉城变故」". 短句节奏
+（苏默冷峻人设）、具体物（羊皮 / 铅框窗 / 帝国蓝章 / 黄纸地图）、双重
+钩子（5 年前预言今日归档 + 红笔圈"白鸦, 第二夜"）齐全, 远超 baseline.
+
+### Tests
+
+9/9 critic 测试通过, 574/574 全测试通过.
+
+---
+
+## [2.38] — 2026-06-11 — fix(iter-review): CRITICAL world_time=0 + HIGH ellipsis
+
+code-review 在 iter#3-5 diff 上发现:
+
+* [CRITICAL] `world_simulator.py`: `not delta_raw.get("world_time")` 对值 0
+  falsy-test 误判为缺失, bootstrap tick 时会双倍推进时间. 改 `is None`.
+  非空过滤同步重写 — 只跳过 None / 空字符串 / 空集合, 保留合法零值.
+* [HIGH] `narrator_agent.py`: ellipsis 占位符阈值过低 (3) 误杀中文
+  "她停下……他也停下……灯灭了……" 这类 3 省略号悬念段. 改成按 "……" / "..."
+  整组算, 阈值 6 组 (cjk+ascii) / 4 组 (纯 ascii).
+* [HIGH] `narrative_critic.py`: 文档化 "首次 LLM critique 失败 → 整个
+  draft 走 det-only" 是有意权衡, 而非副作用.
+
+574/574 tests pass.
+
+---
+
 ## [2.38] — 2026-06-11 — iter#5: WorldSimulator delta-output + 紧凑输入
 
 > 自我迭代第 3 轮. 目标: WorldSimulator (v3 后排名 #1 31%) 减重. 改成
