@@ -1,9 +1,11 @@
 # 无限小说生成系统 (Infinite Novel Generator)
 
-> **当前版本: v2.34** (2026-06-09) — FastAPI + React/Vite 单栈,
+> **当前版本: v2.37** (2026-06-10) — FastAPI + React/Vite 单栈,
 > 10 Agent + 7 阶段 Tick 调度的多智能体模拟系统 (故事驱动),
 > 节级管线已任务化, 自带邮箱 OTP 多租户认证、Tick 驱动节、多模态视频生成、
-> 知识图谱 tick 同步。
+> 知识图谱 tick 同步。v2.37 重写叙事质量架构 (台词管道 / 前文衔接 /
+> 角色名片 / 正向写作方法论) + 全项目 4 路 code review 修复 + 前端
+> 「墨砚」设计系统。
 > 设计哲学来自 [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
 > **故事是模拟的副产品, Narrator 选择性讲述**。
 
@@ -92,7 +94,7 @@
 > CharacterState.{current_location, relationships}` → `Entity + Relation`,
 > 与 `agents_called` 一起诊断 (`kg_sync(+Ne/+Nr/~Ne)`).
 
-### v2.20 – v2.34 增量概览
+### v2.20 – v2.37 增量概览
 
 | 版本 | 主线 | 关键落地点 |
 |------|------|-----------|
@@ -110,6 +112,7 @@
 | v2.31 / v2.32 | 讯飞图片生成对齐 | `modelid` (domain) 切换 / `wss → https POST` / 业务错误码中文 hint / MaaS host+body+分辨率约束 / `patch_id` 永远 set / Docker bridge MTU 1380 |
 | **v2.33** | **多模态视频生成** | `text_segmenter`(中文按句切, 15-60 字) + `edge_tts_client`(WordBoundary 时长) + `video_composer`(`imageio-ffmpeg` 单条 filter_complex, `Semaphore(2)`) + `multimedia/asset_store` + `MultimodalView` 前端 + 6 REST 端点 + 36 安全/性能用例 |
 | **v2.34** | **KG tick 同步 + LLM JSON 兜底 + 4 类用户 bug 治根** | `backend/graph/tick_kg_sync.py` 自动喂图 + `KnowledgeGraph.save/load_to_disk` / `parse_llm_json` 11 agent + bootstrap 统一 + `json_repair` 兜底 / `WorldSimulator` 稳态字段反清空 / `SectionCloser` 接共享 reasoning 反泄漏 / `bootstrap` 空世界完整性闸 / `TickState.novel_title` 主题锚点 / 终态任务保留 60s → 30 min |
+| **v2.37** | **叙事质量架构重写 + 全项目 code review + 前端「墨砚」** | Narrator 场景简报 (台词原文 + △私密动机 + 角色名片 + 世界状态 + `prose_tail` 前文衔接) / system prompt 改正向写作方法论 + 紧凑纪律 / 篇幅三档重校 / CharacterAgent 行动历史 + 台词声纹 / bootstrap 示例台词与对白锚点 / 4 路并行审查 10 CRITICAL + 12 HIGH + 15 MEDIUM 全处置 (ConsistencyGuardian 自部署起静默失效、伏笔源事件被压缩、任务越权、CORS 非法配置、多租户 token 记账错乱等) / 前端「墨砚」设计系统 (朱砂 + 衬线阅读排版 + 分段渲染) |
 
 ### Guardian 幻觉率诊断 (v2.18 Phase 9)
 

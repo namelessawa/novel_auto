@@ -102,3 +102,39 @@ def test_post_open_loop_distinct_ids_independent(client) -> None:
     c.post("/api/tick/open-loops", json=_loop_payload("loop_c"))
     c.post("/api/tick/open-loops", json=_loop_payload("loop_d"))
     assert ts.get_open_loop_count() == 2
+
+
+# ---- v2.37 — query 参数上限约束 (无界 last_n / top_k / last_n_ticks) --------
+# 422 在 handler 之前由 FastAPI 校验返回, 桩 runtime 缺 tick_db 也不影响。
+
+
+def test_open_loops_top_k_bounded(client) -> None:
+    c, _ = client
+    assert c.get("/api/tick/open-loops", params={"top_k": 101}).status_code == 422
+    assert c.get("/api/tick/open-loops", params={"top_k": 0}).status_code == 422
+    assert c.get("/api/tick/open-loops", params={"top_k": 100}).status_code == 200
+
+
+def test_history_last_n_bounded(client) -> None:
+    c, _ = client
+    assert c.get("/api/tick/history", params={"last_n": 501}).status_code == 422
+    assert c.get("/api/tick/history", params={"last_n": 0}).status_code == 422
+
+
+def test_event_stats_last_n_ticks_bounded(client) -> None:
+    c, _ = client
+    r = c.get("/api/tick/event-stats", params={"last_n_ticks": 501})
+    assert r.status_code == 422
+    r = c.get("/api/tick/event-stats", params={"last_n_ticks": -5})
+    assert r.status_code == 422
+
+
+def test_action_patterns_last_n_ticks_bounded(client) -> None:
+    c, _ = client
+    r = c.get("/api/tick/action-patterns", params={"last_n_ticks": 99999})
+    assert r.status_code == 422
+
+
+def test_style_anchors_top_k_bounded(client) -> None:
+    c, _ = client
+    assert c.get("/api/tick/style-anchors", params={"top_k": 101}).status_code == 422

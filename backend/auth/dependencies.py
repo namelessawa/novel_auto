@@ -23,16 +23,23 @@ _bearer = HTTPBearer(auto_error=False)
 
 
 def get_client_ip(request: Request) -> str:
-    """提取真实客户端 IP, 兼容 Cloudflare Tunnel / 反代 / 直连。
+    """提取真实客户端 IP。
 
-    优先级: CF-Connecting-IP > X-Forwarded-For 首个 > request.client.host
+    v2.37 — 默认 (auth.trusted_proxy=false, 直连部署) 只信 request.client.host:
+    X-Forwarded-For / CF-Connecting-IP 是普通请求头, 直连时客户端可任意伪造,
+    用来绕过按 IP 限流 (OTP 发送 / 密码登录)。
+
+    仅当 config.json ``auth.trusted_proxy=true`` (部署在 Cloudflare Tunnel /
+    nginx 反代之后) 才信代理头, 优先级: CF-Connecting-IP > X-Forwarded-For 首个。
     """
-    cf_ip = request.headers.get("CF-Connecting-IP")
-    if cf_ip:
-        return cf_ip.strip()
-    xff = request.headers.get("X-Forwarded-For")
-    if xff:
-        return xff.split(",")[0].strip()
+    cfg = get_auth_config()
+    if cfg.trusted_proxy:
+        cf_ip = request.headers.get("CF-Connecting-IP")
+        if cf_ip:
+            return cf_ip.strip()
+        xff = request.headers.get("X-Forwarded-For")
+        if xff:
+            return xff.split(",")[0].strip()
     if request.client:
         return request.client.host
     return "unknown"

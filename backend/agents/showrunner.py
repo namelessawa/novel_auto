@@ -160,10 +160,10 @@ class Showrunner:
         total_ticks: int,
         current_tick: int,
     ) -> str:
-        # 计算 cold_threads 候选
+        # 计算 cold_threads 候选 (字段可能为 None — or 0 兜底防 TypeError)
         cold_candidates = []
         for l in open_loops:
-            stale = (current_tick - max(l.last_referenced_tick, l.opened_tick))
+            stale = (current_tick - max(l.last_referenced_tick or 0, l.opened_tick or 0))
             if stale > 20:
                 cold_candidates.append(
                     {
@@ -184,7 +184,7 @@ class Showrunner:
 
 ## 开放伏笔
 ```json
-{json.dumps([{"id": l.id, "urgency": l.urgency, "type": l.type, "desc": l.description[:80], "stale_ticks": current_tick - max(l.last_referenced_tick, l.opened_tick)} for l in open_loops], ensure_ascii=False, indent=2)}
+{json.dumps([{"id": l.id, "urgency": l.urgency, "type": l.type, "desc": l.description[:80], "stale_ticks": current_tick - max(l.last_referenced_tick or 0, l.opened_tick or 0)} for l in open_loops], ensure_ascii=False, indent=2)}
 ```
 
 ## 候选冷线索 (>20 tick 未推进)

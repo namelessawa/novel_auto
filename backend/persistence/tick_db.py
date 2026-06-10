@@ -209,7 +209,17 @@ class TickDB:
                             )
                 self._conn.execute("COMMIT")
             except Exception:
-                self._conn.execute("ROLLBACK")
+                # _conn 可能已被 close() 置 None (例如 close 后仍有调用方写入,
+                # BEGIN 抛 AttributeError 进到这里) — 直接 ROLLBACK 会二次
+                # AttributeError 把原始异常掩盖掉。
+                if self._conn is not None:
+                    try:
+                        self._conn.execute("ROLLBACK")
+                    except sqlite3.Error:
+                        logger.warning(
+                            "TickDB ROLLBACK failed in insert_tick error path",
+                            exc_info=True,
+                        )
                 raise
 
     # ------------------------------------------------------------------
@@ -265,18 +275,25 @@ class TickDB:
                 f"WHERE tick_id IN ({placeholders}) AND narrative_value >= 7",
                 tick_ids,
             ).fetchone()
-            high_value_count = high_value_row["c"] if high_value_row else 0
+            high_value_count = int(high_value_row["c"]) if high_value_row else 0
 
-        narrator_chars_sum = sum(r["narrator_chars"] for r in tick_rows)
-        narrator_produced_count = sum(1 for r in tick_rows if r["narrator_produced"])
-        avg_chars = narrator_chars_sum / len(tick_rows) if tick_rows else 0
+            # 锁内把 sqlite3.Row 拷贝为纯 Python 数据 — 不让 Row 对象逃出
+            # 锁的作用域, 之后的聚合不再依赖连接相关对象。
+            sampled = [
+                (int(r["narrator_chars"] or 0), bool(r["narrator_produced"]))
+                for r in tick_rows
+            ]
+
+        narrator_chars_sum = sum(chars for chars, _ in sampled)
+        narrator_produced_count = sum(1 for _, produced in sampled if produced)
+        avg_chars = narrator_chars_sum / len(sampled) if sampled else 0
 
         return {
             "by_type": by_type,
             "high_value_count": high_value_count,
             "avg_narrator_chars": round(avg_chars, 1),
-            "narration_rate": round(narrator_produced_count / len(tick_rows), 3),
-            "ticks_sampled": len(tick_rows),
+            "narration_rate": round(narrator_produced_count / len(sampled), 3),
+            "ticks_sampled": len(sampled),
         }
 
     def get_action_patterns(self, last_n_ticks: int = 100) -> dict:

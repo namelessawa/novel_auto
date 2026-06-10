@@ -36,6 +36,22 @@ def _resolve_runtime():
 _runtime_dep = _resolve_runtime()
 
 
+def _resolve_user():
+    """v2.37 — 只要登录态、不构造 runtime 的轻量 Depends (列表端点用)。
+
+    与 _resolve_runtime 同样走 lazy import, 避免模块加载期循环。
+    """
+    from auth import User, get_current_user
+
+    def _resolve(user: User = Depends(get_current_user)) -> User:
+        return user
+
+    return _resolve
+
+
+_user_dep = _resolve_user()
+
+
 # ---------------------------------------------------------------------------
 # 注册表:9 个 tick agent + 静态元数据 (不变)
 # ---------------------------------------------------------------------------
@@ -521,8 +537,9 @@ def _spec_to_detail(spec: AgentSpec, runtime) -> dict:
 
 
 @router.get("")
-async def list_agents() -> dict:
-    """列表不需要 runtime, 不强制登录态 — 公开元数据。"""
+async def list_agents(_user=Depends(_user_dep)) -> dict:
+    """列表不需要 runtime, 但要求登录态 (v2.37) — 注册表含 module_path 等
+    内部结构信息, 不应无认证暴露。前端 authedFetch 总是带 token, 不受影响。"""
     return {
         "count": len(AGENT_REGISTRY),
         "agents": [_spec_to_brief(s) for s in AGENT_REGISTRY.values()],

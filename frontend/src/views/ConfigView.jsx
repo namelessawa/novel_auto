@@ -122,7 +122,12 @@ function TextLLMSection() {
 
   useEffect(() => {
     const stored = getUserLLMConfig()
-    const detected = inferProvider(stored.base_url)
+    // 修复(11) — 优先用保存时持久化的 provider id; 旧数据无 provider 字段时
+    // 退回 base_url 推断 (向后兼容), 自定义 provider 刷新后不再跳回 deepseek
+    const detected =
+      stored.provider && TEXT_LLM_PROVIDERS[stored.provider]
+        ? stored.provider
+        : inferProvider(stored.base_url)
     setProvider(detected)
     setValues({
       api_key: stored.api_key || '',
@@ -134,8 +139,10 @@ function TextLLMSection() {
   const def = TEXT_LLM_PROVIDERS[provider] || TEXT_LLM_PROVIDERS.deepseek
 
   const onProviderChange = (next) => {
-    setProvider(next)
-    const nextDef = TEXT_LLM_PROVIDERS[next]
+    // 修复(10) — 未知 provider id 兜底到 deepseek, 防 nextDef undefined 崩溃
+    const safeNext = TEXT_LLM_PROVIDERS[next] ? next : 'deepseek'
+    const nextDef = TEXT_LLM_PROVIDERS[safeNext]
+    setProvider(safeNext)
     // 切 provider 时 base_url / model 替换为默认占位, api_key 清空
     const nextValues = { api_key: '', base_url: '', model: '' }
     nextDef.fields.forEach((f) => {
@@ -147,6 +154,8 @@ function TextLLMSection() {
 
   const handleSave = () => {
     setUserLLMConfig({
+      // 修复(11) — provider id 一起入 localStorage, 读取时优先于 base_url 推断
+      provider,
       api_key: (values.api_key || '').trim(),
       base_url: (values.base_url || '').trim(),
       model: (values.model || '').trim(),

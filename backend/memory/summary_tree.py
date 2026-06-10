@@ -274,6 +274,9 @@ class SummaryTree:
 
     def load_from_disk(self, path: str) -> bool:
         """从磁盘恢复 - 返回是否成功加载。文件不存在不算错。"""
+        # 失败路径要用"加载前"的阈值重新 __init__ — self._merge_threshold
+        # 可能已被坏 payload 的值污染 (赋值发生在 root/leaves 校验之前)。
+        original_merge_threshold = self._merge_threshold
         if not os.path.isfile(path):
             logger.info("SummaryTree disk file not found, starting fresh: %s", path)
             return False
@@ -301,7 +304,7 @@ class SummaryTree:
         except (KeyError, TypeError, ValueError) as e:
             _quarantine(path, f"validation: {e}")
             logger.error("SummaryTree payload corrupted (%s) - quarantined, starting fresh", e)
-            self.__init__(merge_threshold=self._merge_threshold)
+            self.__init__(merge_threshold=original_merge_threshold)
             return False
 
         logger.info(
@@ -348,6 +351,12 @@ class SummaryTree:
         except Exception as e:
             logger.error("Summary merge LLM failed: %s", e)
             merged_summary = combined[:200]
+        except BaseException:
+            # CancelledError 等 BaseException 不走上面的兜底 — 此时 volume
+            # 节点尚未建立, 必须把快照放回 pending, 否则索引永久脱钩。
+            # 前插以保留 await 期间可能新追加的 leaf。
+            self._pending_chapter_leaves[:0] = children
+            raise
 
         parent = SummaryNode(
             node_id=f"vol_{ch_start}_{ch_end}",

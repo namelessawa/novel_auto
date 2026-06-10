@@ -71,6 +71,12 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
 
   const controllerRef = useRef(null)
   const textRef = useRef(null)
+  // 修复(竞态) — continueId 的同步镜像: 异步续写流程 await 返回后与请求时快照
+  // 比对, 期间用户已切换小说则丢弃本次结果, 防止把状态写到错的小说上。
+  const continueIdRef = useRef('')
+  useEffect(() => {
+    continueIdRef.current = continueId
+  }, [continueId])
 
   useEffect(() => {
     loadNovels()
@@ -209,15 +215,20 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       showToast('请选择要续写的作品', 'error')
       return
     }
+    // 修复(竞态) — 请求时快照 novelId; API 返回前用户切了小说就丢弃结果
+    const requestedId = continueId
     setMode('continue')
     setStatusText('正在创建续写任务…')
 
     try {
-      await switchNovel(continueId)
-      await createSectionTask(continueId)
+      await switchNovel(requestedId)
+      await createSectionTask(requestedId)
+      // await 期间用户已切到别的小说 → 丢弃本次 UI 更新
+      // (任务本身已入队, 由左下「任务」面板呈现, 不会丢)
+      if (continueIdRef.current !== requestedId) return
       // 任务进度在左下「任务」面板自动显示
       setContinuePrompt('')
-      onAfterCreated?.(continueId)
+      onAfterCreated?.(requestedId)
     } catch (err) {
       // 409 = 同 novel 已有续写任务
       const msg = err.message || String(err)
@@ -233,7 +244,13 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
   }
 
   const handleStop = () => {
-    controllerRef.current?.abort()
+    // 修复(双击安全) — 显式判空, abort 前先置 null:
+    // 第二次点击拿到 null 直接跳过, 不会对已 abort 的 controller 重复操作
+    const ctrl = controllerRef.current
+    if (ctrl) {
+      controllerRef.current = null
+      ctrl.abort()
+    }
     setGenerating(false)
     setStatusText('')
   }

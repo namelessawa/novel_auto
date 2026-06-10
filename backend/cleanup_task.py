@@ -29,12 +29,21 @@ logger = logging.getLogger(__name__)
 
 
 async def cleanup_loop() -> None:
-    """后台 task — 永久循环, 由 FastAPI shutdown 时 cancel。"""
+    """后台 task — 永久循环, 由 FastAPI shutdown 时 cancel。
+
+    v2.37 — run_once / purge_expired_otps 是同步阻塞调用 (rmtree + SQLite),
+    直接在协程里调会卡住整个 event loop (清理大 novel 目录时所有 API 请求
+    冻结)。移到默认 thread executor; TickDB 是 check_same_thread=False + 锁,
+    auth store 每操作独立连接, 跨线程安全。
+    """
     while True:
         cfg = get_auth_config()
         try:
-            n_deleted = run_once()
-            n_otp = get_user_store().purge_expired_otps()
+            loop = asyncio.get_running_loop()
+            n_deleted = await loop.run_in_executor(None, run_once)
+            n_otp = await loop.run_in_executor(
+                None, get_user_store().purge_expired_otps
+            )
             if n_deleted or n_otp:
                 logger.info(
                     "cleanup pass: %d novels purged, %d expired OTPs purged",

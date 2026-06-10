@@ -140,6 +140,17 @@ class PromptBuilder:
                 target = max(50, t - (total - available))
                 truncated_text = _truncate_to_tokens(r, target)
                 new_t = _count_tokens(truncated_text)
+                if new_t >= t:
+                    # 无 tiktoken 时字符近似的取整误差可能让截断零进展,
+                    # 甚至因追加省略号反向膨胀 — 跳过本段, 防预算统计失真。
+                    logger.warning(
+                        "PromptBuilder truncation made no progress on section "
+                        "%r (%d -> %d tokens), skipping",
+                        sec.label,
+                        t,
+                        new_t,
+                    )
+                    continue
                 rendered[idx] = (sec, truncated_text, new_t)
                 total = total - t + new_t
                 truncated.append(sec.label)

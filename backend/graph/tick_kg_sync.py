@@ -221,6 +221,19 @@ def sync_tick_state_to_kg(
             continue
         if state.character_id not in existing_entity_ids:
             continue
+        # 角色移动后先撤掉旧的 LOCATED_AT 出边 — 否则图里"同时位于两地"。
+        # 只删 located_at, 不动 KNOWS/HOSTILE 等其他关系; 指向当前位置的边
+        # 保留 (add_relation 会 upsert), 维持本函数的幂等性。
+        try:
+            for rel in kg.get_relations(state.character_id):
+                if (
+                    rel.source_id == state.character_id
+                    and rel.relation_type == RelationType.LOCATED_AT
+                    and rel.target_id != state.current_location
+                ):
+                    kg.remove_relation(rel.source_id, rel.target_id)
+        except (KeyError, ValueError) as e:
+            logger.debug("stale LOCATED_AT cleanup skipped (%s)", e)
         try:
             kg.add_relation(
                 Relation(

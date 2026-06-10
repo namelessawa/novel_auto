@@ -64,6 +64,9 @@ EXPECTED_PROGRESS_PER_STAGE: dict[ArcStage, tuple[float, float]] = {
 
 STALLED_TICKS = 80  # 同 arc_stage 停留 > 80 tick 视为停滞
 
+# LLM 漂移码白名单 — SYSTEM_PROMPT 定义的 B 系列失败模式 (B3 由确定性检测产出)
+VALID_DRIFT_CODES: frozenset[str] = frozenset({"B1", "B2", "B3", "B4", "B5", "B6"})
+
 
 @dataclass
 class CharacterArcReport:
@@ -418,16 +421,23 @@ class CharacterArcTracker:
             patch = llm_codes.get(r.character_id)
             if not patch:
                 continue
+            # LLM 输出不可信 — drift code 必须落在白名单, 其余丢弃
             new_codes = list(patch.get("drift_codes", []) or [])
             for c in new_codes:
-                if c and c not in r.drift_codes:
-                    r.drift_codes.append(c)
+                code = str(c).strip().upper()
+                if code in VALID_DRIFT_CODES and code not in r.drift_codes:
+                    r.drift_codes.append(code)
             new_ev = list(patch.get("drift_evidence", []) or [])
             for ev in new_ev:
                 if ev and ev not in r.drift_evidence:
                     r.drift_evidence.append(str(ev)[:200])
+            # suggested_stage 必须是 ARC_STAGE_ORDER 已知阶段, 防 LLM 幻觉阶段名
             suggested = patch.get("suggested_stage")
-            if suggested and r.suggested_stage is None:
+            if (
+                suggested
+                and suggested in ARC_STAGE_INDEX
+                and r.suggested_stage is None
+            ):
                 r.suggested_stage = suggested
             speech = patch.get("speech_compliance")
             if speech in {"ok", "loose", "mismatch"}:
@@ -444,4 +454,5 @@ __all__ = [
     "ARC_STAGE_INDEX",
     "EXPECTED_PROGRESS_PER_STAGE",
     "STALLED_TICKS",
+    "VALID_DRIFT_CODES",
 ]

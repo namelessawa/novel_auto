@@ -23,6 +23,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+from collections.abc import Callable
 
 import novel_manager
 from agents.character_agent import CharacterAgent
@@ -217,17 +218,25 @@ def get_runtime(user_id: str, novel_id: str | None = None) -> TickRuntime:
     * ``novel_id=None``: 用该用户活跃 novel; 若没有则 resolve_default_novel_id
       (会必要时新建 "未命名小说")。
     * 第一次为某用户构造时, 自动设为活跃并注入到 tick_routes 容器。
+
+    v2.37 — active 指针读取 + default 解析全部移进 _registry_lock: 此前在锁外
+    读 ``_active_by_user`` (TOCTOU), 两个并发请求可能 resolve 出不同 nid 各自
+    构造 runtime, 先建的一份被活跃指针抛弃但 SQLite 句柄仍开着。已存在的
+    runtime 不重复构造 (单次 dict 查找)。锁内做 resolve/构造与既有约定一致
+    (低频操作, 见 _registry_lock 注释)。
     """
-    nid = novel_id or _active_by_user.get(user_id)
-    if nid is None:
-        nid = novel_manager.resolve_default_novel_id(user_id)
-    key = (user_id, nid)
     with _registry_lock:
-        if key not in _runtimes:
-            _runtimes[key] = TickRuntime(user_id=user_id, novel_id=nid)
+        nid = novel_id or _active_by_user.get(user_id)
+        if nid is None:
+            nid = novel_manager.resolve_default_novel_id(user_id)
+        key = (user_id, nid)
+        rt = _runtimes.get(key)
+        if rt is None:
+            rt = TickRuntime(user_id=user_id, novel_id=nid)
+            _runtimes[key] = rt
         if user_id not in _active_by_user:
-            set_active_novel(user_id, nid)
-        return _runtimes[key]
+            set_active_novel(user_id, nid)  # RLock — 嵌套获取安全
+        return rt
 
 
 def set_active_novel(user_id: str, novel_id: str) -> TickRuntime:
@@ -249,6 +258,24 @@ def set_active_novel(user_id: str, novel_id: str) -> TickRuntime:
         return _runtimes[key]
 
 
+def switch_active_novel(
+    user_id: str,
+    novel_id: str,
+    on_switched: Callable[[], None] | None = None,
+) -> TickRuntime:
+    """v2.37 — 在 ``_registry_lock`` 内完成 set_active_novel + 调用方回调。
+
+    routes.switch_novel 需要在 tick 侧切换后同步它自己的 per-user active map;
+    两步在锁外做, 并发 switch 请求会交错出 tick=B / legacy=A 的状态分歧。
+    回调在锁内执行 — 必须保持轻量 (dict 赋值级别), 不要做 I/O。
+    """
+    with _registry_lock:
+        rt = set_active_novel(user_id, novel_id)
+        if on_switched is not None:
+            on_switched()
+        return rt
+
+
 def get_active_runtime(user_id: str) -> TickRuntime | None:
     with _registry_lock:
         nid = _active_by_user.get(user_id)
@@ -258,7 +285,8 @@ def get_active_runtime(user_id: str) -> TickRuntime | None:
 
 
 def get_active_novel_id(user_id: str) -> str | None:
-    return _active_by_user.get(user_id)
+    with _registry_lock:
+        return _active_by_user.get(user_id)
 
 
 def reload_cache(user_id: str, novel_id: str) -> None:

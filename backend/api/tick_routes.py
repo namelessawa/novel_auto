@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from memory_system.models import Event, EventKind, OpenLoop
@@ -220,7 +220,7 @@ async def inject_event(
 @router.get("/open-loops")
 async def list_open_loops(
     min_urgency: int = 0,
-    top_k: int = 50,
+    top_k: int = Query(50, ge=1, le=100),
     runtime=Depends(_resolve_runtime),
 ) -> dict:
     ts = runtime.tick_state
@@ -261,7 +261,8 @@ async def close_open_loop(
 
 @router.get("/history")
 async def get_history(
-    last_n: int = 20, runtime=Depends(_resolve_runtime)
+    last_n: int = Query(20, ge=1, le=500),
+    runtime=Depends(_resolve_runtime),
 ) -> dict:
     rows = runtime.tick_db.get_recent_ticks(n=last_n)
     return {"count": len(rows), "ticks": rows}
@@ -269,21 +270,24 @@ async def get_history(
 
 @router.get("/event-stats")
 async def get_event_stats(
-    last_n_ticks: int = 50, runtime=Depends(_resolve_runtime)
+    last_n_ticks: int = Query(50, ge=1, le=500),
+    runtime=Depends(_resolve_runtime),
 ) -> dict:
     return runtime.tick_db.get_event_stats(last_n_ticks=last_n_ticks)
 
 
 @router.get("/action-patterns")
 async def get_action_patterns(
-    last_n_ticks: int = 100, runtime=Depends(_resolve_runtime)
+    last_n_ticks: int = Query(100, ge=1, le=500),
+    runtime=Depends(_resolve_runtime),
 ) -> dict:
     return runtime.tick_db.get_action_patterns(last_n_ticks=last_n_ticks)
 
 
 @router.get("/style-anchors")
 async def list_style_anchors(
-    top_k: int = 20, runtime=Depends(_resolve_runtime)
+    top_k: int = Query(20, ge=1, le=100),
+    runtime=Depends(_resolve_runtime),
 ) -> dict:
     ts = runtime.tick_state
     anchors = ts.get_style_anchors(top_k=top_k)

@@ -60,6 +60,20 @@ export default function MultimodalView({ novel }) {
   const taskControllerRef = useRef(null)
   // 防双击 — handleGenerate 是 async, taskRunning 状态滞后, 中间窗口会双发
   const generatingRef = useRef(false)
+  // 修复(5) — SSE 流世代计数: 每开新流自增; 旧流闭包回调凭世代不匹配自动失效,
+  // abort 后绝不会再 setState (abort 不保证拦下已在途的回调)
+  const streamGenRef = useRef(0)
+  // 修复(4) — 最新选中节 / 小说的同步镜像, 供 async 回调与请求时快照比对
+  const selectedKeyRef = useRef(null)
+  useEffect(() => {
+    selectedKeyRef.current = selectedKey
+  }, [selectedKey])
+  const novelIdRef = useRef(null)
+  useEffect(() => {
+    novelIdRef.current = novel?.id || null
+  }, [novel?.id])
+  // 修复(6) — mounted 标志: await 返回时组件已卸载则立刻 revoke 新建的 blob URL
+  const mountedRef = useRef(true)
 
   // ----- 资产 blob URL (视频 + 图 + 音) -----
   // key = filename, value = blob URL.
@@ -72,7 +86,10 @@ export default function MultimodalView({ novel }) {
   }, [assetUrls])
 
   useEffect(() => {
+    // StrictMode 下 mount→cleanup→mount 会跑两遍, 必须在 setup 里复位
+    mountedRef.current = true
     return () => {
+      mountedRef.current = false
       // unmount 全清: blob URLs + SSE controller
       Object.values(assetUrlsRef.current).forEach((u) => {
         try {
@@ -148,6 +165,9 @@ export default function MultimodalView({ novel }) {
         /* noop */
       }
     })
+    // 修复(6) — 同步清空 ref, 不等 state→ref 的同步 effect:
+    // 防止在途的 ensureAssetUrl 判重时拿到已 revoke 的 URL
+    assetUrlsRef.current = {}
     setAssetUrls({})
     if (!selectedSection || !novel?.id) return
 
@@ -191,10 +211,16 @@ export default function MultimodalView({ novel }) {
     }
 
     const { chapter, section } = selectedSection
+    // 修复(4) — 请求时快照: await 返回后核对当前选中节/小说是否还是发起时那个
+    const requestNovelId = novel.id
+    const requestKey = `${chapter}-${section}`
+    const isStillCurrent = () =>
+      novelIdRef.current === requestNovelId &&
+      selectedKeyRef.current === requestKey
     generatingRef.current = true
     try {
       const snap = await generateMultimodal({
-        novel_id: novel.id,
+        novel_id: requestNovelId,
         chapter,
         section,
         voice,
@@ -203,24 +229,46 @@ export default function MultimodalView({ novel }) {
         image_prompt_suffix: promptSuffix,
         negative_prompt: negativePrompt,
       })
+      // 修复(4) — await 期间用户已切节/切小说 → 任务继续在后端跑 (左侧角标
+      // 会更新), 但本视图的 UI 更新全部丢弃, 防止旧节状态写进新节界面
+      if (!isStillCurrent()) return
       setTask(snap)
-      // 启动 SSE 监听 — 旧 controller 必须先 abort, 否则会两路同时推
-      if (taskControllerRef.current) {
-        try { taskControllerRef.current.abort() } catch { /* noop */ }
+      // 修复(5) — 启动 SSE 监听: 先自增世代、置空引用, 再 abort 旧流;
+      // 旧闭包回调凭世代不匹配自动失效, 不会再 setState
+      const myGen = ++streamGenRef.current
+      const prevCtrl = taskControllerRef.current
+      taskControllerRef.current = null
+      if (prevCtrl) {
+        try { prevCtrl.abort() } catch { /* noop */ }
       }
       taskControllerRef.current = watchTaskStream(snap.id, {
-        onSnapshot: (s) => setTask(s),
+        onSnapshot: (s) => {
+          if (streamGenRef.current !== myGen) return
+          if (!isStillCurrent()) return
+          setTask(s)
+        },
         onDone: async () => {
+          if (streamGenRef.current !== myGen) return
           // 任务完成 (无论成败) → 刷新 manifest + 左侧索引
           try {
-            const fresh = await getMultimodalManifest(novel.id, chapter, section)
-            setManifest(fresh)
+            const fresh = await getMultimodalManifest(
+              requestNovelId,
+              chapter,
+              section,
+            )
+            if (streamGenRef.current === myGen && isStillCurrent()) {
+              setManifest(fresh)
+            }
           } catch {
             // 失败时 manifest 可能 404, 静默吞 — 错误已显示在 task.error
           }
-          refreshSectionsAndIndex(novel.id)
+          // 仍在同一部小说才刷新左侧列表, 防止把旧小说的节列表写进新小说视图
+          if (novelIdRef.current === requestNovelId) {
+            refreshSectionsAndIndex(requestNovelId)
+          }
         },
         onError: (e) => {
+          if (streamGenRef.current !== myGen) return
           showToast(e.message || '任务流断开', 'error')
         },
       })
@@ -235,7 +283,8 @@ export default function MultimodalView({ novel }) {
   // ----- 加载视频 / 图 / 音的 blob URL -----
   async function ensureAssetUrl(filename) {
     if (!novel?.id || !selectedSection) return null
-    if (assetUrls[filename]) return assetUrls[filename]
+    const existing = assetUrlsRef.current[filename] || assetUrls[filename]
+    if (existing) return existing
     try {
       const url = await fetchMultimodalAssetBlobUrl(
         novel.id,
@@ -243,6 +292,21 @@ export default function MultimodalView({ novel }) {
         selectedSection.section,
         filename,
       )
+      // 修复(6) — await 期间组件已卸载: setState 会被丢弃, URL 永远进不了
+      // map 也就永远不会被 unmount cleanup revoke → 立刻 revoke 防泄漏
+      if (!mountedRef.current) {
+        try { URL.revokeObjectURL(url) } catch { /* noop */ }
+        return null
+      }
+      // 修复(6) — 并发加载同名资产: 先到的已写入 ref, 本次多余的 revoke 掉,
+      // 否则直接覆盖 map 会让先到的 URL 失去引用泄漏
+      const dup = assetUrlsRef.current[filename]
+      if (dup) {
+        try { URL.revokeObjectURL(url) } catch { /* noop */ }
+        return dup
+      }
+      // 同步写 ref (state→ref 同步 effect 随后对齐), 让并发判重 / cleanup 立即可见
+      assetUrlsRef.current = { ...assetUrlsRef.current, [filename]: url }
       setAssetUrls((prev) => ({ ...prev, [filename]: url }))
       return url
     } catch (e) {

@@ -317,7 +317,16 @@ class TaskManager:
     # ------------------------------------------------------------------
 
     def _clear_for_tests(self) -> None:
-        """清空注册表 — 仅供 pytest 用, 不取消 in-flight asyncio.Task。"""
+        """清空注册表 — 仅供 pytest 用。
+
+        v2.37 — 先 cancel 所有还在跑的 asyncio.Task 再清 _records: 此前只清
+        字典, 孤儿后台任务带着 executor 引用继续跑到下一个测试, 产生跨测试
+        竞态 (写盘 / mock 泄漏)。cancel 对 done 任务是 no-op。
+        """
+        for rec in self._records.values():
+            t = rec.asyncio_task
+            if t is not None and not t.done():
+                t.cancel()
         self._records.clear()
 
 

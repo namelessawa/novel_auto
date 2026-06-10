@@ -64,6 +64,16 @@ def _save_config(cfg: dict) -> None:
         f.write("\n")
 
 
+# v2.37 — CORS 默认值不再是 ["*"]: 通配 origin + allow_credentials=True 违反
+# CORS 规范, 浏览器直接拒绝带 Authorization 的跨域请求。默认只放行本机前端
+# (vite dev server 走 /api proxy 时同源, 此默认值仅兜底直连场景); 生产部署在
+# config.json server.cors_origins 显式列出真实域名 (deploy/ 示例已配置)。
+_DEFAULT_CORS_ORIGINS = (
+    "http://localhost:3143",
+    "http://127.0.0.1:3143",
+)
+
+
 @dataclass(frozen=True)
 class Settings:
     # LLM
@@ -91,7 +101,9 @@ class Settings:
     host: str
     port: int
     frontend_port: int
-    cors_origins: list[str] = field(default_factory=lambda: ["*"])
+    cors_origins: list[str] = field(
+        default_factory=lambda: list(_DEFAULT_CORS_ORIGINS)
+    )
 
 
 def resolve_llm_block_now() -> dict:
@@ -182,7 +194,7 @@ def _build_settings() -> Settings:
         host=srv.get("host", "0.0.0.0"),
         port=srv.get("backend_port", 8000),
         frontend_port=srv.get("frontend_port", 3000),
-        cors_origins=srv.get("cors_origins", ["*"]),
+        cors_origins=srv.get("cors_origins", list(_DEFAULT_CORS_ORIGINS)),
     )
 
 

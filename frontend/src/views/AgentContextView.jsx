@@ -238,6 +238,9 @@ export default function AgentContextView() {
 // v2.23 — 实时上下文独立为中栏。 与 AgentDetail 平级, 复用原 LiveContextBlock
 // 的字段渲染逻辑, 但顶部带 agent 名/cadence 帮助定位。
 function LiveContextPane({ ctx, agent }) {
+  // 修复(14) — ctx 缺失 (后端未返回 live_context) 时前置 return,
+  // 不再依赖子组件兜底, 防止只剩孤零零的标题条
+  if (!ctx) return null
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div

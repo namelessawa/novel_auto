@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import threading
 
 import pytest
 
@@ -134,6 +135,73 @@ def test_users_are_isolated(isolated_runtimes) -> None:
     # 同 user 不同活跃指针
     assert tick_runtime.get_active_runtime("alice") is rt_a
     assert tick_runtime.get_active_runtime("bob") is rt_b
+
+
+def test_get_runtime_concurrent_single_instance(isolated_runtimes) -> None:
+    """v2.37 TOCTOU 回归 — 并发 get_runtime 不得重复构造 runtime。"""
+    user_id = "frank"
+    nid = _create_novel(user_id, "C1")
+    results: list = []
+    barrier = threading.Barrier(8)
+
+    def worker() -> None:
+        barrier.wait()
+        results.append(tick_runtime.get_runtime(user_id, nid))
+
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert len(results) == 8
+    assert all(r is results[0] for r in results)
+    assert len([k for k in tick_runtime._runtimes if k[0] == user_id]) == 1
+
+
+def test_get_runtime_concurrent_default_resolution(isolated_runtimes) -> None:
+    """novel_id=None 的并发 get_runtime: active 指针读取 + default 解析在锁内,
+    不得给同一用户造出两本默认小说 / 两个 runtime。"""
+    user_id = "grace"  # 该用户还没有任何 novel
+    results: list = []
+    barrier = threading.Barrier(4)
+
+    def worker() -> None:
+        barrier.wait()
+        results.append(tick_runtime.get_runtime(user_id))
+
+    threads = [threading.Thread(target=worker) for _ in range(4)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert all(r is results[0] for r in results)
+    assert len(novel_manager.list_novels(user_id)) == 1
+    assert len([k for k in tick_runtime._runtimes if k[0] == user_id]) == 1
+
+
+def test_switch_active_novel_runs_callback_atomically(isolated_runtimes) -> None:
+    """v2.37 — switch_active_novel 在 _registry_lock 内执行回调, 且回调时
+    tick 侧 active 指针已指向新 novel。"""
+    user_id = "henry"
+    n_a = _create_novel(user_id, "A")
+    n_b = _create_novel(user_id, "B")
+    tick_runtime.get_runtime(user_id, n_a)
+
+    seen: dict = {}
+
+    def on_switched() -> None:
+        # 回调执行时 tick 侧已切换, 且持有 _registry_lock (RLock 可重入验证)
+        seen["active"] = tick_runtime.get_active_novel_id(user_id)
+        seen["lock_held"] = tick_runtime._registry_lock.acquire(blocking=False)
+        if seen["lock_held"]:
+            tick_runtime._registry_lock.release()
+
+    rt = tick_runtime.switch_active_novel(user_id, n_b, on_switched)
+    assert rt.novel_id == n_b
+    assert seen["active"] == n_b
+    assert seen["lock_held"] is True  # 同线程重入成功 — 证明回调在锁内跑
 
 
 def test_close_all_runtimes_clears_registry(isolated_runtimes) -> None:

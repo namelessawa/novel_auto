@@ -21,12 +21,15 @@ import os
 from dataclasses import dataclass, field
 
 from agents.narrative_critic import CritiqueOutput, NarrativeCritic
-from agents.quality_spec import render_narrator_quality_block
+from agents.quality_spec import render_narrator_discipline_block
 from memory_system.models import (
+    CharacterAction,
+    CharacterProfile,
     CharacterState,
     Event,
     OpenLoop,
     StyleAnchor,
+    WorldState,
 )
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
@@ -59,75 +62,71 @@ class NarratorOutput:
 
 NARRATOR_SYSTEM_PROMPT = (
     """\
-你是这部连载小说的叙述者。你决定一片混乱的世界数据里,**哪些值得被讲述**。
+你是这部连载小说的执笔人。系统每隔一小段世界时间把"这段时间发生了什么"整理成
+素材简报交给你, 你把值得讲的部分写成连载正文的下一段。读者读到的是连续的小说,
+不是片段集 — 你写的每一段都必须像同一位作者从前文接着写下来的。
 
-# 你的核心品味
+# 写作方法 (每段都按这个骨架去构思)
 
-故事不是事件的堆叠。日常 99% 的时刻不值得写 — 它们填充时间,但不推动故事。
-优秀的叙述者懂得在大量琐碎中识别那些时刻:
+1. **场景有引擎**: 动笔前先确认三件事 — 视点角色此刻想要什么(目标), 什么在
+   挡他(阻力), 这一段结束时什么变了(进展 / 代价 / 新问题)。三者缺一, 这段就
+   不值得写, 宁可沉默。
+2. **对白承载冲突**: 素材里给了角色的台词原文, 优先把它们用进正文 — 可以修剪
+   措辞使其更口语, 但不得改变意思和立场。对话之间穿插动作节拍(端杯子、移开
+   视线、半句被打断), 不要连续堆引号。两人说话要听得出是两个人。
+3. **具体物优先**: 每段至少一个"摄像机拍得到"的具体物(器物 / 痕迹 / 动作
+   细节)。情绪不直接报名字 — 写身体反应和周遭物件的变化。
+4. **因果显形**: 事件素材是按时间排的散点, 你要把"因为…所以…"的链条写出来
+   (不必明说"因为", 用动作的先后与呼应让读者自己看见)。
+5. **内心要薄**: 视点角色的内心一两句白描即可, 贴着他此刻的目标走, 不展开
+   哲学议论。素材里标 △ 的内心/意图只供你理解动机, 不可整句抄成旁白。
+6. **节奏靠句长**: 长短句交错; 关键时刻用短句。一段里全是 12-20 字的匀速句
+   是失败的。
 
-* **拐点**:角色做出违反惯性的决定
-* **揭示**:秘密浮出水面,关系发生质变
-* **张力**:决定即将做出但尚未做出
-* **对照**:当下场景与早期场景的呼应、镜像
-* **余韵**:情节段落的回响
+# 连续性纪律 (极重要)
 
-# 写作约束
+* 简报里给了"前文结尾" — 你的第一句必须能直接接在它后面读下去: 不重新介绍
+  场景和人物, 不复述前文已写的事, 不换一个腔调重新开场。
+* 角色第二次出场起直接用名字, 不再交代身份外貌(除非视点角色第一次见到他)。
+* 若本段与前文之间世界时间有跳跃, 用一个干净的时间过渡(一句即可), 不要硬接。
 
-## 视角
-* 默认跟随主跟踪角色的视角
-* 仅在另一角色视角能揭示主角看不到的关键信息时切换
-* 视角切换每场景不超过 2 次
+# 信息纪律
 
-## 风格一致性
-你的句长分布、词汇密度、修辞密度可向 style_anchors 看齐 — 但锚点只是语感参考,
-不是题材或场景的约束。当本 tick 的事件性质 (动作 / 对峙 / 奇景 / 揭示) 与锚点
-示例的场景类型 (静景 / 对话 / 独白) 显著不符时, 内容性质优先 — 不要为了贴合
-锚点而把动作场写成纯意境片段, 也不要把奇景或对抗强拗成静景白描。
+* 人物、地点、势力、已确立的事实, 以简报为准 — 不发明新人物 / 新地名 / 新设定。
+* 允许"无害补白": 器物细节、天气微变、肢体动作、一两句不改变立场的过场对话。
+  不允许: 新的重大事实、改变任何角色立场或知识范围的内容。
+* 角色只知道他该知道的事(简报已按视角过滤), 不要让角色说出他不知道的信息。
+* 发现素材自相矛盾时不要自行修正, 写进 consistency_flags。
 
-## 信息一致性
-* 严格只使用提供的 character_states / known_facts / events 中的信息
-* 不发明新的世界设定或角色背景细节
-* 角色对话和心理只能引用其 known_facts
-* 若发现状态矛盾,**不要自行修正**,在 consistency_flags 中标出
+# 取舍 (沉默是合法选项)
 
-## 伏笔
-* 优先利用 open_loops_referenced 中的开放伏笔(本章呼应早期种下的种子)
-* 谨慎种新伏笔(newly_opened_loops 每次不超过 1 个)
-* 种新伏笔时,在 ``origin_event_ids`` 列出本 tick 触发该伏笔的事件 id
-  (来自上面 events_in_tick), 让系统保护这些源事件不被压缩
+不是所有素材都要写。优先级: 拐点(违反惯性的决定) > 揭示(秘密/关系质变) >
+对峙与行动 > 有信息量的日常。纯填充性的琐碎可以只字不提, 或一句带过。
+若整段素材都不值得写, narrative_text 留空, 系统会自动记账。
 
----
+# 伏笔
+
+* 优先呼应简报列出的开放伏笔(open_loops_referenced 填其 id)。
+* 谨慎种新伏笔, 每次至多 1 个, 在 origin_event_ids 里列出触发它的事件 id。
 
 """
-    + render_narrator_quality_block()
+    + render_narrator_discipline_block()
     + """
-
----
-
-# 元规则 (反退化)
-
-1. 不奖励自己: 默认你的第一稿有 AI 痕迹 — 主动剔除黑名单词
-2. 代价原则: 主角的胜利必须有代价 (关系 / 健康 / 信念 / 选择的另一面)
-3. 能力守恒: 新设定 / 新能力必须同时引入新限制或代价
-4. 未知优先: 同样能写明白或留白时, 留白更佳
-5. 收尾禁忌: 段末不允许出现"反思 / 升华 / 总结"句, 改让段落停在动作 / 物件 / 对话上
-6. 直接说情绪 = D4 触发 (高严重度) — 改为身体动作 + 周遭物件的反应
 
 # 输出禁区 (反 reasoning 泄漏 — 极重要)
 
 * ``narrative_text`` 字段**只放小说正文本身**, 不要写任何 meta 思考
-* 不要写"首先, 理解任务" / "从 tick 摘要看, 关键点包括" / "我需要为给定的几个
-  tick 摘要写一段..." / "好的, 以下是..." / "让我先..." 这类自言自语
-* 不要在 narrative_text 里出现 "tick" / "tick摘要" / "事件摘要" / "task" 这些
-  系统术语 (这是给读者看的文学作品, 不是给 PM 看的工单)
-* 不要列编号清单解释你打算怎么写 — 直接给段落本身
-* 思考过程留在你模型内部, 不要复制到 JSON 字段里
+* 不要写"首先, 理解任务" / "从素材看, 关键点包括" / "好的, 以下是..." /
+  "让我先..." 这类自言自语
+* 不要在 narrative_text 里出现 "tick" / "素材" / "简报" / "事件摘要" / "task"
+  这些系统术语 (这是给读者看的文学作品, 不是工单)
+* 不要列编号清单解释你打算怎么写 — 直接给正文
+* 不要在正文里写字数统计或"(约 800 字)"之类的标注
 
 # 输出格式(严格 JSON, 不要 markdown 代码块)
 
 {
-  "narrative_text": "...实际的中文小说文本...",
+  "narrative_text": "...实际的中文小说正文...",
   "estimated_length": "short|medium|long",
   "viewpoint_characters": ["char_id_1"],
   "scene_focus": "本场景的核心",
@@ -143,7 +142,7 @@ NARRATOR_SYSTEM_PROMPT = (
   "consistency_flags": []
 }
 
-你是这部小说的灵魂。沉默是节奏,选择是品味。
+你是这部小说的灵魂。写的是人和他们要的东西, 不是气氛。
 """
 )
 
@@ -155,6 +154,12 @@ _NARRATE_FULL_THRESHOLD = 30
 
 # 压缩段落 escape valve:距上次叙述超过此 tick 数即使分数不够也要给个时间流逝段
 _TIME_LAPSE_TICKS = 10
+
+# 前文结尾注入上限 (字符)。再长对衔接没有边际收益, 反而稀释素材权重。
+_PROSE_TAIL_MAX_CHARS = 1200
+# 场景简报里渲染的最大角色数 / 事件素材数
+_MAX_BRIEF_CHARS_COUNT = 8
+_MAX_BRIEF_EVENTS = 24
 
 
 class NarratorAgent:
@@ -226,11 +231,25 @@ class NarratorAgent:
         style_anchors: list[StyleAnchor],
         last_narration_tick: int,
         novel_title: str = "",
+        *,
+        tick_actions: list[CharacterAction] | None = None,
+        char_profiles: dict[str, CharacterProfile] | None = None,
+        world_state: WorldState | None = None,
+        prose_tail: str = "",
     ) -> NarratorOutput:
         """主入口。无事件或事件价值过低时返回 should_narrate=False。
 
         ``novel_title`` (v2.34) — 作品标题, 渲染到 user_prompt 顶部. 默认空字符串
         保持与旧调用方的二进制兼容; Orchestrator 应总是传入非空值。
+
+        v2.37 场景简报参数 (全部可选, 缺省时退化为仅事件描述):
+        * ``tick_actions`` — 本 tick 角色行动原始输出。这是台词
+          (dialogue_spoken) / 意图 / 内心独白的唯一来源 — Event 转换会把它们
+          丢掉, 此前 Narrator 根本看不到角色说了什么, 被迫写无对话的意境段。
+        * ``char_profiles`` — id→CharacterProfile, 提供角色名 / 性格 / 说话风格。
+          此前 Narrator 只拿到 ``char_xxx`` 这样的 id, 连角色叫什么都不知道。
+        * ``world_state`` — 渲染场景地点的名字与现状, 让场景落地。
+        * ``prose_tail`` — 上一段实际正文的结尾, 衔接连续性的根基。
         """
         if not tick_events:
             return NarratorOutput(
@@ -253,16 +272,17 @@ class NarratorAgent:
                 tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
             )
 
-        # 2. 决定篇幅
+        # 2. 决定篇幅 — 单 tick 是世界里的一小段时间, 指标过高只会逼出注水。
+        # 宁短勿水: 一节的体量由 SectionCloser 跨 tick 累积保证。
         if total_score >= _NARRATE_FULL_THRESHOLD:
             estimated_length = "long"
-            target_chars = "2000-5000 字"
+            target_chars = "1200-2200 字"
         elif total_score >= _NARRATE_SHORT_THRESHOLD:
             estimated_length = "medium"
-            target_chars = "800-2000 字"
+            target_chars = "600-1200 字"
         else:
             estimated_length = "short"
-            target_chars = "300-800 字"
+            target_chars = "300-700 字"
 
         # 3. 调用 LLM 写作
         system_prompt = self._build_system_prompt(style_anchors)
@@ -276,6 +296,10 @@ class NarratorAgent:
             open_loops=open_loops,
             target_chars=target_chars,
             novel_title=novel_title,
+            tick_actions=tick_actions or [],
+            char_profiles=char_profiles or {},
+            world_state=world_state,
+            prose_tail=prose_tail,
         )
 
         try:
@@ -283,7 +307,7 @@ class NarratorAgent:
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=0.85,
-                max_tokens=163840,
+                max_tokens=16384,
                 agent_id="narrator",
                 priority="critical",
                 tick=tick,
@@ -395,16 +419,152 @@ class NarratorAgent:
         prompt = NARRATOR_SYSTEM_PROMPT
         if style_anchors:
             anchor_text = "\n\n".join(
-                f"【风格锚点 - {a.scene_type} (权重 {a.weight:.2f})】\n{a.excerpt}\n"
-                f"(选用理由: {a.selection_reason})"
-                for a in style_anchors[:5]  # 严格 top-3 到 top-5
+                f"【语感示例 - {a.scene_type}】\n{a.excerpt}"
+                for a in style_anchors[:3]
             )
             prompt = prompt + (
-                "\n\n# 风格锚点(以下示例段落仅作语感参考: 句长 / 词汇密度 / "
-                "修辞密度。题材、场景、张力以作品标题与本 tick 事件为准, "
-                "锚点不约束内容选择)\n\n"
+                "\n\n# 语感参考(只看句长 / 词汇密度 / 修辞密度。示例的题材、"
+                "场景、人物与本作无关, 不要模仿其内容; 本段写什么由素材简报"
+                "决定 — 动作场就写动作, 对峙场就写对峙, 不要一律写成静景)\n\n"
             ) + anchor_text
         return prompt
+
+    # -- 场景简报渲染 ---------------------------------------------------
+
+    @staticmethod
+    def _display_name(
+        cid: str, char_profiles: dict[str, CharacterProfile]
+    ) -> str:
+        p = char_profiles.get(cid)
+        return p.name if p is not None and p.name else cid
+
+    def _render_scene_block(
+        self,
+        *,
+        tick_events: list[Event],
+        char_states: list[CharacterState],
+        char_profiles: dict[str, CharacterProfile],
+        world_state: WorldState | None,
+        tracking_character_id: str,
+    ) -> str:
+        """渲染 [场景] 块: 涉事地点 + 在场角色名片。
+
+        角色名片是 Narrator 能写出"有声纹的对话"的根基 — 名字 / 性格 / 说话
+        风格全部来自 CharacterProfile (此前从未传给 Narrator)。
+        """
+        # 本 tick 涉及的角色: 事件参与者 ∪ 行动者, 主跟踪角色置顶
+        involved: list[str] = []
+
+        def _add(cid: str) -> None:
+            if cid and cid in {s.character_id for s in char_states} and cid not in involved:
+                involved.append(cid)
+
+        _add(tracking_character_id)
+        for e in tick_events:
+            for cid in e.participants:
+                _add(cid)
+        involved = involved[:_MAX_BRIEF_CHARS_COUNT]
+        involved_set = set(involved)
+
+        # 涉事地点
+        states_by_id = {s.character_id: s for s in char_states}
+        loc_ids: list[str] = []
+        for cid in involved:
+            st = states_by_id.get(cid)
+            if st and st.current_location and st.current_location not in loc_ids:
+                loc_ids.append(st.current_location)
+        for e in tick_events:
+            if e.location and e.location not in loc_ids:
+                loc_ids.append(e.location)
+
+        lines: list[str] = []
+        if world_state is not None:
+            env_bits = [b for b in (world_state.era, world_state.current_season, world_state.weather) if b]
+            if env_bits:
+                lines.append("环境: " + " / ".join(env_bits))
+            locs_by_id = {loc.id: loc for loc in world_state.locations}
+            for lid in loc_ids[:4]:
+                loc = locs_by_id.get(lid)
+                if loc is not None:
+                    desc = loc.current_state or "(无描述)"
+                    lines.append(f"地点【{loc.name}】: {desc[:80]}")
+
+        if involved:
+            lines.append("在场人物:")
+            for cid in involved:
+                p = char_profiles.get(cid)
+                st = states_by_id.get(cid)
+                name = self._display_name(cid, char_profiles)
+                tag = " (视点)" if cid == tracking_character_id else ""
+                bits: list[str] = []
+                if p is not None:
+                    if p.personality:
+                        bits.append(p.personality[:40])
+                    if p.speech_style:
+                        bits.append(f"说话: {p.speech_style[:40]}")
+                if st is not None:
+                    if st.emotional_state and st.emotional_state != "neutral":
+                        bits.append(f"情绪: {st.emotional_state[:24]}")
+                    rel_bits = []
+                    for other_id, rel in list(st.relationships.items())[:4]:
+                        if other_id in involved_set and other_id != cid:
+                            rel_bits.append(
+                                f"{self._display_name(other_id, char_profiles)}({rel.type},信任{rel.trust:+d})"
+                            )
+                    if rel_bits:
+                        bits.append("关系: " + ", ".join(rel_bits))
+                detail = " — " + "; ".join(bits) if bits else ""
+                lines.append(f"- {name} [{cid}]{tag}{detail}")
+
+        return "\n".join(lines) if lines else "(场景信息缺失 — 以素材为准)"
+
+    def _render_material_block(
+        self,
+        *,
+        tick_events: list[Event],
+        tick_actions: list[CharacterAction],
+        char_profiles: dict[str, CharacterProfile],
+    ) -> str:
+        """渲染 [本段素材] 块: 按序号列出事件, 角色行动附台词原文 / △私密线。
+
+        这是修复"Narrator 写不出对话"的关键: dialogue_spoken / intent /
+        internal_monologue 在 action→Event 转换时被丢弃, 必须从原始
+        CharacterAction 取回并随事件一起渲染。
+        """
+        actions_by_char = {a.character_id: a for a in tick_actions}
+        consumed_action_chars: set[str] = set()
+        lines: list[str] = []
+        idx = 0
+        for e in tick_events[:_MAX_BRIEF_EVENTS]:
+            idx += 1
+            if e.type == "character_action" and e.participants:
+                actor_id = e.participants[0]
+                actor = self._display_name(actor_id, char_profiles)
+                lines.append(f"{idx}. [{e.id}] {actor}: {e.description}")
+                act = actions_by_char.get(actor_id)
+                if act is not None and actor_id not in consumed_action_chars:
+                    consumed_action_chars.add(actor_id)
+                    if act.dialogue_spoken:
+                        to_whom = "、".join(
+                            self._display_name(t, char_profiles)
+                            for t in act.dialogue_to_whom[:3]
+                        )
+                        suffix = f" (对{to_whom})" if to_whom else ""
+                        lines.append(f"   台词{suffix}: “{act.dialogue_spoken}”")
+                    if act.internal_monologue:
+                        lines.append(f"   △内心: {act.internal_monologue[:80]}")
+                    if act.intent:
+                        lines.append(f"   △意图: {act.intent[:80]}")
+            else:
+                kind = {
+                    "exogenous": "环境",
+                    "endogenous": "因果",
+                    "dramatic": "变故",
+                }.get(e.type, e.type)
+                lines.append(f"{idx}. [{e.id}] ({kind}) {e.description}")
+        if not lines:
+            return "(本段无素材)"
+        return "\n".join(lines)
 
     def _build_user_prompt(
         self,
@@ -418,71 +578,80 @@ class NarratorAgent:
         open_loops: list[OpenLoop],
         target_chars: str,
         novel_title: str = "",
+        tick_actions: list[CharacterAction] | None = None,
+        char_profiles: dict[str, CharacterProfile] | None = None,
+        world_state: WorldState | None = None,
+        prose_tail: str = "",
     ) -> str:
-        events_dump = json.dumps(
-            [e.model_dump(mode="json") for e in tick_events],
-            ensure_ascii=False,
-            indent=2,
+        tick_actions = tick_actions or []
+        char_profiles = char_profiles or {}
+
+        scene_block = self._render_scene_block(
+            tick_events=tick_events,
+            char_states=char_states,
+            char_profiles=char_profiles,
+            world_state=world_state,
+            tracking_character_id=tracking_character_id,
         )
-        # 角色状态精简:只暴露 emotional_state / current_location / 关键 known_facts (前 5 条)
-        char_text_blocks = []
-        for s in char_states:
-            facts = "; ".join(s.known_facts[:5]) or "(无)"
-            char_text_blocks.append(
-                f"- {s.character_id} @ {s.current_location}, "
-                f"情绪={s.emotional_state}, 已知: {facts}"
-            )
-        char_text = "\n".join(char_text_blocks) or "(无相关角色)"
+        material_block = self._render_material_block(
+            tick_events=tick_events,
+            tick_actions=tick_actions,
+            char_profiles=char_profiles,
+        )
 
         loops_text = "(无开放伏笔)"
         if open_loops:
             loops_text = "\n".join(
-                f"  - [{l.id}] urgency={l.urgency} type={l.type}: {l.description[:120]}"
-                for l in open_loops[:15]  # top-15,防 prompt 膨胀
+                f"- [{l.id}] ({l.type}, 紧迫{l.urgency}) {l.description[:100]}"
+                for l in open_loops[:8]
             )
 
-        summaries_text = "(尚无最近章节)"
+        summaries_text = "(连载刚开始, 尚无前情)"
         if recent_chapter_summaries:
             summaries_text = "\n".join(
-                f"  - {s}" for s in recent_chapter_summaries[-10:]
+                f"- {s}" for s in recent_chapter_summaries[-8:]
             )
 
-        title_block = ""
+        title_line = ""
         if novel_title and novel_title not in ("未命名小说", "(未命名)"):
-            title_block = (
-                f"# 作品标题\n\n"
-                f"《{novel_title}》\n\n"
-                f"这是作品的灵魂。你笔下的世界、人物、场景、张力, 都自然从这\n"
-                f"个标题里生长出来 — 它该是什么, 你最清楚。\n\n"
-            )
+            title_line = f"《{novel_title}》 — "
+
+        tail_block = (
+            f"# 前文结尾 (你写的上一段就停在这里, 新内容必须能直接接着读)\n\n"
+            f"……{prose_tail[-_PROSE_TAIL_MAX_CHARS:]}\n"
+            if prose_tail.strip()
+            else "# 前文结尾\n\n(这是本书的第一段正文 — 用一个具体的场景开场, 不要写楔子式的世界观介绍)\n"
+        )
+
+        viewpoint_name = self._display_name(tracking_character_id, char_profiles)
 
         return f"""\
-{title_block}# 当前 tick
+# 连载进度
 
-tick={tick}, world_time={world_time}
-主跟踪角色: {tracking_character_id}
-目标篇幅: {target_chars}
+{title_line}世界时间 {world_time} (第 {tick} 段素材)
 
-# 本 tick 所有事件(JSON)
+{tail_block}
+# 场景
 
-```json
-{events_dump}
-```
+{scene_block}
 
-# 相关角色当前状态
+# 本段素材 (按时间序。△ 标记 = 角色私密信息, 只用于理解动机, 不可写成旁白明示)
 
-{char_text}
+{material_block}
 
-# 最近章节摘要(供呼应、对照参考)
-
-{summaries_text}
-
-# 当前开放伏笔(优先利用呼应,谨慎种新)
+# 可呼应的伏笔 (优先呼应, 谨慎新增)
 
 {loops_text}
 
-请按 system 提示输出严格 JSON,包含 narrative_text 和元信息字段。
-若你判断本 tick 不值得讲述,可在 narrative_text 留空并在 consistency_flags 说明。
+# 此前剧情备忘 (高度压缩, 仅供保持连贯, 勿照抄)
+
+{summaries_text}
+
+# 写作指令
+
+视点角色: {viewpoint_name}。目标篇幅 {target_chars} — 宁短勿水, 写完该写的就停。
+从前文结尾自然接续。按 system 提示输出严格 JSON。
+若你判断本段素材不值得讲述, narrative_text 留空并在 consistency_flags 说明。
 """
 
     def _parse_output(

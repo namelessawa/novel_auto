@@ -341,6 +341,33 @@ def render_narrator_quality_block() -> str:
     )
 
 
+def render_narrator_discipline_block() -> str:
+    """v2.37 — Narrator system prompt 用的紧凑风格纪律段。
+
+    设计动机: 此前 Narrator prompt 注入完整黑名单 (55 条触发规则 + 56 个禁词
+    逐行列出), 负面约束在体量上压倒一切正向指导, 模型在"处处避雷"的压力下
+    退缩到最安全的输出 — 无人物无对话的感官碎片, 恰是实测里"与标题脱节的
+    意境流水"。完整清单仍由 NarrativeCritic 做确定性检测兜底 (render_full_*
+    系列), Narrator 侧只保留高频踩雷项的紧凑提示。
+    """
+    ai_words = "、".join(AI_CLICHE_BLACKLIST)
+    cliche_words = "、".join(CLICHE_BLACKLIST)
+    return f"""\
+# 风格纪律 (违反会被审稿层打回重写, 一次写对省两次返工)
+
+1. 禁 AI 套话: {ai_words} — 这些词出现即返工。想写"仿佛 X", 改写为只在此
+   场景成立的具体细节。
+2. 慎用陈词: {cliche_words} — 除非场景真的需要, 否则换成自己的话。
+3. 不直接报情绪 ("他很愤怒"❌) — 写身体动作 + 物件反应 ("他把茶杯磕回桌上,
+   茶水溢出来一点"✓)。
+4. 段末停在动作 / 物件 / 对话上 ("他没回头。"✓) — 不写反思、升华、总结句,
+   不写"只剩下风声和呼吸"式收尾。
+5. 相邻段落换一种起笔 (动作 / 对话 / 环境 / 物件 / 时间标记轮换), 不连续
+   三段用主角名开头。
+6. 胜利要有代价, 失败要有理由; 道德灰色和未解之谜可以留着不解释。
+"""
+
+
 # ---------------------------------------------------------------------------
 # 决策矩阵 (NarrativeCritic 使用)
 # ---------------------------------------------------------------------------
@@ -386,5 +413,6 @@ __all__ = [
     "render_diversity_block",
     "render_full_critique_block",
     "render_narrator_quality_block",
+    "render_narrator_discipline_block",
     "decide_action",
 ]

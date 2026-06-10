@@ -82,18 +82,25 @@ def client(monkeypatch, tmp_path):
 
 
 def _install_tick_runtime_stub(monkeypatch, *, succeed: bool):
-    """把 sys.modules['tick_runtime'] 替换为同步桩, 让 lazy import 命中它。"""
+    """把 sys.modules['tick_runtime'] 替换为同步桩, 让 lazy import 命中它。
+
+    v2.37 — routes.switch_novel 改走 switch_active_novel(user, novel, callback):
+    legacy active map 的更新由 tick_runtime 在 _registry_lock 内回调完成。
+    桩按新契约: 成功时执行 on_switched 回调, 失败时回调不执行。
+    """
     mod = types.ModuleType("tick_runtime")
 
     if succeed:
-        def set_active_novel(user_id: str, novel_id: str) -> None:
+        def switch_active_novel(user_id: str, novel_id: str, on_switched=None):
             mod.last_switched = (user_id, novel_id)
+            if on_switched is not None:
+                on_switched()
         mod.last_switched = None
     else:
-        def set_active_novel(user_id: str, novel_id: str) -> None:
+        def switch_active_novel(user_id: str, novel_id: str, on_switched=None):
             raise RuntimeError(f"simulated tick failure for {novel_id}")
 
-    mod.set_active_novel = set_active_novel
+    mod.switch_active_novel = switch_active_novel
     monkeypatch.setitem(sys.modules, "tick_runtime", mod)
     return mod
 

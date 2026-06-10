@@ -191,22 +191,35 @@ class BranchManager:
         return meta
 
     def archive(self, branch_id: str) -> bool:
-        """归档分支 — 不从磁盘删除, 只在索引里标记 archived=True。"""
+        """归档分支 — 不从磁盘删除, 只在索引里标记 archived=True。
+
+        save() 失败时回滚内存值再抛出, 保证内存与磁盘索引一致。
+        """
         if branch_id == self._canonical:
             raise ValueError("不能归档 canonical 分支")
         meta = self._branches.get(branch_id)
         if meta is None:
             return False
+        previous = meta.archived
         meta.archived = True
-        self.save()
+        try:
+            self.save()
+        except Exception:
+            meta.archived = previous
+            raise
         return True
 
     def unarchive(self, branch_id: str) -> bool:
         meta = self._branches.get(branch_id)
         if meta is None or not meta.archived:
             return False
+        previous = meta.archived
         meta.archived = False
-        self.save()
+        try:
+            self.save()
+        except Exception:
+            meta.archived = previous
+            raise
         return True
 
     def set_canonical(self, branch_id: str) -> None:
@@ -220,8 +233,13 @@ class BranchManager:
         meta = self._branches.get(branch_id)
         if meta is None:
             return False
+        previous = meta.notes
         meta.notes = notes
-        self.save()
+        try:
+            self.save()
+        except Exception:
+            meta.notes = previous
+            raise
         return True
 
     # ------------------------------------------------------------------

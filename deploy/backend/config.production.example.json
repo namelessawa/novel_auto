@@ -30,5 +30,9 @@
       "https://novel.your-domain.com",
       "https://novel-frontend.vercel.app"
     ]
+  },
+  "auth": {
+    "_note": "host 锁 127.0.0.1 即部署在 nginx/cloudflared 之后 — trusted_proxy 必须 true, 否则所有用户共享代理出口 IP, 按 IP 限流会误伤。其余 auth 字段走默认值。",
+    "trusted_proxy": true
   }
 }

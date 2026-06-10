@@ -144,7 +144,10 @@ export default function GraphView({ refreshKey, isVisible }) {
   useEffect(() => {
     if (isVisible && graphRef.current && forceGraphData.nodes.length > 0 && containerWidth > 0) {
       const timer = setTimeout(() => {
-        try { graphRef.current.zoomToFit(400, 60) } catch (e) { /* ignore */ }
+        // 修复(13) — 500ms 后图组件可能已卸载 (切 tab / 数据清空), ref 判空再调
+        const fg = graphRef.current
+        if (!fg) return
+        try { fg.zoomToFit(400, 60) } catch (e) { /* ignore */ }
       }, 500)
       return () => clearTimeout(timer)
     }

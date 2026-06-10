@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import json
 import logging
 import os
@@ -31,6 +32,10 @@ logger = logging.getLogger(__name__)
 
 
 AgentPriority = Literal["critical", "medium", "optional"]
+
+# 内存中保留的调用记录上限 / 触顶后裁剪到的条数 (持久化始终只写尾部 200 条)
+_RECORDS_MEMORY_CAP = 2000
+_RECORDS_KEEP_AFTER_TRIM = 1000
 
 
 class BudgetExceeded(Exception):
@@ -146,6 +151,10 @@ class TokenBudgetTracker:
             note=note,
         )
         self._records.append(rec)
+        # 内存上限 — save() 只持久化尾部 200 条, 内存里也没必要无限累积
+        # (长跑 1000+ tick 时这是个纯内存泄漏)。snapshot 聚合值不受裁剪影响。
+        if len(self._records) > _RECORDS_MEMORY_CAP:
+            self._records = self._records[-_RECORDS_KEEP_AFTER_TRIM:]
         self._snapshot.total_prompt_tokens += rec.prompt_tokens
         self._snapshot.total_completion_tokens += rec.completion_tokens
         self._snapshot.by_agent[agent_id] = (
@@ -302,11 +311,21 @@ class TokenBudgetTracker:
         return True
 
 
-# 全局默认实例 — agent 可通过 get_global_tracker() 取
+# 当前 tracker 解析顺序: ContextVar (per-task, 多租户安全) → 模块级 fallback。
+# v2.37 — 此前只有模块级单例, 多 runtime 并发时"最后构造的 runtime"会接管
+# 所有用户的记账与预算判定 (用户 A 的调用记到用户 B 的账上)。Orchestrator
+# 现在在每个 tick 开始时通过 set_global_tracker 写 ContextVar, asyncio 任务树
+# 内的所有 llm_client 调用都解析到本 tick 所属 runtime 的 tracker。
 _GLOBAL_TRACKER: TokenBudgetTracker | None = None
+_CURRENT_TRACKER: contextvars.ContextVar[TokenBudgetTracker | None] = (
+    contextvars.ContextVar("token_budget_tracker", default=None)
+)
 
 
 def get_global_tracker() -> TokenBudgetTracker:
+    ctx_tracker = _CURRENT_TRACKER.get()
+    if ctx_tracker is not None:
+        return ctx_tracker
     global _GLOBAL_TRACKER
     if _GLOBAL_TRACKER is None:
         _GLOBAL_TRACKER = TokenBudgetTracker()
@@ -314,6 +333,12 @@ def get_global_tracker() -> TokenBudgetTracker:
 
 
 def set_global_tracker(tracker: TokenBudgetTracker) -> None:
+    """绑定 tracker 到当前 asyncio 任务树 (ContextVar) + 模块级 fallback。
+
+    在请求/tick 上下文中调用时, 只有当前任务树看到该 tracker, 并发租户互不
+    污染; 模块级 fallback 服务无上下文的调用方 (脚本 / 测试)。
+    """
+    _CURRENT_TRACKER.set(tracker)
     global _GLOBAL_TRACKER
     _GLOBAL_TRACKER = tracker
 

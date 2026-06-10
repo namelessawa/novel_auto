@@ -5,6 +5,119 @@
 
 ---
 
+## [2.37] — 2026-06-10
+
+> 三线大修: 叙事质量架构重写 + 全项目 4 路并行 code review (10 CRITICAL /
+> 12 HIGH / 15 MEDIUM 全数处置) + 前端「墨砚」设计系统重构。
+> (含 v2.35 WorldState 反清空、v2.36 summary_tree/branch per-tick 持久化两个
+> 未单独记账的代码层增量。)
+
+### Changed — 叙事质量架构 (生成质量根因修复)
+
+实测问题: 产出是"与标题脱节的无人物无对话意境碎片"。诊断出 6 个架构级根因,
+全部修复:
+
+* **台词管道打通 (根因 #1)** — `CharacterAction.dialogue_spoken / intent /
+  internal_monologue` 此前在 action→Event 转换时被丢弃, Narrator 从看不到
+  任何角色说了什么, 又被禁止编造 → 结构性写不出对话。Orchestrator 现在缓存
+  本 tick `resolved_actions` 原样传给 Narrator, 素材简报按事件渲染台词原文
+  (`台词 (对X): "…"`) 与 △ 标记的私密动机线 (内心/意图, 仅供理解不可写成旁白)
+* **前文衔接 (根因 #2)** — Narrator 每次拿到上一段实际正文的结尾
+  (`prose_tail`, ≤1200 字), 指令"第一句必须能直接接着读"; 进程重启时从
+  `narratives/` 最新文件恢复, 跨重启保持衔接。此前每 tick 是孤立小品
+* **角色名片 (根因 #3)** — `CharacterProfile` (名字/性格/说话风格/关系+信任)
+  首次传入 Narrator; 此前它只拿到 `char_xxx` id, 连角色叫什么都不知道
+* **世界落地 (根因 #4)** — `WorldState` (era/季节/天气 + 涉事地点名与现状)
+  渲染进场景块, 场景不再悬空
+* **Narrator system prompt 重写 (根因 #5)** — 从"55 条禁令 + 56 个黑名单词
+  逐行列出"改为正向写作方法论 (场景引擎: 目标/阻力/转折; 对白承载冲突 +
+  动作节拍; 具体物优先; 因果显形; 内心要薄; 句长节奏) + 紧凑风格纪律
+  (`quality_spec.render_narrator_discipline_block`, 完整清单仍由
+  NarrativeCritic 确定性检测兜底)。负面约束压倒正向指导正是模型退缩到
+  "安全感官碎片"的成因
+* **篇幅指标重校 (根因 #6)** — 单 tick 目标 2000-5000 字必然注水;
+  改为 300-700 / 600-1200 / 1200-2200 三档, "宁短勿水", 节级体量由
+  SectionCloser 跨 tick 累积保证; `max_tokens` 163840 → 16384 (诚实值)
+* **CharacterAgent** — 注入"你最近几步的行动"(防同一动作机械连刷) +
+  台词要求段 (声纹一致/口语不规则/有目的/可不说话)
+* **bootstrap 升级** — 角色 `speech_style` 强制含 2 句示例台词 (声纹),
+  personality 写行为倾向而非标签, A/B 角欲望强制互斥; 风格锚点对话场
+  强制 ≥4 句你来我往真实对白 (无对白示范的锚点集会把全书带成独白流)
+* Narrator 语感锚点注入降为 top-3, 措辞改为"示例内容与本作无关, 不要模仿
+  其内容"
+
+### Fixed — 核心引擎 (并行审查 #1)
+
+* **CRITICAL** `run_tick` 的 `asyncio.gather` 内 Narrator 异常直接传播,
+  跳过全部持久化 (tick 已 advance 但永不 save, 重跑被 TickDB
+  INSERT OR IGNORE 静默吞) — `_narrate_safe` 包装降级为沉默 tick
+* **CRITICAL** 多租户 token 记账错乱 — `_GLOBAL_TRACKER` 模块单例被最后
+  构造的 runtime 接管, 用户 A 的调用记到 B 的账上; 改 ContextVar per-task
+  绑定 + 每 tick 开始时 `set_global_tracker`
+* **HIGH** CharacterArcTracker 在与 Narrator 并行的"只读"窗口里 upsert
+  角色状态 (Narrator 可能读到半新半旧快照) — 改两段式: 并行窗口只收集,
+  串行阶段统一应用
+* **HIGH** StoryArc 就地 mutate → `model_copy`; TokenBudget 内存记录
+  无限增长 → 2000 条触顶裁剪
+
+### Fixed — 周期 agent / 存储层 (并行审查 #2, 19 项)
+
+* **CRITICAL** MemoryCompressor 把 open_loop 源事件 (protected id) 送 LLM
+  压缩 — 伏笔因果根可被永久删除; 候选过滤补 `id not in protected`
+* **CRITICAL** ConsistencyGuardian → continuity_v2 传 JSON 字符串而非 dict,
+  每次扫描必抛 TypeError 被吞、**一致性检查自部署起从未真正工作过**
+  (永远 degraded=True); 修通后 world_state/角色状态真正进评估 prompt
+* **CRITICAL** StoryArcDirector 就地 mutate 共享 arc.pacing_history —
+  改不可变重建 + 单次赋值
+* **HIGH** tick_kg_sync 角色移动后旧 LOCATED_AT 边永不删除 (角色"同时位于
+  两地"且随 tick 膨胀); ArcTracker 吞 LLM 幻觉 drift_codes/stage (加白名单);
+  narrative_critic 加总轮次上限 4 + `use_llm=False` 时不再调 LLM 修订;
+  continuity_v2 评估缓存加 128 条 FIFO 上限
+* **MEDIUM** fact_ledger bisect 插入 + load 时排序; branch_manager
+  save 失败回滚内存; showrunner `max(None, int)` 兜底 (两处);
+  safety_filter warn 打码改 pattern.sub (原 evidence.replace 会误伤/漏替);
+  knowledge_graph rollback 改临时图原子替换; creativity_scorer 总段数
+  计数器; summary_tree `_merge_up` 被 cancel 时恢复 pending 索引 +
+  load 失败用快照阈值重建; tick_db ROLLBACK 判空 + Row 不逃逸锁;
+  prompt_builder 截断零进展守卫
+
+### Fixed — API / 认证层 (并行审查 #3, 11 项)
+
+* **CRITICAL** 任务越权 — `task.user_id == ""` 时任何登录用户可读/取消/
+  订阅该任务 (`if task.user_id and ...` 短路); 改严格比对
+* **CRITICAL** CORS `allow_origins=["*"]` + `allow_credentials=True` 违反
+  规范, 生产跨域下浏览器直接拒绝带 Authorization 的请求 (前端无法登录);
+  默认 origins 改 localhost 白名单, 含 `*` 时自动关 credentials
+* **CRITICAL** 限流可被伪造 `X-Forwarded-For` 绕过 — 新增 `trusted_proxy`
+  配置 (默认 False 只信 socket 对端; 反代部署示例已配 true)
+* **HIGH** `GET /api/agents` 无认证暴露注册表与模块路径 (补 auth);
+  cleanup_loop 同步 rmtree/SQLite 阻塞 event loop (入 executor);
+  `_clear_for_tests` 不 cancel 孤儿任务; 标题生成 fire-and-forget task
+  无引用持有; switch_novel 双 `_active_by_user` 更新无原子性 (统一锁内
+  回调); `get_runtime` 锁外读活跃表 TOCTOU (并发可造出双 runtime 泄漏
+  SQLite 句柄)
+* **MEDIUM** tick 路由 query 参数加 `ge/le` 上限; auth config 加 mtime
+  缓存 (此前每请求重读 config.json)
+* 审查声称的"tick/agent 端点可跨用户越权"经验证**不成立** (per-user
+  manifest + realpath 沙箱链路闭合), 未为不存在的洞加代码
+
+### Changed — 前端「墨砚」设计系统重构
+
+* `global.css` 全量重写: 暖墨四层 surface + 朱砂主色 + 青瓷/缃黄/黛蓝/胭脂
+  语义辅色, Noto Serif SC 衬线标题与正文, 类名 API 与旧版兼容 (视图零改动
+  换肤), 旧 token 全部别名映射
+* **阅读视图重写** (产品核心面): 正文按段渲染 (首行缩进 2em / 行高 2.05 /
+  40em 行宽 / 纸面底色), 章节元信息行, 上一节/下一节导航
+* App 壳: 墨砚 wordmark, 朱砂活跃指示条, 新空态/进度条/徽标体系
+* 视图层 17 项行为 bug 修复 (竞态/泄漏/空指针/localStorage provider 回跳,
+  详见审查 #4 清单)
+
+### Tests
+
+* 新增 `test_task_routes.py` / `test_auth_config_cache.py` /
+  `test_agent_routes_auth.py`; 适配 6 个测试文件到新契约
+* 全量回归通过 (见各审查批次通过记录)
+
 ## [2.34] — 2026-06-09
 
 ### Added

@@ -168,18 +168,24 @@ class SafetyFilter:
             sanitized_text="" if is_blocked else self._mask_warns(text, hits),
         )
 
-    @staticmethod
-    def _mask_warns(text: str, hits: list[SafetyHit]) -> str:
-        """warn 级命中 PII 时用占位符替换 (block 不在此处处理)。"""
+    def _mask_warns(self, text: str, hits: list[SafetyHit]) -> str:
+        """warn 级命中用规则正则 pattern.sub 打码 (block 不在此处处理)。
+
+        此前用 evidence 上下文片段做 str.replace: 会把命中点前后的无辜文字
+        一并替换 (误伤), 且 strip("...") 按字符集剥离会砍掉匹配本体的句点/
+        省略号导致漏替。改为直接用产生该 hit 的规则正则替换。
+        """
         out = text
+        rules_by_id = {r.rule_id: r for r in self._rules}
+        masked_rule_ids: set[str] = set()
         for h in hits:
-            if h.severity != "warn":
+            if h.severity != "warn" or h.rule_id in masked_rule_ids:
                 continue
-            # 从 evidence 取核心子串
-            core = h.evidence.strip("...").strip()
-            if core and core in out:
-                masked = "[REDACTED-" + h.category.upper() + "]"
-                out = out.replace(core, masked)
+            masked_rule_ids.add(h.rule_id)
+            rule = rules_by_id.get(h.rule_id)
+            if rule is None:
+                continue
+            out = rule.pattern.sub(f"[REDACTED-{h.category.upper()}]", out)
         return out
 
     def add_rule(self, rule: SafetyRule) -> None:

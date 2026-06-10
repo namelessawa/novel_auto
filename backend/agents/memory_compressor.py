@@ -123,18 +123,21 @@ class MemoryCompressor:
                 by_tier[m.tier].append(m)
 
         # L0 → L1: 距今 >50 tick 且非保护的 L0
-        l0_candidates = [
+        # open_loop 源事件 (protected) 绝不送 LLM 压缩 — 即使 protected_reason
+        # 尚未被 mark_protected 打标, 也以 orchestrator 传入的保护集兜底。
+        l0_aged = [
             m
             for m in by_tier["L0"]
             if current_tick - m.original_tick_range[1] > L0_TO_L1_BOUNDARY
             and m.protected_reason is None
         ]
+        l0_candidates = [m for m in l0_aged if m.id not in protected]
+        out.preserved_specially.extend(
+            m.id for m in l0_aged if m.id in protected
+        )
         if l0_candidates:
             new_l1 = await self._compress_l0_to_l1(l0_candidates, protected)
             out.l0_to_l1 = new_l1
-            out.preserved_specially.extend(
-                m.id for m in l0_candidates if m.id in protected
-            )
 
         # L1 → L2: 距今 >500 tick
         l1_candidates = [
@@ -142,6 +145,7 @@ class MemoryCompressor:
             for m in by_tier["L1"]
             if current_tick - m.original_tick_range[1] > L1_TO_L2_BOUNDARY
             and m.protected_reason is None
+            and m.id not in protected
         ]
         if l1_candidates:
             new_l2 = await self._compress_l1_to_l2(l1_candidates, protected)
@@ -279,7 +283,20 @@ class MemoryCompressor:
         out: list[MemoryEntry] = []
         for idx, item in enumerate(payload.get(key, []) or []):
             try:
-                tick_range = item.get("tick_range", [0, 0])
+                # tick_range 来自 LLM, 不可信: None / 空列表 / 非数字 / end<start
+                # 都不能让本条 entry 整体被丢弃 (那会造成压缩结果静默丢失)。
+                raw_range = item.get("tick_range")
+                try:
+                    range_start = int(raw_range[0])
+                    range_end = int(raw_range[1])
+                except (TypeError, ValueError, IndexError, KeyError):
+                    logger.warning(
+                        "MemoryCompressor: invalid tick_range %r, fallback to (0, 0)",
+                        raw_range,
+                    )
+                    range_start, range_end = 0, 0
+                if range_end < range_start:
+                    range_end = range_start
                 raw_src = item.get(src_field, []) or []
                 src_ids = [s for s in raw_src if isinstance(s, str) and s in batch_ids]
                 if not src_ids:
@@ -287,9 +304,9 @@ class MemoryCompressor:
                     src_ids = list(batch_ids)
                 out.append(
                     MemoryEntry(
-                        id=f"{target_tier.lower()}_{tick_range[0]}_{tick_range[1]}_{idx}",
+                        id=f"{target_tier.lower()}_{range_start}_{range_end}_{idx}",
                         tier=target_tier,  # type: ignore[arg-type]
-                        original_tick_range=(int(tick_range[0]), int(tick_range[1])),
+                        original_tick_range=(range_start, range_end),
                         summary=str(item.get("summary", "")),
                         emotional_tags=list(item.get("emotional_tags", []) or []),
                         involved=list(item.get("involved", []) or []),

@@ -1,7 +1,8 @@
 """加载 ``config.json`` 的 auth + smtp 段为 dataclass。
 
-每次调用 ``get_auth_config() / get_smtp_config()`` 都会重读 config.json —
-让 hot-reload 路径 (改 jwt_secret / smtp 凭据后) 立即生效, 不必重启进程。
+``get_smtp_config()`` 每次重读 config.json; ``get_auth_config()`` 自 v2.37
+起基于文件 mtime 缓存 — mtime 未变直接返回缓存的 frozen dataclass, 文件被
+修改后 mtime 变化自动失效, hot-reload 语义保持不变 (无 TTL)。
 """
 from __future__ import annotations
 
@@ -34,6 +35,11 @@ class AuthConfig:
     password_login_per_email_per_15min: int = 5
     ephemeral_ttl_hours: int = 24
     cleanup_interval_seconds: int = 3600
+    # v2.37 — False (默认/直连部署): get_client_ip 只信 request.client.host,
+    # 防止客户端伪造 X-Forwarded-For / CF-Connecting-IP 绕过按 IP 限流。
+    # 部署在 Cloudflare Tunnel / nginx 反代之后时必须显式设 true, 否则所有
+    # 用户共享代理出口 IP, 限流会误伤。
+    trusted_proxy: bool = False
 
 
 @dataclass(frozen=True)
@@ -73,10 +79,35 @@ def _get_or_create_runtime_secret() -> str:
         return _runtime_jwt_secret
 
 
+# v2.37 — get_auth_config 的 mtime 缓存: (mtime, AuthConfig)。AuthConfig 是
+# frozen dataclass, 跨线程共享只读安全。锁仅保护缓存元组的读写一致性。
+_auth_cfg_cache: tuple[float, AuthConfig] | None = None
+_auth_cfg_lock = threading.Lock()
+
+
+def _config_mtime() -> float:
+    try:
+        return os.path.getmtime(_CONFIG_PATH)
+    except OSError:
+        return -1.0  # 文件不存在 — 用哨兵值, 文件出现后 mtime 变化即失效
+
+
 def get_auth_config() -> AuthConfig:
+    """读 auth 段, 基于 config.json mtime 缓存。
+
+    此前每请求重读 + 重 parse config.json (get_current_user 热路径)。现在
+    mtime 未变直接返回缓存; 文件修改 → mtime 变化 → 自动重读, 无 TTL。
+    """
+    global _auth_cfg_cache
+    mtime = _config_mtime()
+    with _auth_cfg_lock:
+        cached = _auth_cfg_cache
+        if cached is not None and cached[0] == mtime:
+            return cached[1]
+
     raw = _load_config().get("auth", {}) or {}
     secret = raw.get("jwt_secret") or _get_or_create_runtime_secret()
-    return AuthConfig(
+    cfg = AuthConfig(
         enabled=bool(raw.get("enabled", True)),
         jwt_secret=secret,
         jwt_algorithm=raw.get("jwt_algorithm", "HS256"),
@@ -93,7 +124,11 @@ def get_auth_config() -> AuthConfig:
         ),
         ephemeral_ttl_hours=int(raw.get("ephemeral_ttl_hours", 24)),
         cleanup_interval_seconds=int(raw.get("cleanup_interval_seconds", 3600)),
+        trusted_proxy=bool(raw.get("trusted_proxy", False)),
     )
+    with _auth_cfg_lock:
+        _auth_cfg_cache = (mtime, cfg)
+    return cfg
 
 
 def get_smtp_config() -> SMTPConfig:

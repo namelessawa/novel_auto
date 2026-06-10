@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import bisect
 import json
 import logging
 import os
@@ -182,13 +183,8 @@ class FactLedger:
 
     def _append_timeline(self, subject: str, entry: TimelineEntry) -> None:
         timeline = self._timeline[subject]
-        # 按 tick 升序插入 (二分查找简化为遍历, N 通常小)
-        idx = 0
-        for i, e in enumerate(timeline):
-            if e.tick > entry.tick:
-                idx = i
-                break
-            idx = i + 1
+        # bisect_right 按 tick 升序插入; 同 tick 保持先来后到 (stable)
+        idx = bisect.bisect_right([e.tick for e in timeline], entry.tick)
         timeline.insert(idx, entry)
 
     def assert_many(self, facts: Iterable[Fact]) -> None:
@@ -383,7 +379,11 @@ class FactLedger:
             except Exception as e:
                 logger.warning("Skip invalid fact: %s", e)
         for cid, entries in (payload.get("timeline") or {}).items():
-            self._timeline[cid] = [TimelineEntry.from_dict(e) for e in entries]
+            restored = [TimelineEntry.from_dict(e) for e in entries]
+            # 磁盘数据可能乱序 (旧版本写入 / 手工编辑) — 排序兜底,
+            # 维持 _append_timeline 的 bisect 升序前提 (stable, 同 tick 保序)
+            restored.sort(key=lambda e: e.tick)
+            self._timeline[cid] = restored
         return True
 
 

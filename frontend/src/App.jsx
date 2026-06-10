@@ -203,8 +203,8 @@ function AppShell() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo">NovelAuto</div>
-          <div className="sidebar-logo-sub">AI 智能小说创作平台</div>
+          <div className="sidebar-logo">墨砚</div>
+          <div className="sidebar-logo-sub">NOVELAUTO STUDIO</div>
         </div>
 
         <nav className="sidebar-nav">

@@ -20,10 +20,13 @@ Features:
 import os
 import json
 import hashlib
+import logging
 from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class ContinuityDimension(Enum):
@@ -86,6 +89,9 @@ class EnhancedContinuityEvaluator:
     feedback for iterative refinement.
     """
 
+    # 评估缓存上限 (FIFO) — 防止长跑进程内存无界增长
+    CACHE_MAX_ENTRIES = 128
+
     # Default weights for dimension scoring
     DEFAULT_WEIGHTS = {
         ContinuityDimension.CHARACTER: 0.20,
@@ -147,7 +153,9 @@ class EnhancedContinuityEvaluator:
         else:
             score = self._heuristic_evaluate(previous_context, new_content)
 
-        # Cache result
+        # Cache result — FIFO 淘汰最早的条目, 上限 CACHE_MAX_ENTRIES
+        while len(self._cache) >= self.CACHE_MAX_ENTRIES:
+            self._cache.pop(next(iter(self._cache)))
         self._cache[cache_key] = score
         return score
 
@@ -158,14 +166,27 @@ class EnhancedContinuityEvaluator:
         memory_context: Optional[Dict]
     ) -> ContinuityScore:
         """Use LLM for semantic evaluation"""
+        # backend 的 LLMClient 没有 generate_json 方法 — hasattr 防御,
+        # 缺失时按 degraded 启发式处理而非 AttributeError 崩掉整次扫描。
+        generate_json = getattr(self.llm_client, "generate_json", None)
+        if not callable(generate_json):
+            logger.warning(
+                "连续性 LLM 客户端 %s 缺少 generate_json 方法，退化为启发式评估（已标记 degraded）",
+                type(self.llm_client).__name__,
+            )
+            score = self._heuristic_evaluate(previous_context, new_content)
+            score.metadata["degraded"] = True
+            score.metadata["degraded_reason"] = "llm_client_missing_generate_json"
+            return score
+
         prompt = self._build_evaluation_prompt(previous_context, new_content, memory_context)
 
-        result = self.llm_client.generate_json(prompt)
+        result = generate_json(prompt)
 
         if not result:
             # LLM 评估失败时不能静默地按启发式 ~0.8 通过，否则
             # 损坏的章节会被当作合格分数放行。标记为 degraded 并告警。
-            print("⚠ 连续性 LLM 评估失败，退化为启发式评估（结果不可靠，已标记 degraded）")
+            logger.warning("连续性 LLM 评估失败，退化为启发式评估（结果不可靠，已标记 degraded）")
             score = self._heuristic_evaluate(previous_context, new_content)
             score.metadata["degraded"] = True
             score.metadata["degraded_reason"] = "llm_evaluation_failed"
@@ -276,10 +297,16 @@ class EnhancedContinuityEvaluator:
         new_preview = new_content[:1500] if len(new_content) > 1500 else new_content
 
         memory_section = ""
-        if memory_context:
-            # Include key memory info
-            if "characters" in memory_context:
-                memory_section += f"\n已知角色状态:\n{json.dumps(memory_context['characters'], ensure_ascii=False, indent=2, default=str)}\n"
+        # 仅接受 dict — 误传字符串时跳过而非 `'key' in str` 子串误命中后
+        # str['key'] 抛 TypeError (ConsistencyGuardianAdapter 修复前的事故模式)。
+        if isinstance(memory_context, dict) and memory_context:
+            # Include key memory info — 'characters' 与 'character_states' 两个键
+            # 都识别 (旧节级管线用前者, tick 架构 guardian 曾用后者)。
+            char_states = memory_context.get("characters") or memory_context.get("character_states")
+            if char_states:
+                memory_section += f"\n已知角色状态:\n{json.dumps(char_states, ensure_ascii=False, indent=2, default=str)}\n"
+            if memory_context.get("world_state"):
+                memory_section += f"\n世界状态:\n{json.dumps(memory_context['world_state'], ensure_ascii=False, indent=2, default=str)}\n"
             if "relationships" in memory_context:
                 memory_section += f"\n已知角色关系:\n{json.dumps(memory_context['relationships'], ensure_ascii=False, indent=2, default=str)}\n"
             if "recent_events" in memory_context:

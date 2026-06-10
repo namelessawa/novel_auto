@@ -101,6 +101,13 @@ SYSTEM_PROMPT_TEMPLATE = """\
 5. 保留秘密 - 在不合适的场合不脱口而出
 6. 如情节让你做"绝对不会做"的事,在 flags 中标出
 
+# 台词要求 (dialogue_spoken — 这是最终小说里的对白原文, 认真写)
+
+* 严格用"你的说话风格"说话 — 你的台词跟别人的台词放一起, 读者要能分辨出是你
+* 像真人口语: 允许半句、打断、犹豫、答非所问; 不要书面腔和舞台腔
+* 说话要有目的 (隐瞒 / 试探 / 索取 / 安抚...), 跟 intent 一致但不直说
+* 没必要说话时就不说 (dialogue_spoken 填 null), 不要为了填字段而尬聊
+
 # 语言约束(强制)
 
 * 所有可读文本字段 (description / dialogue_spoken / intent / internal_monologue /
@@ -197,14 +204,18 @@ class CharacterAgent:
         all_tick_events: list[Event],
         *,
         model_override: str | None = None,
+        recent_actions: list[CharacterAction] | None = None,
     ) -> CharacterAction:
         """对本 tick 做出行动决策。``all_tick_events`` 会被自动过滤为可见子集。
 
         ``model_override`` (v2.18 Phase 6): Guardian 监控建议降级时, Orchestrator
         阶段 3 注入。None / 空时不影响, 非空时透传给 llm_client.chat。
+
+        ``recent_actions`` (v2.37): 本角色最近几 tick 的行动, 注入 prompt 防止
+        无记忆的机械重复 (同一动作连刷十几个 tick 是实测高发退化)。
         """
         visible = self._filter_visible_events(all_tick_events, state.current_location)
-        user_prompt = self._build_user_prompt(state, visible)
+        user_prompt = self._build_user_prompt(state, visible, recent_actions or [])
         try:
             resp = await llm_client.chat(
                 system_prompt=self._system_prompt,
@@ -268,7 +279,10 @@ class CharacterAgent:
         )
 
     def _build_user_prompt(
-        self, state: CharacterState, visible_events: list[Event]
+        self,
+        state: CharacterState,
+        visible_events: list[Event],
+        recent_actions: list[CharacterAction] | None = None,
     ) -> str:
         # 关系网渲染:只显示对方 id + 关系类型 + 信任度 + 历史一句话
         rels_text = "(无关系记录)"
@@ -292,6 +306,21 @@ class CharacterAgent:
                 f"  - [{e.id} @ {e.location}] {e.description}"
                 for e in visible_events
             )
+
+        recent_text = ""
+        if recent_actions:
+            recent_lines = "\n".join(
+                f"  - {a.action_type} → {a.target or '(无目标)'}: {a.description[:60]}"
+                for a in recent_actions[-4:]
+            )
+            recent_text = f"""
+# 你最近几步的行动 (从旧到新)
+
+{recent_lines}
+
+如果情境没有变化, 坚持原计划是合理的; 但**不要原样重复上一步** — 要么推进
+一步 (更接近目标), 要么换方法, 要么对新事件做出反应。
+"""
 
         return f"""\
 # 你的当前状态
@@ -325,7 +354,7 @@ class CharacterAgent:
 # 本 tick 你能感知到的事件
 
 {events_text}
-
+{recent_text}
 请基于你的目标、性格、当前所知信息,决定本 tick 你**采取的行动**。
 """
 
@@ -450,6 +479,7 @@ class CharacterAgent:
         concurrency: int | None = None,
         *,
         model_overrides: dict[str, str] | None = None,
+        recent_actions_by_char: dict[str, list[CharacterAction]] | None = None,
     ) -> list[CharacterAction]:
         """并行调用多个 CharacterAgent.decide()。
 
@@ -458,12 +488,16 @@ class CharacterAgent:
 
         ``model_overrides`` (v2.18 Phase 6): 按 character_id 分发的模型降级标记。
         None 或缺失某 cid 时该 agent 不降级 (model_override=None)。
+
+        ``recent_actions_by_char`` (v2.37): 各角色最近行动环形缓冲 (Orchestrator
+        持有), 注入各自 prompt 防机械重复。
         """
         if not agents:
             return []
         if concurrency is None:
             concurrency = _default_concurrency()
         overrides = model_overrides or {}
+        recent_map = recent_actions_by_char or {}
 
         # A 级优先排入 sem 队列
         prioritized = sorted(agents, key=lambda a: 0 if a.profile.importance_tier == "A" else 1)
@@ -480,9 +514,13 @@ class CharacterAgent:
                 results[index_map[agent]] = agent._fallback_action()
                 return
             override = overrides.get(agent.character_id) or None
+            recent = recent_map.get(agent.character_id) or []
             async with sem:
                 action = await agent.decide(
-                    state, all_tick_events, model_override=override
+                    state,
+                    all_tick_events,
+                    model_override=override,
+                    recent_actions=recent,
                 )
             results[index_map[agent]] = action
 

@@ -17,7 +17,6 @@ CharacterState / Event[] 序列化为 ``memory_context``,把 ContinuityScore.iss
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
 
@@ -45,10 +44,11 @@ class GuardianOutput:
 
 
 class ConsistencyGuardianAdapter:
-    """把 tick 契约转换为 EnhancedContinuityEvaluator 的输入字符串。
+    """把 tick 契约转换为 EnhancedContinuityEvaluator 的输入。
 
     EnhancedContinuityEvaluator 接受 ``(previous_context, new_content, memory_context)``,
-    我们的策略: 把 WorldState / CharacterState 全 dump 进 memory_context,
+    我们的策略: 把 WorldState / CharacterState dump 成 **dict** 进 memory_context
+    (evaluator 期望 dict, 按 'characters' / 'world_state' 键消费),
     把最近章节文本拼成 new_content,把最近事件拼成 previous_context。
     """
 
@@ -58,7 +58,7 @@ class ConsistencyGuardianAdapter:
         char_states: list[CharacterState],
         recent_events: list[Event],
         recent_chapter_text: list[str],
-    ) -> tuple[str, str, str]:
+    ) -> tuple[str, str, dict]:
         # previous_context: 最近事件 + 倒数第二章
         prev_events = "\n".join(
             f"- [{e.tick} | {e.type}] {e.description[:120]}"
@@ -72,14 +72,16 @@ class ConsistencyGuardianAdapter:
         # new_content: 最新一章
         new_content = recent_chapter_text[-1] if recent_chapter_text else ""
 
-        # memory_context: world_state + char_states
+        # memory_context: world_state + char_states — 必须是 dict。
+        # 此前误序列化成 JSON 字符串, evaluator 端 `'relationships' in str` 子串
+        # 命中后 str['relationships'] 直接 TypeError, 扫描永远 degraded。
+        # 键名对齐 evaluator 的 _build_evaluation_prompt: 'characters' / 'world_state'。
         ws_dump = world_state.model_dump(mode="json")
         cs_dump = [s.model_dump(mode="json") for s in char_states]
-        memory_context = json.dumps(
-            {"world_state": ws_dump, "character_states": cs_dump},
-            ensure_ascii=False,
-            indent=2,
-        )
+        memory_context = {
+            "characters": cs_dump,
+            "world_state": ws_dump,
+        }
         return previous_context, new_content, memory_context
 
     @staticmethod

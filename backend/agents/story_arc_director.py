@@ -244,16 +244,19 @@ class StoryArcDirector:
         sampled_intensity = self._sample_intensity(
             recent_narrator_value_sum, analysis.expected_intensity
         )
-        # 追加采样点到历史 (调用方保存 arc 时落盘)
+        # 追加采样点到历史 (调用方保存 arc 时落盘)。
+        # 不就地 append+del — 构造新 list 后单次赋值, 避免中途异常留下
+        # "已 append 未裁剪" 的半截状态; 调用方仍通过同一 arc 对象看到更新。
         new_point = PacingPoint(
             tick=current_tick,
             intensity=sampled_intensity,
             narrative_value_sum=recent_narrator_value_sum,
             is_narration_produced=narrator_produced,
         )
-        arc.pacing_history.append(new_point)
-        if len(arc.pacing_history) > PACING_HISTORY_MAX:
-            del arc.pacing_history[: len(arc.pacing_history) - PACING_HISTORY_MAX]
+        new_history = [*arc.pacing_history, new_point]
+        if len(new_history) > PACING_HISTORY_MAX:
+            new_history = new_history[len(new_history) - PACING_HISTORY_MAX :]
+        arc.pacing_history = new_history
 
         # 确定性诊断
         needs_escalation = (

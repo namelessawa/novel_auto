@@ -235,6 +235,9 @@ def _env_int(name: str, default: int) -> int:
 
 MAX_REVISE_ROUNDS = _env_int("CRITIC_MAX_REVISE_ROUNDS", 2)
 MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 2)
+# rewrite + revise 累计修订轮次硬上限 — 即使 env 把单项上限调大,
+# 也不允许单段触发超过 4 次修订 LLM 调用 (每轮还伴随 1 次 critique 调用)。
+MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 4)
 ENABLE_LLM_CRITIC = os.environ.get("CRITIC_ENABLE_LLM", "1").strip() != "0"
 
 
@@ -328,6 +331,23 @@ class NarrativeCritic:
                     blacklist_to_add=_extract_blacklist_words(all_triggers),
                 )
 
+            if (
+                action in ("REWRITE", "REVISE")
+                and revise_used + rewrite_used >= MAX_TOTAL_ROUNDS
+            ):
+                trail.append(
+                    f"  ! 修订总轮次上限 ({MAX_TOTAL_ROUNDS}) 达到, 接受当前文本"
+                )
+                return CritiqueOutput(
+                    final_text=current_text,
+                    rounds=rounds,
+                    surviving_triggers=all_triggers,
+                    decision_trail=trail,
+                    final_action="ACCEPT",
+                    new_opening_signature=extract_opening_signature(current_text),
+                    blacklist_to_add=_extract_blacklist_words(all_triggers),
+                )
+
             if action == "REWRITE" and rewrite_used >= MAX_REWRITE_ROUNDS:
                 # 达到 REWRITE 上限, 降级为 REVISE 一次或直接接受
                 if revise_used < MAX_REVISE_ROUNDS:
@@ -360,20 +380,29 @@ class NarrativeCritic:
                 )
 
             # === Step 4: 执行修订 ========================================
+            # use_llm=False 时 REVISE/REWRITE 同样不允许调 LLM (此前只挡了
+            # critique) — new_text 保持原文, 走下方 "修订未产生新文本" 分支
+            # 返回当前文本 + 已记录的触发。
             new_text = current_text
             if action == "REWRITE":
-                new_text = await self._llm_rewrite(
-                    original=current_text,
-                    avoid_codes=summary["high_codes"] + summary["medium_codes"],
-                    scene_focus=scene_focus,
-                )
+                if use_llm:
+                    new_text = await self._llm_rewrite(
+                        original=current_text,
+                        avoid_codes=summary["high_codes"] + summary["medium_codes"],
+                        scene_focus=scene_focus,
+                    )
+                else:
+                    trail.append("  ! use_llm=False, 跳过 REWRITE LLM 调用")
                 rewrite_used += 1
             elif action == "REVISE":
-                new_text = await self._llm_revise(
-                    original=current_text,
-                    triggers=all_triggers,
-                    scene_focus=scene_focus,
-                )
+                if use_llm:
+                    new_text = await self._llm_revise(
+                        original=current_text,
+                        triggers=all_triggers,
+                        scene_focus=scene_focus,
+                    )
+                else:
+                    trail.append("  ! use_llm=False, 跳过 REVISE LLM 调用")
                 revise_used += 1
 
             rounds.append(
@@ -597,5 +626,6 @@ __all__ = [
     "CritiqueRound",
     "MAX_REVISE_ROUNDS",
     "MAX_REWRITE_ROUNDS",
+    "MAX_TOTAL_ROUNDS",
     "ENABLE_LLM_CRITIC",
 ]

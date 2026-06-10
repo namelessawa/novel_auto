@@ -74,3 +74,29 @@ def test_tasks_router_is_included():
     assert any(p.startswith("/api/tasks") for p in paths), (
         "未发现 /api/tasks 路由, main.py 可能没 include tasks_router"
     )
+
+
+# ---- v2.37 — CORS: 通配 origin 禁止与 credentials 并用 ----------------------
+
+
+def test_cors_policy_wildcard_disables_credentials():
+    import main
+    origins, allow_credentials = main._cors_policy(["*"])
+    assert origins == ["*"]
+    assert allow_credentials is False
+
+
+def test_cors_policy_explicit_origins_keep_credentials():
+    import main
+    origins, allow_credentials = main._cors_policy(
+        ["https://novel.example.com"]
+    )
+    assert origins == ["https://novel.example.com"]
+    assert allow_credentials is True
+
+
+def test_settings_default_cors_is_not_wildcard():
+    """config.json 未配置 cors_origins 时的默认值不得是 ['*']。"""
+    from config.settings import _DEFAULT_CORS_ORIGINS
+    assert "*" not in _DEFAULT_CORS_ORIGINS
+    assert all(o.startswith("http") for o in _DEFAULT_CORS_ORIGINS)

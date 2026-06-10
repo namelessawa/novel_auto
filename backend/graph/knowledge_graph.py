@@ -173,27 +173,34 @@ class KnowledgeGraph:
         path = os.path.join(self._snapshot_dir, f"{snapshot_id}.json")
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        self._graph.clear()
-        for e in data["entities"]:
-            self.add_entity(
-                Entity(
-                    id=e["id"],
-                    name=e["name"],
-                    entity_type=EntityType(e["entity_type"]),
-                    attributes=e.get("attributes", {}),
+        # 在临时图上重建, 全部成功后才算替换完成 — 中途异常 (坏快照字段 /
+        # 未知 enum 值) 恢复原图, 不再出现 "clear 后重建失败图变空" 的状态。
+        old_graph = self._graph
+        self._graph = nx.DiGraph()
+        try:
+            for e in data["entities"]:
+                self.add_entity(
+                    Entity(
+                        id=e["id"],
+                        name=e["name"],
+                        entity_type=EntityType(e["entity_type"]),
+                        attributes=e.get("attributes", {}),
+                    )
                 )
-            )
-        for r in data["relations"]:
-            self.add_relation(
-                Relation(
-                    source_id=r["source_id"],
-                    target_id=r["target_id"],
-                    relation_type=RelationType(r["relation_type"]),
-                    label=r.get("label", ""),
-                    weight=r.get("weight", 1.0),
-                    attributes=r.get("attributes", {}),
+            for r in data["relations"]:
+                self.add_relation(
+                    Relation(
+                        source_id=r["source_id"],
+                        target_id=r["target_id"],
+                        relation_type=RelationType(r["relation_type"]),
+                        label=r.get("label", ""),
+                        weight=r.get("weight", 1.0),
+                        attributes=r.get("attributes", {}),
+                    )
                 )
-            )
+        except BaseException:
+            self._graph = old_graph
+            raise
 
     def list_snapshots(self) -> list[str]:
         files = os.listdir(self._snapshot_dir)

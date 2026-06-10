@@ -265,6 +265,18 @@ class Orchestrator:
         self._last_tick_events: list[Event] = []
         self._recent_chapter_summaries: list[str] = []  # NarratorOutput 累积
         self._injected_pending: list[Event] = []  # 外部 inject_event 注入的 Event
+        # v2.37 — 本 tick 的角色行动原始输出 (阶段 4 后填充)。Narrator 场景简报
+        # 从这里取 dialogue_spoken / intent / internal_monologue — 这些字段在
+        # action→Event 转换时被丢弃, 此前 Narrator 看不到任何台词。
+        self._current_tick_actions: list[CharacterAction] = []
+        # v2.37 — 前文结尾 (最近一次叙述正文的尾巴)。Narrator 靠它把新段落
+        # 写成"同一作者接着写", 而不是每 tick 一篇孤立小品。进程重启时从
+        # narratives/ 目录最新文件恢复, 跨重启仍保持衔接。
+        self._prose_tail: str = self._load_prose_tail()
+        # v2.37 — ArcTracker 的 arc_stage 推进改为两段式: 只读阶段 (与 Narrator
+        # 并行) 仅收集, 串行阶段统一应用 — 此前在并行窗口里 upsert 角色状态,
+        # Narrator 可能读到半新半旧的快照。
+        self._pending_arc_stage_updates: list[tuple[str, str]] = []
         # v2.24 — 最近一次 Narrator 完整输出 (无论 should_narrate=True/False).
         # SectionTask executor 在 run_tick 后读它累积本节正文 / 收集沉默 tick 摘要.
         # TickSummary 只有 chars/bool, 拿不到原文本; 不放 TickSummary 是为了保持
@@ -359,6 +371,10 @@ class Orchestrator:
         # (CharacterAgent / NarratorAgent / WorldSimulator / ...) 自动归账到本 tick。
         # 同时通知 TokenBudgetTracker 开始新 tick 窗口, 让 per-tick 上限准确。
         set_current_tick(tick)
+        # v2.37 — 多租户记账隔离: 把本 runtime 的 tracker 绑定到当前任务树。
+        # 此前只在 __init__ 设置模块级单例, 多 runtime 并发时最后构造者接管
+        # 所有用户的预算判定与记账。
+        set_global_tracker(self._token_budget)
         self._token_budget.begin_tick(tick)
         agents_called: list[str] = []
         events_generated_ids: list[str] = []
@@ -477,6 +493,7 @@ class Orchestrator:
                     states_map,
                     all_events,
                     model_overrides=model_overrides,
+                    recent_actions_by_char=self._recent_actions_by_char,
                 )
                 # 记录 invocation: action 含 "(LLM 不可用,维持现状)" 描述 →
                 # fallback path, 视为失败; 否则视为成功。
@@ -502,6 +519,8 @@ class Orchestrator:
             agents_called.append(
                 f"action_resolver(conflicts={resolve_diag.conflict_groups})"
             )
+        # v2.37 — 缓存本 tick 行动原始输出, 供阶段 6 Narrator 场景简报取台词
+        self._current_tick_actions = list(resolved_actions)
 
         # 阶段 5: 应用变化 ------------------------------------------------
         action_events = self._apply_actions(tick, resolved_actions)
@@ -547,8 +566,11 @@ class Orchestrator:
         # 周期 agent (Guardian / Critic / ArcTracker) 同步执行。三者只读外部状态,
         # 各自只写不同字段, 互不冲突, 跟 Narrator 也无写冲突。
         # MemoryCompressor 写 memory_store, 仍串行放后面 (sequential_agents)。
+        # v2.37 — _narrate 包一层异常安全: 此前任何未捕获异常会从 gather 直接
+        # 传播出 run_tick, 跳过下方全部持久化 (tick_state 已 advance 但永不
+        # save, 下次同 tick 号重跑被 TickDB INSERT OR IGNORE 静默吞掉)。
         narrator_out, _readonly_result = await asyncio.gather(
-            self._narrate(tick, all_events),
+            self._narrate_safe(tick, all_events),
             self._phase7_readonly_agents(tick, agents_called),
             return_exceptions=False,
         )
@@ -571,6 +593,8 @@ class Orchestrator:
                     safety_result.sanitized_text or narrator_out.narrative_text
                 )
                 await self._narrative_writer(tick, final_text)
+                # v2.37 — 刷新前文结尾, 下一段叙述从这里接续
+                self._prose_tail = final_text[-1500:]
                 # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
                 try:
                     self._creativity_scorer.ingest_paragraph(
@@ -809,8 +833,10 @@ class Orchestrator:
                 recent_narrator_value_sum=nv_sum,
                 narrator_produced=False,  # 阶段 6 还没跑, 这里只采样
             )
-            arc.last_updated_tick = tick
-            self._tick_state.set_story_arc(arc)
+            # v2.37 — 用 model_copy 替代就地 mutate, 与项目不可变约定一致
+            self._tick_state.set_story_arc(
+                arc.model_copy(update={"last_updated_tick": tick})
+            )
             self._last_story_directive = directive
         except Exception as e:
             logger.warning("StoryArcDirector.direct failed (non-fatal): %s", e)
@@ -1335,6 +1361,40 @@ class Orchestrator:
             visible.add(action.target)
         return sorted(visible)
 
+    async def _narrate_safe(
+        self, tick: int, all_events: list[Event]
+    ) -> NarratorOutput:
+        """_narrate 的异常安全包装 — 失败降级为沉默 tick, 不打断 run_tick。"""
+        try:
+            return await self._narrate(tick, all_events)
+        except Exception as e:
+            logger.exception("Narrator phase failed at tick %d: %s", tick, e)
+            return NarratorOutput(
+                should_narrate=False,
+                skip_reason=f"narrator_exception: {e}",
+                tick_summary_for_record=f"tick {tick}: Narrator 异常, 本段未叙述。",
+            )
+
+    def _load_prose_tail(self) -> str:
+        """从 narratives/ 目录恢复最近一段叙述的结尾, 供进程重启后接续。"""
+        narratives_dir = os.path.join(self._tick_state.data_dir, "narratives")
+        try:
+            if not os.path.isdir(narratives_dir):
+                return ""
+            files = sorted(
+                f for f in os.listdir(narratives_dir)
+                if f.startswith("tick_") and f.endswith(".txt")
+            )
+            if not files:
+                return ""
+            latest = os.path.join(narratives_dir, files[-1])
+            with open(latest, "r", encoding="utf-8") as f:
+                text = f.read()
+            return text[-1500:]
+        except Exception as e:  # pragma: no cover
+            logger.warning("load_prose_tail failed (non-fatal): %s", e)
+            return ""
+
     async def _narrate(self, tick: int, all_events: list[Event]) -> NarratorOutput:
         # 优先级长期记忆: 从 store 召回 top-5, 拼接为标注前缀的"摘要"行,
         # 与时间线 recent_chapter_summaries 合并后送 Narrator
@@ -1355,6 +1415,9 @@ class Orchestrator:
             + memory_summaries
             + list(self._recent_chapter_summaries)
         )
+        # v2.37 — 场景简报素材: 角色档案 (名字/性格/说话风格) + 行动原始输出
+        # (台词/意图/内心) + 世界状态 (地点/天气) + 前文结尾。
+        profiles = {p.id: p for p in self._tick_state.list_character_profiles()}
         return await self._narrator.narrate(
             tick=tick,
             world_time=self._tick_state.world_state.world_time,
@@ -1366,6 +1429,10 @@ class Orchestrator:
             style_anchors=self._tick_state.get_style_anchors(top_k=5),
             last_narration_tick=self._tick_state.last_narration_tick,
             novel_title=getattr(self._tick_state, "novel_title", "") or "",
+            tick_actions=self._current_tick_actions,
+            char_profiles=profiles,
+            world_state=self._tick_state.world_state,
+            prose_tail=self._prose_tail,
         )
 
     def _build_creativity_hints(self) -> list[str]:
@@ -1577,18 +1644,14 @@ class Orchestrator:
                 current_tick=tick,
             )
             self._last_arc_tracker_output = tracker_out
+            # v2.37 — 只收集不落账: 本方法跑在与 Narrator 并行的"只读"窗口内,
+            # 在这里 upsert 角色状态会让 Narrator 读到半新半旧的快照。
+            # 推迟到 _phase7_sequential_agents (gather 之后) 统一应用。
             for rep in tracker_out.reports:
                 if rep.suggested_stage and rep.is_stalled:
-                    state = self._tick_state.get_character_state(rep.character_id)
-                    if state is not None:
-                        self._tick_state.upsert_character_state(
-                            state.model_copy(
-                                update={
-                                    "arc_stage": rep.suggested_stage,
-                                    "arc_stage_entered_tick": tick,
-                                }
-                            )
-                        )
+                    self._pending_arc_stage_updates.append(
+                        (rep.character_id, rep.suggested_stage)
+                    )
             agents_called.append("character_arc_tracker")
         except Exception as e:
             logger.error("CharacterArcTracker.evaluate failed: %s", e)
@@ -1597,6 +1660,21 @@ class Orchestrator:
         self, tick: int, agents_called: list[str]
     ) -> None:
         """周期性维护的写 memory_store 类 — 串行避免 race。"""
+
+        # v2.37 — 应用 ArcTracker 在只读窗口收集的 arc_stage 推进
+        if self._pending_arc_stage_updates:
+            for cid, stage in self._pending_arc_stage_updates:
+                state = self._tick_state.get_character_state(cid)
+                if state is not None:
+                    self._tick_state.upsert_character_state(
+                        state.model_copy(
+                            update={
+                                "arc_stage": stage,
+                                "arc_stage_entered_tick": tick,
+                            }
+                        )
+                    )
+            self._pending_arc_stage_updates = []
 
         if (
             self._memory_compressor is not None

@@ -28,8 +28,13 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
 def _check_ownership(task, user_id: str) -> None:
-    """task.user_id 与请求者不匹配 → 404 (不泄露任务存在性)。"""
-    if task.user_id and task.user_id != user_id:
+    """task.user_id 与请求者不匹配 → 404 (不泄露任务存在性)。
+
+    v2.37 — 严格比较: 此前 ``task.user_id and ...`` 让 user_id=="" 的任务对
+    任何登录用户可见/可取消。所有 create_task 调用点都强制传 user_id (auth
+    关闭时为 "_legacy"), 空 user_id 的遗留任务被一律 404 是期望行为。
+    """
+    if task.user_id != user_id:
         raise HTTPException(status_code=404, detail="task not found")
 
 

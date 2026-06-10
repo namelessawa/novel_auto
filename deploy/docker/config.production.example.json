@@ -33,6 +33,7 @@
   },
   "auth": {
     "enabled": true,
+    "trusted_proxy": true,
     "jwt_secret": "REPLACE-ME-WITH-A-LONG-RANDOM-STRING-AT-LEAST-64-CHARS",
     "jwt_algorithm": "HS256",
     "jwt_ttl_days": 7,

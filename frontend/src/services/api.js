@@ -45,6 +45,13 @@ function _emit401() {
   }
 }
 
+// 修复(17) — 共享的 401 处理: 清 token + 广播 auth:expired。
+// authedFetch / 流式端点 / blob 资产下载统一走这里, 不再各自手工复刻。
+function _handleUnauthorized() {
+  setStoredToken('')
+  _emit401()
+}
+
 async function authedFetch(path, init = {}) {
   const headers = new Headers(init.headers || {})
   if (!headers.has('Content-Type') && init.body && typeof init.body === 'string') {
@@ -67,8 +74,7 @@ async function authedFetch(path, init = {}) {
   }
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (res.status === 401 && !_isPublicPath(path)) {
-    setStoredToken('')
-    _emit401()
+    _handleUnauthorized()
   }
   return res
 }
@@ -186,12 +192,13 @@ export function getUserLLMConfig() {
   }
 }
 
-export function setUserLLMConfig({ api_key, base_url, model }) {
+export function setUserLLMConfig({ api_key, base_url, model, provider }) {
   try {
-    localStorage.setItem(
-      USER_LLM_STORAGE_KEY,
-      JSON.stringify({ api_key, base_url, model }),
-    )
+    const payload = { api_key, base_url, model }
+    // 修复(11) — 持久化 provider id, ConfigView 读取时优先用它而非 base_url 推断。
+    // 旧调用方不传 provider 时不写该字段, 读取方退回推断 — 向后兼容。
+    if (provider) payload.provider = provider
+    localStorage.setItem(USER_LLM_STORAGE_KEY, JSON.stringify(payload))
   } catch {
     /* silent */
   }
@@ -331,9 +338,9 @@ export async function fetchMultimodalAssetBlobUrl(novel_id, chapter, section, fi
   if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(url, { headers })
   if (res.status === 401) {
-    // 与 authedFetch 同步, 防止登录态过期后所有资产加载静默失败, 用户卡在"加载中…"
-    setStoredToken('')
-    _emit401()
+    // 修复(17) — 复用共享 401 处理, 与 authedFetch 行为永远同步,
+    // 防止登录态过期后所有资产加载静默失败, 用户卡在"加载中…"
+    _handleUnauthorized()
     throw new Error('登录态已过期, 请重新登录')
   }
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${filename}`)
@@ -341,19 +348,12 @@ export async function fetchMultimodalAssetBlobUrl(novel_id, chapter, section, fi
   return URL.createObjectURL(blob)
 }
 
-function _userLLMHeaders() {
-  const c = getUserLLMConfig()
-  const h = {}
-  if (c.api_key) h['X-User-LLM-Key'] = c.api_key
-  if (c.base_url) h['X-User-LLM-Base-Url'] = c.base_url
-  if (c.model) h['X-User-LLM-Model'] = c.model
-  return h
-}
+// 修复(16) — X-User-LLM-* headers 统一由 authedFetch 注入 (它对所有非公开
+// 路径在 api_key 存在时自动加), 调用点不再手工重复 (原 _userLLMHeaders 已删)。
 
 export async function randomSeed({ existing_title = '' } = {}) {
   const res = await authedFetch('/api/llm/random-seed', {
     method: 'POST',
-    headers: _userLLMHeaders(),
     body: JSON.stringify({ existing_title }),
   })
   return assertOk(res) // { text }
@@ -362,7 +362,6 @@ export async function randomSeed({ existing_title = '' } = {}) {
 export async function randomTitle({ existing_seed = '' } = {}) {
   const res = await authedFetch('/api/llm/random-title', {
     method: 'POST',
-    headers: _userLLMHeaders(),
     body: JSON.stringify({ existing_seed }),
   })
   return assertOk(res) // { text }
@@ -374,7 +373,6 @@ export async function randomPositioning({
 } = {}) {
   const res = await authedFetch('/api/llm/random-positioning', {
     method: 'POST',
-    headers: _userLLMHeaders(),
     body: JSON.stringify({ existing_title, existing_seed }),
   })
   return assertOk(res) // { text }
@@ -452,8 +450,7 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
   })
     .then(async (response) => {
       if (response.status === 401) {
-        setStoredToken('')
-        _emit401()
+        _handleUnauthorized()
         reportError(new Error('登录态已过期, 请重新登录'))
         return
       }
@@ -497,8 +494,9 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
             if (currentEvent === 'pipeline') {
               try {
                 onEvent(JSON.parse(data))
-              } catch {
-                /* ignore parse errors */
+              } catch (err) {
+                // 修复(15) — 不再静默吞: 留观测线索, 方便定位后端 SSE 格式回归
+                console.warn('SSE parse error (pipeline event)', err, data)
               }
             } else if (currentEvent === 'text') {
               if (data) onText(data)
@@ -856,8 +854,7 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
   })
     .then(async (response) => {
       if (response.status === 401) {
-        setStoredToken('')
-        _emit401()
+        _handleUnauthorized()
         if (typeof onError === 'function')
           onError(new Error('登录态已过期'))
         return
@@ -897,8 +894,9 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
                 ) {
                   if (typeof onDone === 'function') onDone(snap)
                 }
-              } catch {
-                /* skip */
+              } catch (err) {
+                // 修复(15) 同类 — 保留原"吞掉继续读流"语义, 仅补观测线索
+                console.warn('SSE parse error (task snapshot)', err, data)
               }
             } else if (currentEvent === 'error') {
               if (typeof onError === 'function') onError(new Error(data))

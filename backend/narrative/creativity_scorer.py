@@ -217,6 +217,8 @@ class CreativityScorer:
         self._history: deque[ParagraphMetrics] = deque()
         self._baseline_locked = False
         self._baseline_metrics: list[ParagraphMetrics] = []
+        # 真实累计 ingest 数 — _history 会被滑窗裁剪, len(_history) 不是累计值
+        self._total_ingested = 0
 
     @property
     def history_size(self) -> int:
@@ -230,6 +232,7 @@ class CreativityScorer:
         """登记一段产出。返回该段的 metrics, 供调试/诊断。"""
         metrics = compute_metrics(text, tick=tick)
         self._history.append(metrics)
+        self._total_ingested += 1
         # 首次窗口填满即锁定 baseline
         if (
             not self._baseline_locked
@@ -245,7 +248,8 @@ class CreativityScorer:
     def report(self) -> CreativityReport:
         """生成当前 CreativityReport — 基于最近 window 与 baseline 对比。"""
         rep = CreativityReport(
-            paragraph_count=len(self._history),
+            # 报告真实累计段数 — len(_history) 是被裁剪后的窗口长度
+            paragraph_count=self._total_ingested,
             window_size=self._window_size,
             baseline_size=self._baseline_size,
         )

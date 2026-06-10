@@ -233,7 +233,12 @@ export default function NovelView({ novel, onAfterGenerated, onNavigate }) {
         ) : (
           <div className="reading-container" style={{ flex: 1 }}>
             <div className="reading-main">
-              <ReadingContent section={sections[selected]} />
+              <ReadingContent
+                section={sections[selected]}
+                index={selected}
+                total={sections.length}
+                onNav={(next) => setSelected(next)}
+              />
             </div>
             <div className="reading-sidebar">
               {/* v2.23 — 标题区可点击跳转到对应工具视图。jumpHint 让用户知道点击会跳走;
@@ -286,16 +291,73 @@ export default function NovelView({ novel, onAfterGenerated, onNavigate }) {
   )
 }
 
-function ReadingContent({ section }) {
-  if (!section) return null
-  const title = section.title || `第${section.chapter}章 第${section.section}节`
-  return (
-    <>
-      <div className="reading-content">
-        <h1>{title}</h1>
-        {section.content}
+function ReadingContent({ section, index = 0, total = 0, onNav }) {
+  if (!section) {
+    return (
+      <div className="empty-state">
+        <i className="fas fa-book-reader"></i>
+        <p>章节内容加载中…</p>
       </div>
-    </>
+    )
+  }
+  const title = section.title || `第${section.chapter}章 第${section.section}节`
+  // 按空行/换行切段 — 让 CSS 的首行缩进与段距排版生效
+  const paragraphs = String(section.content || '')
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  const hasPrev = index > 0
+  const hasNext = index < total - 1
+  return (
+    <div className="reading-content">
+      <h1>{title}</h1>
+      <div className="reading-meta">
+        第{section.chapter}章 · 第{section.section}节 ·{' '}
+        {(section.word_count || 0).toLocaleString()} 字
+        {section.source === 'legacy' ? ' · 节级管线' : ''}
+      </div>
+      {paragraphs.length > 0 ? (
+        paragraphs.map((p, i) => <p key={i}>{p}</p>)
+      ) : (
+        <p style={{ color: 'var(--text-low)' }}>(本节暂无内容)</p>
+      )}
+      {typeof onNav === 'function' && total > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: 44,
+            paddingTop: 18,
+            borderTop: '1px solid var(--line-1)',
+            fontFamily: 'var(--font-ui)',
+          }}
+        >
+          <button
+            className="btn btn-secondary btn-sm"
+            disabled={!hasPrev}
+            onClick={() => hasPrev && onNav(index - 1)}
+          >
+            <i className="fas fa-arrow-left"></i> 上一节
+          </button>
+          <span
+            style={{
+              alignSelf: 'center',
+              fontSize: 12,
+              color: 'var(--text-low)',
+            }}
+          >
+            {index + 1} / {total}
+          </span>
+          <button
+            className="btn btn-secondary btn-sm"
+            disabled={!hasNext}
+            onClick={() => hasNext && onNav(index + 1)}
+          >
+            下一节 <i className="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 

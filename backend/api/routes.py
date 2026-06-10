@@ -32,6 +32,11 @@ router = APIRouter()
 _pipelines: dict[tuple[str, str], GenerationPipeline] = {}
 _active_by_user: dict[str, str] = {}
 
+# v2.37 — 后台标题生成任务的强引用集合: event loop 只持任务的弱引用,
+# ensure_future 后无人持有的 task 可能被 GC 中途回收, 异常也无人消费。
+# done_callback 里 discard + 记录异常。
+_title_tasks: set[asyncio.Task] = set()
+
 
 def _get_active_novel_id(user_id: str) -> str | None:
     return _active_by_user.get(user_id)
@@ -238,18 +243,24 @@ async def switch_novel(
                 logger.exception("save_state before active novel realign failed")
             _pipelines.pop(old_key, None)
 
-    # tick runtime 切换 — 失败 503, 不污染 legacy
+    # tick runtime 切换 — 失败 503, 不污染 legacy。
+    # v2.37 — 走 switch_active_novel: legacy 侧 _active_by_user 的更新在
+    # tick_runtime._registry_lock 内完成, 并发 switch 不再交错出
+    # tick=B / legacy=A 的两 map 分歧。
     try:
-        from tick_runtime import set_active_novel
-        set_active_novel(current_user.id, novel_id)
+        from tick_runtime import switch_active_novel
+
+        def _sync_legacy_active() -> None:
+            _active_by_user[current_user.id] = novel_id
+
+        switch_active_novel(current_user.id, novel_id, _sync_legacy_active)
     except Exception as e:
-        logger.error("set_active_novel(%s, %s) failed: %s", current_user.id, novel_id, e)
+        logger.error("switch_active_novel(%s, %s) failed: %s", current_user.id, novel_id, e)
         raise HTTPException(
             status_code=503,
             detail=f"tick runtime 切换失败: {e}; legacy pipeline 未切换",
         )
 
-    _active_by_user[current_user.id] = novel_id
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
     pipeline = GenerationPipeline(data_dir=data_dir)
     pipeline.load_state()
@@ -717,7 +728,22 @@ def _auto_generate_title(
         return
     if pipeline.total_sections != 1:
         return
-    asyncio.ensure_future(_generate_title_async(user_id, active, content))
+    task = asyncio.create_task(
+        _generate_title_async(user_id, active, content),
+        name=f"auto-title-{user_id}-{active}",
+    )
+    _title_tasks.add(task)
+    task.add_done_callback(_on_title_task_done)
+
+
+def _on_title_task_done(task: asyncio.Task) -> None:
+    """v2.37 — 释放强引用 + 消费异常 (防止 'exception was never retrieved')。"""
+    _title_tasks.discard(task)
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        logger.error("auto title generation task crashed: %s", exc, exc_info=exc)
 
 
 async def _generate_title_async(user_id: str, novel_id: str, content: str) -> None:

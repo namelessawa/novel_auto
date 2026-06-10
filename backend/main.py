@@ -67,10 +67,30 @@ app = FastAPI(
     version="2.26.0",
 )
 
+def _cors_policy(origins: list[str]) -> tuple[list[str], bool]:
+    """v2.37 — origins 含 "*" 时禁用 credentials。
+
+    CORS 规范禁止 ``Access-Control-Allow-Origin: *`` 与
+    ``Access-Control-Allow-Credentials: true`` 并用 — 浏览器会直接拒绝带
+    Authorization 的跨域请求, 等于全站登录失效。生产请在 config.json
+    server.cors_origins 显式列出前端域名。
+    """
+    if "*" in origins:
+        logging.getLogger(__name__).warning(
+            "cors_origins 含 '*' — 已自动关闭 allow_credentials (CORS 规范禁止"
+            "两者并用)。跨域携带 Authorization 的请求将失败; 请在 config.json "
+            "server.cors_origins 显式列出前端域名。"
+        )
+        return origins, False
+    return origins, True
+
+
+_cors_origins, _cors_allow_credentials = _cors_policy(settings.cors_origins)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

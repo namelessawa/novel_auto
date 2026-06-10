@@ -208,6 +208,45 @@ async def test_cancel_unknown_raises(manager):
         await manager.cancel("task_does_not_exist")
 
 
+@pytest.mark.asyncio
+async def test_clear_for_tests_cancels_in_flight_tasks(manager):
+    """v2.37 — _clear_for_tests 必须先 cancel 在跑的 asyncio.Task 再清注册表,
+    否则孤儿任务继续跑进下一个测试 (竞态)。"""
+    started = asyncio.Event()
+    saw_cancel = asyncio.Event()
+
+    async def hang(updater, user_id, novel_id):
+        started.set()
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            saw_cancel.set()
+            raise
+        return {}
+
+    snap = await manager.create_task(
+        user_id="u1",
+        novel_id="nv1",
+        novel_title="",
+        kind="section_generation",
+        executor=hang,
+        target_words=3000,
+        min_words=2400,
+        max_ticks=30,
+    )
+    await asyncio.wait_for(started.wait(), timeout=1)
+    aio_task = manager._records[snap.id].asyncio_task
+
+    manager._clear_for_tests()
+
+    assert manager._records == {}
+    # executor 收到 CancelledError — 不再是孤儿
+    await asyncio.wait_for(saw_cancel.wait(), timeout=1)
+    # _run 捕获 CancelledError 后任务结束 (cancelled 或正常完成均可)
+    await asyncio.wait([aio_task], timeout=1)
+    assert aio_task.done()
+
+
 # ---- SSE 订阅 ---------------------------------------------------------------
 
 
