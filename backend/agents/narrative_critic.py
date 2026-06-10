@@ -166,8 +166,9 @@ REVISE_SYSTEM_PROMPT = (
 | D6 | 强制引入至少一个可视化的具体物 |
 
 # 黑名单
-原稿命中的具体词条已在 user prompt 的 "removed_words" 里给你, 你只需避开
-即可; 不再在 system prompt 里重复完整清单 (节省 token).
+原稿命中的 A4 黑名单触发已在 user prompt 的 "待修订的触发项" 列出
+(每项含 evidence 引用); 修订后请把这些词替换掉, 不再在 system prompt
+里重复完整黑名单 (节省 token).
 
 """
     + render_show_dont_tell_block()
@@ -205,8 +206,8 @@ REWRITE_SYSTEM_PROMPT = (
 4. 必须严格遵守原稿想表达的事件骨架 — 事件 / 角色 / 地点不变
 
 # 黑名单
-原稿命中的具体词条已在 user prompt 的 "avoid_codes" 里给你, 避开即可;
-不再在 system prompt 里重复完整清单 (节省 token).
+原稿命中的触发码已在 user prompt 的 "避免清单" 段列出 (每条 code +
+描述). 重写时严禁触发其中任一; 不再在 system prompt 里重复完整黑名单.
 
 """
     + render_show_dont_tell_block()
