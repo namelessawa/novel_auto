@@ -254,19 +254,17 @@ class MemoryCompressor:
             }
             for m in batch
         ]
+        # v2.38 (iter#23) — 紧凑视图: json indent 去掉, ```json fence 去掉.
+        # batch=10 条 × ~150 字节 indented JSON 约 1500-3000 chars 压缩后
+        # ~800-1200.
         return f"""\
 # 待压缩条目 ({len(batch)} 条)
+{json.dumps(items, ensure_ascii=False)}
 
-```json
-{json.dumps(items, ensure_ascii=False, indent=2)}
-```
-
-# 受保护(open_loop 源头)的 id
-
+# 受保护 (open_loop 源头) 的 id
 {sorted(m.id for m in batch if m.id in protected) or '(无)'}
 
-请输出严格 JSON,字段名遵守 system 提示。
-目标层级: {target_tier}
+输出严格 JSON, 字段名遵守 system 提示. 目标层级: {target_tier}.
 """
 
     def _parse_compressed(
