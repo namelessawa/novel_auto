@@ -449,14 +449,26 @@ async def bootstrap_world(
         max_tokens=5120,
         stage="open_loops",
     )
-    for loop_raw in loops_resp.get("open_loops", []) or []:
+    raw_loops = loops_resp.get("open_loops", []) or []
+    requested_count = len(raw_loops)
+    for loop_raw in raw_loops:
         try:
             loop_raw.setdefault("opened_tick", 0)
             loop_raw.setdefault("id", f"loop_{uuid.uuid4().hex[:8]}")
             ts.add_open_loop(OpenLoop.model_validate(loop_raw))
         except Exception as e:
             logger.warning("Skip invalid OpenLoop (%s): %s", e, loop_raw)
-    logger.info("  → %d OpenLoops added", ts.get_open_loop_count())
+    n_loops = ts.get_open_loop_count()
+    logger.info("  → %d OpenLoops added", n_loops)
+    # v2.38 (iter#12 review fix) — < 3 个伏笔是 event_injector 必须每 tick
+    # 注入张力的阈值, bootstrap 阶段就低于此值意味着冷启动剧情骨架薄弱.
+    if n_loops < 3:
+        logger.warning(
+            "Bootstrap 完成但 OpenLoops=%d < 3 (LLM 返回 %d 条但部分 invalid). "
+            "EventInjector 会被迫每 tick 注入张力事件. 考虑重跑 bootstrap "
+            "或手动补 loops.",
+            n_loops, requested_count,
+        )
 
     # === Step 4: StyleAnchors ========================================
     logger.info("[4/4] Generating StyleAnchors…")

@@ -316,3 +316,118 @@ async def test_critic_caps_rewrite_attempts(mock_llm, monkeypatch) -> None:
     assert out.final_action == "ACCEPT"
     # 至少有一轮 REWRITE
     assert any(r.action == "REWRITE" for r in out.rounds)
+
+
+# ---------------------------------------------------------------------------
+# iter#10 critic length-gate integration test
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_narrate_skips_critic_for_short_narrative(mock_llm, monkeypatch) -> None:
+    """v2.38 iter#10 — narrative_text < 400 字时跳过 critic 整段.
+
+    用 _CRITIC_MIN_NARRATIVE_LEN monkeypatch 把阈值改成可测的值,
+    短 narrative 不触 critic, 长的触发.
+    """
+    from unittest.mock import AsyncMock
+
+    from agents.narrator_agent import NarratorAgent
+    from memory_system.models import Event
+
+    # 构造两个不同长度的 narrator JSON 输出
+    short_text = "他走过雨夜的街。"  # ~10 字
+    long_text = "他走过雨夜的街。" * 60  # ~480 字
+
+    short_resp = json.dumps(
+        {
+            "narrative_text": short_text,
+            "estimated_length": "short",
+            "viewpoint_characters": ["c1"],
+            "scene_focus": "",
+            "events_consumed": [],
+            "open_loops_referenced": [],
+            "newly_opened_loops": [],
+            "style_diagnostics": {},
+            "consistency_flags": [],
+        },
+        ensure_ascii=False,
+    )
+    long_resp = json.dumps(
+        {
+            "narrative_text": long_text,
+            "estimated_length": "medium",
+            "viewpoint_characters": ["c1"],
+            "scene_focus": "",
+            "events_consumed": [],
+            "open_loops_referenced": [],
+            "newly_opened_loops": [],
+            "style_diagnostics": {},
+            "consistency_flags": [],
+        },
+        ensure_ascii=False,
+    )
+
+    # Mock critic to track calls
+    mock_critic = AsyncMock()
+    mock_critic.critique_and_iterate = AsyncMock()
+    agent = NarratorAgent(critic=mock_critic, enable_critic=True)
+
+    # 单事件触发 narrate (避开 score 阈值跳过)
+    dummy_event = Event(
+        id="evt_1",
+        type="exogenous",
+        tick=1,
+        description="测试事件",
+        narrative_value=10,
+        narrative_value_hint=10,
+    )
+
+    # --- 短输出: critic 不应被调 ---
+    mock_llm.set_responses([short_resp])
+    out_short = await agent.narrate(
+        tick=1,
+        world_time=1,
+        tracking_character_id="c1",
+        tick_events=[dummy_event],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        style_anchors=[],
+        last_narration_tick=0,
+    )
+    assert out_short.should_narrate is True
+    assert mock_critic.critique_and_iterate.call_count == 0, (
+        "短段落 (<400 字) 不应该触发 critic"
+    )
+
+    # --- 长输出: critic 应该被调 ---
+    mock_critic.critique_and_iterate.reset_mock()
+    # critic 返回时假装直接 ACCEPT, final_text 等于 draft
+    from agents.narrative_critic import CritiqueOutput
+
+    mock_critic.critique_and_iterate.return_value = CritiqueOutput(
+        final_text=long_text,
+        rounds=[],
+        surviving_triggers=[],
+        decision_trail=[],
+        final_action="ACCEPT",
+        new_opening_signature="",
+        blacklist_to_add=[],
+    )
+    mock_llm.set_responses([long_resp])
+    out_long = await agent.narrate(
+        tick=2,
+        world_time=2,
+        tracking_character_id="c1",
+        tick_events=[dummy_event],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        style_anchors=[],
+        last_narration_tick=0,
+    )
+    assert out_long.should_narrate is True
+    assert mock_critic.critique_and_iterate.call_count == 1, (
+        "长段落 (≥400 字) 必须触发 critic"
+    )

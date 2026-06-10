@@ -144,6 +144,11 @@ _PROSE_TAIL_MAX_CHARS = 800
 # 反而稀释 Narrator 注意力, 同时占 input prompt 体积。
 _MAX_BRIEF_CHARS_COUNT = 5
 _MAX_BRIEF_EVENTS = 16
+# v2.38 (iter#10) — 短段落跳过 critic 的字数下限. 一次 critique+rewrite
+# ~4500 tokens 比 < 400 字段落本身还多, 收益不成比例.
+# v2.38 (iter#12 review fix) — 此前定义在 narrate() 方法体里, 不利于
+# 测试 monkeypatch / 配置发现. 提升到模块级.
+_CRITIC_MIN_NARRATIVE_LEN = 400
 
 
 class NarratorAgent:
@@ -313,11 +318,7 @@ class NarratorAgent:
 
         parsed = self._parse_output(resp.content, estimated_length, tick, tick_events)
         # 4. CRITIQUE → REVISE/REWRITE 循环
-        # v2.38 (iter#10) — 短段落跳过 critic. < 400 字的 narrative critic 收益
-        # 不成比例: 一次 critique+rewrite ~4500 tokens 比 narrative 自身还多,
-        # 而短段落本来就少有 critic 能纠正的结构性问题. 短段落的语感由 Narrator
-        # 自己的 system prompt 已经管住 (反 AI 套话 / 段末 / 开头多样性).
-        _CRITIC_MIN_NARRATIVE_LEN = 400
+        # v2.38 (iter#10) — 短段落跳过 critic, 阈值在模块级 _CRITIC_MIN_NARRATIVE_LEN.
         if (
             parsed.should_narrate
             and self._critic is not None

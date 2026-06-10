@@ -85,7 +85,18 @@ remove}, value}. 仅强因果必须立即生效时填; 一般事件不需要.
       "narrative_value_hint": 7
     }
   ],
-  "state_patches": [],
+  "state_patches": [
+    // 仅强因果事件填; 一般事件留 [] 不填
+    {
+      "source_agent": "event_injector",
+      "source_event_id": "evt_xxx",
+      "target_type": "character",
+      "target_id": "<char_id>",
+      "ops": [{"field": "status_effects", "op": "append", "value": "受伤"}],
+      "confidence": 0.9,
+      "reason": "事件直接结果"
+    }
+  ],
   "no_events_reason": null
 }
 
