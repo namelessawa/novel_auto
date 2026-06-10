@@ -148,14 +148,23 @@ _MAX_BRIEF_EVENTS = 16
 # ~4500 tokens 比 < 400 字段落本身还多, 收益不成比例.
 # v2.38 (iter#12 review fix) — 此前定义在 narrate() 方法体里, 不利于
 # 测试 monkeypatch / 配置发现. 提升到模块级.
-# v2.38 (iter#25) — 400 → 600. 实测 400-600 字 narrative critic 触发
+# v2.38 (iter#25) — 默认 400 → 600. 实测 400-600 字 narrative critic 触发
 # REVISE+REWRITE 时 ~14k tokens (与产出本身同级), 但短中段落即使有结构
-# 性触发, 改写后净收益不显著. 600 字以上才是值得反复打磨的"段". 用户可
-# 通过 CRITIC_MIN_NARRATIVE_LEN env 覆盖.
-import os as _os_for_critic_min
-_CRITIC_MIN_NARRATIVE_LEN = int(
-    _os_for_critic_min.environ.get("CRITIC_MIN_NARRATIVE_LEN", "600")
-)
+# 性触发, 改写后净收益不显著. 600 字以上才是值得反复打磨的"段".
+# v2.38 (iter#27 review fix) — 用 lazy 函数读 env, 测试可以
+# monkeypatch.setenv 后正确改阈值; 此前 module load 时冻结到常量,
+# monkeypatch 无效.
+_CRITIC_MIN_NARRATIVE_LEN_DEFAULT = 600
+
+
+def _critic_min_narrative_len() -> int:
+    raw = os.environ.get("CRITIC_MIN_NARRATIVE_LEN", "").strip()
+    if not raw:
+        return _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
+    try:
+        return int(raw)
+    except ValueError:
+        return _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
 
 
 class NarratorAgent:
@@ -325,12 +334,13 @@ class NarratorAgent:
 
         parsed = self._parse_output(resp.content, estimated_length, tick, tick_events)
         # 4. CRITIQUE → REVISE/REWRITE 循环
-        # v2.38 (iter#10) — 短段落跳过 critic, 阈值在模块级 _CRITIC_MIN_NARRATIVE_LEN.
+        # v2.38 (iter#10) — 短段落跳过 critic, 阈值通过 _critic_min_narrative_len()
+        # 每次 lazy 读 env (允许 monkeypatch.setenv 后立即生效).
         if (
             parsed.should_narrate
             and self._critic is not None
             and parsed.narrative_text
-            and len(parsed.narrative_text) >= _CRITIC_MIN_NARRATIVE_LEN
+            and len(parsed.narrative_text) >= _critic_min_narrative_len()
         ):
             parsed = await self._run_critique(parsed)
         return parsed
