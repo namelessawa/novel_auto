@@ -74,6 +74,91 @@ event_injector 在 3-tick bench 没触发, 所以效果要在生产长跑里看.
 
 ---
 
+## [2.38] — 2026-06-11 — iter#19-29 收尾 + review fixes (累计 -77% tokens / -83% latency)
+
+### iter#19 — Narrator material_block 紧凑
+
+description 截 120 字; internal/intent 80→60 字; 保留 [e.id] (events_consumed
+需引用). 每 narrator 调用省 ~600 chars input.
+
+### iter#20 — character_agent user_prompt
+
+多 header 合并到单行 (当前状态/位置/情绪/身体/物品/钱); 关系/事件/目标 desc
+截 50-100; recent_actions 取后 3 (从 4). per-call 省 ~300-500 chars.
+
+### iter#21 — Showrunner user_prompt indent strip
+
+json indent 去掉; 最近章节 20→10; loop desc 80→60.
+
+### iter#22 — EventInjector user_prompt indent strip
+
+6 个 json.dumps indent → 紧凑; 去 ```json 围栏. 每次调用省 600-1200 tokens.
+
+### iter#23 — MemoryCompressor user_prompt indent strip
+
+batch=10 entries 紧凑化, 节省 50%.
+
+### iter#24 — character_arc_tracker user_prompt indent strip
+
+json indent + fence + 检测要求合并.
+
+### iter#25 — Critic length-gate 400→600 字
+
+阈值通过 _critic_min_narrative_len() lazy 读 CRITIC_MIN_NARRATIVE_LEN env.
+400-600 字段落 critic 触发 REVISE+REWRITE 时 14k tokens 与产出本身同级,
+600+ 字才值得反复打磨.
+
+### iter#26 — continuity_v2 evaluator slim
+
+8 维度详细子项 (每项 3 行) 压到单行 ~80 chars/dim; memory_section json
+indent 去掉.
+
+### iter#27 — NoveltyCritic user_prompt indent strip
+
+json indent + fence; 章节 30→20.
+
+### iter#28 — story_arc_director user_prompt 合并
+
+三段 header 合并到单段紧凑视图.
+
+### iter#29 — bootstrap stage JSON indent strip
+
+PROMPT_CHARACTERS / PROMPT_LOOPS 的 world_state JSON 不再 indent.
+
+### Review fixes (iter#19-29)
+
+* MEDIUM iter#20 — character_agent facts/secrets 按 item 截断 (此前 ";"
+  join 后 [:200] 中间砍字, 静默丢 tail)
+* MEDIUM iter#22 — event_injector stray "+" 字符清理
+* HIGH iter#25 — 双重 `import os` 别名清理
+* HIGH iter#25 — module-level env 冻结改成 lazy 函数 read (monkeypatch
+  能正确生效)
+
+### Benchmark — v15 final vs baseline (3 tick + bootstrap, custom MaaS qwen)
+
+| 指标                       | v0-baseline | v15-final | Δ      |
+| -------------------------- | ----------: | --------: | -----: |
+| total tokens               |     137,890 |    31,214 |  -77%  |
+| narrative_critic (all)     |      65,174 |     7,878 |  -88%  |
+| narrator                   |      19,904 |    16,184 |  -19%  |
+| world_simulator            |      19,427 |     7,152 |  -63%  |
+| bootstrap_sec              |         501 |       306 |  -39%  |
+| avg tick duration (sec)    |         556 |        91 |  -83%  |
+
+### Quality samples preserved at iter#29
+
+> 酸雨落了整夜。天亮时没停。
+> 铁影城的屋顶在雾中只露出轮廓, 像一排生锈的锯齿... 玄烛低头走过赤铜巷.
+> 外套领子竖着, 还是挡不住那股味道 — 煤烟混铁锈, 呛嗓子. 他把布袋换到
+> 另一边肩上, 里面的东西硌着肋骨. 三份卷宗, 封蜡完好, 是昨夜从外城守备
+> 处领回来的. 编号 6-17、6-18、6-19. 守备官递过来的时候手心出汗, 说了句
+> "尽快", 多余的话一个字没有.
+
+577/577 tests pass (incl. integration test for critic length-gate added at
+iter#15 review fix).
+
+---
+
 ## [2.38] — 2026-06-11 — iter#16-18 三轮 + review fix
 
 ### iter#16 — NoveltyCritic prompt 减重
