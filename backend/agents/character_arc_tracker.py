@@ -397,7 +397,8 @@ class CharacterArcTracker:
             system_prompt=SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.3,
-            max_tokens=8192,
+            # v2.38 (iter#15) — arc 漂移检测输出短 JSON ~1500 tokens, 4096 余裕.
+            max_tokens=4096,
             agent_id="character_arc_tracker",
             priority="optional",
         )

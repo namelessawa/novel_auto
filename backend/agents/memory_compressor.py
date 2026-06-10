@@ -223,7 +223,9 @@ class MemoryCompressor:
                     user_prompt=user_prompt,
                     temperature=0.3,
                     # v2.38 (iter#9) — L1→L2 同上, 更高层级摘要更短.
-                    max_tokens=4096,
+                    # v2.38 (iter#15) — 与 L0→L1 一致 (6144), 防 batch=10 verbose
+                    # 模式截断丢 entries.
+                    max_tokens=6144,
                     agent_id="memory_compressor:l1_l2",
                     priority="optional",
                 )
