@@ -1,11 +1,19 @@
 # 无限小说生成系统 (Infinite Novel Generator)
 
-> **当前版本: v2.37** (2026-06-10) — FastAPI + React/Vite 单栈,
+> **当前版本: v2.38** (2026-06-11) — FastAPI + React/Vite 单栈,
 > 10 Agent + 7 阶段 Tick 调度的多智能体模拟系统 (故事驱动),
 > 节级管线已任务化, 自带邮箱 OTP 多租户认证、Tick 驱动节、多模态视频生成、
-> 知识图谱 tick 同步。v2.37 重写叙事质量架构 (台词管道 / 前文衔接 /
-> 角色名片 / 正向写作方法论) + 全项目 4 路 code review 修复 + 前端
-> 「墨砚」设计系统。
+> 知识图谱 tick 同步。
+>
+> **v2.38 cost-quality-loop**: 31 轮自我迭代彻底打磨 prompt 与 max_tokens
+> 预算. critic 链路 -88% / world_simulator -63% / narrator -19% / bootstrap
+> -39%, **累计 total tokens -77%, avg tick duration -83%** vs baseline,
+> 质量保留. 575 测试 GREEN. 每轮迭代 + 9 次 code review 全程归档 (见
+> CHANGELOG iter#3-iter#31, bench artifacts 在 docs/iter/).
+>
+> v2.37 重写叙事质量架构 (台词管道 / 前文衔接 / 角色名片 / 正向写作方法论)
+> + 全项目 4 路 code review 修复 + 前端「墨砚」设计系统。
+>
 > 设计哲学来自 [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
 > **故事是模拟的副产品, Narrator 选择性讲述**。
 
