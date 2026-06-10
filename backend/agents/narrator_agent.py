@@ -148,7 +148,14 @@ _MAX_BRIEF_EVENTS = 16
 # ~4500 tokens 比 < 400 字段落本身还多, 收益不成比例.
 # v2.38 (iter#12 review fix) — 此前定义在 narrate() 方法体里, 不利于
 # 测试 monkeypatch / 配置发现. 提升到模块级.
-_CRITIC_MIN_NARRATIVE_LEN = 400
+# v2.38 (iter#25) — 400 → 600. 实测 400-600 字 narrative critic 触发
+# REVISE+REWRITE 时 ~14k tokens (与产出本身同级), 但短中段落即使有结构
+# 性触发, 改写后净收益不显著. 600 字以上才是值得反复打磨的"段". 用户可
+# 通过 CRITIC_MIN_NARRATIVE_LEN env 覆盖.
+import os as _os_for_critic_min
+_CRITIC_MIN_NARRATIVE_LEN = int(
+    _os_for_critic_min.environ.get("CRITIC_MIN_NARRATIVE_LEN", "600")
+)
 
 
 class NarratorAgent:

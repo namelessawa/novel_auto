@@ -345,8 +345,9 @@ async def test_narrate_skips_critic_for_short_narrative(mock_llm, monkeypatch) -
     from memory_system.models import Event
 
     # 构造两个不同长度的 narrator JSON 输出
+    # v2.38 (iter#25) — 阈值提高到 600, long_text 跟着提
     short_text = "他走过雨夜的街。"  # ~10 字
-    long_text = "他走过雨夜的街。" * 60  # ~480 字
+    long_text = "他走过雨夜的街。" * 100  # ~800 字
 
     short_resp = json.dumps(
         {
