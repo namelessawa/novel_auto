@@ -533,16 +533,22 @@ class NarratorAgent:
         internal_monologue 在 action→Event 转换时被丢弃, 必须从原始
         CharacterAction 取回并随事件一起渲染。
         """
+        # v2.38 (iter#19) — material block 紧凑:
+        # * event description 截 120 字 (此前不截, 单事件可达 300+ chars)
+        # * internal/intent 从 80 截到 60 字 (足够传达动机, 不冗长)
+        # * 保留 [e.id] — Narrator 输出 events_consumed 字段必须引用真实 id
         actions_by_char = {a.character_id: a for a in tick_actions}
         consumed_action_chars: set[str] = set()
         lines: list[str] = []
         idx = 0
+        kind_map = {"exogenous": "环境", "endogenous": "因果", "dramatic": "变故"}
         for e in tick_events[:_MAX_BRIEF_EVENTS]:
             idx += 1
+            desc = e.description[:120] if len(e.description) > 120 else e.description
             if e.type == "character_action" and e.participants:
                 actor_id = e.participants[0]
                 actor = self._display_name(actor_id, char_profiles)
-                lines.append(f"{idx}. [{e.id}] {actor}: {e.description}")
+                lines.append(f"{idx}. [{e.id}] {actor}: {desc}")
                 act = actions_by_char.get(actor_id)
                 if act is not None and actor_id not in consumed_action_chars:
                     consumed_action_chars.add(actor_id)
@@ -551,19 +557,15 @@ class NarratorAgent:
                             self._display_name(t, char_profiles)
                             for t in act.dialogue_to_whom[:3]
                         )
-                        suffix = f" (对{to_whom})" if to_whom else ""
-                        lines.append(f"   台词{suffix}: “{act.dialogue_spoken}”")
+                        suffix = f"(对{to_whom})" if to_whom else ""
+                        lines.append(f"   台词{suffix}: 「{act.dialogue_spoken}」")
                     if act.internal_monologue:
-                        lines.append(f"   △内心: {act.internal_monologue[:80]}")
+                        lines.append(f"   △内心: {act.internal_monologue[:60]}")
                     if act.intent:
-                        lines.append(f"   △意图: {act.intent[:80]}")
+                        lines.append(f"   △意图: {act.intent[:60]}")
             else:
-                kind = {
-                    "exogenous": "环境",
-                    "endogenous": "因果",
-                    "dramatic": "变故",
-                }.get(e.type, e.type)
-                lines.append(f"{idx}. [{e.id}] ({kind}) {e.description}")
+                kind = kind_map.get(e.type, e.type)
+                lines.append(f"{idx}. [{e.id}] ({kind}) {desc}")
         if not lines:
             return "(本段无素材)"
         return "\n".join(lines)
