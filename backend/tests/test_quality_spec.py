@@ -542,3 +542,28 @@ def test_critic_min_narrative_len_rejects_invalid_env(monkeypatch) -> None:
     # 空字符串 → default
     monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "")
     assert _critic_min_narrative_len() == _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
+
+
+def test_critic_enable_llm_env_robust_parsing(monkeypatch) -> None:
+    """v2.38 iter#61 — CRITIC_ENABLE_LLM 接受多种 off 拼写.
+
+    此前只识别 '0'; 'false'/'False'/'no'/'off' 都被当 truthy 继续启用 critic.
+    """
+    import importlib
+
+    cases_off = ["0", "false", "False", "FALSE", "no", "off"]
+    cases_on = ["1", "true", "yes", "on", "", "anything-else"]
+
+    for v in cases_off:
+        monkeypatch.setenv("CRITIC_ENABLE_LLM", v)
+        import agents.narrative_critic as nc
+
+        importlib.reload(nc)
+        assert nc.ENABLE_LLM_CRITIC is False, f"{v!r} 应该禁用 critic"
+
+    for v in cases_on:
+        monkeypatch.setenv("CRITIC_ENABLE_LLM", v)
+        import agents.narrative_critic as nc
+
+        importlib.reload(nc)
+        assert nc.ENABLE_LLM_CRITIC is True, f"{v!r} 应该启用 critic"
