@@ -45,6 +45,10 @@ sys.path.insert(0, str(_REPO_ROOT / "backend"))
 
 # Force custom provider before any imports that resolve the LLM config.
 os.environ.setdefault("LLM_PROVIDER", "custom")
+# v2.38 (iter#57) — bench 跑长 tick 时 reasoning 模型偶发卡 300s+, 默认
+# LLM_TIMEOUT=600 已够. 显式 setdefault 让 bench 在裸环境也有合理超时,
+# 不依赖 .env 缺失/错配.
+os.environ.setdefault("LLM_TIMEOUT", "600")
 
 import novel_manager  # noqa: E402
 from bootstrap_prompts import bootstrap_world  # noqa: E402
