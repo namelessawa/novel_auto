@@ -29,6 +29,15 @@ from quality_metrics.compliance import (
     NarrationRecord,
     compliance_report,
 )
+from quality_metrics.judge import (
+    JudgeFn,
+    JudgeMeta,
+    PairwiseResult,
+    RubricResult,
+    make_mimo_judge_fn,
+    pairwise_judge,
+    rubric_judge,
+)
 from quality_metrics.consistency import (
     CharacterFact,
     ConsistencyReport,
@@ -67,4 +76,12 @@ __all__ = [
     "ComplianceReport",
     "NarrationRecord",
     "compliance_report",
+    # judge
+    "JudgeFn",
+    "JudgeMeta",
+    "PairwiseResult",
+    "RubricResult",
+    "make_mimo_judge_fn",
+    "pairwise_judge",
+    "rubric_judge",
 ]
