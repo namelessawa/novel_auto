@@ -24,6 +24,15 @@ bench integration (iter#80).
 
 from __future__ import annotations
 
+from quality_metrics.consistency import (
+    CharacterFact,
+    ConsistencyReport,
+    ConsistencyViolation,
+    LocationFact,
+    WorldSnapshot,
+    check_narration_against_snapshot,
+    consistency_report,
+)
 from quality_metrics.repetition import (
     RepetitionReport,
     char_ngram_distinct,
@@ -34,10 +43,19 @@ from quality_metrics.repetition import (
 )
 
 __all__ = [
+    # repetition
     "RepetitionReport",
     "char_ngram_distinct",
     "char_ngram_overlap",
     "repetition_report",
     "word_ngram_distinct",
     "word_ngram_overlap",
+    # consistency
+    "CharacterFact",
+    "ConsistencyReport",
+    "ConsistencyViolation",
+    "LocationFact",
+    "WorldSnapshot",
+    "check_narration_against_snapshot",
+    "consistency_report",
 ]
