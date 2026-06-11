@@ -674,10 +674,7 @@ class NarratorAgent:
 {summaries_text}
 
 # 写作指令
-
-视点角色: {viewpoint_name}。目标篇幅 {target_chars} — 宁短勿水, 写完该写的就停。
-从前文结尾自然接续。按 system 提示输出严格 JSON。
-若你判断本段素材不值得讲述, narrative_text 留空并在 consistency_flags 说明。
+视点角色 {viewpoint_name} | 目标篇幅 {target_chars} (宁短勿水) | 从前文结尾自然接续 | 严格 JSON 输出 | 不值得讲时 narrative_text 留空 + consistency_flags 说明.
 """
 
     def _parse_output(
