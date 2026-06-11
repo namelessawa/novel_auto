@@ -1,0 +1,86 @@
+{
+  "label": "stage4plus-seed2-30tick",
+  "source": "bench_stage4plus-seed2-30tick_1781178658",
+  "tick_count": 30,
+  "narrations": 22,
+  "total_tokens": 292673,
+  "longrange": {
+    "foreshadowing": {
+      "sample_count": 6,
+      "open_to_closed_ratio_at_end": 4.0,
+      "stale_ratio_at_end": 0.0,
+      "samples": [
+        {
+          "tick": 5,
+          "open": 4,
+          "closed": 0,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        },
+        {
+          "tick": 10,
+          "open": 4,
+          "closed": 0,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        },
+        {
+          "tick": 15,
+          "open": 4,
+          "closed": 0,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        },
+        {
+          "tick": 20,
+          "open": 4,
+          "closed": 0,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        },
+        {
+          "tick": 25,
+          "open": 4,
+          "closed": 0,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        },
+        {
+          "tick": 30,
+          "open": 4,
+          "closed": 0,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        }
+      ],
+      "notes": []
+    },
+    "novelty": {
+      "sample_count": 0,
+      "mean_score": 0.0,
+      "trend": "insufficient_data",
+      "samples": []
+    },
+    "repetition_global": {
+      "narration_count": 22,
+      "distinct": {
+        "char_2": 0.913,
+        "char_3": 0.9817,
+        "char_4": 0.9957,
+        "word_2": 0.9538,
+        "word_3": 0.9545,
+        "word_4": 0.9091
+      },
+      "overlap_consecutive": {
+        "char_2": 0.0731,
+        "char_3": 0.0253,
+        "char_4": 0.0111,
+        "word_2": 0.0007,
+        "word_3": 0.0,
+        "word_4": 0.0
+      },
+      "notes": []
+    }
+  },
+  "drift_signals": []
+}
