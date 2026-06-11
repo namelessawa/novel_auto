@@ -11,6 +11,21 @@ Output:
 The bench runs a fresh bootstrap + N ticks on a dedicated "bench" user so it
 never collides with real novels.  Re-invoking with the same --label overwrites
 output files but uses a new novel id so each run is independent.
+
+Reproducing v2.38 cost-quality-loop benches:
+
+  # baseline (before iter#3)
+  git checkout main -- backend/agents/ backend/bootstrap_prompts.py
+  python scripts/bench_tick.py --label v0-baseline
+
+  # final state
+  git checkout iter/cost-quality-loop -- .
+  python scripts/bench_tick.py --label v15-final
+
+Expected: total_tokens drops 137,890 → ~31,000 (-77%), avg tick 556s → ~91s.
+
+Note: stochastic provider variance means single-bench numbers fluctuate;
+the trend across 3+ benches at same SHA is what's meaningful.
 """
 
 from __future__ import annotations
