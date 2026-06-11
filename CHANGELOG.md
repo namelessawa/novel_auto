@@ -5,6 +5,32 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#104: close-loop fix 在 seed3 实测验证
+
+`docs/iter/verdict-iter104-close-loop-fix-validated.md`:
+
+iter#103 close-loop fix 实测验证. 重跑 iter#102 触发 drift 的同 seed3
+50-tick, 对照 close 机制开关的差异.
+
+**结果跨 4 个 50-tick bench (200 tick 总, iter#100/101/102/104):**
+- iter#100/101/102 baseline: closed=0 全程
+- **iter#104: closed=1 ← 180+ tick 历史首次自动 close**
+
+vs iter#102 同 seed3 baseline:
+- closed_total 0 → 1 (历史首次)
+- open final 11 → 5 (-55%)
+- stale final 2 → 0
+- avg_urg final 6.09 → 6.80 (+12%, 末期叙事张力恢复)
+- distinct char-2 0.8545 → 0.868 (+1.6%)
+- drift signals 1 → 0
+- total_tokens -53% (有 cast-size confound; 去 confound 估 -30%)
+
+iter#103 fix 实测确认有效. Phase 2 stage5 + close-fix = best stable.
+
+cost delta: -53% gross / ~-30% adjusted
+quality delta: drift 1→0, avg_urg +12%, distinct +1.6%
+测试: 701/701 (无新代码改动)
+
 ## [2.39] — 2026-06-12 — iter#103: Showrunner 自动关闭 open_loops (closed=0 leakage 修复)
 
 `backend/agents/showrunner.py` + `backend/agents/orchestrator.py`:
