@@ -156,6 +156,8 @@ def _render_markdown(rep: dict) -> str:
         f"- tick_durations_sec: {rep['tick_durations_sec']}",
         f"- total_tokens: {rep['total_tokens']}",
         f"- call_count: {rep['call_count']}",
+        # v2.38 (iter#58) — narrative chars 累计, 便于 per-char cost 计算
+        f"- narrative_chars_total: {sum(r['narrator_chars'] for r in rep['per_tick'])}",
         "",
         "## By agent (cumulative, bootstrap + ticks)",
         "",
