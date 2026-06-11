@@ -32,6 +32,7 @@ from memory_system.models import (
     CharacterProfile,
     CharacterState,
 )
+from nf_core.env_helpers import env_bool_tri
 from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
@@ -176,8 +177,7 @@ class CharacterArcTracker:
     ) -> None:
         if enable_llm is None:
             # v2.38 (iter#71) — env_bool_tri 共享 helper.
-            from nf_core.env_helpers import env_bool_tri
-
+            # v2.38 (iter#74 review fix) — import 提到模块顶部.
             tri = env_bool_tri("CHARACTER_ARC_TRACKER_LLM")
             if tri is not None:
                 enable_llm = tri

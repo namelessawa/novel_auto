@@ -256,11 +256,15 @@ MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 1)
 # rewrite) 后直接接受, 不再做 2nd critique. 实测 2nd critique 几乎总是
 # POLISH (modify 已清掉高触发), 等于纯浪费. 通过 env 可恢复为 2/3/4.
 MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 1)
-# v2.38 (iter#72) — env_bool 共享 helper. 行为等价: default=True (env 未设置
-# 或不识别时开 critic), 显式 off-集合关闭.
 from nf_core.env_helpers import env_bool as _env_bool
 
-ENABLE_LLM_CRITIC = _env_bool("CRITIC_ENABLE_LLM", default=True)
+
+# v2.38 (iter#72) — env_bool 共享 helper.
+# v2.38 (iter#74 review fix) — 改成 lazy 函数 read, 此前 module-level
+# 常量在 import 时冻结, monkeypatch.setenv 后无效, 且 production 也不能
+# 不重启进程改 env. 调用方走 ENABLE_LLM_CRITIC() 而非常量.
+def ENABLE_LLM_CRITIC() -> bool:  # noqa: N802  - 保留旧名兼容
+    return _env_bool("CRITIC_ENABLE_LLM", default=True)
 
 # v2.38 (iter#3) — critique 输出上限。triggers JSON 极其紧凑, 1500 tokens 足够
 # 列 10+ 条触发; 之前的 8192 给推理模型留了把 budget 全填满的空间, 浪费且超时。
@@ -315,7 +319,7 @@ class NarrativeCritic:
                 blacklist_to_add=[],
             )
 
-        use_llm = ENABLE_LLM_CRITIC if enable_llm is None else enable_llm
+        use_llm = ENABLE_LLM_CRITIC() if enable_llm is None else enable_llm
         recent_openings = recent_openings or []
 
         rounds: list[CritiqueRound] = []

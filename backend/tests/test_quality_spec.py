@@ -547,23 +547,19 @@ def test_critic_min_narrative_len_rejects_invalid_env(monkeypatch) -> None:
 def test_critic_enable_llm_env_robust_parsing(monkeypatch) -> None:
     """v2.38 iter#61 — CRITIC_ENABLE_LLM 接受多种 off 拼写.
 
-    此前只识别 '0'; 'false'/'False'/'no'/'off' 都被当 truthy 继续启用 critic.
+    v2.38 (iter#74 review fix) — 此前用 importlib.reload 强行换模块, 污染
+    sys.modules 影响后续测试. 改成调用 ENABLE_LLM_CRITIC() 函数 (iter#74
+    review fix 把它从常量改成函数), monkeypatch.setenv 后直接生效, 无副作用.
     """
-    import importlib
+    from agents.narrative_critic import ENABLE_LLM_CRITIC
 
     cases_off = ["0", "false", "False", "FALSE", "no", "off"]
     cases_on = ["1", "true", "yes", "on", "", "anything-else"]
 
     for v in cases_off:
         monkeypatch.setenv("CRITIC_ENABLE_LLM", v)
-        import agents.narrative_critic as nc
-
-        importlib.reload(nc)
-        assert nc.ENABLE_LLM_CRITIC is False, f"{v!r} 应该禁用 critic"
+        assert ENABLE_LLM_CRITIC() is False, f"{v!r} 应该禁用 critic"
 
     for v in cases_on:
         monkeypatch.setenv("CRITIC_ENABLE_LLM", v)
-        import agents.narrative_critic as nc
-
-        importlib.reload(nc)
-        assert nc.ENABLE_LLM_CRITIC is True, f"{v!r} 应该启用 critic"
+        assert ENABLE_LLM_CRITIC() is True, f"{v!r} 应该启用 critic"

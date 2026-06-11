@@ -53,6 +53,7 @@ from narrative.branch_manager import BranchManager
 from narrative.creativity_scorer import CreativityReport, CreativityScorer
 from narrative.fact_ledger import Fact, FactLedger
 from narrative.safety_filter import SafetyFilter
+from nf_core.env_helpers import env_bool as _env_bool
 from nf_core.llm_client import set_current_tick
 from nf_core.token_budget import TokenBudgetTracker, set_global_tracker
 from dataclasses import dataclass, field as dc_field
@@ -1267,8 +1268,7 @@ class Orchestrator:
             return 0
         conflicts = getattr(output, "conflicts", None) or []
         # v2.38 (iter#72) — env_bool 共享 helper.
-        from nf_core.env_helpers import env_bool as _env_bool
-
+        # v2.38 (iter#74 review fix) — import 提到模块顶部.
         override = "haiku" if _env_bool("HALLUCINATION_AUTO_DEGRADE", default=False) else None
 
         processed = 0

@@ -23,15 +23,16 @@ def env_bool(
     name: str,
     *,
     default: bool = False,
-    raw: str | None = None,
+    _raw_override: str | None = None,
 ) -> bool:
     """读 env name, 返回 robust bool.
 
-    ``raw`` 可外部传入跳过 os.environ.get (测试用).
+    ``_raw_override`` (test-only) 可跳过 os.environ.get; name 在该路径下
+    仅用于错误信息上下文, 实际值取自 _raw_override. 生产代码 don't pass.
     未设置或不在 truthy/falsy 集合时返回 ``default``.
     """
     value = (
-        raw if raw is not None else os.environ.get(name, "")
+        _raw_override if _raw_override is not None else os.environ.get(name, "")
     ).strip().lower()
     if value in _FALSY:
         return False

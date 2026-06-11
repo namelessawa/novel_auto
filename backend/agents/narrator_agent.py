@@ -31,6 +31,7 @@ from memory_system.models import (
     StyleAnchor,
     WorldState,
 )
+from nf_core.env_helpers import env_bool_tri
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak as _strip_reasoning_leak
@@ -203,8 +204,7 @@ class NarratorAgent:
             # 默认: 生产环境开启 critic; pytest 环境关闭, 避免吞掉测试预排的 mock LLM 响应。
             # 显式 NARRATOR_ENABLE_CRITIC=1/0 优先于自动判断。
             # v2.38 (iter#69) — env_bool_tri 抽出复用 (替代手抄拼写集合).
-            from nf_core.env_helpers import env_bool_tri
-
+            # v2.38 (iter#74 review fix) — import 提到模块顶部.
             tri = env_bool_tri("NARRATOR_ENABLE_CRITIC")
             if tri is not None:
                 enable_critic = tri

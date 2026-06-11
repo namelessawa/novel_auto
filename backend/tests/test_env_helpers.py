@@ -30,13 +30,13 @@ from nf_core.env_helpers import env_bool, env_bool_tri
     ],
 )
 def test_env_bool_recognized_values(raw, expected) -> None:
-    assert env_bool("DUMMY", raw=raw, default=not expected) is expected
+    assert env_bool("DUMMY", _raw_override=raw, default=not expected) is expected
 
 
 @pytest.mark.parametrize("raw", ["", "  ", "anything", "yesno", "?"])
 def test_env_bool_unrecognized_returns_default(raw) -> None:
-    assert env_bool("DUMMY", raw=raw, default=True) is True
-    assert env_bool("DUMMY", raw=raw, default=False) is False
+    assert env_bool("DUMMY", _raw_override=raw, default=True) is True
+    assert env_bool("DUMMY", _raw_override=raw, default=False) is False
 
 
 def test_env_bool_reads_actual_environ(monkeypatch) -> None:
