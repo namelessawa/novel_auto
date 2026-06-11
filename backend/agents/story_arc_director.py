@@ -131,10 +131,11 @@ class StoryArcDirector:
         model_tier: str = "small",
     ) -> None:
         if enable_llm is None:
-            raw = os.environ.get("STORY_ARC_DIRECTOR_LLM", "").strip()
-            if raw in {"0", "false", "False"}:
+            # v2.38 (iter#65) — case-insensitive 多拼写 (同 narrator iter#64).
+            raw = os.environ.get("STORY_ARC_DIRECTOR_LLM", "").strip().lower()
+            if raw in {"0", "false", "no", "off"}:
                 enable_llm = False
-            elif raw in {"1", "true", "True"}:
+            elif raw in {"1", "true", "yes", "on"}:
                 enable_llm = True
             else:
                 # pytest 默认关闭 LLM, 避免吞掉 mock 响应
