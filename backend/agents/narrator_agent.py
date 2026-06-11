@@ -162,7 +162,10 @@ def _critic_min_narrative_len() -> int:
     if not raw:
         return _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
     try:
-        return int(raw)
+        v = int(raw)
+        # v2.38 (iter#54) — 负值或 0 退回 default (0 等于 critic 总开,
+        # 负值无意义), 防误配把 critic 全打开蹦 token 预算.
+        return v if v > 0 else _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
     except ValueError:
         return _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
 
