@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from dataclasses import dataclass
 
@@ -233,8 +234,9 @@ class EventInjector:
         # 验证 (iter#95) 显示 open_count 单调上涨但 stale 长期保持 0, 让
         # iter#90 原则 #6 (stale≥3 才不新种) 来不及生效就触底. open_pressure
         # 提供第二个 cap 触发信号: open_count ≥ OPEN_LOOP_CAP 时也禁新种.
-        import os as _os_ev
-        _open_cap_raw = _os_ev.environ.get("EVENT_INJECTOR_OPEN_LOOP_CAP", "6").strip()
+        # Phase 2 (iter#99 review fix) — 不再 inline import (iter#27 review 已
+        # 教训过同样的反模式); os 顶部已 import.
+        _open_cap_raw = os.environ.get("EVENT_INJECTOR_OPEN_LOOP_CAP", "6").strip()
         try:
             open_loop_cap = max(3, int(_open_cap_raw))
         except ValueError:
@@ -255,7 +257,7 @@ class EventInjector:
         # v2.38 (iter#96) — open_pressure 第二信号: plot 密集题材 stale 来不及
         # 升 ≥3, 但 open_count 已经偏高 → high 时也走 #6 路径.
         return f"""\
-# 当前 tick={tick}, open_loops={len(open_loops)}, stale_loops={stale_count} (> 20 tick 未推进), open_pressure={open_pressure} (cap={open_loop_cap})
+# 当前 tick={tick}, open_loops={len(open_loops)}, stale_loops={stale_count} (stale_cap=3, > 20 tick 未推进), open_pressure={open_pressure} (open_cap={open_loop_cap})
 
 ## WorldState 摘要
 {json.dumps(ws_lite, ensure_ascii=False)}

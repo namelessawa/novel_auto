@@ -142,7 +142,7 @@ def test_build_prompt_open_pressure_low_below_cap(monkeypatch) -> None:
         dormant_characters=[],
     )
     assert "open_pressure=low" in prompt
-    assert "cap=6" in prompt
+    assert "open_cap=6" in prompt
 
 
 def test_build_prompt_open_pressure_high_at_or_above_cap(monkeypatch) -> None:
@@ -173,4 +173,4 @@ def test_build_prompt_cap_min_clamped_to_3(monkeypatch) -> None:
         showrunner_recs=[],
         dormant_characters=[],
     )
-    assert "cap=3" in prompt
+    assert "open_cap=3" in prompt
