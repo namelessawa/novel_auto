@@ -29,6 +29,17 @@ from quality_metrics.compliance import (
     NarrationRecord,
     compliance_report,
 )
+from quality_metrics.longrange import (
+    ForeshadowingCurve,
+    MemoryFidelityReport,
+    MemoryProbe,
+    NoveltyDecayCurve,
+    NoveltySample,
+    OpenLoopSnapshot,
+    foreshadowing_curve,
+    memory_fidelity_report,
+    novelty_decay_curve,
+)
 from quality_metrics.judge import (
     JudgeFn,
     JudgeMeta,
@@ -84,4 +95,14 @@ __all__ = [
     "make_mimo_judge_fn",
     "pairwise_judge",
     "rubric_judge",
+    # longrange
+    "OpenLoopSnapshot",
+    "ForeshadowingCurve",
+    "foreshadowing_curve",
+    "NoveltySample",
+    "NoveltyDecayCurve",
+    "novelty_decay_curve",
+    "MemoryProbe",
+    "MemoryFidelityReport",
+    "memory_fidelity_report",
 ]
