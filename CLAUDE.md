@@ -141,6 +141,21 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | `LLM_MAX_TOKENS_CAP`          | 65536   | LLMClient.chat 顶层 max_tokens 硬上限        |
 | `LLM_TIMEOUT`                 | 600     | LLM 调用超时 (秒). DEEPSEEK_TIMEOUT 为旧别名 |
 
+## Phase 2 Quality-First Loop 参数 (iter#76+)
+
+> Phase 1 (cost) 已饱和, Phase 2 切到 quality + cost 联合优化.
+> 参数固化以下默认; 修改前必须在 ITERATION_LOG.md 写明原因.
+
+| 参数                          | 默认值                         | 说明                                         |
+| ----------------------------- | :----------------------------- | -------------------------------------------- |
+| `JUDGE_MODEL`                 | `mimo-v2.5-pro` (跨家族评判)   | 用 .env `MIMO_*` 凭据. self-bias 风险最低     |
+| `JUDGE_BUDGET_PER_BENCH`      | 50,000 tokens                  | 单次 quality bench judge 总预算上限           |
+| `JUDGE_PAIRWISE_DENSITY`      | 每 30 tick 抽 10 对            | 关键节拍 (arc / high severity) 优先入样      |
+| `BENCH_FIXED_SEEDS`           | 3 个固定 seed                  | 写入 `scripts/bench_tick.py` 默认; 跨 bench 可复现 |
+| `QUALITY_DET_ALWAYS`          | true                           | 确定性指标层每次 bench 必跑 (零成本)         |
+| `QUALITY_JUDGE_PROMPT_VER`    | (随 prompt 入库自动赋值)        | judge prompt 版本号, 写入产物 metadata       |
+
+
 ## 路径常量约定
 
 - backend 内大多数模块通过 `sys.path.insert` 把 `backend/` 和项目根加入路径,
