@@ -14,6 +14,8 @@
 | bootstrap_sec                |         501 |                 306 |                 305 |  -39%   |
 | avg tick duration (sec)      |         556 |                  91 |                  68 | **-81~88%** |
 
+> Updated 2026-06-11 post iter#48 — see also `STATUS.md` for glance-able board.
+
 ## Iterations
 
 ### Cycle 1 — Core agents (iter#3-5)
@@ -82,6 +84,23 @@
 * **iter#33** Critic MAX_TOTAL_ROUNDS 2→1.
 * **iter#34** world_simulator events 20→10, desc 80→60.
 * Review fix: MEDIUM _compress / _compress_root 长度护栏; MEDIUM world_sim 按 narrative_value 降序选 top-10 (替代 recency).
+
+### Cycle 10 — Polish (iter#35-48)
+
+* **iter#35** ITERATION_LOG.md 完整全程总结.
+* **iter#36** CLAUDE.md env vars table (Token 预算调参 11 个 knob).
+* **iter#37** CRITIC_MIN_NARRATIVE_LEN env override 集成测试.
+* **iter#38** narrator newly_opened_loops str fallback (LLM 偶发不返回 dict).
+* **iter#39** bootstrap OpenLoop 同 fallback.
+* **iter#40** event_injector events 同 fallback.
+* **iter#41** scripts/bench_tick.py docstring 加 reproducibility 章节.
+* **iter#42** bench script smoke 测试 2 个.
+* **iter#43** narrative_critic.py iter#14 残留 dead import (HIGH_SEVERITY_CODES / render_blacklist_block).
+* **iter#44** character_arc_tracker / orchestrator 3 处 dead import.
+* **iter#45** bootstrap_prompts + summary_tree 死 import.
+* **iter#46** narrator user_prompt 写作指令 4 行→1 行 (pipe-separated).
+* **iter#47** branch hygiene check.
+* **iter#48** STATUS.md glance-able board.
 
 ## Architectural patterns applied
 
