@@ -1266,9 +1266,10 @@ class Orchestrator:
         if output is None:
             return 0
         conflicts = getattr(output, "conflicts", None) or []
-        # v2.38 (iter#67) — case-insensitive on-集合 与其他 4 个 env knob 一致.
-        auto_degrade = os.environ.get("HALLUCINATION_AUTO_DEGRADE", "").strip().lower()
-        override = "haiku" if auto_degrade in {"1", "true", "yes", "on"} else None
+        # v2.38 (iter#72) — env_bool 共享 helper.
+        from nf_core.env_helpers import env_bool as _env_bool
+
+        override = "haiku" if _env_bool("HALLUCINATION_AUTO_DEGRADE", default=False) else None
 
         processed = 0
         for c in conflicts:

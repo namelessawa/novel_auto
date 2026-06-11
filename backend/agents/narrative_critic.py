@@ -256,14 +256,11 @@ MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 1)
 # rewrite) 后直接接受, 不再做 2nd critique. 实测 2nd critique 几乎总是
 # POLISH (modify 已清掉高触发), 等于纯浪费. 通过 env 可恢复为 2/3/4.
 MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 1)
-# v2.38 (iter#61) — 接受多种 "off" 拼写, 此前只识别 "0", "false"/"False" 仍开
-# critic 是隐藏 bug.
-ENABLE_LLM_CRITIC = os.environ.get("CRITIC_ENABLE_LLM", "1").strip().lower() not in {
-    "0",
-    "false",
-    "no",
-    "off",
-}
+# v2.38 (iter#72) — env_bool 共享 helper. 行为等价: default=True (env 未设置
+# 或不识别时开 critic), 显式 off-集合关闭.
+from nf_core.env_helpers import env_bool as _env_bool
+
+ENABLE_LLM_CRITIC = _env_bool("CRITIC_ENABLE_LLM", default=True)
 
 # v2.38 (iter#3) — critique 输出上限。triggers JSON 极其紧凑, 1500 tokens 足够
 # 列 10+ 条触发; 之前的 8192 给推理模型留了把 budget 全填满的空间, 浪费且超时。
@@ -361,10 +358,8 @@ class NarrativeCritic:
             # 用 CRITIC_FORCE_LLM=1 可强制总跑 (用于调试 / 严格场景).
             llm_triggers: list[DeterministicTrigger] = []
             det_high_count = sum(1 for t in det_triggers if t.severity == "high")
-            # v2.38 (iter#62) — robust truthy parse, 同 ENABLE_LLM_CRITIC.
-            force_llm = os.environ.get("CRITIC_FORCE_LLM", "0").strip().lower() in {
-                "1", "true", "yes", "on",
-            }
+            # v2.38 (iter#72) — env_bool 共享 helper.
+            force_llm = _env_bool("CRITIC_FORCE_LLM", default=False)
             should_call_llm = (
                 use_llm
                 and not llm_critique_done
