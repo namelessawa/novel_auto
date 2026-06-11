@@ -42,12 +42,8 @@ from memory.tick_state import TickState
 from memory_system.models import (
     CharacterProfile,
     CharacterState,
-    Faction,
-    Goal,
     OpenLoop,
-    Relationship,
     StyleAnchor,
-    TickLocation,
     WorldState,
 )
 from nf_core.json_utils import parse_llm_json

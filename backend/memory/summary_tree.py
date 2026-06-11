@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from memory.tick_state import _quarantine
 from nf_core.llm_client import llm_client
