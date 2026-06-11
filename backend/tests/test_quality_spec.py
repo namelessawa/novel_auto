@@ -439,5 +439,78 @@ async def test_narrate_skips_critic_for_short_narrative(mock_llm, monkeypatch) -
     )
     assert out_long.should_narrate is True
     assert mock_critic.critique_and_iterate.call_count == 1, (
-        "长段落 (≥400 字) 必须触发 critic"
+        "长段落 (≥600 字默认阈值) 必须触发 critic"
+    )
+
+
+@pytest.mark.asyncio
+async def test_critic_min_narrative_len_env_override(mock_llm, monkeypatch) -> None:
+    """v2.38 iter#27 review fix — CRITIC_MIN_NARRATIVE_LEN env 立即生效.
+
+    iter#25 第一版用 module-level constant 冻结到 import 时, monkeypatch.setenv
+    无效. 改成 _critic_min_narrative_len() 函数 lazy 读 env 后, 测试可控.
+    """
+    from unittest.mock import AsyncMock
+
+    from agents.narrator_agent import NarratorAgent
+    from agents.narrative_critic import CritiqueOutput
+    from memory_system.models import Event
+
+    # 把阈值通过 env 降到 50 字, 短段落也应触发 critic
+    monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "50")
+
+    text = "他走过雨夜的街。" * 10  # ~80 字, > 50 但 < 600 默认
+    resp_json = json.dumps(
+        {
+            "narrative_text": text,
+            "estimated_length": "short",
+            "viewpoint_characters": ["c1"],
+            "scene_focus": "",
+            "events_consumed": [],
+            "open_loops_referenced": [],
+            "newly_opened_loops": [],
+            "style_diagnostics": {},
+            "consistency_flags": [],
+        },
+        ensure_ascii=False,
+    )
+
+    mock_critic = AsyncMock()
+    mock_critic.critique_and_iterate = AsyncMock(
+        return_value=CritiqueOutput(
+            final_text=text,
+            rounds=[],
+            surviving_triggers=[],
+            decision_trail=[],
+            final_action="ACCEPT",
+            new_opening_signature="",
+            blacklist_to_add=[],
+        )
+    )
+    agent = NarratorAgent(critic=mock_critic, enable_critic=True)
+
+    dummy_event = Event(
+        id="evt_1",
+        type="exogenous",
+        tick=1,
+        description="测试",
+        narrative_value=10,
+        narrative_value_hint=10,
+    )
+    mock_llm.set_responses([resp_json])
+    out = await agent.narrate(
+        tick=1,
+        world_time=1,
+        tracking_character_id="c1",
+        tick_events=[dummy_event],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        style_anchors=[],
+        last_narration_tick=0,
+    )
+    assert out.should_narrate is True
+    assert mock_critic.critique_and_iterate.call_count == 1, (
+        "env CRITIC_MIN_NARRATIVE_LEN=50 后, 80 字段落必须触发 critic "
+        "(原默认 600 会跳过)"
     )
