@@ -61,6 +61,8 @@ SYSTEM_PROMPT = """\
    ≥ 7** — 让 Narrator critic gate 真正触发, 用关键节拍的全质量复活 cold
    thread. 普通注入 ≤ 5 即可. (Stage 3 数据: avg_urgency 7.0 → 6.11 持续
    下降, 新伏笔越来越弱; 此规则反着把激活类事件的 hint 拉高.)
+   **若 recommendations 为空 (calm tick / Showrunner 未跑) 则本规则不
+   适用** — 不要自己脑补 cold_thread 然后给所有事件 hint=7.
 
 # 禁区
 

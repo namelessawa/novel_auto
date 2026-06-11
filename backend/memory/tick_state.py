@@ -251,17 +251,29 @@ class TickState:
             for l in self._open_loops.values()
             if current_tick - l.opened_tick > l.max_age_ticks
         ]
+        # Phase 2 Stage 3 (iter#91) + iter#93 review fix — 累计实际 pop 成功的
+        # 数, 不是 stale_ids 长度. 单线程环境下两者相等; 防御性写法挡未来
+        # 并发改造 (任何场景里 pop 失败 → 不算 close).
+        actual_closed = 0
         for loop_id in stale_ids:
-            self._open_loops.pop(loop_id, None)
-        # Phase 2 Stage 3 (iter#91) — 累计关闭数, 服务 longrange foreshadowing.
-        if stale_ids:
-            self._loops_closed_total += len(stale_ids)
-            logger.info("Reaped %d stale OpenLoops at tick %d", len(stale_ids), current_tick)
+            if self._open_loops.pop(loop_id, None) is not None:
+                actual_closed += 1
+        if actual_closed:
+            self._loops_closed_total += actual_closed
+            logger.info(
+                "Reaped %d stale OpenLoops at tick %d", actual_closed, current_tick
+            )
         return stale_ids
 
     @property
     def loops_closed_total(self) -> int:
-        """Phase 2 Stage 3 — 累计 close 次数 (reap_stale + explicit pop)."""
+        """Phase 2 Stage 3 — 累计 close 事件数 (reap_stale + explicit pop).
+
+        单调递增, 永不递减. 即便同 id loop 被 close → re-add → re-close,
+        counter 涨 2. 这是 "总 close 事件" 计数器, 不是 "当前已关数"
+        gauge — 算 open/closed ratio 时记得分子是 get_open_loop_count(),
+        分母是本字段 (历史累计).
+        """
         return self._loops_closed_total
 
     def touch_open_loop(self, loop_id: str, tick: int) -> None:
