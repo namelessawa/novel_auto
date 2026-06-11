@@ -89,6 +89,10 @@ async def _bench(args) -> dict:
     tick_records: list[dict] = []
     tick_durations: list[float] = []
     narratives: list[dict] = []
+    # v2.38 Phase 2 Stage 3 (iter#87) — longrange 采样.
+    open_loop_snapshots: list[dict] = []  # foreshadowing 曲线原料
+    novelty_records: list[dict] = []  # 衰减曲线原料
+    longrange_sample_every = max(1, getattr(args, "longrange_every", 5))
 
     for i in range(args.ticks):
         before = dict(tracker.snapshot.by_agent)
@@ -127,6 +131,49 @@ async def _bench(args) -> dict:
                 {"tick": summary.tick, "chars": summary.narrator_output_chars, "text": text}
             )
 
+        # v2.38 Phase 2 Stage 3 (iter#87) — 长程采样.
+        cur_tick = summary.tick
+        if cur_tick % longrange_sample_every == 0:
+            try:
+                loops = rt.tick_state.get_open_loops()
+                open_count = len(loops)
+                stale_open = sum(
+                    1
+                    for l in loops
+                    if (cur_tick - max(
+                        getattr(l, "last_referenced_tick", 0) or 0,
+                        getattr(l, "opened_tick", 0) or 0,
+                    )) > 20
+                )
+                avg_urg = (
+                    sum(getattr(l, "urgency", 0) or 0 for l in loops) / open_count
+                    if open_count
+                    else 0.0
+                )
+                # closed_count: tick_state 不存累计 close; 用 reaped 估算.
+                # 第一版近似: 与 open_count 之比 (无确切 closed 历史).
+                closed_count = max(
+                    0,
+                    int(
+                        getattr(
+                            rt.tick_state, "_loops_closed_total", 0
+                        )
+                    ),
+                )
+                open_loop_snapshots.append(
+                    {
+                        "tick": cur_tick,
+                        "open": open_count,
+                        "closed": closed_count,
+                        "stale_open": stale_open,
+                        "avg_urgency": round(avg_urg, 2),
+                    }
+                )
+            except Exception as e:  # pragma: no cover — defensive
+                open_loop_snapshots.append(
+                    {"tick": cur_tick, "error": f"snapshot_failed: {e}"}
+                )
+
     snap = tracker.snapshot
     report = {
         "label": args.label,
@@ -140,6 +187,9 @@ async def _bench(args) -> dict:
         "call_count": snap.call_count,
         "per_tick": tick_records,
         "narratives": narratives,
+        # v2.38 Phase 2 Stage 3 (iter#87) — longrange 原料.
+        "open_loop_snapshots": open_loop_snapshots,
+        "novelty_records": novelty_records,
     }
 
     # v2.38 (iter#80) — Phase 2 quality metrics integration.
@@ -452,6 +502,12 @@ def main():
         type=int,
         default=50_000,
         help="单次 quality bench judge tokens 总预算 (§7 默认 50k).",
+    )
+    parser.add_argument(
+        "--longrange-every",
+        type=int,
+        default=5,
+        help="Stage 3 longrange 采样间隔 (默认每 5 tick 一次).",
     )
     args = parser.parse_args()
 
