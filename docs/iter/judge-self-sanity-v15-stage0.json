@@ -1,0 +1,60 @@
+{
+  "bench_source": "docs/iter/bench-v15-final-iter29.json",
+  "rounds": 4,
+  "elapsed_sec": 99.02,
+  "judge_model": "mimo-v2.5-pro",
+  "counts": {
+    "x": 0,
+    "y": 0,
+    "tie": 3,
+    "parse_error": 1
+  },
+  "valid_count": 3,
+  "bias_score": 0.0,
+  "results": [
+    {
+      "winner": "parse_error",
+      "reason": "judge_call_failed: APIConnectionError",
+      "meta": {
+        "model": "mimo-v2.5-pro",
+        "prompt_version": "pairwise_v1",
+        "swap_applied": false,
+        "extra": {}
+      },
+      "raw_response": ""
+    },
+    {
+      "winner": "tie",
+      "reason": "两段文本内容完全一致，各维度表现无差异。",
+      "meta": {
+        "model": "mimo-v2.5-pro",
+        "prompt_version": "pairwise_v1",
+        "swap_applied": true,
+        "extra": {}
+      },
+      "raw_response": "{\n  \"winner\": \"tie\",\n  \"reason\": \"两段文本内容完全一致，各维度表现无差异。\"\n}"
+    },
+    {
+      "winner": "tie",
+      "reason": "两段文字内容完全相同，所有维度表现一致。",
+      "meta": {
+        "model": "mimo-v2.5-pro",
+        "prompt_version": "pairwise_v1",
+        "swap_applied": false,
+        "extra": {}
+      },
+      "raw_response": "{\"winner\": \"tie\", \"reason\": \"两段文字内容完全相同，所有维度表现一致。\"}"
+    },
+    {
+      "winner": "tie",
+      "reason": "两段文本内容完全相同，三个维度无差异。",
+      "meta": {
+        "model": "mimo-v2.5-pro",
+        "prompt_version": "pairwise_v1",
+        "swap_applied": false,
+        "extra": {}
+      },
+      "raw_response": "{\n  \"winner\": \"tie\",\n  \"reason\": \"两段文本内容完全相同，三个维度无差异。\"\n}"
+    }
+  ]
+}
