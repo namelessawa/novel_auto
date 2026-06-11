@@ -55,6 +55,12 @@ SYSTEM_PROMPT = """\
    (即有 ≥3 条 open_loop 超过 20 tick 未推进), 本 tick **优先生成激活
    stale loop 的事件**, 不再新种伏笔. 注入事件描述里可以隐式引用 stale
    loop 的关键词 (人物 / 地点 / 物件), 让 Narrator 后续把它写明.
+7. **cold_thread urgency boost (Phase 2 Stage 3 候选 #3)**: 若 Showrunner
+   建议含 `type=trigger_dramatic_event` 或 `propose_meeting`, 并指向具体
+   cold_thread (stale_ticks > 20), 注入的事件 narrative_value_hint **必须
+   ≥ 7** — 让 Narrator critic gate 真正触发, 用关键节拍的全质量复活 cold
+   thread. 普通注入 ≤ 5 即可. (Stage 3 数据: avg_urgency 7.0 → 6.11 持续
+   下降, 新伏笔越来越弱; 此规则反着把激活类事件的 hint 拉高.)
 
 # 禁区
 
