@@ -5,6 +5,34 @@
 
 ---
 
+## [2.38] — 2026-06-12 — iter#102: Phase 2 §4 mandate complete + drift surfaced
+
+`docs/iter/verdict-iter102-stage5-seed3-50tick.md`:
+
+Phase 2 §4 N≥30 × 3-seed mandate 第三 (最后) 50-tick leg, seed3 (末世废土
+移动城市) — plot-dense + cast-dense 复合密度题材.
+
+**§4 mandate: 完成 (3/3 seed 全 N≥30)** ✓
+
+stage5 verdict 跨 3 seed:
+- seed1 (蒸汽朋克 41 narr): 0 drift signals ✓
+- seed2 (民国 42 narr): 0 drift signals ✓
+- **seed3 (末世废土 46 narr): 1 drift signal ✗ open_loop 4→11**
+
+新发现:
+1. (P0) **closed=0 跨 3 seed 130 tick 全部** — close-loop 机制可能未真正
+   运作, EventInjector 控制 open 但无显式 close 路径. stale-reaping 只能
+   延后, 不能释放叙事张力.
+2. (P1) seed3 cost 2.6x (1.3M tokens vs seed1/2 ~500k) — cast-dense
+   character_agent 累积 token. showrunner 可主动 cap active-cast 数.
+3. (P2) distinct char-2 跨 3 seed 区间扩到 [0.855, 0.909], seed3 最低,
+   高密度题材 prose 轻微退化.
+
+cost delta vs iter#101: +170% (题材 variance, cast scaling)
+quality delta: drift signal 在最密题材首次触发
+mandate: §4 完成
+iter#103+ 候选 (优先级 P0→P2 见 verdict).
+
 ## [2.38] — 2026-06-12 — iter#101: Phase 2 stage5 seed2 50-tick (plot-dense cap held)
 
 `docs/iter/verdict-iter101-stage5-seed2-50tick.md`:
