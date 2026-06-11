@@ -91,7 +91,10 @@ async def _bench(args) -> dict:
     narratives: list[dict] = []
     # v2.38 Phase 2 Stage 3 (iter#87) — longrange 采样.
     open_loop_snapshots: list[dict] = []  # foreshadowing 曲线原料
-    novelty_records: list[dict] = []  # 衰减曲线原料
+    # v2.38 (iter#88 review fix) — novelty_records 字段保留作 schema 占位,
+    # 实际填充逻辑 (从 NoveltyCriticOutput 回调累计) 留给 iter#89+ 加 orchestrator
+    # hook 后接通. 当前 bench 跑出来此字段恒为空, 是 by design 而非 bug.
+    novelty_records: list[dict] = []  # 占位 — TODO iter#89 接 novelty_critic hook
     longrange_sample_every = max(1, getattr(args, "longrange_every", 5))
 
     for i in range(args.ticks):
@@ -150,21 +153,24 @@ async def _bench(args) -> dict:
                     if open_count
                     else 0.0
                 )
-                # closed_count: tick_state 不存累计 close; 用 reaped 估算.
-                # 第一版近似: 与 open_count 之比 (无确切 closed 历史).
-                closed_count = max(
-                    0,
-                    int(
-                        getattr(
-                            rt.tick_state, "_loops_closed_total", 0
-                        )
-                    ),
+                # v2.38 (iter#88 review fix) — closed_count 暂未在 TickState
+                # 累计 (_loops_closed_total 字段并不存在), getattr 拿到 0 时
+                # 显式标 "not_implemented" 让 downstream reducer / 人类读者
+                # 不要把 closed=0 当真实数据. iter#89+ 在 TickState.reap_
+                # stale_open_loops 加累计后此 placeholder 可移除.
+                closed_raw = getattr(rt.tick_state, "_loops_closed_total", None)
+                closed_count = int(closed_raw) if closed_raw is not None else 0
+                closed_source = (
+                    "tick_state._loops_closed_total"
+                    if closed_raw is not None
+                    else "not_implemented"
                 )
                 open_loop_snapshots.append(
                     {
                         "tick": cur_tick,
                         "open": open_count,
                         "closed": closed_count,
+                        "closed_source": closed_source,
                         "stale_open": stale_open,
                         "avg_urgency": round(avg_urg, 2),
                     }

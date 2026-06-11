@@ -87,7 +87,9 @@ def test_novelty_insufficient_data() -> None:
 
 
 def test_novelty_decaying_trend() -> None:
-    """early 高, late 低 → decaying."""
+    """early 高, late 低 → decaying.
+    iter#88 review fix: trend_threshold default 1.0; delta 此 case = -3.0.
+    """
     samples = [
         NoveltySample(tick=10, pattern_count=1, overall_score=9),
         NoveltySample(tick=20, pattern_count=1, overall_score=8),
@@ -97,6 +99,22 @@ def test_novelty_decaying_trend() -> None:
     c = novelty_decay_curve(samples)
     assert c.trend == "decaying"
     assert c.mean_score == pytest.approx(7)
+
+
+def test_novelty_threshold_configurable() -> None:
+    """delta = 0.5 in below; default threshold 1.0 → stable;
+    显式调到 0.3 → improving (锁定可配置语义)."""
+    samples = [
+        NoveltySample(tick=10, pattern_count=2, overall_score=6),
+        NoveltySample(tick=20, pattern_count=2, overall_score=7),
+        NoveltySample(tick=30, pattern_count=2, overall_score=7),
+        NoveltySample(tick=40, pattern_count=2, overall_score=7),
+    ]
+    c_default = novelty_decay_curve(samples)
+    assert c_default.trend == "stable"
+    c_loose = novelty_decay_curve(samples)
+    c_loose.trend_threshold = 0.3
+    assert c_loose.trend == "improving"
 
 
 def test_novelty_improving_trend() -> None:

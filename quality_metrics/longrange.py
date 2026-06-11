@@ -97,9 +97,15 @@ class NoveltySample:
     overall_score: int  # NoveltyCriticOutput.overall_novelty_score (1-10)
 
 
+_NOVELTY_TREND_THRESHOLD_DEFAULT = 1.0  # 1-10 scale; 0.5 噪声内, 1.0 显著.
+
+
 @dataclass
 class NoveltyDecayCurve:
     samples: list[NoveltySample] = field(default_factory=list)
+    # v2.38 (iter#88 review fix) — trend 阈值可配置. 默认 1.0 (10% scale).
+    # 老默认 0.5 在 1-10 scale 上太敏感, 被噪声主导误报 trend.
+    trend_threshold: float = _NOVELTY_TREND_THRESHOLD_DEFAULT
 
     @property
     def mean_score(self) -> float:
@@ -110,7 +116,8 @@ class NoveltyDecayCurve:
     @property
     def trend(self) -> str:
         """early vs late half 的均分差异:
-        > 0.5 = 改善 / < -0.5 = 衰减 / 其他 = stable.
+        > +trend_threshold = improving / < -trend_threshold = decaying /
+        其余 stable.
         """
         if len(self.samples) < 4:
             return "insufficient_data"
@@ -120,9 +127,9 @@ class NoveltyDecayCurve:
             len(self.samples) - half
         )
         delta = late - early
-        if delta > 0.5:
+        if delta > self.trend_threshold:
             return "improving"
-        if delta < -0.5:
+        if delta < -self.trend_threshold:
             return "decaying"
         return "stable"
 

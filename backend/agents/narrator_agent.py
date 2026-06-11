@@ -197,7 +197,14 @@ def _critic_importance_min() -> int:
 
 def _tick_importance_score(tick_events) -> int:
     """tick 重要性 = events 中最高 narrative_value (含 hint).
-    无事件返回 0. 用现成 Event 字段, 不引入新 LLM 调用."""
+
+    无事件 → 0 (critic skip, 因为没素材).
+    所有事件的两个字段都缺/0 → 0 (critic skip). 这是 by design — narrator
+    的 _NARRATE_SKIP_THRESHOLD 已在更上层用 total_score 截短无价值 tick;
+    走到这里却都是 0-value 的事件意味着 EventInjector 没在 hint 字段上打分,
+    应当当作"低重要性"由 critic 跳过, 不去无中生有调一次贵 LLM.
+
+    用现成 Event 字段, 不引入新 LLM 调用."""
     if not tick_events:
         return 0
     return max(
@@ -378,28 +385,24 @@ class NarratorAgent:
         # Phase 2 Stage 2 (iter#84) — 加 importance 门控:
         # tick importance < CRITIC_IMPORTANCE_MIN 时跳 critic, 保留关键节拍
         # 的全链路质量 + 平均节拍的 v16 成本. Stage 1 verdict 数据支持.
-        importance = _tick_importance_score(tick_events)
-        gate_importance = _critic_importance_min()
-        if (
+        # v2.38 (iter#88 review fix) — 拆 critic gating 与日志, 删除重复 elif.
+        critic_eligible = (
             parsed.should_narrate
             and self._critic is not None
             and parsed.narrative_text
             and len(parsed.narrative_text) >= _critic_min_narrative_len()
-            and importance >= gate_importance
-        ):
-            parsed = await self._run_critique(parsed)
-        elif (
-            parsed.should_narrate
-            and self._critic is not None
-            and parsed.narrative_text
-            and len(parsed.narrative_text) >= _critic_min_narrative_len()
-            and importance < gate_importance
-        ):
-            # 显式日志: 低重要性 tick 跳 critic. 不污染 consistency_flags.
-            logger.info(
-                "narrator[tick=%d] critic skipped: importance=%d < gate=%d",
-                tick, importance, gate_importance,
-            )
+        )
+        if critic_eligible:
+            importance = _tick_importance_score(tick_events)
+            gate_importance = _critic_importance_min()
+            if importance >= gate_importance:
+                parsed = await self._run_critique(parsed)
+            else:
+                # 显式日志: 低重要性 tick 跳 critic. 不污染 consistency_flags.
+                logger.info(
+                    "narrator[tick=%d] critic skipped: importance=%d < gate=%d",
+                    tick, importance, gate_importance,
+                )
         return parsed
 
     # ------------------------------------------------------------------
