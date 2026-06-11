@@ -1,0 +1,134 @@
+{
+  "label": "v15-vs-v16-pilot-v2",
+  "v15": {
+    "source": "docs/iter/bench-v15-final-iter29.json",
+    "narrative_count": 2,
+    "det": {
+      "repetition": {
+        "narration_count": 2,
+        "distinct": {
+          "char_2": 0.8589,
+          "char_3": 0.9713,
+          "char_4": 0.9931,
+          "word_2": 1.0,
+          "word_3": 1.0,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0947,
+          "char_3": 0.0261,
+          "char_4": 0.0066,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 2,
+        "skipped_records": 0,
+        "evaluated_count": 2,
+        "tier_hit_count": 2,
+        "tier_off_count": 0,
+        "tier_hit_rate": 1.0,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "medium": {
+            "hit": 2,
+            "off": 0
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-v16-final-iter31.json",
+    "narrative_count": 1,
+    "det": {
+      "repetition": {
+        "narration_count": 1,
+        "distinct": {
+          "char_2": 0.9448,
+          "char_3": 0.9928,
+          "char_4": 0.9976,
+          "word_2": 1.0,
+          "word_3": 1.0,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0,
+          "char_3": 0.0,
+          "char_4": 0.0,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": [
+          "only_one_narration_no_overlap"
+        ]
+      },
+      "compliance": {
+        "total_records": 1,
+        "skipped_records": 0,
+        "evaluated_count": 1,
+        "tier_hit_count": 1,
+        "tier_off_count": 0,
+        "tier_hit_rate": 1.0,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "short": {
+            "hit": 1,
+            "off": 0
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 1,
+    "judge_call_count": 1,
+    "tokens_used_estimate": 5000,
+    "elapsed_sec": 28.84,
+    "v15_win": 0,
+    "v16_win": 1,
+    "tie": 0,
+    "parse_err": 0,
+    "results": [
+      {
+        "winner": "y",
+        "reason": "情节推进紧张，角色声音鲜明。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节推进紧张，角色声音鲜明。\"}",
+        "pair_index": 0
+      }
+    ]
+  },
+  "budget": 15000,
+  "verdict": {
+    "label": "v16_promote",
+    "reason": "v16 win-rate 100.00% ≥ 45% — meets §4 promote bar",
+    "v16_win_rate": 1.0,
+    "v16_lose_rate": 0.0,
+    "tie_rate": 0.0,
+    "parse_err_count": 0,
+    "valid_count": 1,
+    "provisional": true
+  }
+}

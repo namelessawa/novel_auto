@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from typing import Awaitable, Callable, Literal
 
 from quality_metrics.judge_prompts import (
-    PAIRWISE_PROMPT_V1,
+    PAIRWISE_PROMPT_ACTIVE,
     PAIRWISE_VERSION,
     RUBRIC_PROMPT_V1,
     RUBRIC_VERSION,
@@ -168,9 +168,9 @@ async def pairwise_judge(
     swap = rng.random() < 0.5
     if swap:
         # X 占 B 位
-        prompt = PAIRWISE_PROMPT_V1.format(text_a=text_y, text_b=text_x)
+        prompt = PAIRWISE_PROMPT_ACTIVE.format(text_a=text_y, text_b=text_x)
     else:
-        prompt = PAIRWISE_PROMPT_V1.format(text_a=text_x, text_b=text_y)
+        prompt = PAIRWISE_PROMPT_ACTIVE.format(text_a=text_x, text_b=text_y)
 
     meta = JudgeMeta(
         model=model_name,
@@ -269,7 +269,7 @@ def make_mimo_judge_fn(
     base_url: str | None = None,
     model: str | None = None,
     timeout_sec: float = 120.0,
-    max_tokens: int = 1024,
+    max_tokens: int = 2048,
 ) -> tuple[JudgeFn, str]:
     """Return (judge_fn, resolved_model_name).
 

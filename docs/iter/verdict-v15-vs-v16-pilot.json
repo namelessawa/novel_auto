@@ -1,0 +1,129 @@
+{
+  "label": "v15-vs-v16-pilot",
+  "v15": {
+    "source": "docs/iter/bench-v15-final-iter29.json",
+    "narrative_count": 2,
+    "det": {
+      "repetition": {
+        "narration_count": 2,
+        "distinct": {
+          "char_2": 0.8589,
+          "char_3": 0.9713,
+          "char_4": 0.9931,
+          "word_2": 1.0,
+          "word_3": 1.0,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0947,
+          "char_3": 0.0261,
+          "char_4": 0.0066,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 2,
+        "skipped_records": 0,
+        "evaluated_count": 2,
+        "tier_hit_count": 2,
+        "tier_off_count": 0,
+        "tier_hit_rate": 1.0,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "medium": {
+            "hit": 2,
+            "off": 0
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-v16-final-iter31.json",
+    "narrative_count": 1,
+    "det": {
+      "repetition": {
+        "narration_count": 1,
+        "distinct": {
+          "char_2": 0.9448,
+          "char_3": 0.9928,
+          "char_4": 0.9976,
+          "word_2": 1.0,
+          "word_3": 1.0,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0,
+          "char_3": 0.0,
+          "char_4": 0.0,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": [
+          "only_one_narration_no_overlap"
+        ]
+      },
+      "compliance": {
+        "total_records": 1,
+        "skipped_records": 0,
+        "evaluated_count": 1,
+        "tier_hit_count": 1,
+        "tier_off_count": 0,
+        "tier_hit_rate": 1.0,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "short": {
+            "hit": 1,
+            "off": 0
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 1,
+    "judge_call_count": 1,
+    "tokens_used_estimate": 5000,
+    "elapsed_sec": 40.84,
+    "v15_win": 0,
+    "v16_win": 0,
+    "tie": 0,
+    "parse_err": 1,
+    "results": [
+      {
+        "winner": "parse_error",
+        "reason": "json_parse_failed",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v1",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "首先，用户要求我作为严格的中文小说编辑，只输出JSON，不解释。输出格式是严格的JSON，不要markdown围栏，不要解释。\n\n任务是盲评A、B两段小说正文，基于三个维度：连贯性、角色声音一致性、情节推进。不能因为长度差异决定胜负。\n\n我需要综合评估每个维度，然后决定赢家：A、B或tie，并用一句话中文说明最看重的判别点，不超过40字。\n\n现在，分析两段文本：\n\n**段A：**\n- 设定：蒸汽管道、废弃厂房、严守正拿着卷宗副本。\n- 维度分析：\n  1. 连贯性：句子衔接顺畅，从环境描写到人物动作，因果合理。例如，从蒸汽管道的响声到严守正的反应，再到脚步声的出现，逻辑连贯。没有明显矛盾。\n  2. 角色声音一致性：严守正的动作和内心活动一致，比如拉领口、按住卷宗、转向岔道，显示他谨慎、警惕的性格。声音一致。\n  3. 情节推进：段首描述严守正带着副本前往安全屋，段末他到达安全屋附近，并意识到可能被跟踪，但雾浓不确定。读者知道他在送副本，并有潜在威胁。段末比段首多知道他有接头人要确认，安全屋就在前面。\n\n**段B：**\n- 设定：酸雨、铁影城、玄烛带着卷宗前往档案馆。\n- 维度分析：\n  1. 连贯性：句子衔接好，从酸雨环境到玄烛的动作和思考，因果合理。例如，酸雨影响行走，卷宗的描述，齿轮声的引入，逻辑清晰。没有前后矛盾。\n  2. 角色声音一致性：玄烛的动作如低头走过、换肩、数步子，显示他谨慎、守规矩的性格。声音一致。\n  3. 情节推进：段首描述玄烛带着卷宗从外城返回，段末他接近钟楼，读者知道卷宗不能在路上打开，只能在鉴阅室打开。段末比段首多知道钟楼的具体位置（从雾中露出），以及他对任务的谨慎。\n\n比较两个段落：\n- 两者在连贯性和角色声音一致性上都做得很好，没有明显缺陷。\n- 情节推进：A段中，读者从知道严守正送副本到接近安全屋并感到威胁；B段中，读者从知道玄烛带着卷宗到接近钟楼并了解卷宗处理规则。两者都推进了情节。\n\n关键判别点：用户说“不能因为长度差异决定胜负”，所以长度不是因素。我需要基于三个维度综合判断。\n\n从情节推进看：\n- A段末尾：严守正快到安全屋，但雾浓不确定威胁，读者知道他要确认接头人安全。\n- B段末尾：玄烛快到钟楼，读者知道钟楼出现，卷宗处理规则。\n\n两者都推进了具体事件。但A段更注重紧张氛围和潜在威胁，B段更注重环境细节和任务执行。\n\n最看重的判别点：我需要用一句话说明。可能角色声音一致性或情节推进是关键。\n\n检查连贯性：两者都很好。\n\n角色声音一致性：两者都一致，严守正和玄烛都是谨慎型人物。\n\n情节推进：A段结尾更含糊，威胁未明；B段结尾更具体，钟楼出现。但A段有接头人安全的确认，这增加了情节深度。\n\n考虑整体：\n- A段：更注重心理活动和环境互动，如“脚下的碎石混着薄冰”等细节。\n- B段：更注重世界构建和感官描述，如“酸雨”、“铁影城”等。\n\n但用户要求盲评，不能因为长度或风格偏好。\n\n我认为两者势均力敌，所以可能是tie。但需要做出决定。\n\n最看重的判别点：我需要选择一个维度作为决定点。\n\n假设我选择情节推进：\n- A段：读者知道他在送副本，有威胁，但未解决。\n- B段：读者知道卷宗规则，钟楼接近。\n\n或许A段的情节推进更连贯，因为从开始到结束，目标清晰（送副本到安全屋），并有具体行动。\n\nB段也有目标（回档案馆），但结尾是钟楼出现，没有新冲突。\n\n在A段末尾，“他没再回头看那条巷子”暗示了紧张，但未明确威胁是否解除。\n\n在B段末尾，“他没再回头看那条巷子”类似，但更侧重于完成任务。\n\n或许A段在角色声音上更一致，因为严守正的动作和内心更",
+        "pair_index": 0
+      }
+    ]
+  },
+  "budget": 30000,
+  "verdict": {
+    "label": "indeterminate",
+    "reason": "no valid pairwise samples",
+    "provisional": true
+  }
+}
