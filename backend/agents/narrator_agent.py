@@ -788,8 +788,19 @@ class NarratorAgent:
             )
 
         # newly_opened_loops 解析(逐条 validate)
+        # v2.38 (iter#38) — LLM 偶发把 loop 写成纯字符串 (description-only) 而非
+        # dict, 此前直接抛 "'str' object has no attribute 'setdefault'" 到 except
+        # 噪声日志. 加 isinstance 兼容: 收到 str 时包成 dict, 缺字段走兜底.
         new_loops: list[OpenLoop] = []
         for idx, loop_raw in enumerate(payload.get("newly_opened_loops", []) or []):
+            if isinstance(loop_raw, str):
+                # 简单 fallback: 当作 description, 其他字段缺省
+                loop_raw = {"description": loop_raw[:200]}
+            elif not isinstance(loop_raw, dict):
+                logger.warning(
+                    "Skip invalid newly_opened_loop (not dict/str): %r", loop_raw
+                )
+                continue
             try:
                 # 用户产出可能省略 id/opened_tick - 补齐
                 loop_raw.setdefault("id", f"loop_t{tick}_{idx}")
