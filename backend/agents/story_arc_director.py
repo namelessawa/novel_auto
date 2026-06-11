@@ -131,12 +131,12 @@ class StoryArcDirector:
         model_tier: str = "small",
     ) -> None:
         if enable_llm is None:
-            # v2.38 (iter#65) — case-insensitive 多拼写 (同 narrator iter#64).
-            raw = os.environ.get("STORY_ARC_DIRECTOR_LLM", "").strip().lower()
-            if raw in {"0", "false", "no", "off"}:
-                enable_llm = False
-            elif raw in {"1", "true", "yes", "on"}:
-                enable_llm = True
+            # v2.38 (iter#70) — 用 env_bool_tri 共享 helper.
+            from nf_core.env_helpers import env_bool_tri
+
+            tri = env_bool_tri("STORY_ARC_DIRECTOR_LLM")
+            if tri is not None:
+                enable_llm = tri
             else:
                 # pytest 默认关闭 LLM, 避免吞掉 mock 响应
                 enable_llm = not bool(os.environ.get("PYTEST_CURRENT_TEST"))
