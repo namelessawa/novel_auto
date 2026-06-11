@@ -159,6 +159,34 @@ Phase 1 饱和未严格达标 (-22%), 但 cost ≈ v16, quality 双向 ≥ 45%, 
 按 §6 跑 100+ tick 长程, 探 memory 保真度 / 伏笔簿记 / novelty 衰减 /
 summary_tree 查询命中. 期望暴露 short bench 看不见的失败模式.
 
+### Stage 3 完成 (iter#86-89) — 长程 drift 实测捕获 2 真信号
+
+50 tick × stage2 default 配置 (iter#89 跑):
+
+**Foreshadowing trend (核心发现)**:
+
+| tick | open | stale | avg_urgency |
+| ---: | ---: | ----: | ----------: |
+| 5    |  5   |  0    | 7.00 |
+| 25   |  8   |  2    | 6.25 |
+| 50   |  9   |  3    | 6.11 |
+
+* open_loops **5 → 9 (+80%)** 单调堆积
+* stale (>20 tick 未推进) **0 → 3** by tick 40
+* avg_urgency 7.0 → 6.11 单调下降 (新种伏笔越来越弱)
+
+Repetition 仍 OK (distinct char-2 = 0.895, overlap = 0.082). **prose-
+level 套路化未现, plot-level 已问题 — 短 bench 看不见.**
+
+详见 `docs/iter/verdict-stage3.md`. 3 项新优化面登记为 iter#90-92 候选.
+
+### Next: Stage 4 / iter#90+ — 攻坚长程 drift
+
+按 Stage 3 verdict 登记:
+* iter#90 — EventInjector 偏好关旧 (而非新种); stale > 阈值时禁新种
+* iter#91 — TickState 加 `_loops_closed_total` 累计 + reap 钩子
+* iter#92 — Showrunner cold_thread urgency boost 真正写进 inject 建议
+
 ---
 
 ## Phase 1 Status (历史)
