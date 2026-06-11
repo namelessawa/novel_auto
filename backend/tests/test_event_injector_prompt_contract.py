@@ -123,3 +123,54 @@ def test_build_prompt_no_stale_when_all_fresh() -> None:
         dormant_characters=[],
     )
     assert "stale_loops=0" in prompt
+
+
+# iter#96 — open_pressure 第二信号 (plot 密集题材 stale 升起前就 cap)
+# ---------------------------------------------------------------------------
+
+
+def test_build_prompt_open_pressure_low_below_cap(monkeypatch) -> None:
+    monkeypatch.setenv("EVENT_INJECTOR_OPEN_LOOP_CAP", "6")
+    inj, loops = _make_injector_with_loops()  # 3 loops < 6
+    prompt = inj._build_prompt(
+        tick=30,
+        world_state=WorldState(world_time=30),
+        recent_events=[],
+        tracking_chars=[],
+        open_loops=loops,
+        showrunner_recs=[],
+        dormant_characters=[],
+    )
+    assert "open_pressure=low" in prompt
+    assert "cap=6" in prompt
+
+
+def test_build_prompt_open_pressure_high_at_or_above_cap(monkeypatch) -> None:
+    monkeypatch.setenv("EVENT_INJECTOR_OPEN_LOOP_CAP", "3")
+    inj, loops = _make_injector_with_loops()  # exactly 3 loops, cap=3
+    prompt = inj._build_prompt(
+        tick=30,
+        world_state=WorldState(world_time=30),
+        recent_events=[],
+        tracking_chars=[],
+        open_loops=loops,
+        showrunner_recs=[],
+        dormant_characters=[],
+    )
+    assert "open_pressure=high" in prompt
+
+
+def test_build_prompt_cap_min_clamped_to_3(monkeypatch) -> None:
+    """env 设 1 应被 clamp 到 3, 防止极端配置让 cap 失去意义."""
+    monkeypatch.setenv("EVENT_INJECTOR_OPEN_LOOP_CAP", "1")
+    inj, loops = _make_injector_with_loops()  # 3 loops
+    prompt = inj._build_prompt(
+        tick=30,
+        world_state=WorldState(world_time=30),
+        recent_events=[],
+        tracking_chars=[],
+        open_loops=loops,
+        showrunner_recs=[],
+        dormant_characters=[],
+    )
+    assert "cap=3" in prompt

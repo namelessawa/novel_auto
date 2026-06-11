@@ -52,9 +52,13 @@ SYSTEM_PROMPT = """\
 4. 戏剧克制: 用 dormant_characters / 已有 locations, 不凭空创造
 5. open_loops < 3 时必须注入能造张力的事件 (即便要新种)
 6. **伏笔容量平衡 (Phase 2 Stage 3 长程数据反推)**: 当 stale_loops ≥ 3
-   (即有 ≥3 条 open_loop 超过 20 tick 未推进), 本 tick **优先生成激活
-   stale loop 的事件**, 不再新种伏笔. 注入事件描述里可以隐式引用 stale
-   loop 的关键词 (人物 / 地点 / 物件), 让 Narrator 后续把它写明.
+   **或** open_pressure=high (open_count ≥ cap), 本 tick **优先生成激活
+   现有 open loop 的事件**, 不再新种伏笔. 两个条件任一满足即触发. 注入
+   事件描述里可以隐式引用 stale loop 的关键词 (人物 / 地点 / 物件), 让
+   Narrator 后续把它写明.
+   (Phase 2 iter#95 数据揭示: plot 密集题材 — 民国谍战 / 多线悬疑 — open
+   单调上涨但 stale 来不及升, 单凭 stale 阈值兜不住, open_pressure 是
+   第二闸口.)
 7. **cold_thread urgency boost (Phase 2 Stage 3 候选 #3)**: 若 Showrunner
    建议含 `type=trigger_dramatic_event` 或 `propose_meeting`, 并指向具体
    cold_thread (stale_ticks > 20), 注入的事件 narrative_value_hint **必须
@@ -225,6 +229,19 @@ class EventInjector:
             for l in open_loops
         ]
         stale_count = sum(1 for l in loops_lite if l["stale_ticks"] > 20)
+        # Phase 2 (iter#96) — open_pressure: plot 密集题材 (民国谍战类) 跨题材
+        # 验证 (iter#95) 显示 open_count 单调上涨但 stale 长期保持 0, 让
+        # iter#90 原则 #6 (stale≥3 才不新种) 来不及生效就触底. open_pressure
+        # 提供第二个 cap 触发信号: open_count ≥ OPEN_LOOP_CAP 时也禁新种.
+        import os as _os_ev
+        _open_cap_raw = _os_ev.environ.get("EVENT_INJECTOR_OPEN_LOOP_CAP", "6").strip()
+        try:
+            open_loop_cap = max(3, int(_open_cap_raw))
+        except ValueError:
+            open_loop_cap = 6
+        open_pressure = (
+            "high" if len(open_loops) >= open_loop_cap else "low"
+        )
         dormant_lite = [
             {"id": p.id, "name": p.name, "tier": p.importance_tier}
             for p in dormant_characters[:10]
@@ -235,8 +252,10 @@ class EventInjector:
         # 体积.
         # v2.38 (iter#90) — header 加 stale_loops 显式提示, 触发 system
         # prompt 原则 #6 (优先关旧 不新种).
+        # v2.38 (iter#96) — open_pressure 第二信号: plot 密集题材 stale 来不及
+        # 升 ≥3, 但 open_count 已经偏高 → high 时也走 #6 路径.
         return f"""\
-# 当前 tick={tick}, open_loops={len(open_loops)}, stale_loops={stale_count} (> 20 tick 未推进)
+# 当前 tick={tick}, open_loops={len(open_loops)}, stale_loops={stale_count} (> 20 tick 未推进), open_pressure={open_pressure} (cap={open_loop_cap})
 
 ## WorldState 摘要
 {json.dumps(ws_lite, ensure_ascii=False)}
