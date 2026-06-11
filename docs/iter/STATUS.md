@@ -1,19 +1,20 @@
-# Cost-Quality-Loop Status (final)
+# Cost-Quality-Loop Status (rolling)
 
 **Branch:** `iter/cost-quality-loop`
 **Range:** baseline 16d5826 → HEAD
-**Last update:** 2026-06-11
+**Last update:** 2026-06-11 (iter#72)
 
 ## Headline
 
 | metric | value |
 | ------ | ----- |
-| Iterations applied | 47 (iter#3-#47, doc/test iter included) |
+| Iterations applied | 72 |
 | Code review cycles | 9 |
-| Commits on branch | 55+ |
-| Files touched (active LLM paths) | 15 (every agent + bootstrap) |
-| Tests passing | 578/578 |
+| Commits on branch | 80+ |
+| Files touched (active LLM paths) | 17 (every agent + bootstrap + bench tool + new env_helpers) |
+| Tests passing | 601/601 (起始 540) |
 | Bench artifacts | 19 paired (json+md) under `docs/iter/` |
+| Real bugs fixed | iter#61 CRITIC_ENABLE_LLM=false 静默无效 → robust truthy parse |
 
 ## Cumulative gains vs v0-baseline
 
