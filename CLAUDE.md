@@ -139,6 +139,7 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | `NARRATOR_STRONG_MODEL_TICKS` | 100     | 前 N tick 用最强模型建立风格基准             |
 | `NARRATOR_ENABLE_CRITIC`      | (auto)  | 1=强制 / 0=关 / 空 = 测试关 / 生产开         |
 | `LLM_MAX_TOKENS_CAP`          | 65536   | LLMClient.chat 顶层 max_tokens 硬上限        |
+| `LLM_TIMEOUT`                 | 600     | LLM 调用超时 (秒). DEEPSEEK_TIMEOUT 为旧别名 |
 
 ## 路径常量约定
 
