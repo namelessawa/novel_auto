@@ -450,6 +450,12 @@ async def bootstrap_world(
     raw_loops = loops_resp.get("open_loops", []) or []
     requested_count = len(raw_loops)
     for loop_raw in raw_loops:
+        # v2.38 (iter#39) — 与 narrator iter#38 同, LLM 可能写成 str 而非 dict.
+        if isinstance(loop_raw, str):
+            loop_raw = {"description": loop_raw[:200]}
+        elif not isinstance(loop_raw, dict):
+            logger.warning("Skip invalid OpenLoop (not dict/str): %r", loop_raw)
+            continue
         try:
             loop_raw.setdefault("opened_tick", 0)
             loop_raw.setdefault("id", f"loop_{uuid.uuid4().hex[:8]}")
