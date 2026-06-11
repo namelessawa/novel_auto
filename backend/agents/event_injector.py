@@ -254,6 +254,15 @@ class EventInjector:
 
         events: list[Event] = []
         for idx, raw_ev in enumerate(payload.get("events", []) or []):
+            # v2.38 (iter#40) — LLM 偶发把 event 写成 str (description-only)
+            # 而非 dict, 与 newly_opened_loops / OpenLoop 同症. 加 isinstance.
+            if isinstance(raw_ev, str):
+                raw_ev = {"description": raw_ev[:200]}
+            elif not isinstance(raw_ev, dict):
+                logger.warning(
+                    "Skip invalid injected event #%d (not dict/str): %r", idx, raw_ev
+                )
+                continue
             try:
                 # 补 default id / tick 防 LLM 遗漏
                 raw_ev.setdefault("id", f"evt_inj_{tick}_{uuid.uuid4().hex[:6]}")
