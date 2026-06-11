@@ -5,6 +5,32 @@
 
 ---
 
+## [2.38] — 2026-06-12 — iter#100: Phase 2 stage5 cross-stage seed1 50-tick verify
+
+`docs/iter/verdict-iter100-stage5-seed1-50tick.md`:
+
+Phase 2 §1 candidate (verdict-phase2-final.md "Continuation") 推进: stage5
+cross-stage seed1 50-tick 长程验证.
+
+结果 (vs stage4 seed1 50-tick baseline iter#94):
+- total_tokens 540,474 → **521,767 (-3.5%)**
+- narrations 40 → **41**
+- distinct char-2 0.895 → 0.8825 (-1.4%, 在 3-seed 区间 0.88-0.91 内)
+- open_loops final 5 → 6 (持续 hold 在 cap=6, 未破)
+- stale final 1 → 1 (持平)
+- **drift signals 0 → 0 (持平)**
+
+open_pressure (iter#96) 软上限在 plot-density 题材 50 tick hold ✓.
+
+Phase 2 §4 N≥30 narrations × 3 seed mandate: seed1 单独已 N=41 ✓.
+seed2/3 当前 N=22/21 (30 tick), 需 50 tick 加跑才能完成 3-seed mandate.
+
+cost delta: -3.5%
+quality delta: 持平 (drift 0/0 持续, distinct -1.4% noise 内)
+
+测试: 691/691 PASS (iter#99 review fix 后无新代码改动)
+bench 产物: bench/longrange-stage5-seed1-50tick-r.{json,md}
+
 ## [2.38] — 2026-06-11 — iter#12: EventInjector prompt compression
 
 `backend/agents/event_injector.py`:
