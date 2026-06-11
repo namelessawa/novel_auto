@@ -1266,8 +1266,9 @@ class Orchestrator:
         if output is None:
             return 0
         conflicts = getattr(output, "conflicts", None) or []
-        auto_degrade = os.environ.get("HALLUCINATION_AUTO_DEGRADE", "").strip()
-        override = "haiku" if auto_degrade in {"1", "true", "TRUE", "yes"} else None
+        # v2.38 (iter#67) — case-insensitive on-集合 与其他 4 个 env knob 一致.
+        auto_degrade = os.environ.get("HALLUCINATION_AUTO_DEGRADE", "").strip().lower()
+        override = "haiku" if auto_degrade in {"1", "true", "yes", "on"} else None
 
         processed = 0
         for c in conflicts:
