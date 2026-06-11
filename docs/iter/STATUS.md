@@ -133,6 +133,32 @@ verdict label = `v16_promote` per §4 第 1 档. Status = **provisional**
 beat / showrunner dramatic tick → v15 全链路; 其余跑 v16). 目标: 拿
 v15 关键质量 + v16 平均成本.
 
+### Stage 2 完成 (iter#84-85) — verdict = stage2 双向 win (provisional)
+
+`CRITIC_IMPORTANCE_MIN=7` (默认) — tick max(narrative_value) <7 时跳
+critic. 同 seed 15 tick 三方对比:
+
+| metric              | v15 | v16 | stage2 |
+| ------------------- | --: | --: | -----: |
+| total tokens        | 188,873 | 149,839 | **146,819** |
+| critic tokens       |  38,153 |   0   |   5,404 |
+| narrations          |     13  |  12   |     13 |
+
+mimo pairwise (50k budget × 2 配对):
+* stage2 vs v15: **stage2 win 70%** / v15 win 30%
+* stage2 vs v16: **stage2 win 60%** / v16 win 40%
+
+stage2 同时打败两者. §5 退出: cost 目标 -40% 因 non-critic 路径
+Phase 1 饱和未严格达标 (-22%), 但 cost ≈ v16, quality 双向 ≥ 45%, 综
+合是 stage2 success.
+
+详见 `docs/iter/verdict-stage2.md`.
+
+### Next: Stage 3 — 长程质量 (iter#86+)
+
+按 §6 跑 100+ tick 长程, 探 memory 保真度 / 伏笔簿记 / novelty 衰减 /
+summary_tree 查询命中. 期望暴露 short bench 看不见的失败模式.
+
 ---
 
 ## Phase 1 Status (历史)

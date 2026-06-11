@@ -1,0 +1,252 @@
+{
+  "label": "stage2-vs-v16",
+  "v15": {
+    "source": "docs/iter/bench-stage2-gated-15tick.json",
+    "narrative_count": 13,
+    "det": {
+      "repetition": {
+        "narration_count": 13,
+        "distinct": {
+          "char_2": 0.919,
+          "char_3": 0.9815,
+          "char_4": 0.9959,
+          "word_2": 0.999,
+          "word_3": 1.0,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0726,
+          "char_3": 0.0232,
+          "char_4": 0.0087,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 13,
+        "skipped_records": 0,
+        "evaluated_count": 13,
+        "tier_hit_count": 8,
+        "tier_off_count": 5,
+        "tier_hit_rate": 0.6154,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 0,
+            "off": 1
+          },
+          "medium": {
+            "hit": 7,
+            "off": 0
+          },
+          "short": {
+            "hit": 1,
+            "off": 4
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-stage1-v16-15tick.json",
+    "narrative_count": 12,
+    "det": {
+      "repetition": {
+        "narration_count": 12,
+        "distinct": {
+          "char_2": 0.8622,
+          "char_3": 0.9729,
+          "char_4": 0.9947,
+          "word_2": 1.0,
+          "word_3": 1.0,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.1121,
+          "char_3": 0.034,
+          "char_4": 0.0108,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 12,
+        "skipped_records": 0,
+        "evaluated_count": 12,
+        "tier_hit_count": 11,
+        "tier_off_count": 1,
+        "tier_hit_rate": 0.9167,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 1,
+            "off": 0
+          },
+          "medium": {
+            "hit": 10,
+            "off": 1
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 12,
+    "judge_call_count": 10,
+    "tokens_used_estimate": 50000,
+    "elapsed_sec": 180.67,
+    "v15_win": 5,
+    "v16_win": 4,
+    "tie": 1,
+    "parse_err": 0,
+    "results": [
+      {
+        "winner": "x",
+        "reason": "情节推进更紧凑，角色行动有明确目标。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更紧凑，角色行动有明确目标。\"}",
+        "pair_index": 0
+      },
+      {
+        "winner": "x",
+        "reason": "情节推进更主动，悬念更紧凑",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更主动，悬念更紧凑\"}",
+        "pair_index": 1
+      },
+      {
+        "winner": "x",
+        "reason": "情节推进更紧凑，角色行动果断",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更紧凑，角色行动果断\"}",
+        "pair_index": 2
+      },
+      {
+        "winner": "y",
+        "reason": "段A连贯性强，角色声音清晰，情节推进明显。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A连贯性强，角色声音清晰，情节推进明显。\"}",
+        "pair_index": 3
+      },
+      {
+        "winner": "y",
+        "reason": "细节丰富，悬念推进，角色声音更独特。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"细节丰富，悬念推进，角色声音更独特。\"}",
+        "pair_index": 4
+      },
+      {
+        "winner": "tie",
+        "reason": "两段描写连贯生动，情节推进有力，难分高下",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"tie\", \"reason\": \"两段描写连贯生动，情节推进有力，难分高下\"}",
+        "pair_index": 5
+      },
+      {
+        "winner": "y",
+        "reason": "情节更紧凑，角色行动突出",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节更紧凑，角色行动突出\"}",
+        "pair_index": 6
+      },
+      {
+        "winner": "y",
+        "reason": "连贯性强，角色描写深入，情节推进紧凑",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"连贯性强，角色描写深入，情节推进紧凑\"}",
+        "pair_index": 7
+      },
+      {
+        "winner": "x",
+        "reason": "情节推进更紧凑，角色互动更突出",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更紧凑，角色互动更突出\"}",
+        "pair_index": 8
+      },
+      {
+        "winner": "x",
+        "reason": "角色互动鲜明，情节推进明确。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"角色互动鲜明，情节推进明确。\"}",
+        "pair_index": 9
+      }
+    ]
+  },
+  "budget": 50000,
+  "verdict": {
+    "label": "stage2_open",
+    "reason": "v16 win-rate 40.00% ∈ [35%, 45%) — critic 不应是 binary 开关, Stage 2 自适应分配立项",
+    "v16_win_rate": 0.4,
+    "v16_lose_rate": 0.5,
+    "tie_rate": 0.1,
+    "parse_err_count": 0,
+    "valid_count": 10,
+    "provisional": true
+  }
+}
