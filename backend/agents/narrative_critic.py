@@ -32,10 +32,8 @@ from agents.quality_checks import (
     summarize_triggers,
 )
 from agents.quality_spec import (
-    HIGH_SEVERITY_CODES,
     RULES_BY_CODE,
     decide_action,
-    render_blacklist_block,
     render_critique_block_semantic,
     render_show_dont_tell_block,
 )
