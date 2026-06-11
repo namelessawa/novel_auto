@@ -61,3 +61,24 @@ def test_bench_render_markdown_returns_string() -> None:
     assert "test" in out
     assert "narrator" in out
     assert "1000" in out
+
+
+def test_bench_render_markdown_handles_zero_tokens() -> None:
+    """edge case: total_tokens=0 不能除零 (max 1 guard)."""
+    bench = _import_bench_module()
+    sample = {
+        "label": "edge",
+        "novel_id": "bench_edge",
+        "ticks": 0,
+        "bootstrap_sec": 0.0,
+        "tick_durations_sec": [],
+        "total_tokens": 0,
+        "by_agent_cumulative": {},
+        "by_priority": {},
+        "call_count": 0,
+        "per_tick": [],
+        "narratives": [],
+    }
+    out = bench._render_markdown(sample)
+    assert isinstance(out, str)
+    assert "edge" in out
