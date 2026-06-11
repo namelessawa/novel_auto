@@ -361,7 +361,10 @@ class NarrativeCritic:
             # 用 CRITIC_FORCE_LLM=1 可强制总跑 (用于调试 / 严格场景).
             llm_triggers: list[DeterministicTrigger] = []
             det_high_count = sum(1 for t in det_triggers if t.severity == "high")
-            force_llm = os.environ.get("CRITIC_FORCE_LLM", "0") == "1"
+            # v2.38 (iter#62) — robust truthy parse, 同 ENABLE_LLM_CRITIC.
+            force_llm = os.environ.get("CRITIC_FORCE_LLM", "0").strip().lower() in {
+                "1", "true", "yes", "on",
+            }
             should_call_llm = (
                 use_llm
                 and not llm_critique_done
