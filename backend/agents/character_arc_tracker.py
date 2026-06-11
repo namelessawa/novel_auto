@@ -24,7 +24,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Optional
+# v2.38 (iter#44) — Optional import 死代码清理
 
 from memory_system.models import (
     ArcStage,
