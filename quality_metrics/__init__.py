@@ -24,6 +24,11 @@ bench integration (iter#80).
 
 from __future__ import annotations
 
+from quality_metrics.compliance import (
+    ComplianceReport,
+    NarrationRecord,
+    compliance_report,
+)
 from quality_metrics.consistency import (
     CharacterFact,
     ConsistencyReport,
@@ -58,4 +63,8 @@ __all__ = [
     "WorldSnapshot",
     "check_narration_against_snapshot",
     "consistency_report",
+    # compliance
+    "ComplianceReport",
+    "NarrationRecord",
+    "compliance_report",
 ]
