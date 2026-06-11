@@ -5,6 +5,32 @@
 
 ---
 
+## [2.38] — 2026-06-12 — iter#101: Phase 2 stage5 seed2 50-tick (plot-dense cap held)
+
+`docs/iter/verdict-iter101-stage5-seed2-50tick.md`:
+
+Phase 2 §4 N≥30 × 3-seed mandate 第二个 50-tick leg. seed2 (民国上海) 是
+当初触发 iter#96 open_pressure 的 plot-dense 题材.
+
+stage5 seed2 50 tick vs stage4 seed2 30 tick (iter#95 baseline):
+- stage4 baseline: tick 30 已经 open=7 突破隐式 cap=5, avg_urg 7.5→6.29
+- stage5 fix: 50 整 tick open final=5, 全程未触及 cap=6, avg_urg 7.5→7.0
+- tick 30 transient stale=2 自我修复, tick 45 后 stale=0
+
+Cost / quality 对比 iter#100 seed1 50 tick:
+- total_tokens 521,767 → 483,857 (-7.3%, 题材 variance)
+- narrations 41 → 42
+- distinct char-2 0.8825 → 0.9087 (+2.97%, seed2 更鲜活)
+- open final 6 → 5
+- stale final 1 → 0
+- drift signals 0 → 0
+- avg_urg final 6.0 → 7.0
+
+cost delta vs iter#100: -7.3%
+quality delta vs iter#100: 全部维度更优
+测试: 691/691 (无代码改动, 仅 bench)
+mandate progress: 2/3 seed 50-tick ✓, 还差 seed3.
+
 ## [2.38] — 2026-06-12 — iter#100: Phase 2 stage5 cross-stage seed1 50-tick verify
 
 `docs/iter/verdict-iter100-stage5-seed1-50tick.md`:
