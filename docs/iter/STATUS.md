@@ -187,6 +187,32 @@ level 套路化未现, plot-level 已问题 — 短 bench 看不见.**
 * iter#91 — TickState 加 `_loops_closed_total` 累计 + reap 钩子
 * iter#92 — Showrunner cold_thread urgency boost 真正写进 inject 建议
 
+### Stage 4 完成 (iter#90-94) — 三件套同时缓解所有 drift 信号
+
+iter#94 50 tick 长 bench (stage4 = stage2 + 三补丁) vs iter#89 baseline:
+
+| metric              | stage3 baseline | **stage4**   |     Δ |
+| ------------------- | --------------: | -----------: | ----: |
+| open_loops end      |               9 |        **5** | -44%  |
+| open growth         |   +80% (5→9)    | +25% (4→5)   | 累积减半 |
+| stale end           |               3 |        **1** | recovery |
+| avg_urgency end     |            6.11 |     **6.80** | 止下降 |
+| drift signals       |               2 |        **0** | 全解除 |
+| distinct char-2     |           0.895 |        0.895 |  持平 |
+| total tokens        |         509,417 |      540,474 |   +6% |
+
+cost +6% 是合理代价 (cold_thread hint=7 触发 critic). 联合 cost-quality
+全维度 stage4 win. 详见 `docs/iter/verdict-stage4.md`.
+
+stage4 现是 best stable candidate 跨 cost / quality / drift.
+
+### Next: iter#95+
+
+* 多 seed 跨题材验证 stage4 是否稳健 (Stage 1/4 都是单 seed)
+* 推 critic length-gate / IMPORTANCE_MIN 进一步省 cost (探 stage4 ⩾v16
+  cost)
+* 加新 prompt 多样化指标 (Stage 3 verdict 候选 #2 之外的方向)
+
 ---
 
 ## Phase 1 Status (历史)
