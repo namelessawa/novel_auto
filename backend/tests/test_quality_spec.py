@@ -514,3 +514,31 @@ async def test_critic_min_narrative_len_env_override(mock_llm, monkeypatch) -> N
         "env CRITIC_MIN_NARRATIVE_LEN=50 后, 80 字段落必须触发 critic "
         "(原默认 600 会跳过)"
     )
+
+
+def test_critic_min_narrative_len_rejects_invalid_env(monkeypatch) -> None:
+    """v2.38 iter#54 — env 非正整数 / 负值 / 0 都退回 default 600.
+
+    防生产误配 CRITIC_MIN_NARRATIVE_LEN=0 把 critic 总开炸 token.
+    """
+    from agents.narrator_agent import _critic_min_narrative_len, _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
+
+    # 正常值
+    monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "300")
+    assert _critic_min_narrative_len() == 300
+
+    # 0 → default
+    monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "0")
+    assert _critic_min_narrative_len() == _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
+
+    # 负值 → default
+    monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "-100")
+    assert _critic_min_narrative_len() == _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
+
+    # 非数字 → default
+    monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "abc")
+    assert _critic_min_narrative_len() == _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
+
+    # 空字符串 → default
+    monkeypatch.setenv("CRITIC_MIN_NARRATIVE_LEN", "")
+    assert _critic_min_narrative_len() == _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
