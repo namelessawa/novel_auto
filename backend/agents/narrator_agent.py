@@ -171,6 +171,41 @@ def _critic_min_narrative_len() -> int:
         return _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
 
 
+# Phase 2 Stage 2 (iter#84) — importance gating.
+# Stage 1 裁决 (verdict-v15-vs-v16.md) 揭示: 平均场景 v16 (critic 关)
+# win 70%, 但 v15 (critic 开) win 的 3 场都关 "推进+角色" → critic 帮
+# 的是关键节拍而非平均质量. 用 tick 重要性门控: 高 importance → critic
+# 全链路 (v15 路径); 低 importance → 跳 critic (v16 路径).
+#
+# importance 来源: tick_events 的 max(narrative_value, narrative_value_hint).
+# 阈值默认 7 (≈ 显著事件级, EventInjector 给戏剧事件多打 ≥7).
+# CRITIC_IMPORTANCE_MIN=0 → critic 总跑 (老 v15 行为); 999 → critic 总跳 (v16).
+_CRITIC_IMPORTANCE_MIN_DEFAULT = 7
+
+
+def _critic_importance_min() -> int:
+    raw = os.environ.get("CRITIC_IMPORTANCE_MIN", "").strip()
+    if not raw:
+        return _CRITIC_IMPORTANCE_MIN_DEFAULT
+    try:
+        v = int(raw)
+        # 接受 0 (critic 总跑); 负值/非法退回 default.
+        return v if v >= 0 else _CRITIC_IMPORTANCE_MIN_DEFAULT
+    except ValueError:
+        return _CRITIC_IMPORTANCE_MIN_DEFAULT
+
+
+def _tick_importance_score(tick_events) -> int:
+    """tick 重要性 = events 中最高 narrative_value (含 hint).
+    无事件返回 0. 用现成 Event 字段, 不引入新 LLM 调用."""
+    if not tick_events:
+        return 0
+    return max(
+        max(e.narrative_value or 0, e.narrative_value_hint or 0)
+        for e in tick_events
+    )
+
+
 class NarratorAgent:
     """选材 + 写作。前置叙事价值评估,后置 OpenLoop 标注。"""
 
@@ -340,13 +375,31 @@ class NarratorAgent:
         # 4. CRITIQUE → REVISE/REWRITE 循环
         # v2.38 (iter#10) — 短段落跳过 critic, 阈值通过 _critic_min_narrative_len()
         # 每次 lazy 读 env (允许 monkeypatch.setenv 后立即生效).
+        # Phase 2 Stage 2 (iter#84) — 加 importance 门控:
+        # tick importance < CRITIC_IMPORTANCE_MIN 时跳 critic, 保留关键节拍
+        # 的全链路质量 + 平均节拍的 v16 成本. Stage 1 verdict 数据支持.
+        importance = _tick_importance_score(tick_events)
+        gate_importance = _critic_importance_min()
         if (
             parsed.should_narrate
             and self._critic is not None
             and parsed.narrative_text
             and len(parsed.narrative_text) >= _critic_min_narrative_len()
+            and importance >= gate_importance
         ):
             parsed = await self._run_critique(parsed)
+        elif (
+            parsed.should_narrate
+            and self._critic is not None
+            and parsed.narrative_text
+            and len(parsed.narrative_text) >= _critic_min_narrative_len()
+            and importance < gate_importance
+        ):
+            # 显式日志: 低重要性 tick 跳 critic. 不污染 consistency_flags.
+            logger.info(
+                "narrator[tick=%d] critic skipped: importance=%d < gate=%d",
+                tick, importance, gate_importance,
+            )
         return parsed
 
     # ------------------------------------------------------------------

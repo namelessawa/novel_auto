@@ -544,6 +544,125 @@ def test_critic_min_narrative_len_rejects_invalid_env(monkeypatch) -> None:
     assert _critic_min_narrative_len() == _CRITIC_MIN_NARRATIVE_LEN_DEFAULT
 
 
+@pytest.mark.asyncio
+async def test_narrate_skips_critic_for_low_importance_tick(mock_llm, monkeypatch) -> None:
+    """v2.38 Phase 2 Stage 2 (iter#84) — CRITIC_IMPORTANCE_MIN 重要性门控.
+
+    Stage 1 verdict 数据: 平均场景 critic 帮的小, 关键节拍 (high event
+    severity) critic 帮的大. 通过 narrative_value 门控.
+    """
+    from unittest.mock import AsyncMock
+
+    from agents.narrative_critic import CritiqueOutput
+    from agents.narrator_agent import NarratorAgent
+    from memory_system.models import Event
+
+    long_text = "他走过雨夜的街。" * 100  # ~800 字, 长度门通过
+
+    long_resp = json.dumps(
+        {
+            "narrative_text": long_text,
+            "estimated_length": "medium",
+            "viewpoint_characters": ["c1"],
+            "scene_focus": "",
+            "events_consumed": [],
+            "open_loops_referenced": [],
+            "newly_opened_loops": [],
+            "style_diagnostics": {},
+            "consistency_flags": [],
+        },
+        ensure_ascii=False,
+    )
+
+    mock_critic = AsyncMock()
+    mock_critic.critique_and_iterate = AsyncMock(
+        return_value=CritiqueOutput(
+            final_text=long_text,
+            rounds=[],
+            surviving_triggers=[],
+            decision_trail=[],
+            final_action="ACCEPT",
+            new_opening_signature="",
+            blacklist_to_add=[],
+        )
+    )
+    agent = NarratorAgent(critic=mock_critic, enable_critic=True)
+
+    # Importance gate = 7 (默认). 用低 narrative_value 事件 → 跳 critic.
+    # value=6 既 > _NARRATE_SKIP_THRESHOLD=5 让 narrator 真跑, 又 < gate=7
+    # 让 critic 真跳.
+    low_event = Event(
+        id="evt_low",
+        type="exogenous",
+        tick=1,
+        description="低重要性事件",
+        narrative_value=6,
+        narrative_value_hint=6,
+    )
+    high_event = Event(
+        id="evt_high",
+        type="dramatic",
+        tick=2,
+        description="高重要性事件",
+        narrative_value=8,
+        narrative_value_hint=8,
+    )
+
+    # --- 低 importance: 不该触发 critic ---
+    mock_llm.set_responses([long_resp])
+    await agent.narrate(
+        tick=1,
+        world_time=1,
+        tracking_character_id="c1",
+        tick_events=[low_event],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        style_anchors=[],
+        last_narration_tick=0,
+    )
+    assert mock_critic.critique_and_iterate.call_count == 0, (
+        "低 importance tick (value=3, gate=7) 必须跳 critic"
+    )
+
+    # --- 高 importance: 该触发 critic ---
+    mock_critic.critique_and_iterate.reset_mock()
+    mock_llm.set_responses([long_resp])
+    await agent.narrate(
+        tick=2,
+        world_time=2,
+        tracking_character_id="c1",
+        tick_events=[high_event],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        style_anchors=[],
+        last_narration_tick=0,
+    )
+    assert mock_critic.critique_and_iterate.call_count == 1, (
+        "高 importance tick (value=8, gate=7) 必须触发 critic"
+    )
+
+    # --- env CRITIC_IMPORTANCE_MIN=0 退回老 v15 行为 (critic 总跑) ---
+    monkeypatch.setenv("CRITIC_IMPORTANCE_MIN", "0")
+    mock_critic.critique_and_iterate.reset_mock()
+    mock_llm.set_responses([long_resp])
+    await agent.narrate(
+        tick=3,
+        world_time=3,
+        tracking_character_id="c1",
+        tick_events=[low_event],  # value=3 但 gate=0
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        style_anchors=[],
+        last_narration_tick=0,
+    )
+    assert mock_critic.critique_and_iterate.call_count == 1, (
+        "CRITIC_IMPORTANCE_MIN=0 时低 importance 也该触发 critic (v15 兼容)"
+    )
+
+
 def test_critic_enable_llm_env_robust_parsing(monkeypatch) -> None:
     """v2.38 iter#61 — CRITIC_ENABLE_LLM 接受多种 off 拼写.
 

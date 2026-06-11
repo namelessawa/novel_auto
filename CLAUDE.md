@@ -128,6 +128,7 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | env var                       | default | 用途                                         |
 | ----------------------------- | ------: | -------------------------------------------- |
 | `CRITIC_MIN_NARRATIVE_LEN`    | 600     | < 此阈值的 narrative 跳过 critic 整段        |
+| `CRITIC_IMPORTANCE_MIN`       | 7       | tick max(narrative_value) < 此阈值跳 critic. Phase 2 Stage 2 重要性门控. 0 = critic 总跑 (老 v15); 999 = 总跳 (v16) |
 | `CRITIC_MAX_TOTAL_ROUNDS`     | 1       | critic 修订总轮次上限 (critique + modify)    |
 | `CRITIC_MAX_REVISE_ROUNDS`    | 1       | revise 单类型上限                            |
 | `CRITIC_MAX_REWRITE_ROUNDS`   | 1       | rewrite 单类型上限                           |
