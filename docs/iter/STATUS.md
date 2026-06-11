@@ -108,6 +108,31 @@ Stage 退出条件已满足:
 * 三种结局都预定处置 (转正 / 维持 / 立 Stage 2 选题)
 * 产出 `docs/iter/verdict-v15-vs-v16.md` 入库
 
+### Stage 1 完成 (iter#81-83) — verdict = v16_promote (provisional)
+
+实跑 15 tick × 2 config + mimo pairwise (10 pair, 50k budget):
+
+| 指标            | v15 (critic 开) | v16 (critic 关) |
+| --------------- | --------------: | --------------: |
+| narrations      |              13 |              12 |
+| total tokens    |         188,873 |         149,839 |
+| **v16 win-rate**|             30% |         **70%** |
+| tier_hit_rate   |           84.6% |       **91.7%** |
+| det 整体        |     无显著恶化  |     微差可忽略  |
+
+verdict label = `v16_promote` per §4 第 1 档. Status = **provisional**
+(N=12 narrations < §4 ≥30 阈值). 详见 `docs/iter/verdict-v15-vs-v16.md`.
+
+**注意**: 3 个 v15 胜 pair 的 judge reason 都跟 "推进 + 角色" 有关,
+提示 critic 帮的不是平均质量, 而是关键节拍. 这与 §4 第 3 档"互有
+胜负 / 关键场景输、过场不输" 高度吻合 — 直接为 Stage 2 立项种.
+
+### Next: Stage 2 — 自适应算力分配 (iter#84+)
+
+按 Stage 1 反对意见 + §5: critic 走重要性门控 (event severity / arc
+beat / showrunner dramatic tick → v15 全链路; 其余跑 v16). 目标: 拿
+v15 关键质量 + v16 平均成本.
+
 ---
 
 ## Phase 1 Status (历史)
