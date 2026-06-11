@@ -218,5 +218,33 @@ def main():
     ))
 
 
+def _self_check() -> None:
+    """Smoke-test the public surface without actually calling LLM.
+
+    Usage: python scripts/bench_tick.py --self-check
+    """
+    sample = {
+        "label": "self-check",
+        "novel_id": "sample",
+        "ticks": 1,
+        "bootstrap_sec": 0.0,
+        "tick_durations_sec": [0.0],
+        "total_tokens": 0,
+        "by_agent_cumulative": {},
+        "by_priority": {},
+        "call_count": 0,
+        "per_tick": [],
+        "narratives": [],
+    }
+    out = _render_markdown(sample)
+    assert isinstance(out, str) and "self-check" in out
+    print("[OK] _render_markdown surface intact")
+    print(f"[OK] _DEFAULT_SEED len={len(_DEFAULT_SEED)} chars")
+    print("[OK] bench_tick.py self-check passed")
+
+
 if __name__ == "__main__":
-    main()
+    if "--self-check" in sys.argv:
+        _self_check()
+    else:
+        main()
