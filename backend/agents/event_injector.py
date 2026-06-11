@@ -50,7 +50,11 @@ SYSTEM_PROMPT = """\
 2. 因果: 内生事件有迹可循, 读者事后能看出"种子在这里"
 3. 设定一致: 外生事件符合 world_rules
 4. 戏剧克制: 用 dormant_characters / 已有 locations, 不凭空创造
-5. open_loops < 3 时必须注入能造张力的事件
+5. open_loops < 3 时必须注入能造张力的事件 (即便要新种)
+6. **伏笔容量平衡 (Phase 2 Stage 3 长程数据反推)**: 当 stale_loops ≥ 3
+   (即有 ≥3 条 open_loop 超过 20 tick 未推进), 本 tick **优先生成激活
+   stale loop 的事件**, 不再新种伏笔. 注入事件描述里可以隐式引用 stale
+   loop 的关键词 (人物 / 地点 / 物件), 让 Narrator 后续把它写明.
 
 # 禁区
 
@@ -199,9 +203,20 @@ class EventInjector:
             for s in tracking_chars
         ]
         loops_lite = [
-            {"id": l.id, "urgency": l.urgency, "type": l.type, "desc": l.description[:80]}
+            {
+                "id": l.id,
+                "urgency": l.urgency,
+                "type": l.type,
+                "desc": l.description[:80],
+                # Phase 2 Stage 4 (iter#90) — surface stale 状态供 LLM 决策.
+                "stale_ticks": tick - max(
+                    getattr(l, "last_referenced_tick", 0) or 0,
+                    getattr(l, "opened_tick", 0) or 0,
+                ),
+            }
             for l in open_loops
         ]
+        stale_count = sum(1 for l in loops_lite if l["stale_ticks"] > 20)
         dormant_lite = [
             {"id": p.id, "name": p.name, "tier": p.importance_tier}
             for p in dormant_characters[:10]
@@ -210,8 +225,10 @@ class EventInjector:
         # v2.38 (iter#22) — 紧凑视图: json indent 去掉, ```json 围栏去掉
         # (system prompt 已说严格 JSON 输出, fence 是冗余). 节省 ~40% prompt
         # 体积.
+        # v2.38 (iter#90) — header 加 stale_loops 显式提示, 触发 system
+        # prompt 原则 #6 (优先关旧 不新种).
         return f"""\
-# 当前 tick={tick}, open_loops={len(open_loops)}
+# 当前 tick={tick}, open_loops={len(open_loops)}, stale_loops={stale_count} (> 20 tick 未推进)
 
 ## WorldState 摘要
 {json.dumps(ws_lite, ensure_ascii=False)}
