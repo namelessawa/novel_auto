@@ -153,16 +153,14 @@ async def _bench(args) -> dict:
                     if open_count
                     else 0.0
                 )
-                # v2.38 (iter#88 review fix) — closed_count 暂未在 TickState
-                # 累计 (_loops_closed_total 字段并不存在), getattr 拿到 0 时
-                # 显式标 "not_implemented" 让 downstream reducer / 人类读者
-                # 不要把 closed=0 当真实数据. iter#89+ 在 TickState.reap_
-                # stale_open_loops 加累计后此 placeholder 可移除.
-                closed_raw = getattr(rt.tick_state, "_loops_closed_total", None)
-                closed_count = int(closed_raw) if closed_raw is not None else 0
+                # v2.38 (iter#88 review fix) → iter#91 — TickState 已加
+                # loops_closed_total 属性, 直接读. 老 state 兼容 attr 不存在.
+                closed_count = int(
+                    getattr(rt.tick_state, "loops_closed_total", 0) or 0
+                )
                 closed_source = (
-                    "tick_state._loops_closed_total"
-                    if closed_raw is not None
+                    "tick_state.loops_closed_total"
+                    if hasattr(rt.tick_state, "loops_closed_total")
                     else "not_implemented"
                 )
                 open_loop_snapshots.append(

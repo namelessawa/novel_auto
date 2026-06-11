@@ -93,6 +93,10 @@ class TickState:
 
         # 张力池
         self._open_loops: dict[str, OpenLoop] = {}
+        # Phase 2 Stage 3 (iter#91) — 累计已关闭 (touched-out / reaped) 的
+        # open_loop 数. Stage 3 longrange 度量需要它算 open/closed ratio.
+        # 持久化时序列化, load 时恢复. 0 是合法初始状态.
+        self._loops_closed_total: int = 0
 
         # 风格锚点(按 weight 降序排列)
         self._style_anchors: list[StyleAnchor] = []
@@ -219,7 +223,11 @@ class TickState:
         return loop_id in self._open_loops
 
     def close_open_loop(self, loop_id: str) -> OpenLoop | None:
-        return self._open_loops.pop(loop_id, None)
+        # Phase 2 Stage 3 (iter#91) — 累计 close (含 explicit pop, 不只 reap).
+        out = self._open_loops.pop(loop_id, None)
+        if out is not None:
+            self._loops_closed_total += 1
+        return out
 
     def get_open_loops(
         self,
@@ -245,9 +253,16 @@ class TickState:
         ]
         for loop_id in stale_ids:
             self._open_loops.pop(loop_id, None)
+        # Phase 2 Stage 3 (iter#91) — 累计关闭数, 服务 longrange foreshadowing.
         if stale_ids:
+            self._loops_closed_total += len(stale_ids)
             logger.info("Reaped %d stale OpenLoops at tick %d", len(stale_ids), current_tick)
         return stale_ids
+
+    @property
+    def loops_closed_total(self) -> int:
+        """Phase 2 Stage 3 — 累计 close 次数 (reap_stale + explicit pop)."""
+        return self._loops_closed_total
 
     def touch_open_loop(self, loop_id: str, tick: int) -> None:
         """Narrator 引用某 loop 时调用,更新 last_referenced_tick(冷线索检测)。"""
@@ -435,6 +450,8 @@ class TickState:
             "open_loops": {
                 lid: l.model_dump(mode="json") for lid, l in self._open_loops.items()
             },
+            # Phase 2 Stage 3 (iter#91) — 累计 close 数.
+            "loops_closed_total": self._loops_closed_total,
             "style_anchors": [a.model_dump(mode="json") for a in self._style_anchors],
             "last_event_tick_by_type": dict(self._last_event_tick_by_type),
             "novelty_warnings": list(self._novelty_warnings),
@@ -501,6 +518,8 @@ class TickState:
                 lid: OpenLoop.model_validate(data)
                 for lid, data in payload.get("open_loops", {}).items()
             }
+            # Phase 2 Stage 3 (iter#91) — 老 state file 没此字段, 视作 0.
+            self._loops_closed_total = int(payload.get("loops_closed_total", 0) or 0)
             self._style_anchors = [
                 StyleAnchor.model_validate(a)
                 for a in payload.get("style_anchors", [])

@@ -140,3 +140,54 @@ def test_touch_open_loop_updates_reference_tick(tmp_path) -> None:
     )
     ts.touch_open_loop("l1", tick=42)
     assert ts.get_open_loops()[0].last_referenced_tick == 42
+
+
+# v2.38 Phase 2 Stage 3 (iter#91) — _loops_closed_total accounting
+# ---------------------------------------------------------------------------
+
+
+def test_loops_closed_total_starts_zero(tmp_path) -> None:
+    ts = _make_state(str(tmp_path))
+    assert ts.loops_closed_total == 0
+
+
+def test_loops_closed_total_increments_on_close(tmp_path) -> None:
+    ts = _make_state(str(tmp_path))
+    ts.add_open_loop(OpenLoop(id="l1", opened_tick=0, description="x", urgency=5))
+    ts.add_open_loop(OpenLoop(id="l2", opened_tick=0, description="y", urgency=5))
+    ts.close_open_loop("l1")
+    assert ts.loops_closed_total == 1
+    ts.close_open_loop("l2")
+    assert ts.loops_closed_total == 2
+    # close 不存在的 id 不增加
+    ts.close_open_loop("does_not_exist")
+    assert ts.loops_closed_total == 2
+
+
+def test_loops_closed_total_increments_on_reap(tmp_path) -> None:
+    ts = _make_state(str(tmp_path))
+    ts.add_open_loop(
+        OpenLoop(id="l1", opened_tick=0, description="x", urgency=5, max_age_ticks=10)
+    )
+    ts.add_open_loop(
+        OpenLoop(id="l2", opened_tick=0, description="y", urgency=5, max_age_ticks=100)
+    )
+    # tick 50 → l1 stale, l2 仍活
+    reaped = ts.reap_stale_open_loops(current_tick=50)
+    assert reaped == ["l1"]
+    assert ts.loops_closed_total == 1
+    assert ts.get_open_loop_count() == 1
+
+
+def test_loops_closed_total_persists_roundtrip(tmp_path) -> None:
+    """save → load 后累计数恢复."""
+    ts = _make_state(str(tmp_path))
+    ts.add_open_loop(OpenLoop(id="l1", opened_tick=0, description="x", urgency=5))
+    ts.close_open_loop("l1")
+    ts.add_open_loop(OpenLoop(id="l2", opened_tick=0, description="y", urgency=5))
+    ts.close_open_loop("l2")
+    assert ts.loops_closed_total == 2
+    ts.save()
+    ts2 = _make_state(str(tmp_path))
+    assert ts2.load() is True
+    assert ts2.loops_closed_total == 2
