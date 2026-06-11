@@ -202,10 +202,11 @@ class NarratorAgent:
         if enable_critic is None:
             # 默认: 生产环境开启 critic; pytest 环境关闭, 避免吞掉测试预排的 mock LLM 响应。
             # 显式 NARRATOR_ENABLE_CRITIC=1/0 优先于自动判断。
-            raw = os.environ.get("NARRATOR_ENABLE_CRITIC", "").strip()
-            if raw in {"0", "false", "False"}:
+            # v2.38 (iter#64) — case-insensitive, 含 no/off/yes/on 全集.
+            raw = os.environ.get("NARRATOR_ENABLE_CRITIC", "").strip().lower()
+            if raw in {"0", "false", "no", "off"}:
                 enable_critic = False
-            elif raw in {"1", "true", "True"}:
+            elif raw in {"1", "true", "yes", "on"}:
                 enable_critic = True
             else:
                 in_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
