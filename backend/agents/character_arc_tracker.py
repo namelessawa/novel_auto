@@ -175,13 +175,12 @@ class CharacterArcTracker:
         model_tier: str = "medium",
     ) -> None:
         if enable_llm is None:
-            # v2.38 (iter#66) — case-insensitive 多拼写 (与 narrator iter#64 /
-            # story_arc iter#65 同模式).
-            raw = os.environ.get("CHARACTER_ARC_TRACKER_LLM", "").strip().lower()
-            if raw in {"0", "false", "no", "off"}:
-                enable_llm = False
-            elif raw in {"1", "true", "yes", "on"}:
-                enable_llm = True
+            # v2.38 (iter#71) — env_bool_tri 共享 helper.
+            from nf_core.env_helpers import env_bool_tri
+
+            tri = env_bool_tri("CHARACTER_ARC_TRACKER_LLM")
+            if tri is not None:
+                enable_llm = tri
             else:
                 enable_llm = not bool(os.environ.get("PYTEST_CURRENT_TEST"))
         self._enable_llm = enable_llm
