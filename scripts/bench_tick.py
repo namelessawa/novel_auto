@@ -58,7 +58,10 @@ _DEFAULT_SEED = (
 
 
 async def _bench(args) -> dict:
+    # v2.38 (iter#52) — bench user_id 固定 "bench" (≠ 任何真实用户 id 格式),
+    # 隔离 cost-quality-loop bench 数据与生产数据.
     user_id = "bench"
+    assert user_id != "_legacy", "bench user_id 与 legacy 冲突"
     novel_id = f"bench_{args.label}_{int(time.time())}"
     data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
     os.makedirs(data_dir, exist_ok=True)
