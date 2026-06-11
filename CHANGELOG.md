@@ -5,6 +5,36 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#103: Showrunner 自动关闭 open_loops (closed=0 leakage 修复)
+
+`backend/agents/showrunner.py` + `backend/agents/orchestrator.py`:
+
+iter#102 verdict 暴露真问题: 跨 130 tick × 3 seed bench 全部 closed=0.
+EventInjector 控制 open, 但**没有任何 agent 自动 close**. 整个 130 tick 实
+验里 close_open_loop 零次被调用, stale-reaping 只是延后, 不释放叙事张力.
+
+修复: Showrunner 输出新增 `loops_to_close: list[str]`, orchestrator 在
+showrunner 调度后调 `tick_state.close_open_loop(id)`.
+
+- `ShowrunnerOutput.loops_to_close: list[str]` 新字段
+- SYSTEM_PROMPT 加 close 决策准则: 当 open_loops ≥ 6, 必须选 1-2 个关闭,
+  优先级 stale 最远 > urgency=low 旧 loop > 偏题 loop. 不关闭 urgency=high
+  或刚开 <10 tick 的. open_loops < 4 时留空.
+- `_parse_output`: 宽容解析 str list 与 {"loop_id": "..."} dict 两种形式,
+  strip whitespace, 跳过空/非 str 项.
+- orchestrator `_phase2_inject_events`: 在 showrunner 调度后 wire close
+  call, 不存在的 ID 静默忽略, logger.info 记录关闭数.
+
+测试: 10 个新测试 (7 parse + 3 orchestrator wire), 全部 PASS.
+- test_showrunner_loops_to_close.py: parse 各种形式 + system prompt 内容契约
+- test_orchestrator_close_loops.py: 真正落到 TickState 上的端到端验证
+
+cost delta: 中性 (showrunner prompt 加 ~50 字符决策准则, system prompt
+~3% 增, ~30 token/调用; 每 5 tick 一次 → 摊薄 ~6 token/tick, 可忽略)
+quality delta: 待 iter#104 bench 验证 (期望: closed≥1 跨 seed3 50-tick,
+open final 从 11 降到 ≤8)
+测试: 691→701 (+10 新)
+
 ## [2.38] — 2026-06-12 — iter#102: Phase 2 §4 mandate complete + drift surfaced
 
 `docs/iter/verdict-iter102-stage5-seed3-50tick.md`:

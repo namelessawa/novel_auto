@@ -416,6 +416,22 @@ class Orchestrator:
                     current_tick=tick,
                 )
                 showrunner_recs = list(getattr(showrunner_out, "recommendations", [])) or []
+                # iter#103 — Showrunner 显式 close-loop 决策落地. 在 130 tick
+                # 跨 3 seed bench 里 closed=0, 此处第一个自动 close 路径.
+                loops_to_close = list(getattr(showrunner_out, "loops_to_close", [])) or []
+                if loops_to_close:
+                    open_ids = {l.id for l in self._tick_state.get_open_loops()}
+                    closed_count = 0
+                    for lid in loops_to_close:
+                        if lid in open_ids:
+                            closed = self._tick_state.close_open_loop(lid)
+                            if closed is not None:
+                                closed_count += 1
+                    if closed_count:
+                        logger.info(
+                            "Showrunner closed %d loop(s) at tick %d: %s",
+                            closed_count, tick, loops_to_close,
+                        )
                 agents_called.append("showrunner")
             except Exception as e:
                 logger.error("Showrunner.assess failed: %s", e)

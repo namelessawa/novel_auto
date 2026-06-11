@@ -70,13 +70,30 @@ SYSTEM_PROMPT = """\
       "rationale": "loop 已沉寂 25 tick, 应激活",
       "urgency": "high"
     }
-  ]
+  ],
+  "loops_to_close": ["loop_7"]
 }
 
 字段值用枚举: intensity ∈ {low, medium, high}, trend ∈ {rising, flat,
 falling}, health ∈ {ok, low, critical}, type ∈ {trigger_dramatic_event,
 propose_meeting, time_jump, generation_shift, macro_reset}, urgency ∈
 {low, medium, high}.
+
+# loops_to_close 决策准则 (iter#103 新增)
+
+当 open_loops ≥ 6 时, 必须从池中挑 1-2 个推荐关闭, 否则池子无限累积
+导致后续叙事张力扩散。优先级 (从高到低):
+1. 最 stale (last_referenced_tick 距 current_tick 最远) — 已无叙事
+   动能, 关闭释放压力
+2. urgency=low 的旧 loop — 张力本就最弱
+3. type 与近期主线偏离 (例如 main_arc 是 "失语少女", 但有 loop 是
+   "外城打猎竞赛" 偏题)
+
+不要无脑关闭 urgency=high 或刚开 < 10 tick 的 loop. open_loops < 4
+时 loops_to_close 留空 (池子健康).
+
+只输出 loop_id 字符串数组 (来自池中真实 id), 不需要 rationale.
+关闭是单向操作 — 一旦关闭, 该 loop 从池中永久剔除, 不可恢复.
 """
 
 
@@ -87,6 +104,10 @@ class ShowrunnerOutput:
     cold_threads: list[dict] = field(default_factory=list)
     arc_status: list[dict] = field(default_factory=list)
     recommendations: list[dict] = field(default_factory=list)
+    # iter#103 — 显式 close-loop 决策 (Phase 2 §closed=0 leakage 修复).
+    # Showrunner 在 open_loops 累积时挑 1-2 个推荐关闭, orchestrator wire
+    # 后会调 tick_state.close_open_loop(id). 仅 ID 字段, 解读权留给 LLM.
+    loops_to_close: list[str] = field(default_factory=list)
 
 
 class Showrunner:
@@ -203,10 +224,22 @@ class Showrunner:
             logger.error("Showrunner JSON parse failed: %s — raw[:300]=%r", e, raw[:300])
             return ShowrunnerOutput()
 
+        raw_loops_to_close = payload.get("loops_to_close", []) or []
+        loops_to_close: list[str] = []
+        for item in raw_loops_to_close:
+            if isinstance(item, str) and item.strip():
+                loops_to_close.append(item.strip())
+            elif isinstance(item, dict):
+                # 宽容: LLM 可能输出 {"loop_id": "loop_3"} 而非纯 str
+                lid = item.get("loop_id") or item.get("id")
+                if isinstance(lid, str) and lid.strip():
+                    loops_to_close.append(lid.strip())
+
         return ShowrunnerOutput(
             pacing_assessment=dict(payload.get("pacing_assessment", {}) or {}),
             conflict_pool_status=dict(payload.get("conflict_pool_status", {}) or {}),
             cold_threads=list(payload.get("cold_threads", []) or []),
             arc_status=list(payload.get("arc_status", []) or []),
             recommendations=list(payload.get("recommendations", []) or []),
+            loops_to_close=loops_to_close,
         )
