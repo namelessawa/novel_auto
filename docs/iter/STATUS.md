@@ -76,6 +76,40 @@ See `scripts/bench_tick.py` docstring.
 * docs/iter/bench-v0..v16-*.{json,md} — raw bench data
 * CLAUDE.md — env tuning table
 
-## Status
+## Phase 2 Quality-First Loop (iter#76+)
+
+> Phase 1 cost 优化在 iter#34 饱和; iter#76 起切到 Phase 2:
+> 质量与 token 成本并列一等公民.
+
+### Stage 0 — Quality Metrics Infrastructure (iter#76-80)
+
+| 模块                                | iter | 测试 | 状态 |
+| ----------------------------------- | ---: | ---: | :--- |
+| det.repetition (n-gram + distinct)  |  #76 |   19 | ✓    |
+| det.consistency (entity vs world)   |  #77 |   14 | ✓    |
+| det.compliance (tier/leak/schema)   |  #78 |   13 | ✓    |
+| judge runner (pairwise + rubric)    |  #79 |   14 | ✓    |
+| bench --quality 集成 + self-sanity  |  #80 |    — | ✓    |
+| **小计** test 增量                  |      | **+60** | 测试 661 (从 601) |
+
+§7 参数固化在 `CLAUDE.md`:
+* JUDGE_MODEL = `mimo-v2.5-pro` (用户选定跨家族评判)
+* judge 预算 50k tokens / bench, pairwise 30 tick / 10 对, 3 固定 seeds
+* det 指标层每 bench 必跑 (零成本)
+
+Stage 退出条件已满足:
+* 4 类 det / judge 全部可在 `python scripts/bench_tick.py --quality` 跑通
+* judge self-sanity 工具 `scripts/quality_self_sanity.py` 待对 v15 实跑一次
+  (Stage 1 入口前必须 bias 通过)
+
+### Next: Stage 1 — v15 vs v16 verdict (iter#81-83)
+
+* 同 seed 跑 v15 vs v16, ≥30 tick, det 全量 + judge 按预算采样
+* 三种结局都预定处置 (转正 / 维持 / 立 Stage 2 选题)
+* 产出 `docs/iter/verdict-v15-vs-v16.md` 入库
+
+---
+
+## Phase 1 Status (历史)
 
 cost-quality-loop work continues at user's directive (rule #3: no stop until user says stop). Saturation of optimizable surfaces reached around iter#34; subsequent iterations focus on code hygiene (dead imports, isinstance guards, docs/tests).

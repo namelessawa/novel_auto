@@ -142,8 +142,167 @@ async def _bench(args) -> dict:
         "narratives": narratives,
     }
 
+    # v2.38 (iter#80) — Phase 2 quality metrics integration.
+    if getattr(args, "quality", False):
+        report["quality"] = await _compute_quality(
+            narratives=narratives,
+            rt=rt,
+            tick_records=tick_records,
+            judge_density=getattr(args, "judge_density", 10),
+            judge_budget=getattr(args, "judge_budget", 50_000),
+        )
+
     rt.close()
     return report
+
+
+async def _compute_quality(
+    *,
+    narratives: list[dict],
+    rt,
+    tick_records: list[dict],
+    judge_density: int,
+    judge_budget: int,
+) -> dict:
+    """Det 三类 + judge 采样. judge 失败/未配置时只跑 det.
+
+    Phase 2 §3.1 + §3.2. 此函数 deterministic 部分必跑, judge 部分按
+    budget 截断.
+    """
+    from quality_metrics import (
+        CharacterFact,
+        LocationFact,
+        NarrationRecord,
+        WorldSnapshot,
+        compliance_report,
+        consistency_report,
+        repetition_report,
+    )
+
+    # --- Det 1: repetition ----------------------------------------------
+    texts = [n["text"] for n in narratives]
+    rep_view = repetition_report(texts).to_dict()
+
+    # --- Det 2: consistency ----------------------------------------------
+    # 用本次 bench 结束时的 TickState 装 snapshot (近似: 每个 narration
+    # 用同一 final snapshot; long bench 会扩展为 per-tick).
+    try:
+        chars = [
+            CharacterFact(
+                id=p.id,
+                name=p.name,
+                current_location=(
+                    next(
+                        (
+                            s.current_location
+                            for s in rt.tick_state.list_character_states()
+                            if s.character_id == p.id
+                        ),
+                        "",
+                    )
+                ),
+                alive=True,
+            )
+            for p in rt.tick_state.list_character_profiles()
+        ]
+        locs = [
+            LocationFact(id=l.id, name=l.name)
+            for l in rt.tick_state.world_state.locations
+        ]
+        snap = WorldSnapshot(characters=chars, locations=locs)
+        cons_view = consistency_report(texts, [snap] * len(texts)).to_dict()
+    except Exception as e:  # pragma: no cover — defensive
+        cons_view = {"error": f"snapshot_assembly_failed: {e}"}
+
+    # --- Det 3: compliance ----------------------------------------------
+    # Bench narratives 现暂未保存 estimated_length / consistency_flags;
+    # 用 text 长度近似 tier (与 narrator 启发式一致): 落 medium 默认.
+    # 后续 iter 可让 bench 保存完整 NarratorOutput dict 以获得真实 flag.
+    comp_records = [
+        NarrationRecord(
+            text=n["text"],
+            estimated_length=_guess_tier_for(n.get("chars", len(n["text"]))),
+            consistency_flags=[],
+            should_narrate=True,
+        )
+        for n in narratives
+    ]
+    comp_view = compliance_report(comp_records).to_dict()
+
+    quality = {
+        "det": {
+            "repetition": rep_view,
+            "consistency": cons_view,
+            "compliance": comp_view,
+        },
+        "judge": None,
+        "judge_meta": {
+            "configured_density_per_30_tick": judge_density,
+            "configured_budget_tokens": judge_budget,
+        },
+    }
+
+    # --- Judge layer (optional) -----------------------------------------
+    # Self-sanity mode (无 _judge_pair_against — iter#80 self-bench 不做 pairwise,
+    # 仅 rubric on 自身). Pairwise 留给 iter#81 v15-vs-v16 Stage 1 裁决.
+    if texts and len(texts) >= 1:
+        try:
+            from quality_metrics import make_mimo_judge_fn, rubric_judge
+        except Exception as e:
+            quality["judge"] = {"error": f"import_failed: {e}"}
+            return quality
+
+        try:
+            judge_fn, judge_model = make_mimo_judge_fn()
+        except RuntimeError as e:
+            quality["judge"] = {"error": f"judge_unconfigured: {e}"}
+            return quality
+        except Exception as e:  # pragma: no cover — defensive
+            quality["judge"] = {"error": f"judge_init_failed: {e}"}
+            return quality
+
+        # 单 bench rubric: 给每段叙述独立打分. 预算意义: 假设每次 rubric
+        # ~ 1500 tokens 输入 + 500 输出 = 2k, 50k 预算可跑 25 段.
+        rubric_results: list[dict] = []
+        approx_cost_each = 2000
+        max_samples = max(0, judge_budget // approx_cost_each)
+        sampled = texts[:max_samples]
+        for t in sampled:
+            if not t or not t.strip():
+                continue
+            try:
+                r = await rubric_judge(t, judge_fn=judge_fn, model_name=judge_model)
+                rubric_results.append(r.to_dict())
+            except Exception as e:
+                rubric_results.append({"error": f"rubric_call_failed: {e}"})
+
+        quality["judge"] = {
+            "rubric_samples": rubric_results,
+            "rubric_count": len(rubric_results),
+            "judge_model": judge_model,
+        }
+        if rubric_results:
+            valid = [
+                r for r in rubric_results if r.get("mean") and r["mean"] > 0
+            ]
+            if valid:
+                quality["judge"]["rubric_mean"] = round(
+                    sum(r["mean"] for r in valid) / len(valid), 4
+                )
+                quality["judge"]["rubric_mean_count"] = len(valid)
+
+    return quality
+
+
+def _guess_tier_for(narrator_chars: int) -> str:
+    """Approximate narrator's own tier rule for compliance reporting."""
+    if narrator_chars <= 0:
+        return "none"
+    if narrator_chars < 500:
+        return "short"
+    if narrator_chars < 1100:
+        return "medium"
+    return "long"
 
 
 def _render_markdown(rep: dict) -> str:
@@ -196,6 +355,77 @@ def _render_markdown(rep: dict) -> str:
         first = rep["narratives"][0]
         lines.append(first["text"][:1200])
         lines.append("```")
+
+    # v2.38 Phase 2 (iter#80) — quality section, mirror image of cost table.
+    if "quality" in rep and rep["quality"]:
+        q = rep["quality"]
+        lines += ["", "## Quality (Phase 2 §3 det + judge)"]
+
+        # Det 1: repetition
+        det_rep = q.get("det", {}).get("repetition") or {}
+        if det_rep:
+            d = det_rep.get("distinct", {})
+            o = det_rep.get("overlap_consecutive", {})
+            lines += [
+                "",
+                "### Repetition (det, zero LLM cost)",
+                "",
+                f"- narration_count: {det_rep.get('narration_count', 0)}",
+                f"- distinct char-2/3/4: {d.get('char_2', 0)} / {d.get('char_3', 0)} / {d.get('char_4', 0)}",
+                f"- distinct word-2/3/4: {d.get('word_2', 0)} / {d.get('word_3', 0)} / {d.get('word_4', 0)}",
+                f"- overlap consecutive char-2/3/4: {o.get('char_2', 0)} / {o.get('char_3', 0)} / {o.get('char_4', 0)}",
+                f"- overlap consecutive word-2/3/4: {o.get('word_2', 0)} / {o.get('word_3', 0)} / {o.get('word_4', 0)}",
+            ]
+            if det_rep.get("notes"):
+                lines.append(f"- notes: {', '.join(det_rep['notes'])}")
+
+        # Det 2: consistency
+        det_cons = q.get("det", {}).get("consistency") or {}
+        if det_cons:
+            lines += [
+                "",
+                "### Consistency (det)",
+                "",
+                f"- violation_count: {det_cons.get('violation_count', 0)} (high={det_cons.get('high_count', 0)}, medium={det_cons.get('medium_count', 0)})",
+            ]
+            for v in (det_cons.get("violations") or [])[:5]:
+                lines.append(
+                    f"  - [{v['severity']}] {v['kind']} @ tick#{v['narration_index']}: `{v['evidence']}`"
+                )
+            if det_cons.get("notes"):
+                lines.append(f"- notes: {', '.join(det_cons['notes'])}")
+
+        # Det 3: compliance
+        det_comp = q.get("det", {}).get("compliance") or {}
+        if det_comp:
+            lines += [
+                "",
+                "### Compliance (det)",
+                "",
+                f"- tier_hit_rate: {det_comp.get('tier_hit_rate', 0)} ({det_comp.get('tier_hit_count', 0)}/{det_comp.get('evaluated_count', 0)})",
+                f"- schema_violation_rate: {det_comp.get('schema_violation_rate', 0)}",
+                f"- reasoning_leak_rate: {det_comp.get('reasoning_leak_rate', 0)}",
+                f"- placeholder_leak_rate: {det_comp.get('placeholder_leak_rate', 0)}",
+                f"- skipped (should_narrate=False): {det_comp.get('skipped_records', 0)}",
+            ]
+            if det_comp.get("notes"):
+                lines.append(f"- notes: {', '.join(det_comp['notes'])}")
+
+        # Judge layer
+        j = q.get("judge")
+        lines += ["", "### Judge (LLM, mimo 跨家族)", ""]
+        if j is None:
+            lines.append("- skipped (no narratives or no config)")
+        elif "error" in j:
+            lines.append(f"- error: `{j['error']}`")
+        else:
+            mean = j.get("rubric_mean")
+            lines += [
+                f"- judge_model: {j.get('judge_model', '?')}",
+                f"- rubric samples: {j.get('rubric_count', 0)}",
+                f"- rubric mean (3 维平均): {mean if mean is not None else 'n/a'} ({j.get('rubric_mean_count', 0)} valid)",
+            ]
+
     return "\n".join(lines) + "\n"
 
 
@@ -205,6 +435,24 @@ def main():
     parser.add_argument("--seed", default=_DEFAULT_SEED)
     parser.add_argument("--label", default="v0-baseline")
     parser.add_argument("--log-level", default="WARNING")
+    # v2.38 Phase 2 (iter#80) — quality metrics integration.
+    parser.add_argument(
+        "--quality",
+        action="store_true",
+        help="跑 det 三类指标 + rubric judge (mimo). 见 §3.1+§3.2.",
+    )
+    parser.add_argument(
+        "--judge-density",
+        type=int,
+        default=10,
+        help="每 30 tick 抽多少对 pairwise (Stage 1+). 默认 10 (§7).",
+    )
+    parser.add_argument(
+        "--judge-budget",
+        type=int,
+        default=50_000,
+        help="单次 quality bench judge tokens 总预算 (§7 默认 50k).",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
