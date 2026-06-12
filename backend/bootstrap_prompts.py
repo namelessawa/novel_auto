@@ -115,7 +115,7 @@ PROMPT_WORLD = """\
 # ---------------------------------------------------------------------------
 
 PROMPT_CHARACTERS = """\
-基于以下 WorldState 设计 6-10 个起始角色.
+基于以下 WorldState 设计起始角色: {cast_breakdown}.
 
 ```json
 {world_state}
@@ -123,7 +123,7 @@ PROMPT_CHARACTERS = """\
 
 # 要求
 
-* 3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / 2-3 个 C 级 (NPC)
+* {cast_tiers}
 * 角色间必须已有关系 (不要互不相识); A 级必须有 arc_goal 和 ≥1 secret
 * 角色与势力关系要预埋张力; A/B 之间至少两对欲望互相冲突
 * **名字**: 与世界观语言一致 (中文世界用中文名); id 用拼音 slug
@@ -344,6 +344,9 @@ async def bootstrap_world(
     positioning: str,
     references: str,
     title: str = "",
+    cast_a_count: int | None = None,
+    cast_b_count: int | None = None,
+    cast_c_count: int | None = None,
 ) -> TickState:
     """完整冷启动序列。返回填充好的 TickState 实例(已 save)。
 
@@ -395,11 +398,37 @@ async def bootstrap_world(
 
     # === Step 2: Characters ===========================================
     logger.info("[2/4] Generating characters…")
+    # iter#119 Phase 3-B: cast-confound 控制.
+    # 默认 wide range (6-10 / 3 A + 3-4 B + 2-3 C), 与历史 bench 等价.
+    # 若调用方设了 cast_a/b/c, 则精确指定 → 跨 seed bench 实验 cast 可控.
+    cast_a = cast_a_count
+    cast_b = cast_b_count
+    cast_c = cast_c_count
+    if cast_a is None and cast_b is None and cast_c is None:
+        cast_breakdown = "6-10 个起始角色"
+        cast_tiers = (
+            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
+            "2-3 个 C 级 (NPC)"
+        )
+    else:
+        a = cast_a if cast_a is not None else 2
+        b = cast_b if cast_b is not None else 2
+        c = cast_c if cast_c is not None else 1
+        total = a + b + c
+        cast_breakdown = f"恰好 {total} 个起始角色 (固定)"
+        cast_tiers = (
+            f"恰好 {a} 个 A 级 (主角候选, 深度建模) / "
+            f"恰好 {b} 个 B 级 (重要配角) / "
+            f"恰好 {c} 个 C 级 (NPC)"
+        )
+
     chars_resp = await _llm_json(
         system_prompt="你是一个角色设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_CHARACTERS.format(
             # v2.38 (iter#29) — 不缩进 JSON, 节省 ~30% input tokens.
-            world_state=ws.model_dump_json()
+            world_state=ws.model_dump_json(),
+            cast_breakdown=cast_breakdown,
+            cast_tiers=cast_tiers,
         ),
         # v2.38 (iter#11) — characters JSON 4-6 角色 × ~700 tokens = ~4000.
         max_tokens=6144,
@@ -545,6 +574,20 @@ def main(argv: list[str] | None = None) -> int:
         default="Le Guin / 古龙",
         help="参考作家/作品",
     )
+    # iter#119 Phase 3-B cast-confound 控制 — 跨 seed bench 实验 cast 可控.
+    # 不设则默认 wide range (与历史 bench 等价).
+    parser.add_argument(
+        "--cast-a-count", type=int, default=None,
+        help="精确 A 级角色数 (主角候选). 不设则 LLM 自由 (默认 3 个 wide)",
+    )
+    parser.add_argument(
+        "--cast-b-count", type=int, default=None,
+        help="精确 B 级角色数 (重要配角). 不设则 LLM 自由 (默认 3-4 个 wide)",
+    )
+    parser.add_argument(
+        "--cast-c-count", type=int, default=None,
+        help="精确 C 级角色数 (NPC). 不设则 LLM 自由 (默认 2-3 个 wide)",
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
 
@@ -566,6 +609,9 @@ def main(argv: list[str] | None = None) -> int:
             positioning=args.positioning,
             references=args.references,
             title=args.title,
+            cast_a_count=args.cast_a_count,
+            cast_b_count=args.cast_b_count,
+            cast_c_count=args.cast_c_count,
         )
     )
     # Windows GBK 控制台无法编码 ✓ — 用 ASCII 替代

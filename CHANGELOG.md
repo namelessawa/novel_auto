@@ -5,6 +5,43 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#119: Phase 3-B cast-confound 控制 — --cast-{a,b,c}-count
+
+`backend/bootstrap_prompts.py`:
+
+Phase 3 候选 B 启动. iter#102 verdict P1 提的 cast-confound 控制 (seed3
+cost 2.6x 主因 bootstrap 生成 3 vs 2 character 随机性) 落地.
+
+新 CLI 参数:
+- `--cast-a-count N` 精确 A 级 (主角候选) 角色数
+- `--cast-b-count N` 精确 B 级 (重要配角)
+- `--cast-c-count N` 精确 C 级 (NPC)
+
+未设 → wide range (6-10 / 3A + 3-4B + 2-3C), 与历史 bench 等价.
+全设/部分设 → "恰好 {N} 个起始角色 (固定)" + 精确 tier 分布, prompt 强制
+LLM 不偏离.
+
+效果: 跨 seed bench 实验 cast 可控, 消除 cast confound. iter#102 时 seed3
++170% cost 之"题材分化" vs "cast 随机" 可拆开测.
+
+测试: backend/tests/test_bootstrap_cast_size.py (6 测试):
+- wide 默认无 '恰好' 字样
+- 全设 → 恰好 N 角色
+- 部分设 → 未设的用默认补足
+- 1+1+1 minimum
+- C=0 允许
+- CLI parser 含 cast args
+
+**环境注**: Conda 在 session 中段升级 Python 3.11→3.14 但 transition 损坏:
+- iter#116 .c~ 大量 restore 后 pytest 9.0.3 起来 (Python 3.11 时)
+- 后续 Conda 把 Python 切 3.14, site-packages pyd 全 cp311 ABI mismatch
+- pip 自身因 metadata 损坏抛 BadMetadata, 无法重装
+- iter#119 测试本地无法跑, 代码已 commit; 用户 conda update / clean 后正常
+
+cost delta: 0 (基建)
+quality delta: 跨 seed bench 实验 confound 控制
+测试: 6 单元测试 (设计完成, 运行待环境恢复)
+
 ## [2.40] — 2026-06-12 — iter#118: diversity dim 离线 cross-bench 灵敏度评估
 
 `scripts/analyze_diversity.py` (new) + `docs/iter/verdict-iter118-diversity-cross-bench.md`:
