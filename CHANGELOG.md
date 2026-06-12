@@ -5,6 +5,36 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#124: Phase 3-B 3-seed final — mixed verdict (-8.5% avg cost, seed-specific)
+
+`docs/iter/verdict-iter124-cast-3seed-final.md`:
+
+完成 Phase 3-B 3-seed × cast-control matrix. seed2 民国 with 2A+2B+1C 控制.
+
+3-seed × cast-control vs close-fix wide:
+- seed3 plot-dense: -19% cost, +1.6% distinct (大胜)
+- seed1 plot-light: -6.4% cost, -0.5% distinct (小胜)
+- **seed2 plot-medium: +1.1% cost, -3.8% distinct (slight regress)**
+
+平均 cost **-8.5%**, 平均 distinct -0.9%, drift 全部 0.
+
+**关键发现 — cast=5 NOT universal optimum**:
+- seed3 (plot-dense): cast random 偶发 3 chars 太密, 5 chars 反而疏松, 净赢
+- seed1 (plot-light): 1-2 chars 太少, 5 chars 让事件 dispersal 更均衡
+- seed2 (plot-medium): 已经处于 "自然甜点" 区间 (close-fix wide distinct
+  0.8974 最高), 强加 5 chars 反而摊薄 vocabulary 让 distinct -3.8%
+
+Phase 3-B 治理是 **配置点 problem**, 题材敏感非 universal robust.
+
+候选 iter#125+:
+1. (P0) cast count sweep cast=3/4/5/6 × seed × density 找 optimal
+2. (P1) showrunner runtime active-cast cap (动态而非 bootstrap)
+3. (P2) seed2 用 cast=3/4 重 bench
+
+cost delta vs close-fix wide: 3-seed 平均 -8.5%
+quality delta: drift 0 维持, distinct -0.9% avg (噪声层级)
+测试: 13/13 cast + 44/44 历史 PASS
+
 ## [2.40] — 2026-06-12 — iter#122: Phase 3-B 跨题材 generalize ✓ — seed1 -6.4%
 
 `docs/iter/verdict-iter122-cast-seed1.md`:
