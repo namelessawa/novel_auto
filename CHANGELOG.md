@@ -5,6 +5,39 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#118: diversity dim 离线 cross-bench 灵敏度评估
+
+`scripts/analyze_diversity.py` (new) + `docs/iter/verdict-iter118-diversity-cross-bench.md`:
+
+iter#116 加 diversity dim, iter#118 离线分析 7 个已有 bench (3 baseline + 3
+close-fix + 1 iter#114 slim 反向) 测试 dim 灵敏度. 0 LLM cost.
+
+**关键发现 — diversity dim 信号方向正确但弱**:
+
+| metric | iter#114 slim vs iter#107 close-fix | 现有 overlap_consec | 强度 |
+| --- | --- | --- | --- |
+| ttr_char | +2.1% (反向) | n/a | 噪声 |
+| ttr_word | +0.01% | n/a | 死 |
+| **mattr** | **-1.2%** | overlap_consec_4 +226% | 弱 |
+| sent_mean | +2.7% | n/a | 噪声 |
+
+跨 3-seed close-fix 自然变异 mattr ±1.8%, iter#114 slim -1.2% 仍在此区间
+内, 不能 confident 区分.
+
+**结论**: iter#116 dim **不能替代** overlap_consec. 但 mattr 跨题材稳定且
+方向性一致, 仍可补充门控. Phase 3-C dim 价值: 捕捉**不同退化模式**:
+- overlap_consec: adjacent narration 重复
+- mattr: 段内 vocabulary 局部贫乏
+
+候选后续:
+1. 删 ttr_word (跨 bench 0.7% 范围, 死信号)
+2. 集成 mattr 到 longrange drift signals (阈值 -2%)
+3. 探更敏感 vocabulary 度量
+
+cost delta: 0 (离线 analysis)
+quality delta: 维度评估完整, 诚实记录弱信号
+测试: 22/22 (无新)
+
 ## [2.40] — 2026-06-12 — iter#117: cycle 15 review fixes (iter#116 followup)
 
 Per Goal #7 全 code-review 每 3 iter. iter#114/#115/#116 — iter#114 revert
