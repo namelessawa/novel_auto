@@ -5,6 +5,32 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#117: cycle 15 review fixes (iter#116 followup)
+
+Per Goal #7 全 code-review 每 3 iter. iter#114/#115/#116 — iter#114 revert
+为净零, iter#115 verdict 文档, iter#116 真实代码 (diversity.py). cycle 15
+review APPROVE + 2 MEDIUM + 1 LOW doc + 1 coverage gap.
+
+[MEDIUM-1] inline `from quality_metrics.repetition import _words` 无 cycle
+justification → 提到 module top.
+
+[MEDIUM-2] `_SENTENCE_END_RE` 含 `\n+` 把段落分隔 (`\n\n`) 当句界, 真 bench
+原稿常含段落分割. 加 inline comment 标 limitation, 留后续 iter 升级
+split 策略.
+
+[LOW] `sentence_length_stats` docstring 与代码行为不符 — docstring 说
+"Empty/单句 → (0, 0)", 代码返回 `(sentence_length, 0.0)` for 单句. 修
+docstring 让 contract 与 impl 一致.
+
+[Coverage gap] 加 3 个测试:
+- test_ttr_word_mixed_cjk_ascii — 真 bench 含混排
+- test_diversity_report_all_single_sentence_narrations — 句长 std=0 invariant
+- test_diversity_report_narrations_with_empty_middle — 中段空跳过
+
+cost delta: 中性 (late import 提级 + comment + docstring)
+quality delta: dep graph 干净化, edge case 覆盖
+测试: 19→22 (+3 review-fix)
+
 ## [2.40] — 2026-06-12 — iter#116: Phase 3-C prose diversity dim — TTR + MATTR + 句长节奏
 
 `quality_metrics/diversity.py` (new) + `__init__.py` export:

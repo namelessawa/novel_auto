@@ -143,3 +143,28 @@ def test_diversity_report_mean_across_narrations():
     """每段 TTR=1 → 整体 mean=1.0."""
     rep = diversity_report(["abc", "def"])
     assert rep.mean_ttr_char == 1.0
+
+
+# --- iter#117 review-fix gap covers ----------------------------------------
+
+
+def test_ttr_word_mixed_cjk_ascii():
+    """混合中英文 TTR sanity. 真 bench narration 含混排."""
+    text = "他 said 你好 to 她"
+    # 4 unique tokens (他/said/你好/to/她) — '她' 单独, vs '他' 不重复
+    ttr = type_token_ratio_word(text)
+    assert 0 < ttr <= 1.0
+
+
+def test_diversity_report_all_single_sentence_narrations():
+    """全是单句 narrations → 句长 std 均值 = 0.0 (vs 报错或 NaN)."""
+    rep = diversity_report(["他来了", "她走了", "雨停了"])
+    assert rep.mean_sentence_length_std == 0.0
+    assert rep.mean_sentence_length > 0
+
+
+def test_diversity_report_narrations_with_empty_middle():
+    """中段含空 → 跳过, 不影响其他指标."""
+    rep = diversity_report(["abc", "", "def", "  "])
+    assert rep.narration_count == 2
+    assert rep.mean_ttr_char == 1.0

@@ -23,7 +23,12 @@ import re
 from dataclasses import dataclass
 from statistics import mean, pstdev
 
+from quality_metrics.repetition import _words
 
+# iter#117 review MEDIUM: \n+ 含在 sentence-end 里 → 段落分割 (\n\n) 与
+# 句号同等切. 真 bench 原稿常含 \n\n 段落, 此处当前实现会把段间当句界,
+# 句数膨胀 / 平均句长偏低. Phase 3-C 首版可接受 (TTR/MATTR 不受影响),
+# 后续 iter 升级 split 策略时同步更新此处.
 _SENTENCE_END_RE = re.compile(r"[。！？!?\.\n]+")
 
 
@@ -53,8 +58,6 @@ def type_token_ratio_char(text: str) -> float:
 
 def type_token_ratio_word(text: str) -> float:
     """TTR on words (light-split). 词类丰富度."""
-    from quality_metrics.repetition import _words
-
     words = _words(text)
     if not words:
         return 0.0
@@ -79,7 +82,8 @@ def mattr(text: str, window: int = 100) -> float:
 def sentence_length_stats(text: str) -> tuple[float, float]:
     """返回 (均值, 总体标准差) of sentence char length.
 
-    Empty/单句 → (0, 0). 高 std = 长短交错; 低 std = 节奏单调.
+    Empty → (0.0, 0.0). 单句 → (sentence_length, 0.0). 高 std = 长短交错;
+    低 std = 节奏单调.
     """
     sentences = _sentences(text)
     if not sentences:
