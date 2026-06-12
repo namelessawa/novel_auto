@@ -484,16 +484,22 @@ python -m backend.bootstrap_prompts \
     --references "Le Guin / 古龙"
 ```
 
-**v2.41 角色规模默认** (Phase 3-B iter#128 实测): 默认 3 个起始角色
-(1 A 级主角 + 2 B 级配角 + 0 C 级 NPC). 跨 3 题材 50-tick bench 实测
-cost vs 旧 wide 6-10 默认 **-12.7% avg**, drift 0 维持. 显式覆盖:
+**v2.42 角色规模默认** (iter#136 REVERT iter#128): 默认 wide range 6-10 个
+起始角色 (3 A 级 + 3-4 B 级 + 2-3 C 级 NPC). 跨 Phase 2 close-fix 一致.
 
+iter#128 曾试 cast=3 默认 (1A+2B+0C) 基于 det 指标显示 -12.7% cost. 但
+iter#133/#134/#135 mimo pairwise 跨 3-seed 显示 cast=3 平均 33% vs wide
+63%, 显著 prose quality 退化 (character interaction 多元性受限). iter#136
+REVERT 回 wide.
+
+**Cost-first opt-in** (acceptable quality trade-off scenarios):
 ```bash
 python -m backend.bootstrap_prompts ... \
-    --cast-a-count 2 --cast-b-count 2 --cast-c-count 1   # 5 角色固定
+    --cast-a-count 1 --cast-b-count 2 --cast-c-count 0   # 3 角色, -36.4% cost
 ```
 
 三个 cast args 必须 all-or-nothing (部分设拒绝, 防 silent default 混入).
+trade-off: cast=3 节省 token 但 mimo pairwise -30pp.
 
 bootstrap 完成后:
 

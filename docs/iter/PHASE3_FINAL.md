@@ -1,7 +1,11 @@
-# Phase 3 Final Verdict
+# Phase 3 Final Verdict (revised iter#136)
 
-> Phase 3 (iter#113-129) 综合 closure: A 失败 / **B 大胜** / C 弱信号 / D 未启动.
-> v2.41 production default = Phase 3-B cast=3 落地.
+> Phase 3 (iter#113-136) 综合 closure: A 失败 / **B opt-in only** / C 弱信号 / D 未启动.
+> v2.42 production default = wide range (Phase 2 一致). Phase 3-B CLI 保留作 cost-first opt-in.
+>
+> **重要 revision**: iter#128 把 default 改 cast=3 基于 det 指标, iter#133/#134/#135
+> mimo pairwise 反向 (cast=3 跨 3-seed 33% vs wide 63%). iter#136 REVERT.
+> 详见 verdict-iter136-revert-iter128-pairwise-evidence.md.
 
 ## Phase 3 iter trail (#113-129)
 
@@ -22,10 +26,17 @@
 | #125 | bench | B (seed2 cast=3) | -9.3% vs cast=5 |
 | #126 | bench | B (seed1 cast=3) | -5.1% vs cast=5 |
 | #127 | bench | B (seed3 cast=3) | +1.1% vs cast=5 (平局) |
-| #128 | code | B default 落地 | wide → cast=3 |
+| #128 | code | B default 落地 | wide → cast=3 (后 revert) |
 | #129 | review | B | cycle 17 fix |
+| #130 | doc | B | PHASE3_FINAL.md (本文档) |
+| #131 | smoke | B | cast=3 default 端到端验证 |
+| #132 | doc | B | README cast=3 guide |
+| #133 | bench | B (seed1 pairwise) | **cast=3 20% vs wide 80%** v15_hold |
+| #134 | bench | B (seed2 pairwise) | cast=3 50% vs wide 50% borderline |
+| #135 | bench | B (seed3 pairwise) | cast=3 30% vs wide 60% v15_hold |
+| **#136** | **code** | **B REVERT iter#128** | **default 回 wide, cast=3 仍 opt-in** |
 
-13 iter Phase 3-B / 3 iter Phase 3-A / 3 iter Phase 3-C / 0 iter Phase 3-D.
+20 iter Phase 3-B (含 revert) / 3 iter Phase 3-A / 3 iter Phase 3-C / 0 iter Phase 3-D.
 
 ## Phase 3-B FINAL matrix
 
@@ -56,31 +67,58 @@
 | seed3 | 502,482 | 1,305,466 | -61.5% (戏剧) |
 | avg | 490,078 | 770,363 | **-36.4%** |
 
-## Quality 维度 final
+## Quality 维度 — det 看似 OK, mimo pairwise 反向
 
-跨 Phase 3-B 3-seed × cast=3:
+跨 Phase 3-B 3-seed × cast=3 (**det 视角**):
 * drift signals: 0 / 0 / 0 ✓
 * distinct char-2: 0.8913 / 0.8886 / 0.8707 (跨 3 seed σ ~1%)
 * avg_urg final: 8.0 / 7.33 / 7.5 (跨 3 seed σ ~5%, 均 > 7)
 * narrative tension 全部 > Phase 2 baseline
 
-## 累积 Phase trail
+**但 mimo pairwise (iter#133/#134/#135 实测) 反向**:
+
+| seed | cast=3 win | wide win | tie | verdict |
+| --- | ---: | ---: | ---: | --- |
+| seed1 | 20% | **80%** | 0% | v15_hold |
+| seed2 | 50% | 50% | 0% | v16_borderline |
+| seed3 | 30% | **60%** | 10% | v15_hold |
+| **avg** | **33.3%** | **63.3%** | 3.3% | **wide preferred** |
+
+cast=3 = 1A+2B+0C 无 NPC → character interaction 多元性受限. det 不测
+这个维度. mimo 重 plot drive / character voice / interaction.
+
+**Phase 3-B det 单点验证是错误流程**. Phase 2 close-fix 当时跑了 pairwise
+验证 (#109/#111/#112), Phase 3-B iter#119-128 漏跑直接改 default.
+
+## iter#136 REVERT verdict
+
+iter#128 cast=3 default 改基于 det 错觉, iter#136 REVERT:
+* default 回 wide range
+* Phase 3-B CLI (--cast-{a,b,c}-count) 保留作 cost-first opt-in
+* Phase 3-B 净 production behavior: 无 default 变化, 但增 opt-in 工具
+
+## 累积 Phase trail (iter#136 revert 后修正)
 
 | Phase | iter range | 核心成果 |
 | --- | --- | --- |
 | Phase 1 (cost) | #3-72 | -77% tokens / -83% latency |
 | Phase 2 (quality close-fix) | #76-112 | drift 1→0, 73.3% pairwise promote ×3 |
-| **Phase 3-B (cast-confound)** | **#119-129** | **cast=3 universal, -36.4% vs Phase 2 baseline** |
-| **Phase 3 net** | — | **-36.4% additional cost on top of Phase 1's -77%** |
+| **Phase 3-B (cast-confound)** | **#119-136** | **CLI 保留作 cost-first opt-in, default 不变** |
+| **Phase 3 net** | — | **0 default cost change; opt-in -36.4% cost trade-off available** |
 
-### 跨 Phase 累积 cost reduction
+### 跨 Phase 累积 cost reduction (revised)
 
 baseline v1.x (Phase 1 起点): assume 100% cost reference
 Phase 1 end (iter#72): 23% cost
 Phase 2 end (iter#112): ~25% (微涨, close-fix +1-4%)
-**Phase 3-B end (iter#128/129)**: **~14.6%** of v1.x baseline cost.
+**Phase 3-B default (iter#136 revert)**: ~25% (与 Phase 2 一致, 默认无变)
 
-**净 -85.4% vs v1.x baseline**.
+**净 -75% vs v1.x baseline** (Phase 1 主导, Phase 2/3 quality 维持).
+
+opt-in cost-first 模式 (--cast-a-count 1 --cast-b-count 2 --cast-c-count 0):
+- 可达 ~14.6% of v1.x baseline (≈ -85.4%)
+- 代价: mimo pairwise -30pp (quality 退化)
+- 适用 cost-critical 生产场景
 
 ## Phase 3-A (失败) 教训
 

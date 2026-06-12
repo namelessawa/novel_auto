@@ -5,6 +5,29 @@
 
 ---
 
+## [2.42] — 2026-06-13 — iter#137: PHASE3_FINAL + README sync to iter#136 revert
+
+`docs/iter/PHASE3_FINAL.md` + `README.md`:
+
+iter#130 PHASE3_FINAL.md 与 iter#132 README 当时基于 iter#128 cast=3
+default. iter#136 REVERT 后, 两文档过时, 同步:
+
+- PHASE3_FINAL.md:
+  - header: "v2.41 default cast=3 落地" → "v2.42 default wide (revert)"
+  - iter trail 加 #130-#136
+  - Quality 维度加 mimo pairwise 反向 verdict
+  - 累积 trail 修正 -85.4% (cast=3 default) → -75% (wide default),
+    标注 -85.4% opt-in trade-off
+
+- README.md:
+  - "v2.41 角色规模默认 3" → "v2.42 默认 wide 6-10, iter#128 revert"
+  - 显式覆盖示例: cast=2+2+1 (5) → cast=1+2+0 (3, cost-first)
+  - 加 trade-off 说明
+
+cost delta: 0 (文档)
+quality delta: 0 (文档同步, 准确反映 iter#136 revert)
+测试: 13/13
+
 ## [2.42] — 2026-06-13 — iter#136: REVERT iter#128 cast=3 default — wide 回归
 
 `docs/iter/verdict-iter136-revert-iter128-pairwise-evidence.md`:
