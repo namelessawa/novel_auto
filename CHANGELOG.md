@@ -5,6 +5,36 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#122: Phase 3-B 跨题材 generalize ✓ — seed1 -6.4%
+
+`docs/iter/verdict-iter122-cast-seed1.md`:
+
+verdict-iter121 §Continuation P0: seed1 (蒸汽朋克 plot-light) with cast
+2A+2B+1C 控制. 验证 Phase 3-B 治理跨题材 generalization.
+
+vs iter#100 (baseline, no close, wide cast):
+- total_tokens 521,767 → 509,863 (**-2.3%**)
+- avg_urg final 6.0 → 6.75 (+12.5%)
+- closed 0 → 4
+
+vs iter#105 (close-fix, wide cast):
+- total_tokens 544,467 → 509,863 (**-6.4%**)
+- distinct char-2 -0.5% (噪声)
+- 其余持平 (open=4, closed +1, drift=0)
+
+Phase 3-B 跨题材 win:
+- seed3 (plot-dense): cost **-19%** vs close-fix (戏剧)
+- seed1 (plot-light): cost **-6.4%** vs close-fix (温和但一致正向)
+- 跨两题材都 drift 0, quality 持平/提升
+
+LLM compliance 备注: 请求 5 chars 实际生成 4 (LLM 偷工 1). 'PROMPT 恰好'
+强语气仍偶发漏. iter#124+ 候选: bootstrap actual count 校验 + retry.
+
+cost delta vs iter#105: -6.4%
+cost delta vs iter#100: -2.3%
+quality delta: drift 同, distinct -0.5% (噪声)
+测试: 13/13 cast tests + 44/44 历史 PASS
+
 ## [2.40] — 2026-06-12 — iter#123: cycle 16 review fixes (Phase 3-B all-or-nothing)
 
 Per Goal #7. python-reviewer cycle 16 报 1 HIGH + 4 MEDIUM + 1 LOW (NA).
