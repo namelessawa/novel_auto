@@ -21,16 +21,17 @@ def _render(cast_breakdown: str, cast_tiers: str) -> str:
 
 
 def _build_cast_strings(a, b, c) -> tuple[str, str]:
-    """Reflect 实际 bootstrap_world cast string 构造 (iter#123 后 all-or-nothing).
+    """Reflect 实际 bootstrap_world cast string 构造 (iter#128 后 cast=3 default).
 
-    0/3 设 → wide. 3/3 设 → 恰好 N. 1-2/3 设 → ValueError (调用方处理).
+    0/3 设 → cast=3 sweet spot (Phase 3-B 实测).
+    3/3 设 → 恰好 N. 1-2/3 设 → ValueError.
     """
     set_count = sum(x is not None for x in (a, b, c))
     if set_count == 0:
         return (
-            "6-10 个起始角色",
-            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
-            "2-3 个 C 级 (NPC)",
+            "3 个起始角色 (Phase 3-B 实测 sweet spot)",
+            "1 个 A 级 (主角, 深度建模) / 2 个 B 级 (重要配角) / "
+            "0 个 C 级",
         )
     if set_count == 3:
         total = a + b + c
@@ -46,15 +47,20 @@ def _build_cast_strings(a, b, c) -> tuple[str, str]:
     )
 
 
-def test_default_wide_when_no_cast_args():
-    """无参 → wide range 6-10."""
+def test_default_cast3_sweet_spot_when_no_cast_args():
+    """iter#128 后: 无参 → cast=3 sweet spot (Phase 3-B 实测).
+    历史 'wide 6-10 / 3A+3-4B+2-3C' 已退役."""
     cb, ct = _build_cast_strings(None, None, None)
     rendered = _render(cb, ct)
-    assert "6-10 个起始角色" in rendered
-    assert "3 个 A 级" in rendered
-    assert "3-4 个 B 级" in rendered
-    assert "2-3 个 C 级" in rendered
-    assert "恰好" not in rendered  # wide 模式无 '恰好'
+    assert "3 个起始角色" in rendered
+    assert "Phase 3-B" in rendered or "sweet spot" in rendered
+    assert "1 个 A 级" in rendered
+    assert "2 个 B 级" in rendered
+    assert "0 个 C 级" in rendered
+    # 老 wide 字眼必须消失
+    assert "6-10 个" not in rendered
+    assert "3-4 个" not in rendered
+    assert "恰好" not in rendered  # default 模式无 '恰好' 字 (只 explicit set 用)
 
 
 def test_precise_all_three_set():

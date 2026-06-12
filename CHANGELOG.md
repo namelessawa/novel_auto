@@ -5,6 +5,33 @@
 
 ---
 
+## [2.41] — 2026-06-13 — iter#128: Phase 3-B cast=3 default 落地
+
+`backend/bootstrap_prompts.py`:
+
+verdict-iter127 P0 落地: Phase 3-B 实测 cast=3 (1A+2B+0C) 跨 3-seed
+universal sweet spot, 改 bootstrap 历史 wide range "6-10 / 3A+3-4B+2-3C"
+为 cast=3 default.
+
+不显式 set `--cast-{a,b,c}-count` 时:
+- 之前: prompt "6-10 个起始角色 / 3 A + 3-4 B + 2-3 C"
+- 之后: prompt "3 个起始角色 (Phase 3-B 实测 sweet spot) / 1 A + 2 B + 0 C"
+
+依据: 跨 3-seed × cast=3/cast=5/wide bench (#100/#104-107/#119-127):
+- cast=3 vs cast=5 平均 -4.6% tokens
+- cast=3 vs close-fix wide 平均 -8.3% tokens
+- cast=3 distinct char-2 +1-3% vs cast=5 (seed1/2), drift 0/0/0
+- cast=3 avg_urg 普遍更高 (narrative tension 不减)
+
+用户仍可显式 set 三个 args 覆盖 (例如 --cast-a-count 2 等).
+
+测试: test_default_wide_when_no_cast_args → test_default_cast3_sweet_spot,
+13/13 PASS (1 重命名 + 1 内容更新).
+
+cost delta: 估 -8.3% on new bench (vs 老 wide bench)
+quality delta: drift 0 维持, avg_urg ↑
+测试: 13/13 cast + 44/44 历史 PASS
+
 ## [2.40] — 2026-06-13 — iter#127: cast=3 universal sweet spot 最终验证 ✓
 
 `docs/iter/verdict-iter127-cast3-universal-final.md`:

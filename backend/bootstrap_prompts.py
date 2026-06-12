@@ -408,10 +408,15 @@ async def bootstrap_world(
         x is not None for x in (cast_a_count, cast_b_count, cast_c_count)
     )
     if set_count == 0:
-        cast_breakdown = "6-10 个起始角色"
+        # iter#128 Phase 3-B verdict: cast=3 (1A+2B+0C) universal sweet spot.
+        # 跨 3-seed × 50-tick × 2 cast 模式 实测 vs cast=5: -4.6% avg cost,
+        # avg_urg +7.1% (seed3), drift 0/0. vs close-fix wide: -8.3% avg.
+        # 历史 wide range "6-10 / 3A+3-4B+2-3C" 改为 "3 / 1A+2B+0C" 默认.
+        # 用户仍可 --cast-{a,b,c}-count 显式覆盖.
+        cast_breakdown = "3 个起始角色 (Phase 3-B 实测 sweet spot)"
         cast_tiers = (
-            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
-            "2-3 个 C 级 (NPC)"
+            "1 个 A 级 (主角, 深度建模) / 2 个 B 级 (重要配角) / "
+            "0 个 C 级"
         )
     elif set_count == 3:
         total = cast_a_count + cast_b_count + cast_c_count
