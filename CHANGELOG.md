@@ -5,6 +5,39 @@
 
 ---
 
+## [2.41] — 2026-06-13 — iter#130: Phase 3 FINAL 综合 verdict
+
+`docs/iter/PHASE3_FINAL.md`:
+
+Phase 3 综合 closure (iter#113-129):
+- A) narrator slim 失败 revert (#114-115)
+- **B) cast-confound 大胜完整 (#119-129) — cast=3 universal default 落地 v2.41**
+- C) prose diversity dim 弱信号但补 overlap_consec (#116-118)
+- D) memory fidelity 未启动 (留 Phase 4)
+
+**Phase 3-B 跨 3-seed × cast=3 FINAL matrix**:
+- cast=3 vs cast=5: -4.6% avg cost
+- cast=3 vs close-fix wide: -12.7% avg cost
+- cast=3 vs Phase 2 baseline: **-36.4% avg cost**
+  (seed3 -61.5% 戏剧, seed1 -7.3%, seed2 持平)
+
+drift 0/0/0, distinct char-2 σ ~1%, avg_urg final 均 > 7.
+
+**跨 Phase 累积**:
+- v1.x baseline: 100% (reference)
+- Phase 1 end: 23%
+- Phase 2 end: ~25%
+- **Phase 3-B end: ~14.6%**
+- **净 -85.4% vs v1.x baseline**
+
+教训 (A 失败 / C 弱):
+- A: user_prompt 字段非字数游戏, 每个字段功能独立
+- C: 度量层加新 dim 应先验证能 catch 已知 regression
+
+cost delta vs baseline: -85.4% cumulative (Phase 1+2+3-B)
+quality delta: drift 0 持续, narrative tension 普涨
+测试: 13/13 cast + 44/44 历史 PASS
+
 ## [2.41] — 2026-06-13 — iter#129: cycle 17 review fixes (iter#128 followup)
 
 Per Goal #7. python-reviewer cycle 17: 2 HIGH + 2 MEDIUM, 全修.
