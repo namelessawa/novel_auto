@@ -5,6 +5,41 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#125: cast count sweep — seed2 cast=3 真正 sweet spot
+
+`docs/iter/verdict-iter125-cast-sweep-seed2.md`:
+
+iter#124 verdict P0: cast count sweep. seed2 (plot-medium) with cast=3
+(1A+2B+0C) 验证 cast=5 不适合是因为太多 vs 自然甜点 ~3.
+
+vs iter#124 cast=5 (同 seed2):
+- total_tokens 533,808 → 484,134 (**-9.3%**)
+- distinct char-2 0.874 → 0.8886 (**+1.7%**)
+- avg_urg final 6.75 → 7.33 (**+8.6%**)
+- drift 0/0 维持
+
+vs iter#107 close-fix wide:
+- total_tokens 527,769 → 484,134 (**-8.3%**)
+- distinct -1.0% (噪声)
+- avg_urg +1.1%
+
+cast=3 完胜 cast=5. narrations -14% 是 narrator 更挑剔 (feature 不 bug).
+
+**关键洞察**: cast 控制 win 来自 **"精确避免极端"** 而非 "增加多元".
+- seed1 wide 偶发 cast=1 → 多面塌, cast=5 救场
+- seed2 wide ~2 已甜点, cast=3 比 cast=5 更好
+- seed3 wide 偶发 cast=3 + 高密度 → cost 爆, cast=5 抑住
+
+Phase 3-B 题材自适应 cast 平均: seed1 cast=5 / seed2 cast=3 / seed3 cast=5
+跨 3-seed 平均 vs close-fix wide: **-11.4%** (vs 之前 cast=5 universal 时 -8.5%)
+
+诚实结论: cast 配置题材自适应可挤多 3 个百分点.
+
+cost delta vs #107: -8.3%
+cost delta vs #124: -9.3%
+quality delta: drift 0/0, distinct -1% vs close-fix 噪声, avg_urg +1.1%
+测试: 13/13 cast + 44/44 历史 PASS
+
 ## [2.40] — 2026-06-12 — iter#124: Phase 3-B 3-seed final — mixed verdict (-8.5% avg cost, seed-specific)
 
 `docs/iter/verdict-iter124-cast-3seed-final.md`:
