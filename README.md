@@ -484,6 +484,17 @@ python -m backend.bootstrap_prompts \
     --references "Le Guin / 古龙"
 ```
 
+**v2.41 角色规模默认** (Phase 3-B iter#128 实测): 默认 3 个起始角色
+(1 A 级主角 + 2 B 级配角 + 0 C 级 NPC). 跨 3 题材 50-tick bench 实测
+cost vs 旧 wide 6-10 默认 **-12.7% avg**, drift 0 维持. 显式覆盖:
+
+```bash
+python -m backend.bootstrap_prompts ... \
+    --cast-a-count 2 --cast-b-count 2 --cast-c-count 1   # 5 角色固定
+```
+
+三个 cast args 必须 all-or-nothing (部分设拒绝, 防 silent default 混入).
+
 bootstrap 完成后:
 
 ```bash

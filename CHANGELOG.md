@@ -5,6 +5,21 @@
 
 ---
 
+## [2.41] — 2026-06-13 — iter#132: README — cast=3 默认 + CLI 用法说明
+
+`README.md`:
+
+补 v2.41 cast=3 默认与 `--cast-{a,b,c}-count` CLI 用法到冷启动文档:
+- 新默认 3 角色 (1A+2B+0C) 实测 cost 节省 -12.7%, drift 同 0
+- 显式覆盖示例 (2A+2B+1C = 5)
+- 强调 all-or-nothing 校验
+
+让用户/contributor 一眼看到 Phase 3-B 实测 production guidance.
+
+cost delta: 0 (docs)
+quality delta: 0 (docs)
+测试: 无新
+
 ## [2.41] — 2026-06-13 — iter#131: smoke test — cast=3 default 端到端验证 ✓
 
 iter#128 cast=3 default 在 production 路径生效验证. bootstrap 无 cast args
