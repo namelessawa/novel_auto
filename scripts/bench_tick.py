@@ -72,7 +72,8 @@ async def _bench(args) -> dict:
 
     # --- Cold-start: bootstrap world (5 prompts) ----------------------------
     t0 = time.perf_counter()
-    # iter#121 Phase 3-B: 透传 cast-confound 控制. None 时保持 wide 默认.
+    # iter#121 Phase 3-B + iter#123 review MEDIUM: 透传 cast-confound 控制.
+    # 删 getattr 默认: CLI 总是声明 3 args, 永远存在, 直接访问.
     await bootstrap_world(
         novel_id=novel_id,
         data_dir=data_dir,
@@ -80,9 +81,9 @@ async def _bench(args) -> dict:
         positioning="冷峻克制 / 阴翳氛围 / 短句节奏 / 物件描写优先",
         references="石黑一雄 / 江户川乱步",
         title="档案馆的失语者",
-        cast_a_count=getattr(args, "cast_a_count", None),
-        cast_b_count=getattr(args, "cast_b_count", None),
-        cast_c_count=getattr(args, "cast_c_count", None),
+        cast_a_count=args.cast_a_count,
+        cast_b_count=args.cast_b_count,
+        cast_c_count=args.cast_c_count,
     )
     bootstrap_sec = time.perf_counter() - t0
 

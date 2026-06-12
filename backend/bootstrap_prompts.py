@@ -398,28 +398,33 @@ async def bootstrap_world(
 
     # === Step 2: Characters ===========================================
     logger.info("[2/4] Generating characters…")
-    # iter#119 Phase 3-B: cast-confound 控制.
-    # 默认 wide range (6-10 / 3 A + 3-4 B + 2-3 C), 与历史 bench 等价.
-    # 若调用方设了 cast_a/b/c, 则精确指定 → 跨 seed bench 实验 cast 可控.
-    cast_a = cast_a_count
-    cast_b = cast_b_count
-    cast_c = cast_c_count
-    if cast_a is None and cast_b is None and cast_c is None:
+    # iter#119 Phase 3-B + iter#123 review HIGH: cast-confound 控制.
+    # 模式:
+    #   * 0/3 设 → wide range (6-10), 与历史 bench 等价
+    #   * 3/3 设 → "恰好 N 角色 (固定)", 跨 seed bench 实验可控
+    #   * 1-2/3 设 → 拒绝 (ValueError). 部分设容易让用户以为只指定 A 数,
+    #     却被 b/c 默认值悄悄加成, 破坏 bench 复现性. all-or-nothing.
+    set_count = sum(
+        x is not None for x in (cast_a_count, cast_b_count, cast_c_count)
+    )
+    if set_count == 0:
         cast_breakdown = "6-10 个起始角色"
         cast_tiers = (
             "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
             "2-3 个 C 级 (NPC)"
         )
-    else:
-        a = cast_a if cast_a is not None else 2
-        b = cast_b if cast_b is not None else 2
-        c = cast_c if cast_c is not None else 1
-        total = a + b + c
+    elif set_count == 3:
+        total = cast_a_count + cast_b_count + cast_c_count
         cast_breakdown = f"恰好 {total} 个起始角色 (固定)"
         cast_tiers = (
-            f"恰好 {a} 个 A 级 (主角候选, 深度建模) / "
-            f"恰好 {b} 个 B 级 (重要配角) / "
-            f"恰好 {c} 个 C 级 (NPC)"
+            f"恰好 {cast_a_count} 个 A 级 (主角候选, 深度建模) / "
+            f"恰好 {cast_b_count} 个 B 级 (重要配角) / "
+            f"恰好 {cast_c_count} 个 C 级 (NPC)"
+        )
+    else:
+        raise ValueError(
+            f"cast 三个参数必须 all-or-nothing (--cast-a/b/c-count). "
+            f"目前 {set_count}/3 设, 防止部分设悄悄混 default."
         )
 
     chars_resp = await _llm_json(

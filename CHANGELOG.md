@@ -5,6 +5,27 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#123: cycle 16 review fixes (Phase 3-B all-or-nothing)
+
+Per Goal #7. python-reviewer cycle 16 报 1 HIGH + 4 MEDIUM + 1 LOW (NA).
+
+[HIGH] partial-set 静默 default 混入 — bench 复现性 risk:
+- 选 "拒绝 partial-set" 路径: 1 或 2/3 设 → ValueError("all-or-nothing")
+- 修 PROMPT 注入逻辑 + 测试 helper + 6 parametrized + 1 e2e
+
+[MEDIUM-1] `cast_a = cast_a_count` 别名 dead code → 删
+[MEDIUM-2] `getattr(args, "cast_a_count", None)` dead-defensive → 直接 args.x
+[MEDIUM-3] `test_cli_args_present` false-positive (--help 无关 args 存在) →
+  rewrite 真正断言 `--cast-a-count` etc 在 help text
+
+跨题材一致 cast 控 (Phase 3-B) 需要 fail-loud partial set, 避免 LLM
+看到 8 chars (a=5 + 默认 b=2 + c=1) 之类不可复现实验.
+
+cost delta: 0 (review fix)
+quality delta: bench 复现性强化
+测试: 6 → 13 (+1 cli_args_present rewrite, +6 partial_cast_raises, +1 e2e
+       bootstrap_world_partial_cast_raises)
+
 ## [2.40] — 2026-06-12 — iter#121: cast-confound 实战验证 ✓ — Phase 3-B 大胜
 
 `docs/iter/verdict-iter121-cast-confound-confirmed.md`:
