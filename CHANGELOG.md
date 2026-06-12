@@ -5,6 +5,25 @@
 
 ---
 
+## [2.41] — 2026-06-13 — iter#131: smoke test — cast=3 default 端到端验证 ✓
+
+iter#128 cast=3 default 在 production 路径生效验证. bootstrap 无 cast args
+新种子 (民国浮桥) → 精确生成:
+- 1 A 级 (char_linxue)
+- 2 B 级 (char_sumo, char_chenfeng)
+- 0 C 级
+- 总 3 chars
+
+iter#129 加的 compliance check 无 warning 触发 — actual matches default
+(不算 explicit set, 但 LLM 顺从了 prompt). 4 个 seed 跨题材 (蒸汽朋克 /
+民国上海 / 末世废土 / 民国浮桥) bootstrap 默认行为一致.
+
+Phase 3-B v2.41 端到端 production ready.
+
+cost delta: 0 (smoke only)
+quality delta: 0 (smoke 仅 bootstrap, 无 tick)
+测试: 13/13 + 44/44 历史
+
 ## [2.41] — 2026-06-13 — iter#130: Phase 3 FINAL 综合 verdict
 
 `docs/iter/PHASE3_FINAL.md`:
