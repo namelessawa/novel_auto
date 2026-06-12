@@ -5,6 +5,35 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#112: Phase 2 close-fix FINAL — 3-seed × pairwise 73.3% avg
+
+`docs/iter/verdict-iter112-phase2-close-fix-final.md`:
+
+Phase 2 close-fix 完整 quality closure. iter#109 (seed2) + iter#111 (seed1)
++ iter#112 (seed3) 3 个 mimo pairwise judge bench 完成 3-seed × pairwise
+matrix.
+
+**3-seed × pairwise FINAL:**
+- seed1 (蒸汽朋克): 70% win
+- seed2 (民国上海): 70% win
+- seed3 (末世废土): **80% win** ← 最难题材最大胜率
+- avg: **73.3%**, σ~5%, 0% tie, parse_err 0
+- §4 promote ×3 (≥45% threshold, 全部 non-provisional)
+
+**Phase 2 §4 N≥30 mandate FULLY SATISFIED**:
+- narrations 41/42/46 (≥30 each)
+- pairs 10/10/10 (total 30)
+- non-provisional ×3
+
+cumulative:
+- Phase 1: -77% tokens / -83% latency
+- Phase 2: drift surface + 3-fix + cross-genre + close-loop + judge validate
+- 707 tests / 14 review cycles
+
+cost delta: 0 (judge 一次性, 不入产线)
+quality delta: §4 promote ×3 confirmed
+测试: 707/707
+
 ## [2.39] — 2026-06-12 — iter#110: Phase 2 cycle 14 review fixes (iter#108 followup)
 
 Per Goal #7 全 code-review 每 3 iter. iter#107-109 中只有 iter#108 有代码改动.
