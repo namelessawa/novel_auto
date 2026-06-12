@@ -1,0 +1,114 @@
+{
+  "label": "iter126-seed1-cast120",
+  "source": "bench_iter126-seed1-cast120_1781278211",
+  "tick_count": 50,
+  "narrations": 42,
+  "total_tokens": 483617,
+  "longrange": {
+    "foreshadowing": {
+      "sample_count": 10,
+      "open_to_closed_ratio_at_end": 1.0,
+      "stale_ratio_at_end": 0.0,
+      "samples": [
+        {
+          "tick": 5,
+          "open": 4,
+          "closed": 1,
+          "stale_open": 0,
+          "avg_urgency": 7.5
+        },
+        {
+          "tick": 10,
+          "open": 3,
+          "closed": 2,
+          "stale_open": 0,
+          "avg_urgency": 8.0
+        },
+        {
+          "tick": 15,
+          "open": 4,
+          "closed": 2,
+          "stale_open": 0,
+          "avg_urgency": 7.25
+        },
+        {
+          "tick": 20,
+          "open": 4,
+          "closed": 2,
+          "stale_open": 0,
+          "avg_urgency": 7.25
+        },
+        {
+          "tick": 25,
+          "open": 3,
+          "closed": 3,
+          "stale_open": 0,
+          "avg_urgency": 8.0
+        },
+        {
+          "tick": 30,
+          "open": 3,
+          "closed": 3,
+          "stale_open": 1,
+          "avg_urgency": 8.0
+        },
+        {
+          "tick": 35,
+          "open": 3,
+          "closed": 3,
+          "stale_open": 0,
+          "avg_urgency": 8.0
+        },
+        {
+          "tick": 40,
+          "open": 3,
+          "closed": 3,
+          "stale_open": 0,
+          "avg_urgency": 8.0
+        },
+        {
+          "tick": 45,
+          "open": 3,
+          "closed": 3,
+          "stale_open": 0,
+          "avg_urgency": 8.0
+        },
+        {
+          "tick": 50,
+          "open": 3,
+          "closed": 3,
+          "stale_open": 0,
+          "avg_urgency": 8.0
+        }
+      ],
+      "notes": []
+    },
+    "novelty": {
+      "sample_count": 0,
+      "mean_score": 0.0,
+      "trend": "insufficient_data",
+      "samples": []
+    },
+    "repetition_global": {
+      "narration_count": 42,
+      "distinct": {
+        "char_2": 0.8913,
+        "char_3": 0.9781,
+        "char_4": 0.9944,
+        "word_2": 0.9746,
+        "word_3": 0.9757,
+        "word_4": 0.9762
+      },
+      "overlap_consecutive": {
+        "char_2": 0.0908,
+        "char_3": 0.0312,
+        "char_4": 0.0126,
+        "word_2": 0.0002,
+        "word_3": 0.0,
+        "word_4": 0.0
+      },
+      "notes": []
+    }
+  },
+  "drift_signals": []
+}

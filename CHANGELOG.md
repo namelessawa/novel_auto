@@ -5,6 +5,42 @@
 
 ---
 
+## [2.40] — 2026-06-13 — iter#126: cast=3 跨 plot-light + plot-medium 都是 sweet spot
+
+`docs/iter/verdict-iter126-cast3-sweet-spot.md`:
+
+verdict-iter125 §Continuation P0: seed1 with cast=3 (1A+2B+0C) 验证.
+
+vs #122 cast=5 (同 seed1, only cast count 变):
+- total_tokens 509,863 → 483,617 (**-5.1%**)
+- distinct char-2 0.8649 → 0.8913 (**+3.1%**)
+- avg_urg final 6.75 → **8.0** (**+18.5%**, narrative tension 极高)
+- drift 0/0
+
+vs #100 baseline:
+- tokens 521,767 → 483,617 (**-7.3%**)
+- avg_urg 6.0 → **8.0** (**+33%**)
+- distinct +1.0%
+
+**Phase 3-B 自适应 cast matrix (post-#126 final)**:
+- seed1 (plot-light): cast=3 优 (vs close-fix wide **-11.2%**)
+- seed2 (plot-medium): cast=3 优 (-8.3%)
+- seed3 (plot-dense): cast=5 优 (-19%)
+- 平均 optimal: **-13.0% cost** (vs universal cast=5 -8.5% 多 4.5pt)
+
+**关键洞察**: cast=3 是 **production default**, cast=5 reserved 给 high-density.
+
+Phase 3 综合 status:
+- A) narrator slim 失败 revert
+- **B) cast-confound 大胜 (#119-126) 跨 3-seed -13%**
+- C) diversity dim 弱信号
+- D) memory fidelity 未启动
+
+cost delta vs #122 cast=5: -5.1%
+cost delta vs baseline: -7.3%
+quality delta: avg_urg +33% vs baseline, drift 0/0
+测试: 13/13 cast + 44/44 历史 PASS
+
 ## [2.40] — 2026-06-12 — iter#125: cast count sweep — seed2 cast=3 真正 sweet spot
 
 `docs/iter/verdict-iter125-cast-sweep-seed2.md`:
