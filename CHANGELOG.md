@@ -5,6 +5,26 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#108: add_open_loop dedup gate (iter#106 review followup)
+
+`backend/memory/tick_state.py`:
+
+iter#106 review MEDIUM 接受作为后续: `add_open_loop` 既往同 ID 重复添加
+静默覆盖, 调用方无知. 例如 Showrunner close(loop_X) 之后 EventInjector
+在同 tick 重 open ID loop_X — 应当被发现, 不该静默.
+
+修复: 同 ID 重复添加时 logger.warning, 行为保持向后兼容 (overwrite-with-warn).
+
+测试: test_add_open_loop_dedup.py (4 个新, 703→707):
+- 首次添加无 warning
+- 重复添加 warning + overwrite 生效
+- close → reopen 同 ID 不警告 (已 pop 出池, 视作首次)
+- 3 次重复 → 2 次 warning
+
+cost delta: 中性 (运行时只在 dup 时多一行 log)
+quality delta: 中性 (无既往 bench dup, 是防御性)
+测试: 703→707 (+4)
+
 ## [2.39] — 2026-06-12 — iter#107: 3-seed × close-fix matrix complete
 
 `docs/iter/verdict-iter107-3-seed-close-matrix.md`:

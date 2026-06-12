@@ -216,6 +216,21 @@ class TickState:
     # ------------------------------------------------------------------
 
     def add_open_loop(self, loop: OpenLoop) -> None:
+        # iter#108 (review-followup MEDIUM iter#106): dedup gate.
+        # 既往: 重复 ID 静默覆盖, 调用方无知. 现在 fail-loud: 同 ID 再加
+        # 时 logger.warning + 保留新值 (与原行为同, 但出错可见).
+        # 用例: Showrunner close(loop_X) 之后 EventInjector 立刻同 tick 重
+        # 用 ID loop_X — 应当被发现, 不该悄悄发生.
+        if loop.id in self._open_loops:
+            try:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "add_open_loop: duplicate id=%r — overwriting prior. "
+                    "若是 close+reopen 同 tick, 该 ID 生成策略需要 nonce.",
+                    loop.id,
+                )
+            except Exception:
+                pass
         self._open_loops[loop.id] = loop
 
     def has_open_loop(self, loop_id: str) -> bool:
