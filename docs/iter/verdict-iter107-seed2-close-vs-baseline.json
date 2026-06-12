@@ -1,0 +1,252 @@
+{
+  "label": "iter107-seed2-close-vs-baseline",
+  "v15": {
+    "source": "docs/iter/bench-stage5-seed2-50tick.json",
+    "narrative_count": 42,
+    "det": {
+      "repetition": {
+        "narration_count": 42,
+        "distinct": {
+          "char_2": 0.9087,
+          "char_3": 0.982,
+          "char_4": 0.9959,
+          "word_2": 0.975,
+          "word_3": 0.9759,
+          "word_4": 0.9762
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0798,
+          "char_3": 0.0266,
+          "char_4": 0.0111,
+          "word_2": 0.0028,
+          "word_3": 0.0017,
+          "word_4": 0.0011
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 42,
+        "skipped_records": 0,
+        "evaluated_count": 42,
+        "tier_hit_count": 29,
+        "tier_off_count": 13,
+        "tier_hit_rate": 0.6905,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "medium": {
+            "hit": 24,
+            "off": 4
+          },
+          "short": {
+            "hit": 5,
+            "off": 9
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-iter103-seed2-50tick.json",
+    "narrative_count": 45,
+    "det": {
+      "repetition": {
+        "narration_count": 45,
+        "distinct": {
+          "char_2": 0.8974,
+          "char_3": 0.9772,
+          "char_4": 0.9949,
+          "word_2": 0.9778,
+          "word_3": 0.9778,
+          "word_4": 0.9778
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0846,
+          "char_3": 0.0269,
+          "char_4": 0.0108,
+          "word_2": 0.0006,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 45,
+        "skipped_records": 0,
+        "evaluated_count": 45,
+        "tier_hit_count": 33,
+        "tier_off_count": 12,
+        "tier_hit_rate": 0.7333,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 3,
+            "off": 1
+          },
+          "medium": {
+            "hit": 20,
+            "off": 5
+          },
+          "short": {
+            "hit": 10,
+            "off": 6
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 42,
+    "judge_call_count": 10,
+    "tokens_used_estimate": 50000,
+    "elapsed_sec": 201.08,
+    "v15_win": 3,
+    "v16_win": 7,
+    "tie": 0,
+    "parse_err": 0,
+    "results": [
+      {
+        "winner": "y",
+        "reason": "段A叙事连贯角色清晰情节推进强",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A叙事连贯角色清晰情节推进强\"}",
+        "pair_index": 0
+      },
+      {
+        "winner": "y",
+        "reason": "情节推进更强，悬疑结尾突出",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更强，悬疑结尾突出\"}",
+        "pair_index": 1
+      },
+      {
+        "winner": "x",
+        "reason": "角色声音鲜明，情节推进更主动。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"角色声音鲜明，情节推进更主动。\"}",
+        "pair_index": 2
+      },
+      {
+        "winner": "x",
+        "reason": "描写细腻，连贯性强，角色声音突出",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"描写细腻，连贯性强，角色声音突出\"}",
+        "pair_index": 3
+      },
+      {
+        "winner": "y",
+        "reason": "情节推进有力，角色内心冲突清晰。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节推进有力，角色内心冲突清晰。\"}",
+        "pair_index": 4
+      },
+      {
+        "winner": "x",
+        "reason": "角色声音更独特，悬念推进更细腻。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"角色声音更独特，悬念推进更细腻。\"}",
+        "pair_index": 5
+      },
+      {
+        "winner": "y",
+        "reason": "情节紧凑，角色行动果断，氛围连贯。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节紧凑，角色行动果断，氛围连贯。\"}",
+        "pair_index": 6
+      },
+      {
+        "winner": "y",
+        "reason": "段B连贯性强，角色声音清晰，情节推进完整。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"段B连贯性强，角色声音清晰，情节推进完整。\"}",
+        "pair_index": 7
+      },
+      {
+        "winner": "y",
+        "reason": "段A情节连贯，角色声音强，推进明显",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A情节连贯，角色声音强，推进明显\"}",
+        "pair_index": 8
+      },
+      {
+        "winner": "y",
+        "reason": "段A连贯性强，环境描写细腻，角色内心活动丰富。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A连贯性强，环境描写细腻，角色内心活动丰富。\"}",
+        "pair_index": 9
+      }
+    ]
+  },
+  "budget": 50000,
+  "verdict": {
+    "label": "v16_promote",
+    "reason": "v16 win-rate 70.00% ≥ 45% — meets §4 promote bar",
+    "v16_win_rate": 0.7,
+    "v16_lose_rate": 0.3,
+    "tie_rate": 0.0,
+    "parse_err_count": 0,
+    "valid_count": 10,
+    "provisional": false
+  }
+}

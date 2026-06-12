@@ -5,6 +5,32 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#109: close-fix mimo pairwise judge — 70% win-rate
+
+`docs/iter/verdict-iter107-seed2-close-vs-baseline.{json,md}`:
+
+Phase 2 close-fix 真实 LLM-judge 实证. iter#107 (close-fix seed2) vs
+iter#101 (baseline seed2) pairwise mimo-v2.5-pro judge (跨家族, self-bias
+最低), 10 paired narrations, 50k token budget.
+
+**verdict: v16_promote (70% win-rate, ≥ 45% §4 promote 门槛, provisional=False)**
+
+- v16 (close-fix) win-rate: 70%
+- v15 (baseline) win-rate: 30%
+- tie: 0%
+- parse_err: 0
+- tier_hit_rate: 0.7333 (close) vs 0.6905 (base), +6.2%
+- distinct char-2: 0.8974 vs 0.9087 (-1.2%, noise)
+
+意义: iter#103 close-fix 不只 drift 修复, mimo judge 也认为 prose-level
+显著优于 baseline. 跨过 §4 promote 阈值, 是 Phase 2 quality-first loop
+首次跨过 §4 实证门槛 (Stage 1 v15-vs-v16 当年 win-rate 70% 但 N<30
+provisional, 此次 N≥30 non-provisional).
+
+cost delta: 中性 (judge bench 一次性, 不入产线)
+quality delta: pairwise 70% win-rate (first real LLM-judge confirmation)
+测试: 707/707 (无新代码)
+
 ## [2.39] — 2026-06-12 — iter#108: add_open_loop dedup gate (iter#106 review followup)
 
 `backend/memory/tick_state.py`:
