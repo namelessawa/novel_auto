@@ -5,6 +5,36 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#105: close-fix 在 seed1 (plot-light) 验证非退化
+
+`docs/iter/verdict-iter105-seed1-close-fix.md`:
+
+verdict-iter104 §Continuation P0: 验证 iter#103 close-fix 不退化原本
+0 drift 的 plot-light seed1.
+
+vs iter#100 baseline (无 close 机制, 同 seed1 50t):
+- closed_total 0 → **3** (跨 tick 25/30 主动关 1+2)
+- open final 6 → 4 (-33%)
+- stale final 1 → 0
+- avg_urg final 6.0 → 6.75 (+12.5%)
+- distinct char-2 0.8825 → 0.8689 (-1.5%, 噪声)
+- drift signals 0 → 0 (无退化)
+- total_tokens +4.4% (Showrunner JSON 加 close 字段, plot-light 题材
+  cost 反向变化在预期内)
+
+close 机制在 plot-light 题材主动运作而非空转. prompt 设计的 open ≥ 4
+阈值跨 2 题材 (seed1 + seed3) robustly 起作用.
+
+**Phase 2 stage5 + iter#103 close-fix = production-ready best stable** ✓
+
+跨 2 seed × close-fix summary:
+- seed3 (plot-dense): cost -53% gross / -30% adj, drift 1→0
+- seed1 (plot-light): cost +4.4%, drift 0→0 持平, quality 提升
+
+cost delta: +4.4% (题材 specific reverse)
+quality delta: avg_urg +12.5%, drift 同 0
+测试: 701/701
+
 ## [2.39] — 2026-06-12 — iter#104: close-loop fix 在 seed3 实测验证
 
 `docs/iter/verdict-iter104-close-loop-fix-validated.md`:
