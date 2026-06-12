@@ -423,10 +423,25 @@ class Orchestrator:
                     open_ids = {l.id for l in self._tick_state.get_open_loops()}
                     closed_count = 0
                     for lid in loops_to_close:
-                        if lid in open_ids:
+                        if lid not in open_ids:
+                            # iter#106 review HIGH-1: fail-loud on hallucinated ID
+                            logger.warning(
+                                "Showrunner requested close of unknown loop_id=%r "
+                                "at tick %d (ignored). known: %s",
+                                lid, tick, sorted(open_ids),
+                            )
+                            continue
+                        try:
                             closed = self._tick_state.close_open_loop(lid)
-                            if closed is not None:
-                                closed_count += 1
+                        except Exception as close_e:
+                            # iter#106 review MEDIUM: 不让 close 错误冒泡丢失上下文
+                            logger.error(
+                                "close_open_loop(%r) raised at tick %d: %s",
+                                lid, tick, close_e,
+                            )
+                            continue
+                        if closed is not None:
+                            closed_count += 1
                     if closed_count:
                         logger.info(
                             "Showrunner closed %d loop(s) at tick %d: %s",

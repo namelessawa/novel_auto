@@ -79,18 +79,23 @@ falling}, health ∈ {ok, low, critical}, type ∈ {trigger_dramatic_event,
 propose_meeting, time_jump, generation_shift, macro_reset}, urgency ∈
 {low, medium, high}.
 
-# loops_to_close 决策准则 (iter#103 新增)
+# loops_to_close 决策准则 (iter#103 新增, iter#106 review 补 [4,5] 区间)
 
-当 open_loops ≥ 6 时, 必须从池中挑 1-2 个推荐关闭, 否则池子无限累积
-导致后续叙事张力扩散。优先级 (从高到低):
+按 open_loops 数量分三档:
+* `≥ 6` — **必须**从池中挑 1-2 个推荐关闭, 否则池子无限累积导致后续叙事
+  张力扩散.
+* `∈ [4, 5]` — **可选**择性关闭 1 个最 stale 的, 或留空. 健康范围, 不强制
+  但鼓励释放最久未碰的 loop.
+* `< 4` — `loops_to_close` 必须**留空** (池子健康, 别为关而关).
+
+挑选优先级 (从高到低):
 1. 最 stale (last_referenced_tick 距 current_tick 最远) — 已无叙事
    动能, 关闭释放压力
 2. urgency=low 的旧 loop — 张力本就最弱
 3. type 与近期主线偏离 (例如 main_arc 是 "失语少女", 但有 loop 是
    "外城打猎竞赛" 偏题)
 
-不要无脑关闭 urgency=high 或刚开 < 10 tick 的 loop. open_loops < 4
-时 loops_to_close 留空 (池子健康).
+不要无脑关闭 urgency=high 或刚开 < 10 tick 的 loop.
 
 只输出 loop_id 字符串数组 (来自池中真实 id), 不需要 rationale.
 关闭是单向操作 — 一旦关闭, 该 loop 从池中永久剔除, 不可恢复.

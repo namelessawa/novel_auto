@@ -90,3 +90,12 @@ def test_system_prompt_documents_close_criteria():
     assert "≥ 6" in SYSTEM_PROMPT or "open_loops" in SYSTEM_PROMPT
     # 优先 stale 最远 / urgency=low 的关闭原则
     assert "stale" in SYSTEM_PROMPT
+
+
+def test_system_prompt_covers_4_to_5_zone():
+    """iter#106 review HIGH-2: [4, 5] 区间必须显式标明 (避免死区)."""
+    from agents.showrunner import SYSTEM_PROMPT
+
+    # 必须覆盖 ≥6 / [4,5] / <4 三档
+    assert "[4, 5]" in SYSTEM_PROMPT or "4 到 5" in SYSTEM_PROMPT
+    assert "< 4" in SYSTEM_PROMPT

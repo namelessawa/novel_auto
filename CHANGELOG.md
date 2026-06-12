@@ -5,6 +5,35 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#106: Phase 2 cycle 13 review fixes (iter#103 follow-up)
+
+Per Goal #7 全 code-review 每 3 iter. iter#100-105 中只有 iter#103 有代码
+改动. python-reviewer 找 2 HIGH + 3 MEDIUM + 1 LOW. 修 2 HIGH + 1 MEDIUM:
+
+[HIGH-1] orchestrator wire 静默丢弃未知 loop_id — 违反 fail-loud:
+- 加 `logger.warning("Showrunner requested close of unknown loop_id=%r ...")`
+- 显示已知 open_ids 列表方便排查 LLM 幻觉
+
+[HIGH-2] SYSTEM_PROMPT [4, 5] 死区: prompt 只覆盖 ≥6 和 <4, 中间区间无指令,
+LLM 可能不一致填:
+- 加第三档 "∈ [4, 5] 可选关 1 个最 stale, 或留空" 显式覆盖
+
+[MEDIUM] close_open_loop 异常未被局部 try 包住, 上抛丢失上下文:
+- 加 inner try/except + logger.error 含 lid
+
+[MEDIUM gap] 测试无 Showrunner.assess raises 路径覆盖:
+- 加 test_showrunner_assess_raises_pool_unchanged
+
+[MEDIUM ID race] 未修 — 接受
+* close 在 event_injector 前调用, 理论上 EventInjector 可生成同 ID 重新 open.
+  实测无观察到, 但需要 add_open_loop dedup gate. 留 iter#107 后续考虑.
+
+[LOW] 未修 — variable naming 风格小问题, 与本 iter 无关.
+
+测试: 701→703 (+2 新 review-fix 测试)
+cost delta: 中性 (prompt +20 token 增)
+quality delta: prompt 灵活度提升 — [4,5] 区间 LLM 行为可预测
+
 ## [2.39] — 2026-06-12 — iter#105: close-fix 在 seed1 (plot-light) 验证非退化
 
 `docs/iter/verdict-iter105-seed1-close-fix.md`:

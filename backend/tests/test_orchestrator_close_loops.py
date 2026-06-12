@@ -188,3 +188,43 @@ def test_showrunner_empty_close_list_keeps_pool(tmp_path, mock_llm) -> None:
     for _ in range(5):
         asyncio.run(orch.run_tick())
     assert len(ts.get_open_loops()) == 6
+
+
+def test_showrunner_assess_raises_pool_unchanged(tmp_path, mock_llm) -> None:
+    """iter#106 review MEDIUM gap: Showrunner.assess 抛错时池子必须不变.
+
+    orchestrator 的 try/except 已包住 assess + close 全段, 但缺测试保证
+    pool 不被偶尔写入. 这是 fail-safe invariant.
+    """
+    # 故意只给 5 个 world_sim, 让 tick 5 的 showrunner JSON 拿不到, 解析失败
+    # → ShowrunnerOutput() 空状态, loops_to_close=[], 但 assess 不抛.
+    # 真正抛错: 用一个拒绝调用的 Showrunner mock.
+    class _BrokenShowrunner:
+        async def assess(self, **kwargs):
+            raise RuntimeError("LLM provider exploded")
+
+    # 注: 不需要 mock_llm 队列, 因为 broken showrunner 在 tick 5 直接抛
+    # world_sim 仍走真实 LLM mock
+    mock_llm.set_responses([
+        _world_sim_response(world_time=1),
+        _world_sim_response(world_time=2),
+        _world_sim_response(world_time=3),
+        _world_sim_response(world_time=4),
+        _world_sim_response(world_time=5),
+    ])
+    ts = _bootstrap_with_loops(tmp_path)
+    agents = {"alice": CharacterAgent(ts.get_character_profile("alice"))}
+    orch = Orchestrator(
+        tick_state=ts,
+        world_simulator=WorldSimulator(),
+        character_agents=agents,
+        narrator=NarratorAgent(strong_model_until_tick=0),
+        action_resolver=ActionResolver(),
+        showrunner=_BrokenShowrunner(),
+        event_injector=EventInjector(),
+    )
+    for _ in range(5):
+        asyncio.run(orch.run_tick())
+    # 关键 invariant: 池子状态不变
+    assert len(ts.get_open_loops()) == 6
+    assert {l.id for l in ts.get_open_loops()} == {f"loop_{i}" for i in range(6)}
