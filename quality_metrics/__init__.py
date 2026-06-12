@@ -58,6 +58,14 @@ from quality_metrics.consistency import (
     check_narration_against_snapshot,
     consistency_report,
 )
+from quality_metrics.diversity import (
+    DiversityReport,
+    diversity_report,
+    mattr,
+    sentence_length_stats,
+    type_token_ratio_char,
+    type_token_ratio_word,
+)
 from quality_metrics.repetition import (
     RepetitionReport,
     char_ngram_distinct,
@@ -68,6 +76,13 @@ from quality_metrics.repetition import (
 )
 
 __all__ = [
+    # diversity (Phase 3-C, iter#116)
+    "DiversityReport",
+    "diversity_report",
+    "mattr",
+    "sentence_length_stats",
+    "type_token_ratio_char",
+    "type_token_ratio_word",
     # repetition
     "RepetitionReport",
     "char_ngram_distinct",

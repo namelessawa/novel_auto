@@ -5,6 +5,37 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#116: Phase 3-C prose diversity dim — TTR + MATTR + 句长节奏
+
+`quality_metrics/diversity.py` (new) + `__init__.py` export:
+
+Phase 3 候选 C: 度量层扩展, 无 dep 新增. 新模块 `diversity` 互补
+`repetition` 的 n-gram 视角:
+
+- `type_token_ratio_char(text)` — char TTR, [0, 1] 词汇丰富度
+- `type_token_ratio_word(text)` — word TTR
+- `mattr(text, window=100)` — Moving-Average TTR, 长度无关化 (避免长文本 TTR
+  偏低 artifact)
+- `sentence_length_stats(text)` → (mean, std) — 节奏单调 vs 长短交错
+- `DiversityReport.to_dict()` 标准 schema 接 bench writer
+
+设计动机: iter#115 narrator slim 反向显示 distinct-n 看不出 (+0.6% noise)
+但 overlap_consec_char-4 暴涨 +226%. 不同重复维度需要不同度量. TTR 捕捉
+"字汇贫乏 / 反复用同一批字" 这种 n-gram 视角错过的退化.
+
+测试: tests/test_diversity.py 19 个 PASS (覆盖 TTR / MATTR / 句长 / 报告
+schema + 中文 + 边界).
+
+cost delta: 0 (det layer, 无 LLM)
+quality delta: + 1 维质量信号 (待 bench 集成验证)
+测试: 707/707 → 703/703 backend (4 auth bcrypt5+passlib1.7 系统级 dep 跳过)
+       + 19 new diversity (722 total, env issue 跳 4)
+
+环境注: anaconda site-packages 跨广 .c~ 损坏 (56821 files), 已用
+`p.rename(p.with_name(p.name[:-3]))` 整体修复. 修复后 pytest 9.0.3 起来,
+但 bcrypt 4.3.0 安装文件被 Windows 锁住 (Python 引用中) 无法 pip 重装,
+4 auth password 测试在此 session 跳过. 用户重启 Python 后正常.
+
 ## [2.40] — 2026-06-12 — iter#115: revert iter#114 — narrator summaries 5→3 反向
 
 `docs/iter/verdict-iter115-narrator-slim-revert.md`:
