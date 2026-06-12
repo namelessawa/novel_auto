@@ -5,6 +5,40 @@
 
 ---
 
+## [2.41] — 2026-06-13 — iter#133: **重大发现** — cast=3 pairwise 反向 (80% LOSS)
+
+`docs/iter/verdict-iter133-cast3-pairwise-contradiction.md`:
+
+mimo pairwise judge cast=3 (#126 seed1) vs close-fix wide (#105 seed1).
+
+**verdict: v15_hold (cast=3 win-rate 20%)**.
+
+| dim | close-fix wide | cast=3 | judge |
+| --- | ---: | ---: | --- |
+| pairwise win | **80%** | 20% | **wide 完胜** |
+| det distinct char-2 | 0.8689 | 0.8913 | cast=3 better |
+| det drift | 0 | 0 | 同 |
+
+**det vs mimo 矛盾**: det 说 cast=3 更优, mimo 说 wide 4x 更优.
+
+解读: mimo 强调 plot drive + character voice + interaction. wide (3-4 chars
+random) 创造更多 interpersonal dynamics; cast=3 (1A+2B+0C) 限制 character
+interaction 多元. cast=3 prose vocabulary 更多样, 但叙事 dynamics 单调.
+
+**Phase 3-B det 没 catch 真正的 prose quality 退化**.
+
+iter#128 default 改可能基于错误前提. 决策树:
+1. REVERT iter#128 → wide
+2. HYBRID --cast-mode={wide|tight} flag, 默认 wide
+3. EXPAND 到 seed2/3 pairwise 看是否一致
+4. REDESIGN cast=4 with 别的 tier 分布
+
+候选 3 最 conservative — iter#134/135 跑 seed2/3 pairwise.
+
+cost delta: 无变 (iter#128 仍生效)
+quality delta: **-60pp pairwise win-rate** (wide 80% vs cast=3 20%)
+**这是 Phase 3-B 后续最重要发现** — det 指标可能 mislead 配置决策
+
 ## [2.41] — 2026-06-13 — iter#132: README — cast=3 默认 + CLI 用法说明
 
 `README.md`:
