@@ -5,6 +5,33 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#115: revert iter#114 — narrator summaries 5→3 反向
+
+`docs/iter/verdict-iter115-narrator-slim-revert.md`:
+
+iter#114 试 summaries [-5:] → [-3:], iter#115 bench seed2 50-tick 反向:
+- total_tokens +4.9% (vs 预期 -1.5%)
+- avg_urg -12.7%
+- overlap consec char-3 +88%, char-4 +226% (严重 prose 退化)
+- narrations -11%
+
+解读: summaries 与 prose_tail 是不同抽象层, 非 redundant.
+- prose_tail (~1600 chars): 续写连贯锚 (语气)
+- summaries[-5:]: 前情张力锚 (plot trail / urgency)
+
+砍 summaries → LLM 失去远期 plot 上下文 → narrator 自我重复 + 选 low-urg
+loops → 失败 → 多轮 critic + character_agent 补救 → 净 tokens +4.9%.
+
+Action: revert `[-3:]` → `[-5:]`, 保留 comment 教训.
+
+Phase 3-A 教训: user_prompt 字段不是字数游戏, 每个字段承载独立功能.
+下一次 ablation 需先量化字段边际贡献.
+
+cost delta: 反向 (revert 后归零, 总体不进展)
+quality delta: 反向 (revert 后归零)
+测试: conda pytest install 损坏 (无关 iter), revert 是回到 iter#113 707/707
+PASS 的精确单行状态
+
 ## [2.40] — 2026-06-12 — iter#114: Phase 3-A narrator user_prompt summaries 5→3
 
 `backend/agents/narrator_agent.py:_build_user_prompt`:
