@@ -5,6 +5,36 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#107: 3-seed × close-fix matrix complete
+
+`docs/iter/verdict-iter107-3-seed-close-matrix.md`:
+
+verdict-iter105 §Continuation P1: seed2 (民国上海) 50-tick with iter#103
+close-fix. 完成跨 3 seed × close-fix 完整 matrix.
+
+**Phase 2 close-fix 跨 3 seed FINAL matrix:**
+
+| seed | open_final | closed | avg_urg | drift | cost |
+| --- | --: | --: | --: | --: | --: |
+| seed1 蒸汽朋克 | 6→4 | 0→3 | 6.0→6.75 | 0→0 | +4.4% |
+| seed2 民国 | 5→4 | 0→2 | 7.0→7.25 | 0→0 | +9.1% |
+| seed3 末世 | 11→5 | 0→1 | 6.09→6.80 | **1→0** | -53% gross |
+| **avg** | -41% | 0→2 | +9.3% | drift 1→0 | (题材分化) |
+
+verdict: **跨题材完整通过**
+- closed_total 跨 3 seed 全部 > 0 (130 tick × 3 seed × closed=0 时代结束)
+- open final 平均 -41%
+- avg_urg 全部上升 (+3.6% ~ +12.5%)
+- drift signals 全部 0 (seed3 1→0)
+- distinct char-2 仅 -1.2% ~ -1.5% (噪声)
+
+cost delta:
+- plot-light (seed1/2): +4.4% / +9.1% (Showrunner JSON +close 决策)
+- plot-dense (seed3): -53% gross / -30% adj (close 释放 token 资源)
+
+quality delta: 全部维度提升, drift 跨题材消除
+测试: 703/703 (iter#106 后无新代码)
+
 ## [2.39] — 2026-06-12 — iter#106: Phase 2 cycle 13 review fixes (iter#103 follow-up)
 
 Per Goal #7 全 code-review 每 3 iter. iter#100-105 中只有 iter#103 有代码
