@@ -29,9 +29,9 @@ def _build_cast_strings(a, b, c) -> tuple[str, str]:
     set_count = sum(x is not None for x in (a, b, c))
     if set_count == 0:
         return (
-            "3 个起始角色 (Phase 3-B 实测 sweet spot)",
+            "3 个起始角色 (推荐配置)",
             "1 个 A 级 (主角, 深度建模) / 2 个 B 级 (重要配角) / "
-            "0 个 C 级",
+            "0 个 C 级 (本作不使用 NPC 角色, 必要时 narrate 即可)",
         )
     if set_count == 3:
         total = a + b + c
@@ -48,19 +48,22 @@ def _build_cast_strings(a, b, c) -> tuple[str, str]:
 
 
 def test_default_cast3_sweet_spot_when_no_cast_args():
-    """iter#128 后: 无参 → cast=3 sweet spot (Phase 3-B 实测).
-    历史 'wide 6-10 / 3A+3-4B+2-3C' 已退役."""
+    """iter#128 后: 无参 → cast=3 sweet spot (1A+2B+0C).
+    iter#129 review: prompt 去 'Phase 3-B' 内部 taxonomy."""
     cb, ct = _build_cast_strings(None, None, None)
     rendered = _render(cb, ct)
     assert "3 个起始角色" in rendered
-    assert "Phase 3-B" in rendered or "sweet spot" in rendered
+    assert "推荐配置" in rendered
+    # iter#129 review: 'Phase 3-B' / 'sweet spot' 内部 taxonomy 必须**不**出现在 prompt 里
+    assert "Phase 3-B" not in rendered
+    assert "sweet spot" not in rendered
     assert "1 个 A 级" in rendered
     assert "2 个 B 级" in rendered
     assert "0 个 C 级" in rendered
     # 老 wide 字眼必须消失
     assert "6-10 个" not in rendered
     assert "3-4 个" not in rendered
-    assert "恰好" not in rendered  # default 模式无 '恰好' 字 (只 explicit set 用)
+    assert "恰好" not in rendered  # default 模式无 '恰好' 字
 
 
 def test_precise_all_three_set():

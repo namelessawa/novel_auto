@@ -5,6 +5,36 @@
 
 ---
 
+## [2.41] — 2026-06-13 — iter#129: cycle 17 review fixes (iter#128 followup)
+
+Per Goal #7. python-reviewer cycle 17: 2 HIGH + 2 MEDIUM, 全修.
+
+[HIGH-1] 模块 docstring 第 6 行 仍称 "6-10 个 CharacterProfile" — 与
+iter#128 实际行为冲突:
+- 更新 "默认 3 个: 1A+2B+0C, Phase 3-B 实测 sweet spot;
+  可用 --cast-{a,b,c}-count 覆盖, all-or-nothing"
+
+[HIGH-2] 函数 inline comment 第 403 行 仍称 "0/3 设 → wide range (6-10),
+与历史 bench 等价" — 与下面 cast=3 代码直接矛盾:
+- 更新 "0/3 设 → cast=3 sweet spot (1A+2B+0C), Phase 3-B 实测默认
+  (旧 wide range 6-10 在 iter#128 退役)"
+
+[MEDIUM-1] prompt 内 "Phase 3-B 实测 sweet spot" 是内部 taxonomy 漏入
+LLM context, 对 generation 任务无价值还添噪声:
+- 改成 "推荐配置" + 加 "0 个 C 级 (本作不使用 NPC 角色, 必要时 narrate 即可)"
+  让 LLM 明白 0 不是疏漏
+
+[MEDIUM-2] 实测 cast count 与 requested 不匹配无 runtime 信号 (iter#122
+seed1 cast=5 实际 4 字默默通过):
+- bootstrap 完成后校验 actual tiers vs requested, mismatch logger.warning
+- 不阻断主流程 (LLM 偶发性需容忍), 但 bench 复现性可追溯
+
+[LOW] semver 主/次版本判断 — v2.41 minor 接受 (pre-1.0 内部工具).
+
+cost delta: 0 (review fix)
+quality delta: 0 (review fix)
+测试: 13/13 cast PASS (加 'Phase 3-B' / 'sweet spot' 不在 prompt 断言)
+
 ## [2.41] — 2026-06-13 — iter#128: Phase 3-B cast=3 default 落地
 
 `backend/bootstrap_prompts.py`:

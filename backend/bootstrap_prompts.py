@@ -3,7 +3,8 @@
 冷启动一个新世界,顺序调用:
 
 1. 世界基础设定(seed_description → WorldState)
-2. 初代角色集(6-10 个 CharacterProfile + CharacterState)
+2. 初代角色集(默认 3 个: 1A+2B+0C, Phase 3-B 实测 sweet spot;
+   可用 --cast-{a,b,c}-count 覆盖, all-or-nothing)
 3. 初始开放伏笔(3-5 个 OpenLoop,至少 1 个 urgency>7)
 4. 风格锚点(3-5 段 ~300 字 StyleAnchor)
 5. (可选) 第一章
@@ -398,9 +399,10 @@ async def bootstrap_world(
 
     # === Step 2: Characters ===========================================
     logger.info("[2/4] Generating characters…")
-    # iter#119 Phase 3-B + iter#123 review HIGH: cast-confound 控制.
+    # iter#119 Phase 3-B + iter#123 review + iter#128 default 改:
     # 模式:
-    #   * 0/3 设 → wide range (6-10), 与历史 bench 等价
+    #   * 0/3 设 → cast=3 sweet spot (1A+2B+0C), Phase 3-B 实测默认
+    #     (旧 wide range 6-10 在 iter#128 退役 — 跨 3-seed -8.3% cost)
     #   * 3/3 设 → "恰好 N 角色 (固定)", 跨 seed bench 实验可控
     #   * 1-2/3 设 → 拒绝 (ValueError). 部分设容易让用户以为只指定 A 数,
     #     却被 b/c 默认值悄悄加成, 破坏 bench 复现性. all-or-nothing.
@@ -412,11 +414,11 @@ async def bootstrap_world(
         # 跨 3-seed × 50-tick × 2 cast 模式 实测 vs cast=5: -4.6% avg cost,
         # avg_urg +7.1% (seed3), drift 0/0. vs close-fix wide: -8.3% avg.
         # 历史 wide range "6-10 / 3A+3-4B+2-3C" 改为 "3 / 1A+2B+0C" 默认.
-        # 用户仍可 --cast-{a,b,c}-count 显式覆盖.
-        cast_breakdown = "3 个起始角色 (Phase 3-B 实测 sweet spot)"
+        # iter#129 review MEDIUM: prompt 去 "Phase 3-B" 内部 taxonomy 漏入.
+        cast_breakdown = "3 个起始角色 (推荐配置)"
         cast_tiers = (
             "1 个 A 级 (主角, 深度建模) / 2 个 B 级 (重要配角) / "
-            "0 个 C 级"
+            "0 个 C 级 (本作不使用 NPC 角色, 必要时 narrate 即可)"
         )
     elif set_count == 3:
         total = cast_a_count + cast_b_count + cast_c_count
@@ -459,6 +461,25 @@ async def bootstrap_world(
     if main_tracking_id is None and ts.list_character_profiles():
         # 没 A 级角色则取第一个
         main_tracking_id = ts.list_character_profiles()[0].id
+
+    # iter#129 review MEDIUM: cast count compliance check (warning only).
+    # LLM 偶发漏 / 多 cast 数 (iter#122 seed1 cast=5 实测得 4). 校验 actual
+    # 与请求是否一致, 不匹配 warn 让 bench 实验复现性可追溯, 不阻断主流程.
+    if set_count == 3:
+        actual_tiers = {"A": 0, "B": 0, "C": 0}
+        for p in ts.list_character_profiles():
+            tier = (p.importance_tier or "").upper()
+            if tier in actual_tiers:
+                actual_tiers[tier] += 1
+        requested = {
+            "A": cast_a_count, "B": cast_b_count, "C": cast_c_count,
+        }
+        if actual_tiers != requested:
+            logger.warning(
+                "cast count mismatch — requested %s, actual %s. "
+                "LLM 偷工/超发, 不阻断 bootstrap, 但 bench 复现性需注意.",
+                requested, actual_tiers,
+            )
 
     logger.info("  → %d characters created", len(ts.list_character_profiles()))
 
