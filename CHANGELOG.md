@@ -5,6 +5,45 @@
 
 ---
 
+## [2.40] — 2026-06-13 — iter#127: cast=3 universal sweet spot 最终验证 ✓
+
+`docs/iter/verdict-iter127-cast3-universal-final.md`:
+
+verdict-iter126 §Continuation P0: seed3 (plot-dense) with cast=3.
+
+vs #121 cast=5 (同 seed3): 几乎平局
+- tokens +1.1% (噪声)
+- distinct -0.9% (噪声)
+- avg_urg 7.0 → **7.5** (+7.1%, narrative tension 反而更好)
+- drift 0/0
+
+**Phase 3-B 最终 3-seed matrix**:
+- seed1 cast=3: 483,617 tokens (-5.1% vs cast=5)
+- seed2 cast=3: 484,134 tokens (-9.3% vs cast=5)
+- seed3 cast=3: 502,482 tokens (+1.1% vs cast=5, 边际)
+- avg cast=3: **490,078** vs cast=5: 513,548
+
+**cast=3 universal win**: -4.6% avg vs cast=5, -8.3% avg vs close-fix wide.
+
+**Production default**: `--cast-a-count 1 --cast-b-count 2 --cast-c-count 0`
+(1A + 2B + 0C = 3 chars).
+
+Phase 3 综合 (final):
+- A 失败 revert
+- **B 大胜完整 (-8.3% universal)**
+- C 弱信号
+- D 未启动
+
+cumulative trail:
+- Phase 1 (#3-72): -77% tokens / -83% latency
+- Phase 2 (#76-112): drift fix, 73.3% pairwise promote ×3
+- **Phase 3-B (#119-127): cast=3 universal -8.3%**
+
+cost delta vs cast=5: -4.6% avg
+cost delta vs close-fix wide: -8.3% avg
+quality delta: drift 0/0 跨 3-seed, avg_urg +7.1% (seed3)
+测试: 13/13 cast + 44/44 历史 PASS
+
 ## [2.40] — 2026-06-13 — iter#126: cast=3 跨 plot-light + plot-medium 都是 sweet spot
 
 `docs/iter/verdict-iter126-cast3-sweet-spot.md`:
