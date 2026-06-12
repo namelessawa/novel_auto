@@ -5,6 +5,29 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#114: Phase 3-A narrator user_prompt summaries 5→3
+
+`backend/agents/narrator_agent.py:_build_user_prompt`:
+
+Phase 3 候选 A 启动. iter#114 第一动作: narrator 50.5% token share 入手, 优
+化 user_prompt 体积.
+
+修改: recent_chapter_summaries 注入从 [-5:] 缩到 [-3:].
+
+理由: prose_tail (_PROSE_TAIL_MAX_CHARS ~1600 chars) 已含 immediate 上下文,
+是高保真度连贯锚. 5 条 summary + prose_tail 双 redundant. iter#7 (Phase 1)
+当年从 8→5 是同理. 进一步缩到 3 让 LLM 焦点更稳.
+
+预估节省: 2 lines × ~50 chars × ~1.5 token/char = ~150 tokens/tick. 跨 50
+tick bench ~7500 tokens (~1-2% narrator share).
+
+风险: prose 连贯性可能稍降. iter#115+ 跑 quality bench gate 验证 (跟
+Phase 2 流程一致).
+
+cost delta: 待 bench 实测 (估 -1.5%)
+quality delta: 待 bench gate
+测试: 707/707
+
 ## [2.39] — 2026-06-12 — iter#112: Phase 2 close-fix FINAL — 3-seed × pairwise 73.3% avg
 
 `docs/iter/verdict-iter112-phase2-close-fix-final.md`:

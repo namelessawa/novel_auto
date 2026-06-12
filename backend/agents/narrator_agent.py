@@ -692,10 +692,14 @@ class NarratorAgent:
                 for l in top_loops
             )
 
+        # iter#114 Phase 3-A: summaries 5→3.
+        # prose_tail 已含 _PROSE_TAIL_MAX_CHARS 上下文 (~1600 char), 是更高
+        # 保真度的连贯锚. 此前 5 条摘要 + prose_tail 双 redundant —
+        # iter#7 缩 8→5 时是同理由, 进一步缩到 3 让 LLM 焦点更稳.
         summaries_text = "(连载刚开始, 尚无前情)"
         if recent_chapter_summaries:
             summaries_text = "\n".join(
-                f"- {s}" for s in recent_chapter_summaries[-5:]
+                f"- {s}" for s in recent_chapter_summaries[-3:]
             )
 
         title_line = ""
