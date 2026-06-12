@@ -5,6 +5,28 @@
 
 ---
 
+## [2.39] — 2026-06-12 — iter#110: Phase 2 cycle 14 review fixes (iter#108 followup)
+
+Per Goal #7 全 code-review 每 3 iter. iter#107-109 中只有 iter#108 有代码改动.
+python-reviewer cycle 14 报 2 HIGH + 1 MEDIUM, 全修:
+
+[HIGH-1] inline `import logging` 与 iter#27/#96/#99 review 教训同样反模式:
+- tick_state.py line 26 已有 module-level `import logging`, line 47 已有
+  `logger = logging.getLogger(__name__)`
+- 删 inline import, 直接用 module-level logger
+
+[HIGH-2] `except Exception: pass` 包 logger.warning — 项目 fail-loud 准则违反:
+- logger.warning 不可能抛
+- 即使抛, silent 是 anti-pattern
+- 删 try/except 包裹
+
+[MEDIUM] warning message 不 actionable — 提 "nonce" 但无源头线索:
+- 改成 "Caller hint: EventInjector / Showrunner / Narrator 同 tick 重用 ID"
+
+cost delta: 中性
+quality delta: 中性 (review fix)
+测试: 707/707 (无新测试 — 4 个 iter#108 测试已覆盖, 仅修 impl)
+
 ## [2.39] — 2026-06-12 — iter#109: close-fix mimo pairwise judge — 70% win-rate
 
 `docs/iter/verdict-iter107-seed2-close-vs-baseline.{json,md}`:
