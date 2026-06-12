@@ -72,6 +72,7 @@ async def _bench(args) -> dict:
 
     # --- Cold-start: bootstrap world (5 prompts) ----------------------------
     t0 = time.perf_counter()
+    # iter#121 Phase 3-B: 透传 cast-confound 控制. None 时保持 wide 默认.
     await bootstrap_world(
         novel_id=novel_id,
         data_dir=data_dir,
@@ -79,6 +80,9 @@ async def _bench(args) -> dict:
         positioning="冷峻克制 / 阴翳氛围 / 短句节奏 / 物件描写优先",
         references="石黑一雄 / 江户川乱步",
         title="档案馆的失语者",
+        cast_a_count=getattr(args, "cast_a_count", None),
+        cast_b_count=getattr(args, "cast_b_count", None),
+        cast_c_count=getattr(args, "cast_c_count", None),
     )
     bootstrap_sec = time.perf_counter() - t0
 
@@ -512,6 +516,19 @@ def main():
         type=int,
         default=5,
         help="Stage 3 longrange 采样间隔 (默认每 5 tick 一次).",
+    )
+    # iter#121 Phase 3-B cast-confound 控制 — 跨 seed cost variance 实验用.
+    parser.add_argument(
+        "--cast-a-count", type=int, default=None,
+        help="精确 A 级角色数. 不设则 LLM 自由 (wide).",
+    )
+    parser.add_argument(
+        "--cast-b-count", type=int, default=None,
+        help="精确 B 级角色数. 不设则 LLM 自由 (wide).",
+    )
+    parser.add_argument(
+        "--cast-c-count", type=int, default=None,
+        help="精确 C 级角色数. 不设则 LLM 自由 (wide).",
     )
     args = parser.parse_args()
 

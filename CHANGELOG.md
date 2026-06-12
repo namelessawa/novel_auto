@@ -5,6 +5,40 @@
 
 ---
 
+## [2.40] — 2026-06-12 — iter#121: cast-confound 实战验证 ✓ — Phase 3-B 大胜
+
+`docs/iter/verdict-iter121-cast-confound-confirmed.md`:
+
+Phase 3-B (iter#119 CLI) 落地后第一次实战 bench. seed3 50-tick with 控制
+cast 2A+2B+1C (固定 5 角色). bench_tick.py 加 `--cast-{a,b,c}-count` 透传.
+
+vs iter#102 (wide random 3 chars): **total_tokens -62%** (1305k → 497k)
+vs iter#104 (wide random 2 chars + close-fix): **-19%** (611k → 497k)
+
+quality 维度全部最优:
+- distinct char-2 0.8545/0.868 → **0.8787** (best)
+- avg_urg final 6.09/6.80 → **7.0** (+15% vs baseline)
+- closed_total 0/1 → **4** (最活跃)
+- drift signals 1/0 → **0** (维持)
+
+**反直觉**: 5 角色 (固定) cost < 2 角色 (random). 原因: cast random 让
+character_agent 调度不均, 个别 agent 抢 100k+ tokens. 固定多 cast 让
+事件 dispersal 均匀, 单 agent 量大降 (iter#121 char_linxue 仅 11k vs
+iter#102 char_fangyanshu 125k).
+
+iter#102 P1 假设确认 (cast 是 seed3 cost 2.6x 主因), 但治理方式与直觉
+相反: 固定 cast 而非压 cast 数.
+
+bench_tick.py:
+- 加 --cast-a-count / --cast-b-count / --cast-c-count 透传到 bootstrap_world
+
+Phase 3-B = Phase 3 首个明显胜利.
+
+cost delta vs iter#102: -62%
+cost delta vs iter#104: -19%
+quality delta vs iter#104: drift 同 0, avg_urg +3%, distinct +1.6%, closed +3
+测试: 44/44 跨 iter#103-119 改动 PASS (验证后)
+
 ## [2.40] — 2026-06-12 — iter#119: Phase 3-B cast-confound 控制 — --cast-{a,b,c}-count
 
 `backend/bootstrap_prompts.py`:
