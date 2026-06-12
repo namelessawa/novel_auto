@@ -5,6 +5,33 @@
 
 ---
 
+## [2.42] — 2026-06-13 — iter#138: PHASE4_PLAN.md — 反映 iter#133-136 教训
+
+`docs/iter/PHASE4_PLAN.md`:
+
+Phase 3 完整 closure 后规划 Phase 4. 关键改动: **每个 architecture / config
+改动必须 mimo pairwise gate**, 不再仅 det 验证. iter#128 漏 mimo gate
+直接改 default → iter#136 revert 是教训.
+
+Phase 4 候选:
+- D (memory fidelity probe): Phase 3 carryover, 200 tick bench
+- **E (Showrunner runtime active-cast cap)**: 直接答 iter#128 反向教训,
+  推荐第一 (动态 cap vs 静态 cast 配置)
+- F (critic prompt cache): 低成本, DeepSeek auto-cache stable prefix
+- G (compressor budget): 与 D 组合
+
+Phase 1/2/3 累积净改动 (revised):
+- Phase 1: -77% tokens (production gain, 验证充分)
+- Phase 2: close-loop fix, 73% pairwise promote (production gain)
+- Phase 3-B: --cast-{a,b,c}-count CLI opt-in only (default 净 0)
+- Phase 3 总: 工具沉淀, default behavior 不变
+
+不可重复 iter#128 "det-only validation" 错误.
+
+cost delta: 0 (PLAN doc)
+quality delta: 0 (PLAN doc)
+测试: 13/13
+
 ## [2.42] — 2026-06-13 — iter#137: PHASE3_FINAL + README sync to iter#136 revert
 
 `docs/iter/PHASE3_FINAL.md` + `README.md`:
