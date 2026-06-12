@@ -98,6 +98,11 @@ class TickState:
         # 持久化时序列化, load 时恢复. 0 是合法初始状态.
         self._loops_closed_total: int = 0
 
+        # iter#139 Phase 4-E — 运行时 sideline: char_id → ticks_remaining.
+        # Showrunner 推荐 sideline 时入字段, 每 tick orchestrator 递减,
+        # 到 0 自动恢复. 在 sideline 期间 batch_decide 跳过该 char.
+        self._sidelined_characters: dict[str, int] = {}
+
         # 风格锚点(按 weight 降序排列)
         self._style_anchors: list[StyleAnchor] = []
 
@@ -297,6 +302,48 @@ class TickState:
         )
 
     # ------------------------------------------------------------------
+    # 角色 sideline (iter#139 Phase 4-E runtime active-cast cap)
+    # ------------------------------------------------------------------
+
+    SIDELINE_DEFAULT_TTL = 10
+
+    def sideline_character(self, character_id: str, ttl: int | None = None) -> None:
+        """暂时 sideline 一个角色 ``ttl`` tick (默认 10). 在 sideline 期间
+        orchestrator 应跳过该角色的 character_agent.batch_decide LLM 调用.
+        ``ttl`` 必须 ≥ 1 — < 1 视为 no-op (与不 sideline 等价).
+        重复 sideline 同一 char 会覆盖 ttl (取较大值, 防止一次缩短).
+        """
+        if ttl is None:
+            ttl = self.SIDELINE_DEFAULT_TTL
+        if ttl < 1:
+            return
+        if character_id not in self._character_states:
+            # 角色不存在 — 不创建幽灵 sideline. 调用方 (orchestrator) 负责
+            # 在 Showrunner 输出未知 ID 时 logger.warning.
+            return
+        existing = self._sidelined_characters.get(character_id, 0)
+        self._sidelined_characters[character_id] = max(existing, ttl)
+
+    def is_character_sidelined(self, character_id: str) -> bool:
+        return self._sidelined_characters.get(character_id, 0) > 0
+
+    def list_sidelined_characters(self) -> dict[str, int]:
+        """返回当前 sideline 字段 (char_id → ticks_remaining) 的 shallow copy."""
+        return dict(self._sidelined_characters)
+
+    def tick_down_sidelines(self) -> list[str]:
+        """每 tick 递减所有 sideline ttl, 返回本 tick 自动恢复的 char_id list.
+        orchestrator 在每 tick 开始 (phase 0 / before character_decisions) 调用.
+        """
+        recovered: list[str] = []
+        for cid in list(self._sidelined_characters.keys()):
+            self._sidelined_characters[cid] -= 1
+            if self._sidelined_characters[cid] <= 0:
+                del self._sidelined_characters[cid]
+                recovered.append(cid)
+        return recovered
+
+    # ------------------------------------------------------------------
     # StyleAnchor(Narrator 取 top-k)
     # ------------------------------------------------------------------
 
@@ -475,6 +522,8 @@ class TickState:
             },
             # Phase 2 Stage 3 (iter#91) — 累计 close 数.
             "loops_closed_total": self._loops_closed_total,
+            # iter#139 Phase 4-E — sideline TTL map.
+            "sidelined_characters": dict(self._sidelined_characters),
             "style_anchors": [a.model_dump(mode="json") for a in self._style_anchors],
             "last_event_tick_by_type": dict(self._last_event_tick_by_type),
             "novelty_warnings": list(self._novelty_warnings),
@@ -543,6 +592,13 @@ class TickState:
             }
             # Phase 2 Stage 3 (iter#91) — 老 state file 没此字段, 视作 0.
             self._loops_closed_total = int(payload.get("loops_closed_total", 0) or 0)
+            # iter#139 Phase 4-E — sideline TTL map (老 state file 没字段 → {}).
+            raw_sidelines = payload.get("sidelined_characters", {}) or {}
+            self._sidelined_characters = {
+                str(k): int(v)
+                for k, v in raw_sidelines.items()
+                if isinstance(v, (int, float)) and int(v) > 0
+            }
             self._style_anchors = [
                 StyleAnchor.model_validate(a)
                 for a in payload.get("style_anchors", [])

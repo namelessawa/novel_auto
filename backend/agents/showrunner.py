@@ -71,13 +71,38 @@ SYSTEM_PROMPT = """\
       "urgency": "high"
     }
   ],
-  "loops_to_close": ["loop_7"]
+  "loops_to_close": ["loop_7"],
+  "sidelined_characters": ["char_minor"]
 }
 
 字段值用枚举: intensity ∈ {low, medium, high}, trend ∈ {rising, flat,
 falling}, health ∈ {ok, low, critical}, type ∈ {trigger_dramatic_event,
 propose_meeting, time_jump, generation_shift, macro_reset}, urgency ∈
 {low, medium, high}.
+
+# sidelined_characters 决策准则 (iter#139 Phase 4-E)
+
+把暂时不在核心冲突中的角色 sideline (orchestrator 跳过其 LLM 决策一段
+tick, 保留 profile/state). 区别于角色删除 — 仅 LLM 静默, 后续可恢复.
+
+挑选准则 (从高到低):
+1. **arc_progress 长期停滞** — 连续 ≥ 20 tick 该角色 arc_progress 无变化
+   且当下没有相关 open_loop
+2. **C 级角色未参与 recent 核心事件** — C 级 NPC 在最近 10 tick 未被 narr-
+   ator 引用 + 未触发 character_arc tracker 更新
+3. **角色与近期主线脱节** — 该角色 personality / arc_goal 与近期 narrative
+   主题距离远 (例如主线已转 court, 角色仍在 frontier)
+
+**不要 sideline**:
+- A 级角色 (主角候选) — 永远活跃, 即便 arc 暂停也保 LLM 决策
+- 上一 tick 刚被 EventInjector 直接触及的角色
+- arc_progress > 0.7 的角色 (临门一脚不能掉)
+
+只输出 character_id 字符串数组 (来自 character_arcs / character_states 真实 id).
+保守原则: 同 tick 最多 sideline 2 个. 不确定时留空.
+
+orchestrator 默认 sideline 持续 10 tick 后自动恢复 (Showrunner 不需要管
+"何时恢复"). 当下要 sideline 谁就给谁.
 
 # loops_to_close 决策准则 (iter#103 新增, iter#106 review 补 [4,5] 区间)
 
@@ -113,6 +138,11 @@ class ShowrunnerOutput:
     # Showrunner 在 open_loops 累积时挑 1-2 个推荐关闭, orchestrator wire
     # 后会调 tick_state.close_open_loop(id). 仅 ID 字段, 解读权留给 LLM.
     loops_to_close: list[str] = field(default_factory=list)
+    # iter#139 Phase 4-E — runtime active-cast cap. Showrunner 把暂时不在
+    # 核心冲突中的角色 sideline 一段 tick, orchestrator 跳过他们的
+    # character_agent.batch_decide LLM 调用, 节 cost 而不动 cast pool.
+    # 区别于 Phase 3-B 静态 cast count: 这里是动态、可恢复.
+    sidelined_characters: list[str] = field(default_factory=list)
 
 
 class Showrunner:
@@ -240,6 +270,17 @@ class Showrunner:
                 if isinstance(lid, str) and lid.strip():
                     loops_to_close.append(lid.strip())
 
+        # iter#139 Phase 4-E — sidelined_characters 同样宽容解析
+        raw_sidelined = payload.get("sidelined_characters", []) or []
+        sidelined: list[str] = []
+        for item in raw_sidelined:
+            if isinstance(item, str) and item.strip():
+                sidelined.append(item.strip())
+            elif isinstance(item, dict):
+                cid = item.get("character_id") or item.get("id")
+                if isinstance(cid, str) and cid.strip():
+                    sidelined.append(cid.strip())
+
         return ShowrunnerOutput(
             pacing_assessment=dict(payload.get("pacing_assessment", {}) or {}),
             conflict_pool_status=dict(payload.get("conflict_pool_status", {}) or {}),
@@ -247,4 +288,5 @@ class Showrunner:
             arc_status=list(payload.get("arc_status", []) or []),
             recommendations=list(payload.get("recommendations", []) or []),
             loops_to_close=loops_to_close,
+            sidelined_characters=sidelined,
         )

@@ -447,6 +447,32 @@ class Orchestrator:
                             "Showrunner closed %d loop(s) at tick %d: %s",
                             closed_count, tick, loops_to_close,
                         )
+                # iter#139 Phase 4-E — runtime active-cast cap.
+                # Showrunner 推荐 sideline 的 char_id 入 tick_state 字段,
+                # 后续 batch_decide 跳过. TTL 默认 10 tick 自动恢复.
+                sidelined = list(getattr(showrunner_out, "sidelined_characters", [])) or []
+                if sidelined:
+                    known_chars = {
+                        s.character_id
+                        for s in self._tick_state.list_character_states()
+                    }
+                    sidelined_count = 0
+                    for cid in sidelined:
+                        if cid not in known_chars:
+                            logger.warning(
+                                "Showrunner requested sideline of unknown "
+                                "character_id=%r at tick %d (ignored). known: %s",
+                                cid, tick, sorted(known_chars),
+                            )
+                            continue
+                        self._tick_state.sideline_character(cid)
+                        sidelined_count += 1
+                    if sidelined_count:
+                        logger.info(
+                            "Showrunner sidelined %d char(s) at tick %d (ttl=%d): %s",
+                            sidelined_count, tick,
+                            self._tick_state.SIDELINE_DEFAULT_TTL, sidelined,
+                        )
                 agents_called.append("showrunner")
             except Exception as e:
                 logger.error("Showrunner.assess failed: %s", e)
@@ -490,17 +516,26 @@ class Orchestrator:
         )
 
         # 阶段 3: 角色决策 ------------------------------------------------
+        # iter#139 Phase 4-E — tick down sidelines 先, 让本 tick 该恢复的
+        # 角色立刻可参与决策. 然后 affected_ids 过滤掉仍 sideline 中.
+        recovered = self._tick_state.tick_down_sidelines()
+        if recovered:
+            logger.info(
+                "Sideline TTL expired at tick %d, recovered: %s", tick, recovered
+            )
         affected_ids = self._collect_affected_characters(all_events)
         actions: list[CharacterAction] = []
         if affected_ids:
             # v2.18 — 跳过仍在 cooldown 窗口内的 agent (连续 LLM 失败超阈值时
             # 自动减压, 避免反复浪费 token 撞同一个错误)。
+            # iter#139 Phase 4-E — 同时跳过 Showrunner sideline 的 char.
             runnable_ids = [
                 cid
                 for cid in affected_ids
                 if not self._tick_state.is_agent_in_cooldown(
                     f"character_agent:{cid}", tick
                 )
+                and not self._tick_state.is_character_sidelined(cid)
             ]
             agents_to_run = [
                 self._character_agents[cid]

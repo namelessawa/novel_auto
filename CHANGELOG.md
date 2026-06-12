@@ -5,6 +5,44 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#139: Phase 4-E Showrunner runtime active-cast cap
+
+`backend/agents/showrunner.py` + `orchestrator.py` + `memory/tick_state.py`:
+
+直接答 iter#128 反向教训: 静态 cast 配置硬伤. Phase 4-E 引入动态 sideline:
+Showrunner 推荐暂时不在核心冲突的角色, orchestrator 跳 batch_decide LLM
+一段 tick, TTL 到期自动恢复.
+
+代码:
+- `ShowrunnerOutput.sidelined_characters: list[str]` 新字段
+- SYSTEM_PROMPT 加 sideline 决策准则:
+  * 挑选: arc_progress 长期停滞 / C 级未参与 recent / 与近期主线脱节
+  * 不要 sideline: A 级 / 刚被 EventInjector 触及 / arc_progress > 0.7
+  * 同 tick 最多 2 个, 不确定留空
+- `_parse_output`: 宽容解析 str list + {"character_id": "..."} dict
+- `tick_state._sidelined_characters: dict[str, int]` (char_id → TTL)
+- TickState API: `sideline_character` / `is_character_sidelined` /
+  `list_sidelined_characters` / `tick_down_sidelines`
+- save/load roundtrip (老 state file 无字段 → {})
+- orchestrator wire: phase 2 后注 sideline (fail-loud on unknown ID),
+  phase 3 起 tick_down 然后过滤 runnable_ids
+- SIDELINE_DEFAULT_TTL = 10
+- 重复 sideline 同 char 取较大 TTL (防 silent 缩短)
+
+测试: 16 个新 (test_sideline_runtime_cap.py):
+- 6 parse 测试 (str / dict / empty / missing / invalid / system_prompt 内容)
+- 8 TickState API (TTL / unknown noop / negative noop / max TTL /
+  tick down / save load / 老 state 兼容)
+- 2 orchestrator wire e2e (batch_decide 实际跳过 / unknown ID warning)
+
+不变 production behavior — 仅当 Showrunner 推荐 sideline 时激活 (mimo gate
+后续 iter#140+ 跑 3-seed pairwise 验证).
+
+cost delta: 待 bench 实测 (估计 -10~-20% character_agent token, 视 sideline
+触发频率)
+quality delta: 待 mimo gate (Phase 4 强制流程)
+测试: 16 新 (737/737 应用 iter#139 后, env-broken 10 unrelated)
+
 ## [2.42] — 2026-06-13 — iter#138: PHASE4_PLAN.md — 反映 iter#133-136 教训
 
 `docs/iter/PHASE4_PLAN.md`:
