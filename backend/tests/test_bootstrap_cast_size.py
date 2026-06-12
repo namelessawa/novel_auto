@@ -21,17 +21,17 @@ def _render(cast_breakdown: str, cast_tiers: str) -> str:
 
 
 def _build_cast_strings(a, b, c) -> tuple[str, str]:
-    """Reflect 实际 bootstrap_world cast string 构造 (iter#128 后 cast=3 default).
+    """Reflect 实际 bootstrap_world cast string 构造 (iter#136 REVERT iter#128).
 
-    0/3 设 → cast=3 sweet spot (Phase 3-B 实测).
+    0/3 设 → wide range 6-10 (mimo pairwise 跨 3-seed 平均 63% 胜 cast=3).
     3/3 设 → 恰好 N. 1-2/3 设 → ValueError.
     """
     set_count = sum(x is not None for x in (a, b, c))
     if set_count == 0:
         return (
-            "3 个起始角色 (推荐配置)",
-            "1 个 A 级 (主角, 深度建模) / 2 个 B 级 (重要配角) / "
-            "0 个 C 级 (本作不使用 NPC 角色, 必要时 narrate 即可)",
+            "6-10 个起始角色",
+            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
+            "2-3 个 C 级 (NPC)",
         )
     if set_count == 3:
         total = a + b + c
@@ -47,23 +47,20 @@ def _build_cast_strings(a, b, c) -> tuple[str, str]:
     )
 
 
-def test_default_cast3_sweet_spot_when_no_cast_args():
-    """iter#128 后: 无参 → cast=3 sweet spot (1A+2B+0C).
-    iter#129 review: prompt 去 'Phase 3-B' 内部 taxonomy."""
+def test_default_wide_when_no_cast_args():
+    """iter#136 REVERT iter#128: 无参 → wide range 6-10 (mimo quality 优先).
+    cast=3 default 在 iter#133-135 跨 3-seed pairwise 平均 33% vs wide 63%,
+    revert 到 wide. cast=3 仍是 cost-first opt-in 路径 (explicit set)."""
     cb, ct = _build_cast_strings(None, None, None)
     rendered = _render(cb, ct)
-    assert "3 个起始角色" in rendered
-    assert "推荐配置" in rendered
-    # iter#129 review: 'Phase 3-B' / 'sweet spot' 内部 taxonomy 必须**不**出现在 prompt 里
-    assert "Phase 3-B" not in rendered
-    assert "sweet spot" not in rendered
-    assert "1 个 A 级" in rendered
-    assert "2 个 B 级" in rendered
-    assert "0 个 C 级" in rendered
-    # 老 wide 字眼必须消失
-    assert "6-10 个" not in rendered
-    assert "3-4 个" not in rendered
-    assert "恰好" not in rendered  # default 模式无 '恰好' 字
+    assert "6-10 个起始角色" in rendered
+    assert "3 个 A 级" in rendered
+    assert "3-4 个 B 级" in rendered
+    assert "2-3 个 C 级" in rendered
+    # iter#128 cast=3 字眼必须消失
+    assert "1 个 A 级" not in rendered or "3 个 A 级" in rendered  # 老 cast=3 字眼无
+    assert "推荐配置" not in rendered
+    assert "恰好" not in rendered  # default 无 '恰好' 字
 
 
 def test_precise_all_three_set():

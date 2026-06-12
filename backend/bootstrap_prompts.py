@@ -3,8 +3,9 @@
 冷启动一个新世界,顺序调用:
 
 1. 世界基础设定(seed_description → WorldState)
-2. 初代角色集(默认 3 个: 1A+2B+0C, Phase 3-B 实测 sweet spot;
-   可用 --cast-{a,b,c}-count 覆盖, all-or-nothing)
+2. 初代角色集(默认 wide 6-10 个: 3A+3-4B+2-3C, 跨 3-seed mimo 实测 quality
+   最稳; 用 --cast-{a,b,c}-count 切 cast=3 cost-first 模式, all-or-nothing,
+   注: cast=3 在 mimo pairwise 平均 33% vs wide 63%, 仅 cost-first 场景采用)
 3. 初始开放伏笔(3-5 个 OpenLoop,至少 1 个 urgency>7)
 4. 风格锚点(3-5 段 ~300 字 StyleAnchor)
 5. (可选) 第一章
@@ -399,26 +400,30 @@ async def bootstrap_world(
 
     # === Step 2: Characters ===========================================
     logger.info("[2/4] Generating characters…")
-    # iter#119 Phase 3-B + iter#123 review + iter#128 default 改:
+    # iter#119 Phase 3-B + iter#123 review + iter#136 REVERT iter#128:
     # 模式:
-    #   * 0/3 设 → cast=3 sweet spot (1A+2B+0C), Phase 3-B 实测默认
-    #     (旧 wide range 6-10 在 iter#128 退役 — 跨 3-seed -8.3% cost)
-    #   * 3/3 设 → "恰好 N 角色 (固定)", 跨 seed bench 实验可控
+    #   * 0/3 设 → wide range (6-10 / 3A+3-4B+2-3C), mimo pairwise quality
+    #     最稳 (iter#133/#134/#135 跨 3-seed 跨 wide vs cast=3 平均 63% wide
+    #     胜). iter#128 试 cast=3 默认在 det 指标看似优, 但 mimo 反向, revert.
+    #   * 3/3 设 → "恰好 N 角色 (固定)", bench 实验或 cost-first opt-in.
+    #     cast=3 = 1A+2B+0C 节省 -36.4% cost 但 prose dynamics 退化.
     #   * 1-2/3 设 → 拒绝 (ValueError). 部分设容易让用户以为只指定 A 数,
     #     却被 b/c 默认值悄悄加成, 破坏 bench 复现性. all-or-nothing.
     set_count = sum(
         x is not None for x in (cast_a_count, cast_b_count, cast_c_count)
     )
     if set_count == 0:
-        # iter#128 Phase 3-B verdict: cast=3 (1A+2B+0C) universal sweet spot.
-        # 跨 3-seed × 50-tick × 2 cast 模式 实测 vs cast=5: -4.6% avg cost,
-        # avg_urg +7.1% (seed3), drift 0/0. vs close-fix wide: -8.3% avg.
-        # 历史 wide range "6-10 / 3A+3-4B+2-3C" 改为 "3 / 1A+2B+0C" 默认.
-        # iter#129 review MEDIUM: prompt 去 "Phase 3-B" 内部 taxonomy 漏入.
-        cast_breakdown = "3 个起始角色 (推荐配置)"
+        # iter#136 REVERT: iter#128 cast=3 默认在 mimo pairwise 跨 3-seed
+        # 平均 33% win vs wide 63% (seed1=20% / seed2=50% / seed3=30%).
+        # det 指标 (distinct +2.6%, drift 0) 与 mimo 反向 — det 没 catch
+        # 真正的 prose dynamics 退化 (cast=3 = 1A+2B+0C 无 NPC, character
+        # interaction 多元性受限). 回到 wide range 保 quality.
+        # 用户仍可 --cast-a-count / --cast-b-count / --cast-c-count 显式 opt-in
+        # cast=3 cost-first 模式 (-36.4% vs Phase 2 baseline, trade prose quality).
+        cast_breakdown = "6-10 个起始角色"
         cast_tiers = (
-            "1 个 A 级 (主角, 深度建模) / 2 个 B 级 (重要配角) / "
-            "0 个 C 级 (本作不使用 NPC 角色, 必要时 narrate 即可)"
+            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
+            "2-3 个 C 级 (NPC)"
         )
     elif set_count == 3:
         total = cast_a_count + cast_b_count + cast_c_count

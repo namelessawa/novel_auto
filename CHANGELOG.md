@@ -5,6 +5,40 @@
 
 ---
 
+## [2.42] — 2026-06-13 — iter#136: REVERT iter#128 cast=3 default — wide 回归
+
+`docs/iter/verdict-iter136-revert-iter128-pairwise-evidence.md`:
+
+iter#133/#134/#135 完成 3-seed × mimo pairwise 验证 iter#128 默认:
+
+**3-seed × pairwise FINAL**:
+- seed1: cast=3 20% / wide 80% (v15_hold)
+- seed2: cast=3 50% / wide 50% (v16_borderline)
+- seed3: cast=3 30% / wide 60% / tie 10% (v15_hold)
+- **avg: cast=3 33.3% / wide 63.3% (decisive wide preference)**
+
+det 指标 (distinct char-2 +1-3%, drift 0, cost -8.3%) 与 mimo 反向. det 不
+够敏感 — 没 catch character interaction 多元性退化. cast=3 = 1A+2B+0C
+无 NPC, character interaction 限.
+
+**REVERT iter#128**:
+- `backend/bootstrap_prompts.py` 默认回 wide 6-10 (3A+3-4B+2-3C)
+- 用户 `--cast-{a,b,c}-count` 仍可 opt-in cast=3 cost-first 模式
+- docstring + inline comment 更新
+
+trade-off:
+- cast=3 opt-in: -36.4% cost vs Phase 2 baseline, mimo 33% win
+- wide default: 同 Phase 2 cost, mimo 63% win
+
+**教训** (Phase 3-B retrospective):
+1. det 指标不够测 prose dynamics
+2. 配置-level 改动也需 mimo gate (Phase 2 close-fix 时跑了, Phase 3-B 漏)
+3. pairwise judge 是 quality ground truth
+
+cost delta vs iter#128: +36.4% (回 Phase 2 水平)
+quality delta vs iter#128: +30pp mimo pairwise win
+测试: 13/13 cast (test rename → test_default_wide_when_no_cast_args)
+
 ## [2.41] — 2026-06-13 — iter#133: **重大发现** — cast=3 pairwise 反向 (80% LOSS)
 
 `docs/iter/verdict-iter133-cast3-pairwise-contradiction.md`:
