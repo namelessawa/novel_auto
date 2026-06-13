@@ -268,10 +268,10 @@ def ENABLE_LLM_CRITIC() -> bool:  # noqa: N802  - 保留旧名兼容
 
 # v2.38 (iter#3) — critique 输出上限。triggers JSON 极其紧凑, 1500 tokens 足够
 # 列 10+ 条触发; 之前的 8192 给推理模型留了把 budget 全填满的空间, 浪费且超时。
-# v2.43 Phase 4-F (iter#152) — 进一步压 1500 → 1200 (-20%). triggers 通常
-# < 5 条 + rationale + red_team_critiques 共 ~600 tokens; 1200 留 100% 余量
-# 足够。mimo gate 后续 iter#153/154 验证.
-_CRITIQUE_MAX_OUTPUT = _env_int("CRITIC_CRITIQUE_MAX_TOKENS", 1200)
+# v2.43 Phase 4-F (iter#152) 试 1200, iter#157 REVERT: seed1 mimo 50% (pass)
+# 但 seed2 40% (stage2_open borderline). 跨 seed avg 45% — det 看似优 (distinct
+# +1.6%~+3.4%) 但 mimo 反向, 重蹈 iter#128 教训. revert 1500.
+_CRITIQUE_MAX_OUTPUT = _env_int("CRITIC_CRITIQUE_MAX_TOKENS", 1500)
 # revise / rewrite 输出上限。narrative_text 上限 ~2200 字 (≈3300 tokens),
 # 给到 4096 留余量, 比之前的 32768 直接砍到 1/8。
 _REVISE_MAX_OUTPUT = _env_int("CRITIC_REVISE_MAX_TOKENS", 4096)

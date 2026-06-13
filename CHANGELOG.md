@@ -5,6 +5,31 @@
 
 ---
 
+## [2.43] — 2026-06-14 — iter#157: REVERT iter#152 budget 1200 — cross-seed borderline 退化
+
+iter#155 跑 seed2 cast=5 budget=1200, iter#156 pairwise vs iter#146
+(budget=1500). 结果:
+
+**Phase 4-F cross-seed matrix**:
+- seed1 (iter#154): v16 50% / v15 30% / tie 20% — v16_promote ✓
+- **seed2 (iter#156): v16 40% / v15 60% — stage2_open (borderline 退化)**
+- avg: ~45% (just at §4 threshold)
+
+det 跨 seed 都说 budget=1200 略优 (distinct char-2 +1.6% ~ +3.4%), 但
+mimo 在 seed2 反向. 类似 iter#128 cast=3 教训: det 不够测 prose dynamics.
+
+per Phase 4 流程 (mimo 是 ground truth), revert iter#152:
+- `_CRITIQUE_MAX_OUTPUT` 1200 → 1500 (回 iter#3 设定)
+- 不增 default cost (与之前一致)
+- 避免边缘 quality 风险
+
+cost delta: +20% critic budget (回原)
+quality delta: 同 baseline (避免 borderline 退化)
+测试: 19/19
+
+教训 (与 iter#128 cast=3 同理): det 单 seed 通过 + cross-seed 边缘 → **revert
+比赌更稳**. 单 seed 50% 通过的"中性"信号是 noise, 不是改进证据.
+
 ## [2.43] — 2026-06-13 — iter#154: Phase 4-F critic budget 1500→1200 验证通过
 
 iter#152 把 `_CRITIQUE_MAX_OUTPUT` 1500→1200 (-20%). iter#153 跑 seed1
