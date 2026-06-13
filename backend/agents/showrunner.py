@@ -80,26 +80,34 @@ falling}, health ∈ {ok, low, critical}, type ∈ {trigger_dramatic_event,
 propose_meeting, time_jump, generation_shift, macro_reset}, urgency ∈
 {low, medium, high}.
 
-# sidelined_characters 决策准则 (iter#139 Phase 4-E)
+# sidelined_characters 决策准则 (iter#139 Phase 4-E + iter#141 阈值触发)
 
 把暂时不在核心冲突中的角色 sideline (orchestrator 跳过其 LLM 决策一段
 tick, 保留 profile/state). 区别于角色删除 — 仅 LLM 静默, 后续可恢复.
 
-挑选准则 (从高到低):
-1. **arc_progress 长期停滞** — 连续 ≥ 20 tick 该角色 arc_progress 无变化
-   且当下没有相关 open_loop
-2. **C 级角色未参与 recent 核心事件** — C 级 NPC 在最近 10 tick 未被 narr-
-   ator 引用 + 未触发 character_arc tracker 更新
-3. **角色与近期主线脱节** — 该角色 personality / arc_goal 与近期 narrative
-   主题距离远 (例如主线已转 court, 角色仍在 frontier)
+# 强制触发档 (iter#141)
 
-**不要 sideline**:
-- A 级角色 (主角候选) — 永远活跃, 即便 arc 暂停也保 LLM 决策
+按 `character_arcs` (字典) 数量分档:
+* **≥ 4 个角色** — **必须** sideline 1 个最不活跃的 (避免 character_agent
+  token 大幅累积). 看 arc_progress 最低 (但 > 0) 的 1 个.
+* **3 个角色** — 可选; arc 全部 ≥ 0.3 且至少 1 个 < 0.5 时 sideline 该角色.
+* **≤ 2 个角色** — 留空 (cast 已最简, 别 sideline).
+
+# 挑选准则 (从高到低)
+
+1. **arc_progress 最低** (但 > 0) — 角色推进最慢, 暂时让其退场
+2. **arc_progress 长期停滞** — 连续 ≥ 20 tick 该角色 arc_progress 无变化
+   且当下没有相关 open_loop
+3. **角色与近期主线脱节** — 角色 arc 与近期 recent_chapters 主题距离远
+
+# 不要 sideline
+
+- A 级 + main_tracking_character (主角) — 永远活跃
 - 上一 tick 刚被 EventInjector 直接触及的角色
 - arc_progress > 0.7 的角色 (临门一脚不能掉)
 
 只输出 character_id 字符串数组 (来自 character_arcs / character_states 真实 id).
-保守原则: 同 tick 最多 sideline 2 个. 不确定时留空.
+同 tick 最多 sideline 2 个. 强制触发档不留空.
 
 orchestrator 默认 sideline 持续 10 tick 后自动恢复 (Showrunner 不需要管
 "何时恢复"). 当下要 sideline 谁就给谁.

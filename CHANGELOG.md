@@ -5,6 +5,25 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#141: Phase 4-E sideline prompt 强制阈值触发
+
+`backend/agents/showrunner.py` SYSTEM_PROMPT:
+
+iter#140 bench (seed1 50 tick) 发现 Showrunner 全程 0 sideline 触发 —
+原 prompt "不确定时留空" + 多 protective rules 让 LLM 极保守.
+
+强化 prompt:
+- ≥ 4 个角色 → **必须** sideline 1 个 (arc_progress 最低 > 0)
+- 3 个角色 → 可选 (arc 全部 ≥ 0.3 且至少 1 个 < 0.5 时触发)
+- ≤ 2 角色 → 留空 (cast 最简)
+
+去掉 last_interaction_tick 引用 — Showrunner 不见此字段, 改用 arc_progress
+(它确实拥有的字段).
+
+cost delta: 待 iter#142 重跑 bench 验证
+quality delta: 待 mimo gate
+测试: 16/16 PASS (无新, 仅 prompt 改)
+
 ## [2.43] — 2026-06-13 — iter#139: Phase 4-E Showrunner runtime active-cast cap
 
 `backend/agents/showrunner.py` + `orchestrator.py` + `memory/tick_state.py`:
