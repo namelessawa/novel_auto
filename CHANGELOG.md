@@ -5,6 +5,42 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#145: Phase 4-E controlled A/B 决定性正面 — 80% mimo win
+
+`docs/iter/verdict-iter145-phase4e-controlled-positive.md`:
+
+iter#122 (no sideline, pre-Phase 4-E) vs iter#144 (sideline ON) clean A/B:
+same seed1 + same cast=5 (2A+2B+1C), 唯一区别 = sideline 机制.
+
+verdict: **v16_promote (80% vs 20%, parse_err 0, decisive)**.
+
+| dim | v15 no-sideline | v16 sideline ON | delta |
+| --- | ---: | ---: | --- |
+| pairwise win | 20% | **80%** | **+60pp** |
+| total_tokens | 509,863 | 495,119 | **-2.9%** |
+| avg_urg final | 6.75 | 7.67 | +13.6% |
+| narrations | 42 | 46 | +9.5% |
+| distinct char-2 | 0.8649 | 0.8563 | -1.0% (noise) |
+| overlap consec char-2 | 0.0861 | 0.1 | +16% (det concern) |
+| drift | 0 | 0 | 同 |
+
+**det 与 mimo 部分反向**: distinct/overlap 看似略损, mimo 决定性 v16 优.
+
+**与 iter#133 静态 cast=3 关键差别**:
+- 静态 cast=3: mimo 20% (worse), character interaction 永远缺
+- **动态 sideline**: mimo **80%** (better), 池子保留 + 暂时退场
+
+动态 sideline 是 **cost ↓ + quality ↑ 双赢**, 远好于静态减 cast.
+
+**Phase 4-E production landing 评估**:
+- ✓ clean A/B verified (single seed)
+- 跨题材待 iter#146/147 (seed2/3) 验证
+- 如稳, iter#148 可正式 landing
+
+cost delta vs no-sideline: -2.9%
+quality delta vs no-sideline: **+60pp mimo pairwise**
+测试: 16/16 (无新代码)
+
 ## [2.43] — 2026-06-13 — iter#143: Phase 4-E 首次 positive — sideline 66.67% mimo win
 
 `docs/iter/verdict-iter143-phase4-e-first-positive.md`:
