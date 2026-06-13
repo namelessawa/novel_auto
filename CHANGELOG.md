@@ -5,6 +5,49 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#149: Phase 4-E 3-seed FINAL — 跨题材 promote ×3, 可 production landing
+
+`docs/iter/verdict-iter149-phase4e-3seed-final-promote.md`:
+
+Phase 4-E (iter#139-149) clean A/B 跨 3-seed × cast=5 controlled × pairwise
+mimo 完整 matrix:
+
+| seed | v15 (no sideline) | v16 (sideline ON) | tokens delta |
+| --- | ---: | ---: | ---: |
+| seed1 | 20% | **80%** | -2.9% |
+| seed2 | 50% | 50% | +0.4% |
+| seed3 | 22% | **77.78%** | +6.2% |
+| **avg** | 30.7% | **69.3%** | **+1.2%** |
+
+**all 3 seed v16_promote**, mimo 跨题材 decisive prefer sideline.
+cost 中性 (+1.2% σ ~4.5% 噪声内).
+
+**与 iter#133-135 静态 cast=3 反例对比**:
+- 静态 cast=3 avg mimo: 33.3% (退化)
+- **动态 sideline avg mimo: 69.3% (改善)**
+
+机制差别: 静态 cast=3 永远只 3 char (interaction 永远缺), 动态 sideline 灵活
+调度 (池子保留, 选择性退场, Showrunner 选时机).
+
+**Production landing 决定**:
+- ✓ infrastructure (iter#139)
+- ✓ 强制触发 prompt (iter#141)
+- ✓ clean A/B 单 seed (iter#145 80%)
+- ✓ cross-genre 3-seed (avg 69.3%)
+- ✓ cost 中性
+- ✓ drift 0
+- 默认 ON (无需 opt-in flag — 跨题材 decisive 正面)
+
+累计 Phase trail:
+- Phase 1: -77% tokens
+- Phase 2: drift fix + 73.3% pairwise
+- Phase 3-B: CLI 工具 (default revert wide)
+- **Phase 4-E: 动态 sideline default ON, +69.3% mimo, cost 中性**
+
+cost delta vs no-sideline (3-seed avg): +1.2%
+quality delta vs no-sideline: **+38.6pp mimo pairwise (30.7% → 69.3%)**
+测试: 16/16
+
 ## [2.43] — 2026-06-13 — iter#145: Phase 4-E controlled A/B 决定性正面 — 80% mimo win
 
 `docs/iter/verdict-iter145-phase4e-controlled-positive.md`:

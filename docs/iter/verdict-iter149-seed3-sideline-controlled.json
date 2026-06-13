@@ -1,0 +1,256 @@
+{
+  "label": "iter149-seed3-sideline-controlled",
+  "v15": {
+    "source": "docs/iter/bench-iter121-seed3-cast221.json",
+    "narrative_count": 45,
+    "det": {
+      "repetition": {
+        "narration_count": 45,
+        "distinct": {
+          "char_2": 0.8787,
+          "char_3": 0.9731,
+          "char_4": 0.9932,
+          "word_2": 0.9768,
+          "word_3": 0.9556,
+          "word_4": 0.9556
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0911,
+          "char_3": 0.0293,
+          "char_4": 0.0106,
+          "word_2": 0.0,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 45,
+        "skipped_records": 0,
+        "evaluated_count": 45,
+        "tier_hit_count": 33,
+        "tier_off_count": 12,
+        "tier_hit_rate": 0.7333,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 4,
+            "off": 2
+          },
+          "medium": {
+            "hit": 23,
+            "off": 7
+          },
+          "short": {
+            "hit": 6,
+            "off": 3
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-iter148-seed3-cast221-sideline-r2.json",
+    "narrative_count": 42,
+    "det": {
+      "repetition": {
+        "narration_count": 42,
+        "distinct": {
+          "char_2": 0.8741,
+          "char_3": 0.9704,
+          "char_4": 0.9917,
+          "word_2": 0.9757,
+          "word_3": 0.9762,
+          "word_4": 0.9762
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0886,
+          "char_3": 0.0298,
+          "char_4": 0.0122,
+          "word_2": 0.0019,
+          "word_3": 0.0011,
+          "word_4": 0.0008
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 42,
+        "skipped_records": 0,
+        "evaluated_count": 42,
+        "tier_hit_count": 32,
+        "tier_off_count": 10,
+        "tier_hit_rate": 0.7619,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 2,
+            "off": 2
+          },
+          "medium": {
+            "hit": 28,
+            "off": 3
+          },
+          "short": {
+            "hit": 2,
+            "off": 5
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 42,
+    "judge_call_count": 10,
+    "tokens_used_estimate": 50000,
+    "elapsed_sec": 227.29,
+    "v15_win": 2,
+    "v16_win": 7,
+    "tie": 0,
+    "parse_err": 1,
+    "results": [
+      {
+        "winner": "y",
+        "reason": "段A角色内心描写更深入，情节悬念强。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A角色内心描写更深入，情节悬念强。\"}",
+        "pair_index": 0
+      },
+      {
+        "winner": "parse_error",
+        "reason": "json_parse_failed",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "首先，用户要求我只输出一行 JSON，格式是 {\"winner\": \"A\", \"reason\": \"≤30字\"}，其中 winner 必须是 A、B 或 tie 之一。我需要基于连贯性、角色声音和情节推进来综合判断。\n\n用户提供了一个段 A 和段 B 的文本。但问题中只给出了段 B 的完整内容，没有段 A 的文本。用户说：\n\n# 段 A\n\n(小说正文，至少80字)\n\n# 段 B\n\n[然后给出了段 B 的内容]\n\n在用户的消息中，段 A 被标记为“(小说正文，至少80字)”，但实际上没有提供段 A 的文本。只有段 B 有具体内容。这可能是一个错误或遗漏。\n\n回顾用户消息：\n\n**重要**: 你**只输出 1 行 JSON**, 不做任何分析, 不写思考过程, 不用 markdown 围栏. 整个回复 ≤80 字符. 违反则视为废答.\n\n格式严格如下 (winner 必须是 A / B / tie 之一):\n\n{\"winner\": \"A\", \"reason\": \"≤30字\"}\n\n# 评判标准 (心里想, 不写出来)\n\n连贯性 + 角色声音 + 情节推进 综合判断. 长度差异不算分.\n\n# 段 A\n\n(小说正文，至少80字)\n\n# 段 B\n\n手指按下启动键。绿光从示数屏扩散开来，像某种水生生物在幽暗中舒展触须。提取器发出极低的嗡鸣，频率与车轮碾过铁轨的节奏错开，形成不协调的二重奏。\n\n车窗外的雾浓了不止一层。碎片撞击玻璃的叮咚声密得连成了片，不再是零星清脆的响，而是持续不断的、湿漉漉的拍打。偶尔有光团撞得太重，在玻璃上留下淡金色的残影——一个破碎的钟面，指针停在模糊的数字上；一道女性的剪影，只到肩颈，便碎成星点。酸雾在玻璃外侧凝成浑浊的珠，缓缓下滑，拖出蜿蜒的痕迹。\n\n示数屏上，代表记忆碎片纯度的波形开始跳动。数字微小地上涨。苏墨盯着那些起伏的曲线，拇指指腹用力抵住提取器外壳，指节绷紧。还不够。这点流量，只够填充林雪私下说的那种“记忆创可贴”。\n\n车身再次猛地一颠，比之前更剧烈。金属结构发出不堪重负的呻吟。他伸手扶住对面的座椅靠背，指尖触到冷硬的塑料，还有一层细腻的、带着湿气的灰尘。窗外的景象在摇晃中扭曲，灰黄的雾海翻涌，远处锈蚀遗迹的黑色轮廓彻底吞没，只剩下耳语般的呼啸从四面八方涌来，贴着车厢壁爬行。\n\n他重新看向示数屏。波形图下方，一行小字闪烁：环境记忆密度超标。建议中断被动接收。\n\n苏墨没动。他的目光越过屏幕，投向玻璃上滑下的一颗酸珠。珠子浑浊，里面裹着细碎的光点，像困在琥珀里的微小星辰。那是某个人记忆的残渣，或许是童年一个遥远的下午，或许是某次无足轻重的告别。现在它被酸雾裹挟，撞向这节行驶的车厢，即将被他的机器捕获，压缩成数据流里一串编号。\n\n为了填充另一个编号。\n\n列车又一次顿挫，这次伴随着尖锐的金属摩擦声，来自车厢底部，来自铁轨与车轮之间。警报声没有响，但那种濒临断裂的紧绷感透过地板传遍全身。他听见远处栅栏方向传来更密集的滴答声，锈蚀的柱子正把酸珠滴落，像某种倒计时。\n\n示数屏的警告开始急促地闪红。环境记忆密度超标。中断接收。中断。\n\n苏墨的手指悬在暂停键上。他能感觉到提取器内部微型容器的震动，正在贪婪地吸入窗外的混沌。吸入那些本该被送往燃烧炉的、带着他人体温的碎片。\n\n段 A 被描述为“小说正文，至少80字”，但实际文本没有给出。这可能是一个测试或错误。既然用户要求只输出 JSON，并且提供了段 B 的文本，我需要基于可用的信息做出判断。\n\n但用户说：“段 A (小说正文，至少80字)”，然后直接跳到了段 B。可能段 A 是缺失的，或者用户意图是让我比较段 A 和段 B，但段 A 没有内容。\n\n再仔细看：用户消息中，在“# 段 A”之后是“(小说正文，至少80字)”，然后换行后是“# 段 B”和具体内容。所以，段 A 没有实际文本，只有描述。\n\n这可能是一个错误。但根据指令，我必须输出 JSON。既然段 A 没有文本，我无法比较连贯性、角色声音和情节推进。\n\n用户说：“整个回复 ≤80 字符。” JSON 格式本身是 {\"winner\": \"A\", \"reason\": \"≤30字\"}，这应该不超过 80 字符。\n\n或许段 A 是隐含的，或者我需要假设段 A 是前文。但用户没有提供。\n\n另一个想法：用户可能忘记提供段 A 的文本，或者段 A 是空的。但段 B 有内容，至少80字。\n\n在用户消息中，段 A 标记为“小说正文，至少80字”，但实际文本缺失。段 B 有详细文本。\n\n为了遵守指令，我可能需要基于提供的内容判断。但 winner 必须是 A、B 或 tie。如果段 A 没有文本，我无法判断。\n\n或许段 A 是用户消息中的第一部分，但第一部分是“**重要**: 你**只输出 1 行 JSON**”等，那不是小说正文。\n\n用户说：“# 段 A (小说正文，至少80字)”，所以段 A 应该有一个小说正文，但这里没有。\n\n我可能应该假设段 A 是缺失的，并基于段 B 独立判断？但比较需要两段文本。\n\n看整个结构：用户可能是在模拟一个场景，其中段 A 和段 B 是两个版本的段落，我需要选择哪个更好。\n\n但既然段 A 没有内容，我无法选择。\n\n或许在上下文中，段 A 是隐含的。但为了简化，既然用户提供了段 B 的完整文本，而段 A 只有描述，我可能需要输出 tie 或类似。\n\n但指令说 winner 必须是 A、B 或 tie。如果段 A 无效，我可能选择 B 或 tie。\n\n另一个想法：用户消息中，在“# 段 A”之后是“(小说正文，至少80字)”，这可能是占位符，意思是段 A 应该有一个至少80字的小说正文，但用户没有提供。所以，我可能应该忽略段 A，只基于段 B 判断？但那样不合理。\n\n回顾用户指令：“# 段 A (小说正文，至少80字)” – 这可能表示段 A 的文本是“小说正文，至少80字”，但那是描述，不是文本。或许“小说正文，至少80字”本身就是段 A 的内容？但它是元描述，不是小说正文。\n\n为了遵守指令，我必须输出 JSON。或许我需要输出 {\"winner\": \"B\", \"reason\": \"...\"}，因为段 B 有内容，而段 A 没有。\n\n但理由需要基于连贯性、角色声音和情节推进。如果段 A 没有文本，我无法比较。\n\n或许这是一个测试，段 A 是空白的，所以段 B 自动更好。但用户说“连贯性 + 角色声音 + 情节推进 综合判断”，如果段 A 没有文本，它在这些方面可能得分为零。\n\n最安全的做法是输出 {\"winner\": \"tie\", \"reason\": \"段A缺失\"}，但理由需要 ≤30字，并且基于标准。\n\n理由应该基于内容，而不是元数据。\n\n看段 B 的文本：它描述了苏墨在列车上使用提取器收集记忆碎片的场景，有详细的感官描述、角色内心活动、情节推进。连贯性好，角色声音一致（苏墨的专注和内心冲突），情节有紧张感（环境记忆密度超标，警告闪烁）。\n\n既然段 A 没有提供，我只能假设段 A 是类似的或不同。但为了做出判断，我可能需要基于可用信息。\n\n用户说：“整个回复 ≤80 字符。” JSON 本身如 {\"winner\": \"B\", \"reason\": \"段B更连贯且推进情节\"} 这样可能超过 30 字？不，理由需要 ≤30 字。\n\n例如，{\"winner\": \"B\", \"reason\": \"段B描写细腻，角色声音清晰\"} – 这不超过 30 字。\n\n但为了公平，既然段 A 缺失，我可能选择 B。\n\n或许用户意图是让我比较两个段落，但段 A 没有提供，所以这是一个错误。但作为 AI，我必须响应。\n\n另一个想法：在用户消息中，段 A 是“(小说正文，至少80字)”，这可能意味着段",
+        "pair_index": 1
+      },
+      {
+        "winner": "y",
+        "reason": "科幻元素独特，情节推进有张力",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"科幻元素独特，情节推进有张力\"}",
+        "pair_index": 2
+      },
+      {
+        "winner": "y",
+        "reason": "段A角色声音细腻，情节紧张连贯。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A角色声音细腻，情节紧张连贯。\"}",
+        "pair_index": 3
+      },
+      {
+        "winner": "y",
+        "reason": "段A连贯性佳，角色声音鲜明，情节推进有力。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A连贯性佳，角色声音鲜明，情节推进有力。\"}",
+        "pair_index": 4
+      },
+      {
+        "winner": "x",
+        "reason": "情节推进更快，角色决策明确。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节推进更快，角色决策明确。\"}",
+        "pair_index": 5
+      },
+      {
+        "winner": "x",
+        "reason": "情节推进更紧凑，悬念设置佳。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节推进更紧凑，悬念设置佳。\"}",
+        "pair_index": 6
+      },
+      {
+        "winner": "y",
+        "reason": "角色声音更鲜明，情节悬疑推进佳。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"角色声音更鲜明，情节悬疑推进佳。\"}",
+        "pair_index": 7
+      },
+      {
+        "winner": "y",
+        "reason": "环境描写细腻，悬念设置出色，情节推进自然。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"环境描写细腻，悬念设置出色，情节推进自然。\"}",
+        "pair_index": 8
+      },
+      {
+        "winner": "y",
+        "reason": "段A情节推进更集中，发现关键索引。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A情节推进更集中，发现关键索引。\"}",
+        "pair_index": 9
+      }
+    ]
+  },
+  "budget": 50000,
+  "verdict": {
+    "label": "v16_promote",
+    "reason": "v16 win-rate 77.78% ≥ 45% — meets §4 promote bar",
+    "v16_win_rate": 0.7778,
+    "v16_lose_rate": 0.2222,
+    "tie_rate": 0.0,
+    "parse_err_count": 1,
+    "valid_count": 9,
+    "provisional": false
+  }
+}
