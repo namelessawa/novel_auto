@@ -395,6 +395,15 @@ class Orchestrator:
         events_generated_ids.extend(e.id for e in natural_events)
 
         # 阶段 2: 事件注入 ------------------------------------------------
+        # iter#151 Phase 4-E review HIGH-2 fix: tick_down_sidelines 在
+        # Showrunner.assess 前调用, 让本 tick set 的 sideline 不会立刻被
+        # decrement (语义: TTL=10 意味着完整 10 tick 沉默, 而非 9).
+        recovered = self._tick_state.tick_down_sidelines()
+        if recovered:
+            logger.info(
+                "Sideline TTL expired at tick %d, recovered: %s", tick, recovered
+            )
+
         injected_events: list[Event] = []
         # v2.18 Phase 8 — EventInjector 可携带 StatePatch 立即生效, 阶段 5d 应用
         injector_state_patches: list[StatePatch] = []
@@ -516,13 +525,10 @@ class Orchestrator:
         )
 
         # 阶段 3: 角色决策 ------------------------------------------------
-        # iter#139 Phase 4-E — tick down sidelines 先, 让本 tick 该恢复的
-        # 角色立刻可参与决策. 然后 affected_ids 过滤掉仍 sideline 中.
-        recovered = self._tick_state.tick_down_sidelines()
-        if recovered:
-            logger.info(
-                "Sideline TTL expired at tick %d, recovered: %s", tick, recovered
-            )
+        # iter#139 Phase 4-E + iter#151 review HIGH-2: tick_down_sidelines
+        # 已移到 Showrunner 前 (phase 2 起点), 确保 sideline TTL 语义 (默认 10
+        # tick 后自动恢复) 与本 tick 行为一致 — 本 tick 新 sideline 不再立刻
+        # 被 decremented 一次. 此处仅过滤当前 sideline 状态.
         affected_ids = self._collect_affected_characters(all_events)
         actions: list[CharacterAction] = []
         if affected_ids:

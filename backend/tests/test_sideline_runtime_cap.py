@@ -188,6 +188,43 @@ def test_load_old_state_without_sidelines_field(tmp_path):
     assert ts2.list_sidelined_characters() == {}
 
 
+def test_load_state_with_malformed_list_payload_does_not_crash(tmp_path):
+    """iter#151 review HIGH-1: 恶意/损坏 state 写 list 而非 dict
+    → load 视作 {} 而非 AttributeError."""
+    ts = _bootstrap_ts(tmp_path)
+    ts.save()
+    import json
+    state_file = tmp_path / "tick_state.json"
+    payload = json.loads(state_file.read_text(encoding="utf-8"))
+    payload["sidelined_characters"] = ["char_a", "char_b"]  # list, 错
+    state_file.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    ts2 = TickState(data_dir=str(tmp_path))
+    ts2.load()  # 不应 raise
+    assert ts2.list_sidelined_characters() == {}
+
+
+def test_release_sideline_force_unsidelines(tmp_path):
+    """iter#151 review HIGH-3: release_sideline 立刻强制解除, 不等 TTL."""
+    ts = _bootstrap_ts(tmp_path)
+    ts.sideline_character("char_a", ttl=10)
+    assert ts.is_character_sidelined("char_a")
+
+    released = ts.release_sideline("char_a")
+    assert released is True
+    assert not ts.is_character_sidelined("char_a")
+    assert "char_a" not in ts.list_sidelined_characters()
+
+
+def test_release_sideline_returns_false_for_unsidelined(tmp_path):
+    """release 一个未 sideline 的 char → 返 False, 不 raise."""
+    ts = _bootstrap_ts(tmp_path)
+    released = ts.release_sideline("char_a")
+    assert released is False
+    released = ts.release_sideline("char_NONEXISTENT")
+    assert released is False
+
+
 # --- Orchestrator wire end-to-end ------------------------------------------
 
 
@@ -245,10 +282,9 @@ def test_orchestrator_wire_sidelines_actually_skip_batch_decide(tmp_path, mock_l
     # char_a 应被 sideline (ttl 默认 10)
     assert ts.is_character_sidelined("char_a")
     sidelines = ts.list_sidelined_characters()
-    # 5 tick 跑过 → sideline 是 tick 5 设定, 之后 tick 5 也算 1 次 tick_down?
-    # 实际: orchestrator 在 phase 3 起调 tick_down, 而 sideline 在同 tick 阶段 2 设
-    # → 同 tick 内 sideline 立刻被 tick_down 减 1 (TTL 10 - 1 = 9)
-    assert sidelines["char_a"] == ts.SIDELINE_DEFAULT_TTL - 1
+    # iter#151 review HIGH-2: tick_down 移到 Showrunner 前 (phase 2 起点), 本
+    # tick 新 sideline 不再立刻被 decrement → SIDELINE_DEFAULT_TTL intact.
+    assert sidelines["char_a"] == ts.SIDELINE_DEFAULT_TTL
 
 
 def test_orchestrator_unknown_sideline_id_logs_warning(tmp_path, mock_llm, caplog):

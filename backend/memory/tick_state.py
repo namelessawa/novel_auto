@@ -327,6 +327,14 @@ class TickState:
     def is_character_sidelined(self, character_id: str) -> bool:
         return self._sidelined_characters.get(character_id, 0) > 0
 
+    def release_sideline(self, character_id: str) -> bool:
+        """iter#151 review HIGH-3: 强制立刻解除一个 sideline (escape hatch).
+        sideline_character 用 max(existing, ttl) 防 silent 缩短, 但若 LLM 误判
+        + 后续 EventInjector 真触及该 char, 需要立刻让其参与决策.
+        返回 True 表示真有 sideline 被解除, False 表示该 char 当前未 sideline.
+        """
+        return self._sidelined_characters.pop(character_id, None) is not None
+
     def list_sidelined_characters(self) -> dict[str, int]:
         """返回当前 sideline 字段 (char_id → ticks_remaining) 的 shallow copy."""
         return dict(self._sidelined_characters)
@@ -592,8 +600,12 @@ class TickState:
             }
             # Phase 2 Stage 3 (iter#91) — 老 state file 没此字段, 视作 0.
             self._loops_closed_total = int(payload.get("loops_closed_total", 0) or 0)
-            # iter#139 Phase 4-E — sideline TTL map (老 state file 没字段 → {}).
+            # iter#139 Phase 4-E + iter#151 review HIGH-1: 防御 list/wrong
+            # type payload (e.g. ["char_a"] 是 list, .items() 会抛
+            # AttributeError). 非 dict 视作 {}.
             raw_sidelines = payload.get("sidelined_characters", {}) or {}
+            if not isinstance(raw_sidelines, dict):
+                raw_sidelines = {}
             self._sidelined_characters = {
                 str(k): int(v)
                 for k, v in raw_sidelines.items()

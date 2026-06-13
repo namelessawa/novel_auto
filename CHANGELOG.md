@@ -5,6 +5,39 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#151: cycle 18 review fixes (Phase 4-E hardening)
+
+Per Goal #7. python-reviewer cycle 18 报 3 HIGH + 2 MEDIUM, 全修.
+
+[HIGH-1] load 非 dict payload AttributeError:
+- `payload.get("sidelined_characters", {}) or {}` 只 catch falsy values
+- 若 state file 写 `["char_a"]` (truthy list), `.items()` 抛
+- 修: `if not isinstance(raw_sidelines, dict): raw_sidelines = {}` 守卫
+
+[HIGH-2] same-tick TTL 立刻 decrement 与 docstring 不符:
+- 之前: sideline 在 phase 2 设, tick_down 在 phase 3 起 → 同 tick TTL=10→9
+- docstring 说 "默认 10 tick 自动恢复" 与实际差 1
+- 修: tick_down 移到 phase 2 起点 (Showrunner 之前), 同 tick 新 sideline
+  保留完整 TTL
+- 测试 assertion: `SIDELINE_DEFAULT_TTL - 1` → `SIDELINE_DEFAULT_TTL`
+
+[HIGH-3] 无 release escape hatch:
+- `max(existing, ttl)` 防 silent 缩短, 但无路径强制立刻解除
+- 加 `release_sideline(character_id) -> bool`
+- 未来 EventInjector 直接触及 sidelined char 时可调
+
+[MEDIUM-1] SYSTEM_PROMPT `arc_progress > 0` guard 在 cold start 失效:
+- 开局 arc 全 0, "最低但 > 0" 无解, LLM 沉默 → 这就是 iter#148 seed3 延迟
+  触发的原因
+- 修: 去 ">0", 加 fallback "若全 0 挑字典末" (避免主角)
+
+[MEDIUM-2] missing test for malformed list payload:
+- 加 `test_load_state_with_malformed_list_payload_does_not_crash`
+
+测试: 16 → 19 (+3 new: list payload defensive + release_sideline x2)
+cost delta: 0 (review fix)
+quality delta: 0 (review fix), prompt 更易触发 sideline (seed3 case 修)
+
 ## [2.43] — 2026-06-13 — iter#150: Phase 4-E production landing docs sync
 
 `README.md` + `docs/iter/PHASE4_PLAN.md`:

@@ -85,17 +85,18 @@ propose_meeting, time_jump, generation_shift, macro_reset}, urgency ∈
 把暂时不在核心冲突中的角色 sideline (orchestrator 跳过其 LLM 决策一段
 tick, 保留 profile/state). 区别于角色删除 — 仅 LLM 静默, 后续可恢复.
 
-# 强制触发档 (iter#141)
+# 强制触发档 (iter#141 + iter#151 review MEDIUM 修)
 
 按 `character_arcs` (字典) 数量分档:
 * **≥ 4 个角色** — **必须** sideline 1 个最不活跃的 (避免 character_agent
-  token 大幅累积). 看 arc_progress 最低 (但 > 0) 的 1 个.
+  token 大幅累积). 看 arc_progress 最低的 1 个; 若所有 arc 全 = 0 (开局
+  阶段), 挑字典里**最后一个** (最不可能是主角的位置).
 * **3 个角色** — 可选; arc 全部 ≥ 0.3 且至少 1 个 < 0.5 时 sideline 该角色.
 * **≤ 2 个角色** — 留空 (cast 已最简, 别 sideline).
 
 # 挑选准则 (从高到低)
 
-1. **arc_progress 最低** (但 > 0) — 角色推进最慢, 暂时让其退场
+1. **arc_progress 最低** — 角色推进最慢, 暂时让其退场. 全 0 时挑字典末
 2. **arc_progress 长期停滞** — 连续 ≥ 20 tick 该角色 arc_progress 无变化
    且当下没有相关 open_loop
 3. **角色与近期主线脱节** — 角色 arc 与近期 recent_chapters 主题距离远
