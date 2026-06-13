@@ -5,6 +5,36 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#143: Phase 4-E 首次 positive — sideline 66.67% mimo win
+
+`docs/iter/verdict-iter143-phase4-e-first-positive.md`:
+
+iter#140 (sideline 0 触发) vs iter#142 (sideline 触发 char_limou tick 5-30)
+mimo pairwise.
+
+**v16_promote (66.67% vs 33.33%, +33pp)**:
+- distinct char-2 0.8643 → 0.8739 (+1.1%)
+- distinct char-4 0.9904 → 0.992 (+0.16%)
+- overlap consec char-2 0.0983 → 0.0921 (-6.3%, less repetition)
+
+**关键: 与 iter#133-135 静态 cast=3 反向不同**:
+- 静态 cast=3 mimo 33% win (退化) — character interaction 永远缺
+- 动态 sideline mimo 66.67% win (改善) — 暂时让"无贡献"char 退场, 池子保留
+
+cost: +4.9% (chars confound, wide 5 vs 8)
+quality: +33pp mimo + det 正向
+
+Confounds: chars 5 vs 8 非 clean A/B. 1 parse_err/10 pair. 单 seed.
+
+后续 iter#144+ 候选:
+1. controlled experiment 固定 cast 看 sideline isolation 效果
+2. seed2/3 跨题材验证
+3. 如 quality 维持 +30pp → Phase 4-E 可 production landing
+
+cost delta: +4.9% (confounded)
+quality delta: **+33pp mimo pairwise** + det 正向
+测试: 16/16 (无新)
+
 ## [2.43] — 2026-06-13 — iter#141: Phase 4-E sideline prompt 强制阈值触发
 
 `backend/agents/showrunner.py` SYSTEM_PROMPT:

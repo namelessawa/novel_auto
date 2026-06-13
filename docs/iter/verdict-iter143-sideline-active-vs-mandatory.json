@@ -1,0 +1,256 @@
+{
+  "label": "iter143-sideline-active-vs-mandatory",
+  "v15": {
+    "source": "docs/iter/bench-iter140-seed1-sideline-active.json",
+    "narrative_count": 41,
+    "det": {
+      "repetition": {
+        "narration_count": 41,
+        "distinct": {
+          "char_2": 0.8643,
+          "char_3": 0.9674,
+          "char_4": 0.9904,
+          "word_2": 0.9753,
+          "word_3": 0.9756,
+          "word_4": 0.9756
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0983,
+          "char_3": 0.0315,
+          "char_4": 0.0125,
+          "word_2": 0.0006,
+          "word_3": 0.0,
+          "word_4": 0.0
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 41,
+        "skipped_records": 0,
+        "evaluated_count": 41,
+        "tier_hit_count": 30,
+        "tier_off_count": 11,
+        "tier_hit_rate": 0.7317,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 3,
+            "off": 5
+          },
+          "medium": {
+            "hit": 25,
+            "off": 3
+          },
+          "short": {
+            "hit": 2,
+            "off": 3
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-iter142-seed1-sideline-mandatory-r.json",
+    "narrative_count": 41,
+    "det": {
+      "repetition": {
+        "narration_count": 41,
+        "distinct": {
+          "char_2": 0.8739,
+          "char_3": 0.9706,
+          "char_4": 0.992,
+          "word_2": 0.9487,
+          "word_3": 0.9512,
+          "word_4": 0.9512
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0921,
+          "char_3": 0.0311,
+          "char_4": 0.013,
+          "word_2": 0.0029,
+          "word_3": 0.0013,
+          "word_4": 0.0003
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 41,
+        "skipped_records": 0,
+        "evaluated_count": 41,
+        "tier_hit_count": 28,
+        "tier_off_count": 13,
+        "tier_hit_rate": 0.6829,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 2,
+            "off": 4
+          },
+          "medium": {
+            "hit": 23,
+            "off": 2
+          },
+          "short": {
+            "hit": 3,
+            "off": 7
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 41,
+    "judge_call_count": 10,
+    "tokens_used_estimate": 50000,
+    "elapsed_sec": 300.83,
+    "v15_win": 3,
+    "v16_win": 6,
+    "tie": 0,
+    "parse_err": 1,
+    "results": [
+      {
+        "winner": "y",
+        "reason": "段A连贯生动，角色鲜明，情节推进强。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A连贯生动，角色鲜明，情节推进强。\"}",
+        "pair_index": 0
+      },
+      {
+        "winner": "y",
+        "reason": "情节推进深入，悬念设置强",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进深入，悬念设置强\"}",
+        "pair_index": 1
+      },
+      {
+        "winner": "x",
+        "reason": "连贯紧凑，紧张感强，角色行动果断",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"连贯紧凑，紧张感强，角色行动果断\"}",
+        "pair_index": 2
+      },
+      {
+        "winner": "x",
+        "reason": "情节紧张推进快，角色声音鲜明",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节紧张推进快，角色声音鲜明\"}",
+        "pair_index": 3
+      },
+      {
+        "winner": "y",
+        "reason": "情节紧凑，悬念递进，角色动作连贯。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节紧凑，悬念递进，角色动作连贯。\"}",
+        "pair_index": 4
+      },
+      {
+        "winner": "y",
+        "reason": "情节连贯，角色行动果断，推进迅速。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节连贯，角色行动果断，推进迅速。\"}",
+        "pair_index": 5
+      },
+      {
+        "winner": "y",
+        "reason": "连贯流畅，角色声音强，情节推进丰富。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"连贯流畅，角色声音强，情节推进丰富。\"}",
+        "pair_index": 6
+      },
+      {
+        "winner": "y",
+        "reason": "环境描写细腻，情节推进自然，时间异常引入新颖。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"环境描写细腻，情节推进自然，时间异常引入新颖。\"}",
+        "pair_index": 7
+      },
+      {
+        "winner": "parse_error",
+        "reason": "json_parse_failed",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "首先，用户的查询是作为严格的中文小说编辑，只输出JSON，不解释。整个回复必须≤80字符，且格式为{\"winner\": \"A\", \"reason\": \"≤30字\"}。winner必须是A、B或tie之一。\n\n评判标准是心里想的，不写出来：连贯性、角色声音、情节推进综合判断。长度差异不算分。\n\n段A是“小说正文”，但用户没有提供段A的具体内容。在查询中，段A是“小说正文”，但这是占位符吗？看查询：用户说“段 A\\n小说正文”，但可能这是模板，而段B是具体文本。实际上，用户提供了段B的文本，但段A是“小说正文”，没有具体内容。这可能是错误或测试。\n\n重新读查询：用户说“# 段 A\\n小说正文\\n\\n# 段 B\\n霜花边缘析出的齿轮轮廓...”，所以段A是“小说正文”，这可能是缺失内容或占位符。但作为AI，我需要基于给定的信息处理。\n\n用户可能忘记提供段A的内容。但根据指令，我只输出JSON，基于提供的段A和段B。\n\n段A是“小说正文”，这可能是一个标签或错误。但段B有详细文本。我需要比较段A和段B，但段A没有内容。\n\n或许“小说正文”是段A的内容？但那样的话，段A只是一个词“小说正文”，而段B是一段描述性文本。\n\n这可能是一个测试或错误。但作为严格的中文小说编辑，我必须基于给定内容。\n\n回想用户指令：“段 A\\n小说正文” – 可能“小说正文”是段A的标题或内容？不，看起来“小说正文”是段A的正文，但只有这个词。\n\n或许在上下文中，段A是缺失的。但为了完成任务，我需要假设段A是空的或只有“小说正文”这个词。\n\n但评判标准是基于连贯性、角色声音、情节推进。如果段A只有“小说正文”，那它不连贯，没有角色声音，没有情节推进。\n\n段B有详细的叙述，描述了林雪的行动、环境细节、情节推进。\n\n所以，比较段A和段B：\n\n- 段A：只是“小说正文”，可能是一个标签，没有实际内容。\n\n- 段B：是一段连贯的叙述，有角色声音（林雪），情节推进（探索蒸汽管网、发现符号、听到声响等）。\n\n因此，基于评判标准，段B明显更优。\n\nwinner应该是B。\n\nreason需要≤30字，给出理由。\n\n理由：段B连贯、角色生动、情节推进有效。\n\n现在，输出必须是1行JSON，整个回复≤80字符。\n\nJSON格式：{\"winner\": \"B\", \"reason\": \"理由\"}\n\n计算字符：{\"winner\": \"B\", \"reason\": \"段B连贯、角色声音强、情节推进好\"} – 这个reason需要≤30字。中文字符计数。\n\nreason建议：连贯性强，角色声音鲜明，情节推进自然。\n\n确保字数：在JSON中，键和值都算字符。\n\n示例：{\"winner\": \"B\", \"reason\": \"段B叙述连贯，角色鲜明，情节推进有效\"}\n\n字符数：{\"winner\": \"B\", \"reason\": \"段B叙述连贯，角色鲜明，情节推进有效\"} – 数一下：英文字符和中文字符。JSON部分固定，reason部分中文。\n\n整个字符串长度：假设reason用中文，不超过30字，整体JSON应该≤80字符。\n\n计算：{\"winner\": \"B\", \"reason\": \"段B连贯、角色声音强、情节推进好\"} – 字符数：大括号、引号、逗号等是英文，共约10个英文字符，reason中文约10字，每个中文字符算1个，总字符数约20多，远低于80。\n\n更精确：JSON结构：{\"winner\": \"B\", \"reason\": \"理由\"} – “winner”: “B” 是10字符（包括冒号和空格？在JSON中，标准格式是{\"key\": \"value\"}，没有空格也可以。\n\n在JSON中，空格可选。但为了简洁，可以用{\"winner\":\"B\",\"reason\":\"理由\"}。\n\n用户格式是{\"winner\": \"A\", \"reason\": \"≤30字\"}，有空格。\n\n所以，输出：{\"winner\": \"B\", \"reason\": \"段B叙述连贯，角色生动，情节推进自然\"}\n\n理由字数：段B叙述连贯，角色生动，情节推进自然 – 约12字，≤30。\n\n现在，确认winner：段A没有内容，所以段B赢。\n\n但用户说“段 A\\n小说正文”，可能“小说正文”是段A的内容。但“小说正文”作为一个短语，没有具体叙述，无法评判连贯性等。所以段B更优。\n\n如果段A是空或只有标签，那么tie或B。但tie需要两者都好，但段A不好，所以B。\n\n最终输出：{\"winner\": \"B\", \"reason\": \"段B连贯性强，角色声音鲜明，情节推进有效\"}\n\n确保字符数：整个JSON字符串数一下。\n\n{\"winner\": \"B\", \"reason\": \"段B连贯性强，角色声音鲜明，情节推进有效\"} – 字符：英文部分：{ \" w i n n e r \" :   \" B \" ,   \" r e a s o n \" :   \" 段 B 连 贯 性 强 ， 角 色 声 音 鲜 明 ， 情 节 推 进 有 效 \" } – 英文字符：2个引号包围winner，2个引号包围B，逗号，2个引号包围reason，2个引号包围理由字符串。具体数：{\"winner\": \"B\", \"reason\": \"段B连贯性强，角色声音鲜明，情节推进有效\"}\n\n- 字符1：{\n\n- 字符2：\"\n\n- 字符3：w\n\n- 字符4：i\n\n- 字符5：n\n\n- 字符6：n\n\n- 字符7：e\n\n- 字符8：r\n\n- 字符9：\"\n\n- 字符10：:\n\n- 字符11：空格\n\n- 字符12：\"\n\n- 字符13：B\n\n- 字符14：\"\n\n- 字符15：,\n\n- 字符16：空格\n\n- 字符17：\"\n\n- 字符18：r\n\n- 字符19：e\n\n- 字符20：a\n\n- 字符21：s\n\n- 字符22：o\n\n- 字符23：n\n\n- 字符24：\"\n\n- 字符25：:\n\n- 字符26：空格\n\n- 字符27：\"\n\n- 然后中文字符：段B连贯性强，角色声音鲜明，情节推进有效 – 假设每个中文字符算1个。\n\n中文字符数：段B连贯性强，角色声音鲜明，情节推进有效 – 字符：段、B、连、贯、性、强、，、角、色、声、音、鲜、明、，、情、节、推、进、有、效 – 20个字符？等等，分段：\n\n- 段B：2字符\n\n- 连贯性强：4字符\n\n- ，：1字符\n\n- 角色声音鲜明：5字符\n\n- ，：1字符\n\n- 情节推进有效：5字符\n\n总中文字符：2+4+1+5+1+5 = 18字符\n\n加上英文部分：从字符1到字符27，有27个英文字符？不，在JSON字符串中，字符是连续的。\n\n整个字符串：{\"winner\": \"B\", \"reason\": \"段B连贯性强，角色声音鲜明，情节推进有效\"}\n\n英文字符：{, \", w, i, n, n, e, r, \", :, 空格, \", B, \", ,, 空格, \", r, e, a, s, o, n, \", :, 空格, \", – 共25个英文字符？我们来列表：\n\n索引1: {\n\n索引2: \"\n\n索引3: w\n\n索引4: i\n\n索引5: n\n\n索引6: n\n\n索引7: e\n\n索引8: r\n\n索引9: \"\n\n索引10: :\n\n索引11: 空格\n\n索引12: \"\n\n索引13: B\n\n索引14: \"\n\n索引15: ,\n\n索引16: 空格\n\n索引17: \"\n\n索引18: r\n\n索引19: e\n\n索引20: a\n\n索引21: s\n\n索引22: o\n\n索引23: n\n\n索引24: \"\n\n索引25: :\n\n索引26: 空格\n\n索引27: \"\n\n然后中文字符开始：索引28: 段, 29: B, 30: 连, 31: 贯, 32: 性, 33: 强, 34: ，, 35: 角, 3",
+        "pair_index": 8
+      },
+      {
+        "winner": "x",
+        "reason": "段A连贯生动，段B无有效内容",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A连贯生动，段B无有效内容\"}",
+        "pair_index": 9
+      }
+    ]
+  },
+  "budget": 50000,
+  "verdict": {
+    "label": "v16_promote",
+    "reason": "v16 win-rate 66.67% ≥ 45% — meets §4 promote bar",
+    "v16_win_rate": 0.6667,
+    "v16_lose_rate": 0.3333,
+    "tie_rate": 0.0,
+    "parse_err_count": 1,
+    "valid_count": 9,
+    "provisional": false
+  }
+}
