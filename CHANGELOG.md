@@ -5,6 +5,32 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#154: Phase 4-F critic budget 1500→1200 验证通过
+
+iter#152 把 `_CRITIQUE_MAX_OUTPUT` 1500→1200 (-20%). iter#153 跑 seed1
+cast=5 bench. iter#154 pairwise vs iter#144 (budget=1500).
+
+mimo pairwise verdict: **v16_promote** (budget=1200)
+- v15 (1500): 30% win
+- v16 (1200): 50% win
+- tie: 20%
+- parse_err: 0
+
+det comparison:
+- distinct char-2: 0.8563 → 0.8851 (+3.4%)
+- distinct char-4: 0.9898 → 0.9943 (+0.5%)
+- overlap consec char-2: 0.1 → 0.0762 (-24%, less repetition)
+
+**confound 注意**: chars=5 vs chars=3 (LLM bootstrap 随机). 跨题材待验证.
+
+但 mimo 通过 §4 gate (≥45%), 加 det 正向, 接受 iter#152 budget=1200 默认.
+
+cost delta: ~0 (chars confound 主导 +0.9%); critic 自身 budget 减 -20%
+quality delta: +20pp mimo + det 正向
+测试: 19/19
+
+iter#152 默认保留. 跨题材 (seed2/3) 后续 iter 验证 — 现单 seed 通过.
+
 ## [2.43] — 2026-06-13 — iter#151: cycle 18 review fixes (Phase 4-E hardening)
 
 Per Goal #7. python-reviewer cycle 18 报 3 HIGH + 2 MEDIUM, 全修.

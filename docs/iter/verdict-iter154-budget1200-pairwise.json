@@ -1,0 +1,256 @@
+{
+  "label": "iter154-budget1200-pairwise",
+  "v15": {
+    "source": "docs/iter/bench-iter144-seed1-cast221-sideline.json",
+    "narrative_count": 46,
+    "det": {
+      "repetition": {
+        "narration_count": 46,
+        "distinct": {
+          "char_2": 0.8563,
+          "char_3": 0.9636,
+          "char_4": 0.9898,
+          "word_2": 0.999,
+          "word_3": 0.9999,
+          "word_4": 1.0
+        },
+        "overlap_consecutive": {
+          "char_2": 0.1,
+          "char_3": 0.0328,
+          "char_4": 0.0126,
+          "word_2": 0.0009,
+          "word_3": 0.0006,
+          "word_4": 0.0002
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 46,
+        "skipped_records": 0,
+        "evaluated_count": 46,
+        "tier_hit_count": 37,
+        "tier_off_count": 9,
+        "tier_hit_rate": 0.8043,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 7,
+            "off": 5
+          },
+          "medium": {
+            "hit": 19,
+            "off": 2
+          },
+          "short": {
+            "hit": 11,
+            "off": 2
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "v16": {
+    "source": "docs/iter/bench-iter153-seed1-cast221-budget1200.json",
+    "narrative_count": 43,
+    "det": {
+      "repetition": {
+        "narration_count": 43,
+        "distinct": {
+          "char_2": 0.8851,
+          "char_3": 0.9755,
+          "char_4": 0.9943,
+          "word_2": 0.9523,
+          "word_3": 0.9302,
+          "word_4": 0.9302
+        },
+        "overlap_consecutive": {
+          "char_2": 0.0762,
+          "char_3": 0.0234,
+          "char_4": 0.0088,
+          "word_2": 0.0006,
+          "word_3": 0.0003,
+          "word_4": 0.0001
+        },
+        "notes": []
+      },
+      "compliance": {
+        "total_records": 43,
+        "skipped_records": 0,
+        "evaluated_count": 43,
+        "tier_hit_count": 30,
+        "tier_off_count": 13,
+        "tier_hit_rate": 0.6977,
+        "schema_violation_count": 0,
+        "schema_violation_rate": 0.0,
+        "reasoning_leak_count": 0,
+        "reasoning_leak_rate": 0.0,
+        "placeholder_leak_count": 0,
+        "placeholder_leak_rate": 0.0,
+        "per_tier": {
+          "long": {
+            "hit": 2,
+            "off": 4
+          },
+          "medium": {
+            "hit": 24,
+            "off": 3
+          },
+          "short": {
+            "hit": 4,
+            "off": 6
+          }
+        },
+        "notes": []
+      }
+    }
+  },
+  "pairwise": {
+    "pair_count": 43,
+    "judge_call_count": 10,
+    "tokens_used_estimate": 50000,
+    "elapsed_sec": 150.75,
+    "v15_win": 3,
+    "v16_win": 5,
+    "tie": 2,
+    "parse_err": 0,
+    "results": [
+      {
+        "winner": "tie",
+        "reason": "两者连贯、角色鲜明、情节推进自然。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"tie\", \"reason\": \"两者连贯、角色鲜明、情节推进自然。\"}",
+        "pair_index": 0
+      },
+      {
+        "winner": "y",
+        "reason": "情节推进更紧迫，角色声音突出",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更紧迫，角色声音突出\"}",
+        "pair_index": 1
+      },
+      {
+        "winner": "y",
+        "reason": "段B情节紧凑，动作感强，推进更快。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"段B情节紧凑，动作感强，推进更快。\"}",
+        "pair_index": 2
+      },
+      {
+        "winner": "y",
+        "reason": "动作连贯，情节推进强，角色紧张感突出。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"动作连贯，情节推进强，角色紧张感突出。\"}",
+        "pair_index": 3
+      },
+      {
+        "winner": "x",
+        "reason": "段A氛围营造更好，角色内心描写细腻，情节推进连贯。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"段A氛围营造更好，角色内心描写细腻，情节推进连贯。\"}",
+        "pair_index": 4
+      },
+      {
+        "winner": "y",
+        "reason": "A情节紧凑，紧张感强，推进迅速。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": true,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"A情节紧凑，紧张感强，推进迅速。\"}",
+        "pair_index": 5
+      },
+      {
+        "winner": "x",
+        "reason": "情节更紧凑，悬念强，连贯性好",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节更紧凑，悬念强，连贯性好\"}",
+        "pair_index": 6
+      },
+      {
+        "winner": "y",
+        "reason": "情节推进更紧凑，角色互动更深入。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"B\", \"reason\": \"情节推进更紧凑，角色互动更深入。\"}",
+        "pair_index": 7
+      },
+      {
+        "winner": "x",
+        "reason": "情节推进紧凑，角色行动果断。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"A\", \"reason\": \"情节推进紧凑，角色行动果断。\"}",
+        "pair_index": 8
+      },
+      {
+        "winner": "tie",
+        "reason": "两者在连贯性、角色声音和情节推进上均表现优异。",
+        "meta": {
+          "model": "mimo-v2.5-pro",
+          "prompt_version": "pairwise_v2",
+          "swap_applied": false,
+          "extra": {}
+        },
+        "raw_response": "{\"winner\": \"tie\", \"reason\": \"两者在连贯性、角色声音和情节推进上均表现优异。\"}",
+        "pair_index": 9
+      }
+    ]
+  },
+  "budget": 50000,
+  "verdict": {
+    "label": "v16_promote",
+    "reason": "v16 win-rate 50.00% ≥ 45% — meets §4 promote bar",
+    "v16_win_rate": 0.5,
+    "v16_lose_rate": 0.3,
+    "tie_rate": 0.2,
+    "parse_err_count": 0,
+    "valid_count": 10,
+    "provisional": false
+  }
+}
