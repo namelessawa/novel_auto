@@ -5,6 +5,29 @@
 
 ---
 
+## [2.43] — 2026-06-13 — iter#150: Phase 4-E production landing docs sync
+
+`README.md` + `docs/iter/PHASE4_PLAN.md`:
+
+iter#149 完成 3-seed pairwise 验证 → Phase 4-E production landed (default ON).
+同步 README 与 PHASE4_PLAN 反映:
+
+PHASE4_PLAN.md:
+- header 标 "E landed, F/G/D pending"
+- 候选 E section 标 ✅ LANDED, 加完整 iter trail
+- 推荐排序: F → G → D (E 已完成)
+- Key insight 强调 "灵活调度" vs "少 char" 区别
+
+README.md:
+- 加 v2.43 Phase 4-E runtime sideline 段
+- 强调 default ON, 自动机制
+- 跨 3-seed 验证数据
+- 与 Phase 3-B cast-confound 互补关系
+
+cost delta: 0 (docs sync)
+quality delta: 0 (docs sync)
+测试: 16/16
+
 ## [2.43] — 2026-06-13 — iter#149: Phase 4-E 3-seed FINAL — 跨题材 promote ×3, 可 production landing
 
 `docs/iter/verdict-iter149-phase4e-3seed-final-promote.md`:

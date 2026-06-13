@@ -501,6 +501,19 @@ python -m backend.bootstrap_prompts ... \
 三个 cast args 必须 all-or-nothing (部分设拒绝, 防 silent default 混入).
 trade-off: cast=3 节省 token 但 mimo pairwise -30pp.
 
+**v2.43 Phase 4-E runtime sideline** (iter#139-149, default ON, 自动):
+
+Showrunner 每 5 tick 评估并可推荐暂时 sideline 1-2 个不在核心冲突的角色 —
+跳过他们的 character_agent LLM 决策一段 tick (默认 10), TTL 到期自动恢复.
+跨 3-seed × 50-tick × cast=5 实测:
+- mimo pairwise 平均 **69.3% v16 (sideline) vs 30.7% v15 (无 sideline)**
+- 跨题材 all v16_promote, drift 0
+- cost 中性 (+1.2% avg, σ ~4.5% 噪声内)
+
+机制独立于 cast count 配置, 与 Phase 3-B opt-in 路径**并存且互补**:
+- cast wide (default) + sideline 自动: 优 production 默认
+- cast=3 opt-in + sideline 自动: cost-first 场景, 仍享 sideline 改善
+
 bootstrap 完成后:
 
 ```bash
