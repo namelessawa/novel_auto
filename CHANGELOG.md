@@ -5,6 +5,33 @@
 
 ---
 
+## [2.43] — 2026-06-14 — iter#158: Phase 4 FINAL 综合 verdict (E LANDED, F revert, G/D 跳过)
+
+`docs/iter/PHASE4_FINAL.md`:
+
+Phase 4 (iter#139-157) 综合 closure:
+- **E LANDED 大胜** (#139-151): sideline default ON, +69.3% mimo, cost 中性
+- F 尝试 revert (#152-157): budget 1200 cross-seed 边缘 → revert 1500
+- G 不动: compressor 6144 已是 iter#15 review 调过的范围, 无 slack
+- D 跳过: 200 tick × 2M tokens 与 cost goal 冲突, 留 phase 5
+
+Phase 4 教训 (cross-Phase):
+1. det 不够测 prose dynamics → mimo 是 ground truth
+2. 配置-level 改动也需 mimo gate
+3. 单 seed 50% borderline = noise, **决策应基于 cross-seed ≥60%**
+4. **架构改动 (E) > 配置改动 (F)**: 新机制赢, budget 压难赢
+
+累积 (revised):
+- Phase 1 (#3-72): -77% tokens (主导 cost 优化)
+- Phase 2 (#76-112): close-loop fix + 73.3% pairwise (架构 gap 修)
+- Phase 3-B (#119-136): CLI opt-in (default 不变)
+- **Phase 4-E (#139-151): 动态 sideline default ON, mimo 跨题材 decisive 改善**
+- Phase 4-F (#152-157): budget 教训 (revert)
+
+cost delta: 0 (Phase 4-E sideline 中性, Phase 4-F 已 revert)
+quality delta: **Phase 4-E +38.6pp mimo pairwise (30.7% → 69.3%)**
+测试: 19/19 cast + 19 sideline + 历史 PASS
+
 ## [2.43] — 2026-06-14 — iter#157: REVERT iter#152 budget 1200 — cross-seed borderline 退化
 
 iter#155 跑 seed2 cast=5 budget=1200, iter#156 pairwise vs iter#146
