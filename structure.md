@@ -19,9 +19,7 @@ novel_auto/
 ├── tools/                    # 辅助 CLI / 一次性脚本
 ├── results/                  # 生成结果留档目录
 ├── temp/                     # 临时文件
-├── infinite-novel-multiagent-prompts.md   # 9-agent 架构设计源
-├── infinite_novel_iteration_prompt.md     # 自我迭代 Prompt v1
-├── novel_quality_critique_and_iteration.md  # 质量评估 & 迭代规范 v1.1
+├── docs/design/              # 9-agent 设计源 + 迭代方法论 + AGENTS.md
 ├── CHANGELOG.md
 ├── CLAUDE.md                 # Claude Code 项目指令
 ├── README.md
@@ -30,9 +28,7 @@ novel_auto/
 ├── config.example.json
 ├── requirements.txt          # 运行时依赖
 ├── requirements-dev.txt      # 测试依赖
-├── run.py                    # 后端入口 (uvicorn backend.main:app)
-├── start.bat / start.sh      # 一键启动前后端
-└── bash.exe.stackdump        # (无关, MSYS 临时)
+└── run.py                    # 后端入口 (uvicorn backend.main:app)
 ```
 
 ---

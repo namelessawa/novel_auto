@@ -14,7 +14,7 @@
 > v2.37 重写叙事质量架构 (台词管道 / 前文衔接 / 角色名片 / 正向写作方法论)
 > + 全项目 4 路 code review 修复 + 前端「墨砚」设计系统。
 >
-> 设计哲学来自 [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
+> 设计哲学来自 [`docs/design/infinite-novel-multiagent-prompts.md`](./docs/design/infinite-novel-multiagent-prompts.md):
 > **故事是模拟的副产品, Narrator 选择性讲述**。
 
 > v1.x 章节驱动单体生成器已整体归档到 [`old/`](./old/),
@@ -443,17 +443,7 @@ DEEPSEEK_MODEL=deepseek-chat
 
 (也可写到 `config.json` 兜底,但 `.env` 优先。)
 
-### 3. 一键启动前后端
-
-```bash
-# Windows
-start.bat
-
-# macOS / Linux
-./start.sh
-```
-
-或分别启动:
+### 3. 启动前后端 (分别开两个终端)
 
 ```bash
 # 后端 (FastAPI, http://127.0.0.1:8762)
@@ -666,9 +656,8 @@ novel_auto/
 ├── config.json                       ← memory/vector/server/auth/smtp 配置 + LLM 兜底
 ├── config.example.json
 ├── run.py                            ← 根级启动入口 (uvicorn backend.main:app)
-├── start.bat / start.sh              ← 一键启动后端 + 前端
 ├── requirements.txt / requirements-dev.txt
-├── infinite-novel-multiagent-prompts.md ← 9 agent 设计 prompt 集
+├── docs/design/                      ← 9 agent 设计 prompt 集 + 迭代方法论
 ├── core/config.py                    ← 多 provider 路由, backend 通过 importlib 加载
 ├── memory_system/models.py           ← Pydantic v2 tick 契约
 ├── evaluation/continuity_v2.py       ← ConsistencyGuardian 复用
@@ -821,7 +810,7 @@ open_loops admin / narrative_writer nonblocking / json_utils fence helper.)
 
 ## 文档
 
-* [`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md)
+* [`docs/design/infinite-novel-multiagent-prompts.md`](./docs/design/infinite-novel-multiagent-prompts.md)
   — 9 agent 完整 prompt 集 + 设计哲学 (必读)
 * [`CHANGELOG.md`](./CHANGELOG.md) — 完整版本历史
 * [`CLAUDE.md`](./CLAUDE.md) — Claude Code 工作指南
