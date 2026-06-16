@@ -36,6 +36,19 @@ from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak as _strip_reasoning_leak
 
+# Phase 5+: style preset 由 env 控制 — bootstrap / matrix bench 在 spawn 子进程
+# 时设 NOVEL_STYLE_PRESET=<key>, narrator 在 user_prompt 头部追加预设的写作契约.
+# 未设 / 空 / unknown key 时 silent fallback 到默认行为 (= literary preset 但不
+# 显式注入, 老 bench 完全等价).
+try:
+    from novel_presets import get_style_preset, list_style_keys
+    _STYLE_PRESETS_AVAILABLE = True
+except ImportError:  # pragma: no cover — defensive 在裸 import 环境
+    _STYLE_PRESETS_AVAILABLE = False
+
+    def list_style_keys() -> list[str]:
+        return []
+
 logger = logging.getLogger(__name__)
 
 
@@ -343,7 +356,11 @@ class NarratorAgent:
             max_output_tokens = 2200
 
         # 3. 调用 LLM 写作
-        system_prompt = self._build_system_prompt(style_anchors)
+        # Phase 5-A: system_prompt 不再追加 style_anchors, 改由 user_prompt 头部
+        # 承载。这样 SYSTEM 跨 tick bit-identical, 命中 DeepSeek/ARK auto prefix
+        # cache (~5x 折扣 on input tokens). 语感锚移到 user 头部, 模型读到的
+        # 字面信息完全等价。
+        system_prompt = self._build_system_prompt()
         user_prompt = self._build_user_prompt(
             tick=tick,
             world_time=world_time,
@@ -358,6 +375,7 @@ class NarratorAgent:
             char_profiles=char_profiles or {},
             world_state=world_state,
             prose_tail=prose_tail,
+            style_anchors=style_anchors,
         )
 
         try:
@@ -494,19 +512,55 @@ class NarratorAgent:
             parts.append(f"[{e.type}] {e.description[:80]}")
         return f"tick {tick}: " + " | ".join(parts)
 
-    def _build_system_prompt(self, style_anchors: list[StyleAnchor]) -> str:
-        prompt = NARRATOR_SYSTEM_PROMPT
-        if style_anchors:
-            anchor_text = "\n\n".join(
-                f"【语感示例 - {a.scene_type}】\n{a.excerpt}"
-                for a in style_anchors[:3]
+    def _build_system_prompt(self) -> str:
+        """Phase 5-A: 纯静态 SYSTEM, 跨 tick bit-identical, 命中 prefix cache.
+
+        style_anchors 已迁到 user_prompt 头部 (见 ``_render_style_anchor_block``)。
+        """
+        return NARRATOR_SYSTEM_PROMPT
+
+    @staticmethod
+    def _render_style_anchor_block(style_anchors: list[StyleAnchor]) -> str:
+        """Phase 5-A: 把 style_anchors 渲染成 user_prompt 头部块。
+
+        与原 SYSTEM 末尾追加的字面信息完全等价 — 只改位置, 不改语义。空 list
+        时返回空字符串, caller 自行决定要不要拼。
+        """
+        if not style_anchors:
+            return ""
+        anchor_text = "\n\n".join(
+            f"【语感示例 - {a.scene_type}】\n{a.excerpt}"
+            for a in style_anchors[:3]
+        )
+        return (
+            "# 语感参考(只看句长 / 词汇密度 / 修辞密度。示例的题材、"
+            "场景、人物与本作无关, 不要模仿其内容; 本段写什么由素材简报"
+            "决定 — 动作场就写动作, 对峙场就写对峙, 不要一律写成静景)\n\n"
+            f"{anchor_text}\n\n"
+        )
+
+    @staticmethod
+    def _render_style_preset_block() -> str:
+        """Phase 5+: 从 ``NOVEL_STYLE_PRESET`` env 读取风格 preset 并渲染.
+
+        未设 / 空 / 未知 key 都安静返回空串 — 老 bench / 未升级用户完全等价.
+        位置在 user_prompt 头部, 在 style_anchors 块之前. 风格契约比语感示例更
+        正式 (preset 注册表写了'本作怎么写'), 放最前面让模型先吃进去.
+        """
+        if not _STYLE_PRESETS_AVAILABLE:
+            return ""
+        key = (os.environ.get("NOVEL_STYLE_PRESET") or "").strip()
+        if not key:
+            return ""
+        try:
+            preset = get_style_preset(key)
+        except KeyError:
+            logger.warning(
+                "NOVEL_STYLE_PRESET=%r unknown — ignoring (valid: %s)",
+                key, ",".join(list_style_keys()),
             )
-            prompt = prompt + (
-                "\n\n# 语感参考(只看句长 / 词汇密度 / 修辞密度。示例的题材、"
-                "场景、人物与本作无关, 不要模仿其内容; 本段写什么由素材简报"
-                "决定 — 动作场就写动作, 对峙场就写对峙, 不要一律写成静景)\n\n"
-            ) + anchor_text
-        return prompt
+            return ""
+        return preset.narrator_addendum
 
     # -- 场景简报渲染 ---------------------------------------------------
 
@@ -663,9 +717,16 @@ class NarratorAgent:
         char_profiles: dict[str, CharacterProfile] | None = None,
         world_state: WorldState | None = None,
         prose_tail: str = "",
+        style_anchors: list[StyleAnchor] | None = None,
     ) -> str:
         tick_actions = tick_actions or []
         char_profiles = char_profiles or {}
+        style_anchors = style_anchors or []
+        # Phase 5+: 顺序 = preset addendum (本作怎么写) → style_anchors (语感示例)
+        # 两个都拼在 # 连载进度 之前. 都为空时返回空串, 老 bench bit-identical.
+        preset_block = self._render_style_preset_block()
+        anchor_block = self._render_style_anchor_block(style_anchors)
+        style_block = preset_block + anchor_block
 
         scene_block = self._render_scene_block(
             tick_events=tick_events,
@@ -718,7 +779,7 @@ class NarratorAgent:
         viewpoint_name = self._display_name(tracking_character_id, char_profiles)
 
         return f"""\
-# 连载进度
+{style_block}# 连载进度
 
 {title_line}世界时间 {world_time} (第 {tick} 段素材)
 

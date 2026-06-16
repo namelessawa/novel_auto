@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from dataclasses import dataclass
 from typing import Any
@@ -27,8 +28,21 @@ from typing import Any
 from memory_system.models import Event, WorldState
 from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
+from nf_core.world_stale_detector import StaleDecision, evaluate_stale
 
 logger = logging.getLogger(__name__)
+
+
+def _stale_skip_enabled() -> bool:
+    """Phase 5-B: env-driven on/off. Default ON when env unset (Phase 5-B is opt-out).
+
+    设为 '0' / 'false' / 'off' / 'no' 可关掉, 让 world_simulator 回到每 tick 必 LLM
+    的老行为. 为 AB 测试 / 紧急回滚保留逃生通道.
+    """
+    raw = (os.environ.get("WORLD_STALE_SKIP_ENABLED") or "").strip().lower()
+    if raw in ("0", "false", "off", "no"):
+        return False
+    return True
 
 
 SYSTEM_PROMPT = """\
@@ -82,6 +96,10 @@ class WorldSimulatorOutput:
     new_world_state: WorldState
     natural_events: list[Event]
     delta_summary: str
+    # Phase 5-B: 当 stale-skip 触发, LLM 未跑, 这里挂决策原因供 metric / 调试.
+    # 'llm_called' 表示走了原 LLM 路径 (默认值, 不破坏 frozen 语义).
+    skipped_llm: bool = False
+    skip_reason: str = "llm_called"
 
 
 class WorldSimulator:
@@ -96,6 +114,8 @@ class WorldSimulator:
         WorldSimulator 当前不参与降级路径, 始终用默认 provider model。
         """
         self._model_tier = model_tier
+        # Phase 5-B: 上次实际跑 LLM 时的 current_world_time (pre-tick), -1 = 冷启动
+        self._last_llm_world_time: int = -1
 
     async def simulate(
         self,
@@ -104,6 +124,24 @@ class WorldSimulator:
         time_step: int = 1,
     ) -> WorldSimulatorOutput:
         """主入口 - Orchestrator 阶段 1 调用。"""
+        # Phase 5-B: det 层 stale-skip 短路.
+        # 全部条件满足时跳 LLM, 构造一条 stale 自然事件 + 零变化 delta.
+        if _stale_skip_enabled():
+            decision = evaluate_stale(
+                current_world_time=world_state.world_time,
+                last_llm_world_time=self._last_llm_world_time,
+                last_tick_events=last_tick_events,
+            )
+            if decision.should_skip:
+                logger.info(
+                    "WorldSimulator stale-skip @ world_time=%d: %s",
+                    world_state.world_time,
+                    decision.reason,
+                )
+                return self._stale_output(world_state, time_step, decision.reason)
+        else:
+            decision = StaleDecision(False, "stale_skip_disabled_via_env")
+
         user_prompt = self._build_user_prompt(world_state, last_tick_events, time_step)
         try:
             resp = await llm_client.chat(
@@ -121,6 +159,8 @@ class WorldSimulator:
             # 兜底:推进 world_time + time_step,其他状态不变,无 natural events
             return self._fallback_output(world_state, time_step)
 
+        # Phase 5-B: 实际跑了 LLM, 记下 world_time, 下次 stale_detector 用它算距离
+        self._last_llm_world_time = world_state.world_time
         return self._parse_output(resp.content, world_state, time_step)
 
     # ------------------------------------------------------------------
@@ -269,4 +309,36 @@ class WorldSimulator:
             new_world_state=new_ws,
             natural_events=[],
             delta_summary="WorldSimulator LLM 不可用,仅推进时间。",
+        )
+
+    @staticmethod
+    def _stale_output(
+        prior: WorldState, time_step: int, reason: str
+    ) -> WorldSimulatorOutput:
+        """Phase 5-B: det 层判定世界 stale, 跳 LLM. 构造零变化 delta + 1 条 stale 事件.
+
+        关键设计:
+        * 仍推进 world_time — 时间不能停, 否则 caller 以为本 tick 没跑过.
+        * 1 条 narrative_value=1 的 exogenous 事件 — 给 CharacterAgent 一个可见的
+          environment beat ("世界静止"), 防止下游 starve. value=1 保证不触发
+          narrator (NARRATE_SKIP_THRESHOLD).
+        * skip_reason 写到 delta_summary 后缀, 便于 grep tick log 调试.
+        """
+        next_world_time = prior.world_time + time_step
+        new_ws = prior.model_copy(update={"world_time": next_world_time})
+        stale_event = Event(
+            id=f"evt_stale_{next_world_time}_{uuid.uuid4().hex[:6]}",
+            type="exogenous",
+            tick=next_world_time,
+            description="世界静止: 无显著变化",
+            narrative_value=1,
+            narrative_value_hint=1,
+            visible_to=["all_in_location"],
+        )
+        return WorldSimulatorOutput(
+            new_world_state=new_ws,
+            natural_events=[stale_event],
+            delta_summary=f"stale-skip ({reason})",
+            skipped_llm=True,
+            skip_reason=reason,
         )

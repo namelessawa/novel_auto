@@ -115,9 +115,15 @@ def _build_responses_5_ticks(loops_to_close: list[str]) -> list[dict]:
     return responses
 
 
-def test_showrunner_close_loops_actually_drains_pool(tmp_path, mock_llm) -> None:
+def test_showrunner_close_loops_actually_drains_pool(
+    tmp_path, mock_llm, monkeypatch
+) -> None:
     """Showrunner 输出 loops_to_close 后, tick_state.get_open_loops()
     必须真正少了对应条数."""
+    # Phase 5-B: 关 stale-skip — 此测试用固定 LLM 响应序列, stale-skip 会
+    # 让 world_sim 跳调用导致响应错位 (showrunner 拿到 world_sim 的响应).
+    # 测试关心 showrunner 关闭路径, 与 Phase 5-B 正交.
+    monkeypatch.setenv("WORLD_STALE_SKIP_ENABLED", "0")
     mock_llm.set_responses(_build_responses_5_ticks(["loop_0", "loop_3"]))
     ts = _bootstrap_with_loops(tmp_path)
     assert len(ts.get_open_loops()) == 6
@@ -145,8 +151,12 @@ def test_showrunner_close_loops_actually_drains_pool(tmp_path, mock_llm) -> None
     assert remaining_ids == {"loop_1", "loop_2", "loop_4", "loop_5"}
 
 
-def test_showrunner_close_ignores_unknown_ids(tmp_path, mock_llm) -> None:
+def test_showrunner_close_ignores_unknown_ids(
+    tmp_path, mock_llm, monkeypatch
+) -> None:
     """LLM 偶尔输出不存在的 ID, orchestrator 必须 silently ignore."""
+    # Phase 5-B: 关 stale-skip — 同 test_showrunner_close_loops_actually_drains_pool
+    monkeypatch.setenv("WORLD_STALE_SKIP_ENABLED", "0")
     mock_llm.set_responses(
         _build_responses_5_ticks(["loop_NONEXISTENT", "loop_1"])
     )

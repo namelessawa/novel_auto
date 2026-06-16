@@ -199,6 +199,14 @@ async def _bench(args) -> dict:
         # v2.38 Phase 2 Stage 3 (iter#87) — longrange 原料.
         "open_loop_snapshots": open_loop_snapshots,
         "novelty_records": novelty_records,
+        # Phase 5-A: prefix cache 可见性. provider 不暴露 cached_tokens 时为 0,
+        # cache_hit_rate = 0.0 — 与"cache 不生效"区分不开, 但至少不掩盖.
+        "total_prompt_tokens": snap.total_prompt_tokens,
+        "total_completion_tokens": snap.total_completion_tokens,
+        "total_cached_tokens": snap.total_cached_tokens,
+        "cache_hit_rate": round(snap.cache_hit_rate, 4),
+        "by_agent_prompt": dict(snap.by_agent_prompt),
+        "by_agent_cached": dict(snap.by_agent_cached),
     }
 
     # v2.38 (iter#80) — Phase 2 quality metrics integration.
@@ -398,6 +406,32 @@ def _render_markdown(rep: dict) -> str:
     ]
     for p, tok in rep["by_priority"].items():
         lines.append(f"| {p} | {tok} |")
+
+    # Phase 5-A: prefix cache hit rate per-agent. Provider 不暴露 cached_tokens
+    # 时整张表都是 0/0 = 0% — 与"cache 不生效"区分不开, 但 absent provider
+    # support 比 silent fallback 更易调试.
+    by_prompt = rep.get("by_agent_prompt", {}) or {}
+    by_cached = rep.get("by_agent_cached", {}) or {}
+    if by_prompt:
+        total_prompt = rep.get("total_prompt_tokens", 0) or 0
+        total_cached = rep.get("total_cached_tokens", 0) or 0
+        overall_rate = (total_cached / total_prompt * 100) if total_prompt else 0.0
+        lines += [
+            "",
+            "## Cache hit rate (Phase 5-A)",
+            "",
+            f"- total prompt_tokens: {total_prompt}",
+            f"- total cached_tokens: {total_cached}",
+            f"- overall hit rate: {overall_rate:.1f}%",
+            "",
+            "| agent | prompt | cached | hit% |",
+            "| --- | ---: | ---: | ---: |",
+        ]
+        for agent in sorted(by_prompt, key=lambda a: -by_prompt[a]):
+            p_tok = by_prompt.get(agent, 0)
+            c_tok = by_cached.get(agent, 0)
+            rate = (c_tok / p_tok * 100) if p_tok else 0.0
+            lines.append(f"| {agent} | {p_tok} | {c_tok} | {rate:.1f}% |")
 
     lines += ["", "## Per tick", "", "| tick | tokens | sec | narr_chars | top agents |", "| ---: | ---: | ---: | ---: | --- |"]
     for r in rep["per_tick"]:

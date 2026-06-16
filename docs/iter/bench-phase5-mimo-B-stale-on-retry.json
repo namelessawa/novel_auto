@@ -1,0 +1,304 @@
+{
+  "label": "phase5-mimo-B-stale-on-retry",
+  "novel_id": "bench_phase5-mimo-B-stale-on-retry_1781592558",
+  "ticks": 20,
+  "bootstrap_sec": 465.5,
+  "tick_durations_sec": [
+    77.78,
+    0.02,
+    0.02,
+    93.65,
+    75.63,
+    0.02,
+    129.65,
+    0.02,
+    0.02,
+    326.49,
+    174.06,
+    0.02,
+    0.02,
+    62.73,
+    114.99,
+    0.02,
+    106.39,
+    0.02,
+    0.02,
+    191.57
+  ],
+  "total_tokens": 82105,
+  "by_agent_cumulative": {
+    "world_simulator": 17438,
+    "narrator": 35532,
+    "showrunner": 19195,
+    "event_injector": 4499,
+    "character_agent:char_linxue": 2416,
+    "novelty_critic": 3025
+  },
+  "by_priority": {
+    "medium": 41132,
+    "critical": 37948,
+    "optional": 3025
+  },
+  "call_count": 22,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 5565,
+      "duration_sec": 77.78,
+      "narrator_chars": 530,
+      "agents": {
+        "world_simulator": 1747,
+        "narrator": 3818
+      }
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 4,
+      "tick_total_tokens": 6888,
+      "duration_sec": 93.65,
+      "narrator_chars": 469,
+      "agents": {
+        "world_simulator": 1546,
+        "narrator": 5342
+      }
+    },
+    {
+      "tick": 5,
+      "tick_total_tokens": 4409,
+      "duration_sec": 75.63,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4409
+      }
+    },
+    {
+      "tick": 6,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 7,
+      "tick_total_tokens": 7554,
+      "duration_sec": 129.65,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 2223,
+        "narrator": 5331
+      }
+    },
+    {
+      "tick": 8,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 9,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 10,
+      "tick_total_tokens": 19662,
+      "duration_sec": 326.49,
+      "narrator_chars": 611,
+      "agents": {
+        "world_simulator": 1588,
+        "narrator": 6765,
+        "showrunner": 4394,
+        "event_injector": 4499,
+        "character_agent:char_linxue": 2416
+      }
+    },
+    {
+      "tick": 11,
+      "tick_total_tokens": 9328,
+      "duration_sec": 174.06,
+      "narrator_chars": 144,
+      "agents": {
+        "world_simulator": 3804,
+        "narrator": 5524
+      }
+    },
+    {
+      "tick": 12,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 13,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 14,
+      "tick_total_tokens": 2672,
+      "duration_sec": 62.73,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 2672
+      }
+    },
+    {
+      "tick": 15,
+      "tick_total_tokens": 5172,
+      "duration_sec": 114.99,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 5172
+      }
+    },
+    {
+      "tick": 16,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 17,
+      "tick_total_tokens": 6778,
+      "duration_sec": 106.39,
+      "narrator_chars": 15,
+      "agents": {
+        "world_simulator": 1683,
+        "narrator": 5095
+      }
+    },
+    {
+      "tick": 18,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 19,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 20,
+      "tick_total_tokens": 14077,
+      "duration_sec": 191.57,
+      "narrator_chars": 531,
+      "agents": {
+        "world_simulator": 2175,
+        "narrator": 3657,
+        "showrunner": 5220,
+        "novelty_critic": 3025
+      }
+    }
+  ],
+  "narratives": [
+    {
+      "tick": 1,
+      "chars": 530,
+      "text": "钟声从雾深处落下来，沉闷，被潮湿的空气吃掉了大半。苏默停住脚步，数了三下。不是报时。钟声又响，间隔不规则，像某个齿轮咬合出了毛病。\n\n锤击声从左侧传来，节奏缓慢，一下接一下。蒸汽锤。她辨认出方向——铸铁厂的方向，隔着三条街。声音穿过雾层变得含混，仿佛整座城都在敲打自己。风裹着铁锈和机油的味道扑过来，她用袖口捂了一下鼻子，继续走。\n\n石板路上积水很深，靴子踩下去，水没过脚踝。墙壁渗出锈色的水痕，一道一道，像陈年的伤。她贴着墙根走，手扶着砖面，指尖冰凉，蹭到一层黏腻的油膜。雾浓得看不见下一个转角的路灯杆，只能靠脚底板记住路——左脚踩到松动的那块砖，再走七步，右拐。\n\n转过弯，雾里浮出建筑的轮廓。无声神殿的钟塔尖顶戳进灰白色的天空，像一根生锈的针。第二声钟鸣这时候落下来，比刚才近，比刚才重。苏默加快脚步，靴底在石板上打出急促的水声。\n\n铁门还没开。她摸到门环，指节叩上去，铜环冰得刺骨。门缝里透出微弱的光，有人在里面点灯了。她又叩了三下，节奏刻意放慢。暗号。\n\n门轴发出低哑的呻吟，露出一道窄缝。一双浑浊的眼睛从缝隙里看出来，盯了她两秒，没有说话。她侧身挤进去，靴子在门槛上刮出一道水痕。\n\n身后，雾气吞没了街道。锤击声还在，一下，一下，比钟声更慢，更沉。"
+    },
+    {
+      "tick": 4,
+      "chars": 469,
+      "text": "门在她身后合拢，沉闷的撞击声切断了外面的雨声。守门人转过身，灯笼的光在他脸上投下深沟。他手里的铜钥匙串哗啦响了一声。‘这个时辰来，’他声音沙哑，‘你闻到了什么？’\n苏默摘下湿透的帽子，水滴落在石板地上，积成一小滩。‘铁锈。机油。还有蒸汽锤。’她顿了顿，‘从东边来。’\n守门人哼了一声，灯笼举高些。走廊深处，墙壁上嵌着巨大的齿轮，一动不动，齿缝里积着灰。空气里有股甜腻的霉味，混着青铜的冷腥。他往前走，靴子踩在潮湿的石板上，回声很空。‘祭坛昨晚动了。’他没回头，‘兄弟会的人在里头守着。你找的东西，他们未必让你看。’\n苏默跟上去。手指划过墙壁，砖面粗糙，沾着看不见的潮气。蒸汽锤声隐约透进来，一下，一下，和心跳叠在一起。她想起昨天在档案馆翻到的符号——那个齿轮裂开的图案，就画在失语少女的速写本角落。祭坛启动，是时候了。\n走廊尽头，铁门半掩。昏黄的光从里面漏出来，照出地上一串脚印，泥泞未干。守门人停下，钥匙插进锁孔，转了一半。‘听着，’他压低声音，‘别碰中央的齿轮。别说话。他们在等“觉醒时刻”。’\n门开了。苏默看进去，呼吸顿住。机械祭坛"
+    },
+    {
+      "tick": 10,
+      "chars": 611,
+      "text": "机械祭坛的嗡鸣声突然拔高，震得石墙簌簌落灰。林雪手中的卷宗纸页哗啦翻动，她抬头，看到齿轮符号边缘渗出暗红色的光，像熔化的铁水在石头缝隙里爬行。她猛地从石凳上弹起，膝盖撞到凳腿，防腐粉末袋翻倒，白色粉末洒了一地。眼睛死死锁住那个符号——红光闪烁的瞬间，眼前爆开碎片：蒸汽核心表面的裂纹蛛网般扩散，内部沸腾的蒸汽白得刺眼，随后是建筑物的坍塌，砖石砸进泥水，没有声音，只有画面在她视网膜上灼烧。幻象只持续了三秒。林雪胸口剧烈起伏，手指攥紧卷宗边缘，纸张发出要撕裂的脆响。她强迫自己蹲下，膝盖压在潮湿的石板上，寒意穿透布料。指尖颤抖着伸向符号，触到石面——冰冷，没有异常温度。红光消失了，但那种感觉还在，像一根冰锥钉在后脑。她从内袋掏出小本子，铅笔尖在纸上刮出急促的线条：齿轮符号，红光，幻象。蒸汽核心，裂纹，废墟。字迹歪斜，有几个笔画断了。写完撕下纸页，塞回内袋时手指碰到布料下面硬质的听诊器头。雨声从石墙外渗进来，沼泽水位涨了，排水口的咕噜声混着远处沉闷的汽笛，像巨兽的喉音。神殿里的空气更潮了，铁锈味压过防腐粉末的苦杏仁气。林雪收好小本子，蹲在粉末洒落的地方，用掌心把粉末拢回袋口。指节蹭到地上的湿气，黏腻腻的。她想起上次看到类似符号时，只是光晕微颤，没有幻象。这次更清晰，更近。如果那不是'可能'，而是'正在发生'——她手指顿了一下。粉末袋系带打结时，她听见走廊尽头传来铁门开启的铰链声，很沉，带着湿气的摩擦。有人进来了。"
+    },
+    {
+      "tick": 11,
+      "chars": 144,
+      "text": "铁门推开时铰链拖出一声长响，湿气扑面。苏默侧身挤过门框，靴底踩到门槛边的积水，浑水溅上裤脚。神殿里比走廊暗，石墙上嵌的油灯光在潮气里跳，把齿轮符号的影子晃到对面墙壁上，像转动了一半卡住的齿盘。\n\n林雪蹲在石板地中间，白色粉末散了一圈。她抬头，手还按在胸口的布料上。苏默注意到她的手指在抖。"
+    },
+    {
+      "tick": 17,
+      "chars": 15,
+      "text": "苏默蹲下来，靴底的水渍在石板上"
+    },
+    {
+      "tick": 20,
+      "chars": 531,
+      "text": "苏默站起来，靴底在石板上拖出两道湿痕。她扶着墙，砖面渗出的凉意穿过袖口。蒸汽管道在头顶嘶嘶作响，凝结的水珠悬在接口处，颤了颤，砸进路边的沟渠里。远处一声汽笛拉长，沉闷地滚过低空——是码头那边，有船在雾里启航。\n\n街道空了。店铺门板紧闭，檐下挂着的铜铃被风吹动，却不响，绳结早就锈死。苏默低头看自己的手背，一道浅浅的擦痕，是刚才翻墙时蹭的。血珠已经干了，结成暗红色的细线。\n\n她沿墙根走。鞋底碾过湿漉漉的落叶，发出黏腻的声响。更远处，沼泽方向的雾漫过来，灰白色，吸饱了水汽，把建筑的轮廓泡得模糊。路灯还没亮，天光却已经暗下来，分不清是云层还是傍晚。\n\n安全屋在三条街外。她数着步子，数到二十七时停在转角。巷口堆着几个废弃的齿轮箱，锈蚀的边缘挂着水珠。她侧身挤过去，肩膀擦过冰冷的金属表面。\n\n汽笛又响了一声。比刚才更近，更尖锐。苏默缩回阴影里，背贴在齿轮箱上。金属的寒意透过衣服渗进来。她屏住呼吸，听着自己的心跳，一下，一下，和远处管道嘶嘶的漏气声混在一起。\n\n雾更浓了。她眨了眨眼，睫毛上凝了细微的水珠。安全屋的门应该在前面，那扇漆成深褐色的铁门，门牌上刻着一个褪色的扳手图案。她摸了摸内袋，钥匙还在，冰凉的一小块金属。\n\n但脚步声从另一头传来了。不是一个人的。"
+    }
+  ],
+  "open_loop_snapshots": [
+    {
+      "tick": 5,
+      "open": 3,
+      "closed": 1,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 10,
+      "open": 3,
+      "closed": 1,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 15,
+      "open": 3,
+      "closed": 1,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 20,
+      "open": 3,
+      "closed": 1,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    }
+  ],
+  "novelty_records": [],
+  "total_prompt_tokens": 40160,
+  "total_completion_tokens": 41945,
+  "total_cached_tokens": 18432,
+  "cache_hit_rate": 0.459,
+  "by_agent_prompt": {
+    "world_simulator": 5353,
+    "narrator": 21616,
+    "showrunner": 8466,
+    "event_injector": 2166,
+    "character_agent:char_linxue": 1554,
+    "novelty_critic": 1005
+  },
+  "by_agent_cached": {
+    "world_simulator": 0,
+    "narrator": 13312,
+    "showrunner": 4096,
+    "event_injector": 1024,
+    "character_agent:char_linxue": 0,
+    "novelty_critic": 0
+  }
+}

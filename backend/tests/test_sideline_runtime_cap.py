@@ -244,8 +244,13 @@ def _showrunner_response(sidelined):
     }
 
 
-def test_orchestrator_wire_sidelines_actually_skip_batch_decide(tmp_path, mock_llm, caplog):
+def test_orchestrator_wire_sidelines_actually_skip_batch_decide(
+    tmp_path, mock_llm, caplog, monkeypatch,
+):
     """Showrunner 输出 sidelined → orchestrator 实际不调 batch_decide LLM."""
+    # Phase 5-B: 关 stale-skip — 固定 mock_llm 响应序列要求 world_sim 每 tick
+    # 都跑 LLM, stale-skip 会让序列错位. 此测试关心 sideline routing 路径.
+    monkeypatch.setenv("WORLD_STALE_SKIP_ENABLED", "0")
     caplog.set_level(logging.INFO, logger="agents.orchestrator")
     ts = _bootstrap_ts(tmp_path)
     # 给 6 open_loops 让 EventInjector 不触发
@@ -287,8 +292,12 @@ def test_orchestrator_wire_sidelines_actually_skip_batch_decide(tmp_path, mock_l
     assert sidelines["char_a"] == ts.SIDELINE_DEFAULT_TTL
 
 
-def test_orchestrator_unknown_sideline_id_logs_warning(tmp_path, mock_llm, caplog):
+def test_orchestrator_unknown_sideline_id_logs_warning(
+    tmp_path, mock_llm, caplog, monkeypatch,
+):
     """LLM 偶尔输出不存在 char_id, orchestrator 必须 logger.warning + 不写入."""
+    # Phase 5-B: 关 stale-skip — 同上, 固定响应序列假设.
+    monkeypatch.setenv("WORLD_STALE_SKIP_ENABLED", "0")
     caplog.set_level(logging.WARNING, logger="agents.orchestrator")
     ts = _bootstrap_ts(tmp_path)
     for i in range(6):

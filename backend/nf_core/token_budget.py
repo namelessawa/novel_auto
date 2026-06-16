@@ -62,6 +62,9 @@ class TokenUsageRecord:
     model: str = ""
     tick: int = -1
     note: str = ""
+    # Phase 5-A: prefix-cache hit (subset of prompt_tokens that came from cache).
+    # 0 when provider doesn't expose prompt_tokens_details.cached_tokens.
+    cached_tokens: int = 0
 
     @property
     def total(self) -> int:
@@ -72,7 +75,12 @@ class TokenUsageRecord:
 class BudgetSnapshot:
     total_prompt_tokens: int = 0
     total_completion_tokens: int = 0
+    # Phase 5-A: aggregate of cached_tokens — provider returns subset of prompt
+    # that hit prefix cache. cache_hit_rate := total_cached_tokens / max(1, total_prompt_tokens).
+    total_cached_tokens: int = 0
     by_agent: dict[str, int] = field(default_factory=dict)
+    by_agent_cached: dict[str, int] = field(default_factory=dict)
+    by_agent_prompt: dict[str, int] = field(default_factory=dict)
     by_priority: dict[str, int] = field(default_factory=dict)
     call_count: int = 0
     last_tick: int = -1
@@ -80,6 +88,10 @@ class BudgetSnapshot:
     @property
     def total_tokens(self) -> int:
         return self.total_prompt_tokens + self.total_completion_tokens
+
+    @property
+    def cache_hit_rate(self) -> float:
+        return self.total_cached_tokens / max(1, self.total_prompt_tokens)
 
 
 def _env_int(name: str, default: int) -> int:
@@ -139,6 +151,7 @@ class TokenBudgetTracker:
         model: str = "",
         tick: int = -1,
         note: str = "",
+        cached_tokens: int = 0,
     ) -> TokenUsageRecord:
         rec = TokenUsageRecord(
             timestamp=time.time() if not os.environ.get("PYTEST_CURRENT_TEST") else 0.0,
@@ -149,6 +162,10 @@ class TokenBudgetTracker:
             model=model,
             tick=tick,
             note=note,
+            # cached_tokens 是 prompt_tokens 的子集 — 上界 clamp 防 provider 反例.
+            cached_tokens=min(
+                int(max(0, cached_tokens)), int(max(0, prompt_tokens))
+            ),
         )
         self._records.append(rec)
         # 内存上限 — save() 只持久化尾部 200 条, 内存里也没必要无限累积
@@ -157,8 +174,15 @@ class TokenBudgetTracker:
             self._records = self._records[-_RECORDS_KEEP_AFTER_TRIM:]
         self._snapshot.total_prompt_tokens += rec.prompt_tokens
         self._snapshot.total_completion_tokens += rec.completion_tokens
+        self._snapshot.total_cached_tokens += rec.cached_tokens
         self._snapshot.by_agent[agent_id] = (
             self._snapshot.by_agent.get(agent_id, 0) + rec.total
+        )
+        self._snapshot.by_agent_cached[agent_id] = (
+            self._snapshot.by_agent_cached.get(agent_id, 0) + rec.cached_tokens
+        )
+        self._snapshot.by_agent_prompt[agent_id] = (
+            self._snapshot.by_agent_prompt.get(agent_id, 0) + rec.prompt_tokens
         )
         self._snapshot.by_priority[priority] = (
             self._snapshot.by_priority.get(priority, 0) + rec.total
@@ -263,7 +287,10 @@ class TokenBudgetTracker:
             "snapshot": {
                 "total_prompt_tokens": self._snapshot.total_prompt_tokens,
                 "total_completion_tokens": self._snapshot.total_completion_tokens,
+                "total_cached_tokens": self._snapshot.total_cached_tokens,
                 "by_agent": dict(self._snapshot.by_agent),
+                "by_agent_cached": dict(self._snapshot.by_agent_cached),
+                "by_agent_prompt": dict(self._snapshot.by_agent_prompt),
                 "by_priority": dict(self._snapshot.by_priority),
                 "call_count": self._snapshot.call_count,
                 "last_tick": self._snapshot.last_tick,
@@ -297,7 +324,10 @@ class TokenBudgetTracker:
         self._snapshot = BudgetSnapshot(
             total_prompt_tokens=int(snap.get("total_prompt_tokens", 0)),
             total_completion_tokens=int(snap.get("total_completion_tokens", 0)),
+            total_cached_tokens=int(snap.get("total_cached_tokens", 0)),
             by_agent=dict(snap.get("by_agent", {}) or {}),
+            by_agent_cached=dict(snap.get("by_agent_cached", {}) or {}),
+            by_agent_prompt=dict(snap.get("by_agent_prompt", {}) or {}),
             by_priority=dict(snap.get("by_priority", {}) or {}),
             call_count=int(snap.get("call_count", 0)),
             last_tick=int(snap.get("last_tick", -1)),

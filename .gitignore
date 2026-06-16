@@ -8,6 +8,9 @@ __pycache__/
 node_modules/
 *.log
 
+# Phase 5+: 本地 LLM 凭据/暂存 (绝不 commit)
+coding.txt
+
 # Test / lint caches
 .coverage
 .pytest_cache/
@@ -48,3 +51,10 @@ bash.exe.stackdump
 !/structure.md
 !deploy/**/README.md
 !docs/**/*.md
+
+# Phase 5+ matrix bench per-cell 产物 (~200 文件, 个别 cell 可重跑复现).
+# 必须在 !docs/**/*.md 之后, last-match-wins 才能盖过上面的全 un-ignore.
+docs/iter/bench-matrix-*.json
+docs/iter/bench-matrix-*.md
+docs/iter/bench-m_*.json
+docs/iter/bench-m_*.md

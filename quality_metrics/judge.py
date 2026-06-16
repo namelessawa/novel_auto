@@ -271,12 +271,15 @@ def make_mimo_judge_fn(
     timeout_sec: float = 120.0,
     max_tokens: int = 2048,
 ) -> tuple[JudgeFn, str]:
-    """Return (judge_fn, resolved_model_name).
+    """Return (judge_fn, resolved_model_name) for MIMO judge.
 
     Defaults pull from MIMO_* env vars set in .env. Phase 2 §7 default judge
     is `mimo-v2.5-pro` (跨家族评判 — narrator 是 qwen, judge 用 mimo).
 
     Caller in bench_tick.py wraps the returned function with budget accounting.
+
+    Phase 5+: see ``make_active_judge_fn()`` for env-driven multi-provider routing
+    (mimo / ark_glm). Direct call to this function still works for mimo-only paths.
     """
     api_key = api_key or os.environ.get("MIMO_API_KEY", "")
     base_url = base_url or os.environ.get(
@@ -326,6 +329,87 @@ def make_mimo_judge_fn(
     return _judge, model
 
 
+def make_ark_glm_judge_fn(
+    api_key: str | None = None,
+    base_url: str | None = None,
+    model: str | None = None,
+    timeout_sec: float = 120.0,
+    max_tokens: int = 2048,
+) -> tuple[JudgeFn, str]:
+    """Phase 5+: ARK volces glm-5.1 judge factory.
+
+    Defaults pull ARK_JUDGE_* env vars. 因为 ARK 上 glm-5.1 默认开 thinking
+    会把 reasoning 漏到 reasoning_content / 空 content, 这里强制
+    ``extra_body={"thinking": {"type": "disabled"}}`` (实测 5/5 通过).
+
+    HARD STOP: 该函数缺凭据立刻 raise — caller (pairwise script) 接 RuntimeError
+    走 exit code 2, 不静默退到 det-only.
+    """
+    api_key = api_key or os.environ.get("ARK_JUDGE_API_KEY") or os.environ.get(
+        "CUSTOM_API_KEY", ""
+    )
+    base_url = base_url or os.environ.get("ARK_JUDGE_BASE_URL") or os.environ.get(
+        "CUSTOM_BASE_URL", ""
+    )
+    model = model or os.environ.get("ARK_JUDGE_MODEL", "glm-5.1")
+
+    if not (api_key and base_url and model):
+        raise RuntimeError(
+            "ARK glm judge 凭据不全 (need ARK_JUDGE_API_KEY/BASE_URL/MODEL, "
+            "或退到 CUSTOM_* 但要确认 CUSTOM_MODEL 是 glm-5.1)."
+        )
+
+    import httpx
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        max_retries=0,
+        timeout=httpx.Timeout(timeout_sec, connect=15.0),
+    )
+
+    async def _judge(prompt: str) -> str:
+        resp = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "你是严格的中文小说编辑, 只输出 JSON, 不解释.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=max_tokens,
+            extra_body={"thinking": {"type": "disabled"}},
+        )
+        choice = resp.choices[0]
+        content = (choice.message.content or "").strip()
+        if not content:
+            content = (
+                getattr(choice.message, "reasoning_content", "") or ""
+            ).strip()
+        return content
+
+    return _judge, model
+
+
+def make_active_judge_fn() -> tuple[JudgeFn, str]:
+    """Phase 5+: env-driven judge provider routing.
+
+    JUDGE_PROVIDER env 决定:
+      - "ark_glm" / "ark" / "glm" → ``make_ark_glm_judge_fn`` (glm-5.1 默认)
+      - "mimo" 或缺省 → ``make_mimo_judge_fn`` (向后兼容 Phase 2/3/4)
+
+    Caller 不应该再直接调 make_mimo_judge_fn — 用这个统一入口.
+    """
+    provider = (os.environ.get("JUDGE_PROVIDER") or "").strip().lower()
+    if provider in ("ark_glm", "ark", "glm", "glm-5.1"):
+        return make_ark_glm_judge_fn()
+    # default to mimo (Phase 2/3/4 baseline 行为, 无 breaking change)
+    return make_mimo_judge_fn()
+
+
 __all__ = [
     "JudgeFn",
     "JudgeMeta",
@@ -334,4 +418,6 @@ __all__ = [
     "pairwise_judge",
     "rubric_judge",
     "make_mimo_judge_fn",
+    "make_ark_glm_judge_fn",
+    "make_active_judge_fn",
 ]

@@ -107,6 +107,10 @@ class LLMResponse:
     content: str
     usage_prompt_tokens: int
     usage_completion_tokens: int
+    # Phase 5-A: 暴露 OpenAI SDK 的 prompt_tokens_details.cached_tokens (provider
+    # 不支持时为 0). 让 narrator cache 重排能直接量化命中率, 而不是只看总 token
+    # 趋势猜测。
+    usage_cached_tokens: int = 0
 
 
 def _resolve_timeout() -> float:
@@ -137,6 +141,41 @@ _MAX_TOKENS_CAP = _resolve_max_tokens_cap()
 
 def _clamp_max_tokens(n: int) -> int:
     return min(n, _MAX_TOKENS_CAP) if n > 0 else _MAX_TOKENS_CAP
+
+
+def _resolve_extra_body() -> dict | None:
+    """Phase 5-A: env-driven extra_body for provider-specific quirks.
+
+    现在只用于 ARK volces 的 thinking-disable. ``LLM_THINKING_MODE=disabled``
+    时把 ARK 的 thinking trace 关掉 — 实测 deepseek-v4-pro 在长中文 + complex
+    schema 下推理 trace 漏进 content, JSON 解析 60% 失败. 关掉后 5/5 通过且
+    completion_tokens 直接降 ~16%.
+
+    其他取值留作未来扩展 (例如 enabled / auto), 当前一律忽略, 返回 None.
+    返回 None 时调用方不传 extra_body, 与原生 OpenAI 调用完全一致.
+    """
+    mode = (os.environ.get("LLM_THINKING_MODE") or "").strip().lower()
+    if mode == "disabled":
+        return {"thinking": {"type": "disabled"}}
+    return None
+
+
+def _extract_cached_tokens(usage_obj) -> int:
+    """Safe pull of usage.prompt_tokens_details.cached_tokens (provider-optional).
+
+    OpenAI / DeepSeek / ARK 等暴露 prefix cache hit 数通过 ``prompt_tokens_details``
+    嵌套字段. 不存在时 (mimo / 老 deepseek-chat) 直接 0, 不影响调用方。
+    """
+    if usage_obj is None:
+        return 0
+    details = getattr(usage_obj, "prompt_tokens_details", None)
+    if details is None:
+        return 0
+    val = getattr(details, "cached_tokens", None)
+    try:
+        return int(val) if val is not None else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 def extract_message_text(message) -> str:
@@ -281,15 +320,21 @@ class LLMClient:
                 priority,
                 len(model_override),
             )
-        response = await client.chat.completions.create(
-            model=effective_model,
-            messages=[
+        # Phase 5-A: env-driven extra_body (现在用于 ARK thinking-disable).
+        # _resolve_extra_body 返回 None 时不传, 保持与老调用 bit-identical.
+        _create_kwargs: dict = {
+            "model": effective_model,
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=temperature,
-            max_tokens=_clamp_max_tokens(max_tokens),
-        )
+            "temperature": temperature,
+            "max_tokens": _clamp_max_tokens(max_tokens),
+        }
+        _extra = _resolve_extra_body()
+        if _extra:
+            _create_kwargs["extra_body"] = _extra
+        response = await client.chat.completions.create(**_create_kwargs)
         choice = response.choices[0]
         usage = response.usage
         # extract_message_text: content 空时退到 reasoning_content, 兼容
@@ -298,6 +343,7 @@ class LLMClient:
             content=extract_message_text(choice.message),
             usage_prompt_tokens=usage.prompt_tokens if usage else 0,
             usage_completion_tokens=usage.completion_tokens if usage else 0,
+            usage_cached_tokens=_extract_cached_tokens(usage),
         )
         # v2.16 — 调用方未显式传 tick 时, 用 ContextVar 中 orchestrator 设的当前 tick。
         # 这让 CharacterAgent / NarratorAgent 等内层 agent 无需修改签名也能正确归账。
@@ -309,6 +355,7 @@ class LLMClient:
                 priority=priority,  # type: ignore[arg-type]
                 prompt_tokens=result.usage_prompt_tokens,
                 completion_tokens=result.usage_completion_tokens,
+                cached_tokens=result.usage_cached_tokens,
                 model=effective_model,
                 tick=effective_tick,
             )
@@ -373,19 +420,24 @@ class LLMClient:
                 len(model_override),
             )
 
-        stream = await client.chat.completions.create(
-            model=effective_model,
-            messages=[
+        # Phase 5-A: 与 chat() 同源, env-driven extra_body 关 ARK thinking.
+        _stream_kwargs: dict = {
+            "model": effective_model,
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=temperature,
-            max_tokens=_clamp_max_tokens(max_tokens),
-            stream=True,
+            "temperature": temperature,
+            "max_tokens": _clamp_max_tokens(max_tokens),
+            "stream": True,
             # v2.19 — 请求提供商在最后一个 chunk 返回 usage; 提供商不支持时
             # 自动忽略, 我们的 _capture_usage 静默兼容 None。
-            stream_options={"include_usage": True},
-        )
+            "stream_options": {"include_usage": True},
+        }
+        _extra = _resolve_extra_body()
+        if _extra:
+            _stream_kwargs["extra_body"] = _extra
+        stream = await client.chat.completions.create(**_stream_kwargs)
 
         usage_obj: object | None = None
         # v2.19.5 — 用 try/finally 包裹 stream 消费, 让失败 (provider 502 /
@@ -418,12 +470,15 @@ class LLMClient:
                 if usage_obj is not None
                 else 0
             )
+            # Phase 5-A: stream API 也尝试取 cached_tokens (provider 不暴露时 0).
+            cached_tokens = _extract_cached_tokens(usage_obj)
             try:
                 tracker.record(
                     agent_id=agent_id,
                     priority=priority,  # type: ignore[arg-type]
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
+                    cached_tokens=cached_tokens,
                     model=effective_model,
                     tick=effective_tick,
                 )
