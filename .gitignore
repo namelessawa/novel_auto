@@ -41,9 +41,10 @@ old/memory_system/entity_snapshots/
 bash.exe.stackdump
 **/bash.exe.stackdump
 
-# Markdown 文档默认不追踪, 仅保留根 README/CHANGELOG/structure + deploy 下的 README
+# Markdown 文档默认不追踪, 但 docs/ 下全部允许 (避免 phase plan / verdict 被静默丢)
 *.md
 !/README.md
 !/CHANGELOG.md
 !/structure.md
 !deploy/**/README.md
+!docs/**/*.md
