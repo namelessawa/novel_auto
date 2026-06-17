@@ -18,7 +18,7 @@ Usage:
         --ticks 3 \\
         --concurrency 4
 
-CLI 不传 --themes/--styles 则跑全注册表笛卡儿积 (15 × 13 = 195 cells, 慎用).
+CLI 不传 --themes/--styles 则跑全注册表笛卡儿积 (21 × 16 = 336 cells, 慎用).
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import concurrent.futures
+import hashlib
 import json
 import os
 import subprocess
@@ -111,9 +112,15 @@ def _bench_label(theme: str, style: str) -> str:
 
     bench_tick.py 把 novel_id 构造成 ``bench_{label}_{int(time.time())}``.
     timestamp 10 digits + 'bench_' (6) + 2 underscores → 19 char overhead.
-    Label budget 45 chars. 用每个 key 前 18 字符足够防撞 (人工 audit 16×13 唯一).
+    Label budget 45 chars.
+
+    HIGH fix (code review 2026-06-17): 老版纯 truncation 在两个 theme 前 18 字符
+    相同时会撞同一 label, 并发跑时 bench JSON 互相覆盖. 加 6 位 sha1 哈希尾巴
+    把碰撞概率推到 16^6 = 2^24, 足够覆盖任何合理大小的 (theme, style) 笛卡儿积.
+    截断仍留 14 字符让 label 可读, debug 友好.
     """
-    return f"m_{theme[:18]}_{style[:18]}"
+    h = hashlib.sha1(f"{theme}:{style}".encode("utf-8")).hexdigest()[:6]
+    return f"m_{theme[:14]}_{style[:14]}_{h}"
 
 
 def _judge_longest_narrative(narratives: list[dict]) -> tuple[dict, str]:
@@ -210,8 +217,12 @@ def _run_cell(theme_key: str, style_key: str, ticks: int) -> CellResult:
         result.judge_plot_progression = r.plot_progression
         result.judge_reason = r.reason
     except RuntimeError as e:
-        # judge 初始化失败 — 应当 hard-stop 但这里只能记录, main() 看分布判
+        # MEDIUM fix (code review 2026-06-17): judge_init RuntimeError 之前只记录,
+        # 让 208 cells 全跑出 mean=0 才报错, 浪费 ~30min 生成 cost. 改成 re-raise
+        # 让 ThreadPoolExecutor.future.result() 在调用方抛, 早 fail. main() 的
+        # fail-fast probe 应当先于 worker thread 跑, 这里是双保险.
         result.judge_error = f"judge_init_failed: {e}"
+        raise
     except Exception as e:
         result.judge_error = f"{type(e).__name__}: {str(e)[:200]}"
     return result

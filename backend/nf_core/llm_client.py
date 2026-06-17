@@ -138,11 +138,15 @@ def _resolve_max_tokens_cap() -> int:
         return 65536
 
 
-_MAX_TOKENS_CAP = _resolve_max_tokens_cap()
-
-
 def _clamp_max_tokens(n: int) -> int:
-    return min(n, _MAX_TOKENS_CAP) if n > 0 else _MAX_TOKENS_CAP
+    """HIGH fix (code review 2026-06-17): lazy 读 env, 与其他 _resolve_* helper 一致.
+
+    历史 module-level 冻结的 _MAX_TOKENS_CAP 让 hot-reload 路径无法切换 cap —
+    生产 server 启动后改 LLM_MAX_TOKENS_CAP 静默无效. 现在每次 chat() 调用都按
+    当前 env 解析.
+    """
+    cap = _resolve_max_tokens_cap()
+    return min(n, cap) if n > 0 else cap
 
 
 def _resolve_max_retries() -> int:

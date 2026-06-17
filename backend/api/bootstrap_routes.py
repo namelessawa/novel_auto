@@ -289,6 +289,11 @@ async def regenerate_style_anchors_endpoint(
 
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
     ts = TickState(data_dir=data_dir)
+    # HIGH bug fix (code review 2026-06-17): __init__ 只初始化空字段, 必须先 load()
+    # 把磁盘 tick_state.json 读回内存. 不 load 直接 save 会把 current_tick / open_loops
+    # / character_profiles / style_preset_key 等所有字段重置成默认值, 造成已跑过 tick
+    # 的小说在 UI 点 "重生成风格锚点" 后整个 TickState 被清空.
+    ts.load()
 
     try:
         new_anchors = await generate_style_anchors(

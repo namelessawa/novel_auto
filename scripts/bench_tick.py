@@ -61,6 +61,69 @@ _DEFAULT_SEED = (
 )
 
 
+def _build_report_dict(
+    *,
+    label: str,
+    novel_id: str,
+    target_ticks: int,
+    bootstrap_sec: float,
+    tick_durations: list[float],
+    snap,  # BudgetSnapshot
+    tick_records: list[dict],
+    narratives: list[dict],
+    open_loop_snapshots: list[dict],
+    novelty_records: list[dict],
+    completed_ticks: int,
+    checkpoint: bool,
+) -> dict:
+    """Phase 5+ J: 抽 report dict 构造为函数, 让 checkpoint 路径与 final 路径
+    复用同一份 schema. checkpoint=True 时多附 ``checkpoint_meta`` 子字段提示
+    "partial run, may resume / continue".
+    """
+    rep = {
+        "label": label,
+        "novel_id": novel_id,
+        "ticks": target_ticks,
+        "completed_ticks": completed_ticks,
+        "bootstrap_sec": round(bootstrap_sec, 2),
+        "tick_durations_sec": [round(d, 2) for d in tick_durations],
+        "total_tokens": snap.total_tokens,
+        "by_agent_cumulative": dict(snap.by_agent),
+        "by_priority": dict(snap.by_priority),
+        "call_count": snap.call_count,
+        "per_tick": tick_records,
+        "narratives": narratives,
+        "open_loop_snapshots": open_loop_snapshots,
+        "novelty_records": novelty_records,
+        "total_prompt_tokens": snap.total_prompt_tokens,
+        "total_completion_tokens": snap.total_completion_tokens,
+        "total_cached_tokens": snap.total_cached_tokens,
+        "cache_hit_rate": round(snap.cache_hit_rate, 4),
+        "by_agent_prompt": dict(snap.by_agent_prompt),
+        "by_agent_cached": dict(snap.by_agent_cached),
+    }
+    if checkpoint:
+        rep["checkpoint_meta"] = {
+            "is_partial": True,
+            "completed_ticks": completed_ticks,
+            "target_ticks": target_ticks,
+            "saved_at": int(time.time()),
+        }
+    return rep
+
+
+def _write_checkpoint(rep: dict, label: str) -> None:
+    """Phase 5+ J: 把当前进度 dump 到磁盘. 写到 bench-{label}.json 同路径 —
+    最终 run 收尾会用 final rep 覆盖此文件. 如果中途被 kill, 留下最近 checkpoint.
+    """
+    out_dir = _REPO_ROOT / "docs" / "iter"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target = out_dir / f"bench-{label}.json"
+    tmp = out_dir / f"bench-{label}.json.partial"
+    tmp.write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp, target)
+
+
 async def _bench(args) -> dict:
     # v2.38 (iter#52) — bench user_id 固定 "bench" (≠ 任何真实用户 id 格式),
     # 隔离 cost-quality-loop bench 数据与生产数据.
@@ -101,6 +164,9 @@ async def _bench(args) -> dict:
     # hook 后接通. 当前 bench 跑出来此字段恒为空, 是 by design 而非 bug.
     novelty_records: list[dict] = []  # 占位 — TODO iter#89 接 novelty_critic hook
     longrange_sample_every = max(1, getattr(args, "longrange_every", 5))
+    # Phase 5+ J: 长程 bench 用 — 每 N tick 把当前 bench JSON 落盘, 让 ARK
+    # 撞顶 / OOM / 手动 kill 时不丢前 N-1 tick 的进度. 默认 0 = 不 checkpoint.
+    checkpoint_every = max(0, int(getattr(args, "checkpoint_every", 0) or 0))
 
     for i in range(args.ticks):
         before = dict(tracker.snapshot.by_agent)
@@ -183,31 +249,46 @@ async def _bench(args) -> dict:
                     {"tick": cur_tick, "error": f"snapshot_failed: {e}"}
                 )
 
+        # Phase 5+ J: 写 checkpoint. 在 longrange 采样后 (确保最新 snapshot 已收集).
+        if checkpoint_every and (i + 1) % checkpoint_every == 0:
+            try:
+                cp_rep = _build_report_dict(
+                    label=args.label,
+                    novel_id=novel_id,
+                    target_ticks=args.ticks,
+                    bootstrap_sec=bootstrap_sec,
+                    tick_durations=tick_durations,
+                    snap=tracker.snapshot,
+                    tick_records=tick_records,
+                    narratives=narratives,
+                    open_loop_snapshots=open_loop_snapshots,
+                    novelty_records=novelty_records,
+                    completed_ticks=i + 1,
+                    checkpoint=True,
+                )
+                _write_checkpoint(cp_rep, args.label)
+                logging.getLogger(__name__).info(
+                    "[bench] checkpoint at tick %d/%d (%d narratives, %d tokens)",
+                    i + 1, args.ticks, len(narratives), tracker.snapshot.total_tokens,
+                )
+            except Exception as e:  # pragma: no cover — 不让 checkpoint 失败 kill bench
+                logging.getLogger(__name__).warning("[bench] checkpoint failed: %s", e)
+
     snap = tracker.snapshot
-    report = {
-        "label": args.label,
-        "novel_id": novel_id,
-        "ticks": args.ticks,
-        "bootstrap_sec": round(bootstrap_sec, 2),
-        "tick_durations_sec": [round(d, 2) for d in tick_durations],
-        "total_tokens": snap.total_tokens,
-        "by_agent_cumulative": dict(snap.by_agent),
-        "by_priority": dict(snap.by_priority),
-        "call_count": snap.call_count,
-        "per_tick": tick_records,
-        "narratives": narratives,
-        # v2.38 Phase 2 Stage 3 (iter#87) — longrange 原料.
-        "open_loop_snapshots": open_loop_snapshots,
-        "novelty_records": novelty_records,
-        # Phase 5-A: prefix cache 可见性. provider 不暴露 cached_tokens 时为 0,
-        # cache_hit_rate = 0.0 — 与"cache 不生效"区分不开, 但至少不掩盖.
-        "total_prompt_tokens": snap.total_prompt_tokens,
-        "total_completion_tokens": snap.total_completion_tokens,
-        "total_cached_tokens": snap.total_cached_tokens,
-        "cache_hit_rate": round(snap.cache_hit_rate, 4),
-        "by_agent_prompt": dict(snap.by_agent_prompt),
-        "by_agent_cached": dict(snap.by_agent_cached),
-    }
+    report = _build_report_dict(
+        label=args.label,
+        novel_id=novel_id,
+        target_ticks=args.ticks,
+        bootstrap_sec=bootstrap_sec,
+        tick_durations=tick_durations,
+        snap=snap,
+        tick_records=tick_records,
+        narratives=narratives,
+        open_loop_snapshots=open_loop_snapshots,
+        novelty_records=novelty_records,
+        completed_ticks=len(tick_records),
+        checkpoint=False,
+    )
 
     # v2.38 (iter#80) — Phase 2 quality metrics integration.
     if getattr(args, "quality", False):
@@ -551,6 +632,16 @@ def main():
         type=int,
         default=5,
         help="Stage 3 longrange 采样间隔 (默认每 5 tick 一次).",
+    )
+    parser.add_argument(
+        "--checkpoint-every",
+        type=int,
+        default=0,
+        help=(
+            "Phase 5+ J: 每 N tick 把 bench JSON 写盘 (atomic via tmp+rename). "
+            "默认 0 = 不 checkpoint (老行为). 长程 bench 推荐 10. 文件路径与 "
+            "最终输出一致 (bench-{label}.json), 中途 kill 时盘上为最近 checkpoint."
+        ),
     )
     # iter#121 Phase 3-B cast-confound 控制 — 跨 seed cost variance 实验用.
     parser.add_argument(
