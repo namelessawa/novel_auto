@@ -101,10 +101,49 @@ Step 4 诊断 7 个 "差 (<3)" cells, 全部失败模式一致:
 
 ## 未做 (carry forward)
 
-* Phase 5-C 候选 (PHASE5_PLAN J): 200-tick 长程 stress 验证 stale-skip + sideline 累积无 drift
-* Phase 5-D 候选 (PHASE5_PLAN K): pairwise judge 自动化基础设施
-* 3-seed cross-theme mimo gate 复测 (Phase 4-E 教训: 架构改动 mandatory cross-seed)
-* matrix 数据驱动: 挑 top preset 推到 UI 默认 + 文档"推荐风格→主题"映射
+> 2026-06-17 follow-up session 全部清零, 见 Phase 5-D 收尾下方.
+
+* ~~Phase 5-C 候选 (PHASE5_PLAN J): 200-tick 长程 stress 验证 stale-skip + sideline 累积无 drift~~ — commit 82820a5 单 seed PASS
+* ~~Phase 5-D 候选 (PHASE5_PLAN K): pairwise judge 自动化基础设施~~ — commit 519e8cf RUNBOOK + bench_tick --theme/--style
+* ~~3-seed cross-theme mimo gate 复测 (Phase 4-E 教训: 架构改动 mandatory cross-seed)~~ — commit 8213580 3/3 PASS
+* ~~matrix 数据驱动: 挑 top preset 推到 UI 默认 + 文档"推荐风格→主题"映射~~ — commit 3deccd8 UI ⭐ recommendation
+
+## Phase 5-D 收尾 (2026-06-17 follow-up session)
+
+5 commit, 全部基于 commit 82820a5 后:
+
+| commit | scope | impact |
+| --- | --- | --- |
+| `1cdd6c4` | ARK cache metadata 探针 (3 script, 31 LLM call) | 解释 200tick cached=0 异常 — ARK provider 端 metadata 不暴露, 非 Phase 5-A 退化. 写入 `verdict-phase5a-ark-cache-followup.md` |
+| `3deccd8` | matrix 数据驱动 UI 默认 | `/api/presets` 加 `recommendations` 字段; 前端选主题后风格 select ⭐ top-3 + ⚠ avoid; 12 个新 test |
+| `519e8cf` | bench_tick --theme/--style + RUNBOOK | 标准化 3-seed 入口 (steampunk/republic/apocalypse); 6 个新 test |
+| `d3a06a0` | cross-seed verdict aggregator + 6 test | 纯数据聚合 (no LLM), drift PASS/WARN/FAIL gate |
+| `8213580` | **3-seed cross-theme 长程 stress — 3/3 PASS** | seed1 steampunk 200tick + seed2 republic 100tick + seed3 apocalypse 100tick, 全部 drift 指标清; Phase 5-B SHIP confirmed |
+
+### 关键数据 (cross-theme drift)
+
+| seed | theme | ticks | tokens | last/first chars | open_loops 稳定 |
+| --- | --- | ---: | ---: | ---: | --- |
+| seed1 | steampunk_archive (plot-light) | 200 | 1,062,459 | +21.5% | 3-4 |
+| seed2 | republic_spy (plot-medium) | 100 | 423,141 | +6.5% | 5 |
+| seed3 | apocalypse_wasteland (plot-dense) | 100 | 438,843 | -0.9% | 5 |
+
+stale-skip 率跨 seed 43-43.5% 一致, 完全在 PHASE5_PLAN target window (30-50%).
+
+### 新增 24 个 test (累计 Phase 5 = 83 new test)
+
+* test_recommended_pairs (12) — lru_cache + 缺文件/损坏 graceful + payload schema
+* test_bench_tick_theme_args (6) — argparse + 3-seed runbook resolution
+* test_verdict_longrange_cross_seed (6) — drift PASS/WARN/INCOMPLETE/ERROR
+
+### ARK 端可观测性 gap (info-only)
+
+`cached_tokens` 字段在 ARK volces `/api/coding/v3` 当前不暴露 (2026-06-17 起).
+* Phase 5-A 架构 (SYSTEM bit-identical) 由 unit test 锁定, 不依赖 metadata
+* bench MD `cache_hit_rate` 信号失效, 不代表实际未命中
+* 切回 DeepSeek 官方 endpoint 或 mimo 可能恢复
+
+详见 `verdict-phase5a-ark-cache-followup.md`.
 
 ## 数据 / verdict 文件
 
