@@ -58,7 +58,16 @@ def isolated_env(monkeypatch):
 def patch_bootstrap_world(monkeypatch):
     """跳过真实 LLM 的 bootstrap_world — 直接构造一个有 1 角色 1 锚点的 TickState。"""
 
-    async def _fake(*, novel_id, data_dir, seed, positioning, references, title=""):
+    async def _fake(
+        *,
+        novel_id,
+        data_dir,
+        seed,
+        positioning,
+        references,
+        title="",
+        style_preset_key="",
+    ):
         os.makedirs(data_dir, exist_ok=True)
         from memory.tick_state import TickState
         from memory_system.models import (
@@ -295,7 +304,16 @@ async def test_bootstrap_world_conflict_409_for_same_novel(
     from fastapi import HTTPException
 
     # 让 fake bootstrap_world 不要立即完成 — sleep 一会儿模拟真实 LLM
-    async def _slow(*, novel_id, data_dir, seed, positioning, references, title=""):
+    async def _slow(
+        *,
+        novel_id,
+        data_dir,
+        seed,
+        positioning,
+        references,
+        title="",
+        style_preset_key="",
+    ):
         os.makedirs(data_dir, exist_ok=True)
         from memory.tick_state import TickState
         from memory_system.models import WorldState
@@ -334,7 +352,16 @@ async def test_bootstrap_world_failure_marks_task_failed(
     )
     from tasks.task_manager import get_task_manager
 
-    async def _boom(*, novel_id, data_dir, seed, positioning, references, title=""):
+    async def _boom(
+        *,
+        novel_id,
+        data_dir,
+        seed,
+        positioning,
+        references,
+        title="",
+        style_preset_key="",
+    ):
         raise RuntimeError("LLM 配额耗尽")
 
     monkeypatch.setattr("api.bootstrap_routes.bootstrap_world", _boom)
