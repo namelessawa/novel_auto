@@ -4,6 +4,7 @@ import {
   createNovel,
   createSectionTask,
   fetchNovels,
+  fetchPresets,
   fetchTickStatus,
   generateSectionStream,
   getUserLLMConfig,
@@ -46,11 +47,16 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
   const [novels, setNovels] = useState([])
   const [createTitle, setCreateTitle] = useState('')
   // v2.25 — createOutline 改名为 createSeed 在语义上更准确 (它现在是 bootstrap_world
-  // 的 seed 参数, 不再是 generate_section 的 global_outline).
+  // 的 seed 参数, 不再是 generate_section of global_outline).
   const [createSeed, setCreateSeed] = useState('')
   const [createPositioning, setCreatePositioning] = useState('')
   const [createReferences, setCreateReferences] = useState('')
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  // Phase 5+ — theme / style preset 下拉
+  const [createTheme, setCreateTheme] = useState('')
+  const [createStyle, setCreateStyle] = useState('')
+  // Phase 5+ — 从后端拉的 presets 注册表 (themes + styles), 启动时 fetch 一次
+  const [presets, setPresets] = useState({ themes: [], styles: [], available: false })
   const [continueId, setContinueId] = useState('')
   const [continuePrompt, setContinuePrompt] = useState('')
 
@@ -68,6 +74,22 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
 
   // v2.23 — Tick runtime 状态用于 "当前小说生成进度" 展示
   const [tickStatus, setTickStatus] = useState(null)
+
+  // Phase 5+ — 启动时拉一次 presets, 失败时 silent fallback (presets.available=false 不显示下拉)
+  useEffect(() => {
+    let cancelled = false
+    fetchPresets()
+      .then((data) => {
+        if (cancelled) return
+        if (data && data.available) setPresets(data)
+      })
+      .catch((err) => {
+        if (!cancelled) console.warn('fetchPresets failed (UI fallback to seed-only):', err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const controllerRef = useRef(null)
   const textRef = useRef(null)
@@ -186,9 +208,12 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
 
       // 2. 立即调 bootstrap-world — 后端默认 also_generate_first_section=true,
       // 它内部跑完 4 阶段会链式入队 bootstrap_section, 首节自动生成。
+      // Phase 5+: theme + style 跟 seed 一起送, 后端持久化 style_preset_key 到 TickState.
       setStatusText('正在为《' + title + '》生成世界种子…')
       const bootstrapTask = await bootstrapWorld(entry.id, {
         seed,
+        theme: createTheme,
+        style: createStyle,
         positioning: createPositioning.trim() || DEFAULT_POSITIONING,
         references: createReferences.trim() || DEFAULT_REFERENCES,
         also_generate_first_section: true,
@@ -199,6 +224,8 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       setCreateSeed('')
       setCreatePositioning('')
       setCreateReferences('')
+      setCreateTheme('')
+      setCreateStyle('')
       setAdvancedOpen(false)
       await loadNovels()
       onAfterCreated?.(entry.id)
@@ -413,6 +440,64 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
               </button>
             </div>
           </div>
+          {/* Phase 5+: 主题 + 风格 preset 下拉 — 后端 /api/presets 注册表驱动 */}
+          {presets.available && (
+            <div style={{ marginBottom: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <label className="input-label">主题 (可选)</label>
+                <select
+                  className="input-field"
+                  value={createTheme}
+                  onChange={(e) => {
+                    const k = e.target.value
+                    const prevTheme = createTheme
+                    setCreateTheme(k)
+                    // 选了主题且 seed 为空 → 自动填充 (用户仍可手改)
+                    if (k && !createSeed.trim()) {
+                      const t = presets.themes.find((x) => x.key === k)
+                      if (t) setCreateSeed(t.seed)
+                    } else if (!k && prevTheme) {
+                      // 反选主题 — 清空 seed 若当前 seed 与刚才主题相同 (反向自动填充),
+                      // 防止 (theme="", seed=老主题原文) 不一致状态
+                      const old = presets.themes.find((x) => x.key === prevTheme)
+                      if (old && createSeed.trim() === old.seed.trim()) {
+                        setCreateSeed('')
+                      }
+                    }
+                  }}
+                  disabled={generating}
+                >
+                  <option value="">(自定义 seed)</option>
+                  {presets.themes.map((t) => (
+                    <option key={t.key} value={t.key}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="input-label">风格 preset (可选)</label>
+                <select
+                  className="input-field"
+                  value={createStyle}
+                  onChange={(e) => setCreateStyle(e.target.value)}
+                  disabled={generating}
+                  title={
+                    createStyle
+                      ? presets.styles.find((x) => x.key === createStyle)?.description || ''
+                      : '默认 literary (描写细致)'
+                  }
+                >
+                  <option value="">默认 (literary)</option>
+                  {presets.styles.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
           <div style={{ marginBottom: 12 }}>
             <label className="input-label">
               世界种子 <span style={{ color: 'var(--accent-rose)' }}>*</span>

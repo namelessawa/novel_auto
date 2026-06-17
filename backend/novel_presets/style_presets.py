@@ -210,6 +210,48 @@ STYLE_PRESETS: dict[str, StylePreset] = {
             "悬念转. 禁: 现代口语词, 网络词, 心理学化术语.\n\n"
         ),
     ),
+    # --- Phase 5+ 扩量: 哲思 / 戏剧化 / 粗粝写实 --------------------------
+    "philosophical_meditative": StylePreset(
+        key="philosophical_meditative",
+        label="哲思冥想 (博尔赫斯式)",
+        description=(
+            "外象事件少, 时间感破碎, 角色行动是哲学命题的载体. 适合实验/哲思文学."
+        ),
+        narrator_addendum=(
+            "# 本作风格契约 — philosophical_meditative\n"
+            "外象事件可压缩, 重点是角色被某个概念 (镜像 / 时间 / 名字 / 选择) "
+            "缠住的状态. 一段允许 1-2 句抽象命题但必须落到一个具体物 (一面镜, "
+            "一张地图, 一个名字的发音变了). 时间感可错位 (此刻同时是十年后).\n"
+            "**最低人物存在度**: 哲学命题挂在视点角色的具体反应上 (停下, 重读, "
+            "抬眼), 不写无角色的概念散文.\n\n"
+        ),
+    ),
+    "screenplay_visual": StylePreset(
+        key="screenplay_visual",
+        label="戏剧化镜头 (剧本笔法)",
+        description=(
+            "段落即'镜头', 切换频繁, 视觉细节优先. 适合改编向 / 视觉强烈题材."
+        ),
+        narrator_addendum=(
+            "# 本作风格契约 — screenplay_visual\n"
+            "每段是一个'镜头': 开篇 1 句定景 (景别 + 主体 + 状态), 中间 1-2 句"
+            "动作或对白, 段末 1 句'切换钩' (镜头将转向何处). 描述视觉可拍, "
+            "无内心独白 — 心理用动作 + 表情显. 禁: 抽象比喻, 长心理段.\n\n"
+        ),
+    ),
+    "rough_grit_realism": StylePreset(
+        key="rough_grit_realism",
+        label="粗粝写实 (反美化)",
+        description=(
+            "肉身重量感强, 拒绝优雅. 物体破损/气味/汗水/疲倦都正面写. 适合底层 / 战争 / 末世粗砺题材."
+        ),
+        narrator_addendum=(
+            "# 本作风格契约 — rough_grit_realism\n"
+            "拒绝美化 — 汗、油、伤口、霉味、肌肉酸都正面写. 物件残破才真实 "
+            "(裂的杯沿, 缺角的桌, 鞋底磨穿). 角色累, 角色疼, 角色饿. 对白带"
+            "口音/口语/粗话 (节制). 禁: 浪漫化伤痛, 美化贫穷, 抒情过场.\n\n"
+        ),
+    ),
 }
 
 

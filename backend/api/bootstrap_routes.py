@@ -26,6 +26,21 @@ from tasks.task_manager import (
     get_task_manager,
 )
 
+# Phase 5+: theme + style preset 注册表 — UI 用 GET /api/presets 拉取,
+# bootstrap 端点用 theme key 自动 resolve seed.
+try:
+    from novel_presets import (
+        STYLE_PRESETS,
+        THEME_SEEDS,
+        get_style_preset,
+        get_theme_seed,
+    )
+    _PRESETS_AVAILABLE = True
+except ImportError:
+    _PRESETS_AVAILABLE = False
+    STYLE_PRESETS = {}
+    THEME_SEEDS = {}
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["bootstrap"])
@@ -34,8 +49,60 @@ DEFAULT_POSITIONING = "古典含蓄、心理白描、节奏舒缓、避免华丽
 DEFAULT_REFERENCES = "Le Guin / 古龙"
 
 
+# ---- Phase 5+ presets registry — UI 拉下拉列表 -----------------------------
+
+
+@router.get("/api/presets")
+async def get_presets(current_user: User = Depends(get_current_user)):
+    """Phase 5+: 列出 theme + style preset 注册表, 前端动态构建下拉.
+
+    Auth-gated — seed 字符串属 prompt engineering IP, 不公开. 登录用户可读
+    (前端 authedFetch 自动带 token).
+    """
+    if not _PRESETS_AVAILABLE:
+        return {"themes": [], "styles": [], "available": False}
+    return {
+        "themes": [
+            {
+                "key": t.key,
+                "label": t.label,
+                "category": t.category,
+                "seed": t.seed,
+            }
+            for t in THEME_SEEDS.values()
+        ],
+        "styles": [
+            {
+                "key": s.key,
+                "label": s.label,
+                "description": s.description,
+            }
+            for s in STYLE_PRESETS.values()
+        ],
+        "available": True,
+    }
+
+
 class BootstrapWorldRequest(BaseModel):
-    seed: str = Field(min_length=1, description="世界种子描述 (主题 / 设定)")
+    # Phase 5+: seed 现在可空, 若给 theme key 自动从 THEME_SEEDS 取
+    seed: str = Field(
+        default="",
+        description="世界种子描述 (主题 / 设定). 空时必须给 theme.",
+    )
+    theme: str = Field(
+        default="",
+        description=(
+            "Phase 5+ 主题 key (novel_presets.THEME_SEEDS). 设置时若 seed 空, "
+            "用注册表里的 seed."
+        ),
+    )
+    style: str = Field(
+        default="",
+        description=(
+            "Phase 5+ 风格 preset key (novel_presets.STYLE_PRESETS). "
+            "持久化进 TickState, narrator 每 tick 拼到 user_prompt 头."
+        ),
+    )
     positioning: str = Field(
         default=DEFAULT_POSITIONING,
         description="作品定位 (文风 / 节奏)",
@@ -62,12 +129,36 @@ async def bootstrap_world_endpoint(
         raise HTTPException(status_code=404, detail=f"novel {novel_id!r} 不存在")
     novel_title = (novel.get("title") or "").strip()
 
+    # Phase 5+: theme / style 校验 + seed 自动 resolve
+    resolved_seed = (req.seed or "").strip()
+    resolved_style = (req.style or "").strip()
+    if req.theme:
+        if not _PRESETS_AVAILABLE or req.theme not in THEME_SEEDS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"theme {req.theme!r} not in registry (valid: {sorted(THEME_SEEDS) if _PRESETS_AVAILABLE else 'none'})",
+            )
+        if not resolved_seed:
+            resolved_seed = THEME_SEEDS[req.theme].seed
+    if resolved_style:
+        if not _PRESETS_AVAILABLE or resolved_style not in STYLE_PRESETS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"style {resolved_style!r} not in registry (valid: {sorted(STYLE_PRESETS) if _PRESETS_AVAILABLE else 'none'})",
+            )
+    if not resolved_seed:
+        raise HTTPException(
+            status_code=400,
+            detail="必须提供 seed 或 theme (从注册表自动取 seed)",
+        )
+
     executor = _make_bootstrap_world_executor(
-        seed=req.seed,
+        seed=resolved_seed,
         positioning=req.positioning,
         references=req.references,
         title=novel_title,
         also_generate_first_section=req.also_generate_first_section,
+        style_preset_key=resolved_style,
     )
 
     mgr = get_task_manager()
@@ -98,6 +189,7 @@ def _make_bootstrap_world_executor(
     references: str,
     title: str,
     also_generate_first_section: bool,
+    style_preset_key: str = "",
 ):
     async def _executor(
         updater: ProgressUpdater, user_id: str, novel_id: str
@@ -118,6 +210,7 @@ def _make_bootstrap_world_executor(
                 positioning=positioning,
                 references=references,
                 title=title,
+                style_preset_key=style_preset_key,
             )
         except Exception:
             logger.exception("bootstrap_world failed for novel '%s'", novel_id)

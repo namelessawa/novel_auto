@@ -349,6 +349,7 @@ async def bootstrap_world(
     cast_a_count: int | None = None,
     cast_b_count: int | None = None,
     cast_c_count: int | None = None,
+    style_preset_key: str = "",
 ) -> TickState:
     """完整冷启动序列。返回填充好的 TickState 实例(已 save)。
 
@@ -361,6 +362,9 @@ async def bootstrap_world(
     # 早早写入标题, 即便后续 LLM 阶段炸了也不丢
     if title:
         ts.set_novel_title(title)
+    # Phase 5+: 持久化用户选定的 style preset. 空字符串 = 默认行为.
+    if style_preset_key:
+        ts.set_style_preset_key(style_preset_key)
 
     # === Step 1: WorldState ============================================
     logger.info("[1/4] Generating WorldState…")
@@ -587,6 +591,23 @@ async def bootstrap_world(
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Phase 5+: 延迟导入注册表 — 仅 CLI 路径需要, 老调用方 (import bootstrap_world
+    # 直接调) 不被强制依赖.
+    try:
+        from novel_presets import (
+            STYLE_PRESETS,
+            THEME_SEEDS,
+            list_style_keys,
+            list_theme_keys,
+        )
+        _presets_available = True
+    except ImportError:
+        _presets_available = False
+        STYLE_PRESETS = {}
+        THEME_SEEDS = {}
+        list_theme_keys = lambda: []  # noqa: E731
+        list_style_keys = lambda: []  # noqa: E731
+
     parser = argparse.ArgumentParser(description="冷启动一个新虚构世界")
     parser.add_argument("--novel-id", required=True, help="小说 id (用作数据目录名)")
     parser.add_argument(
@@ -594,7 +615,37 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="数据目录,默认 backend/data/novels/<id>",
     )
-    parser.add_argument("--seed", required=True, help="世界种子描述")
+    # Phase 5+: --seed 现在可选, --theme 在 novel_presets.THEME_SEEDS 查表自动取 seed.
+    parser.add_argument(
+        "--seed",
+        default="",
+        help="世界种子描述. 留空时必须给 --theme (从注册表取 seed).",
+    )
+    parser.add_argument(
+        "--theme",
+        default="",
+        # MEDIUM fix: 用 ([""] + keys) if available else [""] — operator precedence
+        # 老版 `[""] + list() if x else None` 在 x=False 时 choices=None 让 argparse
+        # 接受任意字符串, 把校验推迟到 KeyError raw traceback.
+        choices=([""] + list_theme_keys()) if _presets_available else [""],
+        help=(
+            "Phase 5+: 主题 key (novel_presets.THEME_SEEDS). 设置时若未给 "
+            "--seed, 用注册表里的 seed. " + (
+                f"可选: {', '.join(list_theme_keys())}" if _presets_available else ""
+            )
+        ),
+    )
+    parser.add_argument(
+        "--style",
+        default="",
+        choices=([""] + list_style_keys()) if _presets_available else [""],
+        help=(
+            "Phase 5+: 风格 preset key (novel_presets.STYLE_PRESETS). 持久化进 "
+            "TickState.style_preset_key, narrator 每 tick 拼到 user_prompt 头. " + (
+                f"可选: {', '.join(list_style_keys())}" if _presets_available else ""
+            )
+        ),
+    )
     parser.add_argument(
         "--title",
         default="",
@@ -632,6 +683,15 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
+    # Phase 5+: --seed 缺省时, --theme 必须给, 从 THEME_SEEDS 取 seed
+    resolved_seed = args.seed
+    if not resolved_seed:
+        if not args.theme:
+            parser.error("--seed 留空时必须给 --theme (从 novel_presets 注册表取 seed)")
+        if not _presets_available:
+            parser.error("novel_presets 未安装, 无法 --theme 自动解析 seed")
+        resolved_seed = THEME_SEEDS[args.theme].seed
+
     data_dir = args.data_dir or os.path.join(
         _BACKEND_DIR, "data", "novels", args.novel_id
     )
@@ -641,13 +701,14 @@ def main(argv: list[str] | None = None) -> int:
         bootstrap_world(
             novel_id=args.novel_id,
             data_dir=data_dir,
-            seed=args.seed,
+            seed=resolved_seed,
             positioning=args.positioning,
             references=args.references,
             title=args.title,
             cast_a_count=args.cast_a_count,
             cast_b_count=args.cast_b_count,
             cast_c_count=args.cast_c_count,
+            style_preset_key=args.style,
         )
     )
     # Windows GBK 控制台无法编码 ✓ — 用 ASCII 替代

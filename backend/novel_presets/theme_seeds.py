@@ -183,6 +183,57 @@ THEME_SEEDS: dict[str, ThemeSeed] = {
             "悬着曹军号牌的瘦削老者。"
         ),
     ),
+    # --- 网文爆款 子类 (Phase 5+ 扩量) -----------------------------------
+    "system_cheat": ThemeSeed(
+        key="system_cheat",
+        label="系统流爽文",
+        category="modern_cn",
+        seed=(
+            "送外卖的大学生周野在暴雨夜被电流击中, 醒来听见一个机械女声: "
+            "'宿主, 检测到时空裂缝, 签到系统强制绑定. 第一个签到地点: "
+            "三里屯顶级私募基金 9 层 CEO 办公室, 倒计时 60 分钟.'"
+        ),
+    ),
+    "transmigration_book": ThemeSeed(
+        key="transmigration_book",
+        label="穿书穿越",
+        category="modern_cn",
+        seed=(
+            "网文编辑沈昭加班审稿到凌晨, 一行字突然把她吸了进去. 她睁眼"
+            "发现自己穿成了刚审完那本 200 万字总裁文里第三章被原女主推下楼"
+            "的炮灰女配, 而剧情正卡在'楼梯口'前三句对白."
+        ),
+    ),
+    "mecha_pilot": ThemeSeed(
+        key="mecha_pilot",
+        label="机甲驾驶员",
+        category="speculative",
+        seed=(
+            "第三次环太平洋裂缝战役第七年, 联军最后一台四代机甲'孤狼' "
+            "重启需要双人神经同步. 唯一活下来能匹配的副驾, 是十年前被列为"
+            "叛徒处决的前队长林越的双胞胎妹妹林夙."
+        ),
+    ),
+    "showbiz_entertainment": ThemeSeed(
+        key="showbiz_entertainment",
+        label="娱乐圈流量",
+        category="modern_cn",
+        seed=(
+            "选秀出道第三年的过气小生顾辞, 在直播间被一条全网热搜炸到掉粉"
+            "百万 — 七年前他被代笔的那部短篇小说获了文学奖, 真作者刚现身,"
+            "是当年说'你写得真好'的剧组场记."
+        ),
+    ),
+    "gourmet_culinary": ThemeSeed(
+        key="gourmet_culinary",
+        label="美食技能",
+        category="modern_cn",
+        seed=(
+            "祖传刀工的鱼生师傅阿杰被诊出味觉减退, 师父留下的最后嘱托是"
+            "在闭店前做完一道叫'忘味'的怀石. 那道菜的方子写在一张老照片"
+            "背面, 照片里的人他从来没见过."
+        ),
+    ),
     # --- 默认 (向后兼容: 原 bench_tick.py _DEFAULT_SEED) ------------------
     "steampunk_archive": ThemeSeed(
         key="steampunk_archive",

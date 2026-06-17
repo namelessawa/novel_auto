@@ -1507,6 +1507,9 @@ class Orchestrator:
             char_profiles=profiles,
             world_state=self._tick_state.world_state,
             prose_tail=self._prose_tail,
+            # Phase 5+: 持久化的风格 preset (bootstrap 写入 / UI 改). 空 → fallback
+            # 到 NOVEL_STYLE_PRESET env / 默认 narrator 行为.
+            style_preset_key=getattr(self._tick_state, "style_preset_key", "") or "",
         )
 
     def _build_creativity_hints(self) -> list[str]:

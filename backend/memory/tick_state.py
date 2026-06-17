@@ -105,6 +105,10 @@ class TickState:
 
         # 风格锚点(按 weight 降序排列)
         self._style_anchors: list[StyleAnchor] = []
+        # Phase 5+: 用户选定的 style preset key (来自 novel_presets.STYLE_PRESETS).
+        # bootstrap 时写入, narrator 每 tick 读取并把对应 preset.narrator_addendum
+        # 拼到 user_prompt 头部. 空字符串 = 用 narrator 默认行为 (与老 bench 等价).
+        self._style_preset_key: str = ""
 
         # EventInjector / Narrator 调度参考
         self._last_event_tick_by_type: dict[str, int] = {}
@@ -153,6 +157,19 @@ class TickState:
         空字符串视为"清空" (rename 到空名也允许, 防止 TickState 持有过时标题)。
         """
         self._novel_title = (title or "").strip()
+
+    @property
+    def style_preset_key(self) -> str:
+        """Phase 5+: 当前小说的风格 preset key (空 = 默认 literary 行为)."""
+        return self._style_preset_key
+
+    def set_style_preset_key(self, key: str) -> None:
+        """更新 style preset key. bootstrap 或 UI rename 同步.
+
+        空字符串视为"清空" (回到默认 narrator 行为). 不在此层验证 key 是否
+        在 STYLE_PRESETS 注册 — narrator 渲染时 silent fallback 到空块.
+        """
+        self._style_preset_key = (key or "").strip()
 
     # ------------------------------------------------------------------
     # tick 推进
@@ -533,6 +550,7 @@ class TickState:
             # iter#139 Phase 4-E — sideline TTL map.
             "sidelined_characters": dict(self._sidelined_characters),
             "style_anchors": [a.model_dump(mode="json") for a in self._style_anchors],
+            "style_preset_key": self._style_preset_key,
             "last_event_tick_by_type": dict(self._last_event_tick_by_type),
             "novelty_warnings": list(self._novelty_warnings),
             "story_arc": (
@@ -583,6 +601,7 @@ class TickState:
             self._current_tick = int(payload.get("current_tick", 0))
             self._last_narration_tick = int(payload.get("last_narration_tick", 0))
             self._novel_title = str(payload.get("novel_title", "") or "")
+            self._style_preset_key = str(payload.get("style_preset_key", "") or "")
             self._world_state = WorldState.model_validate(
                 payload.get("world_state", {})
             )

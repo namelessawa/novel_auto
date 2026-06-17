@@ -804,6 +804,20 @@ export async function bootstrapWorld(novelId, payload) {
   return assertOk(res)
 }
 
+/**
+ * Phase 5+ — 从后端拉 theme + style preset 注册表 (公开元数据, 无 auth 需要).
+ *
+ * @returns {Promise<{
+ *   themes: Array<{ key: string, label: string, category: string, seed: string }>,
+ *   styles: Array<{ key: string, label: string, description: string }>,
+ *   available: boolean,
+ * }>}
+ */
+export async function fetchPresets() {
+  const res = await authedFetch('/api/presets')
+  return assertOk(res)
+}
+
 export async function createSectionTask(novelId = null) {
   const body = novelId ? { novel_id: novelId } : {}
   const res = await authedFetch('/api/section/generate', {

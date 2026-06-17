@@ -300,6 +300,8 @@ class NarratorAgent:
         char_profiles: dict[str, CharacterProfile] | None = None,
         world_state: WorldState | None = None,
         prose_tail: str = "",
+        # Phase 5+: TickState 持久化的 style preset key (空 → fallback 到 env / 默认)
+        style_preset_key: str = "",
     ) -> NarratorOutput:
         """主入口。无事件或事件价值过低时返回 should_narrate=False。
 
@@ -376,6 +378,7 @@ class NarratorAgent:
             world_state=world_state,
             prose_tail=prose_tail,
             style_anchors=style_anchors,
+            style_preset_key=style_preset_key,
         )
 
         try:
@@ -540,24 +543,27 @@ class NarratorAgent:
         )
 
     @staticmethod
-    def _render_style_preset_block() -> str:
-        """Phase 5+: 从 ``NOVEL_STYLE_PRESET`` env 读取风格 preset 并渲染.
+    def _render_style_preset_block(key: str | None = None) -> str:
+        """Phase 5+: 渲染风格 preset block.
+
+        解析顺序:
+        1. ``key`` 显式参数 (从 TickState.style_preset_key 传入) — Phase 5+ 持久化路径
+        2. ``NOVEL_STYLE_PRESET`` env — Phase 5-A 早期 matrix bench 用过的临时旋钮
 
         未设 / 空 / 未知 key 都安静返回空串 — 老 bench / 未升级用户完全等价.
-        位置在 user_prompt 头部, 在 style_anchors 块之前. 风格契约比语感示例更
-        正式 (preset 注册表写了'本作怎么写'), 放最前面让模型先吃进去.
+        位置在 user_prompt 头部, 在 style_anchors 块之前.
         """
         if not _STYLE_PRESETS_AVAILABLE:
             return ""
-        key = (os.environ.get("NOVEL_STYLE_PRESET") or "").strip()
-        if not key:
+        resolved = (key or "").strip() or (os.environ.get("NOVEL_STYLE_PRESET") or "").strip()
+        if not resolved:
             return ""
         try:
-            preset = get_style_preset(key)
+            preset = get_style_preset(resolved)
         except KeyError:
             logger.warning(
-                "NOVEL_STYLE_PRESET=%r unknown — ignoring (valid: %s)",
-                key, ",".join(list_style_keys()),
+                "style preset key=%r unknown — ignoring (valid: %s)",
+                resolved, ",".join(list_style_keys()),
             )
             return ""
         return preset.narrator_addendum
@@ -718,13 +724,16 @@ class NarratorAgent:
         world_state: WorldState | None = None,
         prose_tail: str = "",
         style_anchors: list[StyleAnchor] | None = None,
+        # Phase 5+: 显式 style preset key (TickState 透传过来),
+        # _render_style_preset_block 会优先用它, fallback 到 env.
+        style_preset_key: str = "",
     ) -> str:
         tick_actions = tick_actions or []
         char_profiles = char_profiles or {}
         style_anchors = style_anchors or []
         # Phase 5+: 顺序 = preset addendum (本作怎么写) → style_anchors (语感示例)
         # 两个都拼在 # 连载进度 之前. 都为空时返回空串, 老 bench bit-identical.
-        preset_block = self._render_style_preset_block()
+        preset_block = self._render_style_preset_block(style_preset_key)
         anchor_block = self._render_style_anchor_block(style_anchors)
         style_block = preset_block + anchor_block
 
