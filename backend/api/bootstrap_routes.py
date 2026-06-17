@@ -34,12 +34,16 @@ try:
         THEME_SEEDS,
         get_style_preset,
         get_theme_seed,
+        recommended_pairs_api_payload,
     )
     _PRESETS_AVAILABLE = True
 except ImportError:
     _PRESETS_AVAILABLE = False
     STYLE_PRESETS = {}
     THEME_SEEDS = {}
+
+    def recommended_pairs_api_payload() -> dict:
+        return {"available": False, "version": 0}
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +64,12 @@ async def get_presets(current_user: User = Depends(get_current_user)):
     (前端 authedFetch 自动带 token).
     """
     if not _PRESETS_AVAILABLE:
-        return {"themes": [], "styles": [], "available": False}
+        return {
+            "themes": [],
+            "styles": [],
+            "available": False,
+            "recommendations": {"available": False, "version": 0},
+        }
     return {
         "themes": [
             {
@@ -80,6 +89,9 @@ async def get_presets(current_user: User = Depends(get_current_user)):
             for s in STYLE_PRESETS.values()
         ],
         "available": True,
+        # Phase 5-D follow-up: matrix-bench-derived per-theme style ranking,
+        # 让前端选了主题后能把 top-3 风格标 ⭐ 并把避雷配对置灰。
+        "recommendations": recommended_pairs_api_payload(),
     }
 
 

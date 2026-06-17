@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   bootstrapWorld,
   createNovel,
@@ -56,7 +56,14 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
   const [createTheme, setCreateTheme] = useState('')
   const [createStyle, setCreateStyle] = useState('')
   // Phase 5+ — 从后端拉的 presets 注册表 (themes + styles), 启动时 fetch 一次
-  const [presets, setPresets] = useState({ themes: [], styles: [], available: false })
+  // Phase 5-D follow-up: 顶层加 recommendations (208-cell matrix bench 数据),
+  // 让选了主题后风格 select 能 ⭐ 标注 top-3, 避雷 dim 提示.
+  const [presets, setPresets] = useState({
+    themes: [],
+    styles: [],
+    available: false,
+    recommendations: { available: false, by_theme: {}, avoid_pairs: [] },
+  })
   const [continueId, setContinueId] = useState('')
   const [continuePrompt, setContinuePrompt] = useState('')
 
@@ -74,6 +81,41 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
 
   // v2.23 — Tick runtime 状态用于 "当前小说生成进度" 展示
   const [tickStatus, setTickStatus] = useState(null)
+
+  // Phase 5-D follow-up — 根据已选主题计算推荐风格 ordering / 标注:
+  // - recommendedStyles: 已选主题的全部 style 排名 (rank 1..N)
+  // - recommendedByStyle: style_key → rank/mean/is_top, 渲染 ⭐ + 数值
+  // - avoidStyleKeys: 已选主题下 mean < 4 的避雷风格, 渲染 ⚠ 标注
+  // - sortedStyles: 把推荐的置顶, 其余按原序
+  const recommendedStyles = useMemo(() => {
+    if (!createTheme) return []
+    const rec = presets?.recommendations
+    if (!rec?.available) return []
+    return rec.by_theme?.[createTheme] || []
+  }, [createTheme, presets])
+
+  const recommendedByStyle = useMemo(() => {
+    const m = {}
+    for (const r of recommendedStyles) m[r.style] = r
+    return m
+  }, [recommendedStyles])
+
+  const avoidStyleKeys = useMemo(() => {
+    if (!createTheme) return new Set()
+    const rec = presets?.recommendations
+    if (!rec?.available) return new Set()
+    return new Set(
+      (rec.avoid_pairs || [])
+        .filter((p) => p.theme === createTheme)
+        .map((p) => p.style),
+    )
+  }, [createTheme, presets])
+
+  const sortedStyles = useMemo(() => {
+    if (!createTheme || recommendedStyles.length === 0) return presets.styles
+    const rankOf = (k) => recommendedByStyle[k]?.rank ?? 9999
+    return [...presets.styles].sort((a, b) => rankOf(a.key) - rankOf(b.key))
+  }, [createTheme, presets.styles, recommendedStyles, recommendedByStyle])
 
   // Phase 5+ — 启动时拉一次 presets, 失败时 silent fallback (presets.available=false 不显示下拉)
   useEffect(() => {
@@ -476,7 +518,14 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
                 </select>
               </div>
               <div>
-                <label className="input-label">风格 preset (可选)</label>
+                <label className="input-label">
+                  风格 preset (可选)
+                  {createTheme && recommendedStyles.length > 0 && (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>
+                      — ⭐ 为本主题推荐
+                    </span>
+                  )}
+                </label>
                 <select
                   className="input-field"
                   value={createStyle}
@@ -489,12 +538,30 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
                   }
                 >
                   <option value="">默认 (literary)</option>
-                  {presets.styles.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
+                  {sortedStyles.map((s) => {
+                    const rec = recommendedByStyle[s.key]
+                    const isAvoid = avoidStyleKeys.has(s.key)
+                    const prefix = rec?.is_top
+                      ? `⭐ `
+                      : isAvoid
+                        ? '⚠ '
+                        : ''
+                    const suffix = rec ? `  (${rec.mean.toFixed(2)})` : ''
+                    return (
+                      <option key={s.key} value={s.key}>
+                        {prefix}{s.label}{suffix}
+                      </option>
+                    )
+                  })}
                 </select>
+                {createTheme && recommendedStyles.length > 0 && (
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                    本主题推荐: {recommendedStyles.slice(0, 3).map((r) => {
+                      const s = presets.styles.find((x) => x.key === r.style)
+                      return s ? `${s.label} (${r.mean.toFixed(2)})` : r.style
+                    }).join(' / ')}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -807,10 +807,25 @@ export async function bootstrapWorld(novelId, payload) {
 /**
  * Phase 5+ — 从后端拉 theme + style preset 注册表 (公开元数据, 无 auth 需要).
  *
+ * Phase 5-D follow-up: 响应里现在还带 ``recommendations.by_theme`` (208-cell
+ * matrix bench retro judge 数据), 让选了主题之后能给风格 select 加 ⭐ 排序.
+ *
  * @returns {Promise<{
  *   themes: Array<{ key: string, label: string, category: string, seed: string }>,
  *   styles: Array<{ key: string, label: string, description: string }>,
  *   available: boolean,
+ *   recommendations?: {
+ *     available: boolean,
+ *     version: number,
+ *     by_theme: Record<string, Array<{
+ *       style: string, mean: number, rank: number, is_top: boolean
+ *     }>>,
+ *     perfect_pairs: Array<{ theme: string, style: string, mean: number }>,
+ *     avoid_pairs: Array<{
+ *       theme: string, style: string, mean: number, low_dimensions: string[]
+ *     }>,
+ *     style_universal_avg: Record<string, number>,
+ *   },
  * }>}
  */
 export async function fetchPresets() {

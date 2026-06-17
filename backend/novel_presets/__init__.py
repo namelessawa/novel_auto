@@ -10,6 +10,24 @@ style is a single-line addition to the registry dict.
 
 from __future__ import annotations
 
+from .recommended_pairs import (
+    avoid_pairs as recommended_avoid_pairs,
+)
+from .recommended_pairs import (
+    is_available as recommended_pairs_available,
+)
+from .recommended_pairs import (
+    perfect_pairs as recommended_perfect_pairs,
+)
+from .recommended_pairs import (
+    style_universal_avg as recommended_style_universal_avg,
+)
+from .recommended_pairs import (
+    to_api_payload as recommended_pairs_api_payload,
+)
+from .recommended_pairs import (
+    top_styles_for_theme,
+)
 from .style_presets import (
     STYLE_PRESETS,
     StylePreset,
@@ -32,4 +50,10 @@ __all__ = [
     "ThemeSeed",
     "get_theme_seed",
     "list_theme_keys",
+    "recommended_avoid_pairs",
+    "recommended_pairs_available",
+    "recommended_perfect_pairs",
+    "recommended_style_universal_avg",
+    "recommended_pairs_api_payload",
+    "top_styles_for_theme",
 ]

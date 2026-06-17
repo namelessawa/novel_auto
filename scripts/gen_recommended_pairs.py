@@ -175,10 +175,106 @@ def render_md(cells: dict, judge_source: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def build_recommendation_data(cells: dict) -> dict:
+    """Build a structured dict suitable for JSON / API consumption.
+
+    Output schema:
+        {
+            "version": 1,
+            "total_cells": 208,
+            "scored_cells": <count>,
+            "by_theme": {
+                "<theme_key>": [
+                    {"style": "<style_key>", "mean": 4.67, "coh": 5,
+                     "voice": 4, "plot": 5, "rank": 1, "is_top": true}
+                ]
+            },
+            "perfect_pairs": [{"theme": "<k>", "style": "<k>", "mean": 5.0}],
+            "avoid_pairs": [{"theme": "<k>", "style": "<k>", "mean": 3.0,
+                             "low_dimensions": ["voice"]}],
+            "style_universal_avg": {"<style_key>": 4.50},
+        }
+    """
+    themes_full = sorted(THEME_SEEDS)
+    styles_full = sorted(STYLE_PRESETS)
+
+    def _tiebreak(item):
+        _, (coh, voice, plot, m) = item
+        return (-m, -voice, -plot, -coh)
+
+    by_theme: dict = {}
+    for tk in themes_full:
+        ranked = sorted(
+            [(s, cells[(tk, s)]) for s in styles_full if (tk, s) in cells],
+            key=_tiebreak,
+        )
+        by_theme[tk] = [
+            {
+                "style": sk,
+                "mean": round(v[3], 4),
+                "coh": v[0],
+                "voice": v[1],
+                "plot": v[2],
+                "rank": idx + 1,
+                "is_top": idx < 3,
+            }
+            for idx, (sk, v) in enumerate(ranked)
+        ]
+
+    perfect_pairs = [
+        {"theme": t, "style": s, "mean": round(v[3], 4)}
+        for (t, s), v in cells.items()
+        if v[3] >= 5.0
+    ]
+    avoid_pairs = []
+    for (t, s), v in cells.items():
+        if v[3] < 4.0:
+            low_dims = []
+            if v[0] < 4:
+                low_dims.append("coh")
+            if v[1] < 4:
+                low_dims.append("voice")
+            if v[2] < 4:
+                low_dims.append("plot")
+            avoid_pairs.append(
+                {
+                    "theme": t,
+                    "style": s,
+                    "mean": round(v[3], 4),
+                    "low_dimensions": low_dims,
+                }
+            )
+    avoid_pairs.sort(key=lambda x: x["mean"])
+
+    style_universal_avg: dict = {}
+    for sk in styles_full:
+        scores = [cells[(t, sk)][3] for t in themes_full if (t, sk) in cells]
+        if scores:
+            style_universal_avg[sk] = round(sum(scores) / len(scores), 4)
+
+    return {
+        "version": 1,
+        "total_cells": len(themes_full) * len(styles_full),
+        "scored_cells": len(cells),
+        "by_theme": by_theme,
+        "perfect_pairs": perfect_pairs,
+        "avoid_pairs": avoid_pairs,
+        "style_universal_avg": style_universal_avg,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pattern", default="docs/iter/bench-m_*.json")
     parser.add_argument("--output", default="docs/iter/RECOMMENDED_PAIRS.md")
+    parser.add_argument(
+        "--json-output",
+        default="backend/novel_presets/recommended_pairs.json",
+        help=(
+            "Path to also write structured JSON for API/UI consumption. "
+            "Set to '' to skip."
+        ),
+    )
     parser.add_argument(
         "--judge-source",
         default="matrix-bench-retro-1781668495.md",
@@ -196,6 +292,14 @@ def main() -> int:
     print(f"  >=4.0: {sum(1 for v in cells.values() if v[3] >= 4.0)}")
     print(f"  <4.0:  {sum(1 for v in cells.values() if v[3] < 4.0)}")
     print(f"  =5.0:  {sum(1 for v in cells.values() if v[3] >= 5.0)}")
+
+    if args.json_output:
+        data = build_recommendation_data(cells)
+        json_out = _REPO_ROOT / args.json_output
+        json_out.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"wrote {json_out}")
     return 0
 
 

@@ -11,14 +11,19 @@
 | `ancient_romance` | 古风言情 | **hot_blooded** (5.00) / **black_humor** (4.67) / **colloquial_web** (4.67) |
 | `apocalypse_wasteland` | 末世废土 | **colloquial_web** (4.67) / **ensemble_epic** (4.67) / **first_person_immersive** (4.67) |
 | `campus_youth` | 校园青春 | **colloquial_web** (4.67) / **ensemble_epic** (4.67) / **hot_blooded** (4.67) |
+| `gourmet_culinary` | 美食技能 | (无数据) |
 | `high_fantasy_xuanhuan` | 玄幻冒险 | **black_humor** (4.67) / **ensemble_epic** (4.67) / **first_person_immersive** (4.67) |
 | `history_military` | 历史军事 | **black_humor** (4.67) / **colloquial_web** (4.67) / **ensemble_epic** (4.67) |
+| `mecha_pilot` | 机甲驾驶员 | (无数据) |
 | `modern_romance` | 现代言情 | **black_humor** (4.67) / **first_person_immersive** (4.67) / **warm_healing** (4.67) |
 | `republic_spy` | 民国谍战 | **black_humor** (4.67) / **classical_chapter** (4.67) / **colloquial_web** (4.67) |
 | `scifi_hard` | 硬科幻 | **black_humor** (4.67) / **hot_blooded** (4.67) / **literary** (4.67) |
 | `scifi_soft_lit` | 软科幻文学 | **black_humor** (4.67) / **colloquial_web** (4.67) / **ensemble_epic** (4.67) |
+| `showbiz_entertainment` | 娱乐圈流量 | (无数据) |
 | `steampunk_archive` | 蒸汽朋克悬疑 (默认) | **classical_chapter** (4.67) / **ensemble_epic** (4.67) / **hot_blooded** (4.67) |
 | `supernatural_horror` | 灵异恐怖 | **classical_chapter** (4.67) / **ensemble_epic** (4.67) / **lyrical_poetic** (4.67) |
+| `system_cheat` | 系统流爽文 | (无数据) |
+| `transmigration_book` | 穿书穿越 | (无数据) |
 | `urban_mystery` | 都市悬疑 | **black_humor** (4.67) / **ensemble_epic** (4.67) / **hot_blooded** (4.67) |
 | `western_fantasy` | 西式奇幻 | **black_humor** (4.67) / **first_person_immersive** (4.67) / **noir_cold** (4.67) |
 | `workplace_drama` | 职场商战 | **black_humor** (4.67) / **ensemble_epic** (4.67) / **first_person_immersive** (4.67) |
@@ -39,6 +44,9 @@
 | `lyrical_poetic` | 抒情诗化 (诗意散文) | **supernatural_horror** (4.67) / **wuxia_jianghu** (4.67) / **apocalypse_wasteland** (4.33) |
 | `melancholic` | 致郁忧伤 (悲怆基调) | **ancient_romance** (4.67) / **apocalypse_wasteland** (4.67) / **campus_youth** (4.67) |
 | `noir_cold` | 冷峻冷酷 (黑色硬派) | **campus_youth** (4.67) / **high_fantasy_xuanhuan** (4.67) / **republic_spy** (4.67) |
+| `philosophical_meditative` | 哲思冥想 (博尔赫斯式) | (无数据) |
+| `rough_grit_realism` | 粗粝写实 (反美化) | (无数据) |
+| `screenplay_visual` | 戏剧化镜头 (剧本笔法) | (无数据) |
 | `somber` | 沉郁严肃 (严肃文学) | **ancient_romance** (4.67) / **apocalypse_wasteland** (4.67) / **steampunk_archive** (4.33) |
 | `warm_healing` | 治愈温馨 (慢生活) | **high_fantasy_xuanhuan** (4.67) / **history_military** (4.67) / **modern_romance** (4.67) |
 | `xianxia_fast` | 爽文快节奏 (网文动作向) | **wuxia_jianghu** (5.00) / **apocalypse_wasteland** (4.67) / **high_fantasy_xuanhuan** (4.67) |
@@ -47,19 +55,19 @@
 
 | 风格 key | 中文名 | 跨主题平均 mean | 覆盖主题数 |
 | --- | --- | --- | --- |
-| `black_humor` | 黑色幽默 (荒诞讽刺) | 4.50 | 16/16 |
-| `xianxia_fast` | 爽文快节奏 (网文动作向) | 4.48 | 16/16 |
-| `ensemble_epic` | 群像史诗 (多 POV) | 4.48 | 16/16 |
-| `hot_blooded` | 燃血热血 (高能高燃) | 4.48 | 16/16 |
-| `melancholic` | 致郁忧伤 (悲怆基调) | 4.38 | 16/16 |
-| `noir_cold` | 冷峻冷酷 (黑色硬派) | 4.36 | 16/16 |
-| `first_person_immersive` | 第一人称沉浸 ('我' 视角) | 4.34 | 16/16 |
-| `warm_healing` | 治愈温馨 (慢生活) | 4.31 | 16/16 |
-| `colloquial_web` | 大白话网文 (口语轻读) | 4.25 | 16/16 |
-| `literary` | 描写细致 (文学性, 默认) | 4.17 | 16/16 |
-| `classical_chapter` | 章回体古典 (传统笔法) | 4.15 | 16/16 |
-| `somber` | 沉郁严肃 (严肃文学) | 4.06 | 16/16 |
-| `lyrical_poetic` | 抒情诗化 (诗意散文) | 3.92 | 16/16 |
+| `black_humor` | 黑色幽默 (荒诞讽刺) | 4.50 | 16/21 |
+| `xianxia_fast` | 爽文快节奏 (网文动作向) | 4.48 | 16/21 |
+| `ensemble_epic` | 群像史诗 (多 POV) | 4.48 | 16/21 |
+| `hot_blooded` | 燃血热血 (高能高燃) | 4.48 | 16/21 |
+| `melancholic` | 致郁忧伤 (悲怆基调) | 4.38 | 16/21 |
+| `noir_cold` | 冷峻冷酷 (黑色硬派) | 4.36 | 16/21 |
+| `first_person_immersive` | 第一人称沉浸 ('我' 视角) | 4.34 | 16/21 |
+| `warm_healing` | 治愈温馨 (慢生活) | 4.31 | 16/21 |
+| `colloquial_web` | 大白话网文 (口语轻读) | 4.25 | 16/21 |
+| `literary` | 描写细致 (文学性, 默认) | 4.17 | 16/21 |
+| `classical_chapter` | 章回体古典 (传统笔法) | 4.15 | 16/21 |
+| `somber` | 沉郁严肃 (严肃文学) | 4.06 | 16/21 |
+| `lyrical_poetic` | 抒情诗化 (诗意散文) | 3.92 | 16/21 |
 
 ## 满分配对 (mean = 5.0)
 

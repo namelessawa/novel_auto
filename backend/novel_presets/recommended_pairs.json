@@ -1,0 +1,2237 @@
+{
+  "version": 1,
+  "total_cells": 336,
+  "scored_cells": 208,
+  "by_theme": {
+    "ancient_romance": [
+      {
+        "style": "hot_blooded",
+        "mean": 5.0,
+        "coh": 5,
+        "voice": 5,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 2,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "apocalypse_wasteland": [
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "black_humor",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "campus_youth": [
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "black_humor",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 2,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 3.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 2,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "gourmet_culinary": [],
+    "high_fantasy_xuanhuan": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 3.0,
+        "coh": 4,
+        "voice": 2,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "history_military": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "mecha_pilot": [],
+    "modern_romance": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "republic_spy": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 3.0,
+        "coh": 4,
+        "voice": 2,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "scifi_hard": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "literary",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "scifi_soft_lit": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "showbiz_entertainment": [],
+    "steampunk_archive": [
+      {
+        "style": "classical_chapter",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "black_humor",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "supernatural_horror": [
+      {
+        "style": "classical_chapter",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "black_humor",
+        "mean": 4.33,
+        "coh": 4,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "system_cheat": [],
+    "transmigration_book": [],
+    "urban_mystery": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 2,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 2,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 3.0,
+        "coh": 4,
+        "voice": 1,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "western_fantasy": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "workplace_drama": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "wuxia_jianghu": [
+      {
+        "style": "xianxia_fast",
+        "mean": 5.0,
+        "coh": 5,
+        "voice": 5,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 4,
+        "plot": 4,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 3.67,
+        "coh": 4,
+        "voice": 3,
+        "plot": 4,
+        "rank": 13,
+        "is_top": false
+      }
+    ],
+    "xianxia_cultivation": [
+      {
+        "style": "black_humor",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 1,
+        "is_top": true
+      },
+      {
+        "style": "classical_chapter",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 2,
+        "is_top": true
+      },
+      {
+        "style": "colloquial_web",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 3,
+        "is_top": true
+      },
+      {
+        "style": "first_person_immersive",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 4,
+        "is_top": false
+      },
+      {
+        "style": "hot_blooded",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 5,
+        "is_top": false
+      },
+      {
+        "style": "melancholic",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 6,
+        "is_top": false
+      },
+      {
+        "style": "warm_healing",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 7,
+        "is_top": false
+      },
+      {
+        "style": "xianxia_fast",
+        "mean": 4.67,
+        "coh": 5,
+        "voice": 4,
+        "plot": 5,
+        "rank": 8,
+        "is_top": false
+      },
+      {
+        "style": "ensemble_epic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 9,
+        "is_top": false
+      },
+      {
+        "style": "lyrical_poetic",
+        "mean": 4.33,
+        "coh": 5,
+        "voice": 3,
+        "plot": 5,
+        "rank": 10,
+        "is_top": false
+      },
+      {
+        "style": "noir_cold",
+        "mean": 4.0,
+        "coh": 4,
+        "voice": 3,
+        "plot": 5,
+        "rank": 11,
+        "is_top": false
+      },
+      {
+        "style": "literary",
+        "mean": 4.0,
+        "coh": 5,
+        "voice": 3,
+        "plot": 4,
+        "rank": 12,
+        "is_top": false
+      },
+      {
+        "style": "somber",
+        "mean": 3.33,
+        "coh": 4,
+        "voice": 3,
+        "plot": 3,
+        "rank": 13,
+        "is_top": false
+      }
+    ]
+  },
+  "perfect_pairs": [
+    {
+      "theme": "ancient_romance",
+      "style": "hot_blooded",
+      "mean": 5.0
+    },
+    {
+      "theme": "wuxia_jianghu",
+      "style": "xianxia_fast",
+      "mean": 5.0
+    }
+  ],
+  "avoid_pairs": [
+    {
+      "theme": "campus_youth",
+      "style": "first_person_immersive",
+      "mean": 3.0,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "high_fantasy_xuanhuan",
+      "style": "lyrical_poetic",
+      "mean": 3.0,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "republic_spy",
+      "style": "somber",
+      "mean": 3.0,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "urban_mystery",
+      "style": "classical_chapter",
+      "mean": 3.0,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "ancient_romance",
+      "style": "ensemble_epic",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "ancient_romance",
+      "style": "literary",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "ancient_romance",
+      "style": "lyrical_poetic",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "ancient_romance",
+      "style": "warm_healing",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "campus_youth",
+      "style": "black_humor",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "history_military",
+      "style": "literary",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "scifi_soft_lit",
+      "style": "lyrical_poetic",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "supernatural_horror",
+      "style": "literary",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "supernatural_horror",
+      "style": "somber",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "urban_mystery",
+      "style": "colloquial_web",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "urban_mystery",
+      "style": "lyrical_poetic",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "western_fantasy",
+      "style": "xianxia_fast",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "xianxia_cultivation",
+      "style": "somber",
+      "mean": 3.33,
+      "low_dimensions": [
+        "voice",
+        "plot"
+      ]
+    },
+    {
+      "theme": "ancient_romance",
+      "style": "classical_chapter",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "ancient_romance",
+      "style": "noir_cold",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "campus_youth",
+      "style": "classical_chapter",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "high_fantasy_xuanhuan",
+      "style": "colloquial_web",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "history_military",
+      "style": "noir_cold",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "history_military",
+      "style": "somber",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "modern_romance",
+      "style": "colloquial_web",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "modern_romance",
+      "style": "lyrical_poetic",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "scifi_hard",
+      "style": "colloquial_web",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "scifi_hard",
+      "style": "lyrical_poetic",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "steampunk_archive",
+      "style": "first_person_immersive",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "steampunk_archive",
+      "style": "xianxia_fast",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "supernatural_horror",
+      "style": "first_person_immersive",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "supernatural_horror",
+      "style": "hot_blooded",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "supernatural_horror",
+      "style": "warm_healing",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "western_fantasy",
+      "style": "melancholic",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "workplace_drama",
+      "style": "melancholic",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    },
+    {
+      "theme": "wuxia_jianghu",
+      "style": "warm_healing",
+      "mean": 3.67,
+      "low_dimensions": [
+        "voice"
+      ]
+    }
+  ],
+  "style_universal_avg": {
+    "black_humor": 4.5019,
+    "classical_chapter": 4.1463,
+    "colloquial_web": 4.2512,
+    "ensemble_epic": 4.4806,
+    "first_person_immersive": 4.335,
+    "hot_blooded": 4.4806,
+    "literary": 4.1656,
+    "lyrical_poetic": 3.9162,
+    "melancholic": 4.3769,
+    "noir_cold": 4.3556,
+    "somber": 4.0612,
+    "warm_healing": 4.3144,
+    "xianxia_fast": 4.4806
+  }
+}
