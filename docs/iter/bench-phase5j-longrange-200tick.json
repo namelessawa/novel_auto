@@ -1,0 +1,2855 @@
+{
+  "label": "phase5j-longrange-200tick",
+  "novel_id": "bench_phase5j-longrange-200tick_1781672606",
+  "ticks": 200,
+  "completed_ticks": 200,
+  "bootstrap_sec": 452.49,
+  "tick_durations_sec": [
+    52.29,
+    0.02,
+    0.03,
+    73.39,
+    59.98,
+    0.02,
+    63.78,
+    0.03,
+    0.02,
+    232.96,
+    86.23,
+    0.02,
+    0.02,
+    67.91,
+    50.41,
+    0.03,
+    63.61,
+    0.02,
+    0.03,
+    121.22,
+    128.54,
+    62.36,
+    0.02,
+    0.02,
+    150.91,
+    0.02,
+    0.02,
+    69.22,
+    0.02,
+    127.09,
+    82.23,
+    172.44,
+    95.15,
+    0.03,
+    55.58,
+    63.73,
+    0.02,
+    0.02,
+    66.92,
+    109.37,
+    0.02,
+    105.5,
+    18.1,
+    222.28,
+    117.16,
+    0.03,
+    0.02,
+    72.5,
+    0.02,
+    54.17,
+    73.08,
+    0.03,
+    0.03,
+    42.92,
+    207.41,
+    69.46,
+    0.03,
+    0.02,
+    94.54,
+    114.55,
+    0.02,
+    95.13,
+    0.03,
+    0.03,
+    130.24,
+    179.2,
+    0.03,
+    98.67,
+    0.02,
+    29.37,
+    77.12,
+    0.03,
+    0.02,
+    111.74,
+    62.38,
+    0.02,
+    335.58,
+    181.27,
+    0.02,
+    97.96,
+    68.83,
+    0.02,
+    0.02,
+    71.73,
+    48.08,
+    0.02,
+    68.03,
+    152.01,
+    82.85,
+    170.06,
+    0.02,
+    79.74,
+    0.02,
+    0.02,
+    140.66,
+    0.1,
+    0.1,
+    87.7,
+    150.29,
+    268.82,
+    0.04,
+    0.06,
+    90.22,
+    0.04,
+    57.15,
+    118.76,
+    0.04,
+    0.04,
+    87.75,
+    148.6,
+    187.74,
+    0.04,
+    0.05,
+    96.35,
+    62.46,
+    0.03,
+    87.93,
+    0.03,
+    0.03,
+    169.65,
+    230.03,
+    101.38,
+    0.02,
+    0.02,
+    144.59,
+    0.04,
+    0.04,
+    88.3,
+    0.04,
+    53.49,
+    90.14,
+    189.6,
+    100.97,
+    0.03,
+    69.47,
+    90.03,
+    0.03,
+    0.04,
+    78.47,
+    126.74,
+    0.03,
+    85.35,
+    144.5,
+    133.24,
+    161.04,
+    0.03,
+    0.03,
+    87.24,
+    0.03,
+    273.63,
+    80.33,
+    0.04,
+    0.04,
+    265.15,
+    151.42,
+    0.04,
+    0.03,
+    79.41,
+    0.03,
+    106.94,
+    78.37,
+    0.05,
+    0.05,
+    72.74,
+    309.27,
+    84.95,
+    0.03,
+    0.03,
+    89.25,
+    63.02,
+    0.04,
+    82.15,
+    0.04,
+    0.04,
+    117.91,
+    144.64,
+    91.9,
+    0.04,
+    0.04,
+    219.6,
+    0.04,
+    0.03,
+    91.43,
+    0.03,
+    51.33,
+    69.25,
+    16.98,
+    122.9,
+    122.79,
+    58.56,
+    0.03,
+    99.5,
+    0.05,
+    0.03,
+    112.71,
+    0.04,
+    0.04,
+    66.38,
+    185.6,
+    368.41
+  ],
+  "total_tokens": 1062459,
+  "by_agent_cumulative": {
+    "world_simulator": 131970,
+    "narrator": 429286,
+    "showrunner": 155207,
+    "event_injector": 73577,
+    "character_agent:char_sumo": 32976,
+    "character_agent:char_linxue": 53080,
+    "character_agent:char_lengfeng": 33449,
+    "character_agent:char_zhongli": 41139,
+    "character_agent:char_luyan": 12923,
+    "novelty_critic": 20830,
+    "character_arc_tracker": 42795,
+    "narrative_critic:rewrite": 4610,
+    "character_agent:char_qianyin": 5352,
+    "memory_compressor:l0_l1": 20227,
+    "narrative_critic:critique": 5038
+  },
+  "by_priority": {
+    "medium": 412478,
+    "critical": 566129,
+    "optional": 83852
+  },
+  "call_count": 313,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 4872,
+      "duration_sec": 52.29,
+      "narrator_chars": 644,
+      "agents": {
+        "world_simulator": 1012,
+        "narrator": 3860
+      }
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 4,
+      "tick_total_tokens": 6060,
+      "duration_sec": 73.39,
+      "narrator_chars": 888,
+      "agents": {
+        "world_simulator": 1407,
+        "narrator": 4653
+      }
+    },
+    {
+      "tick": 5,
+      "tick_total_tokens": 4138,
+      "duration_sec": 59.98,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4138
+      }
+    },
+    {
+      "tick": 6,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 7,
+      "tick_total_tokens": 5722,
+      "duration_sec": 63.78,
+      "narrator_chars": 973,
+      "agents": {
+        "world_simulator": 1049,
+        "narrator": 4673
+      }
+    },
+    {
+      "tick": 8,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 9,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 10,
+      "tick_total_tokens": 26847,
+      "duration_sec": 232.96,
+      "narrator_chars": 1742,
+      "agents": {
+        "world_simulator": 1295,
+        "narrator": 6923,
+        "showrunner": 4264,
+        "event_injector": 3350,
+        "character_agent:char_sumo": 1922,
+        "character_agent:char_linxue": 2151,
+        "character_agent:char_lengfeng": 2015,
+        "character_agent:char_zhongli": 2476,
+        "character_agent:char_luyan": 2451
+      }
+    },
+    {
+      "tick": 11,
+      "tick_total_tokens": 6844,
+      "duration_sec": 86.23,
+      "narrator_chars": 919,
+      "agents": {
+        "world_simulator": 2258,
+        "narrator": 4586
+      }
+    },
+    {
+      "tick": 12,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 13,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 14,
+      "tick_total_tokens": 5959,
+      "duration_sec": 67.91,
+      "narrator_chars": 928,
+      "agents": {
+        "world_simulator": 1404,
+        "narrator": 4555
+      }
+    },
+    {
+      "tick": 15,
+      "tick_total_tokens": 3738,
+      "duration_sec": 50.41,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3738
+      }
+    },
+    {
+      "tick": 16,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 17,
+      "tick_total_tokens": 5635,
+      "duration_sec": 63.61,
+      "narrator_chars": 836,
+      "agents": {
+        "world_simulator": 1213,
+        "narrator": 4422
+      }
+    },
+    {
+      "tick": 18,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 19,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 20,
+      "tick_total_tokens": 11774,
+      "duration_sec": 121.22,
+      "narrator_chars": 572,
+      "agents": {
+        "world_simulator": 1268,
+        "narrator": 4411,
+        "showrunner": 3922,
+        "novelty_critic": 2173
+      }
+    },
+    {
+      "tick": 21,
+      "tick_total_tokens": 15694,
+      "duration_sec": 128.54,
+      "narrator_chars": 821,
+      "agents": {
+        "narrator": 5167,
+        "event_injector": 3580,
+        "character_agent:char_linxue": 2683,
+        "character_agent:char_lengfeng": 2201,
+        "character_agent:char_zhongli": 2063
+      }
+    },
+    {
+      "tick": 22,
+      "tick_total_tokens": 5990,
+      "duration_sec": 62.36,
+      "narrator_chars": 577,
+      "agents": {
+        "world_simulator": 1631,
+        "narrator": 4359
+      }
+    },
+    {
+      "tick": 23,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 24,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 25,
+      "tick_total_tokens": 10443,
+      "duration_sec": 150.91,
+      "narrator_chars": 840,
+      "agents": {
+        "world_simulator": 1647,
+        "narrator": 4248,
+        "showrunner": 4548
+      }
+    },
+    {
+      "tick": 26,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 27,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 28,
+      "tick_total_tokens": 5825,
+      "duration_sec": 69.22,
+      "narrator_chars": 848,
+      "agents": {
+        "world_simulator": 1099,
+        "narrator": 4726
+      }
+    },
+    {
+      "tick": 29,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 30,
+      "tick_total_tokens": 8978,
+      "duration_sec": 127.09,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 2949,
+        "character_arc_tracker": 6029
+      }
+    },
+    {
+      "tick": 31,
+      "tick_total_tokens": 6176,
+      "duration_sec": 82.23,
+      "narrator_chars": 747,
+      "agents": {
+        "world_simulator": 1556,
+        "narrator": 4620
+      }
+    },
+    {
+      "tick": 32,
+      "tick_total_tokens": 17775,
+      "duration_sec": 172.44,
+      "narrator_chars": 997,
+      "agents": {
+        "narrator": 5708,
+        "event_injector": 3955,
+        "character_agent:char_linxue": 2454,
+        "character_agent:char_lengfeng": 2015,
+        "character_agent:char_zhongli": 3643
+      }
+    },
+    {
+      "tick": 33,
+      "tick_total_tokens": 13885,
+      "duration_sec": 95.15,
+      "narrator_chars": 906,
+      "agents": {
+        "world_simulator": 1657,
+        "narrator": 5469,
+        "character_agent:char_linxue": 2323,
+        "character_agent:char_lengfeng": 2060,
+        "character_agent:char_zhongli": 2376
+      }
+    },
+    {
+      "tick": 34,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 35,
+      "tick_total_tokens": 3847,
+      "duration_sec": 55.58,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3847
+      }
+    },
+    {
+      "tick": 36,
+      "tick_total_tokens": 5717,
+      "duration_sec": 63.73,
+      "narrator_chars": 584,
+      "agents": {
+        "world_simulator": 1287,
+        "narrator": 4430
+      }
+    },
+    {
+      "tick": 37,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 38,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 39,
+      "tick_total_tokens": 5599,
+      "duration_sec": 66.92,
+      "narrator_chars": 609,
+      "agents": {
+        "world_simulator": 1219,
+        "narrator": 4380
+      }
+    },
+    {
+      "tick": 40,
+      "tick_total_tokens": 6507,
+      "duration_sec": 109.37,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3917,
+        "novelty_critic": 2590
+      }
+    },
+    {
+      "tick": 41,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 42,
+      "tick_total_tokens": 5683,
+      "duration_sec": 105.5,
+      "narrator_chars": 577,
+      "agents": {
+        "world_simulator": 1189,
+        "narrator": 4494
+      }
+    },
+    {
+      "tick": 43,
+      "tick_total_tokens": 2822,
+      "duration_sec": 18.1,
+      "narrator_chars": 0,
+      "agents": {
+        "event_injector": 2822
+      }
+    },
+    {
+      "tick": 44,
+      "tick_total_tokens": 22706,
+      "duration_sec": 222.28,
+      "narrator_chars": 2211,
+      "agents": {
+        "narrator": 6746,
+        "event_injector": 4324,
+        "character_agent:char_sumo": 2647,
+        "character_agent:char_linxue": 3978,
+        "character_agent:char_lengfeng": 2198,
+        "character_agent:char_zhongli": 2813
+      }
+    },
+    {
+      "tick": 45,
+      "tick_total_tokens": 9774,
+      "duration_sec": 117.16,
+      "narrator_chars": 470,
+      "agents": {
+        "world_simulator": 1685,
+        "narrator": 4192,
+        "showrunner": 3897
+      }
+    },
+    {
+      "tick": 46,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 47,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 48,
+      "tick_total_tokens": 5442,
+      "duration_sec": 72.5,
+      "narrator_chars": 592,
+      "agents": {
+        "world_simulator": 1455,
+        "narrator": 3987
+      }
+    },
+    {
+      "tick": 49,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 50,
+      "tick_total_tokens": 3731,
+      "duration_sec": 54.17,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3731
+      }
+    },
+    {
+      "tick": 51,
+      "tick_total_tokens": 5861,
+      "duration_sec": 73.08,
+      "narrator_chars": 838,
+      "agents": {
+        "world_simulator": 1294,
+        "narrator": 4567
+      }
+    },
+    {
+      "tick": 52,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 53,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 54,
+      "tick_total_tokens": 4951,
+      "duration_sec": 42.92,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 1281,
+        "narrator": 3670
+      }
+    },
+    {
+      "tick": 55,
+      "tick_total_tokens": 16323,
+      "duration_sec": 207.41,
+      "narrator_chars": 632,
+      "agents": {
+        "narrator": 4858,
+        "showrunner": 3756,
+        "event_injector": 4463,
+        "character_agent:char_linxue": 3246
+      }
+    },
+    {
+      "tick": 56,
+      "tick_total_tokens": 6106,
+      "duration_sec": 69.46,
+      "narrator_chars": 717,
+      "agents": {
+        "world_simulator": 1749,
+        "narrator": 4357
+      }
+    },
+    {
+      "tick": 57,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 58,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 59,
+      "tick_total_tokens": 6670,
+      "duration_sec": 94.54,
+      "narrator_chars": 1134,
+      "agents": {
+        "world_simulator": 1789,
+        "narrator": 4881
+      }
+    },
+    {
+      "tick": 60,
+      "tick_total_tokens": 11332,
+      "duration_sec": 114.55,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3832,
+        "novelty_critic": 2237,
+        "character_arc_tracker": 5263
+      }
+    },
+    {
+      "tick": 61,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 62,
+      "tick_total_tokens": 6786,
+      "duration_sec": 95.13,
+      "narrator_chars": 853,
+      "agents": {
+        "world_simulator": 2230,
+        "narrator": 4556
+      }
+    },
+    {
+      "tick": 63,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 64,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 65,
+      "tick_total_tokens": 10035,
+      "duration_sec": 130.24,
+      "narrator_chars": 721,
+      "agents": {
+        "world_simulator": 1981,
+        "narrator": 4360,
+        "showrunner": 3694
+      }
+    },
+    {
+      "tick": 66,
+      "tick_total_tokens": 18349,
+      "duration_sec": 179.2,
+      "narrator_chars": 2070,
+      "agents": {
+        "narrator": 6562,
+        "event_injector": 4159,
+        "character_agent:char_linxue": 2511,
+        "character_agent:char_lengfeng": 2191,
+        "character_agent:char_zhongli": 2926
+      }
+    },
+    {
+      "tick": 67,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 68,
+      "tick_total_tokens": 7066,
+      "duration_sec": 98.67,
+      "narrator_chars": 982,
+      "agents": {
+        "world_simulator": 2161,
+        "narrator": 4905
+      }
+    },
+    {
+      "tick": 69,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 70,
+      "tick_total_tokens": 3015,
+      "duration_sec": 29.37,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3015
+      }
+    },
+    {
+      "tick": 71,
+      "tick_total_tokens": 6498,
+      "duration_sec": 77.12,
+      "narrator_chars": 613,
+      "agents": {
+        "world_simulator": 2041,
+        "narrator": 4457
+      }
+    },
+    {
+      "tick": 72,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 73,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 74,
+      "tick_total_tokens": 7645,
+      "duration_sec": 111.74,
+      "narrator_chars": 605,
+      "agents": {
+        "world_simulator": 3412,
+        "narrator": 4233
+      }
+    },
+    {
+      "tick": 75,
+      "tick_total_tokens": 4157,
+      "duration_sec": 62.38,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4157
+      }
+    },
+    {
+      "tick": 76,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 77,
+      "tick_total_tokens": 32670,
+      "duration_sec": 335.58,
+      "narrator_chars": 1964,
+      "agents": {
+        "world_simulator": 1824,
+        "narrator": 7693,
+        "event_injector": 4403,
+        "character_agent:char_sumo": 2484,
+        "character_agent:char_linxue": 3561,
+        "character_agent:char_lengfeng": 2601,
+        "character_agent:char_zhongli": 2577,
+        "character_agent:char_luyan": 2917,
+        "narrative_critic:rewrite": 4610
+      }
+    },
+    {
+      "tick": 78,
+      "tick_total_tokens": 20147,
+      "duration_sec": 181.27,
+      "narrator_chars": 1957,
+      "agents": {
+        "world_simulator": 2990,
+        "narrator": 6882,
+        "character_agent:char_sumo": 2524,
+        "character_agent:char_linxue": 3060,
+        "character_agent:char_lengfeng": 2233,
+        "character_agent:char_zhongli": 2458
+      }
+    },
+    {
+      "tick": 79,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 80,
+      "tick_total_tokens": 6001,
+      "duration_sec": 97.96,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3934,
+        "novelty_critic": 2067
+      }
+    },
+    {
+      "tick": 81,
+      "tick_total_tokens": 5902,
+      "duration_sec": 68.83,
+      "narrator_chars": 529,
+      "agents": {
+        "world_simulator": 1586,
+        "narrator": 4316
+      }
+    },
+    {
+      "tick": 82,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 83,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 84,
+      "tick_total_tokens": 6062,
+      "duration_sec": 71.73,
+      "narrator_chars": 352,
+      "agents": {
+        "world_simulator": 2257,
+        "narrator": 3805
+      }
+    },
+    {
+      "tick": 85,
+      "tick_total_tokens": 3596,
+      "duration_sec": 48.08,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3596
+      }
+    },
+    {
+      "tick": 86,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 87,
+      "tick_total_tokens": 5626,
+      "duration_sec": 68.03,
+      "narrator_chars": 420,
+      "agents": {
+        "world_simulator": 1646,
+        "narrator": 3980
+      }
+    },
+    {
+      "tick": 88,
+      "tick_total_tokens": 14279,
+      "duration_sec": 152.01,
+      "narrator_chars": 802,
+      "agents": {
+        "narrator": 5511,
+        "event_injector": 3885,
+        "character_agent:char_luyan": 2437,
+        "character_agent:char_qianyin": 2446
+      }
+    },
+    {
+      "tick": 89,
+      "tick_total_tokens": 6520,
+      "duration_sec": 82.85,
+      "narrator_chars": 605,
+      "agents": {
+        "world_simulator": 1921,
+        "narrator": 4599
+      }
+    },
+    {
+      "tick": 90,
+      "tick_total_tokens": 11850,
+      "duration_sec": 170.06,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3486,
+        "character_arc_tracker": 8364
+      }
+    },
+    {
+      "tick": 91,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 92,
+      "tick_total_tokens": 6178,
+      "duration_sec": 79.74,
+      "narrator_chars": 634,
+      "agents": {
+        "world_simulator": 1605,
+        "narrator": 4573
+      }
+    },
+    {
+      "tick": 93,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 94,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 95,
+      "tick_total_tokens": 10230,
+      "duration_sec": 140.66,
+      "narrator_chars": 896,
+      "agents": {
+        "world_simulator": 1561,
+        "narrator": 4767,
+        "showrunner": 3902
+      }
+    },
+    {
+      "tick": 96,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.1,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 97,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.1,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 98,
+      "tick_total_tokens": 6734,
+      "duration_sec": 87.7,
+      "narrator_chars": 568,
+      "agents": {
+        "world_simulator": 2185,
+        "narrator": 4549
+      }
+    },
+    {
+      "tick": 99,
+      "tick_total_tokens": 14357,
+      "duration_sec": 150.29,
+      "narrator_chars": 945,
+      "agents": {
+        "narrator": 5075,
+        "event_injector": 3940,
+        "character_agent:char_luyan": 2436,
+        "character_agent:char_qianyin": 2906
+      }
+    },
+    {
+      "tick": 100,
+      "tick_total_tokens": 18032,
+      "duration_sec": 268.82,
+      "narrator_chars": 905,
+      "agents": {
+        "world_simulator": 2879,
+        "narrator": 4871,
+        "showrunner": 3321,
+        "novelty_critic": 2182,
+        "memory_compressor:l0_l1": 4779
+      }
+    },
+    {
+      "tick": 101,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 102,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.06,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 103,
+      "tick_total_tokens": 6775,
+      "duration_sec": 90.22,
+      "narrator_chars": 962,
+      "agents": {
+        "world_simulator": 2135,
+        "narrator": 4640
+      }
+    },
+    {
+      "tick": 104,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 105,
+      "tick_total_tokens": 3736,
+      "duration_sec": 57.15,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3736
+      }
+    },
+    {
+      "tick": 106,
+      "tick_total_tokens": 7641,
+      "duration_sec": 118.76,
+      "narrator_chars": 1291,
+      "agents": {
+        "world_simulator": 2710,
+        "narrator": 4931
+      }
+    },
+    {
+      "tick": 107,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 108,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 109,
+      "tick_total_tokens": 6924,
+      "duration_sec": 87.75,
+      "narrator_chars": 636,
+      "agents": {
+        "world_simulator": 2345,
+        "narrator": 4579
+      }
+    },
+    {
+      "tick": 110,
+      "tick_total_tokens": 10442,
+      "duration_sec": 148.6,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4204,
+        "event_injector": 3728,
+        "character_agent:char_linxue": 2510
+      }
+    },
+    {
+      "tick": 111,
+      "tick_total_tokens": 10017,
+      "duration_sec": 187.74,
+      "narrator_chars": 1667,
+      "agents": {
+        "world_simulator": 4581,
+        "narrator": 5436
+      }
+    },
+    {
+      "tick": 112,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 113,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.05,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 114,
+      "tick_total_tokens": 7337,
+      "duration_sec": 96.35,
+      "narrator_chars": 1034,
+      "agents": {
+        "world_simulator": 2428,
+        "narrator": 4909
+      }
+    },
+    {
+      "tick": 115,
+      "tick_total_tokens": 4094,
+      "duration_sec": 62.46,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4094
+      }
+    },
+    {
+      "tick": 116,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 117,
+      "tick_total_tokens": 6726,
+      "duration_sec": 87.93,
+      "narrator_chars": 834,
+      "agents": {
+        "world_simulator": 1842,
+        "narrator": 4884
+      }
+    },
+    {
+      "tick": 118,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 119,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 120,
+      "tick_total_tokens": 18898,
+      "duration_sec": 169.65,
+      "narrator_chars": 890,
+      "agents": {
+        "world_simulator": 1728,
+        "narrator": 4687,
+        "showrunner": 4340,
+        "novelty_critic": 1450,
+        "character_arc_tracker": 6693
+      }
+    },
+    {
+      "tick": 121,
+      "tick_total_tokens": 22835,
+      "duration_sec": 230.03,
+      "narrator_chars": 1746,
+      "agents": {
+        "narrator": 6743,
+        "event_injector": 4076,
+        "character_agent:char_sumo": 2707,
+        "character_agent:char_linxue": 4257,
+        "character_agent:char_lengfeng": 2391,
+        "character_agent:char_zhongli": 2661
+      }
+    },
+    {
+      "tick": 122,
+      "tick_total_tokens": 7204,
+      "duration_sec": 101.38,
+      "narrator_chars": 1031,
+      "agents": {
+        "world_simulator": 2562,
+        "narrator": 4642
+      }
+    },
+    {
+      "tick": 123,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 124,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 125,
+      "tick_total_tokens": 10350,
+      "duration_sec": 144.59,
+      "narrator_chars": 934,
+      "agents": {
+        "world_simulator": 1796,
+        "narrator": 4586,
+        "showrunner": 3968
+      }
+    },
+    {
+      "tick": 126,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 127,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 128,
+      "tick_total_tokens": 6418,
+      "duration_sec": 88.3,
+      "narrator_chars": 1058,
+      "agents": {
+        "world_simulator": 1897,
+        "narrator": 4521
+      }
+    },
+    {
+      "tick": 129,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 130,
+      "tick_total_tokens": 3694,
+      "duration_sec": 53.49,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3694
+      }
+    },
+    {
+      "tick": 131,
+      "tick_total_tokens": 6459,
+      "duration_sec": 90.14,
+      "narrator_chars": 1048,
+      "agents": {
+        "world_simulator": 1939,
+        "narrator": 4520
+      }
+    },
+    {
+      "tick": 132,
+      "tick_total_tokens": 18654,
+      "duration_sec": 189.6,
+      "narrator_chars": 1465,
+      "agents": {
+        "narrator": 6393,
+        "event_injector": 3341,
+        "character_agent:char_linxue": 4049,
+        "character_agent:char_lengfeng": 2152,
+        "character_agent:char_zhongli": 2719
+      }
+    },
+    {
+      "tick": 133,
+      "tick_total_tokens": 6866,
+      "duration_sec": 100.97,
+      "narrator_chars": 864,
+      "agents": {
+        "world_simulator": 2184,
+        "narrator": 4682
+      }
+    },
+    {
+      "tick": 134,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 135,
+      "tick_total_tokens": 4200,
+      "duration_sec": 69.47,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4200
+      }
+    },
+    {
+      "tick": 136,
+      "tick_total_tokens": 6275,
+      "duration_sec": 90.03,
+      "narrator_chars": 797,
+      "agents": {
+        "world_simulator": 1286,
+        "narrator": 4989
+      }
+    },
+    {
+      "tick": 137,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 138,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 139,
+      "tick_total_tokens": 6135,
+      "duration_sec": 78.47,
+      "narrator_chars": 509,
+      "agents": {
+        "world_simulator": 1402,
+        "narrator": 4733
+      }
+    },
+    {
+      "tick": 140,
+      "tick_total_tokens": 6992,
+      "duration_sec": 126.74,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4391,
+        "novelty_critic": 2601
+      }
+    },
+    {
+      "tick": 141,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 142,
+      "tick_total_tokens": 6080,
+      "duration_sec": 85.35,
+      "narrator_chars": 643,
+      "agents": {
+        "world_simulator": 1989,
+        "narrator": 4091
+      }
+    },
+    {
+      "tick": 143,
+      "tick_total_tokens": 11960,
+      "duration_sec": 144.5,
+      "narrator_chars": 1152,
+      "agents": {
+        "narrator": 5183,
+        "event_injector": 3596,
+        "character_agent:char_sumo": 3181
+      }
+    },
+    {
+      "tick": 144,
+      "tick_total_tokens": 10061,
+      "duration_sec": 133.24,
+      "narrator_chars": 681,
+      "agents": {
+        "world_simulator": 1797,
+        "narrator": 5011,
+        "character_agent:char_sumo": 3253
+      }
+    },
+    {
+      "tick": 145,
+      "tick_total_tokens": 12957,
+      "duration_sec": 161.04,
+      "narrator_chars": 925,
+      "agents": {
+        "world_simulator": 1386,
+        "narrator": 4808,
+        "showrunner": 4062,
+        "character_agent:char_sumo": 2701
+      }
+    },
+    {
+      "tick": 146,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 147,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 148,
+      "tick_total_tokens": 6116,
+      "duration_sec": 87.24,
+      "narrator_chars": 969,
+      "agents": {
+        "world_simulator": 1402,
+        "narrator": 4714
+      }
+    },
+    {
+      "tick": 149,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 150,
+      "tick_total_tokens": 18437,
+      "duration_sec": 273.63,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3927,
+        "character_arc_tracker": 7368,
+        "memory_compressor:l0_l1": 7142
+      }
+    },
+    {
+      "tick": 151,
+      "tick_total_tokens": 6001,
+      "duration_sec": 80.33,
+      "narrator_chars": 846,
+      "agents": {
+        "world_simulator": 1528,
+        "narrator": 4473
+      }
+    },
+    {
+      "tick": 152,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 153,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 154,
+      "tick_total_tokens": 27185,
+      "duration_sec": 265.15,
+      "narrator_chars": 2923,
+      "agents": {
+        "world_simulator": 1745,
+        "narrator": 7844,
+        "event_injector": 3829,
+        "character_agent:char_sumo": 3145,
+        "character_agent:char_linxue": 3103,
+        "character_agent:char_lengfeng": 2245,
+        "character_agent:char_zhongli": 2592,
+        "character_agent:char_luyan": 2682
+      }
+    },
+    {
+      "tick": 155,
+      "tick_total_tokens": 10692,
+      "duration_sec": 151.42,
+      "narrator_chars": 920,
+      "agents": {
+        "world_simulator": 2089,
+        "narrator": 4454,
+        "showrunner": 4149
+      }
+    },
+    {
+      "tick": 156,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 157,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 158,
+      "tick_total_tokens": 5943,
+      "duration_sec": 79.41,
+      "narrator_chars": 843,
+      "agents": {
+        "world_simulator": 1396,
+        "narrator": 4547
+      }
+    },
+    {
+      "tick": 159,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 160,
+      "tick_total_tokens": 6143,
+      "duration_sec": 106.94,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 4483,
+        "novelty_critic": 1660
+      }
+    },
+    {
+      "tick": 161,
+      "tick_total_tokens": 5971,
+      "duration_sec": 78.37,
+      "narrator_chars": 1034,
+      "agents": {
+        "world_simulator": 1288,
+        "narrator": 4683
+      }
+    },
+    {
+      "tick": 162,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.05,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 163,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.05,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 164,
+      "tick_total_tokens": 5821,
+      "duration_sec": 72.74,
+      "narrator_chars": 609,
+      "agents": {
+        "world_simulator": 1661,
+        "narrator": 4160
+      }
+    },
+    {
+      "tick": 165,
+      "tick_total_tokens": 26483,
+      "duration_sec": 309.27,
+      "narrator_chars": 1484,
+      "agents": {
+        "narrator": 5610,
+        "showrunner": 4100,
+        "event_injector": 3285,
+        "character_agent:char_linxue": 3636,
+        "character_agent:char_lengfeng": 2215,
+        "character_agent:char_zhongli": 2599,
+        "narrative_critic:critique": 5038
+      }
+    },
+    {
+      "tick": 166,
+      "tick_total_tokens": 6362,
+      "duration_sec": 84.95,
+      "narrator_chars": 635,
+      "agents": {
+        "world_simulator": 1977,
+        "narrator": 4385
+      }
+    },
+    {
+      "tick": 167,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 168,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 169,
+      "tick_total_tokens": 6159,
+      "duration_sec": 89.25,
+      "narrator_chars": 1661,
+      "agents": {
+        "world_simulator": 1273,
+        "narrator": 4886
+      }
+    },
+    {
+      "tick": 170,
+      "tick_total_tokens": 3981,
+      "duration_sec": 63.02,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3981
+      }
+    },
+    {
+      "tick": 171,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 172,
+      "tick_total_tokens": 6089,
+      "duration_sec": 82.15,
+      "narrator_chars": 852,
+      "agents": {
+        "world_simulator": 1679,
+        "narrator": 4410
+      }
+    },
+    {
+      "tick": 173,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 174,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 175,
+      "tick_total_tokens": 9206,
+      "duration_sec": 117.91,
+      "narrator_chars": 774,
+      "agents": {
+        "world_simulator": 1252,
+        "narrator": 4325,
+        "showrunner": 3629
+      }
+    },
+    {
+      "tick": 176,
+      "tick_total_tokens": 19966,
+      "duration_sec": 144.64,
+      "narrator_chars": 1589,
+      "agents": {
+        "narrator": 6644,
+        "event_injector": 3306,
+        "character_agent:char_sumo": 2791,
+        "character_agent:char_linxue": 2156,
+        "character_agent:char_lengfeng": 2235,
+        "character_agent:char_zhongli": 2834
+      }
+    },
+    {
+      "tick": 177,
+      "tick_total_tokens": 6684,
+      "duration_sec": 91.9,
+      "narrator_chars": 986,
+      "agents": {
+        "world_simulator": 2055,
+        "narrator": 4629
+      }
+    },
+    {
+      "tick": 178,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 179,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 180,
+      "tick_total_tokens": 20594,
+      "duration_sec": 219.6,
+      "narrator_chars": 1078,
+      "agents": {
+        "world_simulator": 1641,
+        "narrator": 4394,
+        "showrunner": 3688,
+        "novelty_critic": 1793,
+        "character_arc_tracker": 9078
+      }
+    },
+    {
+      "tick": 181,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 182,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 183,
+      "tick_total_tokens": 6169,
+      "duration_sec": 91.43,
+      "narrator_chars": 1020,
+      "agents": {
+        "world_simulator": 1594,
+        "narrator": 4575
+      }
+    },
+    {
+      "tick": 184,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 185,
+      "tick_total_tokens": 3610,
+      "duration_sec": 51.33,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3610
+      }
+    },
+    {
+      "tick": 186,
+      "tick_total_tokens": 5675,
+      "duration_sec": 69.25,
+      "narrator_chars": 669,
+      "agents": {
+        "world_simulator": 1117,
+        "narrator": 4558
+      }
+    },
+    {
+      "tick": 187,
+      "tick_total_tokens": 2695,
+      "duration_sec": 16.98,
+      "narrator_chars": 0,
+      "agents": {
+        "event_injector": 2695
+      }
+    },
+    {
+      "tick": 188,
+      "tick_total_tokens": 11067,
+      "duration_sec": 122.9,
+      "narrator_chars": 1051,
+      "agents": {
+        "narrator": 4793,
+        "event_injector": 3531,
+        "character_agent:char_sumo": 2743
+      }
+    },
+    {
+      "tick": 189,
+      "tick_total_tokens": 10028,
+      "duration_sec": 122.79,
+      "narrator_chars": 1010,
+      "agents": {
+        "world_simulator": 2280,
+        "narrator": 4870,
+        "character_agent:char_sumo": 2878
+      }
+    },
+    {
+      "tick": 190,
+      "tick_total_tokens": 3795,
+      "duration_sec": 58.56,
+      "narrator_chars": 0,
+      "agents": {
+        "showrunner": 3795
+      }
+    },
+    {
+      "tick": 191,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 192,
+      "tick_total_tokens": 6571,
+      "duration_sec": 99.5,
+      "narrator_chars": 1063,
+      "agents": {
+        "world_simulator": 1999,
+        "narrator": 4572
+      }
+    },
+    {
+      "tick": 193,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.05,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 194,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.03,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 195,
+      "tick_total_tokens": 8941,
+      "duration_sec": 112.71,
+      "narrator_chars": 821,
+      "agents": {
+        "world_simulator": 1229,
+        "narrator": 4203,
+        "showrunner": 3509
+      }
+    },
+    {
+      "tick": 196,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 197,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.04,
+      "narrator_chars": 0,
+      "agents": {}
+    },
+    {
+      "tick": 198,
+      "tick_total_tokens": 5579,
+      "duration_sec": 66.38,
+      "narrator_chars": 677,
+      "agents": {
+        "world_simulator": 1372,
+        "narrator": 4207
+      }
+    },
+    {
+      "tick": 199,
+      "tick_total_tokens": 18357,
+      "duration_sec": 185.6,
+      "narrator_chars": 1670,
+      "agents": {
+        "narrator": 6351,
+        "event_injector": 3309,
+        "character_agent:char_linxue": 3466,
+        "character_agent:char_lengfeng": 2304,
+        "character_agent:char_zhongli": 2927
+      }
+    },
+    {
+      "tick": 200,
+      "tick_total_tokens": 31248,
+      "duration_sec": 368.41,
+      "narrator_chars": 864,
+      "agents": {
+        "world_simulator": 1663,
+        "narrator": 5395,
+        "showrunner": 4003,
+        "character_agent:char_linxue": 3936,
+        "character_agent:char_lengfeng": 2393,
+        "character_agent:char_zhongli": 3475,
+        "novelty_critic": 2077,
+        "memory_compressor:l0_l1": 8306
+      }
+    }
+  ],
+  "narratives": [
+    {
+      "tick": 1,
+      "chars": 644,
+      "text": "铁锈雨落在棚顶，沙沙声像无数只虫在啃铁皮。\n\n苏摩把领口收紧。雨水顺着帽檐滴进脖子，凉而涩，带一股金属的腥。他站在集市东角的告示牌前，看那张新贴的纸。纸边已经卷起，墨迹被雨洇开，只剩“招募”两个字还勉强可辨。下面一行小字完全糊成蓝灰色的水渍。\n\n有人碰了碰他的胳膊肘。\n\n“让让。”\n\n一个推板车的女人。车上堆着齿轮胚件，锈斑从帆布下露出来。车轮卡进石板缝，她骂了一声，使劲一抬，过去了。积水溅上苏摩的靴子。他没动。\n\n告示牌上还贴着别的纸。一张三个月前的失踪通报，照片上的人脸被酸雨蚀成空洞。一张齿轮议会的政令，红印还鲜亮，但正文已经读不连贯。他扫过那些字，目光停在右下角一行小字上——老城区封锁令，落款是三天前。\n\n灰雾深处传来汽笛。\n\n低沉，绵长，像某种巨大的喉咙在水下呻吟。苏摩抬起头。集市里其他人也抬起头。卖齿轮胚件的女人停住板车。一个正在收摊的布商把手按在货箱上。\n\n汽笛持续了五秒。然后断了。\n\n紧接着是金属摩擦的尖啸。声音从雾里来，方向辨不清。不是工厂的噪音——工厂的机器不会这样叫。这声音像什么东西在撕铁板，一层一层地撕，撕到骨头。\n\n有人开始跑。\n\n板车撞翻了货架。齿轮胚件滚了一地，在积水里砸出暗红色的水花。布商把货箱扛上肩，往巷子里钻。苏摩没跑。他听那个声音。\n\n尖啸停了。\n\n雾里什么也没有。只有铁锈雨还在下，沙沙地啃着铁皮屋顶。\n\n苏摩把告示牌上那张被雨淋透的招募告示揭下来。纸在他手里烂掉一半。他把剩下半张叠好，塞进内袋。然后转身，逆着人流往老城区的方向走。"
+    },
+    {
+      "tick": 4,
+      "chars": 888,
+      "text": "积水漫过脚踝。油光在水面铺开，暗红色，像锈溶进了水里。苏摩踩过去，水花溅上裤腿，布料立刻吃进一层铁锈色。\n\n集市站台方向传来汽笛。\n\n这次不是雾里的那种低吼。更近，更尖，带着蒸汽机泄压阀特有的嘶嘶声。一列机车正缓缓靠站，车轮碾过湿漉漉的轨道，铁与铁磨出刺耳的呻吟。车头的大灯在灰雾里晕成两团黄斑。\n\n有人从车厢里跳下来。靴子踩进积水，溅起的水花比行人更高。是个穿油布工装的男人，肩上扛着工具箱，箱角磕到车门框，闷响。他骂了一句，往集市方向跑。\n\n又下来两个。一个女人抱着孩子，孩子脸埋在她肩窝里，看不清是醒着还是睡了。女人没打伞，铁锈雨把她头发浇成一绺一绺贴在头皮上。她站在站台上，左右看了看，然后往东走了。\n\n苏摩停住脚。\n\n雾里传来第三声。\n\n不是汽笛。是爆炸。\n\n沉闷，短促，像地底有什么东西被压爆了。声音从老城区的方向来，穿过灰雾，穿过铁锈雨，传到脚底时只剩微弱的震动。积水表面泛起一圈涟漪，油光被震碎，又重新聚拢。\n\n站台上的人停住了。扛工具箱的男人回过头。抱孩子的女人站定，把孩子换到另一边肩膀。\n\n第二声爆炸。\n\n比第一声更远，更闷。然后雾把它吞掉了。没有碎片飞出来，没有火光，没有喊叫。灰雾合拢，像什么都没发生过。\n\n苏摩把手伸进内袋。那半张告示纸还湿着，纸浆已经开始发黏。他捏了捏，松开，继续往前走。\n\n站台边缘的积水更深，已经没过脚踝往小腿爬。他踩到什么东西。低头。一只手套，皮面被酸雨蚀出蜂窝状的洞，指节处还留着握过工具的褶痕。手套半沉在水里，油光绕着它打旋。\n\n他没捡。\n\n机车在他身后泄出一股蒸汽，白雾涌进灰雾里，分不清哪团是哪团。汽笛又响了，这次是离站信号。车轮开始转动，铁轨在积水下闷声呻吟。\n\n苏摩拐进老城区方向的巷子。巷口堆着沙袋，沙袋上印着齿轮议会的红印。红印被雨淋过，颜色正在往沙袋里渗。\n\n巷子很窄。两侧墙壁上爬满铁锈，锈斑从墙根往上蔓延，像某种正在生长的苔藓。头顶的遮雨棚破了一半，剩下一半垂下来，铁皮边缘卷着，雨打在上面，沙沙声比别处更密。\n\n他往里走。\n\n巷子尽头是雾。雾里什么也看不见，但能听见声音——很轻，很远，像金属在呼吸。"
+    },
+    {
+      "tick": 7,
+      "chars": 973,
+      "text": "巷子尽头不是雾。是墙。砖面被酸雨蚀出凹槽，凹槽里积着锈水，一滴一滴往下渗。苏摩伸手摸墙。砖缝里的灰浆已经酥了，指甲一刮就往下掉渣。墙不高，三米出头，顶部嵌着碎玻璃。碎玻璃上挂着锈絮，风一吹就飘起来，像铁锈色的蛛丝。他退后两步。靴底踩到什么软东西。低头。一只死老鼠，肚子胀得发圆，皮毛上结了一层锈壳。他用靴尖把它拨到墙根。然后助跑。右脚蹬墙面的凹槽，左手扣住墙头。碎玻璃扎进掌心。他没松手。翻过去。落地时膝盖磕到硬物。是半截路牌，字迹被锈蚀得只剩偏旁。他站起来，拍掉膝盖上的锈渣。这条街比巷子更窄。两侧建筑往中间挤，三楼以上的阳台几乎碰在一起，把天遮成一条灰缝。积水在这里更深，已经过了脚踝往小腿肚爬。水面那层暗红油膜裂开又合拢，像某种活物的皮肤。雾里传来金属碰撞声。当。当。当。规律，缓慢，像有人在敲一口巨大的钟。但铁锈城没有钟楼。钟楼在三十年前就被议会拆了，铜钟熔成齿轮，装进了差分机。苏摩循着声音往前走。雾太浓，他只能看见三步以内的东西。左边墙根堆着沙袋，沙袋上印的齿轮红印已经褪成粉色。右边是一扇铁门，门缝里塞着布条，布条被锈水浸透，颜色从灰白变成暗黄。金属声停了。然后换了一种声音。刮擦声。像金属爪子在石板上拖。从雾深处来，从左前方，距离无法判断。苏摩站住。手伸进内袋。那半张告示纸还在，纸浆已经烂成糊状，粘在指腹上。他把它捏成一团，扔进积水里。纸团浮在油膜上，慢慢散开。刮擦声又响了一次。更近。他往右靠，肩膀贴上湿冷的砖墙。雾里有什么东西在移动。不是人。人的移动不会有金属刮擦石板的声音。声音停了。雾也停了。不是雾停了——是风停了。锈尘悬在半空，不再飘落。积水表面的油膜不再裂开。一切都静止了。然后雾里睁开一只眼睛。不是人眼。是灯。一盏黄灯，悬浮在离地两米的高度，光晕在雾里扩散，照出一圈模糊的轮廓。轮廓后面是金属。暗色的金属，表面爬满锈斑，但锈斑下面有什么东西在跳动——节奏和心跳一样。苏摩屏住呼吸。灯转向他。光柱切开雾，落在他胸口。他看见光柱里有锈尘在翻涌，密密麻麻，像铁锈色的雪。然后灯灭了。刮擦声重新响起，这次是往远处去。一下。两下。三下。然后雾把它吞掉了。风回来了。锈尘重新开始飘落。积水表面的油膜裂开，合拢，裂开。苏摩松开攥紧的拳头。指甲在掌心掐出四道白印。白印里渗着血，和碎玻璃扎的伤口混在一起。他没看伤口。他继续往前走。"
+    },
+    {
+      "tick": 10,
+      "chars": 1742,
+      "text": "雾里先露出的是机械猎犬的轮廓。四条腿，脊背的铆钉排成两列，关节处裹着暗红色的锈壳。它站在巷口，头压低，喉部的共鸣腔发出嗡嗡的震颤。苏摩停住。脚后跟碰到一块松动的铺路石。石头翻了个面，湿漉漉的锈水从石缝里挤出来。猎犬的耳朵——两片铜制共振片——竖起来。然后它张开嘴。警报声不是从喉咙出来的，是从胸腔。齿轮加速转动的尖啸，叠着蒸汽排放的嘶鸣，在窄巷里来回弹撞。苏摩往后退。后背撞上墙。墙上有什么东西硌着他的脊椎。他反手摸。是一根蒸汽管道，管壁烫手，铆钉松了，在震。猎犬往前迈了一步。爪子落在积水里，水面那层虹彩硬壳裂成碎片，沉下去，又浮起来。苏摩把手伸进内袋。指尖碰到的是碎纸浆。那半张告示已经没了。他攥紧拳头。猎犬又迈了一步。然后一个声音从雾里砸出来。\"趴下。\"猎犬的共振片转了半圈。它没趴下。它转向声音的方向。然后一根铁棍从雾里抡出来，砸在它后腿上。不是铁棍——是蒸汽义肢。关节处还在嘶嘶漏气。鲁严从雾里走出来。他右臂的义肢还保持着抡击的姿势，活塞杆在肘部伸缩，把残余的蒸汽挤出来。猎犬歪了一下，但没倒。它后腿的关节被砸凹了一块，铆钉崩飞了一颗，但它站住了。鲁严没看它。他看着苏摩。\"你身上有前线灰雾的味道。\"他说。声音不高，但每个字都像铆钉钉进铁板。\"猎犬不会认错。\"苏摩没动。他侧着头，好像在听什么。\"灰雾的味道，\"他说，语调缓慢，像在吟诵，\"和档案馆地下室的霉味，哪个更让议会害怕？\"鲁严的义肢关节又嘶了一声。他往前迈了一步。猎犬在他腿边发出低沉的共鸣声。\"议会怕什么不关我的事。\"鲁严说。\"我只管清剿令上的名字。你的名字在上面。\"苏摩把手从内袋里抽出来。手指上沾着纸浆和血。他摊开手掌，让鲁严看掌心的伤口。碎玻璃渣还嵌在肉里，被血凝成暗红色。\"清剿令是差分机签发的，\"苏摩说，\"差分机的齿轮是谁调的？\"鲁严没回答。他的左手摸向腰间。那里挂着一把蒸汽增压手枪，枪管上刻着行会的标记——一个被齿轮咬住的锤子。苏摩看见了那个标记。他笑了。不是嘴角上扬的笑，是眼睛。眼睛里有某种东西在烧。\"你还带着它，\"苏摩说，\"那把枪。行会解散那天，你用它打穿了议会的差分机外壳。三发。第三发卡壳了。\"鲁严的手指停在枪柄上。\"那发哑弹还在枪膛里，\"苏摩说，\"你没取出来。\"猎犬的共鸣声变高了。它感觉到了什么——不是威胁，是主人义肢关节的震颤频率变了。鲁严把手从枪柄上移开。\"你在拖延时间，\"他说，\"等什么？等钟离？还是等雾里的东西？\"苏摩把手掌合拢。血从指缝里渗出来，滴在积水里，在虹彩硬壳上砸出一个小坑。\"我在等你自己想明白，\"他说，\"清剿令上的名字，下一个会是谁。\"鲁严没说话。雾在他们之间翻涌。锈尘落在猎犬的脊背上，落在鲁严的义肢上，落在苏摩掌心的伤口上。然后远处传来脚步声。不是人的脚步声。太整齐了。每一步的间隔精确到毫秒，靴底磕在石板上的力度均匀得像差分机的打印头。冷锋。鲁严的义肢关节猛地收紧。\"议会监察部，\"他说，\"你等的是他？\"苏摩摇头。\"我没等他。\"他说。\"但他会来。他一直在等我们两个同时出现。\"脚步声越来越近。猎犬转向巷口，共振片平贴在头骨上。鲁严看着苏摩。苏摩看着他。然后鲁严做了一件冷锋不会理解的事。他把左手从枪柄上移开，往后退了一步，让出半个身位。那条巷子后面是废弃锅炉房的通风管道。苏摩看了他一眼。然后他动了。不是跑——是侧身，滑步，像某种在窄缝里穿行的动物。他的长袍擦过鲁严的义肢，擦过猎犬的鼻尖。猎犬没叫。鲁严的手按在它头上。然后苏摩消失在通风管道里。三秒后，冷锋出现在巷口。他的蒸汽增压手枪已经端平，枪口对准鲁严。\"清剿目标呢？\"冷锋问。鲁严蹲下来，用左手检查猎犬后腿的凹痕。\"跑了，\"他说，\"往灰雾前线方向。\"冷锋的枪口没移开。\"你的猎犬没追。\"\"腿坏了，\"鲁严说，\"追不了。\"冷锋看着猎犬后腿的凹痕。那是被钝器砸的。他又看鲁严的义肢。义肢前臂有一道新鲜的擦痕。他没说话。他把枪收回枪套。\"你会收到一份详细的报告要求，\"他说，\"二十四小时内提交。\"然后他转身，步伐精确地走出巷子。鲁严继续检查猎犬的伤。他的手指摸到那颗崩飞的铆钉孔。孔边缘的金属卷了边。他把手指伸进去，摸到里面还在转的齿轮。齿轮咬住了他的指腹。他没抽手。他看着通风管道的入口。那里只剩锈尘在飘。"
+    },
+    {
+      "tick": 11,
+      "chars": 919,
+      "text": "通风管道里是另一种黑暗。铁锈味混着机油蒸汽，从管壁的裂缝里渗进来。苏摩用膝盖和手肘往前挪。管壁很窄，他的肩膀蹭着两侧的锈皮，每一下都刮下细碎的铁屑。铁屑落进领口，落进头发，落进掌心还没凝固的伤口。他没停。身后巷子里冷锋的声音被铁壁滤成模糊的嗡鸣，听不清内容，但语调平稳。没在审问。在记录。鲁严会应付过去。他继续往前爬。管道拐了三次弯，坡度往下倾斜。手掌按到一处裂缝，边缘卷刃，割破袖口。他摸到裂缝另一侧是空的——管道在这里断开了，下面大概一人高的落差，通往锅炉房的地下检修通道。他先把腿探出去，靴底碰到湿砖。然后松手。落地时膝盖弯了一下，积水没过脚踝。这里的积水还没结壳，油膜浮在水面，被他的动作搅成碎虹。检修通道里只有一盏煤气灯，火苗缩成豆大，在灯罩里发抖。墙壁上嵌着旧管道，管径粗得能塞进一个人。管道表面凝满水珠，水珠里裹着锈粒，像琥珀裹着死虫。他沿着通道往北走。北边是战壕边缘，再往外是灰雾前线。安全屋在战壕内侧的旧泵站地下室里。走了大概两百步，头顶传来蒸汽管道破裂的嘶嘶声。声音从管壁传导下来，在通道里放大成尖锐的哨音。他停住。听。嘶嘶声里夹着另一种声音。沉重的拖曳声。从上面传下来，隔着砖层和土层，闷而钝。像什么很大的东西在石板路上被拖着走。声音从西往东移过去。然后消失了。苏摩等了一会儿。煤气灯的火苗突然跳了一下。他继续走。检修通道的尽头是一扇铸铁门。门没锁。门把手上缠着铁链，链子另一端拴在墙上的铁环里。铁链锈死了。他把链子从把手上解下来，铁锈碎屑簌簌往下掉。推开门。雾涌进来。不是灰雾——是淡黄色的，带着金属燃烧的焦味。可见度不到五步。街灯在雾里忽明忽暗，煤气火苗被锈尘压得只剩一圈暗红的光晕。他踩上路面。脚下的积水油膜完全凝固了，踩上去咔嚓一声，像踩碎玻璃。碎壳陷进积水里，露出下面黑色的水面。远处汽笛响了。六声。短促。然后死寂。街对面几个还没收摊的老贩子脸色变了。其中一个用油布盖住货摊，动作很急，油布角没压住，被风吹起来，拍在木架上。另一个已经在跑了。苏摩往战壕方向走。雾里有什么东西在呼吸。不是人。呼吸声太大了。他贴着墙根，脚步落在油膜硬壳上，咔嚓，咔嚓，咔嚓。每一步都碎掉一小片虹彩。他没回头。雾吞掉了他的轮廓。"
+    },
+    {
+      "tick": 14,
+      "chars": 928,
+      "text": "橘黄色的雾压下来。街灯只剩一圈模糊的晕，颜色像隔夜的茶渍。苏摩贴着墙根走，靴底踩在硬化的油膜上，咔嚓声比刚才更脆。油膜开始龟裂了，裂纹从脚底辐射出去，像碎掉的蛋壳。空气里的金属焦味浓得呛嗓子。他拉起领口捂住口鼻，袖口的布料上全是锈尘，粗粝得像砂纸。\n\n远处传来金属的呻吟声。不是汽笛。是管道在弯折——那种老旧的铸铁管，接口处的铆钉一颗一颗被应力扯松，发出低沉的、拉长的嘎吱声。声音从头顶的管架上漏下来，断断续续，像什么大东西在梦里磨牙。他经过一处管架立柱。立柱根部的接缝渗出黑色油泥，沿着砖缝往下淌，淌成几道黏稠的泪痕。他伸手摸了一下。油泥还温着。指腹碾开，里面有细碎的金属颗粒，在皮肤上留下划痕。\n\n他把手在裤腿上蹭干净。继续走。\n\n街对面是露天堆放的弹壳堆。锈尘沉降的速度肉眼可见——弹壳表面原本是暗铜色，现在正一寸一寸变成赤褐色，像被看不见的舌头舔过。硬壳结得很快。他看见一个哨兵蹲在弹壳堆旁，用油布拼命擦手里的步枪。擦完枪机，擦枪管。擦完枪管，枪机又锈了。哨兵骂了一句，把油布摔在地上。油布落进积水，水面已经结了一层锈膜，油布砸上去，膜裂开，露出下面黑色的水。水不动。\n\n苏摩拐进一条窄巷。巷口堆着几个木箱，箱盖上覆着半指厚的锈尘。他用靴尖拨开一只箱盖。里面是空的。箱底积着一层赤褐色的粉末。\n\n集市东角传来帆布撕裂的声音。然后是金属支架弯折的尖啸。他侧头看了一眼。遮雨棚塌了一角，积尘从棚顶倾泻下来，像一道赤褐色的瀑布。商贩们抢着往外拖货箱，帆布被扯成几片，在风里拍打。有人喊叫，声音被雾吞掉一半，只剩下模糊的音节。一个货箱翻倒，滚出几卷铜线。铜线在路面上滚了几圈，停下来，表面已经覆上一层锈斑。\n\n他没停。\n\n安全屋的入口在旧泵站地下室里。泵站的外墙是红砖砌的，砖缝里嵌着煤灰。他摸到墙上的铁门把手。把手上全是锈。握住。拧。门没动。他用力再拧。锈屑从锁芯里掉出来，落在手背上。门开了。门轴刮过地面，发出短促的摩擦声。他闪进去。把门带上。门合上的瞬间，外面的汽笛又响了。这次只有一声。拖得很长。然后雾里那个呼吸声又出现了。更近。他没开灯。背靠着门，在黑暗里听。呼吸声从巷口移过去。沉重。湿漉漉的。像什么巨大的肺在雾里一张一合。然后远了。然后没了。"
+    },
+    {
+      "tick": 17,
+      "chars": 836,
+      "text": "黑暗里他数自己的心跳。数到十七。呼吸声彻底消失了。他把后脑勺从门上移开，颈椎发出细小的咔嗒声。铁门上的锈粉粘在后颈，被汗浸成泥浆。他用手背擦了一下。手背也全是锈。他蹲下来。膝盖骨响了一声。手掌按在潮湿的地面上。水泥地。有裂缝。裂缝里长出某种菌丝，摸上去像湿棉花。他站起来。从背包侧袋摸出火柴。划第一根。断了。第二根着了。火苗缩成黄豆大，被地下室里的稠雾压着，不敢跳。他看见铁梯。梯级上覆着油膜碎片——那些沥青状的黑色薄片从门缝钻进来，贴在金属表面，边缘微微翘起，像死虫的翅膀。火柴烧到指节。他甩灭。重新划一根。往下走。梯子共十三级。每级都响。第七级踩上去时往下沉了半寸。他停住。等。上面传来铆钉崩飞的声音——不是一颗，是一串。从远处某座蒸汽塔的塔顶开始，铆钉一颗接一颗被应力扯断，弹射，砸在石板路上。第一颗溅起一簇火星。第二颗砸进积水，水花带着锈色溅上墙。第三颗滚进巷子，撞上铁门，当的一声。然后安静了。他继续往下走。梯子尽头是阀门间。三台卧式离心泵并排蹲在水泥基座上，泵体上的铭牌被锈糊满。管道从泵体延伸出去，钻进天花板。管壁结着冷凝水。水珠往下淌，在管道最低点聚成水洼。水洼表面浮着油膜。油膜在动。不是水流动——是地下室里有风。风从通风口灌进来，裹着硫磺味和金属焦味。通风口的百叶窗只剩三片。外面是废弃战壕的方向。他听见油膜碎片被旋风卷起的声音。细小的黑色尘暴擦过铁丝网，刮出一串刺耳的尖啸。铁丝网绷在战壕边缘，网眼上挂着碎布条。布条被风扯直，然后软下来。然后又被扯直。他移开视线。阀门间西北角有一道铁门。门把手上缠着麻绳。麻绳上结着霜。他走过去。握住。拧。门开了。门后是走廊。走廊尽头是向上的台阶。台阶顶部的铁门半开着。橘黄色的光从门缝漏进来。他往上走。台阶上散落着告示牌的碎片。木框被腐蚀性雾气蚀穿了几个洞，边缘焦黑卷曲。新贴的悬赏令还在上面。字迹正缓慢消融——墨水从纸张纤维里渗出来，沿着木纹往下淌，淌成几道蓝色的细线。他跨过碎片。推开门。雾涌进来。他走进雾里。"
+    },
+    {
+      "tick": 20,
+      "chars": 572,
+      "text": "雾比刚才更稠了。不是飘浮的颗粒，是整片整片的胶状物，像湿羊毛贴在脸上。路灯的煤气焰被裹成三团模糊的橙斑，悬在头顶三步之外。他往前走。脚下嚓嚓响——沥青碎片从地面翘起，边缘锋利，踩上去像碎玻璃。有一片竖着扎穿鞋底。他停下来，拔掉。碎片上沾着暗色的血。他自己的。他把碎片扔了。碎片没落地——被一阵旋风卷起来，擦过他耳廓，飞进雾里。他听见它撞上什么东西。铁皮。空桶。当的一声，然后滚远了。\n\n战壕方向传来金属疲劳的尖啸。不是一声，是持续的——像某种巨大的东西在铁轨上缓慢拖动。他想起爪痕。想起腐蚀边缘的酸性残留。他没往那边看。他往集市方向走。\n\n手摸到墙。墙皮酥了。手指按进去，石灰碎成粉末，簌簌往下掉。墙面上贴着一张羊皮纸。新贴的。浆糊还没干透。纸角被沥青碎片划破了三道口子，风从破口灌进去，纸面鼓起来又瘪下去。他凑近看。字迹正在消融——雾里的酸性潮气把墨水从纤维里往外挤，每个字都洇成一团蓝黑色的毛边。只能认出几个字。'最后一趟列车'。其余的都糊了。他伸手按住纸角。纸角在他指腹下裂开。裂口顺着纤维往上爬，爬到'列车'两个字中间。他松开手。纸角弹回去。裂口又撕开一点。\n\n他转身。雾里有什么东西在闪光。橘黄色的。一闪一闪。不是灯。是某种金属表面在反射煤气焰。他往那个方向走。脚下沥青碎片嚓嚓响。雾更浓了。三步之外，光晕只剩针尖大。他往雾更浓处走。"
+    },
+    {
+      "tick": 21,
+      "chars": 821,
+      "text": "通风栅的冰凉透过指尖传上来。林雪没动。她让手掌贴住铁栅，等那阵密集的齿轮咬合声过去。声音没过去。反而更近了——不是从墙内深处传来，是贴着墙皮，就在她头顶三尺。她抬头。雾里看不见屋顶。但听得见。金属关节在转。棘轮一齿一齿卡进槽口。节奏比昨晚快了三拍。\n\n她蹲下。斗篷下摆浸进路面积水。水是橘色的，表面浮着一层油膜，把煤气灯的光晕切成碎鳞。她把手伸进通风栅的缝隙。上次离开时她用焊枪点过这里——只点了一半，留了一道头发丝细的缝。指尖抠进去。铁锈碎成粉末，落在手背上。她往外拉。栅格纹丝不动。\n\n齿轮声停了。\n\n她僵住。手还扣在栅格上。雾里的甜腻味忽然浓了——焦糖混着什么东西烧焦的酸。她听见另一道声音。脚步声。步距精确，靴跟磕在沥青碎片上，嚓、嚓、嚓。不是钟离。钟离走路不响。\n\n她把手从栅格上抽回来。太急。铁锈割破食指。血珠渗出来，滴在积水里，晕开一小片红。她把手指含进嘴里。血腥味混着铁锈。她往墙根缩。斗篷蹭过墙皮，石灰碎屑簌簌往下掉。她按住斗篷。不动了。\n\n脚步声停在巷口。\n\n她看见光。不是煤气灯。是冷光——差分机记录仪屏幕的蓝白色背光，照出一只手。手握着蒸汽增压手枪。保险已经拨到待击发位置。她认得那只手。指节上有墨渍。冷锋。\n\n光柱扫过来。她贴紧墙根。墙根的阴影不够深。光柱擦过她脚踝。停住。往回移。\n\n巷子另一头传来声响。金属撞击。空桶。当的一声，然后滚远了。光柱猛地转向那边。脚步声追过去。嚓、嚓、嚓。远了。\n\n她没动。数到三十。然后从墙根站起来。通风栅还在。她把手指重新扣进缝隙。这次用力。栅格发出一声呻吟。锈屑落了满头。她侧身挤进去。铁栅刮过肩胛骨。斗篷被勾住。她扯了一下。布料撕裂的声音。顾不上。她往里挤。脚踩到实地。灰尘扬起来。\n\n档案馆里比外面更黑。她摸到墙。墙是湿的。她沿着墙走。脚下碰到一堆灰。每晚都扫到角落的那堆。还在。她绕过去。怀里抱紧打字机。\n\n齿轮声又响了。这次在更深处。她转身。背抵着墙。在黑暗中睁大眼睛。"
+    },
+    {
+      "tick": 22,
+      "chars": 577,
+      "text": "黑暗中她听见第一声汽笛。声波被胶雾裹住，传进档案馆时已经变形——不是呜咽，是某种低频的震颤，从脚底传上来。墙皮簌簌往下掉。她按住打字机。铁壳冰凉，贴着小臂。第二声汽笛更近。金属碰撞的闷响跟在后面，像什么东西倒了。方向是灰雾前线。她数过——昨晚的间隔是四十七秒，今晚不到三十秒。\n\n巷口传来铁皮刮擦地面的尖鸣。告示牌。她记得那块牌子——锈蚀的边角，上面写着\"封锁线·擅入者格杀\"。现在被沥青涡旋掀落，在风里翻跟头。每翻一圈，铁皮就磕一下地面。声波撞在档案馆的墙上，被吸掉一半。另一半从通风栅缝隙挤进来，变成细小的嗡鸣。\n\n她往深处挪。脚踩到灰堆。灰是湿的。踩上去不发声响，只往下陷。她蹲下。把打字机放在腿边。伸手摸墙。墙上的水珠聚成细流，从砖缝往下淌。指尖碰到一处凹陷——是她上次用焊枪点过的位置。铁栅的锈蚀颗粒落在她手背上。褐色的。细得像雪尘。她抬头。通风栅缝隙里渗进来的不只是锈。还有机油味。陈年的。混着霉。\n\n齿轮声又响了。这次不在头顶。在墙内。很深。棘轮一齿一齿卡进槽口。节奏比刚才又快了一拍。她抱起打字机。背抵着墙。在黑暗里听。\n\n汽笛第三次响起。三声。短促。然后金属碰撞声连成一片。她闭上眼。数到三十。睁开。\n\n齿轮声没停。但她已经听出方向——在档案架的尽头。她站起来。灰从膝盖上簌簌往下掉。她往那个方向走。打字机抱在怀里。铁壳上凝了一层水珠。"
+    },
+    {
+      "tick": 25,
+      "chars": 840,
+      "text": "走到第七排档案架尽头时，她踩到了什么。不是灰。硬质。边缘锐利。她蹲下，指尖碰到金属表面——一块掉落的通风栅格板。锈蚀的螺栓还嵌在四角。她抬头。头顶的通风口敞着，黑洞洞的。胶雾从缺口灌进来，带着焦臭。比刚才更浓。\n\n一滴液体落在她手背上。不是水。黏的。她凑近闻。机油。混着某种酸腐味。她用手背蹭墙。墙上的水珠已经变了颜色——从透明转成淡黄。往下淌的细流在砖缝里拉出油亮的丝。\n\n远处传来爆炸声。闷的。像被埋在很深的土层下。地面颤了一下。档案架上的铁盒发出细碎的磕碰声。她扶住架柱。指尖感觉到震动从脚底传上来，沿着骨架往上爬。然后停了。\n\n紧接着是金属扭曲的尖啸。不是汽笛。更长。更尖。像什么东西在撕。方向还是灰雾前线。她数过——从爆炸到尖啸，间隔不到五秒。昨晚是十二秒。\n\n她站起来。把打字机换到左臂。右手摸向通风栅缺口。铁框边缘沾着黑色黏液。新鲜的。还没凝。她捻了捻。黏丝在指腹间拉长，断掉。弹回铁框上。\n\n又一声爆炸。更近。档案架晃了。一只铁盒从顶层滑落，砸在她脚边。盒盖弹开。卷宗散出来。纸页在胶雾里翻卷，边缘迅速变黄。她弯腰去捡。手指碰到纸面时，纸碎了。碎成细片。黏在她指尖上。\n\n她甩掉碎片。继续往前走。走到第十一排时，通风栅缺口透进来的光变了——不是橘黄。是暗红。一闪一闪。像远处的火。她把脸贴近缺口。铁框冰凉，贴着眼眶。\n\n巷口的告示牌还在。但上面多了张新告示。泛黄的纸。字迹被雾水浸得模糊。她眯眼。只认出最下面一行——\"……者格杀勿论\"。前面的字全洇成墨团。\n\n告示牌下积了一滩黑色油液。从管道接口渗出来的。一滴一滴。滴落声在雾里回荡。节奏很慢。像钟摆。\n\n她退回来。背抵着档案架。打字机抱在怀里。铁壳上的水珠已经变成油珠。黏的。她闭上眼。听。\n\n齿轮声还在响。但节奏慢了。棘轮一齿一齿卡进槽口。间隔拉长。像什么东西在减速。她睁开眼。往档案架更深处走。\n\n灰在脚下陷。每一步都往下沉一点。油滴从头顶的通风口落下来。落在她肩上。头发上。打字机上。黑色的。细密的。像雨。"
+    },
+    {
+      "tick": 28,
+      "chars": 848,
+      "text": "她抹掉眼皮上的油滴。睁开。睫毛黏在一起。视野里的一切都镀了层淡黄——档案架、铁盒、墙上的水渍。不是光变了。是油膜。薄薄一层，糊在眼球上。她眨眼。油膜裂开细纹。再眨。纹路扩大。然后重新聚拢。\n\n通风栅缺口的光从暗红转成灰白。雾在变稀。能见度拉长了一点。她看见巷口告示牌下的油滩已经漫到路中央。表面浮着金属屑。细碎的。亮银的。在黑色油液上缓慢漂移。\n\n又一声爆炸。这次不是闷响。是脆的。像铁板被撕开。冲击波从通风口灌进来，带着铁锈味。她偏头。一股热风擦过耳廓。身后的档案架上，铁盒齐齐往左滑了一寸。金属刮擦声叠在一起。然后停住。\n\n她蹲下。把打字机放在两膝之间。腾出右手。摸向腰间的水壶。壶嘴拧开。她把水倒在掌心。搓脸。水是温的。混着油珠从指缝淌下来。滴在地上。砸出深色的小坑。\n\n视野清晰了一点。她抬头。通风栅缺口外，对面建筑的铁皮屋顶正在往下淌油。黑色的。黏稠的。沿着瓦楞的沟槽往下爬。一滴一滴坠进巷子里。砸在油布上。砸在铁板上。砸在积水里。声音密起来。\n\n不是雨。是铁锈雨的前奏。\n\n她听过这种声音。三年前。在灰雾前线。那次下了整整四十分钟。之后清理出十七具工兵的尸体。不是炸死的。是油渗进呼吸阀。堵住滤芯。闷死的。\n\n她站起来。打字机夹回左臂。继续往前走。走到第十三排时，头顶的通风管传来敲击声。三下。停。两下。停。一下。\n\n不是随机节奏。是信号。\n\n她停住。听。敲击声又起。这次更近。从通风管拐弯处传来。金属敲金属。三下。停。两下。停。一下。\n\n她认识这个节奏。自由机械师行会的暗号。钟离的人。\n\n她没有回应。背贴着档案架。等。敲击声重复了第三遍。然后停了。通风管里只剩风声。和远处齿轮的咬合声。\n\n她低头看自己的手。手背上油滴已经结成膜。透明的。紧绷的。她握拳。油膜裂开。碎片翘起来。露出下面发红的皮肤。\n\n档案架尽头有扇铁门。半掩着。门缝里透出光。不是橘黄。不是暗红。是白的。冷光。荧光灯管那种白。\n\n她往那扇门走。鞋底踩在灰上。灰已经变成泥。黑色的。黏脚的。每一步都发出轻微的剥离声。"
+    },
+    {
+      "tick": 31,
+      "chars": 747,
+      "text": "她走到铁门前。门缝里的冷光落在她手背上。油膜反出虹彩。她推门。铰链无声。门滑开一掌宽。光涌出来。不是荧光灯管。是电弧灯。蓝白色的。刺得她眯眼。\n\n门后是一条走廊。窄。两侧墙壁嵌着铜管。管壁结满冷凝水。水珠往下淌，在墙根汇成细流。流进地漏。地漏是黄铜的。栅格上卡着一团头发。黑的。缠着油絮。\n\n走廊尽头又是一扇门。这扇是气密的。圆形。像船上的水密门。门把是转轮。锈迹斑斑。\n\n她侧身挤进门缝。电弧灯在头顶嗡嗡响。光太亮。她抬手遮眉。手背上的油膜在强光下显出裂纹。细密的。像旧瓷器的开片。\n\n头顶的通风管又响了。这次不是敲击。是刮擦。金属刮金属。从走廊那头往这头移。速度很慢。一寸一寸的。她贴墙站住。抬头。通风管的铆钉在震。一颗一颗。从远到近。\n\n刮擦声停在她正上方。\n\n然后滴下一滴油。黑色的。黏稠的。落在她左肩。油渗进织物。皮肤感到凉。然后是刺痒。她没动。盯着通风管的接缝。接缝处渗出更多油。聚成珠。悬着。不掉。\n\n又一声爆炸。这次很近。走廊里的电弧灯闪了一下。铜管震颤。冷凝水溅出来。洒在她脸上。混着油。她用袖子擦。袖子已经湿透。擦不干净。\n\n转轮门后面传来声音。不是敲击。是齿轮。咬合很密。转速均匀。像某种机器在待机。她把手放在转轮上。铁是冷的。锈屑扎进掌心。她开始转。转轮吱嘎响。一圈。两圈。锁栓缩回。\n\n她拉开铁门。\n\n里面是向下的楼梯。陡。台阶是铁网焊的。能看见下面。很深。底层有光。橘黄色的。不是电弧灯。是油灯。火焰在跳。映在铁壁上。影子乱晃。\n\n她往下走。铁网台阶在脚下弹动。每一步都响。声音往下传。回音叠回音。底层有人声。模糊的。听不清。\n\n走到一半。她停住。回头看。\n\n转轮门正在自己合拢。很慢。无声。门缝里的蓝白光越来越窄。最后锁栓弹进槽里。咔哒。\n\n她转回头。继续往下走。"
+    },
+    {
+      "tick": 32,
+      "chars": 997,
+      "text": "铁网台阶在她脚下弹动。弹幅比刚才大。她停住。手扶栏杆。栏杆也在震。不是脚步声的回传。是从上面来的。从转轮门那边。从更远的地方。低频的。持续的。像地底有巨兽在翻身。\n\n油灯在底层晃。火焰拉长又缩回。影子在铁壁上抽搐。\n\n她继续往下走。台阶弹动加剧。铁网边缘的焊点发出细响。像指甲刮金属。她加快脚步。靴跟踩在铁网上。每一步都陷进网格。拔出来。再陷。\n\n底层到了。\n\n油灯挂在墙钩上。三盏。灯芯是石棉绳。火焰橘黄。烧出黑烟。烟往上飘。被铁网台阶切成条。\n\n房间不大。四壁是铆接铁板。铆钉头生锈。锈迹往下淌。像凝固的血。墙角堆着木箱。箱盖上印着齿轮议会的徽记。封条已撕开。\n\n房间中央是一张操作台。铁铸的。台面上放着打字机。\n\n她认得那台打字机。键位排列不是标准式。是林雪自己改的。字母按使用频率重新排过。空格键磨得发亮。\n\n打字机旁边是一叠纸。纸角用铜镇纸压着。镇纸是齿轮形。齿间卡着一根头发。黑的。长的。\n\n她走过去。拿起最上面那张。\n\n纸上只有一行字。打得很重。字键几乎穿透纸背:\n\n「共振源在枢纽。钟离启动了回声协议。冷锋已到。」\n\n她翻到第二张。字迹更急。墨带已近干涸。字母残缺:\n\n「差分机逆向转了三格。铜板崩裂。符号重组。预言出现。与卷宗一致。」\n\n第三张纸是空白的。只打了两个字。打在纸中央:\n\n「快走」\n\n她放下纸。抬头。\n\n房间另一侧还有一扇门。铁门。半开。门缝里透出蓝白光。不是电弧灯。是差分机。黄铜齿轮在运转。齿间有光。冷蓝色的。每七秒闪一次。\n\n她走向那扇门。\n\n头顶的共振停了。\n\n突然停的。不是渐弱。是切断。像刀切。\n\n然后传来别的声音。从转轮门上面。很远。但清晰。\n\n手杖剑的金属包头叩击地面。三下。清脆。有节奏。\n\n然后是脚步声。不止一个人。靴底踩在铁板上。整齐。训练有素。\n\n她退回操作台。拿起那三张纸。折叠。塞进腰带内侧。\n\n打字机还开着。滚筒上卷着一张新纸。打了半行。字母歪斜:\n\n「他来了。别出声。」\n\n她伸手。按下空格键。打字机发出咔哒一声。很轻。但在铁壁房间里还是太响。\n\n她松开手。\n\n头顶的脚步声停了。\n\n然后手杖剑又叩了一下。这次更近。就在转轮门外。\n\n一个声音传下来。男声。用词讲究。带着贵族式的拖腔:\n\n「冷锋队长，您先请。毕竟您是带着记录仪来的。我只是个被音乐吵醒的过路人。」\n\n另一个声音。短。硬。每个字都像在念条款:\n\n「你的证件。现在。」"
+    },
+    {
+      "tick": 33,
+      "chars": 906,
+      "text": "门缝里的蓝白光跳了一下。七秒间隔断了。变成三秒。然后五秒。不稳定。\n\n她没推门。转身。赤足踩在铁格栅上。脚底沾着锈粉。每一步都落在格栅交叉点。那里焊得最牢。不响。\n\n卷宗墙在档案馆最深处。铜绿覆满墙面。像一层发霉的皮。羊皮卷轴插在墙上的铁格子里。几百卷。按年份排列。最旧的在左下角。羊皮发黑。边缘碎成粉。最新的在右上角。\n\n她抬头。\n\n右上角多了一卷。\n\n羊皮边缘潮湿。带着灰雾的气息。铜绿在卷轴插入处裂开。裂纹新鲜。还在一丝丝扩展。\n\n她把打字机放在地上。踮脚。指尖碰到卷轴。羊皮冷而湿。像刚从雾里捞出来。抽出来。铜绿碎屑落在她手背上。\n\n展开。\n\n字迹还没干。不是墨水。是某种暗红色液体。在蓝白光下泛着磷光。字迹潦草。但可辨。是差分机输出的符号。齿轮议会用来加密公文的那些。她认得。林雪教过她。\n\n第一行: 「共振频率3.7。来源深度42米。管道枢纽。」\n\n第二行: 「灰雾前锋突破第七隔离带。时间: 第三次铁锈雨前。」\n\n第三行只有三个符号。打得很重。液体渗进羊皮纤维: 「千音之喉。」\n\n她盯着这三个符号。\n\n头顶又传来手杖剑叩击声。这次是两下。间隔一样长。像钟摆。\n\n然后是钟离的声音。隔着铁板。闷。但每个字都清楚: 「冷锋队长，您检查管道的时间比我预想的要长。共振频率测出来了吗？3.7赫兹？还是更接近3.8？」\n\n冷锋没回答。\n\n钟离继续说: 「我建议您把记录仪对准脚下。对。就是那里。铁格栅下面三米。有一条废弃的蒸汽管道。管壁接缝处应该有高温蒸汽泄漏。您的记录仪能测到吗？」\n\n她听见冷锋蹲下的声音。靴底摩擦铁板。\n\n然后冷锋说: 「你早就知道。」\n\n钟离笑了一声。很短。像手杖剑叩地的尾音: 「我知道什么？我只是个被音乐吵醒的过路人。不过——」\n\n停顿。\n\n「如果您现在下去追，可能还来得及。当然，前提是您相信我的话。」\n\n她把卷轴卷起。塞进腰带。和那三张纸叠在一起。\n\n打字机还在地上。滚筒上那张纸。打了半行。字母歪斜。她蹲下。按下三个键。\n\n「知。等。我。」\n\n撕下纸。压在铜镇纸下。镇纸齿间那根黑发还在。\n\n她站起来。走向那扇半开的铁门。\n\n蓝白光还在跳。三秒。五秒。三秒。\n\n她推开门。"
+    },
+    {
+      "tick": 36,
+      "chars": 584,
+      "text": "铁门外是巷子。窄。两侧墙面上挂着黑色粘丝，一缕一缕，像撕开的茧。她踩下去。鞋底发出嘶嘶声。粘丝在石板缝里积成絮团，踩扁了又慢慢弹回来。巷口排水口堵死了。污水漫过她的靴尖，油亮的一层，漂着灰絮和死蛾翅膀。\n\n她贴着墙根走。\n\n远处有金属刮擦声。断断续续。从雾气深处传来。不是钟离的手杖剑。太重。太慢。像某种大型机械的关节在生锈的轨道上拖行。她停住。听。声音停了。然后又开始。这次更近。方向是集市。\n\n她拐出巷口。\n\n集市中央的告示牌上多了张纸。油污浸透纸背。边缘卷起。墨迹被污水洇开，只剩两个字还能辨：\"活捉\"。下面盖着齿轮议会的铜印。印泥还是湿的。\n\n她伸手。指尖碰到纸面。油污粘在指腹上。\n\n身后传来金属刮擦声。\n\n很近。\n\n她转身。雾气里浮出一个轮廓。比人高。比门宽。关节处有铆钉。每一步都刮着石板。火星溅在粘丝上。粘丝烧起来。蓝色火焰。一瞬就灭。\n\n她后退一步。手按在腰带上。卷轴硌着肋骨。\n\n轮廓停住。\n\n然后从雾气里伸出一只手。不是机械。是人的手。指甲缝里嵌着黑油。手指张开。掌心朝上。像在等什么东西。\n\n她没动。\n\n手缩回去。金属刮擦声又起。这次是后退。轮廓一点一点被雾吃掉。最后消失的是铆钉的反光。\n\n她低头看自己的手。指腹上的油污已经干了。结成一层灰色的膜。她搓掉。膜碎成粉。落在污水里。\n\n告示牌上的铜印还在反光。\n\n她绕过告示牌。朝档案馆的方向走。"
+    },
+    {
+      "tick": 39,
+      "chars": 609,
+      "text": "粘丝厚起来了。\n\n不再是飘在空中的絮。是成团的、湿重的灰，从墙缝和排水口往外涌。她踩上去。鞋底发出细微的撕裂声，像踩碎干透的蛾翅。抬脚时粘丝拉出长丝，拖在石板路上，尾迹沾满污水里的灰絮。\n\n能见度在下降。粘丝和灰雾搅在一起，搅成一堵铅灰色的帷幕。前线哨塔的灯火在帷幕后面晕开，模糊成三团黄色的光斑。光斑在抖。不是风。是某种低频的震动从脚底传上来。然后传来金属碰撞的闷响。一声。隔了很久。又一声。\n\n她贴着墙根继续走。\n\n集市中央的告示牌还在。铜印的反光被雾吃掉一半。告示牌上多了张新的羊皮纸。不是悬赏令。纸面被粘丝浸透，字迹洇成一片灰蓝。她凑近。墨水里混着铜锈的绿。几个字还能辨——\"撤离\"、\"第三区\"、\"即日\"。落款是齿轮议会的钢印。印泥还没干透。\n\n旁边货棚顶传来刮擦声。\n\n一个摊贩正用铁片刮棚顶的絮状堆积。铁片钝。刮一下，粘丝卷起来，露出下面锈穿的铁皮。摊贩骂了句什么。把刮下来的粘丝甩在地上。粘丝落地时发出湿抹布摔在石板上的声音。他看见她。停住手。铁片悬在半空。\n\n\"别走东巷。\"他说。\n\n她看他。\n\n\"那边哨塔熄灯了。\"他把铁片插回腰间。\"熄了一整夜。工兵进去就没出来。\"\n\n她点头。\n\n摊贩转身继续刮棚顶。铁片刮铁皮的声音又响起来。刺耳。规律。像某种信号。\n\n她绕过告示牌。朝档案馆的方向走。粘丝在她鞋底一层一层叠上去。鞋底越来越厚。越来越软。每一步都陷得更深。\n\n身后传来铁片刮铁皮的声音。\n\n还在刮。"
+    },
+    {
+      "tick": 42,
+      "chars": 577,
+      "text": "还在刮。铁片刮铁皮的声音追着她走了半条巷子，然后被另一种声音盖过去——脚踩进堆积物里的细碎挤压声。粘丝已经漫过脚踝。每踩一步，灰絮从鞋面两侧挤上来，像踩进半干的泥潭。抬脚时鞋底扯断无数丝缕，发出湿纸撕裂的细响。\n\n屋檐滴落的粘液在石板路上蚀出浅痕。一滴滴。滴在同一个位置。石面已经凹下去一个拇指大的坑，坑底泛着铜绿色的泡沫。她绕开。\n\n雾墙内部突然亮起来。\n\n暗红色的光晕在铅灰色帷幕后面扩散，像一块烧红的铁慢慢冷却。光持续了三秒。四秒。然后熄灭。紧接着地面一震。不是脚底传来的低频——是整个街道跳了一下。石板缝里的灰絮被弹起来，悬在半空，又缓缓落回去。\n\n隆隆声从雾墙深处滚过来。很远。但很沉。像某种巨大的东西在金属地板上拖动身体。\n\n她站住。手按上腰间的铜扣。\n\n东边钟楼响了。\n\n废弃了十二年的钟楼。齿轮锈到卡死，议会三次拨款都没修。此刻它自己响了。第一声。锈蚀的齿轮刮擦铁壳，尖啸着撕开雾幕。第二声。一群黑羽鸟从钟楼顶炸开，四散飞入低垂的絮状云层。第三声。钟舌撞在裂了缝的钟壁上，声音是破的。\n\n然后静下来。\n\n黑羽鸟已经不见了。粘丝还在从墙缝往外涌。她低头看自己的鞋。鞋底叠了厚厚一层灰絮，已经看不出鞋面的铜扣形状。她抬脚。粘丝拉出长丝。断了。\n\n她继续朝档案馆的方向走。\n\n身后钟楼的余音还在雾里荡。一下。又一下。像钟还在犹豫要不要敲第四声。"
+    },
+    {
+      "tick": 44,
+      "chars": 2211,
+      "text": "钟声的余韵还在石板缝里震颤，另一种声音已经渗进了街道。\n\n先是管道。墙内埋设的蒸汽主管道突然嗡鸣起来，铜壳上的锈斑一粒粒跳起，在空气里碎成粉末。嗡鸣从低到高，像有人用湿手指摩擦玻璃杯口，然后——整条巷子的管道同时共振。管壁上的铆钉弹出来，叮叮当当砸在石板路上。\n\n这不是故障。这是信号。\n\n自由机械师行会的回声协议。钟离启动了它。\n\n共振波沿着管道网络扩散，穿过老城区每一面墙、每一块地砖、每一台还在运转的差分机终端。街角的自动记录仪开始冒烟。墙上的气压表指针疯狂摆动。一户人家的蒸汽烤箱突然弹开，里面爬满被震晕的蟑螂。\n\n搜查队的机械猎犬最先出问题。\n\n那头铜皮猎犬正把鼻子抵在一扇铁门上，背部的差分机终端突然开始打印乱码。穿孔纸带像舌头一样吐出来，越吐越长，堆在它前爪之间。猎犬的关节锁死。齿轮卡在某个角度。它保持着嗅探的姿势僵在原地，纸带还在往外涌。\n\n领队的搜查官踢了它一脚。猎犬侧翻。纸带断了。\n\n“信号干扰。”搜查官按住耳边的通讯器。“源头在老城区东南。请求——”\n\n通讯器里只有白噪音。\n\n他骂了一声，拔出信号枪，朝天空发射。照明弹升到一半就熄了。不是故障——是雾太厚。铅灰色的絮状物裹住弹头，把光吞得干干净净。\n\n搜查官盯着那团熄灭的光。\n\n“撤。”他说。“先撤到干扰区外。”\n\n他们拖着僵死的猎犬退出巷口。脚步声被管道共振盖过去。\n\n——\n\n档案馆内。\n\n林雪把耳朵贴在差分机侧面。铜壳冰凉。内部齿轮组正在以某种她从未听过的节奏运转——不是常规的咬合声，而是逆旋。第七齿轮在反向转动。\n\n她睁开眼。左眼里的齿轮微光在黑暗中亮了一瞬。\n\n卷宗摊开在工作台上。昨夜自动更新的那行字还在：千音之喉将于第三次铁锈雨前永寂。字迹是差分机针头刺穿纸面的痕迹，墨油未干，在烛火下反光。\n\n她撕下一张纸条。打字机键敲下去。短。更短。\n\n冷锋接过纸条。上面只有七个字。\n\n「第七齿轮逆旋。停下。否则门开。」\n\n他看完。没问“什么门”。没问“你怎么知道”。他把纸条翻过来，在背面写：频率47.3。振幅0.8。源头东南。钟离。\n\n林雪扫了一眼。点头。\n\n她赤足走向差分机侧面。脚底踩在铁板上的声音很轻。铜绿覆盖的齿轮组嵌在机箱深处，第七齿轮的位置几乎被锈迹完全遮住。她伸手。指尖碰到齿轮箱外壳。\n\n震动传过来。\n\n逆旋的节奏不对。不是机械故障那种紊乱——太规律了。像心跳。像某种东西在齿轮另一侧敲击。一下。又一下。和灰雾前线传来的敲击声同步。\n\n她指向旁边的助力手轮。\n\n冷锋已经站在手轮旁。他握住轮盘。铸铁表面粗糙，锈屑扎进掌心。他没松手。\n\n“转多少。”\n\n林雪举起三根手指。又翻过手掌，指尖向下。逆时针。三圈。\n\n冷锋开始转。\n\n齿轮咬合声变了。第一圈。第七齿轮减速。第二圈。逆旋停止。第三圈——\n\n林雪突然按住他的手。\n\n她摇头。\n\n不是停下。是听。\n\n齿轮箱内部传来一声轻响。像锁簧弹进槽里。然后静下来。\n\n她把手掌贴在铜壳上。震动消失了。逆旋停止了。但那种心跳般的敲击还在——不在齿轮里。在更深处。在档案馆的地基下面。\n\n——\n\n维修通道内。\n\n钟离把差分机通讯器贴近耳边。加密频道的静电噪音里，千音的声音断断续续。\n\n“……灰雾教团的人……已经进入老城区下水管网……”\n\n“离档案馆通风口多远。”\n\n“不到两百米。他们在用腐蚀剂溶解隔离网。”\n\n钟离的手指停在齿轮手杖的暗格上。\n\n“林雪还在里面。”\n\n“我知道。”千音的声音顿了一下。“但还有更糟的。灰雾前线的防御矩阵全部熄灭了。不是故障——是某种信号覆盖了控制频段。石磊的工兵队正在往哨站外集结。苏摩和他们在一起。”\n\n钟离没说话。\n\n管道共振还在持续。回声协议只能再撑七分钟。七分钟后，搜查队的差分机终端会重新校准，所有干扰频段都会被锁定。到那时，高阙的猎犬会咬穿这层噪音屏障。\n\n他把手杖换到左手。右手探进暗格，摸到一枚扁平的铜钥匙。\n\n“千音。给我接档案馆的内部回路。”\n\n“档案馆的差分机还在运转，接通会暴露——”\n\n“接。”\n\n静电噪音里加入新的频率。档案馆差分机的运转声传过来。齿轮咬合。针头刺纸。然后——\n\n一个更轻的声音。\n\n赤足踩在铁板上的声音。\n\n钟离闭上眼睛。\n\n她还活着。\n\n——\n\n灰雾前线。哨站。\n\n防御矩阵的指示灯全部熄灭。黑暗中，工兵们的呼吸器发出参差不齐的嘶嘶声。有人打开了手电筒。光束扫过隔离网。\n\n网外的爪痕在发光。\n\n腐蚀痕迹沿着爪痕边缘蔓延，形成某种规则的纹路——齿轮。符号。和圣堂地板上镶嵌的图案完全相同。光从腐蚀痕迹内部透出来，暗红色，像烧红的铁慢慢冷却。\n\n敲击声从雾墙深处传来。有节奏。深沉。每一下都让哨站的铁板地板震颤。\n\n苏摩侧头。银色薄膜覆盖的眼睛转向黑暗。\n\n他抬起一只手。工兵们安静下来。\n\n“你听，石磊。”他的声音很轻，像在吟诵。“齿轮不再哭泣，它们开始歌唱。那敲击声——是母亲的心跳，还是坟墓的叩门？”\n\n石磊站在他身后。手按在枪柄上。指节发白。\n\n“防御矩阵的熄灭，是终结，还是真正的开始？”苏摩转向他。嘴角浮现一丝微笑。近乎悲悯。\n\n石磊没回答。\n\n他盯着隔离网上的发光纹路。那些符号他认得。每一个在前线待过三天以上的工兵都认得——因为每个死去的兄弟，伤口边缘都会出现同样的腐蚀痕迹。\n\n“那不是心跳。”石磊说。\n\n苏摩的微笑没有变。\n\n“那是敲门的动静。”石磊把枪拔出来。“有人在敲门。”"
+    },
+    {
+      "tick": 45,
+      "chars": 470,
+      "text": "石磊的枪口指向隔离网。\n\n防御矩阵的指示灯跳了一下。红。黄。红。黄。循环闪烁，像某种信号。工兵们后退半步。呼吸器的嘶嘶声更急了。\n\n敲击声停了一拍。\n\n然后重新响起。这次更近。不是从雾墙深处——是从隔离网外。就在网外。\n\n石磊的拇指拨开保险。\n\n蒸汽管道在脚下颤抖。管壁凝结的水珠滴落，砸在硬化灰毯上，嘶嘶作响。一滴。又一滴。节奏和敲击声同步。\n\n“石队长。”苏摩的声音从身后传来。“你见过齿轮唱歌吗？”\n\n石磊没回头。“闭嘴。”\n\n隔离网上的发光纹路开始延伸。腐蚀痕迹像活物一样爬过铁网，留下暗红色的沟槽。沟槽边缘析出细小的结晶——暗绿色，和灰毯表面那些一样。\n\n风从雾墙方向吹过来。结晶碎裂。微光粉尘扬起，落在废弃铁轨上，落在工兵们的肩章上，落在石磊的枪管上。\n\n敲击声变成刮擦声。\n\n有什么东西在网外移动。很慢。很重。铁网向外凸起一个轮廓——不是爪痕。更大。\n\n石磊开枪。\n\n子弹穿过隔离网，打进雾里。没有回声。没有击中任何东西的声响。\n\n刮擦声停了。\n\n指示灯全部转红。\n\n然后熄灭。\n\n黑暗中，苏摩开始哼唱。调子和敲击声一模一样。"
+    },
+    {
+      "tick": 48,
+      "chars": 592,
+      "text": "枪口的硝烟还没散。石磊盯着黑暗里的隔离网。网上的腐蚀沟槽还在延伸，暗红色的光在沟槽底部跳动，像余烬。\n\n身后有脚步声。不是工兵。更轻。\n\n苏摩走到他旁边。石磊余光扫到那双手——没戴手套，指甲缝里嵌着暗绿色的结晶粉末。\n\n“你浪费了一颗子弹。”苏摩说。\n\n石磊没接话。他退掉弹壳。铜壳落地，在硬化灰毯上弹了一下，滚进裂缝里。裂缝边缘的针状结晶被弹壳砸断，断口渗出粘稠的液体。暗绿色，发着微光。\n\n工兵们没人去捡。\n\n敲击声又开始了。这次不在网外。在下面。\n\n地面颤了一下。石磊感觉到靴底传来的震动——不是蒸汽管道的脉动。更慢。更重。一下。停顿。两下。停顿。三下。节奏和刚才苏摩哼唱的调子完全一致。\n\n“你听。”苏摩侧过头。“它在学。”\n\n石磊重新举枪。枪管指向地面。灰毯硬壳上，裂缝正在扩大。暗绿色的光从裂缝深处透上来，照亮了工兵们的脸。他们的呼吸器面罩上结了一层霜。\n\n集市方向传来碎裂声。不是一声。是一片。像冰面在脚下崩解。顶棚上的灰壳成片剥落，砸在货摊之间。粉尘扬起，混着刺鼻的焦糊味。商贩们掩着口鼻往后撤，有人撞翻了货架。齿轮零件滚了一地。\n\n“石队长。”苏摩蹲下身，用手指敲了敲地面。三下。\n\n地下的敲击声回应了三下。\n\n苏摩抬起头。他的眼睛在暗绿色光里变成两个深洞。“它想上来。”\n\n石磊的拇指压在保险上。指节发白。\n\n隔离网外，雾墙开始向内凹陷。像有什么巨大的东西在吸气。"
+    },
+    {
+      "tick": 51,
+      "chars": 838,
+      "text": "嗡鸣声先从脚底传来。不是耳朵听到的——是骨头。石磊的臼齿发酸，像咬到了锡箔。他低头。靴边的结晶簇在颤。每一根晶柱都在抖，表面爬满细纹，纹路里渗出粘稠的液体，暗绿色，发着荧光。液体接触空气的瞬间凝固，长出新的枝杈。枝杈再裂开。再渗出。再凝固。结晶在疯长。\n\n一个工兵后退时踩到了晶簇。靴底嘶的一声。他低头看。靴底的铁掌正在溶解，铁水顺着晶面往下淌，淌到地上又凝成新的结晶。工兵骂了一句，单脚跳着往后退。\n\n石磊伸手拽住他的肩带，把他拖到灰毯还硬着的地面上。\n\n风来了。\n\n不是吹。是灌。灼热的气流从灰雾前线的方向压过来，裹着细碎的结晶粉尘。粉尘落在石磊的枪管上，金属表面立刻浮起锈斑。锈斑扩散，连成片，像枪管在流血。石磊用袖子擦掉。袖口碰到锈迹的地方，布料焦了。\n\n苏摩还蹲在地上。结晶粉尘落在他头发上，他没动。他盯着裂缝深处。暗绿色的光在他的瞳孔里跳动。\n\n“石队长。”他说。\n\n石磊没应。\n\n“它在下面。”苏摩站起来，拍掉膝盖上的粉尘。手掌碰到粉尘的地方，皮肤没破，但颜色变了——变成和结晶一样的暗绿色。“不是一只。是一层。”\n\n地面又颤了一下。这次不是敲击。是位移。灰毯硬壳成片翘起，边缘翻卷，像巨大的鳞片被从下往上掀开。黑色泥土露出来。湿的。冒着气泡。气泡破裂时释放出硫磺味，混进焦糊的空气里。\n\n石磊看到泥土里有东西在动。不是虫子。更大。\n\n他扣住扳机。\n\n“别开枪。”苏摩按住他的手腕。那只手的温度很低。低得不正常。“子弹喂不饱它。”\n\n集市方向传来尖叫声。不是一个人。是一片。\n\n石磊转头。灰毯硬壳正在从集市中心向外塌陷。货摊一个接一个陷进裂缝里。齿轮零件滚落的声音、布匹撕裂的声音、玻璃碎裂的声音搅在一起。一个商贩抱着货箱跑，跑出三步，脚下的地面裂开。他掉下去。箱子摔在裂缝边缘，盖子弹开，里面是空的。\n\n“石队长。”苏摩松开手。“现在你信了？”\n\n石磊没回答。他盯着裂缝深处。暗红色的光晕在很深的地方脉动。一下。停顿。两下。停顿。三下。\n\n和他自己的心跳同步。"
+    },
+    {
+      "tick": 55,
+      "chars": 632,
+      "text": "档案馆里没有风。\n\n但卷宗纸页在动。林雪的手指刚碰到纸缘，泛黄的纤维就自己卷起来，像被看不见的舌头舔过。墨迹从纸背渗出——不是洇开，是蔓延。字迹原有的笔画被顶起，墨壳剥落，新的线条从纸纹里长出来。她缩手。指尖沾了墨。墨是冷的。\n\n她看着那行字成形。\n\n「千音之喉的沉睡之地，在第三次铁锈雨浸透的第七根烟囱下。」\n\n她默念到第三个字，太阳穴里像扎进一根针。针在骨缝里转。她咬住嘴唇，舌尖尝到铁锈味。视野边缘泛起暗绿色的光——和窗外飘过的孢子一样的颜色。孢子贴在玻璃上，嘶嘶响。玻璃表面浮起雾状蚀痕。\n\n她把便携式打字机放到地板上。底板碰到积灰，没有声音。她从褪色斗篷的内袋里取出手写索引簿。铜线装订，纸页卷角。手指翻页的速度比平时快。齿轮左眼在黑暗中亮起来，冷光扫过条目。\n\n「第三次铁锈雨。」她翻到那一页。页边注着一行小字：历1343年深秋，东区第七至第九排烟囱遭腐蚀性降水，管道壁减薄三成，三人失踪。\n\n第七根烟囱。\n\n她合上索引簿。铜线勒进纸脊。齿轮左眼的光熄灭，又亮起。她在听。档案馆外有脚步声。不是一个人的。靴底踩在碎砖上，节奏均匀，越来越近。\n\n她抱起打字机，赤足移动到卷宗墙的另一侧。地面冰凉。脚底沾了灰。她蹲下，背靠铁架。架子上的卷宗盒码到天花板。盒脊标签褪色，字迹模糊。她抬头。最顶层有一只铝盒，盒面没有标签，只有凹痕。\n\n脚步声停在门外。\n\n门把手转动。铰链响。\n\n她把打字机抱紧。打字机的金属外壳贴着她的肋骨，很凉。凉得和刚才指尖沾到的墨一样。"
+    },
+    {
+      "tick": 56,
+      "chars": 717,
+      "text": "门把手转到一半，停了。\n\n外面有人在说话。声音压得很低，被铁门滤成模糊的嗡响。林雪听不清词句，但能分辨出两个声部——一个沙哑，一个尖细。他们在争执。沙哑的那个重复了某个词，尖细的啐了一口。\n\n她趁机移动。赤足踩在灰上，一步，两步，退进卷宗架的更深处。背脊贴住铁架。铁架在震。不是她的心跳——是地面在震。\n\n远处传来结晶簇迸裂的声音。像玻璃被捏碎。荧光液滴溅射到档案馆外墙，混凝土嘶嘶作响。她闻到了。甜腻，带酸，混着臭氧。\n\n灰雾方向的嗡鸣变调了。触须状阴影扫过雾缘，暗红色光晕脉动一次，两次。地面龟裂带又拓宽了一指。\n\n门外的争执停了。\n\n靴底踩碎砖。走远。又走回来。\n\n林雪抬头。最顶层那只铝盒还在。盒面凹痕在暗绿色孢子光里泛着哑光。她伸手。指尖差两寸。打字机不能放下——放下会有声音。她单手托住打字机底部，另一只手去够。肩膀拉到极限。中指碰到盒角。铝盒晃了一下。\n\n她停住。\n\n门外的人没听见。远处鸣笛集市传来三声汽笛，紧接着是金属碰撞的乱响。商队在抢装货物。铁链拖地，箱体撞击，有人在喊。\n\n铝盒被她勾下来。盒体比看上去轻。她蹲下，把打字机夹在两膝之间，打开盒盖。\n\n里面没有卷宗。\n\n是一块暗绿色的结晶。拳头大小。表面粘稠，荧光液滴正沿着晶面往下淌。液滴落在盒底，蚀出针尖大小的孔。\n\n她合上盖子。\n\n门外的人终于走了。靴底声渐远，被汽笛和金属碰撞吞掉。林雪站起来。铝盒夹在腋下，打字机抱在胸前。她看向窗户。孢子还贴在玻璃上，但蚀痕已经深到能看见窗外的轮廓——烟囱群的黑影，一根一根，排列到第七根时，烟囱顶端正冒着淡绿色的烟。\n\n她记住那个方向。\n\n然后转身，朝档案馆后门移动。脚底沾的灰印在铁架间的过道上，一个接一个，很浅。"
+    },
+    {
+      "tick": 59,
+      "chars": 1134,
+      "text": "后门的铰链锈死了。林雪用肩膀顶了两下，门板纹丝不动。她把打字机换到左手，右手去摸门闩。铁闩上凝着一层暗绿色的霜，指尖碰到时嘶地一声，皮肉烫出针尖大的白点。她缩手。门闩上的霜正在增厚，以肉眼可见的速度从边缘向中心蔓延。\n\n地面又震了一下。不是微颤——是整栋建筑跳起来，又落回去。\n\n档案馆外墙传来砖石崩裂的脆响。林雪回头。窗户上的蚀痕已经贯通成网状裂缝，孢子液正沿着裂缝往下淌，在窗台上积成一滩。滩面冒泡。每破一个泡，就有一股甜腻的气味散开。\n\n她退离门闩。后门走不通了。\n\n外面传来金属扭曲的长吟。是烟囱。第七根烟囱的方向。她数过——从窗户看出去时，第七根正冒着淡绿色烟。现在那根烟囱正在倒。声音从高到低，像一根巨大的音叉被掰弯。砖石砸穿工棚顶棚的闷响紧随其后，然后是铁皮撕裂的尖啸。\n\n林雪把铝盒夹紧。盒里的结晶在震动中发出嗡鸣，频率与灰雾方向的暗红色光晕同步。她感觉到了——结晶在回应什么。\n\n她转身跑向档案馆前厅。\n\n赤足踩过碎砖。打字机的按键在奔跑中磕碰，打出零乱的字母，打在空白的卷轴上。她没有停。前厅的拱门已经歪斜，门楣上的铆钉一颗一颗往外蹦，弹在铁架上叮当作响。\n\n她冲过拱门时，龟裂带边缘崩落了。\n\n三根触须状阴影从灰雾中甩出来。第一根抽在档案馆东墙，砖石横飞，留下一条焦黑的凹痕，深到能看见墙内的钢筋骨架。第二根扫过地面，碎石像霰弹一样溅射，打在林雪背上的打字机外壳上，当的一声。第三根悬在半空，末端的细丝状卷须张开，暗红色光晕在卷须间流转。\n\n林雪没有回头看。她跑向正门。正门的铁门还开着一条缝——她进来时留的。\n\n荧光液流从结晶簇根部涌出，汇成一条齐踝深的小溪，正沿着档案馆门前的斜坡往下淌。溪流经过处，荒草瞬间碳化，折断，碎成黑色的粉末。液流表面浮着一层油状的光泽，倒映着天空。天空是灰绿色的。\n\n她踩进液流。脚底灼痛。她咬住牙，三步跨过溪流，冲上斜坡。\n\n身后，档案馆的屋顶开始塌陷。瓦片滑落，砸进液流里，溅起荧光的水花。\n\n林雪跑到斜坡顶端才停下。弯腰。喘气。打字机从怀里滑落，磕在地上。铝盒还夹在腋下。她低头看自己的脚——脚底沾着一层焦黑的残留物，混着荧光液滴，正在慢慢凝固。\n\n她抬头看向第七根烟囱的方向。烟囱已经倒了。淡绿色的烟还在冒，从废墟堆里升起来，歪歪扭扭地飘向灰雾。\n\n铝盒里的结晶又嗡鸣了一声。\n\n她打开盒盖。结晶表面的荧光液滴已经淌尽，露出内部的纹理——暗绿色的晶面上，刻着密密麻麻的符号。不是蚀刻。是生长出来的。符号排列的方式她见过。在档案馆的卷宗上。在沉默圣堂差分机吐出的纸带上。\n\n千音之喉将于第三次铁锈雨前永寂。\n\n她合上盖子。脚底的灼痛还在加剧。她撕下一截袖口，裹住脚掌。然后抱起打字机，朝第七根烟囱的废墟走去。"
+    },
+    {
+      "tick": 62,
+      "chars": 853,
+      "text": "裹脚布在走出二十步后松脱了。她蹲下重新系紧。布条上洇出淡黄色的液迹——不是血，是脚底水泡破裂后混着荧光残留物的脓。她用指甲刮掉凝固的硬壳，碎屑落进土里，土面冒出细小的气泡。\n\n身后传来崩裂声。\n\n她回头。档案馆前厅那簇三人高的结晶正在解体。不是碎裂。是炸开。暗绿色的晶片像弹片一样四散，其中一片旋转着飞过她头顶，削断一截枯枝，嵌进十步外的土墙里，还在冒烟。荧光液从断裂的晶簇根部喷涌而出，浇在档案馆的铁门上。铁门表面立刻鼓起密密麻麻的气泡，气泡破裂时发出啵啵的轻响，像煮沸的沥青。\n\n坑缘正在凝结新的结晶。细小的，针尖似的，从冒着白烟的浅坑边缘一簇一簇往外钻。生长速度肉眼可见。\n\n她站起来。脚底的灼痛变成了钝痛。\n\n地面又震了一下。\n\n东边传来金属呻吟。她转头——那座废弃钟楼的铁皮屋顶正在扭曲。锈蚀的铁片一块一块往下掉，砸在泥水里，溅起的泥点飞到她小腿上。铁皮剥落处露出钟楼的骨架，骨架在震动中发出低沉的嗡鸣，频率与铝盒里的结晶同步。\n\n她按住盒盖。\n\n酸雨开始下了。\n\n不是雨滴。是雾。灰绿色的雾从灰雾前线方向飘过来，裹着荧光微粒，落在皮肤上有针刺感。她抬起手臂挡住脸。雾粒沾在袖口上，布料开始褪色——不是被水浸湿的那种深，是从靛蓝变成灰白，像被什么东西抽走了颜色。\n\n路旁停着一辆废弃的履带车。车体上的装甲板正在起泡。细密的气泡从铆钉孔周围往外冒，破裂后留下针眼大的蚀坑。空气里浮出一股甜味。焦糖的甜，但发腻，腻得让人后脑发紧。\n\n她加快脚步。\n\n打字机在怀里越来越沉。铝盒夹在腋下，盒角硌着肋骨。她调整了一下姿势，脚底踩到一块碎石，碎石边缘嵌着新生的结晶颗粒，硌进伤口。她没停。\n\n第七根烟囱的废墟就在前方。\n\n淡绿色的烟还在冒。烟柱歪歪扭扭地升上去，在半空被酸雾裹住，混成一种脏兮兮的黄绿色，然后被风撕开。废墟堆里有什么东西在闪光——不是火光。是结晶的光。暗绿色的，一明一灭，像在呼吸。\n\n铝盒里的结晶又嗡鸣了一声。\n\n这次更长。从嗡鸣变成了持续的颤音。盒盖在她掌下震动，像有什么东西在里面敲。"
+    },
+    {
+      "tick": 65,
+      "chars": 721,
+      "text": "仓库是在她经过时塌的。\n\n不是慢慢倾斜。是整面外墙突然向内折进去，像被一只看不见的手从中间按瘪。锈尘炸开，混着酸雾，变成一团脏橘色的云。她侧身，后背撞上路灯杆。灯杆锈蚀的表层硌进肩胛骨。碎片从尘云里飞出来——半截窗框、一块招牌的铁皮角、碎成渣的砖块——砸在她脚边三步远的地方。\n\n荧光溪流改了道。\n\n原本沿着路基流淌的绿光拐了个弯，涌进坍塌形成的洼地。洼地边缘的泥土正在溶解，冒出的气泡比档案馆铁门上的更大，破裂时溅起的荧光液落在她的靴面上。靴面皮革立刻发白，起皱。她用袖口擦掉。袖口也白了。\n\n铝盒里的嗡鸣停了。\n\n不是渐渐消失。是戛然而止。像被什么东西掐断。她低头看盒盖。盒盖表面凝结的水珠正在蒸发——不是被风吹干，是从液态直接变成气态，留下一圈一圈灰白色的盐渍。\n\n地面又震。这次不是从东边钟楼传来的。是从脚下。从很深的地方。\n\n龟裂带边缘的地面塌下去一块。不是裂开。是整块地皮陷落，像踩塌了蚁穴。一根触须的卷须从塌陷处扫过，卷起碎石。碎石不是被抓住——是被吸住。粘在卷须表面，然后被拖进暗红光晕里。光晕深处有什么东西在动。不是触须。更大。更慢。\n\n她没看。\n\n号角声从地下传来。\n\n低沉的，绵长的，像某种巨大的活物在呼吸。声波贴着地面走，震得碎石跳动，震得她的脚底发麻。旧弹坑边缘的裂缝在号角声里一寸一寸拓宽，裂缝深处渗出暗红色的光。不是火光。是龟裂带里那种光。\n\n她走到第七根烟囱的废墟前。\n\n淡绿色的烟还在冒。烟柱比刚才更粗。废墟堆里的结晶光一明一灭，频率与号角声同步。她踩上第一块碎石。碎石边缘嵌着的结晶颗粒硌进伤口。灼痛从小腿窜上来。\n\n她没停。\n\n铝盒又震了一下。\n\n这次不是嗡鸣。是敲击。一下。两下。三下。从盒子里往外敲。"
+    },
+    {
+      "tick": 66,
+      "chars": 2070,
+      "text": "她没停。\n\n铝盒又震了一下。\n\n这次不是嗡鸣。是敲击。一下。两下。三下。从盒子里往外敲。\n\n她把盒盖按紧。指节发白。敲击声闷在铝壳里，像被困住的飞蛾撞灯罩。她抱着盒子跑。靴底踩过碎石，踩过荧光液蚀出的沟壑，踩过旧弹坑边缘新裂开的缝隙。每一步都在身后留下发白的靴印。\n\n机械鸟从屋顶弹射升空。\n\n不是一只。是数十只。铜羽翼在酸雾里展开，关节处迸出锈红色的火花。它们同时张嘴。差分机脉冲噪音像一堵墙压下来——高频的，刺耳的，把号角声撕成碎片。蒸汽哨戒炮的炮口正在转向她。噪音撞上去。炮口偏了。偏了三度。炮弹擦过档案馆的东墙，在砖面上凿出一个洞。砖屑飞溅。她没回头。\n\n档案馆的铁门虚掩着。\n\n她侧身挤进去。斗篷下摆被门框上的锈钉勾住。她用力一扯。布裂了。裂口从下摆一直撕到膝弯。她没停。\n\n卷宗墙还在。铜绿爬满每一寸铁架。霉味比上次更重。她抱着打字机跑过一排排档案架。架上的卷宗盒在噪音里震动，盒脊标签脱落，飘在地上。她踩过一张。纸上的字迹是「千音之喉」。她没看。\n\n暗门在卷宗墙后面。\n\n铁锈覆盖着门框。锈层厚得像树皮。她把打字机夹在腋下，空出右手，在门框上摸索。指尖碰到松动的砖。不是砖。是铁板。伪装成砖的铁板。她按下去。铁板凹陷。门框里传来齿轮咬合的声音——不是顺滑的转动，是卡顿的，生涩的，像很久没上过油。\n\n铝盒里的敲击声停了。\n\n不是渐渐消失。是同时停。像被什么东西同时按住。她把盒子贴在耳边。里面没有声音。只有她自己的心跳。\n\n暗门开了一条缝。\n\n缝里涌出冷风。风里有铁锈味。还有别的——更淡，更甜，像旧纸在潮湿里腐烂了几十年。她把肩膀顶进门缝。铁门刮过石板地，发出刺耳的摩擦声。她挤进去。门在身后自动合上。齿轮咬合声又响了一遍。然后锁簧弹进槽里。\n\n黑暗。\n\n不是完全的黑暗。齿轮左眼在暗处亮起来。微弱的，琥珀色的光。光照出维修通道的轮廓——窄，只够一人通过。墙壁是裸露的砖。砖缝里嵌着蒸汽管道。管道表面凝结的水珠在光里闪。她往前走。通道向下倾斜。坡度很缓。但走了二十步后，脚下的石板变成了铁格栅。格栅下面有水声。不是流水。是滴落。一滴一滴，从很高的地方滴进很深的地方。\n\n她停下来听。\n\n机械鸟的噪音传不到这里。号角声也传不到。只有滴水声。还有——\n\n呼吸。\n\n不是她的。是从通道深处传来的。很慢。很深。像某种巨大的活物在睡。她把打字机抱紧。打字机外壳上的铆钉硌进肋骨。她继续走。\n\n千音的气动管在通道入口处等着她。\n\n铜管嵌在墙砖之间，管口塞着一小团纸。她抽出来。展开。纸条上的字迹潦草，墨水还没干透：「蝴蝶已入网。蜘蛛在看着。别停。」\n\n她把纸条揉成团。塞进袖口。继续走。\n\n冷锋的记录仪捕捉到了机械鸟的脉冲频率。\n\n他站在档案馆对面的屋顶上。步距精确。左脚踩在屋脊第三块瓦的裂缝上。右脚踩在第四块。记录仪的指针在表盘上跳动，把频率刻成锯齿状的曲线。他看曲线。然后看档案馆的铁门。门虚掩着。门缝里没有光。他把记录仪切换到热感模式。表盘上出现一个红点。正在向下移动。很慢。但没停。\n\n他按下通讯器。\n\n\"封锁维修通道出口。\"他说。\"坐标——\"\n\n通讯器里传来电流声。然后千音的声音切进来。轻快的，带着笑：「冷锋队长，老城区的蒸汽管道刚刚爆了三条。你的坐标信号……有点模糊呢。」\n\n电流声又响起来。通讯断了。\n\n他看通讯器。信号格数在跳。三格。一格。零格。他关掉通讯器。把记录仪夹在腋下。转身。步距依然精确。但速度比刚才快了半拍。\n\n钟离把加密通讯器贴近耳侧。\n\n指尖在齿轮手杖的暗格上敲击。识别码的节奏很稳。三长。两短。三长。通讯器里传来千音的回应——同样是敲击。两短。一长。四短。他听完。把通讯器放下。手杖的暗格弹开。里面是一卷微型差分机磁带。磁带标签上写着「回声协议·备份」。\n\n他把磁带取出来。在手心里握了一会儿。然后放回暗格。暗格合上。齿轮咬合。他站起来。走到窗边。窗外是老城区的方向。酸雾里隐约能看见机械鸟的铜羽翼还在盘旋。脉冲噪音已经减弱。但没完全停。\n\n他看了一会儿。然后拉上窗帘。\n\n林雪走到通道尽头。\n\n铁格栅到了终点。前面是石阶。向上。石阶边缘长着暗绿色的结晶。很小。只有指甲盖大。但正在发光。光一明一灭。频率与铝盒里的敲击声相同。她把盒子举起来。盒盖表面凝结的水珠也在发光。不是反射。是自己发光。\n\n她踏上第一级石阶。\n\n结晶在脚下碎裂。声音很脆。像踩碎玻璃。她继续向上。石阶很长。她数到第三十七级时，头顶出现了一道铁门。铁门上没有锁。只有一个把手。她把打字机换到左手。右手握住把手。把手是冷的。冷得粘手。\n\n她转动把手。\n\n铁门开了。\n\n门外是沉默圣堂的外围。废弃的回廊。穹顶上画着差分机的预言符号。符号正在发光。光很弱。但足以照出回廊尽头的一排铜像。铜像的脸被酸雾腐蚀得模糊不清。但它们的眼睛——每一双眼睛都嵌着齿轮。齿轮正在转。\n\n她走进回廊。\n\n铁门在身后合上。锁簧弹进槽里。声音在穹顶下回荡。回荡了很久。\n\n铝盒里的敲击声又响了。\n\n这次不是三下。是连续的。急促的。像在敲一段她听不懂的密码。"
+    },
+    {
+      "tick": 68,
+      "chars": 982,
+      "text": "敲击声没有停。\n\n她站在回廊里，铝盒贴着小臂，震动顺着骨头传到肩胛。铜像的眼睛还在转。齿轮咬合声从穹顶反射下来，和敲击声叠在一起。她听了一会儿。两种节奏不一样。铜像的齿轮是三拍。铝盒是七拍。\n\n她把打字机换到右手。左手按住铝盒。敲击声穿透掌心。\n\n回廊尽头传来碎裂声。\n\n不是石阶上的结晶。更远。更深。她走过去。铜像列在两侧。经过第五座时，她看见铜像的手指动了。食指。只动了一下。指向回廊尽头的一扇铁门。门上没有把手。只有一道焊缝。焊缝正在裂开。\n\n暗绿色的光从裂缝里漏出来。\n\n她走到门前。焊缝裂开的速度在加快。光越来越亮。她把铝盒举起来。盒盖上的水珠不再发光。敲击声停了。\n\n门后传来液体的声音。粘稠的。倾泻的。\n\n她把手贴在铁门上。铁在震动。不是敲击。是某种更慢的律动。像呼吸。\n\n身后。铜像的齿轮全部停转。\n\n她回头。铜像的眼睛暗了。但它们的头——每一座铜像的头都转向了同一个方向。不是她。是铁门。\n\n她推门。\n\n铁门向内打开。暗绿色的光涌出来。她眯起眼。门后是圣堂的内殿。穹顶比回廊高出三倍。差分机的预言符号刻满每一寸石壁。符号在发光。光很弱。但足以照出内殿中央的东西。\n\n结晶簇。\n\n五人高。从地面一直长到穹顶。表面粘稠的荧光液滴正在倾泻。液体落在地面，蚀出深及小腿的沟壑。沟壑汇成数条溪流，其中一条涌向内殿角落的排水口。排水口的铁栅栏正在腐蚀。嘶嘶声从下面传上来。很深。很远。\n\n她绕过结晶簇。\n\n液体从她脚边流过。鞋底踩在蚀出的沟壑边缘。石头是软的。像踩在腐肉上。她继续走。内殿另一头是圣堂的正门。门开着。门外是铁锈城的街道。\n\n她走到门口。\n\n街道在震动。石板翘起。远处一座废弃冶炼厂的烟囱开始倾斜。砖石掉落的声音隔着酸雾传过来。闷响。一下。又一下。\n\n她抬头。\n\n灰雾前线的方向。龟裂带已经拓宽到九步宽。暗红色的光晕里，七根触须状阴影完全探出雾缘。其中两根卷须相互缠绕，缓慢向铁锈城方向延伸。末端细丝卷起碎石。碎石被抛向空中。在空中悬了一瞬。然后落下。\n\n她听见吼声。\n\n低沉的。从灰雾深处传来。地面震动加剧。结晶簇在她身后发出碎裂声。她回头。一根晶柱正在断裂。荧光液滴喷溅出来。溅在铜像上。铜像的胸口开始腐蚀。\n\n她把铝盒抱紧。\n\n走出圣堂正门。石阶向下。第三级石阶已经裂成两半。她跨过去。铝盒又开始震动。\n\n这次不是敲击。\n\n是持续的低鸣。"
+    },
+    {
+      "tick": 71,
+      "chars": 613,
+      "text": "石阶走完。她踩上街道的石板。石板在动。不是震动。是翘起。一块接着一块，像有什么东西从地底往上拱。她跳过第一块翘起的石板。第二块。第三块。铝盒的低鸣在掌心发麻。\n\n身后传来断裂声。\n\n她回头。废弃冶炼厂的烟囱正在倾倒。很慢。像一根被推倒的桅杆。烟囱砸在相邻库房的屋顶上。砖石吞没砖石。粉尘炸开。灰白色的云团翻滚着吞掉三个街区。她转回头。继续走。\n\n粉尘追上来。\n\n她拉起衣领捂住口鼻。能见度在下降。五十步。三十步。十步。她放慢脚步。脚底突然踩空。\n\n不是石板。\n\n是地面。\n\n她往后跳。面前的路面塌下去。直径五步的陷坑。坑底是废弃下水道的砖拱。砖拱正在碎裂。荧光液滴从裂缝里喷出来。蒸汽跟着涌出。滚烫的。带着硫磺味。她绕开陷坑。左边。右边。又出现两个。嘶嘶声从每个坑底传上来。\n\n铝盒的低鸣变调了。\n\n从持续的低鸣变成断续的脉冲。像心跳。她低头看。盒盖上的水珠又开始发光。不是暗绿色。是白色。很弱。但足以照出她脚下的路。\n\n震波传来。\n\n她没站稳。单膝跪在翘起的石板上。膝盖磕出闷响。铝盒差点脱手。她抓紧。抬头。\n\n灰雾方向。一根触须抽打地面。\n\n石板路面从远处开始碎裂。裂缝像蛇一样游过来。游过陷坑。游过翘起的石板。游到她脚边。停下。她站起来。左腿膝盖在抖。她不管。继续走。\n\n城墙方向传来闷响。\n\n磨盘大的石块砸在城墙上。碎石溅落。其中一块滚到她脚边。石头表面有腐蚀的痕迹。嘶嘶响。她跨过去。铝盒的脉冲在加快。\n\n她开始跑。"
+    },
+    {
+      "tick": 74,
+      "chars": 605,
+      "text": "石板在脚底碎裂。不是一块。是一整段路面。她跳开。碎屑溅进裤腿。继续跑。铝盒的脉冲贴着手腕往上爬，像第二副脉搏。\n\n左前方传来撕裂声。\n\n她转头。城墙方向。一块磨盘大的石块砸进垛口。碎石崩开。其中一片擦过她的肩胛。她往前踉跄两步。没停。\n\n毒雾从灰雾方向漫过来。淡绿色。贴着地面爬。爬过翘起的石板。爬过陷坑边缘。爬过她的脚踝。硫磺味堵住鼻腔。她咳嗽。喉咙像被砂纸打磨。拉起衣领已经没用。她撕下一截袖口。绑在脸上。继续跑。\n\n街角告示牌从雾里浮出来。\n\n铁皮表面在冒泡。字迹被腐蚀成绿色的脓。一滴荧光液从牌顶滴落。砸在地上。嘶。青烟。她绕过告示牌。脚底突然踩到软的东西。\n\n她低头。\n\n是一截触须。断的。还在抽搐。断面渗出暗绿色粘液。粘液流过石板。石板在溶解。她跳开。铝盒的脉冲突然变急。\n\n她抬头。\n\n灰雾里。七根触须的轮廓在移动。其中四根已经探出雾缘。末端卷须张开。像手指。其中一根卷起第二块石块。往后蓄力。\n\n她转身。往城墙缺口相反的方向跑。\n\n地面又塌了。这次在正前方。直径八步。坑底不是砖拱。是荧光溪流汇成的漩涡。漩涡中心在吸什么东西。蒸汽喷上来。滚烫。她刹住。左腿膝盖弯下去。又撑起来。\n\n铝盒的脉冲连成一条线。不再像心跳。像尖叫。\n\n她往右拐。钻进两栋开裂建筑之间的窄巷。墙体在抖。灰泥剥落。一块砖从头顶掉下来。砸在她脚边。她跨过去。巷口在三十步外。\n\n身后。触须抽打地面的声音。很近。\n\n她没回头。"
+    },
+    {
+      "tick": 77,
+      "chars": 1964,
+      "text": "通讯器旋到底。咔嗒。鲁严把它捅进工具袋深处，转身。锅炉泄压阀在头顶嘶——像蛇。林雪缩在管道弯头下面，蒸汽义肢的膝盖顶着打字机外壳，关节缝渗出白汽，一缕一缕，擦过她手背。他拎起工具袋，下巴朝废铁场方向一抬，没等。\n\n她站起来。打字机贴着肚子。锅炉的嘶声追着他们到侧门。\n\n巷子裂开了。石板翘成牙。暗绿的液从缝里冒，不流，是爬——爬过碎石，爬过鲁严踩碎的粉末。告示牌的铁皮在冒泡，字迹烂成绿脓。一滴从牌顶坠下，砸地，青烟蹿起，酸味钻进鼻腔。林雪的鞋底碾过烟，烟碎了。\n\n东区那栋三层砖楼塌得突然。不是响，是震——地面先抖，然后才是声音。灰浪扑过巷口，鲁严举义肢挡脸，齿轮在关节里加速，嗡嗡的，像困住的苍蝇。灰落满他肩膀，落满林雪头发。她没拍。\n\n废铁场栅栏门的铰链没声。老烟上过油。棚屋里焊枪喷蓝火，老烟蹲在工作台前，护目镜上两个鲁严的脸在晃。工具袋砸上台面，弹簧和齿轮在铁盒里跳。\n\n“共鸣晶。三块。”\n\n老烟摘护目镜。眼珠灰白，炉灰那种灰。他看林雪。林雪靠门框站着，打字机抱在怀里，手指没停，敲键声轻得像指甲刮铁皮。\n\n“丫头能用？”\n\n“能。”\n\n老烟转身翻那堆金属，碰撞声尖细。铁盒从底层抽出来，打开，三块晶石暗蓝，裂纹像蛛网。他推到鲁严面前。\n\n“最后三块。高阙的人在收。三倍价。”\n\n鲁严拿起一块，晶面映出他的眼。“记账。”\n\n“上次没清。”\n\n“一起。”\n\n老烟没再说。林雪已经坐进角落，打字机搁膝上，手指落下去，轻，密，铁皮屋顶的雨。\n\n——\n\n档案馆门前，钟离的手杖顿地。当——石板缝里的灰跳起来。单片眼镜后的视线扫过十二支蒸汽步枪，枪管烫得空气扭曲。他往前迈半步，挡在门正中央，左手背到身后，对阴影比了个手势——极细微，手指往里收。\n\n“鲁严队长。”声音薄，刀刃似的。“全副武装来这堆发霉的纸面前，替议会清理垃圾，还是找某样您自己也说不清的东西？”\n\n鲁严义肢的关节在锁紧，发出金属咬合的细响。\n\n“《城市治安条例》第十七条第三款。”钟离继续说，每个字都咬得干净。“进入行会保护产业，要三份签署令状。您手上那份，该不会只有高阙议员的私人印章？”\n\n鲁严下颌肌肉抽了一下。他掏出羊皮纸，展开，红印章孤零零一个。\n\n“搜查叛国文献。”字从齿轮缝里挤出来。“让开。”\n\n“叛国？”钟离笑。笑声轻，像玻璃在裂。“哪条法律定义了？《刑法典》？《信息安全法》？还是高阙议员昨晚起草那份——没通过三读的临时法案？”\n\n鲁严的手按上腰间手铐。黄铜，冰凉，刻着齿轮议会徽章。\n\n阴影里，林雪的手指在键盘上跑，极轻极快。她撕下纸条，对折两次，指尖在护身符上停了一瞬——金属烫得像刚焊过。她甩出纸条。\n\n纸条飞过石板地，落地沙沙响，像伤了的飞蛾。停在鲁严和钟离之间。字迹是敲出来的，墨没干透。\n\n“门开。第七齿轮转。灰雾出。退。”\n\n钟离低头看纸条，看阴影里那个抱打字机的轮廓。手指在背后收紧，骨节发白。\n\n鲁严盯着纸条。护身符贴胸口的皮肤，烫得刺痛。他没弯腰。\n\n——\n\n灰雾前线，触须从雾里伸出来，几十条，灰白，末端卷须张开。一根卷起磨盘大的石块砸向城墙，缺口扩大，砖块飞进城，砸穿铁皮棚屋顶，铁皮撕开的声音尖长。\n\n石磊的枪托抵着肩膀，枪管在抖。\n\n触须滴黏液，落在隔离网上，铁丝变黑变软，断了。但黏液绕过备用电缆——绕过去，像认得路。\n\n苏摩转向石磊，长袍上金属碎片碰撞，细碎，叮叮的。他抬起灰白的手，指向那根正在腐蚀隔离网的触须，银膜覆盖的眼像穿透了什么。\n\n“看到了吗，石磊？”语调慢，有节奏，像诵经。“那不是腐蚀，是圣油。为旧世界的金属做临终涂油礼。你听——齿轮在哭。旧世界的挽歌，还是新生的序曲？”\n\n石磊没答。他盯着备用电缆。电缆完好。触须绕过它。\n\n金属摩擦声从雾里传来，尖锐，不是齿轮不是蒸汽机，是更大的东西在逼近。\n\n苏摩眼睛亮了。他高喊：“圣临！”\n\n石磊的指节在扳机上发白。\n\n——\n\n档案馆门前，冷锋大步走来，靴跟敲石板，节奏均匀。蒸汽增压手枪的保险已开，他举记录仪，镜头对准双方，红灯闪。\n\n停在鲁严和钟离之间。目光扫过两人的脸，像扫描。\n\n“停止。”声音冰。“出示搜查令。三秒。”\n\n鲁严举高羊皮纸。\n\n冷锋看了一眼，没接。\n\n“安全部签发。”他说。“不是议会。三秒到了。”\n\n手按上枪柄。\n\n钟离嘴角微微上扬。单片眼镜后的目光转向冷锋，转向记录仪，红灯还在闪。\n\n鲁严义肢喷出一股白汽。他把羊皮纸折好，放回怀里。\n\n“撤。”\n\n卫兵们面面相觑，枪管放低。\n\n鲁严转身，义肢踩过纸条，纸条粘在脚底。三步后脱落，留在石板地上，字朝上。\n\n“门开。第七齿轮转。灰雾出。退。”\n\n冷锋的记录仪还在闪。镜头对准钟离，对准他身后大门，对准阴影里那个抱打字机的轮廓。\n\n林雪没动。手指停在键盘上。护身符烫着胸口。"
+    },
+    {
+      "tick": 78,
+      "chars": 1957,
+      "text": "冷锋的记录仪红灯还在闪。鲁严没动。义肢膝关节发出齿轮空转的咔嗒声，像钟表卡了发条。\n\n“搜查令。”冷锋重复。这次不是问句。\n\n鲁严从怀里掏出羊皮纸，展开。纸缘有折痕，墨迹是安全部的蓝印。冷锋接过，放大镜从袖口滑出，贴在镜片上。他看得很慢。一行一行。\n\n“签署日期。”他说。“三天前。”\n\n“有效期内。”\n\n“签署人。”\n\n“安全部长。”\n\n冷锋把羊皮纸翻过来。背面空白。他又翻回来，放大镜对准印章。铜章边缘有细微的毛刺——真章。他把羊皮纸折好，递回去。\n\n“程序合规。”\n\n鲁严伸手接。冷锋没松手。两人各执一端，羊皮纸绷紧。\n\n“但搜查范围不包括档案馆内部。”冷锋说。“你越界了。”\n\n鲁严义肢喷出一股白汽。蒸汽在两人之间散开，带着铁锈味。他松开羊皮纸。冷锋把纸折好，装进证物袋。\n\n“记录在案。”\n\n鲁严转身。卫兵们让开一条路。他走了三步，停下。没回头。\n\n“冷锋。”他说。“你的记录仪镜头该擦了。”\n\n义肢踩过石板，踩过那张纸条。纸条上字迹朝上：“门开。第七齿轮转。灰雾出。退。”\n\n冷锋的记录仪对准纸条。红灯闪了三下。\n\n钟离的手杖一顿。他没看鲁严的背影，转身朝东区走去。步伐不疾不徐。单片眼镜反射着远处扬起的灰尘——那栋垮塌的木结构房屋还在往下掉瓦片，闷响一声接一声。\n\n他经过冷锋身边时停了一瞬。\n\n“安全部的章。”钟离说，嘴角那丝冷笑还在。“三天前签的。有意思。”\n\n冷锋没答。记录仪转向钟离。\n\n“三天前。”钟离重复。“正好是差分机预言出现的那天。”\n\n他继续走。手杖敲石板，节奏均匀。\n\n——\n\n灰雾前线。\n\n触须残片还在缺口处蠕动。灰白色，断口渗出黏液，滴在城砖上，砖面变黑，起泡，像被煮开的沥青。石磊盯着那截残片。枪托还抵着肩膀，枪管不抖了。不抖是因为手指已经僵了。\n\n苏摩的手指还指着缺口。银膜覆盖的眼转向石磊，嘴角的微笑没褪。\n\n“你听见了吗，石磊？”\n\n石磊听见了。金属摩擦声。从雾里来，不是齿轮不是蒸汽机，是更大的东西。每一声都像铁轨被掰弯。他的呼吸器发出嘶嘶声，滤芯快饱和了。\n\n“那不是破坏。”苏摩说。长袍上的金属碎片叮叮响。“是开门。”\n\n又一块巨石从雾里飞出。砸在缺口旁。碎石溅到石磊脚边，一块指甲大的石片划过他的手背。血珠渗出来。他没擦。\n\n“旧世界的枷锁。”苏摩的声音像诵经。“每一块碎石，都是一根断裂的锁链。你听见齿轮在哭了吗？”\n\n石磊听见了。不是齿轮。是城墙内部传动轴的哀鸣。轴承碎了，钢珠在轴套里乱撞。\n\n“它们在哭。”苏摩说。“因为它们知道自己即将被净化。”\n\n黏液绕过备用电缆。石磊盯着那根完好的电缆。铜芯还在供电，绝缘层干干净净。触须不碰它。\n\n“为什么？”石磊说。声音哑。\n\n“什么？”\n\n“为什么不碰电缆？”\n\n苏摩侧头。银膜下的眼像在穿透什么。他沉默了三息。\n\n“因为圣油有灵。”他说。“它认得什么该留，什么该毁。”\n\n石磊的手指在扳机上收紧。指节发白。\n\n——\n\n窄巷。\n\n林雪蹲在锈蚀管道后。斗篷裹紧打字机，键盘贴着胸口。齿轮左眼亮着微光，光束扫过坑底那汪幽绿色的水潭。\n\n陷坑边缘还在塌。土块掉进水里，溅起荧光液滴。液滴落在砖石上，砖缝里的青苔瞬间疯长，从暗绿变成荧绿，然后枯死，变黑，碎成粉末。\n\n林雪把打字机放在膝上。手指摸到键帽。她打了一行字，没按回车。\n\n“荧光加深。与卷宗源点描述吻合度87%。”\n\n她删掉。又打。\n\n“水。光。长。死。”\n\n齿轮左眼的光束停在水潭中心。那里有气泡冒上来。不是沼气。气泡破开时，水面荡开一圈圈荧光波纹，波纹撞到坑壁又弹回来，形成干涉图案。\n\n林雪盯着那些图案。手指在键帽上悬停。\n\n图案在变。不是随机干涉。是有规律的。像某种信号。\n\n她打了一个符号。\n\n“∑。”\n\n回车。纸张卷动。她把纸条撕下来，塞进袖口。然后继续看。\n\n气泡还在冒。图案还在变。\n\n——\n\n东区。\n\n钟离站在垮塌的房屋前。灰尘还没落定。半边墙体塌成瓦砾堆，木梁折断，断面参差。屋顶的瓦片滑了一地，碎了大半。\n\n他用手杖拨开一块碎瓦。下面压着一只童鞋。布面，鞋底磨穿了。他把瓦片放回去。\n\n围观的人群聚在巷口。没人靠近。\n\n钟离蹲下。单片眼镜后的目光扫过瓦砾堆底部。那里有道裂缝。不是墙体裂缝——是地面裂缝。从房屋地基一直延伸到隔壁的铁皮棚。裂缝边缘有暗绿色的痕迹，像是什么液体干涸后留下的。\n\n他用指尖刮了一点。粉末。放鼻子前闻了闻。没味道。\n\n手杖一顿。他站起来，沿着裂缝走。裂缝拐进窄巷，消失在锈蚀的蒸汽管道下。\n\n钟离没跟进去。他回头看了一眼垮塌的房屋。灰尘终于落定了。阳光透过灰尘照下来，灰蒙蒙的，像旧照片。\n\n他嘴角那丝冷笑消失了。\n\n单片眼镜后的目光转向档案馆的方向。\n\n然后他转身，朝议会区走去。手杖敲石板，节奏不疾不徐。"
+    },
+    {
+      "tick": 81,
+      "chars": 529,
+      "text": "手杖敲到第三十七下时，钟离停住了。\n\n不是到了议会区。是街道断了。\n\n荧光液滴汇成的溪流横在面前，宽约三步。液面漂着暗绿色泡沫，一团一团，像腐坏的肺。石板在液面下嗤嗤作响，边缘正在溶解。他蹲下，用手杖末端探进溪流。金属杖尖提起来时，镀层已经薄了一层。\n\n他换了个方向。绕过倒塌的蒸汽管道，穿过一条窄巷。\n\n巷口躺着一个人。\n\n女人。窝棚区的。手指抓着石板缝，指甲裂了三个。嘴角有绿色泡沫，比溪流上的更细密，还在冒。她咳了一声。泡沫破掉，溅到钟离靴面上。他没躲。\n\n蹲下。翻开她眼皮。眼白布满暗绿色丝状纹路，像蕨类植物的根系。瞳孔还在收缩，但已经不对焦了。\n\n“雾。”她说。声音像砂纸刮铁皮。“雾里有东西。”\n\n“什么东西。”\n\n她没回答。手指从石板缝里松开，指甲留了一片在缝里。\n\n钟离站起来。单片眼镜后的目光扫过窄巷尽头。绿色薄雾正从排水沟的格栅里涌上来，贴着地面爬行。雾碰到女人的脚底，停顿了一瞬，然后继续蔓延。\n\n他转身。不再绕路。手杖直接踩进荧光溪流，靴底嗤嗤响。三步过去。靴底的钉子在石板上留下一串浅坑。\n\n议会区的尖顶从雾里浮出来。钟声在响。不是报时。是紧急召集。\n\n他没回头。手杖敲石板的节奏没变。\n\n身后，窄巷里那个女人又咳了一声。然后没了。"
+    },
+    {
+      "tick": 84,
+      "chars": 352,
+      "text": "栈道断在第三处。木板翘成锐角，断口还在冒烟。腐蚀浆液从破裂的结晶簇里涌出来，稠得像化脓的伤口，淌过石板时发出油炸的声响。钟离绕过去，靴底踩进泥灰里，拔出来时带起一串黏丝。\n\n城墙缺口就在前面。灰雾的触须从缺口探进来，细如发丝，贴着地面爬。碰到石板的地方冒出青烟，烟散后留下一块灰斑，边缘正在扩大。他停了一步。单片眼镜对准触须。镜片上闪过一行读数，然后暗了。\n\n下风区传来咳嗽声。不是一声两声。是一片。然后一片里少了几声。\n\n钟离没往那边看。他走过缺口时，一根触须缠上他靴跟。他跺脚。触须断了，断口渗出灰浆，在石板上扭了两下，不动了。靴跟的皮革已经薄了一层。\n\n议会区的钟声还在敲。节奏变了。不是紧急召集。是围城警报。\n\n他加快脚步。手杖点地的频率提了一倍。身后，灰斑还在扩散，一片一片，像地面睁开了眼睛。"
+    },
+    {
+      "tick": 87,
+      "chars": 420,
+      "text": "第四处栈道垮掉时，他刚拐过街角。声音从身后追上来——木梁断裂的闷响，然后是水花，然后是嘶嘶声，像烙铁插进冷水。他没回头。手杖点地的节奏没变。\n\n城门方向有什么东西在发光。不是火光。是铁栅栏本身，从内向外泛红，像被送进锻炉的熟铁。灰雾的细丝缠在栅栏上，一圈一圈，勒进去。金属软了。第一滴铁水落下来，砸在石板上，溅成橘色的星子。然后是第二滴。第三滴。\n\n钟离在距城门二十步的地方停住。单片眼镜对准栅栏。镜片上跳出一串数字，然后开始闪烁——读数不稳定。他把镜片摘下来，用袖口擦了一下，重新戴上。还是闪。\n\n下风区那边已经没有咳嗽声了。\n\n绿色的薄雾从排水沟里漫出来，贴着地面流。它绕过碎石，绕过铁水冷却成的珠子，绕过一只翻倒的木屐。雾流过木屐时，屐面上的布带褪了色。从靛蓝褪成灰白。\n\n钟离把靴子从雾的边缘移开。手杖换了只手。议会区的钟还在敲，节奏越来越快，像差分机打孔带卡进了死循环。\n\n他绕过那滩铁水。靴底踩过的地方，石板上的灰斑连成了一片。"
+    },
+    {
+      "tick": 88,
+      "chars": 802,
+      "text": "鸣笛集市的蒸汽管道比平时喷得更猛。白汽从拱顶裂缝里挤出来，裹住吊灯的铁链，裹住摊贩的铜秤，裹住千音的脚踝。\n\n她闪身躲进一个售卖铜制小玩意儿的摊位后。半张金属面纱在蒸汽里泛着冷光。她把气动管收发器贴在耳边，假装整理裙摆——手指穿过帆布破洞，摸到摊板下的铆钉。\n\n鲁严的靴子停在五步外。齿轮扣皮靴，擦得比平时亮。靴底碾过一片碎玻璃，嘎吱。\n\n\"任何藏匿接触卷宗者的人——\"他的声音被蒸汽管道吞掉一半，\"——同罪。\"\n\n千音没动。她透过破洞看那双靴子转向左，又转向右。靴尖对准一个卖差分机齿轮的老头，停住。老头举起双手，袖口滑下去，露出手腕上的机油纹身。不是他要找的人。靴子移开。\n\n收发器贴着她耳廓，冰凉。她听见士兵翻倒货箱，听见铜管滚下台阶，听见一个女人的尖叫——然后被汽笛盖过。\n\n\"接触卷宗者\"。她眯起眼睛。这个词不是随便用的。档案馆的卷宗。林雪。钟离。她脑子里同时转着三个名字，手指在收发器上敲出一串无节奏的轻响。\n\n鲁严转身了。靴尖朝向她这边。\n\n蒸汽管道又喷出一股白汽。她趁机压低身体，从摊位后滑进旁边的铁梯阴影里。收发器磕在梯阶上，发出一声闷响。她按住它。屏息。\n\n靴子没停。\n\n她等了三秒。然后从铁梯另一侧探出头。鲁严正蹲在一个矮小的身影前——林雪。蒸汽义肢的关节排出细小的气柱。他用左手拇指抹去女孩脸上的油污，动作很轻。\n\n\"丫头，外面那帮铁壳脑袋在搜人，但废料场他们暂时不会来。\"他的声音压得很低，像齿轮咬合前的间隙，\"你听着，就像上次拆差分机一样——别出声，别乱动，等我信号。这些齿轮比人心可靠，至少它们不会出卖你。\"\n\n林雪点头。她递出一张纸条。鲁严接过去，没看，塞进手套里。然后他站起来，义肢发出液压杆复位的声音。他拍了拍膝盖上的灰，转身走向集市的蒸汽帷幔。\n\n千音把收发器从耳边移开。她的手指悬在按键上，停了很久。\n\n然后她按下三个键。气动管里传来压缩空气的尖啸。消息发出去了。"
+    },
+    {
+      "tick": 89,
+      "chars": 605,
+      "text": "收发器里传来回执信号——三声短促的震动，间隔零点五秒。消息已送达。她把收发器塞回帆布袋，指尖碰到袋底的铜壳弹壳，凉的。三颗。她只带了三颗。\n\n城门方向传来金属扭曲的尖啸。不是一声，是一串，像什么巨物正把铁栅栏当湿纸撕。千音从铁梯阴影里探出半张脸。蒸汽帷幔被气流撕开一道缝。她看见城门。铁栅栏上溶出拳头大的孔洞，边缘发红，滴着铁水。灰雾触须从孔洞里挤进来，细丝贴着地面蠕动，碰到鹅卵石就留下焦黑的凹痕。\n\n五步。触须比昨天又近了五步。\n\n她缩回阴影里。后脑勺抵住铁梯的铆钉。冷。\n\n排水沟方向传来一声闷响。有什么重物砸在鹅卵石上。她偏头看。沟口那块铁质招牌——\"钟氏齿轮行\"——锈蚀脱落，砸在湿漉漉的石面上，边缘还在继续溶解，冒出绿色的细泡。毒雾沿沟壁爬上来，贴着地面漫开，碰到招牌的铁框，铁框就开始发黑。\n\n她拉起帆布面罩。不是防毒规格，但总比没有强。\n\n低洼区的方向飘来烧焦的金属味。不是铁锈，是铜——她认得这个味道。废弃冶炼厂第三车间的铜顶，上周还在。现在大概只剩一锅沸腾的浆液。\n\n她得移动。\n\n收发器又震了一下。不是回执。是钟离的频道。她按下接收键。气动管里传来压缩空气的嘶嘶声，然后是一个坐标——老城区第七街，自由机械师行会的旧仓库。\n\n她删掉消息。手指在按键上停了一秒。然后她站起来，贴着铁梯的阴影边缘，朝第七街的方向移动。\n\n身后，城门铁栅又发出一声尖啸。这次更长。像骨头被拧断。\n\n她没有回头。"
+    },
+    {
+      "tick": 92,
+      "chars": 634,
+      "text": "铁栅弯折的声音追上来。不是一声，是持续的低吼——金属纤维被一根一根拧断，每断一根就在她后颈上弹一下。她加快脚步。帆布袋拍打髋骨，铜壳弹壳在袋底互相碰撞，叮，叮，叮。\n\n第七街的入口被雾气削去一半。能见度不到两步。她贴着墙根走，左手摸砖缝，右手攥着帆布袋的束口绳。砖面渗出黏稠的水珠，碰到指尖就发麻。不是水。她把手指在裤腿上蹭干。\n\n脚下突然一空。\n\n她往后仰，后脚跟踩到实心石面才稳住。低头看。排水沟的铁质沟盖不见了。一个蜂窝状的洞口张在脚边，边缘还在往下掉铁渣，每一片铁渣落进洞里都没有回声。绿色毒雾从洞口涌上来，贴着她小腿翻滚，漫过脚踝。帆布裤脚沾到雾气的部分开始发硬，像被浆过。\n\n她退开三步。洞口继续扩大。边缘的铁件像被看不见的嘴啃着，一点一点消失。\n\n废弃冶炼厂的方向亮起一团暗绿色的光。不是灯。是火。火焰舔着第四车间的屋顶铁架，铁架正在往下塌，像被烤软的蜡烛。又一声爆裂。这次更近。她看见一块燃烧的废油布被气浪抛起来，在空中翻了两圈，落在铁轨路基上。路基的枕木开始冒烟。烟是绿的。\n\n她拉紧面罩。帆布纤维在鼻梁上勒出一道印。\n\n收发器又震了。三短。间隔零点五秒。不是钟离。是自动中继站的回执确认——她之前发出的那条消息已经进入老城区的地下气动管网。至少管道还在。\n\n她拐进第七街。街口那棵枯槐还在，树干上的铜质路牌锈掉一半，剩下\"七\"字的最后一横。她蹲下。枯槐根部有一个铁质检修盖。她用指节敲了三下。\n\n盖子从里面推开。\n\n一只手伸出来。指节上有齿轮纹身。"
+    },
+    {
+      "tick": 95,
+      "chars": 896,
+      "text": "她抓住那只手。掌心贴住齿轮纹身的凸起，凉的，纹路在皮肤下微微跳动——不是脉搏，是齿轮在转。对方一拽，她整个人滑进检修口。膝盖磕在铁梯横档上，闷响。盖子合拢。头顶传来铁栓推入槽口的摩擦声。\n\n黑暗里只有呼吸。两个人的。\n\n“布袋。”声音从下方传来，女声，沙得像锉刀。\n\n她把帆布袋递下去。袋底的铜壳弹壳又碰了一下，叮。这次在密闭空间里格外脆。\n\n“轻点。”\n\n她没应。脚踩到实地。检修通道只有一人宽，墙壁是裸露的砖，砖缝里渗出机油和别的什么。一盏油灯挂在头顶的铁钩上，火焰缩成豆大，光只够照出三步。三步外是弯曲的管道，铸铁的，表面凝着水珠。\n\n城门方向传来金属断裂声。不是一根，是一排。铁栅的残骸砸在地上，溅起的腐蚀液滴打在石板路面上，嘶嘶响。紧接着是更沉的坍塌声——下风区窝棚的屋顶。木结构折断时发出类似骨骼碎裂的声音，一层叠一层。\n\n齿轮纹身的女人没回头。她蹲在管道拐角处，正在拆墙上一块铁板。螺丝刀咬住螺帽，手腕一转，螺帽脱落。再一转，第二颗。\n\n“钟离呢？”苏默问。\n\n“还没到。”\n\n铁板卸下来。墙洞里是一排铜质阀门，每个阀门手轮上都刻着编号。女人拧开第三个。管道深处传来气流泄压的嘶声。\n\n低洼区方向又亮了一下。暗红色的光从检修通道的通风口漏进来，把油灯的黄光压下去一瞬。铁轨路基的枕木在燃烧，火星被热气流卷起来，飘过通风口的铁栅，落在苏默脚边。她踩灭。鞋底碾出碳粉的触感。\n\n“进来。”女人钻进墙洞。\n\n苏默跟进去。洞内是更大的空间，能站直。墙上有三排仪表盘，指针全部停在零位。地面铺着铁格栅，格栅下有水声。不是清水，是某种黏稠液体被泵抽走的咕噜声。\n\n女人把油灯挂在仪表盘旁边的钩子上。光晃了一下，照出墙角堆着的木箱。箱盖上烙着自由机械师行会的徽记——齿轮与羽翼。\n\n“你的位置。”女人指了指标盘下方一张铁凳，“坐。”\n\n苏默没坐。她把帆布袋放在铁凳旁，袋口松开，露出里面的铜壳弹壳。弹壳表面有刻痕，是她自己划的。\n\n城门方向又传来一声爆裂。这次更近。基座石料碎裂的声音像冰面崩开。\n\n女人看了她一眼。齿轮纹身在油灯光下反光，纹路延伸到手腕，没入袖口。\n\n“还有七分钟。”她说。"
+    },
+    {
+      "tick": 98,
+      "chars": 568,
+      "text": "城门方向传来金属扭曲声。不是断裂，是扭绞——铁栅的竖杆被什么东西拧成螺旋，螺纹刮过石槽，发出指甲划过黑板的尖啸。然后两下闷响。主栅栏坠地。腐蚀液溅起来的声音像油锅进水。\n\n苏默的手指碰到帆布袋里的弹壳。刻痕硌进指腹。她没往外看。\n\n仪表盘旁边的通风口漏进一道橘红色的光。低洼区方向。枕木在燃烧，明火舔着铁轨转辙器的铸铁外壳，黑烟从通风口的铁栅缝里挤进来，在油灯的黄光上蒙了一层灰。\n\n女人蹲在木箱前，正在撬箱盖。撬棍插进缝隙，手腕下压。钉子从木头里拔出来的声音，短促，涩。箱盖掀开。里面是铜管，拇指粗，两端有螺纹接口，码得整整齐齐。\n\n下风区方向又塌了一片。这次更沉，不是屋顶，是整面墙。砖石砸进腐蚀浆液里的声音闷而钝，像远处有人往泥潭里扔石头。绿色毒雾从通风口涌进来一缕，碰到油灯火焰，嘶一声，烧成青白色的烟。\n\n苏默把帆布袋拎起来，放在铁凳上。袋底的弹壳又碰了一下。她没管。\n\n“五分钟。”女人说。\n\n她从木箱里抽出三根铜管，拧在一起。螺纹咬合时发出细密的金属摩擦声。然后把组装好的铜管一端接在第三个阀门的手轮下方。管道深处的水声变了——不是咕噜，是某种东西被反向抽回来的呼啸。\n\n苏默看着仪表盘。指针还是停在零位。但玻璃表盘上凝了水珠，从内壁往下淌。\n\n城门基座的石料碎裂声持续传来。碎石从拱顶剥落，砸在石板路面上，间隔越来越短。"
+    },
+    {
+      "tick": 99,
+      "chars": 945,
+      "text": "鸣笛集市东侧入口的铁栅栏前，卫兵排成扇形。蒸汽船在头顶的拱形隧道里拉响汽笛，湿漉漉的回音撞在砖壁上，碎成一片嗡鸣。\n\n千音被拦在第三道栅栏前。卫兵队长的差分目镜闪着绿光，镜头伸缩，对准她的脸。\n\n“张嘴。”\n\n她没动。手指攥住衣角，指节发白。\n\n队长伸手捏住她的下颌。拇指按在颊侧，压下去。千音的嘴被撬开一条缝。队长偏头，往她口腔里看了一眼。目镜的绿光扫过她的舌根。\n\n“声带还在。”他松开手，往后退半步。“不说话。带走。”\n\n两名卫兵上前。千音往后退了一步，后背撞上身后的铜制蒸汽烤炉。摊主早已躲开，炉子上的铁板还嗞嗞冒着油星。烤炉的阀门就在她右手边，黄铜手轮，上面刻着压力刻度。\n\n她抬手。袖口滑出一截枪管。\n\n枪响。\n\n子弹钻进阀门手轮的轴心。黄铜炸开。高压蒸汽从裂口喷出来，白茫茫的，带着铁锈味和滚烫的水珠。卫兵队长的差分目镜瞬间蒙上一层水雾，他伸手去抹，千音已经矮身钻进摊位间的缝隙。\n\n帆布篷在她头顶晃动。她蹲在木箱后面，手指摸到摊位支柱上绑着的气动管收发器。按键是黄铜片，冰凉。她敲了六下。加密脉冲顺着管道窜出去，在墙壁夹层里拐了三道弯，往钟离的接收终端飞去。\n\n蒸汽还在喷。白雾里有人咳嗽，有人骂。铁质摊架被撞倒，锅碗瓢盆砸了一地。\n\n然后一声更尖锐的嘶鸣压过所有噪音。\n\n不是蒸汽。是蒸汽义肢的排气阀。\n\n鲁严从人群里挤出来。他的右臂义肢正在喷气，灼热的白雾从肘关节的排气孔往外涌，周围摊贩捂着脸往后退。他走到卫兵队长面前，义肢的钳状手指张开，合拢，敲在对方的胸甲上。\n\n当。当。当。\n\n“瞎了你的差分眼。”鲁严的声音不大，但每个字都像铆钉钉进铁板。“这哑巴是我锅炉房的学徒。她喉咙里的滤嘴还是老子亲手装的。”\n\n队长抹掉目镜上的水珠，镜头重新聚焦。“鲁严师傅。她拒绝开口接受卷宗接触测试——”\n\n“她开不了口。”鲁严的钳指夹住队长的胸甲边缘，金属刮擦声刺耳。“滤嘴卡死了。你们议会现在连行会收个残废都要管？”\n\n蒸汽义肢又喷出一股白雾。队长往后仰了仰。\n\n千音蹲在摊位缝隙里，透过帆布篷的破洞往外看。鲁严的背脊挡在她和卫兵之间，宽阔，沾满机油和铁屑。他的左手垂在身侧，手指在腿侧敲了两下——行会暗语。\n\n别出声。\n\n她把手从气动管收发器上移开。指尖还留着铜片按键的凉意。"
+    },
+    {
+      "tick": 100,
+      "chars": 905,
+      "text": "鲁严的钳指还扣在队长的胸甲上。蒸汽义肢的排气阀又嘶了一声，白雾散开，裹住两个人的轮廓。\n\n千音从木箱后面移出来。帆布篷的破洞在她肩头掠过，粗麻布边角刮过袖口的枪管。她蹲着走，鞋底踩碎一片陶罐碎片。没人回头。所有人的眼睛都盯着鲁严的义肢。\n\n蒸汽烤炉还在喷。白茫茫的汽团里混着铁锈和滚油的气味。一个倒扣的铜锅在积水里打转，边缘磕碰石板，当当当响个不停。\n\n她摸到摊位支柱上的气动管收发器。铜片按键还留着她刚才敲击的余温。她把收发器从绑绳上解下来，塞进怀里。金属贴住肋骨，冰凉。\n\n鲁严的左手又在腿侧敲了两下。这次节奏不同——三短一长。\n\n走。\n\n她转身。集市东侧入口的帆布门帘被逃散的人群扯掉半边，剩下半边在风里拍打。帘子外面是内城边缘的排水沟。沟壁缺口处涌进来的腐蚀浆液正在石板路上蔓延，黄绿色的液面冒着泡，边缘舔到倾倒的货箱，木头瞬间发黑，冒出一股甜腻的焦臭。\n\n千音绕过浆液。鞋跟踩在干燥的石板上，一步，两步。\n\n身后传来金属刮擦声。鲁严的钳指松开了队长的胸甲。队长往后踉跄半步，差分目镜的红光重新亮起来，扫过摊位间的缝隙。\n\n千音已经出了集市。\n\n排水沟的缺口在她左手边，四尺宽，沟壁的砖块还在往下掉。浆液从缺口涌进来，沿着石板路的低洼处往内城方向淌。铁轨方向的黑烟柱更粗了，明火在枕木上跳跃，火星溅到旁边的废弃冶炼厂墙上，墙皮剥落，露出里面锈蚀的钢架。\n\n她贴着墙根走。蒸汽从集市方向追过来，在她脚踝处散成薄薄一层。\n\n城门方向传来一声闷响。不是爆炸。是石头砸在石头上的声音。她抬头，透过内城建筑的间隙看见城门拱顶的裂缝正在扩大，碎石像雨点一样往下掉。三根主栅栏的断口在灰雾里晃荡，细丝勒进铁栅的切口，发出锯木头般的低鸣。\n\n她收回视线。面前是第七街的入口。街口的路灯柱被腐蚀浆液溅到，铸铁灯罩锈穿了一个洞，里面的煤气火苗噗噗跳了两下，灭了。\n\n千音拐进巷子。巷口堆着三个木箱，箱盖上印着自由机械师行会的齿轮标记。她翻过最上面那个，手指摸到箱底粘着的铁片。铁片边缘锋利，割破她的指腹。血珠渗出来。她把血抹在箱盖的齿轮标记上，然后蹲下身，背靠墙壁。\n\n怀里气动管收发器的铜片按键硌着她的肋骨。\n\n她没动。"
+    },
+    {
+      "tick": 103,
+      "chars": 962,
+      "text": "城门方向传来第三声巨响。不是栅栏断裂——是基座。裂纹从拱顶蔓延到石墙，碎石像雨点砸在石板路上，弹起来，滚进排水沟的浆液里，嗤一声化掉。\n\n千音没回头。\n\n怀里的气动管收发器硌着肋骨，铜片按键还沾着她指腹的血。她盯着巷口那三个木箱。箱盖上齿轮标记被她抹上去的血迹洇开，暗红色渗进木纹。\n\n第七街的巷子窄，两侧墙壁被蒸汽熏得发黑，墙缝里塞着行会丢弃的铜管废料。巷子深处传来脚步声——不是靴子，是赤脚踩在湿石板上的啪嗒声。一个裹着油布的小孩从拐角探出头，脸上糊着煤灰，看见她，缩回去。啪嗒声跑远了。\n\n腐蚀浆液从排水沟缺口灌进来，沿着石板路的低洼处往巷口淌。液面冒着黄绿色的泡，边缘舔到巷口第一个木箱。木头瞬间发黑，箱底的铁片在浆液里冒出白烟，刺鼻的焦臭混着金属氧化的酸味涌进巷子。\n\n千音站起来。\n\n她搬开第二个木箱，露出墙根处一扇半人高的铁门。门把手上缠着铁链，链子另一端锁在墙上的铁环里。她摸出鲁严塞给她的那截细丝——集市混乱中他钳指夹着递过来的，她当时没来得及看。细丝在指间展开，末端弯成钩状，钩尖泛着淬火后的蓝。\n\n她把钩尖插进锁孔。手腕一转。锁簧弹开的声音被城门方向持续的碎石坠落声盖住。\n\n铁链滑下来，砸在她鞋面上。\n\n她拉开铁门。门后是向下的台阶，黑暗里涌出机油和旧铁锈的气味。她回头看了一眼巷口。浆液已经吞掉第一个木箱，正往第二个蔓延。白烟贴着地面翻滚，像活的。\n\n她钻进铁门。反手把门拉上。\n\n黑暗吞掉她。台阶很窄，她摸墙往下走，数到第七级时踩到平地。头顶传来闷响——不是城门。是巷口第二个木箱被浆液蚀穿，塌了。\n\n她摸出火折子。火星溅了两下，亮起来。\n\n面前是一条废弃的维修通道。通道两侧堆着行会丢弃的差分机零件——齿轮、传动杆、穿孔卡带，全都锈成一团。墙上钉着一块铜牌，绿锈斑驳，字迹还看得清：\"第七街地下管廊——自由机械师行会财产——齿轮历 1321 年封存。\"\n\n火折子的光照在她脸上。她嘴角动了动，不是笑。\n\n她把收发器从怀里掏出来，放在地上。铜片按键上她的血迹已经干了，变成深褐色。她按下一个键。收发器底部的气动管接口发出轻微的嘶嘶声——还有气压。\n\n她松开键。嘶嘶声停了。\n\n通道深处有什么东西响了一下。不是老鼠。是金属刮擦金属的声音，短促，刻意。\n\n千音举起火折子。光只照到五步远。\n\n她没动。"
+    },
+    {
+      "tick": 106,
+      "chars": 1291,
+      "text": "金属刮擦声停了。\n\n千音没动。火折子的光只够照出面前三步——齿轮的锈齿、断裂的传动杆、一卷被机油浸透的穿孔卡带，上面的孔洞像盲文。她把火折子压低，让光圈缩到脚边。\n\n第二声。\n\n这次更近。是金属拖过石面的声音，从通道左侧的岔口传出来。岔口被一堆废料半堵着，铜管和铁板交错堆叠，缝隙里什么都看不见。\n\n她蹲下。手指摸到地上一根传动杆，锈蚀不深，握在手里有分量。她把它捡起来，换到左手。右手还举着火折子。\n\n地面震了一下。\n\n不是通道里的动静。是从上面传来的——城门方向。又一根主栅栏断了，砸在石板路上，闷响隔着土层传下来，像有人在远处敲鼓。头顶的砖缝簌簌掉灰，落在她头发上。\n\n她没抬头。眼睛盯着岔口的废料堆。\n\n第三声刮擦。这次拖得更长，金属尖在石面上划出一道刺耳的尾音。然后停了。\n\n火折子的火焰晃了一下。不是风。通道里没有风。\n\n千音把传动杆握紧。锈屑硌进掌心。\n\n岔口的废料堆后面，有什么东西在呼吸。不是人的呼吸。是气压变化的声音——吸气时金属板轻微鼓胀，吐气时板缝里挤出细小的铁锈粉末，在火光里飘成一小团褐色的雾。\n\n她把火折子往前伸。\n\n光圈爬上废料堆，照到一根铜管。铜管表面有划痕——五道，平行，间距两指宽。不是工具留下的。\n\n地面又震了一下。这次更重。头顶的砖缝里掉下来一块碎砖，砸在她脚边，碎成三瓣。\n\n岔口深处，那东西动了。\n\n金属板被推开的声音。一块铁板从废料堆内侧被顶落，砸在地上，哐当声在通道里来回撞。千音站起来。火折子的光照进岔口。\n\n她看见一只手。\n\n不是手。是金属骨架——五根指骨，每根由三节铜质关节组成，关节处嵌着微型齿轮，还在转。指骨末端不是指甲，是五片弧形刮刀，刀刃上沾着新鲜的铁锈。\n\n手从黑暗中伸出来，按在废料堆的铜管上。刮刀收拢，在铜管表面划出第六道痕。\n\n千音后退一步。\n\n脚后跟碰到收发器。她低头——收发器还在地上，铜片按键上的血迹已经干了。她弯腰去捡。\n\n那只手突然握紧。铜管被捏瘪，管壁塌陷，齿轮关节里的传动带绷紧，发出弦被拧到极限的声音。\n\n她捡起收发器。塞进怀里。\n\n火折子灭了。\n\n不是燃尽。是她自己掐灭的。\n\n黑暗里，岔口方向传来金属关节转动的声音——不是一声，是一串。齿轮咬合，传动杆伸缩，刮刀在石面上张开。然后静下来。\n\n千音握着传动杆。黑暗里她看不见自己的手，但能感觉到锈屑还在掌心里，一粒一粒，硌得发疼。\n\n那东西在听。\n\n她也听。\n\n头顶的震动停了。城门方向的碎石坠落声也停了。通道里只剩下两个呼吸——一个是她的，压得很低；另一个是金属的，一吸一张，铁板鼓胀又收缩。\n\n然后那东西动了。\n\n不是冲她来的。是往通道深处退。金属关节转动的声音渐远，刮刀拖过石面，划出一串渐弱的尾音。最后一声响是废料堆的铁板被重新拖回原位，哐当一下，闷住。\n\n千音等了三次呼吸。\n\n重新打火。火星溅了三下才亮。光圈重新张开。岔口的废料堆还是原来的样子——铜管上的划痕还在，被捏瘪的那根还在。但铁板合上了。缝隙里什么都看不见。\n\n她把传动杆换到右手。左手举着火折子，往通道深处照。\n\n光只照到五步远。\n\n五步之外，黑暗。\n\n她迈出第一步。"
+    },
+    {
+      "tick": 109,
+      "chars": 636,
+      "text": "第二步踩到碎石。脚底一滑，她扶住管壁。铜管冰凉，锈屑嵌进掌心。她没松手，借力站稳，把火折子往前探。\n\n光推开三步。三步外还是黑暗。\n\n城门方向传来金属扭曲的尖啸。不是一声，是拖长的——铁栅栏被什么东西拧断，断裂声像脊椎被逐节掰开。然后是一声坠地的闷响，砸在石板路上，溅起的火星从管廊通风口飘进来，在她脚边明灭了两下。\n\n她没回头。\n\n继续走。第五步，脚下不再是碎石，是湿的。火折子往下照——地面有一层薄液，泛着暗绿色，正从管壁裂缝里渗出来。液面在涨。她抬脚，靴底拉出丝，嘶嘶响。\n\n排水沟方向传来玻璃炸裂声。紧接着是铁质灯杆被腐蚀的嘶鸣——白烟从通风口灌进来，呛得她偏头。烟里裹着酸味，辣眼睛。她拉起领口捂住口鼻，眯着眼往前走。\n\n液面没过鞋底。每踩一步都黏。\n\n低洼区的火光从另一个通风口透进来，把管壁照出一小片橘红。黑烟柱的影子投在湿壁上，扭曲，蠕动。焦臭味混进酸雾里，堵在喉咙口。远处有木料爆裂的噼啪声，密集，像枪声。\n\n千音停下来。\n\n不是怕。是听见了别的。\n\n前方黑暗里，金属关节转动的声音又响了。这次更轻，更慢——不是撤退，是等待。刮刀在石面上张开，一片一片，像花瓣绽开。\n\n她握紧传动杆。\n\n液面还在涨。已经没过脚踝。嘶嘶声从四面八方渗进来，管壁在腐蚀，铜管表面开始冒泡。\n\n那东西没动。\n\n她也没动。\n\n火光从通风口照进来，把她和黑暗切开。她站在光里，传动杆横在身前，锈屑从掌心往下掉，一粒一粒落进绿液，激起细小的涟漪。\n\n涟漪散开。\n\n那东西的呼吸停了。"
+    },
+    {
+      "tick": 111,
+      "chars": 1667,
+      "text": "城门方向传来第三声坠地的闷响。不是铁栅栏——是石头。大块花岗岩从拱顶剥落，砸在石板路上，震动沿管壁传过来，把她脚踝处的绿液震出一圈圈细纹。\n\n那东西的呼吸停了。\n\n但金属关节还在转。很慢，一片一片，刮刀在黑暗里张开又收拢，像在数她的心跳。\n\n千音没等它数完。\n\n她往前跨出一步。绿液没过脚踝，靴底踩到什么——不是碎石，是软的。她没低头看。传动杆横在身前，锈屑从掌心往下掉，一粒一粒落进液面，激起的涟漪撞到管壁又弹回来。\n\n那东西退了一步。\n\n关节反向转动，刮刀收回半寸。金属脚掌踩在管底的湿石上，发出细碎的摩擦声。它在让路。\n\n千音又跨一步。\n\n液面突然涌动——不是她踩的。排水沟方向灌进来的腐蚀浆液冲进管廊，绿液翻涌，溅上她的小腿。布料嘶嘶响，边缘焦黑。她没停。第三步，第四步，每一步都踩在涌动的液面上，靴底黏稠，拉起丝。\n\n那东西继续退。刮刀完全收拢，折叠进前肢关节里。金属构造体的轮廓在火光里一闪——通风口透进来的橘红照亮它半边身躯。不是铁，不是铜。表面是暗银色的，布满细密纹路，像鳞片。\n\n它退进黑暗里。\n\n关节转动声渐远，被液面涌动声盖过。千音走到它刚才站的位置。火折子往下照——管底有一滩液，不是绿的。暗红色，还在扩散，边缘冒着细小的气泡。\n\n她蹲下。传动杆搁在膝上。指尖探进红液，沾了一点，凑近火折子。不是血。是锈水，混着某种油质，在光里泛出七彩纹。\n\n管壁突然震动。\n\n不是城门方向——是头顶。石板路面上有重物拖行的声音，刮擦声粗粝，从管廊上方碾过去。灰泥从管壁接缝处簌簌落下，掉进绿液，激起白烟。\n\n她站起来。\n\n火折子往上照。管顶的砖缝在渗水，一滴一滴，浑浊，带着铁锈味。拖行声往城门方向去了。紧接着是木料断裂的脆响——岗亭剩下的半边也塌了，碎石砸在管顶上，闷响连成一片。\n\n千音把传动杆换到左手。右手在裤腿上擦掉锈水，擦不干净，油质渗进掌纹里。她抬头看前方——管廊尽头有微光，不是火光，是冷白色的，从通风口透进来。\n\n她往光走。\n\n液面开始下降。腐蚀浆液往低洼区涌去，绿液从她小腿退到脚踝，再退到鞋底。管底露出湿漉漉的石面，坑洼里积着残液，冒着细小的气泡。\n\n通风口近了。冷白光从栅栏缝里漏进来，照出管壁上的腐蚀痕迹——铜管表面起泡，泡破了，露出里面暗绿色的锈层。她伸手推栅栏。铁条松动，锈屑往下掉。再推，栅栏向外翻开，铰链断裂。\n\n她爬出去。\n\n外面是内城边缘的街道。或者说，曾经是街道。\n\n路面石板被蚀出凹坑，坑里积着绿液，冒着白烟。沿街的路灯杆倒了两根，一根横在路中间，铁质灯罩摔得变形，玻璃碎片散了一地。另一根斜靠在墙上，杆身腐蚀出拳头大的洞，洞缘焦黑。\n\n空气里全是刺鼻的酸味。\n\n千音拉起领口捂住口鼻。传动杆撑地，她站起来，靴底踩在蚀坑边缘，碎石滚进坑里，嘶嘶响。\n\n低洼区方向的火光映红半边天空。黑烟柱升腾，裹着火星，焦臭味混进酸雾里，堵在喉咙口。仓库的木料还在烧，噼啪声密集，偶尔有整根梁柱断裂的闷响。\n\n她回头看管廊入口。\n\n黑暗里什么都没有。那东西没跟出来。\n\n但管壁深处传来金属关节转动的声音——不是一组，是很多组。密密麻麻，像齿轮咬合，从管廊深处涌过来，越来越近。\n\n她转身。\n\n往内城深处跑。\n\n靴底踩在蚀坑边缘，碎石滚落，绿液溅起。路灯杆的残骸在身后倒塌，砸在石板上，溅起白烟。她绕过街角的石墙，钻进窄巷。\n\n巷子里有梯子。铁质，锈迹斑斑，通往屋顶。\n\n她抓住梯级。锈屑嵌进掌心，和之前的锈屑混在一起。往上爬。梯子晃动，固定在墙上的螺栓松动，灰泥往下掉。她爬到顶，翻上屋顶。\n\n瓦片松动。她单膝跪在屋脊上，喘气。\n\n从这里能看见城门。\n\n灰雾触须勒进铁栅栏，细丝嵌进铁条一尺深。又有三根主栅栏断裂，坠在石板路上，砸出凹坑。城门拱顶的裂纹从两侧石墙往中间蔓延，大块碎石不断剥落，砸毁内侧岗亭的残骸。地面震动传过来，屋顶的瓦片在她膝下颤动。\n\n她握紧传动杆。\n\n管廊里的关节转动声还在响。从巷子深处涌出来，从排水沟方向涌出来，从她刚爬出来的通风口涌出来。\n\n不是追她。\n\n是往城门方向去。"
+    },
+    {
+      "tick": 114,
+      "chars": 1034,
+      "text": "城门倒下的声音不是轰响。\n\n是撕裂。铁栅栏从基座里被拔出来，石砌拱顶沿着裂缝撕成两半，半扇城门向内倾倒——很慢，像一棵被蛀空的树——砸在岗亭残骸上。碎石如雨。铁皮屋顶被压扁，铆钉崩飞，弹在石板路上叮当响。\n\n灰雾触须从缺口涌进来。不是雾。是雾里裹着的东西。细丝状，灰白色，勒进铁条一尺深，铁条断口处冒着细小的气泡。\n\n千音蹲在屋脊上，传动杆横在膝头。瓦片还在颤。\n\n第三条街道的方向传来嘶嘶声。她转头。排水沟的缺口从八尺撕裂到十二尺，腐蚀浆液沿沟奔涌，灌进街面。石板遇液炸裂——不是碎裂，是炸裂。碎片飞起来，翻着跟头砸进临街的窗洞。沿街建筑底层墙体开始溶解。砖缝里的灰泥先化，青砖一块块松动，滑落，掉进浆液里冒白烟。窗框上的铁铰链扭曲，发出尖细的金属悲鸣。\n\n一扇百叶窗从二楼坠下来。砸在液面上。三秒就没了。\n\n低洼区方向，火光映红半边天空。黑烟柱旋转升腾，裹着火星，焦臭味混进酸雾里堵在喉咙口。腐蚀浆液沸腾喷溅，高度三丈，淹没废弃冶炼厂第十车间。铁轨转辙器以东二百步，路基明火连片，五座仓库同时烧。火势顺风窜进堆料场。堆的是木料和煤。煤堆烧起来是蓝色的。\n\n蓝色火焰舔着黑烟底部。\n\n管廊里的关节转动声还在响。密密麻麻，从排水沟方向涌出来，从通风口涌出来，从巷子深处的窖井涌出来。\n\n不是追她。\n\n是往城门缺口去。\n\n第一组金属构造体从排水沟缺口爬出来。六足，关节反转，铜质外壳上布满蚀孔。腐蚀浆液从它背上淌下来，滴在石板上，石板嘶嘶响。它跨过溶解的墙体残骸，往城门方向移动。第二组从巷子深处钻出来。第三组。第四组。\n\n它们的关节转动声混在一起，像齿轮咬合，像差分机运转。\n\n千音握紧传动杆。\n\n锈屑嵌进掌心。\n\n她站起来。瓦片在靴底滑动，一块松动，顺着屋脊滚下去，摔碎在巷子里。她没低头看。\n\n城门缺口处，灰雾触须还在往里涌。金属构造体群往缺口方向汇聚。两股力量，在城门内侧的空地上，越来越近。\n\n她看见第一组构造体停下。\n\n六足撑地，关节锁死。铜质外壳上的蚀孔里渗出绿色荧光。\n\n然后它抬起头。\n\n没有眼睛。只有一张嘴。嘴里是齿轮。齿轮在转。\n\n它发出声音。\n\n不是金属摩擦。是人的声音。是很多人的声音叠在一起，从齿轮缝隙里挤出来——\n\n\"千——音——\"\n\n她后退一步。\n\n传动杆抵在瓦片上，杆尖划出一道白痕。\n\n\"千——音——之——喉——\"\n\n声音从所有构造体嘴里同时涌出。从城门缺口方向涌来，从排水沟方向涌来，从巷子深处涌来。\n\n她转身。\n\n往屋顶另一端跑。"
+    },
+    {
+      "tick": 117,
+      "chars": 834,
+      "text": "瓦片在她脚下连续碎裂。第三片。第四片。碎片顺着屋脊滚下去，砸进巷子里的腐蚀浆液，溅起绿色液花，然后没了。\n\n她跳过屋脊。\n\n落地时左脚踩进瓦缝，脚踝一歪。她没停，用传动杆撑住瓦面，借力把自己推出去。杆尖划破青瓦，白痕拉成一条线。\n\n城门方向传来巨响。\n\n不是金属构造体的声音。是城门。半扇城门向内倒塌，砸穿岗亭废墟，碎砖飞起来，砸进对面的建筑墙体。灰雾触须从缺口涌入，不再是试探性的伸入——是涌。浓稠的灰绿色雾体沿街道蠕动，速度比人走路还快。触须前端分开，分成五股，每股往不同方向伸展。一股钻进排水沟。一股贴地爬行，裹住路灯基座，铁柱表面立即起泡。\n\n她看见雾触须裹住一个还在燃烧的煤堆。\n\n火焰从灰雾内部透出来，变成暗红色。然后熄灭。不是被扑灭——是被吸收。灰雾触须裹住煤堆后体积膨胀一圈，继续往前蠕动。\n\n堆料场方向，油料库的屋顶炸开。\n\n不是燃烧。是爆炸。蓝色火球升起来，裹着黑烟，黑烟旋转上升，形成三层烟幕。最底层是浓黑的油料烟，中间层是灰白色的蒸汽，最上层是火星和灰烬。三层烟幕叠在一起，遮住半边天空。焦臭味混进酸雾里，堵在喉咙口，她咳了一声。\n\n脚下震动。\n\n不是地震。是沿街两栋三层砖楼开始倾斜。腐蚀浆液沿第三条街道奔涌过三个路口，街面石板成片炸裂，碎片飞溅，砸进临街窗洞。砖楼底层墙体溶解过半，承重柱裸露出来，红砖被浆液泡成黑色。一栋楼的外墙整片剥落，砸进浆液里，溅起绿色浪花。楼体倾斜角度加大。\n\n她跑。\n\n传动杆握在手里，锈屑嵌进掌心，血从指缝渗出来，滴在瓦片上。她跳过屋脊之间的空隙，落地时瓦片又碎一片。\n\n\"千——音——之——喉——\"\n\n声音从身后追上来。从排水沟方向。从巷子深处。从城门缺口。所有构造体同时发出声音，齿轮咬合，差分机运转，人的声音从金属缝隙里挤出来。\n\n她没回头。\n\n前面是烟囱。砖砌烟囱，废弃多年，表面爬满裂缝。她冲过去，用传动杆勾住烟囱上的铁箍，借力转身，背靠烟囱。\n\n传动杆横在身前。\n\n锈屑嵌进掌心。血顺着杆身往下淌。"
+    },
+    {
+      "tick": 120,
+      "chars": 890,
+      "text": "冲击波先到。\n\n不是声音。是空气本身被压缩成墙，拍在她背靠的烟囱上。砖缝里的老灰喷出来，迷了她的左眼。她闭眼，传动杆横在身前没动。碎玻璃从身后飞来——内城半数窗玻璃同时震碎，碎片像冰雹砸在瓦面上，弹起来，又落下。一片碎玻璃划过她右小臂，袖子裂开，血没流出来，伤口被锈屑和灰堵住了。\n\n她睁开眼。\n\n油料雨。燃烧的油料从爆炸中心抛上天空，现在落下来。不是雨点——是粘稠的火团，拖着黑尾巴。一团砸在烟囱顶端，砖块炸开，火星溅进她头发里。她没拍。用传动杆撑住瓦面，把自己推离烟囱。\n\n脚下瓦片又碎一片。\n\n第三条街道在她左侧。腐蚀浆液奔涌过第五个路口，路面整体塌陷。不是裂开——是整段街面沉下去，像被抽掉底板的抽屉。塌陷带拉出二十尺宽的深沟，两侧建筑地基裸露出来。红砖基础被浆液泡成黑色，承重柱一根接一根折断。一栋四层砖楼开始倾斜，楼顶烟囱先倒，砸进邻楼的屋顶，瓦片飞溅。然后整栋楼体沿塌陷边缘滑下去，慢得像鞠躬。\n\n砖楼砸进浆液。绿色液花溅起来，喷到七丈高，裹着碎砖和木梁碎片。液花落下来，浇在临街建筑的墙面上，墙面立即起泡。\n\n她转身。\n\n堆料场方向，六座仓库的钢梁同时扭曲。钢梁在高温里变软，像蜡烛一样弯下来，砸进燃烧的煤堆和木料里。黑烟柱旋转上升，四层烟幕叠在一起——最底层是浓黑的油料烟，第二层是灰白色的蒸汽，第三层是火星和灰烬，第四层是酸雾本身被热浪抬升形成的黄绿色涡旋。焦臭味混进酸雾里，堵在喉咙口。\n\n她咳了一声。血从传动杆上滴下来，滴在碎瓦上。\n\n\"千——音——之——喉——\"\n\n声音从塌陷带对面追过来。从排水沟方向。从燃烧的仓库方向。所有构造体还在运转，齿轮咬合，差分机运转，人的声音从金属缝隙里挤出来。\n\n她跳过屋脊。\n\n左脚踩进瓦缝，脚踝又歪一次。她没停，用传动杆勾住屋脊铁饰，借力转身，把自己甩向下一栋建筑。落地时膝盖撞在瓦面上，瓦片碎成三块。\n\n爬起来。\n\n前面是鸣笛集市的钟楼。铁皮屋顶，尖顶上的风标还在转。钟楼下面，集市广场的石板地面被逃难的人群踩得发亮。\n\n她往钟楼跑。\n\n身后，又一栋砖楼滑进塌陷带。绿色液花溅起来，浇在钟楼侧墙上。铁皮墙面立即起泡。"
+    },
+    {
+      "tick": 121,
+      "chars": 1746,
+      "text": "钟楼铁皮屋顶在腐蚀浆液的浇淋下起泡，气泡膨胀到拳头大，炸开，溅出酸液。风标还在转，但轴承声变了——不是锈蚀的尖啸，是某种低沉的摩擦，像金属在咬合金属。\n\n她没回头。\n\n传动杆勾住钟楼排水管，借力荡过最后一段瓦面。落地时右脚踩进排水沟的铁箅子，脚踝第三次歪向同一侧。这次她听见韧带发出的闷响。她咬住传动杆，用双手撑起身体，把脚从箅缝里拔出来。靴底磨穿了，脚踝肿得撑满靴筒。\n\n爬起来。\n\n钟楼下面，集市广场的石板地面空着。逃难的人群已经退进内城方向，留下满地的货摊残骸——翻倒的铁笼，踩扁的铜壶，一只木屐陷在泥里。广场边缘，三号哨塔的轮廓在酸雾中忽明忽暗。塔基处，共鸣晶基座还在冒烟，蓝色电弧沿基座裂缝爬行，每闪一次，隔离网方向的金属摩擦声就逼近一步。\n\n她往钟楼侧门移动。\n\n排水沟旁积着一潭水。不是雨水——水面浮着油膜，在火光映照下泛出虹彩。水潭边缘，荧光液体正从沟壁裂缝里渗出来，沿石板缝隙爬向潭心。\n\n林雪蹲在水潭边。\n\n她没看千音。她的全部注意力在水面上。打字机搁在膝头，滚筒里夹着一张干纸条。她撕下另一张，将一角浸入潭水。荧光液体沿纤维攀爬，速度均匀，像被毛细作用牵引。液面到达纸条中段时，纹路开始凝结——不是随机扩散，是螺旋纹。顺时针旋转，每圈间距相等。\n\n她抽回手。\n\n齿轮左眼骤然收紧。虹膜边缘的铜齿咬合，瞳孔深处的螺旋纹与纸条上的纹路重叠，完全吻合。她将湿样本夹入滚筒，指尖悬停在键帽上。没有敲击。远处火场传来管道震颤，通过石板传进她膝头，打字机的铅字臂轻轻碰撞，发出细碎的叮当声。\n\n\"你看到了吗，石磊？\"\n\n声音从哨塔方向传来。苏摩站在塌陷带边缘，长袍上的金属碎片随着他转身的动作相互碰撞。他抬起灰白色的手，指向共鸣晶基座。银色薄膜覆盖的眼睛没有看基座——他在看石磊。\n\n石磊站在他身后三步。呼吸器的面罩摘了，挂在脖子上。他盯着那些新出现的爪痕，手指按在蒸汽焊枪的扳机上，指节发白。\n\n\"矩阵不是失效，\"苏摩的声音低沉而有节奏，\"是觉醒。它用自己的死亡为我们撕开了帷幕。那些爪痕，不是入侵，是指引。\"\n\n他向前迈一步。脚底踩碎一片烧焦的瓦砾。\n\n\"现在，你还要等待谁的许可？\"\n\n石磊没回答。他的喉结滚动了一下。焊枪枪口微微偏转，指向地面。\n\n钟离在档案馆外围的观察点停下。手杖往烧焦的碎石地面一顿，杖尖陷进灰烬半寸。单片眼镜反射着铁栅栏的暗红光芒。栅栏被烧得通红，封锁部队已经后撤到第二条防线，留下空荡荡的街垒和几具被遗忘的蒸汽增压罐。\n\n他左手在袖中按下加密通讯器的信号增强键。三下短按，一下长按。\n\n蒸汽蜘蛛的扫描数据开始回传。微型锅炉的震动通过骨传导耳机传进他颞骨，频率稳定。卷宗室的共鸣频率正在被逐层解析——第一层是纸张纤维的含水率，第二层是墨水的化学成分，第三层是——\n\n\"钟离，立即停止。\"\n\n冷锋从街垒后转出来。靴跟撞击石板，节奏精确。左手紧握记录仪，镜头锁定钟离的侧脸。右手按在蒸汽增压手枪的枪柄上，食指已经挑开保险。\n\n\"你的行为已被记录。\"\n\n钟离没转身。手杖仍插在灰烬里。\n\n\"冷锋，\"他说，语调平稳，\"你记录的是大火，是封锁线后撤，是三号哨塔过载。我记录的是卷宗室的共鸣频率。我们都在做分内的事。\"\n\n\"三台蒸汽蜘蛛。\"冷锋的拇指拨开击锤。\"未经议会授权。\"\n\n\"议会授权？\"钟离终于转过身。单片眼镜后的眼睛眯起来。\"议会刚刚后撤了封锁线。他们的授权留在铁栅栏上，正在被烧红。你要我去找栅栏要许可？\"\n\n冷锋没回答。记录仪的镜头持续锁定。\n\n林雪抬起头。\n\n湿纸条在滚筒里慢慢变干。螺旋纹褪色，但已经拓印进齿轮左眼。她合上打字机，站起来。膝盖上的灰没拍。\n\n她看向钟楼侧门。\n\n千音正用传动杆撬开门锁。锁簧锈死了，传动杆弯成弧形。她换了个角度，用体重压下去。锁簧弹开。铁门向内敞开一条缝。\n\n门缝里涌出冷空气。带着机油和霉纸的味道。\n\n她挤进去。\n\n林雪抱起打字机，跟上去。经过水潭时，她停了一步。潭面油膜已经重新合拢，荧光纹路消失了。只剩下虹彩在火光里流转。\n\n她转身，走进钟楼。\n\n铁门在身后合上。锁簧弹回槽里。\n\n外面，苏摩的声音还在继续。\"石磊，拿起焊枪。不是修复——是接管。\"\n\n石磊的手指松开了扳机。又握紧。\n\n焊枪枪口仍指着地面。"
+    },
+    {
+      "tick": 122,
+      "chars": 1031,
+      "text": "钟楼内部比外面更暗。千音站在楼梯井底部，传动杆还握在手里。杆头弯了，弯角处金属疲劳的裂纹在震动中微微张开。她没扔，换到左手。右手摸向墙壁。石砖湿冷，砖缝里渗出机油。机油顺着砖面往下爬，爬过刻在墙上的维修日志——最近一条是齿轮历1339年，字迹被腐蚀得只剩凹痕。\n\n林雪的打字机磕在门框上。她侧身挤进来，打字机抱在胸前，键盘朝内。齿轮左眼的红光扫过墙壁，停在维修日志上。\n\n\"八年前。\"她说。\n\n千音没回答。她开始爬楼梯。铁梯踏板锈穿了几个洞，靴尖踩上去，锈片簌簌往下掉。每上一级，楼梯井深处的回音就变一次调——从金属疲劳的呻吟，变成某种有节奏的震动。\n\n震动来自上方。\n\n钟楼顶层。\n\n千音停住。传动杆换回右手。\n\n\"钟。\"她说。\n\n\"什么？\"林雪在下面，还没转过楼梯转角。\n\n\"钟在走。\"\n\n鸣笛集市的钟楼已经沉默六年。差分机接管报时后，齿轮议会下令停转所有机械钟。千音记得那天的通知——贴在集市公告栏上，纸还没干就被酸雨打烂。但现在，头顶传来齿轮咬合的声音。不是差分机的电磁嗡鸣，是老式发条钟的机械节拍。\n\n一下。一下。再一下。\n\n每一下都隔着同样的间隔。\n\n千音继续往上。转角处的窗户碎了，酸雨斜打进来，落在铁梯扶手上。扶手正在生锈。锈斑以肉眼可见的速度扩散，从针尖大变成指甲大，再连成片。她缩手。袖子擦过扶手，布料沾上锈水，立即变脆。\n\n\"别碰扶手。\"她回头说。\n\n林雪已经跟上来了。打字机换了位置，扛在肩上。齿轮左眼对着窗外。窗外是铁栅栏的方向。栅栏正在熔化。铁水淌过石板，淌进排水沟，在沟底凝固成扭曲的树枝状。封锁部队的蒸汽管线散落一地，橡胶软管被铁水烫出焦黑的泡。\n\n更远处，三号哨塔的轮廓在烟雾中晃动。塔基的共鸣晶基座彻底溶毁了。蓝色电弧最后闪了一下，然后熄灭。灰雾从缺口涌入，雾中有什么东西在移动——不是雾气的翻涌，是固体。金属表面反射着火光，一闪，又隐入雾中。\n\n千音盯着那片雾。\n\n传动杆在手里转了半圈。\n\n\"防御矩阵熄灭了。\"她说。\n\n\"我知道。\"林雪把打字机放下，打开键盘盖。\"预言符号——\"\n\n\"现在不是符号。\"千音打断她。\"现在是雾。\"\n\n头顶的钟声停了。\n\n停了三次呼吸的时间。\n\n然后重新开始。节奏变了。不再是均匀的间隔，而是三短一长。三短。一长。再重复。\n\n千音抬起头。\n\n天花板上，灰泥裂缝里渗出机油。机油沿着裂缝勾勒出一张正在扩散的图案——不是随机的纹路。是齿轮。是咬合中的齿轮。\n\n和沉默圣堂差分机上的预言符号一模一样。"
+    },
+    {
+      "tick": 125,
+      "chars": 934,
+      "text": "图案还在扩散。\n\n机油从裂缝里渗出来，沿着灰泥的纹理爬行。不是往下淌——是往上。逆着重力，逆着所有千音知道的物理法则，黑色的油珠一颗一颗滚向天花板中央。每颗油珠滚过的路径都留在灰泥上，像钢笔划过吸墨纸。路径交叉。重叠。最后拼成一个完整的图形。\n\n齿轮。\n\n不是沉默圣堂差分机上那种精密咬合的齿轮。这个齿轮只有半边。另外半边是断裂的齿，碎在图案边缘，像被什么东西从内部撑裂了。\n\n\"半齿。\"林雪的声音从下方传来。她把打字机放在楼梯转角，齿轮左眼对准天花板。\"预言符号里没有半齿。\"\n\n\"现在有了。\"\n\n千音握紧传动杆。\n\n钟声还在响。三短一长。三短。一长。节奏越来越快，像发条被拧到极限前的最后几圈。她数着。七组。八组。到第九组时，钟声突然停了。\n\n不是自然停止。是卡住。\n\n齿轮咬死的声音从头顶传来——金属齿尖刮擦金属齿尖，频率高到几乎听不见，但能感觉到。牙根发酸。\n\n然后地面震了一下。\n\n不是爆炸的冲击波。是从脚下深处传来的震颤，像地底有什么东西翻了个身。楼梯井里的灰尘扬起，在千音和林雪之间形成一道灰幕。灰幕那边，林雪的手指停在键盘上。\n\n\"老城区。\"林雪说。\n\n\"什么？\"\n\n\"有东西塌了。\"\n\n第二下震动接踵而至。这次更近。钟楼的铁梯扶手开始晃动，生锈的螺栓从墙里退出半寸。酸雨从破窗灌进来，浇在扶手上。铁遇水生锈，锈被震落，露出里面还没腐蚀的部分，然后又被新的酸雨覆盖。\n\n千音往上看。\n\n天花板的裂缝扩大了。机油不再是一颗一颗渗，而是成股流下。黑色的油柱浇在铁梯上，浇在墙上，浇在那半个齿轮图案上。图案被油覆盖，看不见了。\n\n但千音记住了它的位置。\n\n正上方。钟楼顶层。\n\n\"上去。\"她说。\n\n林雪合上键盘盖。打字机的齿轮左眼最后闪了一下——蓝光，和防御矩阵熄灭前的电弧同一种颜色。然后熄灭。\n\n远处传来汽笛声。\n\n从鸣笛集市方向。断续。急促。三短。一长。三短。一长。\n\n和刚才的钟声节奏一模一样。\n\n汽笛响了四组。然后被另一种声音盖过——冰雹砸在铁皮屋顶上，密集得像一千台打字机同时敲击。汽笛声消失。\n\n千音开始往上爬。\n\n传动杆在手里转了半圈。铁梯在脚下晃动。每上一级，天花板上滴落的机油就密一分。油滴打在她肩上，浸透布料，贴着皮肤发凉。\n\n她没擦。"
+    },
+    {
+      "tick": 128,
+      "chars": 1058,
+      "text": "铁梯到转角平台断了三级。千音踩住断裂的梯蹬边缘，锈铁片往下掉，很久才听见落地的回声。她把传动杆横咬在嘴里，双手攀住平台边缘翻上去。铁板在掌心下凹陷，锈蚀层像干涸的苔藓一样碎裂。\n\n林雪跟上来。打字机用背带挂在胸前，齿轮左眼对着地面，偶尔闪一下蓝光——不是信号，是残余电荷在放电。\n\n平台上堆着废弃的齿轮组。大的直径超过两臂张开，小的散在地上，齿尖朝上，像一片金属草地。千音绕过它们。传动杆从嘴里取下来，握把上留着牙印。\n\n头顶传来金属疲劳的呻吟。不是钟声。是承重梁在弯折。\n\n她抬头。天花板的裂缝已经蔓延到整个穹顶，机油从裂缝里挤出来，沿着穹顶的弧度往下淌，在墙上画出黑色的树状图。那半个齿轮图案被油完全覆盖，只剩最外圈的齿尖还露着，一个一个，排成弧形。\n\n\"在那里。\"千音用传动杆指向上方。\n\n穹顶正中央。一个检修口。铁盖半开，里面透出的光不是烛火也不是电弧——是幽绿色的磷光，和毒雾里忽隐忽现的那种一模一样。\n\n林雪把打字机端平。键盘自动敲了三下，齿轮左眼对准检修口。蓝光闪了两次。然后打字机吐出一截纸带。林雪扯下来看。\n\n\"空的。\"她说。\n\n\"什么空的？\"\n\n\"检修口里面。\"林雪把纸带翻过来。纸带背面也是空白。\"差分机读不到任何结构。那里不应该有东西。\"\n\n千音盯着检修口。磷光还在。一明一暗。一明一暗。像呼吸。\n\n她踩上一只横躺的大齿轮。齿尖硌进鞋底。再踩上第二只。第三只。齿轮堆成的阶梯在脚下晃动，生锈的齿尖互相刮擦，发出老鼠一样的尖啸。\n\n检修口越来越近。磷光越来越亮。\n\n她伸手。指尖碰到铁盖边缘。\n\n冰凉的。不是机油那种凉。是冬天铁栏杆粘住舌尖那种凉——会粘住皮肤。\n\n她没有缩手。\n\n用力推开铁盖。铰链尖叫。磷光涌出来，浇在她脸上。\n\n检修口里面不是黑暗。\n\n是一只眼睛。\n\n巨大的。占满整个检修口。瞳孔是竖的，虹膜是锈红色，里面浮着无数细小的齿轮符号——半齿。全都是半齿。眼睛在看她。瞳孔收缩。收缩。缩成一条线。\n\n千音松手。\n\n铁盖自动合上。铰链尖叫。磷光消失。\n\n她站在齿轮堆上，传动杆握在手里，指节发白。\n\n\"你看到了？\"林雪在下面问。\n\n千音没回答。她看着自己的右手。指尖上粘着一小片东西——不是铁锈。是鳞片。指甲盖大小，边缘泛着幽绿色的光。\n\n鳞片在她掌心里动了动。\n\n然后碎了。碎成粉末，从指缝漏下去。\n\n钟楼外，老城区方向传来连串坍塌声。热浪越过内城墙，把晾在屋檐下的帆布点成一片火海。火光照进钟楼破窗，在墙上投下跳动的橙色。\n\n千音从齿轮堆上跳下来。\n\n\"走。\"她说。\"现在。\""
+    },
+    {
+      "tick": 131,
+      "chars": 1048,
+      "text": "千音落地时膝盖弯了一下。她没停，抓起地上的工具袋甩到肩上。林雪已经把打字机抱在怀里，齿轮左眼还在转，发出细小的咔嗒声。\n\n楼梯间的灰比上来时更厚了。踩上去不是灰——是灰烬。热风从破窗灌进来，裹着焦臭和金属熔化的甜味。千音用袖子捂住口鼻，传动杆横在身前探路。\n\n第三层转角。窗外的天空是橙红色的。老城区最后一片棚屋正在塌。屋顶的镀锌板卷起来，像纸片被吸进火柱。火焰舔过防火沟，沟里的水早烧干了，只剩焦黑的沟壁在反光。\n\n\"东侧街道淹了。\"林雪在身后说。她的声音闷在袖子里。\n\n千音往下看。浆液已经漫过内城墙的基座，黑亮黑亮的，表面浮着一层虹彩。淹掉的三条街只剩屋顶露在外面，像溺水的人伸出水面。地基在响——那种嘎吱声不是铁的声音，是石头在互相挤压。石头在喊疼。\n\n\"走西门。\"\n\n她们拐进侧廊。这里的玻璃窗还在。彩绘玻璃上画的是齿轮历元年的加冕礼，差分机教皇把手按在圣齿轮上。现在教皇的脸被震裂了，一道缝从额头劈到下巴。\n\n第一声爆炸响起时，千音正踩在教皇的碎脸上。\n\n冲击波先到。玻璃窗往外鼓了一下，然后整扇整扇地炸进来。彩绘碎片在空中转，红的蓝的金的，像一场反方向下的雹。千音把林雪按在墙上，用后背挡住碎玻璃。碎片扎进工具袋，发出密集的噗噗声。\n\n第二声爆炸更近。防御矩阵残骸的方向。电弧击中弹药箱，连锁反应。冲击波把钟楼的钟撞响了——不是敲，是撞。铜钟发出半声闷响，然后卡住。余音在墙壁间弹跳，越弹越低，最后变成地板下的震动。\n\n千音拉起林雪。碎玻璃从她们身上滑下去，在地上堆成一小堆。\n\n\"差分机还在读数据。\"林雪低头看打字机。纸带上印出一行字，歪歪扭扭的，像喝醉了酒。\n\n\"读什么？\"\n\n\"读不到。\"林雪把纸带扯下来。纸带边缘割破她的拇指，血洇在字上。字还是看不清。\"它在读那个检修口。还在读。但读不到。\"\n\n千音没回头。检修口在身后某处，在楼梯尽头，在穹顶中央。那只眼睛现在闭着还是睁着，她不想知道。\n\n右手掌心还残留着鳞片的触感。碎了之后是凉的。粉末从指缝漏下去时，有一粒卡在指甲缝里。她没去抠。\n\n西门到了。铁门被热浪烤得发烫，门把手裹着一层焦黑的油污。千音用传动杆顶开门闩。\n\n门外是酸雪。\n\n雪花落在传动杆上，嘶嘶响。落在台阶上，把石阶蚀出一个个小坑。落在千音手背上，她甩掉。\n\n\"跑。\"她说。\n\n她们跑进雪里。身后，钟楼的钟又响了一声——这次不是撞，是掉。铜钟从梁上脱落，砸穿三层楼板，把教皇的碎脸砸进地基。\n\n灰烬和酸雪一起落下来。落在她们跑过的脚印上，一个一个，很快填满。"
+    },
+    {
+      "tick": 132,
+      "chars": 1465,
+      "text": "冰针取代了酸雪。\n\n细密的针尖斜着扎下来，打在石板上叮叮响，打在皮肤上就是一个小红点，然后渗血。钟离站在钟楼的阴影里，单片眼镜的镜片映出远处档案馆的火光。他用齿轮手杖轻敲地面，一下，两下，第三下停在半空。\n\n封锁部队的蒸汽防护墙塌了。高温把水墙蒸成白雾，雾里人影乱窜，探照灯的光柱一根接一根熄灭。档案馆外围的铁丝网被推倒，缺口敞着，像一张嘴。\n\n火舌正舔过档案馆东侧的蒸汽管道。管道外壁的保温层烧得噼啪响，里面的浆液还在流——高温下浆液变稀，从阀门缝隙里喷出来，遇火就着。整条街泡在蓝火里。\n\n钟离侧过头。手杖这才落下，点在石板缝里。\n\n“档案馆的门扉从未如此敞开。”他说，声音不高，刚好盖过冰针砸在帽檐上的声音，“仿佛在邀请迷途的旅人。只是——”\n\n他停顿。镜片上的火光跳了一下。\n\n“旅人是否知道自己寻找的究竟是真相，还是另一座牢笼？”\n\n林雪没看他。她正把一张纸条举到他眼前。纸条浸过荧光水样，螺旋纹路在冰针的微光中泛着幽蓝。字迹潦草，墨水被水渍晕开一角：火转向。缺口。进去。\n\n她收回纸条，转身面向档案馆。打字机已经从工具袋里抽出来，架在小臂上。她敲键。键杆弹动，字锤打在卷筒上，声音被冰针砸碎。\n\n纸带吐出来。她扯下，递过去。\n\n钟离接过。纸带还湿着，墨迹未干。上面只有一行字：卷宗今晚更新。烧了就没了。\n\n他把纸带折好，放进内袋。手杖又敲了一下地面。\n\n“那么，”他说，“望风的人需要知道一件事。”\n\n林雪抬眼。\n\n“议会的老鼠们不会撤太久。新的防护墙已经在路上，带着更厚的蒸汽板和更多的兵。”他用手杖指向缺口，“你进去的时间，大概够差分机读完三段预言。多一段，就多一分风险。”\n\n林雪点头。她开始往工具袋里塞东西——打字机、备用色带、一截铜管、半瓶荧光水样。每样东西都放在固定的位置，塞进去时没有碰撞声。\n\n“还有一件事。”钟离的手杖横在她面前。\n\n她停住。\n\n“如果你在里面看到的东西，和你在卷宗上看到的不一样——”他摘下单片眼镜，用袖口擦拭。镜片上有一道裂纹，从边缘延伸到中心，是刚才震出来的。“——不要急着相信差分机。机器也会撒谎。尤其是那些运转了太久的机器。”\n\n他把眼镜戴回去。裂纹正好切过他的瞳孔。\n\n林雪看了他三秒。然后敲了三个字。\n\n纸带吐出来。她没扯，直接让他看。\n\n我知道。\n\n她绕过手杖，跑进冰针里。\n\n钟离没动。他站在钟楼的阴影中，看着她的背影被火光拉长，又被冰针切断。手杖的金属头抵在石板缝里，杖身微微颤动——不是他的手在抖，是地面。地基还在响。石头还在喊疼。\n\n远处，封锁部队的第二道防线亮起一排新的探照灯。光柱扫过屋顶，扫过钟楼，扫过他站的位置。他没躲。光柱移开。\n\n他抬起手杖，在石板上敲了三下。\n\n一长。两短。一长。\n\n回声协议启动。钟楼的钟——已经掉下来的那口——当然不会响。但钟楼本身会。石墙内部的共振腔发出低频嗡鸣，人耳听不到，但脚底能感觉到。嗡鸣沿着蒸汽管道传出去，传进档案馆的地基，传进自由机械师行会埋在老城区地下的每一条传声管。\n\n信号只有一个意思：有人进去了。\n\n钟离把单片眼镜往上推了推。裂纹还在，但他已经习惯了。\n\n他转身，走向钟楼的另一侧。那里能看见第二道防线的全貌。封锁部队正在重新部署，蒸汽装甲车排成扇形，炮口对准档案馆的缺口。士兵们在装甲车后面跑来跑去，像被捅了窝的蚂蚁。\n\n冰针还在下。打在装甲车上，弹开。打在士兵的头盔上，叮叮响。打在钟离的帽檐上，他不管。\n\n他只是在数。\n\n数那些装甲车的数量。数炮口的朝向。数士兵换岗的间隔。\n\n数林雪还有多少时间。"
+    },
+    {
+      "tick": 133,
+      "chars": 864,
+      "text": "数到第十七辆时，屋顶塌了。\n\n不是他脚下的屋顶——是档案馆。木梁在烈火中折断的声音像骨头碎裂，一根接一根，然后整片屋顶陷下去。火星被热浪托起，混进冰针里，橘红色和银白色绞在一起往上翻。蒸汽管道在坍塌中爆开，高温白雾从断口喷出，嘶叫着扫过街面。封锁部队的第一道防线往后撤了四十步，士兵们弯腰跑过第七街垒，铁靴踩在水洼里，溅起的水花还没落下就被蒸汽烫成雾。\n\n钟离没动。他站在钟楼这一侧，手杖杵在石缝里，看着装甲车重新调整炮口。扇形阵型缩窄了——他们在给档案馆的缺口让路，怕火势引燃弹药箱。怕是对的。\n\n他数炮口。少了两门。不是撤走的，是调去了东侧。\n\n东侧的水位已经涨过街面。浆液倒灌的速度比行会预估的快了至少三刻钟。墨绿色的水面冒着泡，每个泡破裂都吐出一小团有毒蒸汽。蒸汽贴着水面爬，碰到铁栏杆就缠上去。栏杆上的黑漆开始起皮，一片一片翘起来，露出下面正在变红的铁。沿岸的煤气灯一盏接一盏熄灭，不是被风吹的——是灯柱根部被腐蚀，歪了，煤气管断裂，嘶嘶漏气。\n\n钟离把单片眼镜往上推。裂纹还在，但镜片边缘凝了一层霜。他用拇指抹掉。\n\n就在这时，防御矩阵残骸亮了。\n\n不是正常的运行光——是电弧。蓝白色的电弧从废墟深处窜出来，像一条被踩住尾巴的蛇，在碎砖和扭曲的金属骨架之间乱跳。然后冲击波到了。空气被压缩成一堵看不见的墙，撞碎三栋建筑的玻璃幕墙。玻璃不是往外飞，是往内炸。碎片像雨一样落进建筑内部，割断窗帘，钉进木地板。金属构件从高处脱落，砸在石板路上，弹起来，再落下。\n\n钟离侧过身，让一块飞来的铁片从帽檐边擦过。铁片嵌进他身后的石墙，还在颤。\n\n他低头看手杖。杖尖抵着的石板缝里，积了一小滩酸雪融水。水面在震。一圈一圈的波纹从中心往外扩，间隔越来越短。\n\n地基还在响。石头还在喊疼。\n\n他抬起手杖，在石板上又敲了三下。\n\n一长。两短。一长。\n\n这次没有嗡鸣回应。传声管可能断了。也可能没断，只是被电弧爆炸的噪音盖住了。他把手杖放回石缝里，重新看向档案馆的方向。\n\n火还在烧。冰针还在下。封锁部队还在跑。\n\n他重新开始数。\n\n一。"
+    },
+    {
+      "tick": 136,
+      "chars": 797,
+      "text": "二。\n\n冰雹砸下来。不是针了——是石子。指节大的冰粒密集敲在钟楼铜顶上，响声像千百只手在拍铁皮鼓。钟离的帽檐往下压了半寸。一颗冰粒擦过他手背，划开一道白印，血还没渗出来就被冻住。\n\n街面上有人在跑。不是士兵。是还困在老城区的住户。一个女人抱着孩子滑倒在石板路上，膝盖磕出闷响。她爬起来，又滑倒。积水在结冰。不是慢慢冻——是肉眼可见的速度，水面从边缘往中心变白，像有人从底下往上铺一层霜。女人的鞋底打滑，她索性跪在冰面上，把孩子往前推。孩子滑出去三四步远，撞在一根歪倒的煤气灯柱上。灯柱晃了晃。没倒。\n\n钟离没看她们。他在数。\n\n三。\n\n东侧第三排仓库的屋顶窜出黑烟。不是火苗先起来的——是烟先到。浓黑的烟柱从铁皮接缝处挤出来，像被捏扁的软管里喷出的墨汁。然后火星才到。烈风裹着燃烧的帆布碎片越过防火沟，碎片在空中翻跟头，落在仓库顶上。铁皮烫出嘶嘶声。一颗火星掉进通风口。三秒。整个屋顶从内侧被掀开。火焰不是往上烧——是往外炸。橘红色的火舌从每一个缝隙里伸出来，舔到隔壁仓库的木梁。木梁上刷过防腐油。烧得更快。\n\n封锁部队的装甲车开始往后退。炮口还指着档案馆方向，但车身已经在挪。车轮碾过冰面，冰壳碎裂的声音像踩断骨头。\n\n四。\n\n集市北侧的帆布棚区被撕开了。不是扯破——是整片帆布被风从支架上拔起来，像揭痂一样掀到半空。帆布在空中展开，兜住风，鼓成一个巨大的灰白色囊袋，往南飘了二十步，然后砸下来。盖住了三辆手推车和一排货架。货架上的瓶罐滚落，在冰面上弹跳。有个陶罐没碎。滚到钟离脚边。罐口封着蜡，里面装着半罐腌菜。酸液从蜡封的裂缝里渗出来，滴在冰上，融出一个个针眼大的小洞。\n\n散落的布料堆在冰面上。酸蚀的纤维开始冒烟。白烟贴着地面爬，碰到腌菜罐的裂缝，被吸进去一点。罐子里咕嘟响了一声。\n\n钟离低头看那个罐子。\n\n然后抬头。\n\n冰雹还在下。火还在烧。封锁线还在缩。\n\n他重新开始数。\n\n一。"
+    },
+    {
+      "tick": 139,
+      "chars": 509,
+      "text": "二。\n\n储油罐爆了。不是烧裂——是整座铁罐从底部被抬起来，罐体膨胀成球形，然后撕开。冲击波先到。钟离的衣摆被往后扯平，帽檐掀起来，露出额头上一道旧疤。然后声音才到。不是爆炸的巨响——是更低的、更长的闷响，像地底有什么东西在翻身。邻近厂房的玻璃同时往外炸，碎片在空中转半圈，又被冻雨打下来，插进冰面。黑色烟柱往上顶，顶到半空被烈风拦腰截断，往南偏过去，盖住了半个东区的天。\n\n三。\n\n顶棚残骸砸下来。不是一整块——是碎成七八片的铁皮和帆布，被冻雨浸透之后重了三倍。第一片砸在石板路上，溅起的泥浆喷到对面货摊的油布上。摊主是个瘦子，手指冻得发紫，正往货堆上压油布角。泥浆溅到他脸上。他没擦。油布角被风掀起来，他整个人趴上去，用膝盖压住。第二片残骸砸在他身后两步。他没回头。第三片砸歪了一根路灯柱。灯柱弯下来，玻璃罩掉在地上，没碎。\n\n四。\n\n炮声从北边来。不是封锁部队的装甲车炮——更远。冻雨里夹着的硝烟气味变浓了，不是烧木头的焦味，是烧什么的焦味。前线方向有火光闪了一下，又灭了。隔了三秒，又闪一下。不是炮口焰。是更持久的、贴在地平线上的暗红色光晕，像铁水在锅底慢慢淌。\n\n钟离看着那个方向。\n\n然后重新开始数。\n\n一。"
+    },
+    {
+      "tick": 142,
+      "chars": 643,
+      "text": "二。\n\n湿雪先落在手背上。不是雪花——是半融的冰粒，砸在皮肤上弹开，留下针尖大的水痕。钟离没擦。他盯着北边的暗红色光晕，嘴唇在动。\n\n三。\n\n酸雾是从东区仓库带那边淌过来的。不是飘——是淌。灰白色的雾体贴着石板路面往前推，漫过货摊的油布角，漫过歪倒的路灯柱，漫过瘦子摊主还趴着的膝盖。雾里有烧橡胶的焦臭，混着更刺鼻的什么东西，呛进鼻腔时像吸了一口碎玻璃。钟离的喉咙缩紧。他咳了一声，用手背捂住口鼻。手背上的水痕被雾里的酸质舔过，开始发痒。\n\n四。\n\n雾里有什么东西在叫。\n\n不是人。不是机械。是更低的、从胸腔以下发出的共鸣声，像生锈的铁门被慢慢推开。声音从北边来，从前线方向来，但被雾裹住之后方向就乱了。东边也响了一声。西边又响了一声。三声嘶吼在酸雾里撞来撞去，分不清远近。\n\n五。\n\n然后被另一种声音盖过。\n\n刺耳的笛声——不是警笛，是更尖更碎的电子杂音，从左前方三十步外扎过来。一台自动贩售机。铁壳子锈穿了半边，按键板上的黄铜片翘起来，湿雪渗进去，短了路。笛声一长一短，一长一短，像机器在给自己喊救命。\n\n六。\n\n拾荒者从雾里走出来。\n\n三个。裹着拼接的油布斗篷，脸上缠着浸过机油的纱布，只露出眼睛。第一个人手里提着撬棍，棍头磨成扁刃。第二个人背着麻袋，袋底在滴水。第三个人空手，但右臂的袖管卷到肘部，前臂上绑着一排铜管——是自制的蒸汽拳套，管口还在冒白汽。\n\n他们停在贩售机前。提撬棍的蹲下去，用扁刃敲了敲机壳。笛声变调了，高了半度。\n\n钟离看着他们。\n\n然后重新开始数。\n\n一。"
+    },
+    {
+      "tick": 143,
+      "chars": 1152,
+      "text": "防御塔的警报响了。\n\n三声。短——短——长。石磊手里的焊枪抖了一下，焰尖舔偏了，在炮台基座上烧出一道黑痕。他骂了一句，关掉气阀，把面罩推上去。酸雾立刻钻进鼻孔，像两根烧红的铁丝捅进鼻窦。他咳了两声，吐出一口带灰的唾沫。\n\n炮台还在转。\n\n锈住的齿轮咬合着，发出骨头错位似的嘎吱声。炮口从左摆到右，从右摆到左，像瞎子在摸索拐杖。然后停了。警报也停了。雾里安静了三秒。\n\n金属刮擦声从北边响起来。\n\n不是那种机械运转的摩擦——是更慢的，更有力的，像什么东西在铁板上拖行。声音越来越近，越来越近，在隔离网外三步远的地方突然断掉。\n\n石磊站起来。焊枪还攥在手里。\n\n雾散了一点。网外多了道爪痕。\n\n四道平行的沟槽，从上到下撕开铁丝网的外层护板。槽口边缘在冒泡——不是烧红的铁水那种泡，是更细密的，像酸液还在往里渗。气泡破掉，留下针尖大的锈孔。和昨天那道一模一样。\n\n和前天那道也一模一样。\n\n石磊盯着那些气泡。他想起昨天工兵队收尸时，有个新兵问他：长官，这东西的爪子能撕开钢板，为什么只留一道痕就走了？他没回答。因为他也不知道。\n\n细碎的金属碰撞声从身后传来。\n\n苏摩在走。长袍下摆拖过散落的齿轮碎片，挂住的铜片被拖行几步，又弹开。他走到隔离网前，停下。灰白色的手指抬起来，在雾里划了一道弧。指尖经过的地方，酸雾被搅出微弱的荧光，像腐木上的磷。\n\n石磊看见苏摩侧过头。\n\n不是看他——是听。耳朵偏向雾里，偏向爪痕的方向，偏向那个金属刮擦声消失的位置。苏摩的嘴唇在动，没出声。然后他开口了。\n\n“你听，石磊。”\n\n石磊没动。\n\n“齿轮在哭泣。”苏摩的声音很轻，但每个字都像浸过油，滑进耳道里不散，“那是旧世界的挽歌，还是新生的序曲？”\n\n他的手指落下来，指尖悬在爪痕上方一寸。酸雾在他指缝间流过，被皮肤的温度蒸出细小的白烟。\n\n“这爪痕不是破坏。”苏摩转过身，眼睛从兜帽的阴影里露出来。瞳孔是浅灰色的，和雾一个颜色。“是神祇的笔迹。在腐朽的皮肤上书写净化的经文。”\n\n石磊攥紧焊枪。枪柄上的防滑纹硌进掌心。\n\n“走近些。”苏摩朝他伸出手，手掌向上，五指微张，“用你的眼睛去触摸。用你的恐惧去聆听。”\n\n雾里又响了一声。更远，更低，像生锈的铁门被慢慢推开。\n\n“那雾中的低语——”苏摩的嘴角弯起来，弯成一个不该出现在这张脸上的弧度，“是否在呼唤你的名字？”\n\n石磊没回答。\n\n他走过去。一步。两步。焊枪还攥在手里。他在苏摩身侧停下，肩膀隔着半臂的距离。近到能闻见苏摩长袍上的气味——不是机油，不是锈，是更旧的东西，像档案馆里放久了的纸。\n\n他低头看那道爪痕。\n\n气泡还在冒。一个接一个。破掉。锈孔扩大。边缘的金属从银灰变成暗红，从暗红变成焦黑。像伤口在腐烂。\n\n石磊盯着那些气泡。\n\n然后他想起昨天没回答的那个问题。"
+    },
+    {
+      "tick": 144,
+      "chars": 681,
+      "text": "冰粒砸在铁皮屋顶上。密集，细碎，像有人在用铁砂擦洗钢板。石磊抬头。东区仓库带涌出的黄烟已经漫过第三道隔离网，和酸雾搅在一起，分不清哪团是雾哪团是烟。路灯柱上的油漆起了泡。一个泡鼓起来，破掉，露出底下锈成褐色的铁。\n\n隔离网外，金属刮擦声断了。\n\n不是渐弱——是齐根切断。紧接着一阵低沉的嗡鸣从雾底浮上来，像差分机启动时空转的那一秒。石磊攥紧焊枪。他看见雾里有光。暗红色。闪一下。两下。三下。然后灭了。\n\n长袍上的金属碎片响起来。\n\n苏摩转过身。不是朝他——是朝雾。朝光消失的方向。兜帽下那张灰白色的脸侧过去，耳朵对准隔离网的缺口。银色薄膜覆盖的眼睛微微睁大。石磊看见他喉结动了一下。\n\n“你听见了吗？”\n\n苏摩抬起手。灰白色的手指张开，指向嗡鸣声的源头。\n\n“齿轮的哭泣停止了。取而代之的是心跳——不是我们的，是祂的。”\n\n他迈出一步。长袍下摆拖过地上的齿轮碎片，挂住一枚铜齿，拖行两步，又弹开。\n\n“暗红色的眼睛在雾中睁开又闭合。那是祂在审视我们是否配得上即将揭开的真理。”\n\n第二步。第三步。苏摩走到隔离网的缺口前。锈蚀的铁丝网卷起一角，边缘挂着暗红色的锈迹——不是锈，是更黏的东西，在酸雾里还没干透。\n\n“来吧，石磊。”苏摩侧过头，浅灰色的瞳孔从兜帽阴影里盯住他，“带上你的人。我们去爪痕边缘，见证旧世界伤疤里长出的第一株新芽。”\n\n石磊没动。\n\n他低头看手里的焊枪。防滑纹上沾着汗。他松开手指，又攥紧。身后的工兵在等他下令。没人说话。只有冰粒敲在铁皮上，敲在头盔上，敲在隔离网上。\n\n雾里又响了一声。更远，更低。像生锈的铁门被慢慢推开。\n\n石磊迈出一步。"
+    },
+    {
+      "tick": 145,
+      "chars": 925,
+      "text": "第二步踩进泥里。冻雨落下来，不再是冰粒——是针。细密的酸针扎在头盔上，扎在肩甲上，扎进焊枪防滑纹的缝隙里。石磊听见身后有人骂了一声。工兵老赵，湖北口音，骂的是天气，骂的是雾，骂的是议会不给前线配发防酸油布。没人接话。\n\n苏摩已经走出五步。长袍下摆拖过一滩积水，水面浮着虹色的油膜。油膜裂开，又合拢。他停在一根路灯柱旁。柱身的油漆像蜕皮一样卷起来，露出底下正在冒泡的铸铁。橙色的锈瘤一个一个鼓出来，破掉，淌下锈水。锈水汇进街面的泥浆，发出嘶嘶声。\n\n石磊走到他身后。焊枪的喷嘴朝下，防走火。\n\n苏摩蹲下去。灰白色的手指张开，悬在路面三道平行的金属刮痕上方。刮痕边缘结着暗红色的冰粒。不是锈——锈是褐的，这是红的。像冻住的血。冰粒正在融化，融得很慢，渗进刮痕底部的金属裂缝里。裂缝深处有什么东西在反光。不是水。更稠。\n\n“你看到了吗，石磊？”\n\n苏摩没抬头。银色薄膜覆盖的眼睛凝视着冰粒消融的过程，瞳孔在薄膜下缓慢收缩。\n\n“冰在流血。金属在哭泣。”\n\n他侧过头。耳朵对准刮痕延伸的方向——雾的深处。长袍上的金属碎片随着侧头的动作碰撞，叮。叮。叮。节奏像某种祷告用的铃。\n\n“这不是故障。不是腐蚀。”苏摩的手指落下。指尖触到一枚正在融化的冰粒。冰粒在他指腹下裂开，暗红色的液体洇开，染进指纹的沟壑。“这是灰雾之神在向我们展示真理。你听——每一滴融化的冰都在低语。它们说：旧世界的边界正在消融。”\n\n石磊没蹲下。他站着，看苏摩的指尖。看那抹红色从指纹里渗出来，滴进刮痕。\n\n“你难道感觉不到吗？”苏摩终于抬起头。兜帽滑落一寸，露出额头。额头上有一道旧疤，从发际线拉到眉骨。浅灰色的瞳孔盯住石磊。“这空气中弥漫的……不是恐惧。是应许。”\n\n石磊攥紧焊枪。\n\n他感觉到了。空气里确实有东西。不是烧焦金属的味道——那个一直在。是别的。更甜。更腥。像屠宰场。像焊枪切开血肉时腾起的那股气。\n\n“应许什么？”他说。\n\n苏摩站起来。手指在长袍上擦了一下，留下一条暗红色的痕迹。\n\n“跟我来。你会看到的。”\n\n他转身。继续朝隔离网的缺口走。石磊回头看了一眼。工兵们站在原地，头盔的护目镜反射着路灯的暗光。没人动。老赵还在骂，但声音小了，像在自言自语。\n\n石磊迈出第三步。"
+    },
+    {
+      "tick": 148,
+      "chars": 969,
+      "text": "蒸汽支管在他们左侧七步远的地方爆了。\n\n不是炸——是管壁先鼓起一个瘤，然后裂开，像被酸液从里往外舔穿的。黄绿色的蒸汽从裂口喷出来，带着哨音。石磊的护目镜立刻蒙上一层水雾。他抬手擦，手套上的橡胶刮过镜片，发出吱的一声。\n\n脚下的泥浆开始冒泡。一个一个鼓起来，破掉，溅出的浆点落在靴面上，嘶嘶响。皮革变色。从黑褪成灰，再褪成一种病态的黄。\n\n苏摩没停。\n\n长袍的下摆拖过沸腾的泥浆。布料沾湿，但没有腐蚀。金属碎片在蒸汽里碰撞，叮。叮。叮。节奏没变。\n\n石磊攥紧焊枪。喷嘴朝下，但手指扣在扳机上。保险还关着。他回头看。老赵和工兵们的身影被蒸汽切成几段，晃动的轮廓像水底的影子。老赵还在骂，但声音被哨音盖住了。只看见嘴在动。\n\n远处传来一声闷响。不是爆炸。更沉。像什么巨大的东西正在弯折。金属扭曲的声音拖得很长，末尾带颤，然后断了。\n\n集市那边有人在喊。铁皮棚顶被酸雨蚀穿了一个洞，拳头大的窟窿。雨水灌进去，浇在货摊上。摊贩扯着油布往货物上盖，油布边缘被风吹起来，啪嗒啪嗒抽打铁架子。叫骂声混着雨声，听不清在骂谁。\n\n苏摩停在隔离网的缺口前。\n\n缺口边缘的金属网丝正在变色。从银灰变成暗绿，再变成黑。黑的部分在往下滴。一滴。一滴。滴进泥浆里，溅起一小股烟。\n\n他转过身。兜帽下露出的半张脸被蒸汽染成黄绿色。浅灰色的瞳孔盯住石磊。\n\n\"你听到了吗？\"\n\n石磊没答。他听到了。金属扭曲的声音还在远处回荡。集市那边的叫骂声更响了。脚下的泥浆还在冒泡。蒸汽从破裂的支管里持续喷出，哨音忽高忽低。\n\n\"旧世界在坍塌。\"苏摩说。\"每一根管道。每一块铁皮。每一寸边界。都在我们眼前消融。\"\n\n他抬起手。手指上还留着刚才那抹暗红色的痕迹，被蒸汽濡湿后洇开，染红了整个指腹。\n\n\"这不是末日。这是分娩。\"\n\n石磊的拇指摸到焊枪的保险。金属的触感。冷。硬。他按下去。咔哒一声。很轻。但苏摩听到了。\n\n苏摩笑了。\n\n嘴角裂开，露出牙齿。牙齿上有一层灰色的膜，和眼睛上的那层一样。\n\n\"别怕。\"他说。\"你很快就会明白。\"\n\n他转身。弯腰。钻过隔离网的缺口。长袍的下摆擦过网丝，刮下一片黑色的腐蚀物。\n\n石磊站在原地。蒸汽裹住他。护目镜又蒙上一层雾。他没擦。透过模糊的镜片，他看见苏摩的身影在雾里变淡。灰色长袍。灰色背影。灰色的手垂在身侧，指尖还在滴红。\n\n他迈出第四步。"
+    },
+    {
+      "tick": 151,
+      "chars": 846,
+      "text": "第五步踩进泥浆里。酸雪落在焊枪的喷嘴上，嘶一声化成白汽。石磊抬手抹掉护目镜上的雾，手指碰到镜片边缘的锈斑。锈斑在扩大。昨天还没有。\n\n苏摩的身影在缺口另一侧晃动。灰色长袍被酸雪打湿，贴在肩胛骨上。骨头凸起的形状像折断的机翼。\n\n煤气灯在街角晕开一圈惨绿。光透不过雾，只能把雾染成病态的颜色。石板路面上，酸雪和泥浆混成糊状，踩下去能感觉到石板缝里的气泡在破裂。噗。噗。噗。\n\n石磊低头看自己的靴子。靴底的铆钉在发黑。他抬起脚，泥浆拉出丝，丝断了，弹回地面溅起一小股烟。\n\n远处又传来金属扭曲的声音。这次更近。雾里有橙光一闪，像什么在燃烧。锅炉泄压声紧跟着传来，低沉，绵长，震得脚底发麻。\n\n石磊攥紧焊枪。保险已经打开。喷嘴对着地面，但食指扣在扳机上。他迈过缺口。\n\n网丝擦过肩膀。工作服的帆布面被刮出一道白印。白印边缘开始变色。灰。绿。黑。他伸手拍掉腐蚀物，掌心沾上碎屑，碎屑还在发烫。\n\n苏摩在十步外等他。兜帽完全湿透，塌下来遮住大半张脸。只露出下巴。下巴上有一道旧疤，白色的，从嘴角斜拉到颌骨。\n\n\"你跟着我。\"苏摩说。不是问句。\n\n石磊没答。他把焊枪抬高一寸。喷嘴对准苏摩的胸口。\n\n苏摩低下头。看着焊枪。然后转过身，继续往前走。长袍拖过泥浆，留下一道沟痕。沟痕里冒出细密的气泡，啵啵啵地破了。\n\n石磊跟上去。保持十步距离。酸雪打在护目镜上，每一片都留下一个白点。白点连成片。视线越来越模糊。他没再擦。透过白点，他看见苏摩拐进一条窄巷。巷口堆着锈蚀的管道碎片，碎片上有人用白漆画了一个圈。圈里是三个字母。\n\nTSP。\n\n石磊停在巷口。脚边的泥浆在冒泡。气泡破裂的节奏和他自己的心跳一样快。他回头看了一眼。来路已经被雾吞掉。煤气灯的光缩成针尖大的绿点。集市那边的叫骂声停了。只剩下酸雪落地的簌簌声，和远处锅炉持续的呻吟。\n\n他转回头。巷子里黑洞洞的。苏摩的脚步声还在响。一下。一下。很有规律。像某种机械装置在运转。\n\n石磊扣紧扳机。食指压下去一毫米。两毫米。再压一毫米就会点火。他走进巷子。"
+    },
+    {
+      "tick": 154,
+      "chars": 2923,
+      "text": "冰粒先砸在铁皮檐上，然后才是他的肩膀。叮。叮叮。密集得像有人在敲铆钉。苏摩没回头。灰色长袍在巷子尽头晃了一下，拐进更窄的岔口。\n\n石磊跟上去。泥浆已经没过脚踝。每走一步，靴子拔出来时都带着吮吸声。酸液渗进帆布面，脚背开始发痒。他没低头看。焊枪的喷嘴还对着前方，食指还扣在扳机上。\n\n岔口里堆着废弃的蒸汽管道。管道截面参差不齐，像被什么东西咬断的。断口处的金属泛着暗绿色，正在冒烟。苏摩站在管道堆前，侧着头。兜帽还塌着，但石磊看见他的嘴唇在动。没有声音。像是在数什么。\n\n然后雾兽来了。\n\n不是从巷口。是从上面。铁皮屋顶被撕裂的声音先到——那种薄铁板被扯开时的尖叫，然后才是它们落地的闷响。三只。四只。石磊数到第五只时放弃了。它们的轮廓在酸雾里晃动，半是血肉半是齿轮。其中一只的前肢是活塞驱动的，每动一下都喷出一股蒸汽。爪尖刮过石板，刮出白色的沟痕。沟痕边缘立刻开始冒泡。\n\n石磊扣下扳机。再压一毫米。\n\n焊枪没点火。他低头看。保险还开着。他的拇指在保险钮上，指节发白，但没动。\n\n雾兽没看他。它们冲过他身边，像冲过一堆废铁。爪牙撕开巷口的隔离网——那种手指粗的铁丝网，在它们面前像纸。撕裂声和金属扭曲声混在一起。远处传来自动炮台的扫射声。哒哒哒。哒哒哒。然后停了。然后又开始。然后又是一声金属扭曲的呻吟，比之前更近。\n\n苏摩转过身。银色薄膜覆盖的眼睛对准石磊。他灰白色的手指从地面捻起一小撮东西。暗红色。冰粒。酸雪和血混在一起冻成的冰粒。他把它举到眼前，端详了一会儿，然后小心地收进金属经卷的夹层里。\n\n\"你听，石磊。\"苏摩的声音从兜帽下传出来，缓慢，有节奏，像在吟诵。\"齿轮在哭泣。那是旧世界最后的挽歌。\"\n\n石磊听见了。不是比喻。是真的有齿轮在哭。某种金属疲劳到极限时发出的高频震颤，从防御矩阵的方向传来。声音刺进耳膜，刺进牙根。他咬紧牙。牙龈发酸。\n\n\"雾中的低语者已派遣使者。\"苏摩朝雾兽消失的方向抬了抬下巴。\"它们为我们清除了通往三号哨塔的障碍。防御矩阵的哀鸣，不正是灰雾之神赐予我们的征兆吗？\"\n\n焊枪的喷嘴在抖。石磊看见自己的手在抖。不是因为冷。\n\n\"现在，带着你的工兵队，随我来。\"苏摩迈过管道碎片，长袍下摆拖过泥浆。\"我们不是去修复。我们是去接掌那沉睡的力量。\"\n\n他停在石磊面前。距离不到一步。石磊能闻到他身上的气味。不是机油，不是酸雪。是某种更古老的东西。像是旧书，像是锈，像是很久没打开过的地下室。\n\n\"你愿意成为新生的序曲，还是旧世界的陪葬？\"\n\n冰粒打在护目镜上。每一粒都在镜片上炸开，留下白点。白点连成片。苏摩的脸在白点后面晃动，像一个正在显影的底片。\n\n石磊的拇指从保险钮上移开。他把焊枪抬高一寸。喷嘴对准苏摩的喉咙。\n\n\"三号哨塔有十二个弟兄。\"他说。声音从牙缝里挤出来。\"你让我带他们去送死。\"\n\n\"死？\"苏摩侧过头。兜帽滑下来一点，露出额头。额头上有一块旧伤疤，圆形的，像被什么东西烙过。\"死是旧世界的概念。石磊。在新世界里，没有死。只有转化。\"\n\n他抬起手。手指碰到焊枪的喷嘴。指尖的皮肤是灰白色的，碰到金属时没有发出声音。\n\n\"你的弟兄们。\"苏摩说。\"他们已经在旧世界里死了。每天巡逻，每天修那些永远修不好的机器，每天看着雾里伸出爪牙，等着被撕碎。那不是活着。那是拖延。\"\n\n他的手指沿着喷嘴往上移。碰到石磊的指节。冰凉的。\n\n\"但你可以给他们一个选择。不是拖延。是转化。\"\n\n远处又传来金属扭曲的呻吟。这次更近。石磊能感觉到脚底的震动。泥浆里的气泡破裂得更快了。\n\n他想起隔离网上的爪痕。想起那些被酸性物质腐蚀的金属边缘。想起冷锋在简报会上说的话——\"雾中金属摩擦声的频率与强度急剧上升\"。冷锋说那句话时，手指一直在敲桌面。嗒。嗒。嗒。像在计数。\n\n石磊收回焊枪。\n\n\"带路。\"他说。\n\n苏摩点头。兜帽又滑下来，遮住额头上的伤疤。他转身，继续往巷子深处走。长袍拖过泥浆，留下一道沟痕。沟痕里冒出细密的气泡。\n\n石磊跟上去。这次只隔三步。\n\n巷子尽头是一堵墙。墙上用白漆画了一个圈。圈里是三个字母。TSP。苏摩把手按在圈上。墙面裂开。齿轮转动的声音从墙后传来，低沉，有规律。墙面向两侧滑开，露出一个黑洞洞的入口。入口里有铁锈和机油的气味，混着某种更甜的东西。像是腐烂。像是祭祀。\n\n苏摩走进去。\n\n石磊停在入口前。他回头看了一眼。来路已经被雾吞掉。煤气灯的光彻底消失了。只剩下冰粒敲击铁皮屋顶的声音，和远处防御矩阵持续的哀鸣。\n\n他扣紧扳机。食指压下去一毫米。两毫米。再压一毫米就会点火。\n\n他走进入口。\n\n墙面在他身后合上。齿轮转动的声音停了。黑暗涌过来，浓稠得像泥浆。苏摩的脚步声还在响。一下。一下。很有规律。\n\n石磊跟着那声音走。焊枪的喷嘴在黑暗中发着微弱的红光。那是点火线圈待机时的光。很小。很暗。但足够让他看见脚下的路。\n\n路面是金属的。格栅结构。格栅下面有水声。不是干净的水。是某种粘稠的液体在流动。偶尔有气泡破裂的声音。\n\n苏摩停下了。\n\n\"到了。\"他说。\n\n石磊举起焊枪。红光映出一扇门。铁门。门上有铆钉，有锈斑，有一个白漆画的圈。圈里是三个字母。TSP。\n\n门后面有声音。不是金属扭曲。不是齿轮转动。是人的声音。很多人在低语。低语声混在一起，像某种机械装置在运转。\n\n苏摩把手按在门上。\n\n\"你的弟兄们已经在里面了。\"他说。\"他们比你早到一步。\"\n\n石磊盯着那扇门。焊枪的红光在门板上晃动。锈斑在红光里变成黑色。\n\n\"你对他们做了什么？\"\n\n\"我给了他们选择。\"苏摩推开门。\"就像我给你的一样。\"\n\n门开了。低语声涌出来。石磊看见里面有人影。很多人影。他们跪在地上，围成一个圈。圈中央是一个金属装置，形状像差分机的核心，但更大，更古老。装置的表面布满铜绿，齿轮在缓慢转动。每转一圈，跪着的人就低语一句。\n\n石磊认出其中几个。是工兵队的人。是今天早上还跟他一起喝机油的人。\n\n他们没有抬头看他。\n\n苏摩走进圈中央。他张开双臂。长袍的袖子滑下来，露出灰白色的手臂。手臂上刻满了符号。不是文字。是某种更古老的东西。\n\n\"灰雾之神已降下征兆。\"苏摩说。他的声音在金属墙壁间回荡。\"防御矩阵已裂。旧世界的屏障已破。新生的时刻到了。\"\n\n跪着的人同时抬起头。他们的眼睛是灰色的。和酸雾一样的灰色。\n\n石磊攥紧焊枪。食指压在扳机上。再压一毫米。\n\n他看见其中一个跪着的人站起来。转过身。是早上那个新兵。那个问他\"雾里到底有什么\"的新兵。\n\n新兵看着他。灰色的眼睛没有眨。\n\n\"石队。\"新兵说。声音很平静。\"你也来了。\"\n\n石磊没答。他把焊枪抬高一寸。喷嘴对准新兵的胸口。\n\n新兵低头看着焊枪。然后笑了。\n\n\"不用那个。\"他说。\"在这里，不需要那个。\"\n\n他伸出手。手掌摊开。掌心里是一小撮暗红色的冰粒。和苏摩收进经卷里的一模一样。\n\n\"你听。\"新兵说。\n\n石磊听见了。不是用耳朵。是用骨头。是用牙齿。某种低频的震动从脚底传上来，从金属格栅传上来，从那个古老的装置里传出来。震动有节奏。像心跳。像呼吸。像某种巨大的东西正在醒来。\n\n焊枪的红光在抖。\n\n石磊的食指压在扳机上。再压一毫米。\n\n他没压下去。"
+    },
+    {
+      "tick": 155,
+      "chars": 920,
+      "text": "石磊没压下去。\n\n焊枪的红光在抖。不是手抖。是格栅在抖。是整个下水道在抖。那个古老的装置发出第三声低鸣，跪着的人同时低语一句。声音整齐，像排练过。\n\n新兵的手还伸着。掌心里的暗红色冰粒开始融化。不是化成水。是化成气。淡红色的气升起来，混进酸雾里。\n\n\"你听。\"新兵又说了一遍。\n\n石磊听见了。防御矩阵的炮台在远处嘶吼。不是正常的射击节奏。是最后一阵。嘶哑的，断断续续的，像肺里呛了水。电网边缘有东西在抽搐。雾兽的残骸。焦糊的金属味从通风管灌进来，混着催泪瓦斯的刺鼻气味。\n\n东侧岔口飘出荧光绿雾。\n\n石磊用余光扫了一眼。绿雾在巷道里慢慢扩散，贴着酸泥表面爬行。附近有脚步声。是流浪汉在逃离。有人骂了一句，被咳嗽打断。\n\n\"防御矩阵完了。\"苏摩说。他还站在圈中央，双臂仍张着。长袍袖口垂下来，露出整条前臂。符号从手腕一直刻到肘弯。不是纹身。是疤痕。旧疤痕，叠着新疤痕，一层一层，像某种记录。\"灰雾之神等了七个世纪。现在屏障裂了。你的差分机修不好它。你的工兵队修不好它。\"\n\n他放下左臂。右手食指指向石磊。\n\n\"但你还可以选。\"\n\n石磊看着那根手指。指甲是灰色的。和雾一样的灰色。\n\n\"选什么。\"他说。声音从牙缝里挤出来。\n\n\"选站在哪一边。\"苏摩说。\"屏障裂了之后，雾会进来。不是今天。不是明天。但很快。你可以站在雾里，也可以站在雾外。\"\n\n跪着的人又低语一句。装置上的齿轮转了一格。铜绿剥落一小片，掉在酸泥里，发出滋滋声。\n\n石磊把焊枪抬高两寸。喷嘴对准苏摩。\n\n\"我站在我弟兄这边。\"\n\n新兵笑了。还是那种平静的笑。\n\n\"我们就是你的弟兄。\"他说。\"我们还在。只是换了一种方式。\"\n\n他往前走了一步。焊枪的喷嘴几乎碰到他胸口。帆布工装被酸雾蚀出洞眼，露出里面的皮肤。皮肤上也有符号。新的，刻上去不超过一天。边缘还结着暗红色的痂。\n\n石磊盯着那些符号。\n\n他认得其中一个。是工兵队的标记。不是刻的。是烙的。每个工兵入队时都在左胸烙一个。用差分机的废热。烫三秒。留一辈子。\n\n新兵胸口的标记还在。但符号从标记边缘长出来，像藤蔓爬过旧墙。\n\n\"石队。\"新兵说。\"放下焊枪。你焊不了这个。\"\n\n石磊的食指压在扳机上。\n\n再压一毫米。\n\n他松开了。"
+    },
+    {
+      "tick": 158,
+      "chars": 843,
+      "text": "钟楼倒塌的声音从东边传来。不是轰隆一声。是铁架被酸蚀透之后那种慢吞吞的弯折，嘎吱嘎吱，然后砸进泥里。溅起的酸泥飞过巷道，打在苏摩张开的右臂上。长袍烧出几个洞眼。他没躲。符号在洞眼下面继续亮着，淡绿色的，和雾一样的光。\n\n石磊把焊枪垂下。枪口朝地。\n\n新兵看着他的手。\"石队。\"\n\n\"闭嘴。\"石磊说。\"你不是我队里的人。\"\n\n\"我是。\"新兵扯开工装领口。左胸的烙痕还在。工兵队的铁砧标记。但符号从铁砧边缘长出来，像锈迹爬过铁板。\"烙印在。人就在。你说过的。入队那天你说的。\"\n\n石磊盯着那个标记。\n\n他说过。每个新兵入队他都说过。烙铁按下去的时候，他按着新兵的肩膀，说烙印在，人就在。说工兵队不丢下任何一个弟兄。\n\n那是三年前。\n\n现在这个弟兄站在他面前，胸口爬满他不认识的符号，眼睛是雾的绿色，笑着问他记不记得。\n\n\"我记得。\"石磊说。\n\n他把焊枪插回腰间皮套。金属磕在皮带扣上，叮的一声。\n\n\"所以我不会对你开枪。\"\n\n他转身。背对苏摩。背对跪着的人。背对那台还在转动的装置。\n\n\"石磊。\"苏摩的声音从背后传来。\"你走出去。雾会找到你。不是今天。不是明天。但你身上已经沾了它的气味。你刚才在圈里站过。你吸了它的呼吸。你逃不掉。\"\n\n石磊没回头。\n\n他踩着酸泥往巷道深处走。冻雨从头顶的裂缝灌进来，混着黄绿色的浓雾，贴地滚动。能见度不到五步。他听见身后装置又转了一格。跪着的人低语声停了。然后是脚步声。不是追他。是往反方向。往东侧岔口。往钟楼倒塌的方向。\n\n雾里传来金属被腐蚀的嘶嘶声。\n\n他继续走。酸泥没过脚踝。靴子里灌进了泥浆，烧得皮肤发紧。他走到巷道尽头，推开一扇铁门。门没锁。铰链锈断了。\n\n外面是集市。\n\n排水沟堵了。酸性泥浆漫过石板路，商贩们正用铁板垫高货摊。有人看见他从雾里出来，愣了一下。一个卖零件的女人把扳手举起来，对准他。\n\n石磊站在铁门口。\n\n他低头看自己的手。手背上沾了酸泥。泥里混着铜绿。是那台装置上剥落的。他搓了一下。铜绿没掉。嵌进皮肤纹路里，像新刻的符号。"
+    },
+    {
+      "tick": 161,
+      "chars": 1034,
+      "text": "卖零件的女人没放下扳手。她盯着石磊的手背，盯着那片嵌进皮肤的铜绿。扳手在她掌心里转了半圈，握紧。\n\n“你从雾里出来的。”她说。不是问句。\n\n石磊没答。他跨过铁门门槛，靴子踩进泥浆。酸泥从靴口灌进去，烧得脚踝发紧。他往前走。女人往后退了一步。扳手还举着。\n\n“你身上有雾的气味。”她说。\n\n旁边货摊的商贩也抬起头。一个焊工把面罩推上去，露出半张脸。脸是干的。汗都没有。他看石磊的眼神像看一台故障的机器——不是恨，是判断。判断要不要拆。\n\n石磊站住。他慢慢抬起右手，摊开手掌。铜绿在掌纹里，在指节褶皱里，在手背的酸泥下面。他翻过手背，让女人看。\n\n“不是符号。”他说。“是锈。”\n\n女人盯着他的手。扳手慢慢垂下来，磕在铁皮货架上，当的一声。\n\n“锈不会嵌进肉里。”她说。\n\n“会。”石磊把手插回工装口袋。“在雾里站久了就会。”\n\n他没再解释。他穿过货摊之间的窄缝，往集市深处走。身后有人低声说话。他听见“工兵队”三个字。听见“烙印”。听见女人说“但他手上没有”。\n\n冻雨砸在头顶的铁皮棚上，嘶嘶声密得像焊花飞溅。棚子下面，商贩们用铁板垫高了货箱。零件泡在浅水里，表面镀着一层黄绿色的膜。有人在用抹布擦齿轮。擦完一个，抹布就烂一个洞。\n\n石磊走到集市的公用水泵前。水泵锈得只剩铸铁骨架，手柄上缠着防酸胶带。他压了三下。没水。第四下，一股黄褐色的泥浆从管口涌出来，落在水槽里，冒泡。\n\n他把右手伸到管口下面。泥浆冲过手背。铜绿还在。\n\n他又搓了一下。用左手拇指，用力，搓得皮肤发红。铜绿没掉。嵌进皮肤纹路里，像新刻的符号。\n\n远处传来金属扭曲的闷响。不是钟楼方向。是北面。是前线。几座废弃哨塔在酸雨中缓缓坍塌，溅起的泥浪越过隔离网，拍在集市边缘的铁皮围墙上。围墙晃了一下。\n\n汽笛声穿透雨幕。三短一长。商队。但泥泞中看不见车轮，只听见蒸汽引擎的喘息，闷在雾里，像被困住的动物。\n\n石磊关掉水泵。他把手在工装裤上擦干。铜绿还在。\n\n他往集市的东出口走。那里有工兵队的临时哨站。他要去拿自己的焊枪。那把焊枪还在腰间皮套里。他摸了一下。金属是凉的。\n\n然后他想起石磊把焊枪插回皮套的声音。叮的一声。\n\n他停住。\n\n那不是他的焊枪。他的焊枪丢在巷道里了。丢在那台装置旁边。丢在苏摩脚边。\n\n腰间这把是石磊的。\n\n他低头看皮套。皮套上烙着铁砧标记。标记边缘被酸腐蚀，模糊了。他把焊枪抽出来。枪柄上刻着两个字：石磊。\n\n他握着那把焊枪站在泥浆里。冻雨从棚顶裂缝灌进来，打在枪管上，嘶嘶响。"
+    },
+    {
+      "tick": 164,
+      "chars": 609,
+      "text": "焊枪在手里沉甸甸的。不是他的，但握柄上的包浆贴合他的虎口。石磊把枪管凑近鼻子。铜味。还有别的——焦糊，松脂，某种酸性溶剂。石磊的焊枪。石磊的手。他记得那双手。指节粗大，指甲缝里永远嵌着黑泥。焊东西时左手稳得像台钳。现在这把枪在他手里。石磊在哪儿。\n\n他把焊枪插回皮套。皮套扣带太紧，扣了两下才扣上。铁砧标记硌着髋骨。\n\n东出口的哨站亮着一盏黄灯。灯罩是铁皮敲的，锈穿了几个洞，光漏出来像筛子。哨站里坐着个年轻工兵，头盔搁在膝盖上，正用酸布擦护目镜片。他看见石磊，站起来。\n\n“石队。”\n\n石磊没应。他走到哨站的登记台前。台上摊着交接簿，纸页被酸气熏得发脆，边角卷成褐色的卷。簿子上压着一截齿轮轴。轴端有新鲜断口，不是酸蚀的，是扭断的。\n\n“谁来过。”石磊说。\n\n年轻工兵把护目镜戴上。镜片没擦干净，左眼位置还糊着一层白翳。“没人。就您。”\n\n石磊拿起那截齿轮轴。断口处有咬痕。不是工具留下的。是牙。某种金属牙。他把轴放回簿子上。簿子翻过一页。上一页有签名。墨迹洇开了，但笔画还认得：石磊。\n\n是他的签名。不是他签的。\n\n他把簿子合上。\n\n“北面哨站失联多久了。”\n\n年轻工兵愣了一下。“三个钟头。您之前说不用管。”\n\n石磊没说话。他走出哨站。酸雾涌过来，裹住黄灯的光。泥浆在脚下咕噜咕噜响。北面。倒塌声还在继续，闷闷的，像远处有人在拆一座很大的机器。\n\n他摸了一下腰间的焊枪。枪柄上那两个字硌着掌心。\n\n然后他往北走。"
+    },
+    {
+      "tick": 165,
+      "chars": 1484,
+      "text": "敲击声从北面来。三短，两长，一短。停顿。重复。\n\n钟离的怀表在掌心里震了一下。秒针正走到第七格。他低头看表盘。齿轮咬合正常，但表壳温度在升高——不是机械摩擦的热，是某种外部共振。他把表贴近耳朵。滴答声里夹着一丝颤音，像有人在表芯里拨动了一根极细的簧片。\n\n三短，两长，一短。\n\n他的手指在表壳上敲出回应。指甲叩击银面，节奏分毫不差。敲完他把怀表揣进内袋，手杖换到左手。杖尖在石板路上轻点三下，试了试地面的实度。碎玻璃铺满路面，酸雾凝成的水珠挂在玻璃碴上，折射出黄绿色的碎光。他绕开玻璃，踩上石板接缝处的裸地。\n\n东区钟楼在雾里露出半截轮廓。铁皮屋顶塌了一角，齿轮钟面停在四点十二分。分针弯了，指向地面。钟离在钟楼底下停住。他抬头看钟面。四点十二分。不是现在的时间。是某次爆炸震停的。他记得那次爆炸。灰雾第一次涌进内城那天。\n\n他又敲了一下怀表。表壳里的颤音还在。\n\n身后有脚步声。步距精确，靴底铁片撞击石板的频率像节拍器。钟离没回头。他把手杖靠在钟楼的铁门上，杖柄的铜鹰头正对来人的方向。\n\n\"冷队长。\"他说。\"你的靴子该换掌了。左脚的铁片磨偏了半寸。\"\n\n冷锋在十步外停住。蒸汽增压手枪的枪口垂向地面，但击锤已经扳开。记录仪的红光扫过钟离的后背，停在杖柄的铜鹰头上。\n\n\"声源。\"冷锋说。\"定位。\"\n\n\"我也在找。\"钟离转过身。酸雾在他睫毛上凝成水珠。他眨了一下眼，水珠滚下来，顺着颧骨滑到下颌。\"你听见的节奏，是三短两长一短。我听见的也是。但敲击声不是从钟楼里传出来的。\"\n\n他用杖尖点了点地面。\"从下面。\"\n\n冷锋走近两步。记录仪的红光扫向钟楼底部。铁门下方有一道缝隙，酸雾正从缝隙里往外涌。雾的颜色比外面深，偏绿。\n\n\"下水道。\"冷锋说。\n\n\"下水道。\"钟离重复。\n\n蒸汽管道的阴影里传来打字机键钮的咔嗒声。很轻，像蟋蟀振翅。钟离偏头看过去。林雪从管道后面走出来，斗篷兜帽拉得很低，只露出下巴和脖子上的一圈铜环。便携式打字机托在左臂上，右手正从滚轴下抽出一张纸条。\n\n她递过来。纸条上的字迹被雾气洇湿，墨迹微微晕开：\n\n「计数断，为何？下水道，荧光。」\n\n钟离看完，把纸条折成窄条，塞进怀表的表链扣里。\n\n\"不是断了。\"他说。\"是被盖住了。有人在用同样的频率敲击，功率比我大。我的怀表只能接收，发不出去。\"\n\n他顿了顿。\"你刚才说荧光。哪一段下水道？\"\n\n林雪的手指在键钮上跳动。打字机吐出新纸条。她撕下来，没递，而是举起来让钟离自己看：\n\n「钟楼正下方。水潭。蓝绿色。上次没有。」\n\n冷锋跨前一步。他把记录仪对准地面缝隙，红光穿透酸雾，照在铁门下方的石板上。石板缝里有东西在发光。蓝绿色，很暗，像腐木上的磷火。\n\n\"荧光素。\"冷锋说。\"灰雾生物的体液残留。\"\n\n他直起腰，看着钟离。\"你引来的？\"\n\n\"如果是我引来的，\"钟离把手杖从铁门上拿起来，杖尖抵住门缝，\"我就不会站在这里跟你讨论靴子的问题了。\"\n\n他用力一撬。铁门吱呀一声开了。酸雾从门框里涌出来，带着一股腥甜味。门后是向下的石阶。台阶被酸蚀得坑坑洼洼，每一级都积着浅水。水面上漂着一层蓝绿色的油膜。\n\n钟离掏出手帕捂住口鼻。他回头看林雪。\n\n\"你带了多少纸条？\"\n\n林雪拍了拍打字机侧面的纸匣。满的。\n\n\"好。\"钟离说。\"我走前面。冷队长，你的枪能打穿三寸钢板吗？\"\n\n\"能。\"\n\n\"那就麻烦你断后。\"\n\n他没等冷锋回答，拄着手杖走下第一级台阶。靴底踩进积水，蓝绿色的油膜荡开，又慢慢合拢。怀表在内袋里震动，秒针的滴答声越来越快。\n\n下面又传来敲击声。三短，两长，一短。\n\n这次很近。就在台阶尽头。"
+    },
+    {
+      "tick": 166,
+      "chars": 635,
+      "text": "钟离在最后一级台阶上停下。手杖点住水面，蓝绿色的油膜绕着杖尖打旋。敲击声停了。不是消失了，是被另一种声音盖过去——头顶上方，隔着石板，传来蒸汽管道破裂的尖啸。那声音像一把钝刀刮过铁板，持续了七八秒，然后断掉。余音在砖壁间弹跳，慢慢沉进水里。\n\n冷锋的靴子停在钟离身后两级台阶上。他没回头，但记录仪的镜头对准了天花板。红光扫过石缝，照出一滴正在下坠的酸液。液滴落在冷锋肩甲上，嘶一声，留下一个针尖大的黑点。\n\n“管道爆了。”冷锋说。“不是这一段。上面。”\n\n钟离没应声。他盯着水面。油膜底下有什么东西在动。不是鱼。形状不对。他把手杖探进水里，杖尖碰到硬物。金属。他用力一挑。\n\n一根铁质护栏的断柱浮出水面。断口处还在冒泡，边缘被腐蚀成锯齿状，蓝绿色的荧光液正从断口往外渗。酸液。不是灰雾生物的体液。是街道低洼处那种泥浆池里的东西。\n\n“酸性泥浆。”钟离把断柱拨到台阶旁。“从上面渗下来的。浓度比外面高。”\n\n林雪的打字机在身后响了三下。她没有递纸条，而是直接把打字机举到钟离肩侧。纸条上只有四个字：\n\n「齿轮还在转。」\n\n钟离侧耳。是的。东区钟楼方向，齿轮转动的咔嗒声穿透石板和酸雾，节奏缓慢而稳定。和他怀表里秒针的滴答声不在一个频率上。钟楼的齿轮比他快。快得多。\n\n怀表又震了一下。这次不是敲击信号。是回声协议自动触发的反馈脉冲——有人在下水道深处启动了另一台接收装置。\n\n钟离把手杖从水里抽出来，杖尖指向黑暗。\n\n“走。”\n\n他迈下最后一级台阶，靴底踩实了水下的石板。"
+    },
+    {
+      "tick": 169,
+      "chars": 1661,
+      "text": "水没过脚踝。温热。不是体温那种热——是酸液腐蚀金属时放出的那种热，隔着靴底往上渗。钟离走了七步，停下。怀表在掌心又震了一次，这次脉冲更长，两秒，然后断掉。接收装置还在深处，但信号源在移动。不是靠近。是横向偏移。有人在另一条支管里，和他们平行前进。\n\n头顶传来闷响。不是齿轮声。是石板开裂的声音。\n\n钟离抬头。拱顶的砖缝正在变宽，锈红色的蒸汽从缝隙里挤出来，像伤口里渗出的血。一滴酸液落在水面，离他左脚三寸。水面嘶一声，泛起一圈白沫。\n\n“上面塌了。”冷锋说。记录仪的红光扫过拱顶，照出七八条正在扩大的裂缝。“不是这一段。但压差在往这边传导。”\n\n钟离没应声。他把手杖横过来，杖尖抵住右侧砖壁，杖尾抵住左侧。手杖在震。不是水流的震。是整段下水道在承受来自上方的压力。石板在往下沉。\n\n前方五米处，一根废弃炮管从砖壁里戳出来，半截埋在墙体里，半截悬在水面上。炮管表面凝结的酸液滴不断往下掉，在管身上蚀出一道道竖痕。每滴落下一滴，水面就多一个针尖大的孔。\n\n钟离盯着那根炮管。不是看它。是看它投在水面上的倒影。倒影在晃。不是因为水波。是因为炮管本身在动。\n\n它在往外滑。\n\n砖壁握不住它了。\n\n“退。”钟离说。\n\n三个人同时往后撤。炮管滑出砖壁的速度比预想的快。它砸进水里，溅起的酸液泼在钟离刚站过的位置。石板台阶嘶嘶作响，边缘开始起泡。\n\n炮管横在水道中央，堵住了去路。管口对着他们，黑洞洞的。里面有什么东西在响。金属刮擦金属的声音，由远及近。\n\n林雪的打字机响了。纸条递过来：\n\n「不是回声。」\n\n钟离点头。怀表没震。这声音不是信号。是活物。\n\n他把手杖换到左手，右手探进外套内袋。指尖碰到一样冷而硬的东西。他握住它，没掏出来。\n\n炮管里的刮擦声停了。\n\n停了大约三次心跳的时间。\n\n然后管口喷出一股锈红色的蒸汽，直冲拱顶。蒸汽撞上砖壁，散开，沿着裂缝往四面八方钻。钟离侧身，让过最浓的那一团。蒸汽擦过他的肩膀，外套上立刻留下一道焦痕。\n\n蒸汽散尽后，炮管里爬出一样东西。\n\n不是灰雾生物。是机械。四条腿，每条腿的关节都是反向弯折的，末端不是脚掌，是铲形的刮刀。躯干是一段被压扁的锅炉外壳，铆钉还在，但铆钉孔里往外渗着蓝绿色的荧光液。它没有头。躯干前端只有一个圆形的接收盘，盘面布满铜触点，正在缓慢旋转。\n\n接收盘对准了钟离怀表的方向。\n\n怀表震了。\n\n不是回声协议。是接收盘发出的查询脉冲，在请求握手。\n\n钟离看着那个接收盘。盘面上的铜触点排列成一组他认识的编码格式。自由机械师行会的格式。三年前废弃的型号。\n\n“自己人的东西。”冷锋说。\n\n“曾经是。”钟离说。\n\n他把手杖插进水里，杖尖抵住炮管边缘。那东西没动。接收盘还在转，还在发查询脉冲。怀表每震一次，它就往前挪一寸。铲形脚掌刮过水下石板，发出粉笔划过黑板的声音。\n\n钟离没退。他松开外套内袋里的手，空手举到胸前，五指张开。\n\n接收盘停了。\n\n停了很久。久到冷锋的手指搭上了扳机。\n\n然后那东西开始往后退。一步一步，铲形脚掌倒着刮过石板。它退进炮管里，接收盘最后缩进去，管口只剩下一圈蓝绿色的荧光。\n\n怀表又震了一下。这次是回声协议。信号源还在深处，还在横向移动。\n\n钟离把手杖从水里拔出来。\n\n“它认得手势。”他说。“不是废弃。是被改写了。”\n\n他跨过炮管，靴底踩在管身上。金属表面已经蚀出蜂窝状的孔洞，踩上去发出脆响。他走到炮管另一端，跳进水里。水面已经涨到小腿肚。温度比刚才高了。\n\n前方十米，水道分岔。左支往东，右支往北。信号源在左支。但右支的砖壁上，有人用粉笔写了一个字。\n\n「等。」\n\n字迹被酸雾侵蚀了一半，但还认得出来。粉笔灰在往下淌，混进酸液里，变成淡蓝色的细流。\n\n钟离看着那个字。\n\n“不是写给我们看的。”他说。\n\n“你怎么知道。”冷锋说。\n\n“粉笔是新的。但字迹的腐蚀程度比周围砖壁轻。”钟离用手杖点了一下字迹下方的砖缝。“有人在这里站过。站了很久。然后写了这个字。写完之后，酸雾才加重。”\n\n他转身面向左支。\n\n“等的人已经走了。我们不等。”"
+    },
+    {
+      "tick": 172,
+      "chars": 852,
+      "text": "左支水道更窄。砖壁向内挤，拱顶压低到钟离必须低头。水更深了，淹到膝盖，温度比岔口又高了半度。怀表还在震，间隔变短。信号源在减速。\n\n冷锋在后面，靴底踩水的声音很稳。\n\n砖壁上开始出现蚀刻。不是粉笔。是金属利器划出来的。一组组短横线，排列整齐，像计数。钟离用手杖点了一下最近的一组。十七条横线，第十八条只刻了一半。\n\n“他在数什么。”钟离说。\n\n“数日子。”冷锋说。“或者数脚步声。”\n\n钟离没接话。他继续往前走。蚀刻越来越多，有些被酸雾侵蚀得只剩浅痕，有些还很新。新刻痕的间距越来越短。刻的人越来越急。\n\n前方拱顶突然升高。水道扩成一个圆形井室，直径大约五米。井壁是铸铁板铆接的，铆钉头已经锈成橙红色的瘤。井室中央立着一根通气管，管径半米，从水面一直伸进拱顶的砖层里。管身上有人用白漆刷了一行字。\n\n「往下走。别碰管子。」\n\n字迹和岔口的「等」是同一个人的。漆还没干透，往下淌着细白的泪。\n\n怀表震了一下。不是回声协议。是新的信号。信号源不在前方了。在下方。\n\n钟离低头看水面。泥浆太浓，看不见底。但水面在震动。不是他们走动引起的波纹。是从井室底部传上来的规律震动。每三秒一次。像心跳。\n\n冷锋把枪口压低，对准水面。“它在下面。”\n\n“不是它。”钟离说。“是泵。”\n\n他用手杖敲了一下通气管。管壁发出空响。响完之后，震动停了。停了大约五秒。然后重新开始，频率快了一倍。\n\n井室北侧的砖壁上有一道铁门。门框变形，门扇卡在半开的位置。门后是向下的螺旋梯。梯级是铁格栅的，能看见下面有光。蓝绿色的荧光。和炮管里那东西身上渗出来的一模一样。\n\n钟离走到门边。铁格栅上沾着黏液。新鲜的。还没被酸雾腐蚀。\n\n“它刚从这里下去。”他说。\n\n冷锋蹲下，用指尖碰了一下黏液。举到鼻尖闻了闻。\n\n“机油。”他说。“还有铜锈。还有别的。”\n\n“什么别的。”\n\n冷锋把手在裤子上擦干净。“血。人血。”\n\n螺旋梯下方传来金属刮擦声。一下。又一下。节奏稳定。像铲形脚掌刮过铁格栅。在往上走。\n\n钟离把手杖横在身前。\n\n“它回来了。”"
+    },
+    {
+      "tick": 175,
+      "chars": 774,
+      "text": "蓝白色的光先到。从螺旋梯井口涌上来，把铁格栅的影子烙在井室拱顶上。静电。空气里的金属颗粒在导电薄层上聚成一条银灰色的河，废弃管道口又迸出一串火花，噼啪声在砖壁间弹跳。方圆三米被照亮了一瞬。钟离看见冷锋的脸——咬肌绷着，瞳孔缩成针尖。光灭。浓雾合拢。\n\n泥浆在脚下翻腾。气泡破裂声此起彼伏，偶尔溅起的泥点落在通气管的铁锈上，嘶嘶地蚀出新的凹坑。酸性比刚才更强了。\n\n螺旋梯上的刮擦声停了。\n\n不是走了。是在听。\n\n钟离把手杖横在身前，杖尖对准门洞。冷锋的枪口跟着抬起来，拇指拨开保险。两个人都不呼吸。\n\n浓雾深处传来一声沉闷的金属扭曲。很远。像是大型构装体在泥泞里挣扎，钢梁被扭断的那种声音。井室的铸铁壁板跟着震了一下，铆钉缝里挤出锈水。\n\n然后螺旋梯上的东西又开始动了。\n\n这次不是往上。是往下。刮擦声一级一级沉下去，越来越快，像什么东西被拖回深处。拖它的东西力气很大。刮擦声里夹着金属碎裂的脆响。铁格栅断了一根。断口弹上来，砸在井壁上，叮当一声掉进泥浆。\n\n冷锋往前迈了一步。钟离伸手拦住。\n\n“别追。”\n\n“它在跑。”\n\n“不是跑。”钟离盯着门洞里的蓝绿色荧光。荧光在变暗。不是熄灭，是被什么东西遮住了。遮它的东西很大，从井底升上来，把光一口一口吃掉。“是被叫回去了。”\n\n荧光彻底消失。\n\n井室陷入完全的黑暗。泥浆沸腾的声音还在，静电火花的噼啪声还在，但螺旋梯方向没有任何声响。连呼吸声都没有。\n\n然后怀表震了。\n\n不是回声协议。是新的信号。信号源在下方，比刚才更深。信号内容只有两个字。\n\n「下来。」\n\n钟离把手杖换到左手。右手按住怀表。表壳在震，震得很急，像发报机的电键被什么人死死摁住不放。\n\n冷锋看着他的动作。“谁发的。”\n\n钟离没回答。他把怀表翻过来。表背的铭牌上，蚀刻的字迹正在被新的信号改写。一笔一划，刻得很慢。\n\n「带 枪。」"
+    },
+    {
+      "tick": 176,
+      "chars": 1589,
+      "text": "钟离把怀表合上。表壳咔嗒一声，很轻，但在管道井的死寂里像敲了一下钟。冷锋的枪口还指着螺旋梯的方向。黑暗里看不见他的脸，只听见拇指摩挲保险钮的细响。\n\n“不是下去的时候。”钟离说。\n\n冷锋没动。“信号—— ”\n\n“信号是真的。路不是。”钟离用手杖敲了敲井壁。铸铁的回音很短，被泥浆吃掉一半。“下面那个东西能改写怀表的铭牌，就能改写任何发报信号。它叫你带枪，你就带枪下去？”\n\n冷锋的拇指停了。\n\n泥浆又翻了一下。这次不是气泡。是井室底部的砖缝里渗出了新的液体，比泥浆稀，滴落的声音更脆。一滴。两滴。然后连成线。\n\n钟离把手杖换回右手。“先上去。老城区还有一条路。”\n\n“哪条。”\n\n“差分机中继站。议会的封锁线靠差分机网络调度，中继器一断，巡逻路线就会出现盲区。”钟离已经往螺旋梯迈了一步。靴底踩在铁格栅上，锈屑簌簌往下掉。“刚才那道静电火花，不管是谁放的，帮了我们一个忙。”\n\n冷锋收了枪。没说话，跟上来。\n\n两人一前一后往上爬。螺旋梯的铆钉松了几颗，每一级都响，但不再是刚才那种刮擦声。是活人的脚步。\n\n井口还在原地。铁盖被掀开一半，暗红色的雾从缝隙里灌进来，裹着酸味和机油味。钟离先探出头。巷道空着。蒸汽管道还在漏气，白烟贴着地面爬。差分机中继器的残骸就倒在巷口，铜绿斑驳的机柜被电弧烧出一道焦黑的裂口，穿孔卡带散了一地。\n\n林雪蹲在中继器残骸的阴影里。\n\n她没出声。齿轮左眼在暗红雾气里微微收缩，像猫瞳调整焦距。她手里捏着一张纸条，字迹还没干。她把纸条翻过来给钟离看。\n\n「巡逻队 东偏30度 间距7分钟」\n\n钟离点头。他半跪在差分机残骸旁，用手杖尖端拨开缠绕的导线。单片眼镜上的共鸣晶碎片亮了一下。烧焦的穿孔卡带上还能辨认出几排孔洞——议会的调度编码，老式四列制，漏洞在第三列的校验位。\n\n“有趣。”他把一片卡带翻过来，对着雾光看。“静电火花不会无缘无故击中中继器，除非有人在同一频段上发送了强功率信号。”他偏头看向林雪。“退后一步。这些老式差分机的电容可能还存着余电。”\n\n林雪往后挪了半步。打字机搁在她膝上，但她没按。只是又从斗篷下抽出一张空白纸条。\n\n冷锋从井口翻上来，背靠砖墙，枪口扫过巷道两端。确认无人后，他从腰间取下便携式差分机记录仪。屏幕上的电磁频谱图还在跳动。他把刚才静电干扰时的波形调出来，放大。\n\n“不是随机噪声。”他说。\n\n钟离抬起头。“特征呢。”\n\n“脉冲宽度稳定。重复间隔零点四秒。”冷锋把记录仪转过来给他看。“像是—— ”\n\n“像是有人在敲发报键。”钟离接上。\n\n两个人对视了一眼。\n\n巷道东侧传来蒸汽甲胄的杂音。活塞关节的嘶嘶声，钢靴踩在碎石上的咔嚓声。巡逻队。间距七分钟，但第一组已经折返了。\n\n林雪把第二张纸条塞进钟离手里。字更少。\n\n「中继站 地下二层 旧管道 通档案馆」\n\n钟离看完，把纸条折好放进内袋。他站起来，用手杖指向巷道的西侧岔口。那里有一扇半塌的铁门，门楣上还残留着差分机中继站的铜字招牌。\n\n“走。”\n\n三人钻进铁门。冷锋最后一个进去，反手把门拉上。门轴干涩，刮出一声尖响。\n\n外面的蒸汽甲胄杂音停了一瞬。\n\n然后继续响。往东去了。\n\n中继站内部比巷道更暗。倒塌的差分机架堆成小山，生锈的管道从天花板垂下来，像死掉的藤蔓。林雪走在最前面，齿轮左眼在黑暗中发出微弱的蓝绿色光。她绕过一堆碎掉的真空管，停在一扇地板暗门前。\n\n暗门的拉环上刻着一行字。不是议会的标记。是自由机械师行会的旧徽——齿轮与羽毛笔交叉。\n\n钟离蹲下来，用手指擦掉拉环上的锈。\n\n“这条管道，”他说，“最后一次维护是一百年前。”\n\n林雪已经在打字机上敲了三个字。她把纸条撕下来，贴在暗门上。\n\n「还能用」\n\n钟离笑了一下。很短。然后他拉住拉环，用力一提。暗门开了。一股干燥的风从下面涌上来，带着旧纸和机油的味道。\n\n不是泥浆的酸臭。\n\n是档案馆的味道。"
+    },
+    {
+      "tick": 177,
+      "chars": 986,
+      "text": "暗门下面是一道铁梯。锈蚀的横档踩上去会弯，但不折。林雪先下。齿轮左眼的光扫过管道壁——铸铁，铆接，每隔三米有一圈加固箍。壁上结着灰白色的硝，手指碰上去，粉末簌簌地掉。\n\n管道比预想的窄。钟离的肩膀蹭着管壁往下挪，手杖横握在身前。空气干燥，但干燥得不自然。像被什么东西吸走了所有水分。\n\n冷锋最后一个下来。他单手抓着梯子，另一只手把暗门往回拉。门板合上之前，巷道里的光漏进来一瞬——暗红色的，带着电晕的余辉。然后咔嗒一声，暗门落回槽口。\n\n黑暗封住了管道口。\n\n林雪的打字机响了三下。她把纸条递给钟离。光太暗，他只能凑到齿轮左眼旁边读。\n\n「金属细流 排水沟 熔融」\n\n钟离把纸条翻过来，用指尖在背面划了一个问号。林雪没再打字。她只是抬起左手，指向管道壁。\n\n管壁在发烫。\n\n不是摩擦生热的那种烫。是电流通过导体时那种均匀的、从内向外渗透的热。钟离把手掌贴上去。三秒后拿开。掌心留下一层细密的黑色粉末。氧化铁。\n\n“上面的导电层在熔。”他说。声音在管道里被压得很扁。\n\n冷锋从腰间拔出记录仪。屏幕亮起来，电磁频谱的波形在狭窄空间里显得格外刺眼。他调出低频段。一条平直的线正在缓慢隆起，像皮肤下面的淤血。\n\n“电流密度在上升。”他把记录仪转向钟离。“如果导电层熔穿到这条管道的铆接层——”\n\n他没说完。管道深处传来一声闷响。不是爆炸。是金属受热膨胀后，铆钉从孔槽里挤出来的声音。一颗铆钉从加固箍上弹出来，叮当叮当滚过管道底部，停在林雪脚边。\n\n还在冒烟。\n\n钟离用手杖敲了敲管壁。回声传得不远。前面有什么东西把声音吸掉了。不是转弯。是堆积物。\n\n“走。”他说。“别停。”\n\n三人弯腰往前移动。管道开始向下倾斜。坡度不大，但脚下的锈蚀碎屑开始滑动，像走在干涸的河床上。齿轮左眼的光在前方切开黑暗。管壁上开始出现字迹。不是喷涂。是用酸性物质腐蚀出来的。笔画边缘还残留着淡黄色的结晶。\n\n「回声协议 第三节点」\n\n字迹下面是一个箭头。指向管道更深处。\n\n冷锋伸手碰了碰那些结晶。指尖立刻起了一层白霜。他闻了一下。\n\n“硝酸银。”他说。“行会的旧标记手法。”\n\n钟离没说话。他把手杖换到左手，右手按在管壁上。管壁的震动变了。不再是电流的均匀脉动。是一种有节奏的敲击。\n\n嗒。嗒。嗒。\n\n间隔零点四秒。\n\n和刚才巷道里截获的那个信号一模一样。\n\n只是这次，声源不在上面。\n\n在管道尽头。"
+    },
+    {
+      "tick": 180,
+      "chars": 1078,
+      "text": "嗒。嗒。嗒。\n\n第四声没响。\n\n钟离的手还按在管壁上。掌心等到的不是敲击，是一阵持续的低频震颤——像有什么大质量的东西在管道外翻身。管壁上的硝酸银结晶簌簌往下掉，落在肩头，化成一粒粒灰白色的渍。\n\n冷锋把记录仪贴到管壁上。屏幕上的波形跳了一下，然后整条曲线开始往高频方向甩。\n\n“不是敲击信号停了。”他说。“是管道在吸收震动。外面的地面——”\n\n头顶传来一声闷爆。\n\n不是铆钉弹出的脆响。是酸液沸腾到临界点时，蒸汽把地面顶开的声音。管道上方的土层裂开一道缝，暗红色的光从缝里漏下来，照在三人的靴面上。光在跳动。不是火焰。是电弧。\n\n林雪的打字机响了一串。她没递纸条，直接把机身转过来给钟离看。\n\n「地表导电层击穿 酸池连锁塌陷 蒸汽步行机被电弧激活」\n\n钟离看完，抬头看向那道裂缝。暗红色的光把他的脸切成两半。上半张脸在阴影里，下半张脸的胡茬上沾着氧化铁粉末，被光照得像铁锈。\n\n“步行机。”他说。“哪一台？”\n\n林雪的手指刚碰到键盘，答案就自己来了。\n\n裂缝外面传来金属关节的尖啸。不是运转。是抽搐。活塞在缺油的状态下被电流强行驱动，缸体与缸壁刮擦，发出一种像动物被活剥时的声音。那台废弃的蒸汽步行机正在管道上方痉挛。每一下抽搐都通过土层传到管道里，震得管壁上的结晶持续脱落。\n\n冷锋把记录仪收进腰间。屏幕在合上之前闪过一个读数——地表电场强度已经超过安全阈值的十七倍。\n\n“如果那台步行机的锅炉被电弧击穿——”\n\n他没说完。钟离已经用手杖指向管道深处。\n\n“跑。”\n\n不是走。是跑。\n\n三人在倾斜的管道里往下冲。脚下的锈蚀碎屑像流沙一样滑动，每一步都踩不稳。齿轮左眼的光在管壁上乱晃，照出更多行会标记——硝酸银腐蚀出的箭头，一个接一个，指向同一个方向。\n\n身后传来蒸汽步行机锅炉的金属疲劳声。那种声音先是很低，像大提琴的尾音，然后突然拔高，变成一声尖啸。\n\n然后管道上方的一切都安静了零点三秒。\n\n钟离在那零点三秒里把林雪往前推了一把。\n\n爆炸不是从上面来的。是从管道外面，蒸汽步行机的胸腔里。冲击波把土层撕开，管道顶部塌下来一块。碎石和酸泥灌进来，堵住了他们刚才站的位置。\n\n管道还在震动。但敲击信号没有再响。\n\n钟离从碎石堆里拔出左腿。裤管被酸泥烧穿了几个洞，小腿皮肤上起了红斑。他没看。只是用手杖撑起身体，继续往下走。\n\n冷锋跟上来，把一块沾着酸泥的碎石从肩头拍掉。\n\n“那个信号。”他说。“停了。”\n\n钟离没回头。\n\n“没停。”他说。“是我们在往上浮。管道在下沉。”\n\n他用手杖敲了敲管壁。这次回声传得很远。前面不再是堆积物。是空的。\n\n很深。"
+    },
+    {
+      "tick": 183,
+      "chars": 1020,
+      "text": "管道尽头不是出口。是一口竖井。井壁是铸铁的，铆钉间距均匀，每一颗都生着暗红色的锈。锈末被酸雾濡湿，在井壁上淌成细流，像伤口渗出的血。\n\n钟离用手杖探了探井底。杖尖碰到水面。不是水。是酸液。比重比水大，颜色发绿，表面浮着一层油膜。油膜上倒映着管道口漏进来的暗红天光。\n\n冷锋蹲在井口边缘，把记录仪屏幕亮度调到最低。屏幕上跳出一行读数。他把屏幕转向钟离。\n\n“酸液深度两米三。底部有通道。方向朝东。”\n\n林雪从背包侧袋里抽出三副橡胶护目镜。镜片上全是划痕。她递给冷锋一副，又递给钟离一副。钟离没接。他的左眼不需要护目镜。齿轮结构在眼眶里缓慢旋转，焦距调整时发出极细的咔嗒声。\n\n他把手杖横在井口，杖身卡进两枚铆钉之间。然后单手抓住杖身，身体悬空，先让靴底碰到酸液表面。油膜破了。酸液没过膝盖、腰、胸口。他没发出声音。只是嘴唇绷成一条线。\n\n冷锋把护目镜戴好，第二个下去。酸液浸到他的记录仪皮套。他单手把记录仪举过头顶，另一只手划水。林雪最后。她入水时溅起的酸液落在井壁上，铆钉周围的铁锈嘶嘶作响。\n\n三人在酸液中往前游。井底通道很窄，只能容一人通过。钟离在前，齿轮左眼提供唯一的光源。光柱照出通道壁上的行会标记——不是箭头。是文字。硝酸银腐蚀出的字迹，每个字都有巴掌大。\n\n「灰雾不是雾。」\n\n钟离停下来。后面的冷锋撞上他的背。\n\n“怎么了？”\n\n钟离没回答。他盯着那行字。齿轮左眼的光在字迹上来回扫了两次。然后他继续往前游。\n\n通道尽头是另一口竖井。这次井口上方没有管道。是敞开的。酸雨直接灌进来，在井口形成一道水帘。水帘外面是街道。铁皮屋顶在酸雨中冒烟。路灯杆上的电火花已经连成片，整根灯杆都在发光。\n\n叉状闪电击中废弃精炼塔的瞬间，三人刚从井口爬出来。塔顶铁架熔断的声音被雷声吞掉。熔化的铁水与酸雨接触，炸开一团蒸汽。蒸汽里裹着铁屑，打在临街的铁皮墙上，声音像霰弹。\n\n钟离把林雪拉到一扇铁门后。冷锋跟进来。铁门内侧贴着差分机网络检修时间表。纸张已经发脆，边缘卷起。日期栏最后一行写着齿轮历1345年。两年前的。\n\n“那个标记。”冷锋把记录仪屏幕上的酸液擦掉，“灰雾不是雾——是什么意思？”\n\n钟离用手杖把铁门顶开一条缝。街道上电弧还在窜动，银光在浓雾中忽明忽暗。导电薄层上每一条电弧都像活物，在地表游走，寻找接地点。\n\n“意思是有人在两年前就知道。”钟离说。“而且刻在管道里。不是给行会看的。”\n\n他关上门。\n\n“是给走管道的人看的。”"
+    },
+    {
+      "tick": 186,
+      "chars": 669,
+      "text": "铁门被冰雹砸得发颤。拇指大的颗粒打在锈铁皮上，声音像有人在用拳头擂门。钟离没动。他透过门缝往外看，齿轮左眼的光被浓雾吞掉大半。街道上的电弧比刚才更密了。银白色的枝杈在雾中生长、分叉、熄灭，再生长。导电薄层上每一条电弧都拖着蓝白色的尾迹，像蝌蚪在酸液表面游动。\n\n冷锋把记录仪塞回皮套。皮套上的酸液还没干，手指按上去会发出细微的嘶声。\n\n“等。”钟离说。\n\n他没解释等什么。林雪蹲在铁门另一侧，背靠墙。墙上的检修时间表在震动中剥落纸屑。她伸手接住一片。纸屑落在掌心，立刻被手套上的酸液洇透，字迹晕成灰色的团。\n\n一道电弧击中街对面的废弃哨塔。\n\n炸裂声比雷声尖锐。金属碎片旋转着飞过街道，一片砸在铁门上，留下巴掌大的凹痕。另一片削掉路灯杆顶端的电火花发生器。发生器掉进地面的酸池，酸液溅起半人高。钟离关上门。\n\n门缝里灌进来的酸雾在铁门内侧凝成水珠，顺着检修时间表的纸面往下淌。日期栏的“齿轮历1345年”被酸液浸透，墨迹重新变湿，在纸上洇开。\n\n冷锋盯着那行字。\n\n“两年前的检修表。”他说。“贴在这里。不是给行会看的。”\n\n钟离转过身。齿轮左眼的焦距咔嗒调整，光柱打在冷锋脸上。\n\n“你学得很快。”\n\n手杖敲地。杖尖在铁皮地面上戳出一个浅坑。\n\n“现在学另一件事。”钟离说。“灰雾里的东西也会看标记。”\n\n铁门外，哨塔残骸在酸雨中冒烟。白烟裹着铁锈味从门缝挤进来。荒原上的酸池已经连成一片，沸腾的酸液溢出池沿，在低洼处蚀出一条新的溪流。溪流表面浮着油膜，油膜下面有什么东西在动。不是电弧。是影子。\n\n钟离把手杖从地面拔出来。\n\n“走。”"
+    },
+    {
+      "tick": 188,
+      "chars": 1051,
+      "text": "防御矩阵的探照灯在同一秒内全部转向西北。\n\n十二道光柱切开暗红浓雾，在隔离网外的酸池上空交汇。光柱里的冰粒被瞬间汽化，发出嘶嘶的声响。石磊手里的焊枪掉在地上。枪头磕到铁格栅，溅起一串火星。他没去捡。\n\n雾中的轮廓在光柱交汇处显形。\n\n扭曲的金属骨架，每一根肋骨都是不同型号的齿轮咬合而成。灰雾在骨架间流动，像血液在透明的血管里循环。轮廓的头部位置没有眼睛，只有一张由酸蚀铁板拼成的嘴。嘴张开。金属摩擦声从那张嘴里涌出来，不是吼叫，是某种有节奏的研磨——像一台巨型差分机在咀嚼穿孔卡。\n\n地面震动。隔离网外的爪痕边缘开始冒泡。酸液沸腾加剧，气泡炸裂时溅起的液滴落在隔离网的铁柱上，铁柱表面立刻蚀出蜂窝状的坑。\n\n苏摩稳住身形。\n\n他一只手按住经卷，另一只手把手杖插进格栅的缝隙。杖尖卡在两根铁条之间。他借着这个支点站直，然后把经卷举过头顶。探照灯的光柱穿过经卷边缘的穿孔，在封面上投下暗红色的光斑。冰粒落在经卷表面，融化的液体顺着刻痕流淌。液体不是透明的。是暗红色。像稀释过的血。\n\n液体填满刻痕。图案成形。\n\n齿轮咬合齿轮。蛇骨缠绕轮轴。符号与预言书第七卷第三页的插图完全吻合。苏摩侧过头。银色薄膜覆盖的眼睛转向石磊。光柱在他脸上切出明暗分界线。\n\n“看。”他说。语调缓慢，每个字之间的停顿都精确得像节拍器。“血露在圣典上绘出了预言之痕。”\n\n石磊盯着经卷上的图案。他的手在抖。不是恐惧。是酒精戒断反应。他已经六个小时没碰酒壶了。\n\n“那雾中的轮廓——”苏摩的声音压过金属摩擦声，“是旧世界的残骸在挣扎，还是新神的骨骼在生长？”\n\n雾中的巨嘴合上。又张开。研磨声的频率变了。变得更快。更密。像差分机在加速运算。\n\n“石磊。”\n\n苏摩把手杖从格栅里拔出来。杖尖带起一块铁锈。他用手杖指向雾中的轮廓，杖尖与轮廓的嘴部连成一条直线。\n\n“你听到齿轮的哀鸣了吗？”他问。“它们在问——你准备好献上你的钥匙了吗？”\n\n石磊没回答。他弯腰捡起焊枪。枪柄上的酸液还没干。他握紧。指节发白。\n\n自动炮台开始扫射。\n\n十二座炮台同时开火。曳光弹拖着蓝白色尾迹钻进雾中，击中轮廓的金属骨架。火花四溅。骨架上的齿轮被打碎，碎片旋转着飞出来，掉进酸池。酸液吞掉碎片，冒出一股白烟。但轮廓没有后退。它又往前移动了一步。骨架之间的灰雾变得更浓。被打碎的齿轮在雾中重新生长。\n\n苏摩看着齿轮重生。\n\n银色薄膜下的眼睛眨了一下。他的嘴唇翕动，但没有发出声音。他在默念什么。不是经文。是计数。\n\n他在数轮廓体内齿轮的转速。\n\n转速不对。"
+    },
+    {
+      "tick": 189,
+      "chars": 1010,
+      "text": "电弧击中经卷的瞬间，苏摩的手臂没有抖。\n\n电流从金属封面灌入，沿着刻痕纹路分流，在经卷边缘炸开一圈蓝白色的芒。暗红色的液体在高温下蒸发，发出嘶嘶声。焦痕取代了原来的图案。齿轮咬合齿轮的纹路变成了另一幅图——更复杂，更密集，像某种文字。\n\n苏摩低头看了一眼。\n\n银色薄膜下的瞳孔收缩了一下。那不是预言书上的任何一页。但他没有说。他把经卷缓缓放下，手臂的动作平稳得像在圣坛上放置祭品。焦痕在金属表面闪烁着暗红色的微光，频率与堡垒内部齿轮的转速同步。\n\n雾中的移动堡垒往前推进了一步。\n\n地面震颤。酸池里的液面荡起波纹，波纹撞到隔离网的铁柱，溅起的酸液在柱子上蚀出新的坑洞。自动炮台还在扫射，但曳光弹钻进堡垒的灰雾后就像被吞掉了一样，没有爆炸，没有火花，什么都没有。\n\n探照灯接连爆裂。\n\n三座灯管的玻璃壳同时炸开，熔融的玻璃碎片拖着白烟坠落，掉进酸池。白烟升腾，裹挟着刺鼻的焦臭味。防御矩阵的照明范围骤然缩小，只剩下最后两盏灯还在挣扎。光柱在灰雾中晃动，照出堡垒的局部——一段履带，半截烟囱，一排正在自行转动的齿轮。\n\n苏摩侧过头。\n\n他朝向石磊，手杖指向堡垒的方向。杖尖的锈迹在电弧的映照下泛着暗红。他的嘴唇先动了一下，然后才发出声音。语调缓慢，每个字之间的停顿都精确得像节拍器。\n\n“你看到了吗，石磊？”\n\n他往前迈了一步。靴底踩碎一片齿轮碎片。\n\n“神在回应我们。”他的手杖从堡垒移向经卷，再从经卷移向爆裂的探照灯，“祂用闪电亲吻经卷，用堡垒的轮廓宣告降临。防御矩阵的灯管爆裂——”他停顿。银色薄膜覆盖的眼睛转向最后一盏还在闪烁的探照灯。“不是故障。是旧世界的躯壳在神的气息下腐朽。”\n\n最后一盏探照灯灭了。\n\n黑暗只持续了三秒。堡垒表面的电弧跳跃加剧，蓝白色的光把灰雾染成半透明的帷幕。帷幕后面，堡垒的轮廓完全显现——一座由废弃机械和灰雾凝聚而成的移动要塞，履带碾过地面时发出骨头碎裂的声音。堡垒的正面嵌着一排齿轮，大小不一，转速各异，但都在转动。\n\n苏摩把手杖收回。杖尖抵住地面。\n\n“你还要怀疑吗？”他问。\n\n石磊没有回答。焊枪从他手里滑落，砸在地上，溅起一小片酸液。他的手指还在抖。他盯着堡垒，盯着经卷上的焦痕，盯着苏摩侧脸上的银色薄膜。他的嘴唇翕动，但没有声音。\n\n苏摩等了三秒。\n\n然后他伸出手，手掌朝上，朝向石磊。焦痕的微光映在他的掌纹上，像另一幅图案。\n\n“献上你的钥匙。”他说。“神已经等得够久了。”"
+    },
+    {
+      "tick": 192,
+      "chars": 1063,
+      "text": "石磊盯着那只手。\n\n掌纹里的焦痕微光一明一暗，像在呼吸。他的手指动了动——不是伸向苏摩，而是摸向自己腰间。钥匙还在。铁片贴着皮肤，被体温焐得温热。\n\n酸雨砸在头顶的铁皮遮棚上，节奏越来越密。锈水从棚沿倾泻，在他脚边积成一洼暗红色的水潭。水面映出堡垒的电弧，蓝白色的光碎成一片一片。\n\n“钥匙。”苏摩的手没有收回。“现在。”\n\n石磊的手指攥紧钥匙。铁片的边缘嵌进掌心。他往后退了一步。靴跟踩进水洼，锈水溅上裤腿。布料立刻开始变色，纤维被酸液蚀出细小的孔洞。\n\n他想起焊枪。\n\n焊枪还在原地。枪口朝下，半截泡在酸水里。他弯腰去捡。手指碰到枪柄的瞬间，苏摩的手杖压住了他的手腕。\n\n不重。但很准。杖尖抵在尺骨和桡骨之间的凹陷处，刚好卡住肌腱。石磊的手指松开。焊枪又掉回水洼，这次溅起的锈水泼了他一脸。\n\n他闭眼。酸液在颧骨上烧出针尖大小的刺痛。\n\n“你以为你在保护什么？”苏摩的声音从他头顶压下来。“档案馆？差分机？还是那个姓钟离的女人教你的——‘自由意志’？”\n\n石磊睁开眼。锈水从睫毛滴落。他仰起头，看向苏摩。银色薄膜后面的眼睛没有瞳孔，但他知道那双眼睛在看他。\n\n“我……”他的声音卡在喉咙里。\n\n远处传来一声闷响。酸雾柱从地面的裂口喷涌而出，裹挟着蒸汽和金属碎屑，直冲数十米高。雾柱在半空散开，像一朵灰色的蘑菇云。风把它推向铁锈城的方向。所经之处，隔离网上的藤蔓瞬间枯黑，叶片卷曲，茎秆脆断，灰烬般飘落。\n\n苏摩没有回头。他的手杖还压在石磊腕上。\n\n“你看。”他说。“神的气息已经上路了。它会先到铁锈城，然后是档案馆，然后是每一个还相信旧世界的人。”他停顿。杖尖加了一分力。“但你可以走在它前面。带着钥匙。带着神的印记。”\n\n石磊的嘴唇发抖。\n\n他的手从腰间抽出钥匙。铁片离开皮肤的瞬间，他感到一阵凉意。他把它举到苏摩面前。手指还攥着，指节发白。\n\n苏摩没有接。\n\n“放手。”他说。\n\n石磊的手指一根一根松开。钥匙落在苏摩掌心。焦痕的微光立刻爬上铁片表面，像某种活物在试探猎物。\n\n苏摩合拢手掌。\n\n“很好。”他说。手杖从石磊腕上移开。杖尖在地面点了一下，转身面向堡垒。\n\n石磊跪在水洼里。膝盖压住焊枪的电缆。酸水渗进裤子的破洞，大腿内侧的皮肤开始发烫。他没有站起来。他看着苏摩的背影走向灰雾，走向电弧，走向那座由齿轮和废铁堆成的移动堡垒。\n\n苏摩没有回头。\n\n石磊低下头。水洼里映着他的脸。锈水把他的五官扭曲成另一副模样。他伸手去捞焊枪。枪柄的橡胶套已经被酸液蚀出蜂窝状的孔洞。他握住它。握紧。\n\n橡胶套在他掌心里碎成渣。"
+    },
+    {
+      "tick": 195,
+      "chars": 821,
+      "text": "焊枪的电缆缠在他脚踝上。他扯了一下。没断。再扯。电缆外皮被酸液泡胀，像死蛇蜕皮一样剥落，露出里面铜芯。铜丝已经发黑。他拽断它，站起来。膝盖发出一声脆响。不是骨头。是关节腔里的气泡被挤破。他听过这种声音——在档案馆的解剖图谱上，人体关节是齿轮和液压杆的仿生学原型。钟离说过，差分机永远造不出膝盖。因为膝盖会响。\n\n他弯腰捡起焊枪。枪口还滴着锈水。\n\n苏摩的背影已经缩成雾里一个灰点。堡垒的轮廓在暗红中蠕动，齿轮咬合声隔着酸雾传过来，闷而钝，像巨兽磨牙。电弧又劈下一道。苍白的光刃切开雾层，照出堡垒顶部的轮廓——不是废铁堆，是结构。对称的。有肋骨的弧度。\n\n石磊握紧焊枪。枪柄的橡胶套已经碎光，裸出的金属管硌进掌骨。他盯着那个灰点。\n\n然后他转身。\n\n不是朝苏摩。是朝铁锈城的方向。\n\n酸雨打在他后脑勺上。头发早就结成一缕一缕，雨水顺着发梢流进领口，在后背烫出一条线。他没擦。他走。每一步都踩进水洼。暗绿色的泡沫在鞋底炸开，发出细碎的嘶嘶声。\n\n他数步子。\n\n一。左脚陷进泥里，拔出来时鞋帮发出噗的一声。二。焊枪的电缆拖在地上，刮过碎玻璃和铁片。三。他想起钟离的手指。她数数时手指会敲桌面。食指先落，然后中指，然后无名指。小指永远翘着。四。她数到多少被打断的？他不记得了。\n\n地层塌陷的闷响从脚底传上来。震动很轻，像远处有人关了一扇沉重的门。他停下。低头看地面。焦土上的气孔正在往外冒气泡。酸雨渗进去，和地下的什么东西发生反应，每个气孔都变成微型烟囱，吐出细股白烟。\n\n焊枪的枪口磕到地面。他把它当拐杖拄着。\n\n雾里有什么在动。不是苏摩的方向。是侧面。隔离网的位置。金属摩擦声从那个方向传来，频率很高，不像齿轮。像爪子划过铁板。\n\n他握紧焊枪。\n\n枪口对准雾里。\n\n没有东西出来。摩擦声停了。雾恢复成暗红色的均匀幕布。只有酸雨还在下，打在金属屋顶上，打在焦土上，打在他手背上。手背的皮肤已经开始泛红。\n\n他继续走。\n\n五。六。七。\n\n他不再数了。"
+    },
+    {
+      "tick": 198,
+      "chars": 677,
+      "text": "铁锈城的轮廓从雾里浮出来。不是渐渐清晰——是一瞬间。电弧劈过，苍白的光刃把整座城切成两半。左半边是废铁堆，右半边也是废铁堆。但中间有条缝。窄巷。入口两侧堆着压扁的锅炉，铆钉从铁板里爆出来，像死鱼的脊椎骨。\n\n他侧身挤进去。\n\n焊枪先过。枪口磕在锅炉壁上，刮下一层锈皮。锈皮掉进积水，嗤一声，冒出一串气泡。巷子里酸雾更浓。他低头看脚面——积水没过鞋帮，水面浮着油膜，暗绿色，反出自己脸的轮廓。颧骨。眼眶。嘴。都是黑的。\n\n汽笛又响了。\n\n这次很近。声音从巷子深处灌进来，低频振动压过胸腔，肋骨跟着嗡嗡响。他停下。等笛声过去。余音在巷道里撞了三下，然后被雾吃掉。\n\n他继续走。焊枪拖在身后，电缆刮过锅炉壁上的铆钉，发出指甲划过铁板的尖响。\n\n巷子尽头是一扇铁门。半开。门缝里透出黄光。不是电弧的白，不是酸雾的红。是灯。油灯或者电灯，稳定的，有人调过灯芯。\n\n他把焊枪换到左手。右手推门。\n\n铰链没响。\n\n门后是间铺子。货架倒了，齿轮零件撒了一地。黄铜的，铁的，还有几枚陶瓷轴承，碎成两半。柜台还在。台面上有盏油灯，灯罩熏黑半边。灯旁有只手。\n\n手按在一张纸上。\n\n他认出手背上的疤痕——十字形，旧伤，缝过针。\n\n钟离抬起头。\n\n“你迟了。”她说。手指敲了一下桌面。食指。\n\n他没说话。焊枪的枪口磕到门槛上。\n\n钟离盯着那把焊枪。盯了三秒。然后把手从纸上移开。纸面上是她惯用的速记符号，墨迹还没干。最末一行被手指蹭花了，只剩半个符号，像折断的蚂蚁腿。\n\n“隔离网外面有什么？”她问。\n\n石磊把焊枪靠在门框上。枪口还对着巷子。\n\n“爪子。”他说。“很大的爪子。”"
+    },
+    {
+      "tick": 199,
+      "chars": 1670,
+      "text": "钟离走出铺子时，手腕上的计数器跳了一下。\n\n不是平常的脉动。指针从零位弹到满刻度，撞上止动销，弹回来，又撞上去。表盘里的齿轮哀鸣了一声。他低头看——黄铜表壳在发烫。\n\n远处有嗡鸣。\n\n很低。低到骨头里。脚底的铁板在跟着振，积水表面泛起同心圆，一圈一圈往外推。三股。他分辨得出来。三股不同步的低频，像三只手同时按在胸口。\n\n干扰器。三台。\n\n他拐进钟楼的阴影里。手杖尖端在碎石地面上点了三下——轻，重，轻。杖尖的铁箍磕出火星。第一下溅在左脚边，第二下弹到墙根，第三下被酸雾吞了。\n\n信号发出去了。但回声协议的载波正在衰减。他能感觉到——就像耳膜被棉花塞住，原本清晰的白噪音变得断断续续。计数器指针还在疯跳。\n\n他摸出内袋里的穿孔卡带碎片。烧焦的边角硌着指腹。纸浆纤维已经炭化了，一碰就碎。他捏紧。碎片扎进掌心。\n\n钟楼顶层有残余信号。结构高度够，铁框架还能当谐振腔用。他往楼梯井走。\n\n屋顶上，林雪伏在烟囱后面。\n\n齿轮左眼缩到最小光圈。酸雨打在铜质虹膜上，顺着眼窝的排水槽往下淌。她没擦。下方六十步，三台干扰器排成三角阵列。底座是铸铁的，四角用膨胀螺栓钉进路面。每台顶上竖着三根铜棒，棒身裹着线圈，线圈在震。震得空气发稠。\n\n她把便携式打字机搁在膝上。键帽冰凉。指尖悬在F键上方——没按下去。嗡鸣从脚底传上来，穿过胫骨，穿过打字机的铸铁框架，传到键帽上。键帽在颤。\n\n不是机械故障。是干扰波的谐波。\n\n她闭上眼。感受那道连接——档案馆的卷宗索引，那些无声的字句，那些她用手指敲进差分机的记录。连接还在。但像隔了一层水。字句变得模糊，像浸了油的纸。\n\n她睁开眼。撕下一张纸条。铅笔。\n\n「干扰器。等。观察。」\n\n递给右侧三步外的冷锋。\n\n冷锋没接纸条。他正盯着便携式差分机记录仪的目镜。红光扫描线爬过废墟内墙，一格一格往下刷。砖缝。铁筋。碳化木板。每三步，停下，扫描。步距精确到厘米。\n\n左手拇指抵住枪套保险。保险已经推开了。\n\n扫描线停在一处墙根。红光闪了两下。\n\n“这里。”\n\n他蹲下。记录仪屏幕上跳出一串波形——不是干扰器的噪音。是差分机残留信号。衰减了，但模式还在。自由机械师行会的加密脉冲。三短一长。重复。\n\n他伸手摸墙根。指尖碰到铁板。锈蚀了，但边缘整齐。暗门。\n\n林雪的纸条飘到他脚边。他捡起来。扫了一眼。\n\n“等不了。”他说。\n\n纸条攥进掌心。他站起来，枪套扣已经解开。\n\n钟楼里，钟离踩上第一级铁梯。\n\n梯子锈穿了几个洞。脚踩上去，铁锈片往下掉，叮叮当当砸进底层积水。他往上爬。计数器贴着手腕，烫得像烙铁。指针不再摆动——它卡在满刻度，一动不动。\n\n回声协议快断了。\n\n他加快速度。手杖横在臂弯里，每爬一级就磕一下梯框。铁梯在晃。铆钉在松。\n\n爬到第三层。窗口。\n\n他往外看。\n\n三台干扰器的铜棒在酸雨中发光。不是电弧的白。是共振产生的暗红，一圈一圈从线圈往外漾。光晕边缘，酸雾被加热成蒸汽，嘶嘶作响。\n\n他举起手杖。杖尖对准窗口。\n\n手杖里藏着最后一截未注册的差分机谐振管。功率不够穿透干扰。但够打一个点。一个信号点。千音能读到——只要她在听。\n\n他按下杖柄上的簧片。\n\n杖尖亮了一下。\n\n很暗。像火柴头在擦燃前那一瞬。\n\n然后灭了。\n\n计数器从手腕上脱落。表带烧断了。表壳掉在铁梯上，弹了一下，滚进积水。嗤一声。蒸汽冒上来。\n\n钟离盯着水面。表盘还在发烫，在水底亮了三秒。然后暗了。\n\n屋顶上，林雪的齿轮左眼突然收缩到极限。\n\n连接断了。\n\n档案馆的索引从她意识边缘消失了。不是衰减——是切断。像剪刀合拢。\n\n她低头看打字机。键帽不再颤了。\n\n手指悬在F键上方。悬了很久。\n\n然后她按下去。\n\n键帽落到底。字锤弹起来，打在色带上。墨迹印上纸卷。一个字母。F。\n\n她又按了一个。\n\nU。\n\n冷锋撬开暗门时，听到身后传来打字机的声音。\n\n很慢。一个键。一个键。\n\n他没有回头。\n\n暗门下面是阶梯。往下。黑得看不见底。但差分机信号从下面涌上来——三短一长。还在重复。\n\n他拔出枪。\n\n枪口对准黑暗。\n\n拇指压下击锤。\n\n咔哒。"
+    },
+    {
+      "tick": 200,
+      "chars": 864,
+      "text": "钟离背靠钟楼石墙。手杖横在膝上，杖尖还烫着。\n\n他从内袋取出加密通讯器。黄铜外壳，巴掌大，按键上刻着差分机惯用的十六进制码。拇指按下去。键帽弹起来，发出老式打字机那种清脆的咔嗒声。\n\n调频。千音的私人波段。\n\n单片眼镜上的共鸣晶碎片开始闪。不是规律的脉冲——是乱闪。像蜡烛被风吹。低频嗡鸣从三台干扰器方向涌过来，一波接一波。玻璃窗在远处碎裂。声音很细。像踩碎薄冰。\n\n通讯器只传回杂音。刺耳的静电。然后是一段断续的摩尔斯电码。\n\n雾。集市。干扰源。\n\n重复。\n\n雾。集市。干扰源。\n\n钟离的拇指悬在按键上方。没有回复。他盯着镜片上的晶碎片。碎片不再闪了。它发着暗红的光——和干扰器铜棒上的共振光晕同频。\n\n他把通讯器翻过来。背板上有一道新痕。不是划痕。是腐蚀。酸雾渗进了密封圈。\n\n钟离合上通讯器。手杖重新握紧。\n\n他站起来。\n\n铁梯还在晃。\n\n暗门下面，冷锋的指节敲在第三块砖上。\n\n笃。笃。笃。\n\n停顿两秒。\n\n回音从墙后返回来。空洞的。他横向移动三十厘米。再敲。\n\n笃。笃。笃。\n\n这次回音短了。墙后空间变窄。暗门铰链应该在左侧。他收回左手，指尖沿砖缝摸过去。砂浆松了。粉末掉下来，混着锈渣。\n\n枪口始终对准黑暗。\n\n屋顶上，打字机键杆开始自己动。\n\n林雪没碰键盘。\n\n铜丝连着护身符的共鸣簧片和打字机的差分齿轮。簧片在颤。不是随机颤——它在模仿什么。齿轮左眼收缩到极限，瞳孔里的齿纹缓慢转动，一格一格，像在计数。\n\n低频嗡鸣穿过簧片，转化成机械脉冲。脉冲驱动键杆。键杆打在色带上。\n\n纸卷上浮现符号序列。\n\n不是文字。是波形图。\n\n干扰器的相位。档案馆回声协议的相位。两条线。镜像。完全相反。\n\n不是干扰。\n\n是抹除。\n\n林雪的手指终于落回键盘。她打了一个词。\n\nC-A-N-C-E-L。\n\n键帽弹起来。字锤打在纸卷上。墨迹很重。\n\n她撕下纸带。站起来。打字机搁在瓦片上。斗篷下摆扫过积水。她走向屋顶边缘。\n\n雾里，三台干扰器的暗红光晕还在漾。一圈一圈。\n\n她把纸带折成窄条。塞进护身符背面的夹层。\n\n然后她开始往下爬。"
+    }
+  ],
+  "open_loop_snapshots": [
+    {
+      "tick": 5,
+      "open": 4,
+      "closed": 1,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.75
+    },
+    {
+      "tick": 10,
+      "open": 4,
+      "closed": 1,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.75
+    },
+    {
+      "tick": 15,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 20,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 25,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 30,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 35,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 40,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 45,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 50,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 55,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 60,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 65,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 1,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 70,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 1,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 75,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 1,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 80,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 85,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 90,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 95,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 100,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 105,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 110,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 115,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 120,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 1,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 125,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 130,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 135,
+      "open": 3,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.0
+    },
+    {
+      "tick": 140,
+      "open": 4,
+      "closed": 2,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.25
+    },
+    {
+      "tick": 145,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 150,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 155,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 160,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 165,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 170,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 175,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 180,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 185,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 190,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 195,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 200,
+      "open": 3,
+      "closed": 3,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    }
+  ],
+  "novelty_records": [],
+  "total_prompt_tokens": 637092,
+  "total_completion_tokens": 425367,
+  "total_cached_tokens": 0,
+  "cache_hit_rate": 0.0,
+  "by_agent_prompt": {
+    "world_simulator": 54093,
+    "narrator": 299775,
+    "showrunner": 81293,
+    "event_injector": 45086,
+    "character_agent:char_sumo": 21437,
+    "character_agent:char_linxue": 28760,
+    "character_agent:char_lengfeng": 23554,
+    "character_agent:char_zhongli": 26661,
+    "character_agent:char_luyan": 7433,
+    "novelty_critic": 9699,
+    "character_arc_tracker": 23352,
+    "narrative_critic:rewrite": 2401,
+    "character_agent:char_qianyin": 2824,
+    "memory_compressor:l0_l1": 8042,
+    "narrative_critic:critique": 2682
+  },
+  "by_agent_cached": {
+    "world_simulator": 0,
+    "narrator": 0,
+    "showrunner": 0,
+    "event_injector": 0,
+    "character_agent:char_sumo": 0,
+    "character_agent:char_linxue": 0,
+    "character_agent:char_lengfeng": 0,
+    "character_agent:char_zhongli": 0,
+    "character_agent:char_luyan": 0,
+    "novelty_critic": 0,
+    "character_arc_tracker": 0,
+    "narrative_critic:rewrite": 0,
+    "character_agent:char_qianyin": 0,
+    "memory_compressor:l0_l1": 0,
+    "narrative_critic:critique": 0
+  }
+}
