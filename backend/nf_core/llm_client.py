@@ -90,10 +90,12 @@ def _get_user_client(cfg: UserLLMConfig) -> AsyncOpenAI:
         if client is not None:
             _user_client_cache.move_to_end(key)
             return client
+        # _get_user_client also picks up LLM_MAX_RETRIES — per-user clients
+        # benefit from the same backoff knob during bench / batch flows.
         client = AsyncOpenAI(
             api_key=cfg.api_key,
             base_url=base,
-            max_retries=0,
+            max_retries=_resolve_max_retries(),
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         _user_client_cache[key] = client
@@ -141,6 +143,43 @@ _MAX_TOKENS_CAP = _resolve_max_tokens_cap()
 
 def _clamp_max_tokens(n: int) -> int:
     return min(n, _MAX_TOKENS_CAP) if n > 0 else _MAX_TOKENS_CAP
+
+
+def _resolve_max_retries() -> int:
+    """env-driven retry count for AsyncOpenAI client.
+
+    历史默认 0 (不重试) — 为了让真错误 (bad input / config 错) 立即可见, 不被
+    silent retry 掩盖. ARK 配额耗尽场景下任何瞬时 429 也立挂 → matrix bench
+    全军覆没. 用 env override 让 bench/批处理路径选择性开启指数退避.
+
+    返回值传给 ``AsyncOpenAI(max_retries=...)``, SDK 自带 exponential backoff
+    + 仅对 429/500/502/503/504 重试 (不重试 400 类用户错).
+    """
+    raw = os.environ.get("LLM_MAX_RETRIES", "0").strip()
+    try:
+        v = int(raw)
+        return max(0, v)
+    except ValueError:
+        return 0
+
+
+def _resolve_per_call_sleep() -> float:
+    """env-driven per-call throttle (seconds) — 跨 ARK TPM 窗口的救命旋钮.
+
+    历史默认 0 (无 sleep) 保持 production 路径 bit-identical.
+    bench / 批处理场景设 ``LLM_PER_CALL_SLEEP=N`` 在每个 chat() 调用前 asyncio.sleep(N).
+    ARK 经验: 单 cell bench_tick ~30 LLM calls 在 30s 内突发, 撞 TPM 窗口立 429.
+    sleep(3) 摊到 ~90s/cell, 让 TPM 窗口有时间 refill.
+
+    注意: asyncio.sleep 释放 event loop, 同 cell 内并发的 character_agents 仍
+    用 asyncio.gather 并发, 但每个 worker 自己 sleep 3s, 总体节流 ~5-6x 慢.
+    """
+    raw = os.environ.get("LLM_PER_CALL_SLEEP", "0").strip()
+    try:
+        v = float(raw)
+        return max(0.0, v)
+    except ValueError:
+        return 0.0
 
 
 def _resolve_extra_body() -> dict | None:
@@ -208,7 +247,7 @@ class LLMClient:
         self._client = AsyncOpenAI(
             api_key=settings.deepseek_api_key,
             base_url=settings.deepseek_base_url,
-            max_retries=0,
+            max_retries=_resolve_max_retries(),
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         self._model = settings.deepseek_model
@@ -244,7 +283,7 @@ class LLMClient:
         self._client = AsyncOpenAI(
             api_key=eff_key,
             base_url=eff_url,
-            max_retries=0,
+            max_retries=_resolve_max_retries(),
             timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
         )
         self._model = eff_model
@@ -334,6 +373,11 @@ class LLMClient:
         _extra = _resolve_extra_body()
         if _extra:
             _create_kwargs["extra_body"] = _extra
+        # Phase 5+: per-call throttle 跨 ARK TPM 窗口. 默认 0 = 无 sleep.
+        _sleep = _resolve_per_call_sleep()
+        if _sleep > 0:
+            import asyncio as _async
+            await _async.sleep(_sleep)
         response = await client.chat.completions.create(**_create_kwargs)
         choice = response.choices[0]
         usage = response.usage
@@ -437,6 +481,11 @@ class LLMClient:
         _extra = _resolve_extra_body()
         if _extra:
             _stream_kwargs["extra_body"] = _extra
+        # Phase 5+: per-call throttle. 与 chat() 同源.
+        _sleep = _resolve_per_call_sleep()
+        if _sleep > 0:
+            import asyncio as _async
+            await _async.sleep(_sleep)
         stream = await client.chat.completions.create(**_stream_kwargs)
 
         usage_obj: object | None = None

@@ -141,6 +141,11 @@ def _run_cell(theme_key: str, style_key: str, ticks: int) -> CellResult:
     # Phase 5-B stale-skip 默认 on 会让低事件密度的早期 tick 沉默 → 部分 cell
     # 0 narrative_chars 无法 judge. 这里强制关掉, 让矩阵看每 cell 真实生成能力.
     env["WORLD_STALE_SKIP_ENABLED"] = "0"
+    # ARK 是 TPM 限流 (不是 RPM/QPS): 单次 ping 立即 OK, 但 bench_tick
+    # ~30 LLM calls × ~3-4k tokens = ~100k tokens 在 30s 内突发, 撞 TPM cap
+    # 立 429. max_retries 退避只在单次调用 fail 后等, 救不了已经撞顶的状态.
+    # 真正救命: 每个 LLM 调用前主动 sleep, 摊薄 token 速率到 TPM 窗口下.
+    env["LLM_MAX_RETRIES"] = "4"  # ARK 充足时无需激进退避; 真 burst 时 SDK 自动跨 ~7.5s
 
     cmd = [
         sys.executable,
