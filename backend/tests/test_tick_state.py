@@ -116,7 +116,66 @@ def test_persist_round_trip(tmp_path) -> None:
 def test_load_missing_file_starts_fresh(tmp_path) -> None:
     ts = _make_state(str(tmp_path / "nonexistent"))
     assert ts.load() is False
-    assert ts.current_tick == 0
+
+
+def test_style_preset_key_default_empty(tmp_path) -> None:
+    """Phase 5+: fresh TickState 的 style_preset_key = "" — narrator 默认行为."""
+    ts = _make_state(str(tmp_path))
+    assert ts.style_preset_key == ""
+
+
+def test_style_preset_key_setter_strips(tmp_path) -> None:
+    """Phase 5+: setter 去前后空白, 空字符串视作 '清空'."""
+    ts = _make_state(str(tmp_path))
+    ts.set_style_preset_key("  hot_blooded  ")
+    assert ts.style_preset_key == "hot_blooded"
+    ts.set_style_preset_key("")
+    assert ts.style_preset_key == ""
+
+
+def test_style_preset_key_persist_roundtrip(tmp_path) -> None:
+    """Phase 5+: save → load 后 style_preset_key 恢复 — bootstrap CLI 写入,
+    server 重启后 narrator 应当读到原值."""
+    ts = _make_state(str(tmp_path))
+    ts.set_style_preset_key("xianxia_fast")
+    ts.save()
+
+    ts2 = _make_state(str(tmp_path))
+    assert ts2.load() is True
+    assert ts2.style_preset_key == "xianxia_fast"
+
+
+def test_style_preset_key_load_missing_field_defaults_empty(tmp_path) -> None:
+    """Phase 5+ 向后兼容: 老 tick_state.json 没 style_preset_key 字段时 load
+    成 "", narrator 走默认行为. 防 Phase 5 之前的小说升级时炸."""
+    import json
+    import os
+
+    # 模拟一个老 payload (无 style_preset_key 字段)
+    legacy = {
+        "version": 1,
+        "current_tick": 5,
+        "last_narration_tick": 4,
+        "novel_title": "老小说",
+        "world_state": {},
+        "character_profiles": {},
+        "character_states": {},
+        "open_loops": {},
+        "style_anchors": [],
+        "last_event_tick_by_type": {},
+        "novelty_warnings": [],
+        "story_arc": None,
+        "agent_runtime_states": {},
+    }
+    legacy_path = os.path.join(str(tmp_path), "tick_state.json")
+    with open(legacy_path, "w", encoding="utf-8") as f:
+        json.dump(legacy, f, ensure_ascii=False)
+
+    ts = _make_state(str(tmp_path))
+    assert ts.load() is True
+    assert ts.style_preset_key == ""
+    assert ts.current_tick == 5
+    assert ts.novel_title == "老小说"
 
 
 def test_arc_status_excludes_c_tier(tmp_path) -> None:
