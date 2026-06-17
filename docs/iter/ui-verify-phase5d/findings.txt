@@ -1,0 +1,7 @@
+theme select count: 6
+theme=steampunk_archive: ⭐=YES ⚠=YES mean_numbers=YES
+  hint visible: 风格 preset (可选)— ⭐ 为本主题推荐默认 (literary)⭐ 章回体古典 (传统笔法)  (4.67)⭐ 群像史诗 (多 POV)  (4.67)⭐ 燃血热血 (高能高燃)  (4.67)大白话网文 (口语轻读)  (4.3
+theme=republic_spy: ⭐=YES ⚠=YES mean_numbers=YES
+  hint visible: 风格 preset (可选)— ⭐ 为本主题推荐默认 (literary)⭐ 黑色幽默 (荒诞讽刺)  (4.67)⭐ 章回体古典 (传统笔法)  (4.67)⭐ 大白话网文 (口语轻读)  (4.67)群像史诗 (多 POV)  (4.6
+theme=apocalypse_wasteland: ⭐=YES ⚠=NO mean_numbers=YES
+  hint visible: 风格 preset (可选)— ⭐ 为本主题推荐默认 (literary)⭐ 大白话网文 (口语轻读)  (4.67)⭐ 群像史诗 (多 POV)  (4.67)⭐ 第一人称沉浸 ('我' 视角)  (4.67)燃血热血 (高能高燃)  (
