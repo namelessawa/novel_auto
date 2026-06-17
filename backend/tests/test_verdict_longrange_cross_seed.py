@@ -103,14 +103,17 @@ def test_narrator_silence_second_half_warns(tmp_path: pathlib.Path):
 
 
 def test_open_loop_collapse_warns(tmp_path: pathlib.Path):
-    """If open_loops drops by 3+ between first and last snapshot → WARN."""
+    """If open_loops drops by 3+ AND closures don't account for it → WARN.
+
+    Updated 2026-06-18 after Phase 6-A.2 500-tick: 'open_loops down + closed up' is
+    healthy resolution, not drift. The signal is *unexplained* loop loss.
+    """
     fake = tmp_path / "collapse.json"
     snaps = [
-        {"tick": 5, "open": 8, "stale": 0},
-        {"tick": 50, "open": 7, "stale": 1},
-        {"tick": 100, "open": 2, "stale": 0},  # -6 vs initial
+        {"tick": 5, "open": 8, "stale": 0, "closed": 0},
+        {"tick": 50, "open": 7, "stale": 1, "closed": 0},
+        {"tick": 100, "open": 2, "stale": 0, "closed": 1},  # -6 vs initial, only 1 closed
     ]
-    # Need adequate narratives so the second-half-chars check passes.
     narratives = [
         {"tick": t, "text": "正文" * 100} for t in range(1, 101)
     ]
@@ -127,6 +130,37 @@ def test_open_loop_collapse_warns(tmp_path: pathlib.Path):
     text = out.read_text(encoding="utf-8")
     assert "WARN" in text
     assert "open_loops" in text
+
+
+def test_open_loop_drop_with_closures_passes(tmp_path: pathlib.Path):
+    """500-tick reality: open 5→1 with 8 closures = healthy resolution, PASS.
+
+    Added 2026-06-18 after observing Phase 6-A.2: long-running novels NATURALLY
+    close foreshadowing — that should never read as drift.
+    """
+    fake = tmp_path / "healthy_closure.json"
+    snaps = [
+        {"tick": 5, "open": 5, "stale": 0, "closed": 0},
+        {"tick": 250, "open": 3, "stale": 0, "closed": 4},
+        {"tick": 500, "open": 1, "stale": 0, "closed": 8},  # 5→1 but 8 closed during
+    ]
+    narratives = [
+        {"tick": t, "text": "正文" * 100} for t in range(1, 501)
+    ]
+    _write_fake_bench(
+        fake,
+        completed=500,
+        ticks=500,
+        narratives=narratives,
+        open_loop_snapshots=snaps,
+    )
+    out = tmp_path / "verdict.md"
+    proc = _run("--bench", f"healthy={fake}", "--output", str(out))
+    assert proc.returncode == 0
+    text = out.read_text(encoding="utf-8")
+    assert "PASS" in text
+    assert "GATE PASS" in text
+    assert "WARN" not in text or "WARN —" not in text
 
 
 def test_corrupted_bench_marked_error_no_crash(tmp_path: pathlib.Path):

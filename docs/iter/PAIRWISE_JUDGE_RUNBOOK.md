@@ -61,7 +61,7 @@ done
 
 **重要 env**:
 * `LLM_PROVIDER=custom` — 走 ARK deepseek-v4-pro 生成
-* `JUDGE_PROVIDER=ark_glm` (Phase 6+ 标准) — judge 走 glm-5.1 跨家族
+* `JUDGE_PROVIDER=ark_glm` (Phase 6+ 标准) — judge 走 glm-5.2 跨家族
 * `LLM_PER_CALL_SLEEP=3` (单进程) 或 `=5` (3 并发) — ARK TPM 救命旋钮
 
 Bench 单 seed × 50 tick ≈ 35-50 分钟. 10 bench 串行 ≈ 8-10 小时, 并发 (2-3
@@ -81,7 +81,7 @@ python scripts/cross_seed_pairwise.py \
   --output docs/iter/verdict-phase6x-5seed.md
 ```
 
-每 seed 跑 ≤20 pair (max-pairs); JUDGE_PROVIDER=ark_glm (glm-5.1).
+每 seed 跑 ≤20 pair (max-pairs); JUDGE_PROVIDER=ark_glm (glm-5.2).
 单 seed ~30s-1min, 5 seed ~5 min。
 
 ### Step 3 — 读 verdict

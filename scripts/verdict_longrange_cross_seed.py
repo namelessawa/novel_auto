@@ -47,8 +47,13 @@ class SeedReport:
     stale_skip_count: int
     stale_skip_rate: float
     open_loop_progression: list[tuple[int, int, int]]
-    by_agent_top: list[tuple[str, int]]
+    loops_closed_during_bench: int = 0
+    by_agent_top: list[tuple[str, int]] = None
     error: str | None = None
+
+    def __post_init__(self):
+        if self.by_agent_top is None:
+            self.by_agent_top = []
 
 
 def _load(path: Path) -> dict:
@@ -104,10 +109,18 @@ def _summarize(name: str, bench_path: Path) -> SeedReport:
         (
             int(s.get("tick", 0)),
             int(s.get("open", s.get("count", 0)) or 0),
-            int(s.get("stale", 0) or 0),
+            int(s.get("stale", s.get("stale_open", 0)) or 0),
         )
         for s in olsnaps
     ]
+    # Closed-loop tracking — added 2026-06-18 after Phase 6-A.2 500-tick run.
+    # An open_loops drop of 4 (5→1) is NOT drift if 8 loops were closed (resolved
+    # through narrative). The drift signal is "loops disappeared without closure",
+    # not "open count went down". Without this distinction, a healthy long-running
+    # novel that resolves foreshadowing reads as WARN.
+    closed_initial = (olsnaps[0].get("closed", 0) if olsnaps else 0) or 0
+    closed_final = (olsnaps[-1].get("closed", 0) if olsnaps else 0) or 0
+    loops_closed_during_bench = max(0, int(closed_final) - int(closed_initial))
 
     by_agent_dict = d.get("by_agent_cumulative") or {}
     by_agent_top = sorted(by_agent_dict.items(), key=lambda kv: -kv[1])[:5]
@@ -127,6 +140,7 @@ def _summarize(name: str, bench_path: Path) -> SeedReport:
         stale_skip_count=stale_count,
         stale_skip_rate=round(stale_rate, 4),
         open_loop_progression=ol_prog,
+        loops_closed_during_bench=loops_closed_during_bench,
         by_agent_top=by_agent_top,
     )
 
@@ -151,8 +165,16 @@ def _drift_verdict(r: SeedReport) -> str:
     notes = []
     if last_ratio < 0.7:
         notes.append(f"narrator output -{(1 - last_ratio) * 100:.0f}% second half")
+    # Foreshadowing collapse signal: loops dropped by > 2 AND those drops are
+    # NOT explained by closures during the bench. A healthy long-running novel
+    # closes more loops than it drops — that's resolution, not drift.
     if ol_final < ol_initial - 2:
-        notes.append(f"open_loops {ol_initial}→{ol_final} (collapse)")
+        unexplained = (ol_initial - ol_final) - r.loops_closed_during_bench
+        if unexplained > 2:
+            notes.append(
+                f"open_loops {ol_initial}→{ol_final}, only "
+                f"{r.loops_closed_during_bench} closed (collapse)"
+            )
     if notes:
         return f"WARN — {'; '.join(notes)}"
     return "PASS"
