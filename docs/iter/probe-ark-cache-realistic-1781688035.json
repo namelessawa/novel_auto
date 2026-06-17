@@ -1,0 +1,75 @@
+{
+  "started_at": 1781688035,
+  "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+  "model": "deepseek-v4-pro",
+  "system_prompt_chars": 2195,
+  "user_prompt_chars": 1395,
+  "calls": [
+    {
+      "label": "R1",
+      "elapsed_sec": 15.49,
+      "prompt_tokens": 1960,
+      "completion_tokens": 423,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "sys_chars": 2195,
+      "user_chars": 1395,
+      "error": null
+    },
+    {
+      "label": "R2",
+      "elapsed_sec": 16.24,
+      "prompt_tokens": 1960,
+      "completion_tokens": 413,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "sys_chars": 2195,
+      "user_chars": 1395,
+      "error": null
+    },
+    {
+      "label": "R3",
+      "elapsed_sec": 20.84,
+      "prompt_tokens": 1960,
+      "completion_tokens": 482,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "sys_chars": 2195,
+      "user_chars": 1395,
+      "error": null
+    },
+    {
+      "label": "R4",
+      "elapsed_sec": 18.98,
+      "prompt_tokens": 1960,
+      "completion_tokens": 483,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "sys_chars": 2195,
+      "user_chars": 1395,
+      "error": null
+    },
+    {
+      "label": "R5",
+      "elapsed_sec": 15.33,
+      "prompt_tokens": 1960,
+      "completion_tokens": 441,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "sys_chars": 2195,
+      "user_chars": 1395,
+      "error": null
+    },
+    {
+      "label": "R6",
+      "elapsed_sec": 17.16,
+      "prompt_tokens": 1960,
+      "completion_tokens": 469,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "sys_chars": 2195,
+      "user_chars": 1395,
+      "error": null
+    }
+  ]
+}

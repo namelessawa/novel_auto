@@ -1,0 +1,97 @@
+{
+  "started_at": 1781688145,
+  "probe_sys_chars": 450,
+  "probe_user_chars": 55,
+  "calls": [
+    {
+      "endpoint_tag": "coding#1",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "prompt_tokens": 341,
+      "completion_tokens": 160,
+      "cached_tokens": 0,
+      "elapsed_sec": 9.05,
+      "error": null
+    },
+    {
+      "endpoint_tag": "coding#2",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "prompt_tokens": 341,
+      "completion_tokens": 152,
+      "cached_tokens": 0,
+      "elapsed_sec": 7.73,
+      "error": null
+    },
+    {
+      "endpoint_tag": "coding#3",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "prompt_tokens": 341,
+      "completion_tokens": 127,
+      "cached_tokens": 0,
+      "elapsed_sec": 6.84,
+      "error": null
+    },
+    {
+      "endpoint_tag": "standard#1",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+      "model": "deepseek-v4-pro",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0,
+      "elapsed_sec": 0.16,
+      "error": "NotFoundError: Error code: 404 - {'error': {'code': 'InvalidEndpointOrModel.NotFound', 'message': 'The model or endpoint deepseek-v4-pro does not exist or you do not have access to it. Request id: 021781688123928fc1"
+    },
+    {
+      "endpoint_tag": "standard#2",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+      "model": "deepseek-v4-pro",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0,
+      "elapsed_sec": 0.06,
+      "error": "NotFoundError: Error code: 404 - {'error': {'code': 'InvalidEndpointOrModel.NotFound', 'message': 'The model or endpoint deepseek-v4-pro does not exist or you do not have access to it. Request id: 021781688125506fc1"
+    },
+    {
+      "endpoint_tag": "standard#3",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+      "model": "deepseek-v4-pro",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0,
+      "elapsed_sec": 0.05,
+      "error": "NotFoundError: Error code: 404 - {'error': {'code': 'InvalidEndpointOrModel.NotFound', 'message': 'The model or endpoint deepseek-v4-pro does not exist or you do not have access to it. Request id: 021781688127078fc1"
+    },
+    {
+      "endpoint_tag": "judge#1",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "glm-5.1",
+      "prompt_tokens": 413,
+      "completion_tokens": 224,
+      "cached_tokens": 0,
+      "elapsed_sec": 4.34,
+      "error": null
+    },
+    {
+      "endpoint_tag": "judge#2",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "glm-5.1",
+      "prompt_tokens": 413,
+      "completion_tokens": 178,
+      "cached_tokens": 0,
+      "elapsed_sec": 3.72,
+      "error": null
+    },
+    {
+      "endpoint_tag": "judge#3",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "glm-5.1",
+      "prompt_tokens": 413,
+      "completion_tokens": 228,
+      "cached_tokens": 0,
+      "elapsed_sec": 4.22,
+      "error": null
+    }
+  ]
+}

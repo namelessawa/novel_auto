@@ -1,0 +1,160 @@
+{
+  "started_at": 1781687517.2380733,
+  "ended_at": 1781687731.7404544,
+  "duration_sec": 214.5,
+  "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+  "model": "deepseek-v4-pro",
+  "a_warmup": [
+    {
+      "label": "A1/N5",
+      "elapsed_sec": 16.28,
+      "prompt_tokens": 232,
+      "completion_tokens": 363,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "A2/N5",
+      "elapsed_sec": 13.53,
+      "prompt_tokens": 232,
+      "completion_tokens": 319,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "A3/N5",
+      "elapsed_sec": 14.8,
+      "prompt_tokens": 232,
+      "completion_tokens": 391,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "A4/N5",
+      "elapsed_sec": 13.45,
+      "prompt_tokens": 232,
+      "completion_tokens": 334,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "A5/N5",
+      "elapsed_sec": 13.45,
+      "prompt_tokens": 232,
+      "completion_tokens": 341,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    }
+  ],
+  "b_ttl": [],
+  "c_thinking": [
+    {
+      "label": "C_thinking_disabled_1",
+      "elapsed_sec": 13.86,
+      "prompt_tokens": 232,
+      "completion_tokens": 354,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "C_thinking_disabled_2",
+      "elapsed_sec": 9.69,
+      "prompt_tokens": 232,
+      "completion_tokens": 239,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "C_thinking_default_1",
+      "elapsed_sec": 15.64,
+      "prompt_tokens": 232,
+      "completion_tokens": 404,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "C_thinking_default_2",
+      "elapsed_sec": 13.95,
+      "prompt_tokens": 232,
+      "completion_tokens": 360,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    }
+  ],
+  "d_prefix_length": [
+    {
+      "label": "D_system_short",
+      "elapsed_sec": 5.66,
+      "prompt_tokens": 117,
+      "completion_tokens": 122,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "D_system_short_repeat",
+      "elapsed_sec": 8.01,
+      "prompt_tokens": 117,
+      "completion_tokens": 180,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "D_system_medium",
+      "elapsed_sec": 17.28,
+      "prompt_tokens": 232,
+      "completion_tokens": 425,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "D_system_medium_repeat",
+      "elapsed_sec": 15.88,
+      "prompt_tokens": 232,
+      "completion_tokens": 368,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "D_system_long",
+      "elapsed_sec": 16.47,
+      "prompt_tokens": 970,
+      "completion_tokens": 374,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    },
+    {
+      "label": "D_system_long_repeat",
+      "elapsed_sec": 11.47,
+      "prompt_tokens": 970,
+      "completion_tokens": 276,
+      "cached_tokens": 0,
+      "cache_hit_rate": 0.0,
+      "error": null
+    }
+  ],
+  "notes": [
+    "B_skipped: A 无命中故跳过 TTL 测",
+    "A (warm-up x5): first_cached=0, subsequent_cached=[0, 0, 0, 0], cache_active=NO",
+    "C thinking_disabled cached: [0, 0], thinking_default cached: [0, 0]",
+    "D D_system_short: prompt=117 cached=0 hit=0.0%",
+    "D D_system_short_repeat: prompt=117 cached=0 hit=0.0%",
+    "D D_system_medium: prompt=232 cached=0 hit=0.0%",
+    "D D_system_medium_repeat: prompt=232 cached=0 hit=0.0%",
+    "D D_system_long: prompt=970 cached=0 hit=0.0%",
+    "D D_system_long_repeat: prompt=970 cached=0 hit=0.0%"
+  ]
+}
