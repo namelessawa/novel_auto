@@ -5,6 +5,93 @@
 
 ---
 
+## [2.44] — 2026-06-17 — Phase 5 完成 + Phase 5-D follow-up (carry-forward 清零)
+
+`docs/iter/PHASE5_FINAL.md` + `docs/iter/PHASE5_PLAN.md`:
+
+Phase 5 五子阶段全部 LANDED:
+
+- **5-A** narrator prompt cache 重排: SYSTEM bit-identical, 动态 style_anchors
+  挪到 user_prompt 头. pilot bench 56.9% cache hit, input cost -45.5%.
+- **5-B** world_simulator stale-skip 架构: det 层短路低值 tick. matrix bench
+  skip 率 47.5% (target 30-50%).
+- **5-C** theme/style preset 注册表 (21 主题 × 16 风格): novel_presets module
+  + `/api/presets` + matrix_bench 笛卡尔积 runner.
+- **5-D** matrix bench: 208/207 cell OK, glm-5.1 跨家族 retro judge, avg
+  mean 4.24/5.00, 173/208 ≥ 4.0.
+- **5-E** atmosphere preset patch: 6 preset (noir_cold/lyrical_poetic/
+  somber/warm_healing/melancholic/black_humor) addendum 加"最低人物存在度"
+  条款, 7 个差 cell 平均 2.57 → 4.38, "<3" cells 清零.
+
+200-tick 单 seed 长程 stress (commit 82820a5): completion 100%, 后半 narrative
++37% vs 前半, stale-skip 长程不 drift.
+
+### Phase 5-D follow-up (本次 2026-06-17 session, 7 commit)
+
+1. **ARK cache metadata 探针** (`1cdd6c4`): 3 probe script, 31 LLM call 全 0
+   命中. 结论: ARK volces `/api/coding/v3` 2026-06-16 后停止暴露
+   `usage.prompt_tokens_details.cached_tokens`. Phase 5-A 架构正确性由单测
+   锁定不受影响, bench MD `cache_hit_rate` 信号失效是 provider-side 可
+   观测性问题. 详见 `verdict-phase5a-ark-cache-followup.md`.
+
+2. **matrix 数据驱动 UI 默认** (`3deccd8`):
+   - `/api/presets` 加 `recommendations` 字段 (by_theme top-3 + avoid_pairs)
+   - 前端 HomeView 选主题后风格 select 自动 ⭐ top-3 + ⚠ avoid + mean 数值
+   - hint "本主题推荐: X (4.67) / Y (4.67) / Z (4.67)" 在 select 下方显示
+   - 12 个新 test (lru_cache + 缺文件/损坏 graceful + payload schema lock)
+
+3. **pairwise judge 标准化** (`519e8cf`):
+   - `bench_tick.py --theme/--style` 直通参数 (resolve THEME_SEEDS + 注入
+     NOVEL_STYLE_PRESET env, 与 matrix_bench 对齐)
+   - `PAIRWISE_JUDGE_RUNBOOK.md`: 3-seed (steampunk / republic / apocalypse)
+     ship gate 全流程 + HARD STOP 路径 + 速查表
+   - 6 个新 CLI 集成 test
+
+4. **cross-seed verdict aggregator** (`d3a06a0`):
+   - `verdict_longrange_cross_seed.py`: 纯数据聚合 (no LLM), 跨 N seed 输出
+     drift PASS/WARN/INCOMPLETE/ERROR + gate decision
+   - 6 个新 test (production bench + 各 drift 模式)
+
+5. **3-seed cross-theme 长程 stress — 3/3 PASS** (`8213580`):
+   | seed | theme | ticks | tokens | last/first | drift |
+   | --- | --- | ---: | ---: | ---: | --- |
+   | seed1 | steampunk_archive | 200 | 1,062,459 | +21.5% | PASS |
+   | seed2 | republic_spy | 100 | 423,141 | +6.5% | PASS |
+   | seed3 | apocalypse_wasteland | 100 | 438,843 | -0.9% | PASS |
+
+   stale-skip 率跨 seed 一致 43-43.5%. **Phase 5-B 架构改动从单 seed pilot
+   升级到 3-seed cross-theme PASS — 满足 Phase 4-E 教训 "架构改动 mandatory
+   cross-seed" ship gate**.
+
+6. **PHASE5_FINAL 收尾** (`874e285`): carry-forward 4 项全 strike-through +
+   "Phase 5-D 收尾" 段落 (5 commit 表格 + drift 数据矩阵 + 24 新 test 总结
+   + ARK metadata gap info).
+
+7. **测试基础设施修** (`ecd132f`): test_bootstrap_routes 3 个 mock fixture
+   加 `style_preset_key` kwarg (Phase 5+ 加的 signature 漏接). 环境层
+   protobuf 6.33→7.35 force-reinstall + bcrypt 5.0→4.0.1 降级
+   (passlib 1.7.x 兼容). 测试总数 764/805 → **810/810 PASS**.
+
+8. **UI 浏览器验证 PASS** (`e47e8ae`): playwright + chromium 自动跑 3 个
+   runbook 主题, HTML inspection + 3 截图 + findings.txt. ⭐/⚠/mean 渲染
+   与数据 ground truth 一致, 3 个未评分 style 渲染 fallback 正确.
+
+### 累积一览
+
+| Phase | 主要产出 | 测试 | 状态 |
+| --- | --- | ---: | --- |
+| Phase 1 (#3-72) | -77% tokens (cost 优化主线) | +540 | 饱和 |
+| Phase 2 (#76-112) | close-loop fix + 73.3% pairwise | +60 | 饱和 |
+| Phase 3-B (#119-136) | CLI opt-in (default 不变) | — | 收档 |
+| Phase 4-E (#139-151) | sideline default ON, +38.6pp pairwise | +19 | LANDED |
+| Phase 5-A/B/C/D/E | narrator cache + stale-skip + 21×16 preset | +59 | LANDED |
+| **Phase 5-D follow-up** | UI + runbook + 3-seed gate + ARK probe | **+24** | **LANDED** |
+
+测试 810/810 PASS. cost 维度: Phase 1 早已饱和, Phase 5-B 在 stale-skip 路径
+再节 ~12% world_simulator + Phase 5-A narrator cache 减 input cost
+(provider 端 metadata 暂不可观测, 但架构正确). quality 维度: 21 主题 × 16
+风格 默认配置, 173/208 mean ≥ 4.0, 全 cell < 3 已清零.
+
 ## [2.43] — 2026-06-14 — iter#158: Phase 4 FINAL 综合 verdict (E LANDED, F revert, G/D 跳过)
 
 `docs/iter/PHASE4_FINAL.md`:
