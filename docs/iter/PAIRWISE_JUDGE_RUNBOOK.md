@@ -7,82 +7,86 @@ Phase 5-A / 5-B / 5-E 都遵守"架构改动 mandatory cross-seed ×3"教训。
 PHASE5_PLAN K 把这个流程从手动 (~半天 / cycle) 落到 3 个标准化脚本里。
 本 runbook 把跑 cross-seed pairwise gate 的完整步骤固化。
 
-## 3 个固定 seed (标准化)
+## 5 个固定 seed (Phase 6+ 标准化)
 
-PHASE4_FINAL + PHASE5_PLAN 选定 plot-light / medium / plot-dense 三档:
+Phase 6 起把 seed 集从 3 扩到 5, 加 fantasy_cn (玄幻仙侠) 和 scifi
+(科幻硬核) 各一档, 覆盖中国主流网文 5 大题材范围.
 
-| name | theme key | label 中文 | bench 命名建议 |
-| --- | --- | --- | --- |
-| seed1 | `steampunk_archive` | 蒸汽朋克悬疑 (plot-light, 默认) | `<feature>-seed1-steampunk` |
-| seed2 | `republic_spy` | 民国谍战 (plot-medium) | `<feature>-seed2-republic` |
-| seed3 | `apocalypse_wasteland` | 末世废土 (plot-dense) | `<feature>-seed3-apocalypse` |
+| name | theme key | label 中文 | 题材类型 | bench 命名建议 |
+| --- | --- | --- | --- | --- |
+| seed1 | `steampunk_archive` | 蒸汽朋克悬疑 (默认) | plot-light, 西式悬疑 | `<feature>-seed1-steampunk` |
+| seed2 | `republic_spy` | 民国谍战 | plot-medium, 历史背景 | `<feature>-seed2-republic` |
+| seed3 | `apocalypse_wasteland` | 末世废土 | plot-dense, 群像生存 | `<feature>-seed3-apocalypse` |
+| seed4 | `xianxia_cultivation` | 仙侠修真 | plot-light, 东方修仙 | `<feature>-seed4-xianxia` |
+| seed5 | `scifi_hard` | 硬科幻 | plot-light/medium, 科技理性 | `<feature>-seed5-scifi` |
 
 跨 seed 一致的 PASS 是 ship 的 ground truth。单 seed PASS 是 noise (iter#128 / iter#157 教训)。
 
+> **历史**: PHASE4_FINAL + PHASE5_PLAN 用 3 seed (seed1-3) 跑 ship gate. Phase 6+
+> 扩到 5 seed, 让架构改动跨 5 种题材世界观才能 ship.
+
 ## 一次 ship gate cycle 全流程
 
-> 假设你刚改完 Phase 5+X 候选, 要决定 ship / revert。
+> 假设你刚改完 Phase 6+X 候选, 要决定 ship / revert。
+> Phase 6+ 标准用 5 seed (Phase 5 用 3 seed); 老 cycle 跑 3 seed 也能用,
+> 但 ship gate 必须 cross 5 seed avg ≥ 60% 才落定。
 
-### Step 1 — 跑 6 个 bench (baseline × 3 seed + candidate × 3 seed)
+### Step 1 — 跑 10 个 bench (baseline × 5 seed + candidate × 5 seed)
 
 baseline = 你的 candidate revert 后的状态 (或 `main` HEAD)。
 candidate = 你的改动启用后的状态。
 
 ```bash
-# baseline (Phase 5+X 关掉, 跑 3 seed)
+THEMES=(steampunk_archive republic_spy apocalypse_wasteland \
+        xianxia_cultivation scifi_hard)
+TAGS=(seed1-steampunk seed2-republic seed3-apocalypse \
+      seed4-xianxia seed5-scifi)
+
+# baseline (Phase 6+X 关掉, 5 seed)
 git checkout main -- backend/agents/
-WORLD_STALE_SKIP_ENABLED=0 python scripts/bench_tick.py \
-  --theme steampunk_archive --ticks 50 \
-  --label phase5x-baseline-seed1-steampunk
+for i in 0 1 2 3 4; do
+  WORLD_STALE_SKIP_ENABLED=0 python scripts/bench_tick.py \
+    --theme "${THEMES[$i]}" --ticks 50 \
+    --label "phase6x-baseline-${TAGS[$i]}"
+done
 
-python scripts/bench_tick.py \
-  --theme republic_spy --ticks 50 \
-  --label phase5x-baseline-seed2-republic
-
-python scripts/bench_tick.py \
-  --theme apocalypse_wasteland --ticks 50 \
-  --label phase5x-baseline-seed3-apocalypse
-
-# candidate (Phase 5+X 启用)
+# candidate (Phase 6+X 启用)
 git checkout <feature-branch> -- backend/agents/
-python scripts/bench_tick.py \
-  --theme steampunk_archive --ticks 50 \
-  --label phase5x-candidate-seed1-steampunk
-
-python scripts/bench_tick.py \
-  --theme republic_spy --ticks 50 \
-  --label phase5x-candidate-seed2-republic
-
-python scripts/bench_tick.py \
-  --theme apocalypse_wasteland --ticks 50 \
-  --label phase5x-candidate-seed3-apocalypse
+for i in 0 1 2 3 4; do
+  python scripts/bench_tick.py \
+    --theme "${THEMES[$i]}" --ticks 50 \
+    --label "phase6x-candidate-${TAGS[$i]}"
+done
 ```
 
 **重要 env**:
 * `LLM_PROVIDER=custom` — 走 ARK deepseek-v4-pro 生成
-* `JUDGE_PROVIDER=ark_glm` (默认) 或 `mimo` — judge 路径
-* `LLM_PER_CALL_SLEEP=3` — ARK TPM 救命旋钮 (撞 429 才开)
+* `JUDGE_PROVIDER=ark_glm` (Phase 6+ 标准) — judge 走 glm-5.1 跨家族
+* `LLM_PER_CALL_SLEEP=3` (单进程) 或 `=5` (3 并发) — ARK TPM 救命旋钮
 
-Bench 单 seed × 50 tick ≈ 35-50 分钟. 6 bench 串行 ≈ 4-5 小时.
-长程 stress 用 `--ticks 200 --checkpoint-every 10`。
+Bench 单 seed × 50 tick ≈ 35-50 分钟. 10 bench 串行 ≈ 8-10 小时, 并发 (2-3
+进程) ≈ 4-5 小时。
+长程 stress 用 `--ticks 200 --checkpoint-every 10`, 超长 `--ticks 500`。
 
-### Step 2 — 跑 3-seed pairwise judge
+### Step 2 — 跑 5-seed pairwise judge
 
 ```bash
 python scripts/cross_seed_pairwise.py \
-  --pair seed1=docs/iter/bench-phase5x-baseline-seed1-steampunk.json,docs/iter/bench-phase5x-candidate-seed1-steampunk.json \
-  --pair seed2=docs/iter/bench-phase5x-baseline-seed2-republic.json,docs/iter/bench-phase5x-candidate-seed2-republic.json \
-  --pair seed3=docs/iter/bench-phase5x-baseline-seed3-apocalypse.json,docs/iter/bench-phase5x-candidate-seed3-apocalypse.json \
+  --pair seed1=docs/iter/bench-phase6x-baseline-seed1-steampunk.json,docs/iter/bench-phase6x-candidate-seed1-steampunk.json \
+  --pair seed2=docs/iter/bench-phase6x-baseline-seed2-republic.json,docs/iter/bench-phase6x-candidate-seed2-republic.json \
+  --pair seed3=docs/iter/bench-phase6x-baseline-seed3-apocalypse.json,docs/iter/bench-phase6x-candidate-seed3-apocalypse.json \
+  --pair seed4=docs/iter/bench-phase6x-baseline-seed4-xianxia.json,docs/iter/bench-phase6x-candidate-seed4-xianxia.json \
+  --pair seed5=docs/iter/bench-phase6x-baseline-seed5-scifi.json,docs/iter/bench-phase6x-candidate-seed5-scifi.json \
   --max-pairs 20 \
-  --output docs/iter/verdict-phase5x-3seed.md
+  --output docs/iter/verdict-phase6x-5seed.md
 ```
 
-每 seed 跑 ≤20 pair (max-pairs); judge 走 `JUDGE_PROVIDER` env 决定的 endpoint。
-单 seed ~30s-1min, 3 seed ~3 min。
+每 seed 跑 ≤20 pair (max-pairs); JUDGE_PROVIDER=ark_glm (glm-5.1).
+单 seed ~30s-1min, 5 seed ~5 min。
 
 ### Step 3 — 读 verdict
 
-`docs/iter/verdict-phase5x-3seed.md` 自带 ship gate 决策:
+`docs/iter/verdict-phase6x-5seed.md` 自带 ship gate 决策:
 
 | overall B win rate | gate | 行动 |
 | --- | --- | --- |
@@ -110,7 +114,8 @@ python scripts/cross_seed_pairwise.py \
 | --- | --- | --- |
 | 单 seed 短 bench | `bench_tick.py --theme T --ticks 50 --label L` | 3 min smoke |
 | 单 seed 长程 stress | `bench_tick.py --theme T --ticks 200 --checkpoint-every 10` | 4-6 hr |
-| 3-seed pairwise gate | `cross_seed_pairwise.py --pair seed1=...` × 3 | ship 决策 |
+| 5-seed pairwise gate | `cross_seed_pairwise.py --pair seed1=...` × 5 | Phase 6+ ship 决策 |
+| 3-seed pairwise gate (legacy) | `cross_seed_pairwise.py --pair seed1=...` × 3 | Phase 5 兼容 |
 | 16 主题 × 13 风格 matrix | `matrix_bench.py --ticks 3` | preset 覆盖 |
 | 单对 pairwise (临时) | `pairwise_judge_phase5.py --bench-a ... --bench-b ...` | 不入 3-seed gate |
 | 已有 bench 跑 retro judge | `judge_existing.py docs/iter/bench-X.json` | 配额耗尽 fallback |
