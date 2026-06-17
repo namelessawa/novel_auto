@@ -7,6 +7,7 @@ import TaskListPanel from './components/TaskListPanel'
 import ControlPanel from './components/ControlPanel'
 import HomeView from './views/HomeView'
 import NovelView from './views/NovelView'
+import ReaderView from './views/ReaderView'
 import ConfigView from './views/ConfigView'
 import AgentContextView from './views/AgentContextView'
 import MultimodalView from './views/MultimodalView'
@@ -27,6 +28,7 @@ import { showToast } from './utils/toast'
 const PRIMARY_NAV = [
   { key: 'home', label: '创作控制台', icon: 'fa-gauge-high' },
   { key: 'novel', label: '作品详情', icon: 'fa-book-open' },
+  { key: 'reader', label: '连续阅读', icon: 'fa-book-reader' },
   { key: 'multimodal', label: '多模态生成', icon: 'fa-image' },
   { key: 'agents', label: 'Agent 上下文', icon: 'fa-robot' },
   { key: 'config', label: '系统设置', icon: 'fa-sliders-h' },
@@ -47,6 +49,7 @@ const TEST_NAV = [
 const VIEW_TITLES = {
   home: { label: '创作控制台', icon: 'fa-gauge-high' },
   novel: { label: '作品详情', icon: 'fa-book-open' },
+  reader: { label: '连续阅读', icon: 'fa-book-reader' },
   multimodal: { label: '多模态生成', icon: 'fa-image' },
   agents: { label: 'Agent 上下文', icon: 'fa-robot' },
   config: { label: '系统设置', icon: 'fa-sliders-h' },
@@ -417,6 +420,9 @@ function AppShell() {
               onAfterGenerated={bumpRefresh}
               onNavigate={setActiveView}
             />
+          </ViewSlot>
+          <ViewSlot active={activeView === 'reader'}>
+            <ReaderView novel={activeNovel} />
           </ViewSlot>
           <ViewSlot active={activeView === 'multimodal'}>
             <MultimodalView novel={activeNovel} />

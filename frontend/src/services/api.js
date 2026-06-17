@@ -833,6 +833,32 @@ export async function fetchPresets() {
   return assertOk(res)
 }
 
+/**
+ * Phase 6-B reader API — pull narrative bodies for tick range.
+ *
+ * @param {object} opts
+ * @param {number} [opts.startTick=0]
+ * @param {number} [opts.endTick=0]  0 means up to current tick
+ * @param {number} [opts.limit=500]  hard cap (server max 2000)
+ * @returns {Promise<{
+ *   count: number,
+ *   narratives: Array<{ tick: number, text: string, char_count: number }>,
+ *   start_tick: number,
+ *   end_tick: number,
+ *   current_tick: number,
+ *   truncated?: boolean,
+ * }>}
+ */
+export async function fetchTickNarratives({ startTick = 0, endTick = 0, limit = 500 } = {}) {
+  const params = new URLSearchParams({
+    start_tick: String(startTick),
+    end_tick: String(endTick),
+    limit: String(limit),
+  })
+  const res = await authedFetch(`/api/tick/narratives?${params.toString()}`)
+  return assertOk(res)
+}
+
 export async function createSectionTask(novelId = null) {
   const body = novelId ? { novel_id: novelId } : {}
   const res = await authedFetch('/api/section/generate', {

@@ -310,6 +310,75 @@ async def list_novelty_warnings(runtime=Depends(_resolve_runtime)) -> dict:
     return {"warnings": ts.get_novelty_warnings()}
 
 
+@router.get("/narratives")
+async def list_narratives(
+    start_tick: int = Query(0, ge=0),
+    end_tick: int = Query(0, ge=0, description="0 = up to current tick"),
+    limit: int = Query(500, ge=1, le=2000),
+    runtime=Depends(_resolve_runtime),
+) -> dict:
+    """Phase 6-B reader API — 列出 tick 区间内的全部 narrative 正文.
+
+    返回顺序: 按 tick 升序. 每条 ``{tick, world_time, text, char_count}``.
+    ``end_tick=0`` 表示截至当前 tick. ``limit`` 防止误请整本.
+
+    数据源: ``{data_dir}/narratives/tick_NNNNNN.txt`` (orchestrator 每 tick 写盘).
+    与 ``/api/tick/history`` 的区别: history 给 TickSummary (摘要 + 元数据),
+    本端点给 narrative 正文文本 — 是 reader 视图的主数据.
+    """
+    import os
+    import re
+
+    ts = runtime.tick_state
+    current_tick = ts.get_current_tick()
+    effective_end = end_tick if end_tick > 0 else current_tick
+
+    narratives_dir = os.path.join(ts.data_dir, "narratives")
+    if not os.path.isdir(narratives_dir):
+        return {
+            "count": 0,
+            "narratives": [],
+            "start_tick": start_tick,
+            "end_tick": effective_end,
+            "current_tick": current_tick,
+        }
+
+    pat = re.compile(r"^tick_(\d{6})\.txt$")
+    rows: list[dict] = []
+    for fname in sorted(os.listdir(narratives_dir)):
+        m = pat.match(fname)
+        if not m:
+            continue
+        tick = int(m.group(1))
+        if tick < start_tick or tick > effective_end:
+            continue
+        path = os.path.join(narratives_dir, fname)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                text = f.read()
+        except OSError as e:
+            logger.warning("read narrative tick=%d failed: %s", tick, e)
+            continue
+        rows.append(
+            {
+                "tick": tick,
+                "text": text,
+                "char_count": len(text),
+            }
+        )
+        if len(rows) >= limit:
+            break
+
+    return {
+        "count": len(rows),
+        "narratives": rows,
+        "start_tick": start_tick,
+        "end_tick": effective_end,
+        "current_tick": current_tick,
+        "truncated": len(rows) >= limit,
+    }
+
+
 @router.get("/diagnostic/hallucination")
 async def hallucination_diagnostic(runtime=Depends(_resolve_runtime)) -> dict:
     import os
