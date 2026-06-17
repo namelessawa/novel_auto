@@ -607,6 +607,23 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ticks", type=int, default=3)
     parser.add_argument("--seed", default=_DEFAULT_SEED)
+    parser.add_argument(
+        "--theme",
+        default="",
+        help=(
+            "Phase 5+ theme key (novel_presets.THEME_SEEDS). 设置时若 --seed "
+            "保持默认, 用 registry seed; 用户显式 --seed 优先. PHASE5_PLAN K "
+            "3-seed runbook: steampunk_archive / republic_spy / apocalypse_wasteland."
+        ),
+    )
+    parser.add_argument(
+        "--style",
+        default="",
+        help=(
+            "Phase 5+ style preset key (novel_presets.STYLE_PRESETS). 内部赋值给 "
+            "NOVEL_STYLE_PRESET env, 与 matrix_bench 对齐. 默认 literary."
+        ),
+    )
     parser.add_argument("--label", default="v0-baseline")
     parser.add_argument("--log-level", default="WARNING")
     # v2.38 Phase 2 (iter#80) — quality metrics integration.
@@ -657,6 +674,29 @@ def main():
         help="精确 C 级角色数. 不设则 LLM 自由 (wide).",
     )
     args = parser.parse_args()
+
+    # Phase 5-D follow-up — --theme / --style 标准化 (PHASE5_PLAN K runbook).
+    # 与 matrix_bench.py 走的两条路径对齐 (theme.seed 喂 --seed, style.key 喂 env).
+    # 用户显式 --seed 优先 (== _DEFAULT_SEED 之外的值), --theme 只作 seed 的替代.
+    if args.theme:
+        try:
+            from novel_presets import get_theme_seed  # noqa: WPS433 (local import)
+
+            theme = get_theme_seed(args.theme)
+        except (ImportError, KeyError) as e:
+            parser.error(f"--theme {args.theme!r} 解析失败: {e}")
+        if args.seed == _DEFAULT_SEED:
+            args.seed = theme.seed
+    if args.style:
+        try:
+            from novel_presets import get_style_preset  # noqa: WPS433
+
+            style = get_style_preset(args.style)
+        except (ImportError, KeyError) as e:
+            parser.error(f"--style {args.style!r} 解析失败: {e}")
+        # NOVEL_STYLE_PRESET env 与 narrator_agent 的 preset 注入路径对齐.
+        # 子进程 / matrix_bench 也用同一路径, 保持一致.
+        os.environ["NOVEL_STYLE_PRESET"] = style.key
 
     logging.basicConfig(
         level=args.log_level.upper(),
