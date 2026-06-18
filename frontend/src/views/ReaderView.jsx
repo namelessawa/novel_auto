@@ -70,8 +70,9 @@ export default function ReaderView({ novel }) {
         closed_total: loops?.closed_total ?? 0,
       })
       setArcStates(chars?.states ?? [])
-    } catch {
-      // 侧栏失败不阻塞阅读 — 静默吞掉 (主 error banner 留给 narratives 失败).
+    } catch (err) {
+      // 侧栏失败不阻塞阅读, 但留观测线索方便定位 (区分"空数据" vs "加载失败")
+      console.warn('ReaderView loadSidePanels failed:', err)
       setLoopsData({ loops: [], count: 0, closed_total: 0 })
       setArcStates([])
     } finally {
@@ -152,7 +153,11 @@ export default function ReaderView({ novel }) {
           </div>
         </div>
         {error && (
-          <div style={{ color: 'var(--accent-rose, #f43f5e)', fontSize: 13, marginTop: 8 }}>
+          <div
+            role="alert"
+            aria-live="assertive"
+            style={{ color: 'var(--accent-rose, #f43f5e)', fontSize: 13, marginTop: 8 }}
+          >
             {error}
           </div>
         )}

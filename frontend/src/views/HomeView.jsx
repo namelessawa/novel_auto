@@ -146,6 +146,15 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     loadNovels()
   }, [])
 
+  // unmount 取消进行中的 SSE controller — 防 set state on unmounted + 后端 produce
+  // 协程被 cancel 释放 LLM token. 与 GeneratePanel 同一模式.
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort()
+      controllerRef.current = null
+    }
+  }, [])
+
   useEffect(() => {
     if (textRef.current) {
       textRef.current.scrollTop = textRef.current.scrollHeight
@@ -241,6 +250,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     }
     setMode('create')
     setStatusText(`正在创建《${title}》…`)
+    setGenerating(true)
 
     try {
       // 1. 创建空壳 (默认 auto_bootstrap=false, 不会立即入队首节)
@@ -275,6 +285,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       showToast('创建失败:' + err.message, 'error')
     } finally {
       setStatusText('')
+      setGenerating(false)
       onAfterGenerated?.()
     }
   }
@@ -288,6 +299,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
     const requestedId = continueId
     setMode('continue')
     setStatusText('正在创建续写任务…')
+    setGenerating(true)
 
     try {
       await switchNovel(requestedId)
@@ -308,6 +320,7 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
       }
     } finally {
       setStatusText('')
+      setGenerating(false)
       onAfterGenerated?.()
     }
   }

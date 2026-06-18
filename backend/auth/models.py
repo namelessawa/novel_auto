@@ -37,6 +37,9 @@ class PasswordLoginRequest(BaseModel):
 
 class SetPasswordRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
+    # current_password 在用户已设过密码时必填, 防 stolen-token + session-fixation 通过
+    # 直接改密接管账户。首次设密 (user.has_password=false) 时为空。
+    current_password: str = Field(default="", max_length=128)
 
 
 class UpdateSettingsRequest(BaseModel):

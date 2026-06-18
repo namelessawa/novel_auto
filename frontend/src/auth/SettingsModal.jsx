@@ -15,12 +15,14 @@ export default function SettingsModal({ open, onClose }) {
   const [saveMyWorks, setSaveMyWorks] = useState(false)
   const [savingPref, setSavingPref] = useState(false)
 
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [settingPassword, setSettingPassword] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setSaveMyWorks(Boolean(user?.save_my_works))
+    setCurrentPassword('')
     setNewPassword('')
   }, [open, user])
 
@@ -45,10 +47,18 @@ export default function SettingsModal({ open, onClose }) {
       showToast('密码须 8-128 位', 'error')
       return
     }
+    if (user?.has_password && !currentPassword) {
+      showToast('请输入当前密码', 'error')
+      return
+    }
     setSettingPassword(true)
     try {
-      await authSetPassword(newPassword)
+      await authSetPassword({
+        password: newPassword,
+        current_password: currentPassword,
+      })
       await refreshUser()
+      setCurrentPassword('')
       setNewPassword('')
       showToast(user?.has_password ? '密码已更新' : '密码已设置', 'success')
     } catch (err) {
@@ -149,18 +159,34 @@ export default function SettingsModal({ open, onClose }) {
           icon="fa-shield-alt"
           title={user?.has_password ? '更新密码' : '设置密码'}
         >
+          {user?.has_password ? (
+            <input
+              type="password"
+              className="input-field"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="当前密码"
+              autoComplete="current-password"
+              style={{ width: '100%', marginBottom: 8 }}
+            />
+          ) : null}
           <input
             type="password"
             className="input-field"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="8-128 位"
+            placeholder={user?.has_password ? '新密码 8-128 位' : '8-128 位'}
+            autoComplete="new-password"
             style={{ width: '100%', marginBottom: 8 }}
           />
           <button
             className="btn btn-primary btn-sm"
             onClick={handleSetPassword}
-            disabled={settingPassword || newPassword.length < 8}
+            disabled={
+              settingPassword ||
+              newPassword.length < 8 ||
+              (user?.has_password && !currentPassword)
+            }
           >
             {settingPassword ? '保存中…' : '保存'}
           </button>

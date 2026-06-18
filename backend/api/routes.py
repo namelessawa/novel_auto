@@ -15,6 +15,7 @@ import json
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
@@ -195,7 +196,8 @@ async def update_novel(
         rt = _runtimes.get((current_user.id, novel_id))
         if rt is not None:
             rt.tick_state.set_novel_title(req.title)
-            rt.tick_state.save()
+            # save() 是同步 JSON + os.replace, 放线程池避免阻塞 event loop
+            await run_in_threadpool(rt.tick_state.save)
     except Exception as e:
         logger.warning(
             "sync novel_title to active runtime failed (non-fatal): %s", e
@@ -238,7 +240,7 @@ async def switch_novel(
         old_pipe = _pipelines.get(old_key)
         if old_pipe is not None:
             try:
-                old_pipe.save_state()
+                await run_in_threadpool(old_pipe.save_state)
             except Exception:
                 logger.exception("save_state before active novel realign failed")
             _pipelines.pop(old_key, None)
@@ -263,7 +265,8 @@ async def switch_novel(
 
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
     pipeline = GenerationPipeline(data_dir=data_dir)
-    pipeline.load_state()
+    # load_state 读 JSON 文件, 放线程池避免大状态文件阻塞 event loop
+    await run_in_threadpool(pipeline.load_state)
     _pipelines[(current_user.id, novel_id)] = pipeline
 
     novel_manager.touch_last_accessed(current_user.id, novel_id)
@@ -305,9 +308,14 @@ async def update_llm_config_route(
     user_pipelines = [k for k in _pipelines if k[0] == current_user.id]
     for key in user_pipelines:
         try:
-            _pipelines[key].save_state()
+            await run_in_threadpool(_pipelines[key].save_state)
         except Exception:
-            pass
+            # 重建路径不能因落盘失败而阻塞 LLM 配置更新, 但必须有 log 留痕
+            logger.exception(
+                "pipeline.save_state failed during LLM config reload (user=%s, novel=%s)",
+                key[0],
+                key[1],
+            )
         _pipelines.pop(key, None)
     return result
 
@@ -325,7 +333,7 @@ async def generate_section(
     section = await pipeline.generate_next_section(
         global_outline=req.outline, novel_title=novel_title
     )
-    pipeline.save_state()
+    await run_in_threadpool(pipeline.save_state)
     _auto_generate_title(current_user.id, pipeline, section.content)
     return {
         "chapter": section.chapter,
@@ -355,6 +363,9 @@ async def generate_section_stream(
                     global_outline=req.outline, novel_title=novel_title
                 ):
                     await queue.put(item)
+            except asyncio.CancelledError:
+                # 客户端断开 → 上游 cancel 我们; 不当 PipelineEvent 入队 (没人收), 直接退出
+                raise
             except Exception as e:
                 await queue.put(PipelineEvent(PipelineStage.FAILED, str(e)))
             finally:
@@ -362,39 +373,52 @@ async def generate_section_stream(
 
         task = asyncio.create_task(produce())
 
-        while True:
+        try:
+            while True:
+                try:
+                    item = await asyncio.wait_for(queue.get(), timeout=15)
+                except asyncio.TimeoutError:
+                    yield {"comment": "heartbeat"}
+                    continue
+
+                if item is sentinel:
+                    break
+
+                if isinstance(item, PipelineEvent):
+                    yield {
+                        "event": "pipeline",
+                        "data": json.dumps(
+                            {
+                                "stage": item.stage.value,
+                                "message": item.message,
+                                "data": item.data,
+                            },
+                            ensure_ascii=False,
+                        ),
+                    }
+                elif isinstance(item, str):
+                    yield {"event": "text", "data": item}
+
+            yield {"event": "done", "data": ""}
+        finally:
+            # 客户端断开 / 异常退出时, produce 协程必须被取消, 否则 LLM 会继续烧 token.
+            # 落盘也放在 finally — 中断时也保证写出已生成内容, 避免下次访问看到空状态。
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except (asyncio.CancelledError, Exception):
+                    pass
             try:
-                item = await asyncio.wait_for(queue.get(), timeout=15)
-            except asyncio.TimeoutError:
-                yield {"comment": "heartbeat"}
-                continue
-
-            if item is sentinel:
-                break
-
-            if isinstance(item, PipelineEvent):
-                yield {
-                    "event": "pipeline",
-                    "data": json.dumps(
-                        {
-                            "stage": item.stage.value,
-                            "message": item.message,
-                            "data": item.data,
-                        },
-                        ensure_ascii=False,
-                    ),
-                }
-            elif isinstance(item, str):
-                yield {"event": "text", "data": item}
-
-        yield {"event": "done", "data": ""}
-        await task
-
-        pipeline.save_state()
-        if pipeline._generated_sections:
-            _auto_generate_title(
-                current_user.id, pipeline, pipeline._generated_sections[-1].content
-            )
+                await run_in_threadpool(pipeline.save_state)
+            except Exception:
+                logger.exception("save_state in stream finalizer failed")
+            if pipeline._generated_sections:
+                _auto_generate_title(
+                    current_user.id,
+                    pipeline,
+                    pipeline._generated_sections[-1].content,
+                )
 
     return EventSourceResponse(event_generator())
 
@@ -404,7 +428,7 @@ async def generate_section_stream(
 async def advance_chapter(current_user: User = Depends(get_current_user)):
     pipeline = _get_pipeline(current_user.id)
     pipeline.advance_chapter()
-    pipeline.save_state()
+    await run_in_threadpool(pipeline.save_state)
     return {
         "chapter": pipeline.current_chapter,
         "section": pipeline.current_section,
@@ -421,7 +445,7 @@ async def rollback(
         pipeline.rollback_to_chapter(req.chapter)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    pipeline.save_state()
+    await run_in_threadpool(pipeline.save_state)
     return {
         "chapter": pipeline.current_chapter,
         "section": pipeline.current_section,
@@ -440,12 +464,6 @@ async def get_stats(current_user: User = Depends(get_current_user)):
     )
     stats["active_novel_title"] = novel["title"] if novel else ""
     return stats
-
-
-@router.get("/api/text")
-async def get_full_text(current_user: User = Depends(get_current_user)):
-    pipeline = _get_pipeline(current_user.id)
-    return {"text": pipeline.get_full_text()}
 
 
 @router.get("/api/sections")
@@ -495,12 +513,15 @@ def _get_active_kg(user_id: str):
     return pipeline.knowledge_graph, None
 
 
-def _persist_active_kg(user_id: str, kg, kg_path) -> None:
-    """tick KG 改动后落盘. legacy fallback (kg_path is None) 静默跳过。"""
+async def _persist_active_kg(user_id: str, kg, kg_path) -> None:
+    """tick KG 改动后落盘. legacy fallback (kg_path is None) 静默跳过。
+
+    save_to_disk 是同步 JSON 写, 大图时阻塞 event loop, 必须挪到线程池。
+    """
     if not kg_path:
         return
     try:
-        kg.save_to_disk(kg_path)
+        await run_in_threadpool(kg.save_to_disk, kg_path)
     except Exception as e:
         logger.warning("KG save_to_disk failed (non-fatal): %s", e)
 
@@ -551,7 +572,7 @@ async def create_entity(
         attributes=req.attributes,
     )
     kg.add_entity(entity)
-    _persist_active_kg(current_user.id, kg, kg_path)
+    await _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok", "entity_id": req.id}
 
 
@@ -561,7 +582,7 @@ async def delete_entity(
 ):
     kg, kg_path = _get_active_kg(current_user.id)
     kg.remove_entity(entity_id)
-    _persist_active_kg(current_user.id, kg, kg_path)
+    await _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok"}
 
 
@@ -612,7 +633,7 @@ async def create_relation(
         kg.add_relation(relation)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    _persist_active_kg(current_user.id, kg, kg_path)
+    await _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok"}
 
 
@@ -624,7 +645,7 @@ async def delete_relation(
 ):
     kg, kg_path = _get_active_kg(current_user.id)
     kg.remove_relation(source_id, target_id)
-    _persist_active_kg(current_user.id, kg, kg_path)
+    await _persist_active_kg(current_user.id, kg, kg_path)
     return {"status": "ok"}
 
 
@@ -641,7 +662,10 @@ async def list_snapshots(current_user: User = Depends(get_current_user)):
 @router.post("/api/legacy/snapshots")
 async def take_snapshot(current_user: User = Depends(get_current_user)):
     pipeline = _get_pipeline(current_user.id)
-    sid = pipeline.knowledge_graph.take_snapshot(pipeline.current_chapter)
+    # take_snapshot 写 JSON 文件 (knowledge_graph 全量 dump), 放线程池
+    sid = await run_in_threadpool(
+        pipeline.knowledge_graph.take_snapshot, pipeline.current_chapter
+    )
     return {"snapshot_id": sid}
 
 

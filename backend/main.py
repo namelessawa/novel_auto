@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import sys
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
@@ -30,6 +31,7 @@ from api.multimodal_routes import router as multimodal_router
 from auth import router as auth_router
 from cleanup_task import cleanup_loop
 from config.settings import settings
+from middleware.sliding_refresh import SlidingRefreshMiddleware
 from middleware.user_llm import UserLLMHeadersMiddleware
 from tasks import router as tasks_router
 
@@ -61,10 +63,61 @@ class _AccessLogFilter(logging.Filter):
 
 logging.getLogger("uvicorn.access").addFilter(_AccessLogFilter())
 
+_cleanup_task: asyncio.Task | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI lifespan — 替代弃用的 ``@app.on_event('startup'/'shutdown')``。
+
+    启动顺序:
+      1. legacy 数据迁移 (idempotent)
+      2. 启动 24h cleanup 后台任务
+
+    关闭顺序: 反向 — 先取消 cleanup, 再关闭所有 tick runtime。
+    """
+    log = logging.getLogger(__name__)
+
+    # legacy 数据迁移
+    try:
+        import novel_manager
+        if novel_manager.migrate_legacy_layout():
+            log.info("v2.25 → v2.26 legacy data migrated to data/users/_legacy/")
+    except Exception as e:
+        log.error("legacy migration failed: %s", e)
+
+    # cleanup 后台任务
+    global _cleanup_task
+    if os.environ.get("DISABLE_CLEANUP", "0") != "1":
+        _cleanup_task = asyncio.create_task(
+            cleanup_loop(), name="ephemeral-novel-cleanup"
+        )
+        log.info("started ephemeral cleanup background task")
+
+    yield
+
+    # 关停: 反向, 先 cleanup, 再 runtime
+    if _cleanup_task is not None and not _cleanup_task.done():
+        _cleanup_task.cancel()
+        try:
+            await _cleanup_task
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log.error("cleanup task shutdown error: %s", e)
+
+    try:
+        from tick_runtime import close_all_runtimes
+        close_all_runtimes()
+    except Exception as e:
+        log.error("close_all_runtimes failed: %s", e)
+
+
 app = FastAPI(
     title="AI 长篇小说生成 Agent 系统",
     description="多 Agent + 7 阶段 Tick 调度 + 邮箱 OTP 认证 + 多租户数据隔离",
     version="2.26.0",
+    lifespan=lifespan,
 )
 
 def _cors_policy(origins: list[str]) -> tuple[list[str], bool]:
@@ -93,10 +146,16 @@ app.add_middleware(
     allow_credentials=_cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    # X-Refreshed-Token 让前端 authedFetch 能读到 sliding refresh 签的新 token,
+    # 不显式 expose 浏览器跨域请求里 JS 拿不到。
+    expose_headers=["X-Refreshed-Token"],
 )
 # v2.28 — 必须在 CORS 之后注册 (Starlette middleware 栈是 LIFO; 后注册的先执行
 # 入站请求); 这样 CORS 先处理 preflight, 再轮到 user-llm middleware 提取 header.
 app.add_middleware(UserLLMHeadersMiddleware)
+# Sliding refresh — 注册顺序同 user-llm; 在 user-llm 之后注册意味着出站方向先跑
+# (LIFO), 所以响应阶段先添加 X-Refreshed-Token 再走 user-llm (它不改 response).
+app.add_middleware(SlidingRefreshMiddleware)
 
 # v2.26 — auth_router 必须在所有受保护 router 之前注册 (FastAPI 路由匹配顺序无关
 # 但日志可读性: 让 /api/auth/* 优先出现)
@@ -110,65 +169,6 @@ app.include_router(agent_router)
 app.include_router(section_router)
 app.include_router(bootstrap_router)
 app.include_router(tasks_router)
-
-
-# ---------------------------------------------------------------------------
-# 后台任务句柄
-# ---------------------------------------------------------------------------
-
-_cleanup_task: asyncio.Task | None = None
-
-
-@app.on_event("startup")
-async def _on_startup() -> None:
-    """v2.26 启动钩子.
-
-    1. 一次性迁移 v2.25 旧布局 (data/novels/ → data/users/_legacy/novels/)
-    2. 启动 24h cleanup 后台 task
-    3. tick runtime 不预热 — 改为 lazy per-user (第一次请求时构造)
-    """
-    log = logging.getLogger(__name__)
-
-    # 1. legacy 数据迁移 — idempotent, 第二次启动不会再动
-    try:
-        import novel_manager
-        if novel_manager.migrate_legacy_layout():
-            log.info(
-                "v2.25 → v2.26 legacy data migrated to data/users/_legacy/"
-            )
-    except Exception as e:
-        log.error("legacy migration failed: %s", e)
-
-    # 2. 启动 cleanup 后台 task
-    if os.environ.get("DISABLE_CLEANUP", "0") != "1":
-        global _cleanup_task
-        _cleanup_task = asyncio.create_task(
-            cleanup_loop(), name="ephemeral-novel-cleanup"
-        )
-        log.info("started ephemeral cleanup background task")
-
-
-@app.on_event("shutdown")
-async def _on_shutdown() -> None:
-    log = logging.getLogger(__name__)
-
-    # 取消 cleanup
-    global _cleanup_task
-    if _cleanup_task is not None and not _cleanup_task.done():
-        _cleanup_task.cancel()
-        try:
-            await _cleanup_task
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            log.error("cleanup task shutdown error: %s", e)
-
-    # 关闭所有 tick runtime
-    try:
-        from tick_runtime import close_all_runtimes
-        close_all_runtimes()
-    except Exception as e:
-        log.error("close_all_runtimes failed: %s", e)
 
 
 # ---------------------------------------------------------------------------

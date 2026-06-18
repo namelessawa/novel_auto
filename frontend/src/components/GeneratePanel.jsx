@@ -27,6 +27,15 @@ export default function GeneratePanel({ onGenerated }) {
     }
   }, [streamText])
 
+  // unmount 时取消进行中的 SSE — 用户切路由 / 关页面时, 后端 produce 协程会被
+  // 上游 cancel (event_generator 的 finally 释放), 否则 LLM 会继续烧 token.
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort()
+      controllerRef.current = null
+    }
+  }, [])
+
   const handleGenerate = () => {
     setGenerating(true)
     setStreamText('')

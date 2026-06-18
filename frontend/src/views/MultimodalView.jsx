@@ -345,9 +345,18 @@ export default function MultimodalView({ novel }) {
           <i className="fas fa-list" style={{ marginRight: 6 }}></i>
           节列表 ({sections.length})
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div
+          style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}
+          aria-busy={sectionsLoading || undefined}
+        >
           {sectionsLoading && (
-            <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>加载中…</p>
+            <p
+              style={{ color: 'var(--text-muted)', fontSize: 12 }}
+              role="status"
+              aria-live="polite"
+            >
+              加载中…
+            </p>
           )}
           {!sectionsLoading && sections.length === 0 && (
             <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
@@ -358,10 +367,22 @@ export default function MultimodalView({ novel }) {
             const key = `${s.chapter}-${s.section}`
             const mm = multimodalIndex[key]
             const isActive = key === selectedKey
+            const select = () => setSelectedKey(key)
             return (
               <div
                 key={key}
-                onClick={() => setSelectedKey(key)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isActive}
+                aria-label={`选中 第${s.chapter}章 第${s.section}节`}
+                onClick={select}
+                onKeyDown={(e) => {
+                  // a11y: 键盘等价 — Enter / Space 触发选中, 不让默认空格滚动页面
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    select()
+                  }
+                }}
                 style={{
                   padding: '8px 10px',
                   marginBottom: 4,

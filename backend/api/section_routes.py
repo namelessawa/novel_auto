@@ -68,7 +68,14 @@ async def generate_section_task(
     try:
         get_runtime(current_user.id, novel_id)
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"runtime init failed: {e}")
+        # 不要把 str(e) 直接回显给前端 — 内部异常信息 (路径 / 栈片段) 可能泄露给攻击者
+        logger.exception(
+            "runtime init failed user=%s novel=%s", current_user.id, novel_id
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="后端运行时初始化失败, 请稍后重试或联系管理员",
+        ) from e
 
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
     store = get_section_store(novel_id, data_dir=data_dir)

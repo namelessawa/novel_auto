@@ -32,6 +32,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 
 from auth import User, get_current_user
+from middleware.url_safety import is_safe_public_url
 from nf_core.llm_client import extract_message_text
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,19 @@ def _validate_header_key(key: str | None) -> str:
             ),
         )
     return key.strip()
+
+
+def _safe_base_url(raw: str | None, default: str) -> str:
+    """SSRF 防御: 拒绝指向内网/loopback/保留地址的 base_url, 退回默认。"""
+    value = (raw or "").strip()
+    if not value:
+        return default
+    if not is_safe_public_url(value):
+        raise HTTPException(
+            status_code=400,
+            detail="X-User-LLM-Base-Url 必须是公网 https://... 地址",
+        )
+    return value
 
 
 async def _one_shot_complete(
@@ -204,7 +218,7 @@ async def random_seed(
     ),
 ) -> RandomResponse:
     api_key = _validate_header_key(x_user_llm_key)
-    base_url = (x_user_llm_base_url or "https://api.deepseek.com").strip()
+    base_url = _safe_base_url(x_user_llm_base_url, "https://api.deepseek.com")
     model = (x_user_llm_model or "deepseek-chat").strip()
 
     title = req.existing_title.strip()
@@ -240,7 +254,7 @@ async def random_title(
     ),
 ) -> RandomResponse:
     api_key = _validate_header_key(x_user_llm_key)
-    base_url = (x_user_llm_base_url or "https://api.deepseek.com").strip()
+    base_url = _safe_base_url(x_user_llm_base_url, "https://api.deepseek.com")
     model = (x_user_llm_model or "deepseek-chat").strip()
 
     seed = req.existing_seed.strip()
@@ -289,7 +303,7 @@ async def random_positioning(
     免得用户拿到一个奇幻动作题材的标题, 还在用默认的"古典含蓄"模板生成
     style_anchors, 最终 narrator 产出与标题脱节。"""
     api_key = _validate_header_key(x_user_llm_key)
-    base_url = (x_user_llm_base_url or "https://api.deepseek.com").strip()
+    base_url = _safe_base_url(x_user_llm_base_url, "https://api.deepseek.com")
     model = (x_user_llm_model or "deepseek-chat").strip()
 
     title = req.existing_title.strip()

@@ -33,7 +33,9 @@ function _isPublicPath(path) {
   return (
     path.startsWith('/api/auth/register/') ||
     path.startsWith('/api/auth/login/') ||
-    path === '/api/health'
+    path === '/api/health' ||
+    // /api/presets 返回主题/风格元数据, 未登录页也用得着. 与后端保持一致即可。
+    path === '/api/presets'
   )
 }
 
@@ -73,6 +75,14 @@ async function authedFetch(path, init = {}) {
     }
   }
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
+  // sliding refresh: 后端在距过期 < 1 天时通过 X-Refreshed-Token 响应头签新 token,
+  // 浏览器 JS 仅在后端 expose_headers 显式列出时能读到 (main.py CORS 已配置).
+  try {
+    const fresh = res.headers.get('X-Refreshed-Token')
+    if (fresh) setStoredToken(fresh)
+  } catch {
+    /* private mode / 跨域无 expose 等情况静默忽略 */
+  }
   if (res.status === 401 && !_isPublicPath(path)) {
     _handleUnauthorized()
   }
@@ -150,12 +160,16 @@ export async function authMe() {
   return assertOk(res) // user
 }
 
-export async function authSetPassword(password) {
+export async function authSetPassword({ password, current_password = '' } = {}) {
+  // 改密后端会自增 password_version + 返回新 JWT, 前端立即替换 localStorage 让
+  // 后续 fetch 用新 token (旧 token 被服务端 pv 校验拦截).
   const res = await authedFetch('/api/auth/me/set-password', {
     method: 'POST',
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ password, current_password }),
   })
-  return assertOk(res)
+  const data = await assertOk(res)
+  if (data && data.token) setStoredToken(data.token)
+  return data // { token, user }
 }
 
 export async function authUpdateSettings({ save_my_works }) {
@@ -168,11 +182,19 @@ export async function authUpdateSettings({ save_my_works }) {
 
 export async function authLogout() {
   try {
+    // 必须先发请求 — 后端会把当前 token 的 jti 加入撤销表; 清完本地 token 就发不出去了
     await authedFetch('/api/auth/logout', { method: 'POST' })
   } catch {
-    /* server-side noop; ignore failure */
+    /* server-side noop on token error; 仍要清本地 */
   }
   setStoredToken('')
+  // 用户登出时一并清掉他们的 LLM / image api key — 防共享设备下泄露给下个登录者.
+  try {
+    localStorage.removeItem(USER_LLM_STORAGE_KEY)
+    localStorage.removeItem(USER_IMAGE_STORAGE_KEY)
+  } catch {
+    /* private mode etc — silent */
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -395,32 +417,32 @@ export async function regenerateStyleAnchors(novelId, payload = {}) {
 
 export async function fetchStats() {
   const res = await authedFetch('/api/stats')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchSections() {
   const res = await authedFetch('/api/sections')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchGraph() {
   const res = await authedFetch('/api/graph')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchOutline() {
   const res = await authedFetch('/api/outline')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchMemory() {
   const res = await authedFetch('/api/memory')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchSnapshots() {
   const res = await authedFetch('/api/snapshots')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function generateSection(outline = '') {
@@ -428,7 +450,7 @@ export async function generateSection(outline = '') {
     method: 'POST',
     body: JSON.stringify({ outline }),
   })
-  return res.json()
+  return assertOk(res)
 }
 
 export function generateSectionStream(outline = '', onEvent, onText, onDone, onError) {
@@ -465,6 +487,11 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
         reportError(new Error(detail))
         return
       }
+      // 修复(sse-6) — body 在某些代理/Service Worker 介入下可能为 null
+      if (!response.body) {
+        reportError(new Error('Streaming not supported by this transport'))
+        return
+      }
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -475,7 +502,8 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
+        // 修复(sse-1) — 用 \r?\n 正则切, nginx/cloudflare 把流换行规范化为 \r\n 时不再丢事件
+        const lines = buffer.split(/\r?\n/)
         buffer = lines.pop() || ''
 
         for (const line of lines) {
@@ -525,7 +553,7 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
 
 export async function advanceChapter() {
   const res = await authedFetch('/api/chapter/advance', { method: 'POST' })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function rollback(chapter) {
@@ -533,7 +561,7 @@ export async function rollback(chapter) {
     method: 'POST',
     body: JSON.stringify({ chapter }),
   })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function createEntity(entity) {
@@ -558,7 +586,7 @@ export async function deleteEntity(entityId) {
     { method: 'DELETE' },
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function deleteRelation(sourceId, targetId) {
@@ -571,7 +599,7 @@ export async function deleteRelation(sourceId, targetId) {
     { method: 'DELETE' },
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchEntityDetail(entityId) {
@@ -579,17 +607,17 @@ export async function fetchEntityDetail(entityId) {
     `/api/graph/entities/${encodeURIComponent(entityId)}`,
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function resetPipeline() {
   const res = await authedFetch('/api/reset', { method: 'POST' })
-  return res.json()
+  return assertOk(res)
 }
 
 export async function takeSnapshot() {
   const res = await authedFetch('/api/snapshots', { method: 'POST' })
-  return res.json()
+  return assertOk(res)
 }
 
 // ---------------------------------------------------------------------------
@@ -598,7 +626,7 @@ export async function takeSnapshot() {
 
 export async function fetchLLMConfig() {
   const res = await authedFetch('/api/config/llm')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function updateLLMConfig({ api_key, base_url, model, provider }) {
@@ -620,7 +648,7 @@ export async function updateLLMConfig({ api_key, base_url, model, provider }) {
 
 export async function fetchNovels() {
   const res = await authedFetch('/api/novels')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function createNovel(title = '未命名小说') {
@@ -661,7 +689,7 @@ export async function switchNovel(novelId) {
 export async function fetchTickStatus() {
   const res = await authedFetch('/api/tick/status')
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function runOneTick() {
@@ -694,30 +722,16 @@ export async function fetchTickHistory(lastN = 20) {
 
 export async function fetchTickOpenLoops(topK = 30) {
   const res = await authedFetch(`/api/tick/open-loops?top_k=${topK}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function addTickOpenLoop(loop) {
+  // assertOk 已统一处理 detail / 422 array — 不再手抄解析逻辑
   const res = await authedFetch('/api/tick/open-loops', {
     method: 'POST',
     body: JSON.stringify(loop),
   })
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`
-    try {
-      const j = await res.json()
-      if (typeof j?.detail === 'string') detail = j.detail
-      else if (Array.isArray(j?.detail)) {
-        detail = j.detail
-          .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
-          .join('; ')
-      }
-    } catch {
-      /* keep default */
-    }
-    throw new Error(detail)
-  }
-  return res.json()
+  return assertOk(res)
 }
 
 export async function closeTickOpenLoop(loopId) {
@@ -725,39 +739,29 @@ export async function closeTickOpenLoop(loopId) {
     `/api/tick/open-loops/${encodeURIComponent(loopId)}`,
     { method: 'DELETE' },
   )
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`
-    try {
-      const j = await res.json()
-      if (typeof j?.detail === 'string') detail = j.detail
-    } catch {
-      /* keep default */
-    }
-    throw new Error(detail)
-  }
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchCharacterStates() {
   const res = await authedFetch('/api/tick/character-states')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchStyleAnchors(topK = 20) {
   const res = await authedFetch(`/api/tick/style-anchors?top_k=${topK}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchNoveltyWarnings() {
   const res = await authedFetch('/api/tick/novelty-warnings')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchEventStats(lastNTicks = 50) {
   const res = await authedFetch(
     `/api/tick/event-stats?last_n_ticks=${lastNTicks}`,
   )
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchActionPatterns(lastNTicks = 100) {
@@ -765,13 +769,13 @@ export async function fetchActionPatterns(lastNTicks = 100) {
     `/api/tick/action-patterns?last_n_ticks=${lastNTicks}`,
   )
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchHallucinationDiagnostic() {
   const res = await authedFetch('/api/tick/diagnostic/hallucination')
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 // ---------------------------------------------------------------------------
@@ -780,13 +784,13 @@ export async function fetchHallucinationDiagnostic() {
 
 export async function fetchAgents() {
   const res = await authedFetch('/api/agents')
-  return res.json()
+  return assertOk(res)
 }
 
 export async function fetchAgentDetail(agentId) {
   const res = await authedFetch(`/api/agents/${encodeURIComponent(agentId)}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  return assertOk(res)
 }
 
 // ---------------------------------------------------------------------------
@@ -919,16 +923,30 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
         if (typeof onError === 'function') onError(err)
         return
       }
+      // 修复(sse-6) — null body 防护
+      if (!response.body) {
+        if (typeof onError === 'function')
+          onError(new Error('Streaming not supported by this transport'))
+        return
+      }
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
       let currentEvent = ''
+      // 修复(sse-5) — 防双触发 onDone (终态 snapshot + while 退出后兜底 onDone(null))
+      let doneFired = false
+      const fireDone = (snap) => {
+        if (doneFired) return
+        doneFired = true
+        if (typeof onDone === 'function') onDone(snap)
+      }
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
+        // 修复(sse-1) — \r?\n 正则切, 兼容代理换行规范化
+        const lines = buffer.split(/\r?\n/)
         buffer = lines.pop() || ''
 
         for (const line of lines) {
@@ -947,7 +965,7 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
                   snap.status === 'failed' ||
                   snap.status === 'cancelled'
                 ) {
-                  if (typeof onDone === 'function') onDone(snap)
+                  fireDone(snap)
                 }
               } catch (err) {
                 // 修复(15) 同类 — 保留原"吞掉继续读流"语义, 仅补观测线索
@@ -962,7 +980,7 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
           if (line.trim() === '') currentEvent = ''
         }
       }
-      if (typeof onDone === 'function') onDone(null)
+      fireDone(null)
     })
     .catch((err) => {
       if (err.name === 'AbortError') return

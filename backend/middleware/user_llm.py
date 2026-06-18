@@ -18,9 +18,15 @@
 """
 from __future__ import annotations
 
+import logging
+
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from nf_core.llm_client import set_user_llm_config
+
+from .url_safety import is_safe_public_url
+
+_log = logging.getLogger(__name__)
 
 
 class UserLLMHeadersMiddleware:
@@ -47,6 +53,15 @@ class UserLLMHeadersMiddleware:
                 base_url = v.decode("latin-1", "ignore").strip()
             elif k == b"x-user-llm-model":
                 model = v.decode("latin-1", "ignore").strip()
+
+        # SSRF 防御: base_url 若被填入但指向内网/保留地址, 直接丢弃 (传 "" 让 LLMClient
+        # 回落到 config.json 默认). 不返回 400 — 防止攻击者用错误码做内网端口扫描。
+        if base_url and not is_safe_public_url(base_url):
+            _log.warning(
+                "rejected user-supplied LLM base_url pointing to non-public host: %r",
+                base_url,
+            )
+            base_url = ""
 
         if api_key:
             set_user_llm_config(api_key=api_key, base_url=base_url, model=model)

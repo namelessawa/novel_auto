@@ -27,6 +27,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from memory_system.models import Event, EventKind, OpenLoop
@@ -249,7 +250,8 @@ async def add_open_loop(
             ),
         )
     ts.add_open_loop(loop)
-    ts.save()
+    # ts.save() 是同步 JSON + os.replace, 在 async 路由里直接调会阻塞 event loop。
+    await run_in_threadpool(ts.save)
     return {"ok": True, "loop": loop.model_dump(mode="json")}
 
 
@@ -261,7 +263,7 @@ async def close_open_loop(
     closed = ts.close_open_loop(loop_id)
     if closed is None:
         raise HTTPException(status_code=404, detail="loop not found")
-    ts.save()
+    await run_in_threadpool(ts.save)
     return {"ok": True, "closed": closed.model_dump(mode="json")}
 
 
@@ -270,7 +272,8 @@ async def get_history(
     last_n: int = Query(20, ge=1, le=500),
     runtime=Depends(_resolve_runtime),
 ) -> dict:
-    rows = runtime.tick_db.get_recent_ticks(n=last_n)
+    # SQLite 查询是阻塞 IO, 在 async 路由内必须挪到线程池, 否则单慢查询会卡死整个 event loop
+    rows = await run_in_threadpool(runtime.tick_db.get_recent_ticks, n=last_n)
     return {"count": len(rows), "ticks": rows}
 
 
@@ -279,7 +282,9 @@ async def get_event_stats(
     last_n_ticks: int = Query(50, ge=1, le=500),
     runtime=Depends(_resolve_runtime),
 ) -> dict:
-    return runtime.tick_db.get_event_stats(last_n_ticks=last_n_ticks)
+    return await run_in_threadpool(
+        runtime.tick_db.get_event_stats, last_n_ticks=last_n_ticks
+    )
 
 
 @router.get("/action-patterns")
@@ -287,7 +292,9 @@ async def get_action_patterns(
     last_n_ticks: int = Query(100, ge=1, le=500),
     runtime=Depends(_resolve_runtime),
 ) -> dict:
-    return runtime.tick_db.get_action_patterns(last_n_ticks=last_n_ticks)
+    return await run_in_threadpool(
+        runtime.tick_db.get_action_patterns, last_n_ticks=last_n_ticks
+    )
 
 
 @router.get("/style-anchors")
@@ -340,40 +347,34 @@ async def list_narratives(
     effective_end = end_tick if end_tick > 0 else current_tick
 
     narratives_dir = os.path.join(ts.data_dir, "narratives")
-    if not os.path.isdir(narratives_dir):
-        return {
-            "count": 0,
-            "narratives": [],
-            "start_tick": start_tick,
-            "end_tick": effective_end,
-            "current_tick": current_tick,
-        }
 
-    pat = re.compile(r"^tick_(\d{6})\.txt$")
-    rows: list[dict] = []
-    for fname in sorted(os.listdir(narratives_dir)):
-        m = pat.match(fname)
-        if not m:
-            continue
-        tick = int(m.group(1))
-        if tick < start_tick or tick > effective_end:
-            continue
-        path = os.path.join(narratives_dir, fname)
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                text = f.read()
-        except OSError as e:
-            logger.warning("read narrative tick=%d failed: %s", tick, e)
-            continue
-        rows.append(
-            {
-                "tick": tick,
-                "text": text,
-                "char_count": len(text),
-            }
-        )
-        if len(rows) >= limit:
-            break
+    def _read_narratives_blocking() -> list[dict]:
+        if not os.path.isdir(narratives_dir):
+            return []
+        pat = re.compile(r"^tick_(\d{6})\.txt$")
+        out: list[dict] = []
+        for fname in sorted(os.listdir(narratives_dir)):
+            m = pat.match(fname)
+            if not m:
+                continue
+            tick = int(m.group(1))
+            if tick < start_tick or tick > effective_end:
+                continue
+            path = os.path.join(narratives_dir, fname)
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    text = f.read()
+            except OSError as e:
+                logger.warning("read narrative tick=%d failed: %s", tick, e)
+                continue
+            out.append({"tick": tick, "text": text, "char_count": len(text)})
+            if len(out) >= limit:
+                break
+        return out
+
+    # 整个 listdir + N 次同步 read 都跑在线程池, 防止 narratives 多 (1000+ tick)
+    # 时一次请求把 event loop 卡数百 ms。
+    rows = await run_in_threadpool(_read_narratives_blocking)
 
     return {
         "count": len(rows),

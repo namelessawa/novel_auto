@@ -299,6 +299,7 @@ export default function ControlPanel({ onAction, refreshKey }) {
 
               {novel.id !== activeNovelId && (
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleDeleteNovel(novel.id)
@@ -309,13 +310,17 @@ export default function ControlPanel({ onAction, refreshKey }) {
                     color: 'var(--error)',
                     cursor: 'pointer',
                     fontSize: 14,
-                    padding: '0 4px',
+                    // 触控目标至少 44x44 (WCAG 2.5.5 + Apple HIG): 24px 是上限
+                    minWidth: 28,
+                    minHeight: 28,
+                    padding: '4px 8px',
                     flexShrink: 0,
                     opacity: 0.6,
                   }}
                   title="删除小说"
+                  aria-label={`删除小说《${novel.title || '未命名小说'}》`}
                 >
-                  ×
+                  <span aria-hidden="true">×</span>
                 </button>
               )}
             </div>
@@ -434,11 +439,16 @@ export default function ControlPanel({ onAction, refreshKey }) {
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+            <label
+              htmlFor="cp-api-key"
+              style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}
+            >
               API Key
             </label>
             <input
+              id="cp-api-key"
               type="password"
+              autoComplete="off"
               placeholder="输入新的 API Key（留空保持不变）"
               value={apiKeyInput}
               onChange={(e) => setApiKeyInput(e.target.value)}
@@ -447,10 +457,14 @@ export default function ControlPanel({ onAction, refreshKey }) {
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+              <label
+                htmlFor="cp-base-url"
+                style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}
+              >
                 Base URL
               </label>
               <input
+                id="cp-base-url"
                 type="text"
                 placeholder="https://api.deepseek.com"
                 value={baseUrlInput}
@@ -459,10 +473,14 @@ export default function ControlPanel({ onAction, refreshKey }) {
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+              <label
+                htmlFor="cp-model"
+                style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}
+              >
                 Model
               </label>
               <input
+                id="cp-model"
                 type="text"
                 placeholder="deepseek-chat"
                 value={modelInput}

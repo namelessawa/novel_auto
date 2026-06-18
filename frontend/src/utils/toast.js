@@ -15,8 +15,17 @@ export function showToast(message, kind = 'info') {
 
   const toast = document.createElement('div')
   toast.className = `toast ${kind}`
+  // a11y: error 用 alert (assertive) 立刻打断屏阅; 其他用 status (polite) 不打断
+  if (kind === 'error') {
+    toast.setAttribute('role', 'alert')
+    toast.setAttribute('aria-live', 'assertive')
+  } else {
+    toast.setAttribute('role', 'status')
+    toast.setAttribute('aria-live', 'polite')
+  }
+  toast.setAttribute('aria-atomic', 'true')
   const icon = ICON_BY_KIND[kind] || ICON_BY_KIND.info
-  toast.innerHTML = `<i class="fas ${icon}" style="margin-right:8px;"></i>${escape(message)}`
+  toast.innerHTML = `<i class="fas ${icon}" aria-hidden="true" style="margin-right:8px;"></i>${escape(message)}`
   document.body.appendChild(toast)
 
   requestAnimationFrame(() => toast.classList.add('show'))

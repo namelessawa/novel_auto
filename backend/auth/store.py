@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT,
     save_my_works INTEGER NOT NULL DEFAULT 0,
     created_at REAL NOT NULL,
-    last_login_at REAL
+    last_login_at REAL,
+    password_version INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -57,6 +58,17 @@ class UserStore:
     def _init_schema(self) -> None:
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            # 迁移: 老 DB 没有 password_version 列, 加上 default 0 让全部已签发 token
+            # 第一次过校验 (pv=0 in payload == pv=0 in db)。增量改密后 pv 自增, 旧 token 被踢。
+            cols = {
+                r["name"]
+                for r in conn.execute("PRAGMA table_info(users)").fetchall()
+            }
+            if "password_version" not in cols:
+                conn.execute(
+                    "ALTER TABLE users ADD COLUMN "
+                    "password_version INTEGER NOT NULL DEFAULT 0"
+                )
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -101,12 +113,22 @@ class UserStore:
             ).fetchone()
         return dict(row)
 
-    def update_password(self, user_id: str, password_hash: str) -> None:
+    def update_password(self, user_id: str, password_hash: str) -> int:
+        """更新密码 + 自增 password_version, 返回新 password_version。
+
+        password_version 是 JWT 失效信号: payload.pv != db.password_version 即视为
+        过期, 让旧 token 立即失效 (防 session-fixation / 被盗 token 持续可用)。
+        """
         with self._lock, self._connect() as conn:
             conn.execute(
-                "UPDATE users SET password_hash=? WHERE id=?",
+                "UPDATE users SET password_hash=?, "
+                "password_version=password_version+1 WHERE id=?",
                 (password_hash, user_id),
             )
+            row = conn.execute(
+                "SELECT password_version FROM users WHERE id=?", (user_id,)
+            ).fetchone()
+            return int(row[0]) if row else 0
 
     def update_save_my_works(self, user_id: str, value: bool) -> None:
         with self._lock, self._connect() as conn:

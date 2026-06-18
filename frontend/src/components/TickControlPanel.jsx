@@ -38,6 +38,9 @@ export default function TickControlPanel({ onAction, refreshKey }) {
   const [history, setHistory] = useState([])
   const [openLoops, setOpenLoops] = useState([])
   const [busy, setBusy] = useState(false)
+  // 防双击锁 — React setState 是异步, fast double-click 在 setBusy(true) 还没生效时
+  // 就拿到 busy=false 进入第二次提交. 用 ref 做同步守门, busyRef.current=true 立刻拦截。
+  const busyRef = useRef(false)
   const [statusError, setStatusError] = useState('')
   const [form, setForm] = useState(DEFAULT_FORM)
   // v2.20 — OpenLoop CRUD inline form
@@ -142,11 +145,13 @@ export default function TickControlPanel({ onAction, refreshKey }) {
   }, [refresh, refreshKey])
 
   const handleRun = async () => {
-    if (busy) return
+    // ref 同步守门: setBusy 异步, ref 立即起作用, fast double-click 不会双触发
+    if (busyRef.current) return
     if (status?.is_paused) {
       showToast('Tick 已暂停,请先恢复', 'error')
       return
     }
+    busyRef.current = true
     setBusy(true)
     try {
       const res = await runOneTick()
@@ -164,6 +169,7 @@ export default function TickControlPanel({ onAction, refreshKey }) {
     } catch (err) {
       showToast('推进失败:' + (err?.message || '未知错误'), 'error')
     } finally {
+      busyRef.current = false
       setBusy(false)
     }
   }
@@ -196,10 +202,12 @@ export default function TickControlPanel({ onAction, refreshKey }) {
 
   const handleInject = async (e) => {
     e?.preventDefault?.()
+    if (busyRef.current) return
     if (!form.description.trim()) {
       showToast('请填写事件描述', 'error')
       return
     }
+    busyRef.current = true
     setBusy(true)
     try {
       const participants = form.participants
@@ -230,6 +238,7 @@ export default function TickControlPanel({ onAction, refreshKey }) {
     } catch (err) {
       showToast('注入失败:' + (err?.message || '未知错误'), 'error')
     } finally {
+      busyRef.current = false
       setBusy(false)
     }
   }
@@ -608,9 +617,10 @@ export default function TickControlPanel({ onAction, refreshKey }) {
                   disabled={busy}
                   onClick={() => handleCloseLoop(l.id)}
                   title="关闭这个 OpenLoop"
+                  aria-label={`关闭伏笔 ${l.id}`}
                   style={{ padding: '2px 8px' }}
                 >
-                  <i className="fas fa-times"></i> 关闭
+                  <i className="fas fa-times" aria-hidden="true"></i> 关闭
                 </button>
               </li>
             ))}

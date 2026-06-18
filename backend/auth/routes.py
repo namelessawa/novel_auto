@@ -24,9 +24,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from .config import get_auth_config
 from .dependencies import get_client_ip, get_current_user, to_user
-from .jwt_utils import encode_token
+from .jwt_utils import TokenError, decode_token, encode_token, revoke_token
 from .models import (
     AuthResponse,
     PasswordLoginRequest,
@@ -36,6 +38,8 @@ from .models import (
     User,
     VerifyOTPRequest,
 )
+
+_bearer = HTTPBearer(auto_error=False)
 from .otp import (
     OTPExpired,
     OTPInvalid,
@@ -96,7 +100,9 @@ async def register_send_otp(req: SendOTPRequest, request: Request) -> None:
     _rate("otp_send_email", email, _policy_send_otp_email())
 
     if get_user_store().get_by_email(email) is not None:
-        raise HTTPException(409, detail="该邮箱已注册, 请直接登录")
+        # 不泄露邮箱存在性 — 与 login/send-otp 对齐: 静默返回 204, 不发 OTP。
+        # 真实用户若想登录, 走 login 链路即可; 攻击者无法用 send-otp 探测账户。
+        return None
     try:
         await send_otp(email, "register")
     except SMTPError as e:
@@ -111,7 +117,9 @@ async def register_verify(req: VerifyOTPRequest, request: Request) -> AuthRespon
     email = req.email.lower()
     store = get_user_store()
     if store.get_by_email(email) is not None:
-        raise HTTPException(409, detail="该邮箱已注册")
+        # 与 send-otp 对齐: 不暴露存在性, 用与无效 OTP 相同的 400 错误。
+        # (邮箱已注册时 send-otp 静默不发邮件 → 这里必然 OTP 不存在 → 仍走"验证码错误")
+        raise HTTPException(400, detail="验证码错误或已过期")
     try:
         verify_otp(email, "register", req.otp)
     except OTPInvalid as e:
@@ -123,8 +131,11 @@ async def register_verify(req: VerifyOTPRequest, request: Request) -> AuthRespon
 
     row = store.create(email)
     store.touch_last_login(row["id"])
-    user = to_user(store.get_by_id(row["id"]))
-    token = encode_token(user.id, user.email)
+    fresh = store.get_by_id(row["id"])
+    user = to_user(fresh)
+    token = encode_token(
+        user.id, user.email, password_version=int(fresh.get("password_version") or 0)
+    )
     return AuthResponse(token=token, user=user)
 
 
@@ -166,8 +177,11 @@ async def login_verify_otp(req: VerifyOTPRequest, request: Request) -> AuthRespo
         raise HTTPException(429, detail=str(e))
 
     store.touch_last_login(row["id"])
-    user = to_user(store.get_by_id(row["id"]))
-    token = encode_token(user.id, user.email)
+    fresh = store.get_by_id(row["id"])
+    user = to_user(fresh)
+    token = encode_token(
+        user.id, user.email, password_version=int(fresh.get("password_version") or 0)
+    )
     return AuthResponse(token=token, user=user)
 
 
@@ -192,21 +206,47 @@ async def login_password(
         raise error
 
     store.touch_last_login(row["id"])
-    user = to_user(store.get_by_id(row["id"]))
-    token = encode_token(user.id, user.email)
+    fresh = store.get_by_id(row["id"])
+    user = to_user(fresh)
+    token = encode_token(
+        user.id, user.email, password_version=int(fresh.get("password_version") or 0)
+    )
     return AuthResponse(token=token, user=user)
 
 
 # ---- 受保护端点 ---------------------------------------------------------
-@router.post("/me/set-password", status_code=204)
+@router.post("/me/set-password", response_model=AuthResponse)
 async def set_password(
     req: SetPasswordRequest,
     current_user: User = Depends(get_current_user),
-) -> None:
+) -> AuthResponse:
+    """改密接口 — 防 session-fixation 三道保险:
+
+    1. 已设过密码的用户必须传 current_password 校验 (防被盗 token 直接接管)
+    2. 改完自增 store.users.password_version, 让 *所有* 在用 token 立即作废
+    3. 返回新签的 token, 前端替换 localStorage; 旧 token 会被 get_current_user 401
+    """
+    store = get_user_store()
+    row = store.get_by_id(current_user.id)
+    if row is None:
+        raise HTTPException(401, detail="用户不存在")
+
+    existing_hash = row.get("password_hash") or ""
+    if existing_hash:
+        if not req.current_password:
+            raise HTTPException(400, detail="改密前必须提供当前密码")
+        if not verify_password(req.current_password, existing_hash):
+            raise HTTPException(400, detail="当前密码不正确")
+
     try:
-        get_user_store().update_password(current_user.id, hash_password(req.password))
+        new_pv = store.update_password(current_user.id, hash_password(req.password))
     except ValueError as e:
         raise HTTPException(400, detail=str(e))
+
+    fresh = store.get_by_id(current_user.id)
+    user = to_user(fresh)
+    new_token = encode_token(user.id, user.email, password_version=new_pv)
+    return AuthResponse(token=new_token, user=user)
 
 
 @router.get("/me", response_model=User)
@@ -225,9 +265,17 @@ async def update_settings(
 
 
 @router.post("/logout", status_code=204)
-async def logout(current_user: User = Depends(get_current_user)) -> None:
-    """无状态 JWT — 服务端无 session, 客户端清 token 即登出。
-
-    保留端点是为给前端一个 idempotent 端点 + 给将来的 token 黑名单留口子。
-    """
+async def logout(
+    current_user: User = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> None:
+    """服务端撤销当前 JWT — 把它的 jti 加入内存撤销表 (TTL = 原 exp), 防被盗 token 在 7d 内继续被用。"""
+    if credentials is None or not credentials.credentials:
+        return None
+    try:
+        payload = decode_token(credentials.credentials)
+    except TokenError:
+        # 解码失败的 token 不需要撤销 (本就 401), 端点保持 idempotent
+        return None
+    revoke_token(payload)
     return None

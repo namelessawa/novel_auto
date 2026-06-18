@@ -68,14 +68,21 @@ def _load_config() -> dict:
 
 
 def _get_or_create_runtime_secret() -> str:
-    """生成进程内随机 secret — fallback 当 config.json 没填 jwt_secret。
+    """生成进程内随机 secret — fallback 当 config.json/env 没填 jwt_secret。
 
-    缺点: 重启进程已签发的 token 立即失效。生产应在 config.json 显式设置。
+    缺点: 重启进程已签发的 token 立即失效。生产应在 ``JWT_SECRET`` env 或
+    ``config.json`` 显式设置。第一次生成时打 WARNING, 让运维注意到。
     """
     global _runtime_jwt_secret
     with _secret_lock:
         if _runtime_jwt_secret is None:
             _runtime_jwt_secret = secrets.token_urlsafe(64)
+            import logging
+            logging.getLogger(__name__).warning(
+                "[auth] JWT_SECRET 未设置 — 使用进程内随机 secret. 进程重启后"
+                "所有已签发 token 立即失效。生产请设置 JWT_SECRET env var 或"
+                "config.json auth.jwt_secret。"
+            )
         return _runtime_jwt_secret
 
 
@@ -106,7 +113,13 @@ def get_auth_config() -> AuthConfig:
             return cached[1]
 
     raw = _load_config().get("auth", {}) or {}
-    secret = raw.get("jwt_secret") or _get_or_create_runtime_secret()
+    # secret 优先级: env JWT_SECRET > config.json auth.jwt_secret > 进程内随机.
+    # 进程内随机是兜底, 进程重启时已签发 token 立即失效, 仅用于 dev / 临时部署。
+    secret = (
+        os.environ.get("JWT_SECRET", "").strip()
+        or raw.get("jwt_secret")
+        or _get_or_create_runtime_secret()
+    )
     cfg = AuthConfig(
         enabled=bool(raw.get("enabled", True)),
         jwt_secret=secret,

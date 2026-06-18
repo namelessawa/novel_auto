@@ -58,3 +58,7 @@ docs/iter/bench-matrix-*.json
 docs/iter/bench-matrix-*.md
 docs/iter/bench-m_*.json
 docs/iter/bench-m_*.md
+
+# Review 复盘临时产物 (extract_findings.py 的输出, 不入 git)
+scripts/findings.json
+scripts/findings.err

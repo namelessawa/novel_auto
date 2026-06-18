@@ -29,12 +29,23 @@ export default function NovelView({ novel, onAfterGenerated, onNavigate }) {
       // v2.24 — 同时拉 tick 驱动节 (主) 与 legacy 节 (测试栏产物). 按 (chapter, section)
       // 升序合并, 同 key 时 tick 驱动优先, legacy 退让 — 保证 v2.24 主路径渲染稳定,
       // 同时让旧数据不丢。
+      // 任一分支失败回落到空数据, 不阻塞整体渲染; 但保留 log 区分"空" vs "失败"
+      const _onFail = (name) => (e) => {
+        console.warn(`NovelView ${name} failed:`, e)
+        return null
+      }
       const [tickResp, legacyResp, mem, out, gph] = await Promise.all([
-        listTickSections().catch(() => ({ sections: [] })),
-        fetchSections().catch(() => ({ sections: [] })),
-        fetchMemory().catch(() => null),
-        fetchOutline().catch(() => null),
-        fetchGraph().catch(() => null),
+        listTickSections().catch((e) => {
+          console.warn('NovelView listTickSections failed:', e)
+          return { sections: [] }
+        }),
+        fetchSections().catch((e) => {
+          console.warn('NovelView fetchSections failed:', e)
+          return { sections: [] }
+        }),
+        fetchMemory().catch(_onFail('fetchMemory')),
+        fetchOutline().catch(_onFail('fetchOutline')),
+        fetchGraph().catch(_onFail('fetchGraph')),
       ])
       const tickList = tickResp.sections || []
       const legacyList = legacyResp.sections || []

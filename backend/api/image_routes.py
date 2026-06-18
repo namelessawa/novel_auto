@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from auth import User, get_current_user
+from middleware.url_safety import is_safe_public_url
 from nf_core import xfyun_image
 
 logger = logging.getLogger(__name__)
@@ -69,10 +70,14 @@ async def generate_image(
 
         # model 即讯飞 domain — 没填走 general; 新模型如 xopqwentti20b 必须填
         domain = (x_image_model or "").strip() or "general"
-        endpoint = (
-            (x_image_endpoint or "").strip()
-            or xfyun_image.XFYUN_DEFAULT_ENDPOINT
-        )
+        endpoint_raw = (x_image_endpoint or "").strip()
+        if endpoint_raw and not is_safe_public_url(endpoint_raw):
+            # SSRF 防御: 拒绝指向内网/保留地址的 endpoint
+            raise HTTPException(
+                status_code=400,
+                detail="X-Image-Endpoint 必须是公网 https://... 或 wss://... 地址",
+            )
+        endpoint = endpoint_raw or xfyun_image.XFYUN_DEFAULT_ENDPOINT
 
         try:
             b64 = await xfyun_image.generate_image(

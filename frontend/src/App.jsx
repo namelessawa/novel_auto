@@ -107,20 +107,23 @@ function AppShell() {
   const [activeNovelId, setActiveNovelId] = useState(null)
   const [hoveredNovelId, setHoveredNovelId] = useState(null)
 
+  // refreshStats 不能依赖 activeNovelId — 否则切小说会重建 callback, 触发
+  // 所有 useEffect(deps=[refreshStats]) 的 unmount/remount → 整组事件监听器 + 拉数据
+  // 重新挂载. 用 setActiveNovelId 的 updater form 读最新值, 切断对 state 的依赖。
   const refreshStats = useCallback(async () => {
     if (!hasToken) return
     try {
       const data = await fetchStats()
       setStats(data)
       setBackendOnline(true)
-      if (data.active_novel_id && !activeNovelId) {
-        setActiveNovelId(data.active_novel_id)
+      if (data.active_novel_id) {
+        setActiveNovelId((prev) => prev || data.active_novel_id)
       }
     } catch (err) {
       console.error('Failed to fetch stats:', err)
       setBackendOnline(false)
     }
-  }, [activeNovelId, hasToken])
+  }, [hasToken])
 
   const refreshNovels = useCallback(async () => {
     if (!hasToken) return
