@@ -14,6 +14,7 @@ from agents.quality_checks import (
     check_ai_cliche_blacklist,
     check_cliche_blacklist,
     check_opening_repetition,
+    check_prose_dynamics,
     check_summary_ending,
     check_word_repetition,
     run_deterministic_checks,
@@ -682,3 +683,73 @@ def test_critic_enable_llm_env_robust_parsing(monkeypatch) -> None:
     for v in cases_on:
         monkeypatch.setenv("CRITIC_ENABLE_LLM", v)
         assert ENABLE_LLM_CRITIC() is True, f"{v!r} 应该启用 critic"
+
+
+# ---------------------------------------------------------------------------
+# Phase 6-C — check_prose_dynamics 接入
+# ---------------------------------------------------------------------------
+#
+# 单元只测 wrapper 行为: env kill switch / trigger 转换 / [prose_dynamics]
+# evidence 前缀 / run_deterministic_checks 集成可达性. prose_dynamics 内部
+# 检测精度归 test_prose_dynamics.py 19 个用例, 这里不重复.
+
+
+_PROSE_HEALTHY_SAMPLE = (
+    "酸雨落了整夜。天亮时没停。"
+    "铁影城的屋顶在雾中只露出轮廓, 像一排生锈的锯齿。"
+    "街巷窄, 两面高墙夹着, 雨水沿墙根淌下来, 颜色发黄, "
+    "碰到铁栏杆就嘶嘶响, 冒一点白烟。"
+    "栏杆上原本有漆, 早被蚀光了, 露出底下坑洼的铸铁。"
+    "玄烛低头走过赤铜巷。"
+)
+
+# 5 句全 4 字, stddev=0 — 触发 prose_dynamics E1 (绝对阈值 stddev<6.0).
+# 注意: quality_checks 老 check_sentence_rhythm 也会触发 (相对 std/mean<0.25),
+# 但 run_deterministic_checks 不去重, 由 _merge_triggers 兜底.
+_PROSE_FLAT_RHYTHM_SAMPLE = "他来了。她笑了。风停了。门开了。雪落了。猫醒了。"
+
+# 抽象形容词密集, 无 concrete noun — 触发 D6.
+_PROSE_ABSTRACT_SAMPLE = (
+    "宏伟的山脉, 古老的塔楼, 神秘的雾霭, 璀璨的星辰, "
+    "辉煌的殿堂, 灿烂的光华, 壮丽的景象, 庄严的气息."
+)
+
+
+def test_check_prose_dynamics_healthy_no_trigger() -> None:
+    """Phase 5-J healthy 样本两 dim 都不触发."""
+    triggers = check_prose_dynamics(_PROSE_HEALTHY_SAMPLE)
+    assert triggers == []
+
+
+def test_check_prose_dynamics_flat_rhythm_triggers_e1() -> None:
+    """全 4 字句样本触发 prose_dynamics E1, evidence 带 [prose_dynamics] 前缀."""
+    triggers = check_prose_dynamics(_PROSE_FLAT_RHYTHM_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "E1" in codes
+    e1 = next(t for t in triggers if t.code == "E1")
+    assert e1.severity == "medium"
+    assert "[prose_dynamics]" in e1.evidence
+
+
+def test_check_prose_dynamics_abstract_triggers_d6() -> None:
+    """全抽象形容词样本触发 D6."""
+    triggers = check_prose_dynamics(_PROSE_ABSTRACT_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "D6" in codes
+    d6 = next(t for t in triggers if t.code == "D6")
+    assert d6.severity == "medium"
+    assert "[prose_dynamics]" in d6.evidence
+
+
+def test_check_prose_dynamics_env_kill_switch(monkeypatch) -> None:
+    """PROSE_DYNAMICS_ENABLE=0 时不触发, 即使样本会命中 D6."""
+    monkeypatch.setenv("PROSE_DYNAMICS_ENABLE", "0")
+    triggers = check_prose_dynamics(_PROSE_ABSTRACT_SAMPLE)
+    assert triggers == []
+
+
+def test_run_deterministic_checks_includes_d6() -> None:
+    """D6 通过 run_deterministic_checks 主入口可达 — 接入闭环验证."""
+    triggers = run_deterministic_checks(_PROSE_ABSTRACT_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "D6" in codes

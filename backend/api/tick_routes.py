@@ -225,7 +225,13 @@ async def list_open_loops(
 ) -> dict:
     ts = runtime.tick_state
     loops = ts.get_open_loops(min_urgency=min_urgency, top_k=top_k)
-    return {"count": len(loops), "loops": [l.model_dump(mode="json") for l in loops]}
+    return {
+        "count": len(loops),
+        "loops": [l.model_dump(mode="json") for l in loops],
+        # Phase 6-B reader sidebar — 历史累计 close 事件计数 (无 closed_loops
+        # 列表, 关闭即 pop). 用于 Reader 显示 "已关 N / 当前开 M" 平衡感.
+        "closed_total": ts.loops_closed_total,
+    }
 
 
 @router.post("/open-loops")

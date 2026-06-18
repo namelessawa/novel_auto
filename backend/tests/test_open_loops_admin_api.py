@@ -138,3 +138,30 @@ def test_action_patterns_last_n_ticks_bounded(client) -> None:
 def test_style_anchors_top_k_bounded(client) -> None:
     c, _ = client
     assert c.get("/api/tick/style-anchors", params={"top_k": 101}).status_code == 422
+
+
+# ---- Phase 6-B reader sidebar — GET /open-loops 暴露 closed_total -----------
+
+
+def test_get_open_loops_includes_closed_total_zero_initially(client) -> None:
+    """空 tick_state — closed_total 字段存在且 = 0 (前端无 undefined 风险)."""
+    c, _ = client
+    r = c.get("/api/tick/open-loops")
+    assert r.status_code == 200
+    body = r.json()
+    assert "closed_total" in body
+    assert body["closed_total"] == 0
+    assert body["count"] == 0
+    assert body["loops"] == []
+
+
+def test_get_open_loops_closed_total_tracks_deletes(client) -> None:
+    """DELETE 一个 loop 后, closed_total 涨到 1."""
+    c, ts = client
+    c.post("/api/tick/open-loops", json=_loop_payload("loop_z", urgency=3))
+    assert c.get("/api/tick/open-loops").json()["closed_total"] == 0
+    r_del = c.delete("/api/tick/open-loops/loop_z")
+    assert r_del.status_code == 200
+    body = c.get("/api/tick/open-loops").json()
+    assert body["closed_total"] == 1
+    assert body["count"] == 0

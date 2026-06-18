@@ -9,6 +9,7 @@
 * A5 / A7 — 开头句式重复 (需要外部状态)
 * A6 — 段末"总结性独白"启发式
 * E1 — 句长标准差过低
+* D6 — 抽象描写过密 (Phase 6-C, lite, 通过 quality_metrics/prose_dynamics)
 
 LLM-based 的语义判定 (B/C/F/G 中的多数项) 留给 NarrativeCritic agent。
 
@@ -27,6 +28,7 @@ from agents.quality_spec import (
     AI_CLICHE_BLACKLIST,
     CLICHE_BLACKLIST,
 )
+from nf_core.env_helpers import env_bool
 
 
 @dataclass(frozen=True)
@@ -359,6 +361,58 @@ def check_sentence_rhythm(text: str) -> list[DeterministicTrigger]:
 
 
 # ---------------------------------------------------------------------------
+# Phase 6-C prose dynamics 接入 (E1 双保险 + D6 lite)
+# ---------------------------------------------------------------------------
+#
+# `quality_metrics/prose_dynamics.py` 校准过 Phase 6-A.2 271 narratives, E1
+# 用绝对 stddev<6.0 (vs 老 check_sentence_rhythm 的相对 std/mean<0.25),
+# D6 是全新的 abstract:concrete 启发式. 两者都走 medium severity.
+#
+# 接入策略 — 不替换老 E1, 双保险共存. NarrativeCritic._merge_triggers 按
+# code dedupe, 同 medium 保留先入, 所以老 quality_checks E1 evidence 优先,
+# 新 prose_dynamics E1 仅在老的没触发时显形.
+#
+# env knob PROSE_DYNAMICS_ENABLE 默认 True, 0 时跳过回到 Phase 6-B 行为.
+
+
+def check_prose_dynamics(text: str) -> list[DeterministicTrigger]:
+    """E1 (abs-stddev) + D6 (abstract:concrete lite) det checks.
+
+    委托给 ``quality_metrics.prose_dynamics`` — 这里只把 triggered 状态
+    转成 ``DeterministicTrigger`` 列表, 接入 ``run_deterministic_checks``.
+
+    返回空列表 if:
+    * env ``PROSE_DYNAMICS_ENABLE=0`` (kill switch)
+    * 文本无内容 / 太短 (prose_dynamics 内部判定)
+    * 两个 dim 均未触发
+    """
+    if not env_bool("PROSE_DYNAMICS_ENABLE", default=True):
+        return []
+    # Lazy import — quality_metrics 是项目根级包, sys.path 由入口脚本加.
+    from quality_metrics.prose_dynamics import prose_dynamics_report
+
+    report = prose_dynamics_report(text)
+    triggers: list[DeterministicTrigger] = []
+    if report.e1_triggered:
+        triggers.append(
+            DeterministicTrigger(
+                code="E1",
+                severity="medium",
+                evidence=f"[prose_dynamics] {report.e1_evidence}",
+            )
+        )
+    if report.d6_triggered:
+        triggers.append(
+            DeterministicTrigger(
+                code="D6",
+                severity="medium",
+                evidence=f"[prose_dynamics] {report.d6_evidence}",
+            )
+        )
+    return triggers
+
+
+# ---------------------------------------------------------------------------
 # 开头句式相似性 (A5/A7) — 需要外部状态
 # ---------------------------------------------------------------------------
 
@@ -417,6 +471,7 @@ def run_deterministic_checks(
     out.extend(check_word_repetition(text, exempt_words=exempt_words))
     out.extend(check_summary_ending(text))
     out.extend(check_sentence_rhythm(text))
+    out.extend(check_prose_dynamics(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -455,6 +510,7 @@ __all__ = [
     "check_word_repetition",
     "check_summary_ending",
     "check_sentence_rhythm",
+    "check_prose_dynamics",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",

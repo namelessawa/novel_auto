@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { fetchTickNarratives } from '../services/api'
+import {
+  fetchTickNarratives,
+  fetchTickOpenLoops,
+  fetchCharacterStates,
+} from '../services/api'
 
 /**
  * Phase 6-B — long-range reader view.
@@ -10,13 +14,15 @@ import { fetchTickNarratives } from '../services/api'
  *
  * Layout:
  * - Left: tick index (clickable list of ticks that have content)
- * - Right: continuous reader pane showing selected window
+ * - Middle: continuous reader pane showing selected window
+ * - Right: side panels — open loops + character arc snapshot
  * - Top controls: refresh + jump-to-tick range
  *
  * What this is NOT:
- * - Not the arc timeline view (TBD, Phase 6-B follow-up)
+ * - Not the arc *timeline* view (current snapshot only — historical arc
+ *   trail needs snapshot replay, deferred).
  * - Not the multimedia reader (multimodal_routes already exposes per-section
- *   bundles; reader-with-media is a separate flow)
+ *   bundles; reader-with-media is a separate flow).
  */
 export default function ReaderView({ novel }) {
   const [loading, setLoading] = useState(false)
@@ -25,6 +31,10 @@ export default function ReaderView({ novel }) {
   const [startTick, setStartTick] = useState(0)
   const [endTick, setEndTick] = useState(0)
   const [selectedTick, setSelectedTick] = useState(null)
+  // Phase 6-B right sidebar — current open loops + character arc snapshot.
+  const [loopsData, setLoopsData] = useState({ loops: [], count: 0, closed_total: 0 })
+  const [arcStates, setArcStates] = useState([])
+  const [sideLoading, setSideLoading] = useState(false)
 
   const loadNarratives = async (overrides = {}) => {
     setLoading(true)
@@ -47,8 +57,31 @@ export default function ReaderView({ novel }) {
     }
   }
 
+  const loadSidePanels = async () => {
+    setSideLoading(true)
+    try {
+      const [loops, chars] = await Promise.all([
+        fetchTickOpenLoops(50),
+        fetchCharacterStates(),
+      ])
+      setLoopsData({
+        loops: loops?.loops ?? [],
+        count: loops?.count ?? 0,
+        closed_total: loops?.closed_total ?? 0,
+      })
+      setArcStates(chars?.states ?? [])
+    } catch {
+      // 侧栏失败不阻塞阅读 — 静默吞掉 (主 error banner 留给 narratives 失败).
+      setLoopsData({ loops: [], count: 0, closed_total: 0 })
+      setArcStates([])
+    } finally {
+      setSideLoading(false)
+    }
+  }
+
   useEffect(() => {
     loadNarratives()
+    loadSidePanels()
     // re-fetch when novel id changes
   }, [novel?.id])
 
@@ -104,7 +137,10 @@ export default function ReaderView({ novel }) {
             <button
               type="button"
               className="btn"
-              onClick={() => loadNarratives()}
+              onClick={() => {
+                loadNarratives()
+                loadSidePanels()
+              }}
               disabled={loading}
             >
               {loading ? (
@@ -122,7 +158,7 @@ export default function ReaderView({ novel }) {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 300px', gap: 12, flex: 1, minHeight: 0 }}>
         <div className="card" style={{ padding: 8, overflowY: 'auto' }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
             Tick 索引 ({data.narratives.length})
@@ -181,7 +217,148 @@ export default function ReaderView({ novel }) {
             </div>
           )}
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
+          <ArcSnapshotPanel arcs={arcStates} loading={sideLoading} />
+          <OpenLoopsPanel
+            loops={loopsData.loops}
+            count={loopsData.count}
+            closedTotal={loopsData.closed_total}
+            loading={sideLoading}
+          />
+        </div>
       </div>
+    </div>
+  )
+}
+
+function ArcSnapshotPanel({ arcs, loading }) {
+  return (
+    <div className="card" style={{ padding: 10, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
+        <i className="fas fa-route" style={{ marginRight: 4 }}></i>
+        角色弧线 (current snapshot · {arcs.length})
+      </div>
+      {loading && arcs.length === 0 && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>加载中…</div>
+      )}
+      {!loading && arcs.length === 0 && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>(无角色)</div>
+      )}
+      {arcs.map((c) => {
+        const progress = Math.max(0, Math.min(1, Number(c.arc_progress) || 0))
+        return (
+          <div
+            key={c.character_id || c.name}
+            style={{
+              marginBottom: 8,
+              paddingBottom: 8,
+              borderBottom: '1px solid var(--border-soft, rgba(255,255,255,0.06))',
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600 }}>
+              {c.name}
+              {c.arc_stage && (
+                <span
+                  style={{
+                    marginLeft: 6,
+                    fontSize: 11,
+                    fontWeight: 400,
+                    padding: '1px 6px',
+                    borderRadius: 4,
+                    background: 'var(--accent-purple-soft, rgba(139,92,246,0.18))',
+                    color: 'var(--accent-purple, #8b5cf6)',
+                  }}
+                >
+                  {c.arc_stage}
+                </span>
+              )}
+            </div>
+            {c.arc_goal && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                目标:{c.arc_goal}
+              </div>
+            )}
+            <div
+              style={{
+                marginTop: 4,
+                height: 4,
+                background: 'var(--border-soft, rgba(255,255,255,0.08))',
+                borderRadius: 2,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.round(progress * 100)}%`,
+                  height: '100%',
+                  background: 'var(--accent-purple, #8b5cf6)',
+                }}
+              />
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              {Math.round(progress * 100)}%
+              {c.arc_stage_entered_tick != null && (
+                <span style={{ marginLeft: 6 }}>
+                  · 进入 stage @ tick {c.arc_stage_entered_tick}
+                </span>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function OpenLoopsPanel({ loops, count, closedTotal, loading }) {
+  const urgencyColor = (u) => {
+    if (u >= 8) return 'var(--accent-rose, #f43f5e)'
+    if (u >= 5) return 'var(--accent-amber, #f59e0b)'
+    return 'var(--text-muted)'
+  }
+  return (
+    <div className="card" style={{ padding: 10, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
+        <i className="fas fa-link" style={{ marginRight: 4 }}></i>
+        伏笔 · 开 {count} / 累计已关 {closedTotal}
+      </div>
+      {loading && loops.length === 0 && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>加载中…</div>
+      )}
+      {!loading && loops.length === 0 && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>(无 open loop)</div>
+      )}
+      {loops.map((l) => (
+        <div
+          key={l.id}
+          style={{
+            marginBottom: 6,
+            paddingBottom: 6,
+            borderBottom: '1px solid var(--border-soft, rgba(255,255,255,0.06))',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <span
+              style={{
+                fontWeight: 600,
+                color: urgencyColor(l.urgency || 0),
+                minWidth: 24,
+              }}
+            >
+              u{l.urgency ?? 0}
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              [{l.type || '?'}]
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              @{l.opened_tick}
+            </span>
+          </div>
+          <div style={{ fontSize: 12, marginTop: 2, lineHeight: 1.4 }}>
+            {l.description}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
