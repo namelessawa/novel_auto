@@ -220,7 +220,34 @@ def get_llm_config() -> dict:
     }
 
 
-_VALID_PROVIDERS = ("deepseek", "mimo", "custom")
+def _load_known_provider_keys() -> tuple[str, ...]:
+    """从主项目 ``core/config.py:_PROVIDER_CATALOG`` 派生合法 provider 集合.
+
+    用 importlib 复用 ``_try_load_main_project_llm`` 的隔离加载模式 (不污染
+    sys.modules['core']). 失败时兜底 3 个历史 provider, 避免 update_llm_config
+    在 core/config.py 不可读时彻底拒绝写入. 模块加载时一次性派生, 之后冻结 —
+    catalog 是源码硬编码, 无 runtime 增删.
+    """
+    import importlib.util
+
+    config_path = os.path.join(_MAIN_PROJECT_ROOT, "core", "config.py")
+    if not os.path.isfile(config_path):
+        return ("deepseek", "mimo", "custom")
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "_main_project_config_provider_keys", config_path
+        )
+        if spec is None or spec.loader is None:
+            return ("deepseek", "mimo", "custom")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        keys = tuple(mod.PROVIDERS.keys())  # type: ignore[attr-defined]
+        return keys if keys else ("deepseek", "mimo", "custom")
+    except Exception:
+        return ("deepseek", "mimo", "custom")
+
+
+_VALID_PROVIDERS = _load_known_provider_keys()
 
 
 def update_llm_config(

@@ -80,7 +80,7 @@ def test_provider_switch_writes_env(restore_env_provider):
 
 @pytest.mark.parametrize("p", list(_VALID_PROVIDERS))
 def test_all_valid_providers_accepted(restore_env_provider, p):
-    """3 个合法 provider 都能写入。"""
+    """catalog 全部合法 provider 都能写入 (v2.45 扩到 23 个)."""
     update_llm_config(provider=p)
     assert os.environ["LLM_PROVIDER"] == p
 
@@ -92,10 +92,14 @@ def test_provider_case_normalized(restore_env_provider):
 
 
 def test_invalid_provider_rejected(restore_env_provider):
-    """非法 provider 抛 ValueError, 不污染 os.environ。"""
+    """非法 provider 抛 ValueError, 不污染 os.environ。
+
+    用 catalog 不存在的伪 ID. 此前用 'openai' 当反例, v2.45 catalog 扩展后
+    openai 已是合法 provider, 故改为 sentinel.
+    """
     os.environ["LLM_PROVIDER"] = "deepseek"
     with pytest.raises(ValueError, match="非法"):
-        update_llm_config(provider="openai")
+        update_llm_config(provider="not_a_real_provider_xyz")
     assert os.environ["LLM_PROVIDER"] == "deepseek"
 
 

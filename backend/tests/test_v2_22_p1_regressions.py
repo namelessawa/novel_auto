@@ -100,7 +100,8 @@ def test_invalid_provider_does_not_partial_write(
             api_key="sk-leaked",
             base_url="https://attacker.example.com",
             model="evil-model",
-            provider="openai",  # 非法
+            # v2.45 — 此前用 "openai" 当反例, catalog 扩展后 openai 已合法; 改 sentinel.
+            provider="not_a_real_provider_xyz",
         )
 
     after = json.loads(isolate_config_json.read_text(encoding="utf-8"))

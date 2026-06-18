@@ -35,13 +35,17 @@ TEMP_DIR.mkdir(exist_ok=True)
 # LLM 提供商配置（多提供商抽象）
 # ============================================================================
 #
-# 通过 `LLM_PROVIDER` 切换默认提供商：
-#   - "deepseek"  → 使用 DeepSeek 官方 API
-#   - "mimo"      → 使用小米 MiMo API（OpenAI 兼容）
-#   - "custom"    → 使用 CUSTOM_* 系列环境变量自定义提供商
+# 通过 `LLM_PROVIDER` 切换默认提供商。catalog 驱动 — 加一家 provider 只改
+# `_PROVIDER_CATALOG` 一行, PROVIDERS / _PROVIDER_PUBLIC_META / _FALLBACK_ORDER
+# 自动派生。所有 catalog 内 provider 都是 **OpenAI 兼容**(Bearer + base_url),
+# 现有 OpenAI SDK (`backend/nf_core/llm_client.py`) 直接调.
 #
-# 每个提供商分别用独立的环境变量保存凭据，运行时 `get_active_llm_config()`
-# 会返回当前生效的 `{api_key, base_url, model, max_tokens, temperature, timeout}`。
+# 非 OpenAI 兼容的 provider (Anthropic Messages API / Gemini 原生 / 百度文心
+# v1 / 腾讯混元 / 智谱 v3 JWT 等) 不在此 catalog — 可走 one-api 网关转 OpenAI
+# 兼容, 或在 custom provider 填 1 个外部网关 endpoint.
+#
+# 运行时 `get_active_llm_config()` 返回当前生效的
+# `{provider, label, api_key, base_url, model, max_tokens, temperature, timeout}`.
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "deepseek").strip().lower()
 
@@ -50,47 +54,79 @@ DEFAULT_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", os.getenv("DEEPSEEK_MAX_TOK
 DEFAULT_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", os.getenv("DEEPSEEK_TEMPERATURE", "0.7")))
 DEFAULT_TIMEOUT = int(os.getenv("LLM_TIMEOUT", os.getenv("DEEPSEEK_TIMEOUT", "120")))
 
-# --- DeepSeek ---------------------------------------------------------------
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
-# --- MiMo（小米）-----------------------------------------------------------
-MIMO_API_KEY = os.getenv("MIMO_API_KEY", "")
-MIMO_BASE_URL = os.getenv("MIMO_BASE_URL", "https://token-plan-cn.xiaomimimo.com/v1")
-MIMO_MODEL = os.getenv("MIMO_MODEL", "mimo-chat")
+# Provider catalog — (key, label, default_base_url, default_model, env_prefix).
+# env_prefix=PREFIX → 读取 PREFIX_API_KEY / PREFIX_BASE_URL / PREFIX_MODEL.
+# default base_url / model 是用户没填 env 时的合理默认 (跟官方文档对齐).
+#
+# 排序: 国内主力 → 海外主力 → custom 兜底.
+_PROVIDER_CATALOG: tuple[tuple[str, str, str, str, str], ...] = (
+    # ─── 已有 (历史 default) ────────────────────────────────────────────
+    ("deepseek",    "DeepSeek",                          "https://api.deepseek.com/v1",                          "deepseek-chat",                                       "DEEPSEEK"),
+    ("mimo",        "MiMo (小米)",                       "https://token-plan-cn.xiaomimimo.com/v1",              "mimo-chat",                                           "MIMO"),
+    # ─── 国内 OpenAI 兼容 ─────────────────────────────────────────────
+    ("qwen",        "通义千问 (DashScope OpenAI 兼容)",   "https://dashscope.aliyuncs.com/compatible-mode/v1",    "qwen-plus",                                           "QWEN"),
+    ("zhipu",       "智谱 GLM",                          "https://open.bigmodel.cn/api/paas/v4",                 "glm-4-plus",                                          "ZHIPU"),
+    ("moonshot",    "Moonshot Kimi",                     "https://api.moonshot.cn/v1",                           "moonshot-v1-32k",                                     "MOONSHOT"),
+    ("baidu",       "百度千帆 v2 (OpenAI 兼容)",          "https://qianfan.baidubce.com/v2",                      "ernie-4.0-turbo-128k",                                "BAIDU"),
+    ("ark",         "火山引擎方舟 (豆包)",                 "https://ark.cn-beijing.volces.com/api/v3",             "doubao-pro-32k",                                      "ARK"),
+    ("siliconflow", "SiliconFlow (硅基流动)",             "https://api.siliconflow.cn/v1",                        "Qwen/Qwen2.5-72B-Instruct",                           "SILICONFLOW"),
+    ("stepfun",     "阶跃星辰 step",                      "https://api.stepfun.com/v1",                           "step-1-256k",                                         "STEPFUN"),
+    ("minimax",     "MiniMax",                           "https://api.minimax.chat/v1",                          "abab6.5-chat",                                        "MINIMAX"),
+    ("baichuan",    "百川 Baichuan",                     "https://api.baichuan-ai.com/v1",                       "Baichuan4-Turbo",                                     "BAICHUAN"),
+    ("lingyiwanwu", "零一万物 (Yi)",                      "https://api.lingyiwanwu.com/v1",                       "yi-large",                                            "LINGYIWANWU"),
+    ("ai360",       "360 智脑",                          "https://api.360.cn/v1",                                "360gpt-pro",                                          "AI360"),
+    # ─── 海外 OpenAI 兼容 ─────────────────────────────────────────────
+    ("openai",      "OpenAI",                            "https://api.openai.com/v1",                            "gpt-4o-mini",                                         "OPENAI"),
+    ("xai",         "xAI Grok",                          "https://api.x.ai/v1",                                  "grok-2-latest",                                       "XAI"),
+    ("groq",        "Groq",                              "https://api.groq.com/openai/v1",                       "llama-3.3-70b-versatile",                             "GROQ"),
+    ("openrouter",  "OpenRouter",                        "https://openrouter.ai/api/v1",                         "openai/gpt-4o-mini",                                  "OPENROUTER"),
+    ("together",    "Together AI",                       "https://api.together.xyz/v1",                          "meta-llama/Llama-3.3-70B-Instruct-Turbo",             "TOGETHER"),
+    ("fireworks",   "Fireworks AI",                      "https://api.fireworks.ai/inference/v1",                "accounts/fireworks/models/llama-v3p3-70b-instruct",   "FIREWORKS"),
+    ("mistral",     "Mistral La Plateforme",             "https://api.mistral.ai/v1",                            "mistral-large-latest",                                "MISTRAL"),
+    ("novita",      "Novita AI",                         "https://api.novita.ai/v3/openai",                      "meta-llama/llama-3.3-70b-instruct",                   "NOVITA"),
+    ("gemini_oai",  "Google Gemini (OpenAI 兼容层)",       "https://generativelanguage.googleapis.com/v1beta/openai",  "gemini-1.5-flash",                                  "GEMINI_OAI"),
+    # ─── 兜底 ─────────────────────────────────────────────────────────
+    ("custom",      "Custom (任意 OpenAI 兼容)",          "",                                                     "",                                                    "CUSTOM"),
+)
 
-# --- Custom（任意 OpenAI 兼容端点）-----------------------------------------
-CUSTOM_API_KEY = os.getenv("CUSTOM_API_KEY", "")
-CUSTOM_BASE_URL = os.getenv("CUSTOM_BASE_URL", "")
-CUSTOM_MODEL = os.getenv("CUSTOM_MODEL", "")
 
-# 已知提供商注册表：name → {api_key, base_url, model}
-PROVIDERS = {
-    "deepseek": {
-        "label": "DeepSeek",
-        "api_key": DEEPSEEK_API_KEY,
-        "base_url": DEEPSEEK_BASE_URL,
-        "model": DEEPSEEK_MODEL,
-    },
-    "mimo": {
-        "label": "MiMo (小米)",
-        "api_key": MIMO_API_KEY,
-        "base_url": MIMO_BASE_URL,
-        "model": MIMO_MODEL,
-    },
-    "custom": {
-        "label": "Custom",
-        "api_key": CUSTOM_API_KEY,
-        "base_url": CUSTOM_BASE_URL,
-        "model": CUSTOM_MODEL,
-    },
-}
+def _build_provider(key: str, label: str, default_base_url: str, default_model: str, env_prefix: str) -> dict:
+    """从 catalog 一行 + env 派生 provider 配置 dict.
+
+    env_prefix=ARK → 读 ARK_API_KEY / ARK_BASE_URL / ARK_MODEL, 留空时回落到
+    default_base_url / default_model. custom 类 provider (空 default) 不会
+    通过 _complete() 校验, 自动跳过 fallback.
+    """
+    return {
+        "label": label,
+        "api_key": os.getenv(f"{env_prefix}_API_KEY", ""),
+        "base_url": os.getenv(f"{env_prefix}_BASE_URL", default_base_url),
+        "model": os.getenv(f"{env_prefix}_MODEL", default_model),
+        "env_prefix": env_prefix,
+    }
 
 
-# 备用 provider 搜索顺序 — 当 active provider 缺 api_key 时, 按这个顺序找
-# 第一个 endpoint + model + api_key 都齐的 provider 顶上。
-_FALLBACK_ORDER = ("deepseek", "mimo", "custom")
+# Catalog → PROVIDERS dict (运行时唯一权威, 保持 key→entry 字典契约不变)
+PROVIDERS = {spec[0]: _build_provider(*spec) for spec in _PROVIDER_CATALOG}
+
+# 备用 provider 搜索顺序 — 当 active provider 缺 api_key 时按顺序找第一个
+# api_key + base_url + model 都齐的 provider 顶上. catalog 顺序 = fallback 顺序
+# (国内主力优先, custom 最后兜底).
+_FALLBACK_ORDER = tuple(spec[0] for spec in _PROVIDER_CATALOG)
+
+# --- Backward compat: 历史顶层常量 (judge.py / 旧 scripts 直读 env 名时仍可用) -
+# `os.getenv` 这些常量在 import 时一次性 snapshot, runtime monkeypatch.setenv
+# 后不会变 — 跟 _PROVIDER_CATALOG 解析时机一致, 不引入新约束.
+DEEPSEEK_API_KEY = PROVIDERS["deepseek"]["api_key"]
+DEEPSEEK_BASE_URL = PROVIDERS["deepseek"]["base_url"]
+DEEPSEEK_MODEL = PROVIDERS["deepseek"]["model"]
+MIMO_API_KEY = PROVIDERS["mimo"]["api_key"]
+MIMO_BASE_URL = PROVIDERS["mimo"]["base_url"]
+MIMO_MODEL = PROVIDERS["mimo"]["model"]
+CUSTOM_API_KEY = PROVIDERS["custom"]["api_key"]
+CUSTOM_BASE_URL = PROVIDERS["custom"]["base_url"]
+CUSTOM_MODEL = PROVIDERS["custom"]["model"]
 
 
 def get_active_llm_config() -> dict:
@@ -266,11 +302,10 @@ def validate_api_keys():
     return warnings
 
 
-# 公开元数据注册表 — 不含 api_key，给展示/日志层使用。
+# 公开元数据注册表 — 不含 api_key，给展示/日志层使用。catalog 自动派生.
 _PROVIDER_PUBLIC_META = {
-    "deepseek": {"label": "DeepSeek", "endpoint": DEEPSEEK_BASE_URL, "model": DEEPSEEK_MODEL},
-    "mimo": {"label": "MiMo (小米)", "endpoint": MIMO_BASE_URL, "model": MIMO_MODEL},
-    "custom": {"label": "Custom", "endpoint": CUSTOM_BASE_URL, "model": CUSTOM_MODEL},
+    key: {"label": cfg["label"], "endpoint": cfg["base_url"], "model": cfg["model"]}
+    for key, cfg in PROVIDERS.items()
 }
 
 
@@ -286,12 +321,8 @@ def _safe_summary(_active: dict | None = None) -> dict:
     if not meta.get("endpoint") or not meta.get("model"):
         provider = "deepseek"
         meta = _PROVIDER_PUBLIC_META["deepseek"]
-    # 凭据存在性 → boolean，丢弃凭据内容
-    _key_lookup = {
-        "deepseek": DEEPSEEK_API_KEY,
-        "mimo": MIMO_API_KEY,
-        "custom": CUSTOM_API_KEY,
-    }
+    # 凭据存在性 → boolean，丢弃凭据内容. catalog 自动派生.
+    _key_lookup = {key: cfg["api_key"] for key, cfg in PROVIDERS.items()}
     has_credential = bool(_key_lookup.get(provider))
     return {
         "label": meta["label"],

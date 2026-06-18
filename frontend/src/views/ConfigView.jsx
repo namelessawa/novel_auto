@@ -15,12 +15,16 @@ import { showToast } from '../utils/toast'
 //
 // 都用 schema 驱动的 PROVIDERS 表渲染 — 加一家新供应商只改这张表.
 
+// Schema 驱动 — 跟 backend `core/config.py:_PROVIDER_CATALOG` 同步.
+// 加 provider = 加一个 entry. 全部 OpenAI 兼容(Bearer + base_url),
+// 非兼容(Anthropic Messages / Gemini 原生等) 走 custom + one-api 网关.
 const TEXT_LLM_PROVIDERS = {
+  // 历史 default
   deepseek: {
     label: 'DeepSeek',
     fields: [
       { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' },
-      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.deepseek.com' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.deepseek.com/v1' },
       { name: 'model', label: 'Model', type: 'text', placeholder: 'deepseek-chat' },
     ],
   },
@@ -32,11 +36,174 @@ const TEXT_LLM_PROVIDERS = {
       { name: 'model', label: 'Model', type: 'text', placeholder: 'mimo-v2.5-pro' },
     ],
   },
-  custom: {
-    label: '自定义 OpenAI 兼容',
+  // 国内 OpenAI 兼容
+  qwen: {
+    label: '通义千问 (DashScope OpenAI 兼容)',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'qwen-plus / qwen-max / qwen-turbo' },
+    ],
+  },
+  zhipu: {
+    label: '智谱 GLM',
     fields: [
       { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
-      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://open.bigmodel.cn/api/paas/v4' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'glm-4-plus / glm-4-flash' },
+    ],
+  },
+  moonshot: {
+    label: 'Moonshot Kimi',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.moonshot.cn/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'moonshot-v1-32k / moonshot-v1-128k' },
+    ],
+  },
+  baidu: {
+    label: '百度千帆 v2',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'bce-v3/...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://qianfan.baidubce.com/v2' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'ernie-4.0-turbo-128k' },
+    ],
+  },
+  ark: {
+    label: '火山引擎方舟 (豆包)',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://ark.cn-beijing.volces.com/api/v3' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'doubao-pro-32k / coding-v3' },
+    ],
+  },
+  siliconflow: {
+    label: 'SiliconFlow (硅基流动)',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.siliconflow.cn/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'Qwen/Qwen2.5-72B-Instruct' },
+    ],
+  },
+  stepfun: {
+    label: '阶跃星辰 step',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.stepfun.com/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'step-1-256k / step-2-16k' },
+    ],
+  },
+  minimax: {
+    label: 'MiniMax',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.minimax.chat/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'abab6.5-chat' },
+    ],
+  },
+  baichuan: {
+    label: '百川 Baichuan',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.baichuan-ai.com/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'Baichuan4-Turbo' },
+    ],
+  },
+  lingyiwanwu: {
+    label: '零一万物 (Yi)',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.lingyiwanwu.com/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'yi-large / yi-medium' },
+    ],
+  },
+  ai360: {
+    label: '360 智脑',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.360.cn/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: '360gpt-pro' },
+    ],
+  },
+  // 海外 OpenAI 兼容
+  openai: {
+    label: 'OpenAI',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.openai.com/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'gpt-4o-mini / gpt-4o' },
+    ],
+  },
+  xai: {
+    label: 'xAI Grok',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'xai-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.x.ai/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'grok-2-latest / grok-beta' },
+    ],
+  },
+  groq: {
+    label: 'Groq',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'gsk_...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.groq.com/openai/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'llama-3.3-70b-versatile' },
+    ],
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-or-v1-...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://openrouter.ai/api/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'openai/gpt-4o-mini / anthropic/claude-3.5-sonnet' },
+    ],
+  },
+  together: {
+    label: 'Together AI',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.together.xyz/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'meta-llama/Llama-3.3-70B-Instruct-Turbo' },
+    ],
+  },
+  fireworks: {
+    label: 'Fireworks AI',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.fireworks.ai/inference/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'accounts/fireworks/models/llama-v3p3-70b-instruct' },
+    ],
+  },
+  mistral: {
+    label: 'Mistral La Plateforme',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.mistral.ai/v1' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'mistral-large-latest / mistral-small-latest' },
+    ],
+  },
+  novita: {
+    label: 'Novita AI',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://api.novita.ai/v3/openai' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'meta-llama/llama-3.3-70b-instruct' },
+    ],
+  },
+  gemini_oai: {
+    label: 'Google Gemini (OpenAI 兼容层)',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: 'AIza...' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://generativelanguage.googleapis.com/v1beta/openai' },
+      { name: 'model', label: 'Model', type: 'text', placeholder: 'gemini-1.5-flash / gemini-1.5-pro' },
+    ],
+  },
+  // 兜底 — 任意 OpenAI 兼容 endpoint (含 one-api 网关 / Azure / Ollama 等)
+  custom: {
+    label: '自定义 OpenAI 兼容 (one-api / Azure / Ollama …)',
+    fields: [
+      { name: 'api_key', label: 'API Key', type: 'password', placeholder: '' },
+      { name: 'base_url', label: 'Base URL', type: 'text', placeholder: 'https://... (e.g. http://localhost:3000/v1 for one-api)' },
       { name: 'model', label: 'Model', type: 'text', placeholder: 'model-id' },
     ],
   },

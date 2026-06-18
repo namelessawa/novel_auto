@@ -30,8 +30,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 多 LLM 提供商
 
-`core/config.py` 通过 `LLM_PROVIDER` 环境变量切换:
-- `deepseek` (默认), `mimo` (小米), `custom` (任意 OpenAI 兼容)
+`core/config.py` 通过 `LLM_PROVIDER` 环境变量切换 (v2.45 — 23 个 OpenAI 兼容 provider catalog 数据驱动):
+- 国内: `deepseek` (默认) / `mimo` / `qwen` / `zhipu` / `moonshot` / `baidu` /
+  `ark` / `siliconflow` / `stepfun` / `minimax` / `baichuan` / `lingyiwanwu` / `ai360`
+- 海外: `openai` / `xai` / `groq` / `openrouter` / `together` / `fireworks` /
+  `mistral` / `novita` / `gemini_oai` (OpenAI 兼容层)
+- 兜底: `custom` (任意 OpenAI 兼容, 含 one-api 网关 / Azure / Ollama)
+- 加 provider 只改 `core/config.py:_PROVIDER_CATALOG` 一行 + `ConfigView.jsx:TEXT_LLM_PROVIDERS`
 
 `backend/config/settings.py` 用 `importlib` 加载 `core/config.py:get_active_llm_config()`,
 读取 `.env`。`.env` 缺失时回落到根 `config.json`。
