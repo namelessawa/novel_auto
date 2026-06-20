@@ -1,0 +1,207 @@
+/* v2.47 — Agent view (§ Agent 上下文): roster + narrator context window. */
+
+.dc-ag-root {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.dc-ag-row {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 32px;
+  align-items: start;
+}
+.dc-ag-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dc-ag-col-kicker {
+  font: 500 10px/1 'JetBrains Mono', monospace;
+  color: var(--text3);
+  letter-spacing: 0.16em;
+}
+
+.dc-ag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dc-ag-list-row {
+  background-color: var(--surf);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: box-shadow 130ms ease;
+}
+.dc-ag-list-row:hover { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.dc-ag-list-row.is-active { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.dc-ag-list-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex: none;
+}
+.dc-ag-list-dot.is-idle {
+  background: transparent;
+  border: 1px solid var(--border2);
+}
+.dc-ag-list-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.dc-ag-list-name {
+  font: 600 12px/1 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+.dc-ag-list-sub {
+  font: 400 11px/1.2 'Noto Serif SC', serif;
+  color: var(--text3);
+}
+.dc-ag-list-tok {
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+}
+.dc-ag-list-tok.is-active { color: var(--accent); }
+
+/* context window card */
+.dc-ag-ctx {
+  background-color: var(--surf);
+  border: 1px solid var(--border);
+  padding: 30px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.dc-ag-ctx-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.dc-ag-ctx-head-l { display: flex; align-items: center; gap: 12px; }
+.dc-ag-ctx-name {
+  font: 600 16px/1 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+.dc-ag-ctx-badge {
+  font: 500 9px/1 'JetBrains Mono', monospace;
+  padding: 3px 7px;
+  background-color: var(--red-tint);
+  color: var(--accent);
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+}
+.dc-ag-ctx-aux {
+  font: 400 12px/1.5 'Noto Serif SC', serif;
+  color: var(--text3);
+}
+
+.dc-ag-ctx-segbar {
+  display: flex;
+  height: 14px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.dc-ag-ctx-seg {
+  height: 100%;
+  transition: width 240ms ease;
+}
+
+.dc-ag-ctx-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.dc-ag-ctx-rowx {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--track);
+}
+.dc-ag-ctx-rowx:last-child { border-bottom: none; }
+.dc-ag-ctx-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+.dc-ag-ctx-rowx-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+.dc-ag-ctx-rowx-name {
+  font: 500 13px/1 'Inter', sans-serif;
+  color: var(--text);
+}
+.dc-ag-ctx-rowx-sub {
+  font: 400 11px/1 'Inter', sans-serif;
+  color: var(--text3);
+}
+.dc-ag-ctx-rowx-tok {
+  font: 600 13px/1 'JetBrains Mono', monospace;
+  color: var(--text2);
+  font-variant-numeric: tabular-nums;
+}
+
+.dc-ag-ctx-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 2px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dc-ag-ctx-total-lbl {
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  color: var(--text3);
+  letter-spacing: 0.14em;
+}
+.dc-ag-ctx-total-right {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.dc-ag-ctx-total-num {
+  font: 700 26px/1 'Inter', sans-serif;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.dc-ag-ctx-total-aux {
+  font: 400 12px/1 'JetBrains Mono', monospace;
+  color: var(--text3);
+}
+
+/* prompt preview (expanded) */
+.dc-ag-prompt {
+  margin-top: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 16px 18px;
+  font: 400 12.5px/1.65 'JetBrains Mono', monospace;
+  color: var(--text2);
+  max-height: 360px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+.dc-ag-prompt-empty {
+  padding: 12px 0;
+  font: 400 12px/1.5 'Inter', sans-serif;
+  color: var(--text3);
+}

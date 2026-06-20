@@ -13,7 +13,7 @@ import AgentContextView from './views/AgentContextView'
 import MultimodalView from './views/MultimodalView'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import LoginGate from './auth/LoginGate'
-import TopBar from './auth/TopBar'
+import DashboardShell from './dashboard/Shell'
 import {
   deleteNovel,
   fetchNovels,
@@ -61,13 +61,12 @@ const VIEW_TITLES = {
 }
 
 export default function App() {
-  // v2.26 — 顶层包 AuthProvider 让所有 view 能拿到 user。LoginGate 在未登录态
-  // 全屏遮罩, 但 sidebar/main 仍然渲染 (因为 API 请求都会被 401 拦下, 不污染)。
+  // v2.47 — DashboardShell 接管整个登录后界面 (chrome + 6 view + reader + modals).
+  // 旧 AppShell + auth/TopBar 完全替换. LoginGate 仍处理未登录态.
   return (
     <AuthProvider>
-      <TopBar />
       <AuthGated>
-        <AppShell />
+        <DashboardShell />
       </AuthGated>
     </AuthProvider>
   )

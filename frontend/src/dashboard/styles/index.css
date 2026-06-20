@@ -1,0 +1,11 @@
+/* v2.47 — Dashboard system entrypoint. Loads tokens + chrome + all view stylesheets.
+ * 由 DashboardShell.jsx 顶部 import. 单 entry 让 Vite tree-shake friendly. */
+
+@import './tokens.css';
+@import './shell.css';
+@import './overview.css';
+@import './tick.css';
+@import './agent.css';
+@import './chapter.css';
+@import './kg.css';
+@import './config.css';
