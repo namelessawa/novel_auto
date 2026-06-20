@@ -1,0 +1,661 @@
+/* ============================================================================
+   LoginGate — 「Novel Auto Login」: 移植自 claude.ai/design 项目
+   「小说自动化前端页面」 / Novel Auto Login.dc.html (2026-06).
+
+   设计原则:
+   - 左 ≈ 46% : 文学纸面 (永远「书页气质」, 但白天 = 米黄, 夜晚 = 深墨)
+   - 右 ≈ 54% : 登录表单, 顶部右侧 jh3y 风格日夜切换 (太阳 ⇄ 月亮)
+   - 朱砂 #C8392A 作为唯一强调色, 与全站 --cinnabar 一致
+   - 反 polyfill: 不引 Tailwind, 不依赖 LoginGate 之外的任何全局类名,
+     只读写 html[data-theme="dark"] 这一个全局属性, 登录成功后清理.
+   ============================================================================ */
+
+/* —— LoginGate 作用域内的设计变量 —— */
+.na-login-root {
+  --na-rbg: #FAFAF9;
+  --na-surf: #FFFFFF;
+  --na-tx: #0A0A0A;
+  --na-tx2: #525252;
+  --na-tx3: #8A8A8A;
+  --na-bd: #ECECEA;
+  --na-trk: #F1F1EF;
+  --na-abg: #0A0A0A;
+  --na-afg: #FAFAF9;
+  --na-note: #A3A3A3;
+  --na-succ: #FDF1EE;
+  --na-red: #C8392A;
+  --na-red-hover: #B53224;
+  /* —— 文学侧 (日间米黄羊皮) —— */
+  --na-as-bg: #ECE4D3;
+  --na-as-fg: #1B1815;
+  --na-as-fg2: #5A5247;
+  --na-as-mut: #928873;
+  --na-as-line: #C9BFA9;
+  --na-as-chip: rgba(0, 0, 0, 0.055);
+  --na-as-chipfg: #6E6453;
+  --na-as-wm: rgba(40, 28, 12, 0.05);
+  --na-as-brandsq: #1B1815;
+  --na-as-tag-bg: rgba(200, 57, 42, 0.12);
+  --na-as-tag-fg: #A8392B;
+}
+
+html[data-theme='dark'] .na-login-root {
+  --na-rbg: #0F0E0C;
+  --na-surf: #1A1815;
+  --na-tx: #F4F2EE;
+  --na-tx2: #BFBDB7;
+  --na-tx3: #8C8A84;
+  --na-bd: #2B2925;
+  --na-trk: #23211D;
+  --na-abg: #F4F2EE;
+  --na-afg: #0F0E0C;
+  --na-note: #76746E;
+  --na-succ: #2A1813;
+  /* —— 文学侧 (夜间深墨) —— */
+  --na-as-bg: #0A0A0A;
+  --na-as-fg: #FAFAF9;
+  --na-as-fg2: #B8B8B6;
+  --na-as-mut: #8A8A8A;
+  --na-as-line: #3A3A3A;
+  --na-as-chip: rgba(255, 255, 255, 0.06);
+  --na-as-chipfg: #A3A3A3;
+  --na-as-wm: rgba(255, 255, 255, 0.035);
+  --na-as-brandsq: #FAFAF9;
+  --na-as-tag-bg: rgba(200, 57, 42, 0.16);
+  --na-as-tag-fg: #E8857A;
+}
+
+/* —— 容器 —— */
+.na-login-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  min-height: 100vh;
+  display: flex;
+  background-color: var(--na-rbg);
+  color: var(--na-tx);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 600ms ease, color 600ms ease;
+  overflow: hidden;
+}
+.na-login-root *,
+.na-login-root *::before,
+.na-login-root *::after {
+  box-sizing: border-box;
+}
+
+/* —— 左:文学面板 —— */
+.na-aside {
+  width: 46%;
+  max-width: 620px;
+  min-width: 380px;
+  background-color: var(--na-as-bg);
+  color: var(--na-as-fg);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 56px 56px 48px 56px;
+  transition: background-color 600ms ease, color 600ms ease;
+}
+.na-aside-watermark {
+  position: absolute;
+  right: -60px;
+  bottom: -120px;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 900;
+  font-size: 460px;
+  line-height: 1;
+  color: var(--na-as-wm);
+  user-select: none;
+  pointer-events: none;
+  transition: color 600ms ease;
+}
+.na-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.na-brand-square {
+  width: 22px;
+  height: 22px;
+  background-color: var(--na-as-brandsq);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 600ms ease;
+}
+.na-brand-square-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--na-red);
+}
+.na-brand-name {
+  font: 600 13px/1 'Inter', sans-serif;
+  color: var(--na-as-fg);
+  letter-spacing: -0.005em;
+}
+.na-brand-ver {
+  font: 500 9px/1 'JetBrains Mono', monospace;
+  color: var(--na-as-mut);
+  letter-spacing: 0.14em;
+}
+.na-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.na-kicker-bar {
+  width: 14px;
+  height: 1px;
+  background: var(--na-red);
+  display: inline-block;
+}
+.na-kicker-text {
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  color: var(--na-red);
+  letter-spacing: 0.18em;
+}
+.na-hero {
+  font: 700 46px/1.18 'Noto Serif SC', serif;
+  color: var(--na-as-fg);
+  margin: 0;
+  letter-spacing: -0.01em;
+  transition: color 600ms ease;
+}
+.na-hero-period {
+  color: var(--na-red);
+}
+.na-quote {
+  font: 400 15px/1.95 'Noto Serif SC', serif;
+  color: var(--na-as-fg2);
+  margin: 0;
+  text-wrap: pretty;
+  transition: color 600ms ease;
+}
+.na-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.na-chip {
+  font: 500 10px/1 'JetBrains Mono', monospace;
+  padding: 5px 9px;
+  background-color: var(--na-as-chip);
+  color: var(--na-as-chipfg);
+  letter-spacing: 0.08em;
+  transition: background-color 600ms ease, color 600ms ease;
+}
+.na-chip.na-chip-red {
+  background-color: var(--na-as-tag-bg);
+  color: var(--na-as-tag-fg);
+}
+.na-aside-meta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font: 400 11px/1 'JetBrains Mono', monospace;
+  color: var(--na-as-mut);
+  letter-spacing: 0.04em;
+  transition: color 600ms ease;
+}
+.na-aside-meta .na-sep {
+  color: var(--na-as-line);
+}
+.na-aside-meta .na-green {
+  color: var(--na-red);
+}
+
+/* —— 右:表单面板 —— */
+.na-main {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background-color: var(--na-rbg);
+  transition: background-color 600ms ease;
+  overflow-y: auto;
+}
+.na-form-inner {
+  width: 100%;
+  max-width: 384px;
+}
+.na-compact-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 36px;
+}
+.na-compact-brand .na-brand-square {
+  background: var(--na-tx);
+}
+.na-compact-brand .na-brand-name {
+  color: var(--na-tx);
+}
+.na-compact-brand .na-brand-ver {
+  color: var(--na-tx3);
+}
+
+/* —— Heading —— */
+.na-block {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.na-heading-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.na-heading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.na-heading {
+  font: 700 32px/1.1 'Noto Serif SC', serif;
+  color: var(--na-tx);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.na-sub {
+  font: 400 13px/1.5 'Inter', sans-serif;
+  color: var(--na-tx3);
+  margin: 0;
+}
+
+/* —— Segmented Tabs —— */
+.na-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--na-trk);
+  border-radius: 8px;
+  transition: background-color 600ms ease;
+}
+.na-tab {
+  flex: 1;
+  padding: 9px 4px;
+  background: transparent;
+  color: var(--na-tx3);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font: 500 12px/1 'Inter', sans-serif;
+  transition: background-color 200ms ease, color 200ms ease;
+  font-family: inherit;
+}
+.na-tab:hover:not(.na-tab-active) {
+  color: var(--na-tx);
+}
+.na-tab-active {
+  background: var(--na-abg);
+  color: var(--na-afg);
+  font-weight: 600;
+}
+.na-tab-register.na-tab-active {
+  background: var(--na-red);
+  color: #FAFAF9;
+}
+
+/* —— Field —— */
+.na-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.na-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.na-label {
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  color: var(--na-tx3);
+  letter-spacing: 0.1em;
+}
+.na-hint {
+  font: 400 11px/1 'Inter', sans-serif;
+  color: #B8B8B6;
+}
+.na-field {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: var(--na-surf);
+  border: 1px solid var(--na-bd);
+  border-radius: 6px;
+  font: 400 14px/1.2 'Inter', sans-serif;
+  color: var(--na-tx);
+  outline: none;
+  transition: border-color 140ms, background-color 600ms ease;
+  font-family: inherit;
+}
+.na-field::placeholder {
+  color: #B8B8B6;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.na-field:focus {
+  border-color: var(--na-tx);
+}
+.na-field:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.na-field-otp {
+  font: 600 22px/1 'JetBrains Mono', monospace;
+  text-align: center;
+  letter-spacing: 12px;
+  padding: 14px 14px 14px 26px;
+}
+
+/* —— Button —— */
+.na-btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--na-red);
+  color: #FAFAF9;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font: 600 13px/1 'Inter', sans-serif;
+  letter-spacing: 0.01em;
+  transition: background-color 140ms ease;
+  font-family: inherit;
+}
+.na-btn-primary:hover:not(:disabled) {
+  background: var(--na-red-hover);
+}
+.na-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.na-btn-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: 500 12px/1 'Inter', sans-serif;
+  color: var(--na-red);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+  font-family: inherit;
+}
+.na-btn-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: 500 12px/1 'Inter', sans-serif;
+  color: var(--na-tx3);
+  padding: 0;
+  font-family: inherit;
+  transition: color 140ms;
+}
+.na-btn-back:hover {
+  color: var(--na-tx);
+}
+
+/* —— OTP Pulse —— */
+.na-pulse-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 2px;
+}
+.na-pulse {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+}
+.na-pulse-core,
+.na-pulse-halo {
+  position: absolute;
+  inset: 0;
+  background: var(--na-red);
+  border-radius: 50%;
+}
+.na-pulse-core {
+  animation: na-pulse 1.8s ease-in-out infinite;
+}
+.na-pulse-halo {
+  animation: na-halo 1.8s ease-out infinite;
+}
+.na-pulse-text {
+  font: 400 11px/1 'Inter', sans-serif;
+  color: var(--na-tx3);
+}
+.na-pulse-email {
+  color: var(--na-tx2);
+  font-family: 'JetBrains Mono', monospace;
+}
+.na-cooldown-text {
+  font: 400 12px/1 'JetBrains Mono', monospace;
+  color: #B8B8B6;
+}
+.na-otp-helper {
+  font: 400 11px/1.6 'Inter', sans-serif;
+  color: var(--na-note);
+  margin: 0;
+  text-align: center;
+}
+.na-resend-row {
+  text-align: center;
+}
+
+/* —— Footer Note —— */
+.na-footer-note {
+  padding-top: 18px;
+  border-top: 1px solid var(--na-bd);
+  font: 400 11px/1.7 'Inter', sans-serif;
+  color: var(--na-note);
+  text-align: center;
+}
+
+/* —— Success State —— */
+.na-success-check {
+  width: 44px;
+  height: 44px;
+  background: var(--na-abg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.na-success-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.na-success-title {
+  font: 700 28px/1.15 'Noto Serif SC', serif;
+  color: var(--na-tx);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.na-success-msg {
+  font: 400 13px/1.6 'Inter', sans-serif;
+  color: var(--na-tx3);
+  margin: 0;
+}
+.na-success-card {
+  background-color: var(--na-surf);
+  border: 1px solid var(--na-bd);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 600ms ease;
+  gap: 12px;
+}
+.na-success-card-email {
+  font: 400 12px/1 'JetBrains Mono', monospace;
+  color: var(--na-tx2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+.na-success-card-badge {
+  font: 500 10px/1 'JetBrains Mono', monospace;
+  padding: 4px 8px;
+  background: var(--na-succ);
+  color: var(--na-red);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* —— jh3y Day/Night Sky Toggle —— */
+.na-toggle {
+  position: absolute;
+  top: 28px;
+  right: 32px;
+  width: 92px;
+  height: 38px;
+  border-radius: 40px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 6;
+  isolation: isolate;
+  background: linear-gradient(165deg, #4A95DD 0%, #8FCBEF 78%);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 4px rgba(0, 40, 90, 0.28),
+    0 3px 9px rgba(20, 50, 90, 0.22);
+  transition: background 600ms ease, box-shadow 600ms ease;
+}
+html[data-theme='dark'] .na-toggle {
+  background: linear-gradient(165deg, #15233F 0%, #2E2553 100%);
+  box-shadow: inset 0 1px 2px rgba(180, 200, 255, 0.18),
+    inset 0 -2px 5px rgba(0, 0, 20, 0.5),
+    0 3px 9px rgba(8, 10, 30, 0.4);
+}
+.na-tgl-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.na-tgl-cloud {
+  position: absolute;
+  background: #FFFFFF;
+  border-radius: 40px;
+  opacity: 0.92;
+  transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 450ms ease;
+  filter: drop-shadow(0 1px 1px rgba(0, 60, 120, 0.12));
+}
+.na-tgl-c1 { width: 26px; height: 9px; left: 8px; bottom: 6px; }
+.na-tgl-c2 { width: 18px; height: 7px; left: 30px; bottom: 14px; opacity: 0.8; }
+.na-tgl-c3 { width: 20px; height: 7px; left: 16px; top: 6px; opacity: 0.7; }
+html[data-theme='dark'] .na-tgl-cloud {
+  transform: translateY(26px);
+  opacity: 0;
+}
+.na-tgl-star {
+  position: absolute;
+  background: #FFFFFF;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 500ms ease, transform 600ms ease;
+  transform: scale(0.2);
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+html[data-theme='dark'] .na-tgl-star {
+  opacity: 1;
+  transform: scale(1);
+  animation: na-twinkle 2.4s ease-in-out infinite;
+}
+.na-tgl-s1 { width: 3px; height: 3px; left: 14px; top: 9px; animation-delay: 0s !important; }
+.na-tgl-s2 { width: 2px; height: 2px; left: 26px; top: 20px; animation-delay: 0.5s !important; }
+.na-tgl-s3 { width: 2.5px; height: 2.5px; left: 19px; bottom: 8px; animation-delay: 1s !important; }
+.na-tgl-s4 { width: 2px; height: 2px; left: 36px; top: 11px; animation-delay: 1.5s !important; }
+.na-knob {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFE89B, #FFC93C 70%);
+  box-shadow: 0 0 10px 2px rgba(255, 201, 60, 0.65),
+    0 1px 2px rgba(120, 80, 0, 0.25);
+  transition: transform 620ms cubic-bezier(0.5, 1.45, 0.5, 1.04),
+    background 600ms ease, box-shadow 600ms ease;
+}
+.na-tgl-crater {
+  position: absolute;
+  background: rgba(140, 138, 128, 0.5);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 500ms ease 200ms;
+}
+.na-tgl-k1 { width: 6px; height: 6px; top: 7px; left: 14px; }
+.na-tgl-k2 { width: 4px; height: 4px; top: 16px; left: 8px; }
+.na-tgl-k3 { width: 3px; height: 3px; top: 6px; left: 7px; }
+html[data-theme='dark'] .na-tgl-crater { opacity: 1; }
+
+/* —— Animations —— */
+@keyframes na-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.55; }
+}
+@keyframes na-halo {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes na-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes na-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.na-fade-in { animation: na-fade 240ms ease; }
+.na-fade-in-slow { animation: na-fade 300ms ease; }
+
+/* —— Reduced motion —— */
+@media (prefers-reduced-motion: reduce) {
+  .na-login-root,
+  .na-aside,
+  .na-main,
+  .na-field,
+  .na-tab,
+  .na-tgl-cloud,
+  .na-tgl-star,
+  .na-knob,
+  .na-tgl-crater {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  .na-pulse-core,
+  .na-pulse-halo,
+  .na-tgl-star,
+  .na-fade-in,
+  .na-fade-in-slow {
+    animation: none !important;
+  }
+}
+
+/* —— 小屏: 隐藏文学侧, 显示紧凑品牌 —— */
+.na-compact-brand { display: none; }
+@media (max-width: 860px) {
+  .na-aside { display: none; }
+  .na-compact-brand { display: flex; }
+  .na-main { padding: 80px 24px 32px; }
+  .na-hero { font-size: 36px; }
+  .na-toggle { top: 20px; right: 20px; }
+}
+@media (max-width: 460px) {
+  .na-main { padding: 88px 18px 24px; }
+}

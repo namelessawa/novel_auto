@@ -20,6 +20,7 @@ const DEFAULT_POSITIONING = '古典含蓄、心理白描、节奏舒缓、避免
 const DEFAULT_REFERENCES = 'Le Guin / 古龙'
 import { showToast } from '../utils/toast'
 import TickControlPanel from '../components/TickControlPanel'
+import DashboardOverview from './DashboardOverview'
 
 // 节级管线 6 个 stage 顺序固定; failed 单列。
 const STAGE_LABELS = {
@@ -43,7 +44,13 @@ const PIPELINE_ORDER = [
   'complete',
 ]
 
-export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated }) {
+export default function HomeView({
+  activeNovel,
+  stats,
+  onAfterGenerated,
+  onAfterCreated,
+  onNavigate,
+}) {
   const [novels, setNovels] = useState([])
   const [createTitle, setCreateTitle] = useState('')
   // v2.25 — createOutline 改名为 createSeed 在语义上更准确 (它现在是 bootstrap_world
@@ -425,22 +432,34 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
 
   // v2.23 — 阶段进度: 已完成的 stage 数 / 7
   const stageDoneCount = stages.filter((s) => s.status === 'done').length
-  const currentActiveStage = stages.find((s) => s.status === 'active')?.stage
   const progressPct = generating
     ? Math.min(100, Math.round((stageDoneCount / PIPELINE_ORDER.length) * 100))
     : 0
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1200 }}>
-      {/* v2.23 — 当前作品总览 + 进度 */}
-      <ActiveNovelOverview
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1280 }}>
+      {/* v2.46 — Novel Auto Dashboard.dc.html「总览」段移植.
+          替代了 v2.23 的 ActiveNovelOverview 单卡片 — 现在是 hero + agents + 伏笔池
+          三段, 接 tickStatus / stats / fetchTickNarratives / fetchTickOpenLoops / fetchAgents.
+          generating 时顶部 slim genbar 兼顾"还在跑"的可见性, 下方原 pipeline 进度卡
+          + streaming 正文 + logs 不动 (信息密度更高的二级面板). */}
+      <DashboardOverview
         novel={activeNovel}
         tickStatus={tickStatus}
+        stats={stats}
         generating={generating}
-        mode={mode}
+        statusText={
+          statusText ||
+          (generating
+            ? mode === 'continue'
+              ? '正在创建续写任务…'
+              : '正在生成…'
+            : '')
+        }
         progressPct={progressPct}
-        statusText={statusText}
-        currentStage={currentActiveStage}
+        onJumpReader={() => onNavigate?.('reader')}
+        onJumpAgents={() => onNavigate?.('agents')}
+        onJumpKg={() => onNavigate?.('graph')}
       />
 
       <div className="grid-2">
@@ -906,155 +925,5 @@ export default function HomeView({ activeNovel, onAfterGenerated, onAfterCreated
   )
 }
 
-function ActiveNovelOverview({
-  novel,
-  tickStatus,
-  generating,
-  mode,
-  progressPct,
-  statusText,
-  currentStage,
-}) {
-  if (!novel) {
-    return (
-      <div className="card">
-        <div className="card-title">
-          <i className="fas fa-book"></i> 当前作品
-        </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-          尚未选择作品。在下方"创建新小说"开始,或在左侧"我的作品"切换。
-        </div>
-      </div>
-    )
-  }
-
-  const currentTick = tickStatus?.current_tick ?? '—'
-  const isPaused = tickStatus?.is_paused
-  const openLoops = tickStatus?.open_loop_count ?? '—'
-  const charCount = tickStatus?.character_count ?? '—'
-
-  // 当前阶段中文
-  const stageLabel = currentStage ? STAGE_LABELS[currentStage] || currentStage : ''
-
-  return (
-    <div className="card">
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 16,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 240 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              marginBottom: 4,
-            }}
-          >
-            当前作品
-          </div>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 20,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <i
-              className="fas fa-book-open"
-              style={{ color: 'var(--accent-purple)' }}
-            ></i>
-            {novel.title || novel.id}
-          </h2>
-          <div
-            style={{
-              marginTop: 8,
-              display: 'flex',
-              gap: 8,
-              flexWrap: 'wrap',
-            }}
-          >
-            <span className="badge badge-purple">tick #{currentTick}</span>
-            <span
-              className="badge"
-              style={{
-                background: isPaused
-                  ? 'rgba(245,158,11,0.15)'
-                  : 'rgba(16,185,129,0.15)',
-                color: isPaused ? 'var(--accent-amber)' : 'var(--accent-emerald)',
-              }}
-            >
-              {isPaused ? '已暂停' : '运行中'}
-            </span>
-            <span className="badge badge-emerald">活跃伏笔 {openLoops}</span>
-            <span className="badge badge-purple">角色 {charCount}</span>
-          </div>
-        </div>
-
-        <div style={{ flex: 1, minWidth: 280 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              marginBottom: 4,
-            }}
-          >
-            {mode === 'continue' ? '续写进度' : '生成进度'}
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              marginBottom: 6,
-              minHeight: 18,
-            }}
-          >
-            {generating
-              ? `${statusText || '生成中…'}${stageLabel ? ` · 当前阶段: ${stageLabel}` : ''}`
-              : '空闲 — 在下方开始创作或续写'}
-          </div>
-          <div
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: 8,
-              height: 10,
-              overflow: 'hidden',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            <div
-              style={{
-                width: `${progressPct}%`,
-                height: '100%',
-                background: generating
-                  ? 'linear-gradient(90deg, var(--accent-purple), var(--accent-cyan))'
-                  : 'transparent',
-                transition: 'width 0.3s ease',
-              }}
-            />
-          </div>
-          <div
-            style={{
-              marginTop: 4,
-              fontSize: 11,
-              color: 'var(--text-muted)',
-              textAlign: 'right',
-            }}
-          >
-            {generating ? `${progressPct}% · 6 阶段管线` : '—'}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+// v2.46 — ActiveNovelOverview 已被 DashboardOverview 替代 (Novel Auto Dashboard.dc.html 移植).
+// 旧组件逻辑见 git log d018f96 之前; 新组件分三段 (hero / agents / 伏笔池), 接 fetchTickNarratives + fetchTickOpenLoops + fetchAgents.

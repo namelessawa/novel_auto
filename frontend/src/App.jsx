@@ -410,11 +410,13 @@ function AppShell() {
           <ViewSlot active={activeView === 'home'}>
             <HomeView
               activeNovel={activeNovel}
+              stats={stats}
               onAfterCreated={(id) => {
                 refreshNovels()
                 if (id) setActiveNovelId(id)
               }}
               onAfterGenerated={bumpRefresh}
+              onNavigate={setActiveView}
             />
           </ViewSlot>
           <ViewSlot active={activeView === 'novel'}>
