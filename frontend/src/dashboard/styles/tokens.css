@@ -59,6 +59,13 @@ html[data-theme="dark"] .dc-root {
   min-height: 100vh;
 }
 
+/* v2.47 — 解锁 global.css 给老 AppShell 设的 body/#root 高度锁定.
+ * 老 shell 在内部容器里滚动, 新 dashboard 设计用 page-level scroll +
+ * sticky topbar (.dc-topbar). 提高选择器 specificity (html body) 盖过 global.css
+ * 的 `body { overflow: hidden }` (specificity 1) 与 `#root { height: 100vh }` (1). */
+html body { overflow: auto; }
+html body #root { height: auto; min-height: 100vh; }
+
 /* —— Keyframes —— */
 @keyframes dc-run-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
