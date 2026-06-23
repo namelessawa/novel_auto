@@ -8,6 +8,7 @@
 | iter#2 (2026-06-24) | agent code · narratives endpoint 双 fix | PASS | 879 tests / +9 (5 unit + 4 integration) / contract 锁定 |
 | iter#3 (2026-06-24) | det metric · E7 translation-artifact | PASS | 884 tests / E7 healthy trigger 0.00% / E 维度 det 补完 |
 | iter#4 (2026-06-24) | test · char_signal+translation dedicated test | PASS | 921 tests / +37 (18+18 dedicated, 1 算法精确化) |
+| iter#5 (2026-06-24) | agent code · critic_log.jsonl 持久化 | PASS | 927 tests / 数据基础就位 (reader API + 长程分析 unlock) |
 
 **候补 (未挑)**:
 - C6 章末无悬念 det check — semantic, det 层易 FP
