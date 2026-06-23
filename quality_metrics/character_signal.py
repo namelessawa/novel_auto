@@ -125,10 +125,27 @@ def count_inner_monologue_chars(text: str) -> tuple[int, list[str]]:
     total = 0
     evidence: list[str] = []
     for start, end, sent in _sentences_with_offsets(text):
-        # Skip if sentence is fully inside a quote.
-        if start < len(in_quote) and in_quote[start] and (end - 1) < len(in_quote) and in_quote[end - 1]:
+        # Marker-aware quote skip — find the marker's absolute position in
+        # `text` and skip if that position falls inside any quote. Sentence
+        # spans can straddle a quote boundary ('他说:"我想到 X"。' splits
+        # before the trailing "。", so the span's start sits outside the
+        # quote even though the marker is inside), so we cannot rely on
+        # span corners alone — checking the marker position is precise.
+        marker_in_quote = False
+        for marker in _INNER_MARKERS:
+            pos = sent.find(marker)
+            if pos < 0:
+                continue
+            abs_pos = start + pos
+            if abs_pos < len(in_quote) and in_quote[abs_pos]:
+                marker_in_quote = True
+                break
+            # marker exists outside any quote — this sentence is inner monologue
+            break
+        else:
+            # no marker matched at all — not inner monologue
             continue
-        if not any(marker in sent for marker in _INNER_MARKERS):
+        if marker_in_quote:
             continue
         cjk = sum(1 for ch in sent if "一" <= ch <= "鿿")
         total += cjk
