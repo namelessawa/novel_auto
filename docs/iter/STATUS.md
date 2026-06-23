@@ -218,3 +218,41 @@ stage4 现是 best stable candidate 跨 cost / quality / drift.
 ## Phase 1 Status (历史)
 
 cost-quality-loop work continues at user's directive (rule #3: no stop until user says stop). Saturation of optimizable surfaces reached around iter#34; subsequent iterations focus on code hygiene (dead imports, isinstance guards, docs/tests).
+
+---
+
+## SESSION SUMMARY — 2026-06-24 Phase 6 iteration operator run
+
+7 轮 PASS · 0 FAIL · 0 WARN. 测试基线 810 → **940** (+130: B4 + 9 narratives + 5 E7 + 37 dedicated + 6 critic_log + 6 endpoint + 7 stats). 全部零回归.
+
+### Per-iter
+
+| iter | scope | landed |
+| --- | --- | --- |
+| iter#1 | det metric | B4 inner-monologue det check (Phase 6-C 第三刀). 271-narrative offline replay 触发 0.00%. |
+| iter#2 | agent code | `/api/tick/narratives` 双 fix — `current_tick` AttributeError + 漏填 `world_time`. 9 新 test (5 unit + 4 integration). |
+| iter#3 | det metric | E7 翻译腔 det check (Phase 6-C 第四刀). 7 pattern, healthy 0 触发. |
+| iter#4 | test | character_signal + translation_artifact 各加 18 dedicated test, 模块覆盖与 prose_dynamics 平衡. count_inner_monologue_chars 算法 marker-position 精确化. |
+| iter#5 | persistence | critic decision JSONL log — orchestrator 每 tick append `{data_dir}/critic_log.jsonl`. `_append_critic_log` helper + 6 test. |
+| iter#6 | api | `GET /api/tick/critic-log` raw rows endpoint. malformed safe-skip + range/limit + 6 test. |
+| iter#7 | api | `GET /api/tick/critic-log/stats` aggregated dashboard — action distribution + top-10 codes + empty_decision_ticks + 7 test. |
+
+### 完成的 phase 节点
+
+- **Phase 6-C det wrapper trilogy**: prose_dynamics (E1+D6, 前作) + character_signal (B4, iter#1) + translation_artifact (E7, iter#3). 3 模块各 18/19 dedicated unit + 5 集成测试.
+- **Phase 6-B reader 数据栈三件套**: orchestrator critic_log.jsonl (iter#5) + raw rows endpoint (iter#6) + aggregated stats endpoint (iter#7). frontend 直接 consume.
+- **v2.48 endpoint contract fix**: `/api/tick/narratives` 从 500 状态恢复 + world_time 字段补全 (iter#2).
+
+### 边际收益评估 (退出理由)
+
+继续 iter 候选边际收益不足:
+- **A1 threshold 校准**: 2★ 风险 (regression 风险), 需 3-seed cross-theme bench 验证, ~10h+ 不适合单 iter
+- **D5 多感官 / D1 背景倾倒 det**: 1★ 但 leverage 低 — det wrapper 模板已 saturate (类似 iter#1/3 模板, padding coverage 数字而无新 catch)
+- **frontend 工作**: v2.48 dashboard uncommitted 状态阻塞
+- **hygiene 扫**: 无明确 target, narrative_critic 已 `except Exception` defense-in-depth 完备
+
+7 轮累计 22 files 触及, 每 iter 单语义 commit + dedicated verdict, 无 cross-cutting refactor. ITERATION_LOG 166 行 (距 200 阈值 34 行余量) 为后续 session 留空间.
+
+### 状态留给下个 session
+
+ITERATION_LOG `候补 (未挑)` 区已记 A1 threshold 校准 (高风险高杠杆) — 配套需求: 3-seed cross-theme bench harness 准备好后再启动. 否则任何 A1 改动属一刀切, 违反 Phase 4-E 教训"架构改动 mandatory cross-seed".
