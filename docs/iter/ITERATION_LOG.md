@@ -5,10 +5,13 @@
 | iter | scope | verdict | key metric |
 | --- | --- | --- | --- |
 | iter#1 (2026-06-24) | det metric · B4 inner-monologue | PASS | 870 tests / B4 healthy trigger 0.00% / +5 test |
+| iter#2 (2026-06-24) | agent code · narratives endpoint 双 fix | PASS | 879 tests / +9 (5 unit + 4 integration) / contract 锁定 |
 
 **候补 (未挑)**:
 - E7 翻译腔 pattern det check — healthy 触发预期 0, 实战 catch 弱
 - C6 章末无悬念 det check — semantic, det 层易 FP
+- A1 threshold 校准 — 271 narratives bench 显示 avg 12+ A1/narr, critic noise 大
+  but 改 threshold 是 high-risk regression
 
 > Branch: `iter/cost-quality-loop`. 2026-06-10 → 2026-06-11.
 > 34 iterations + 9 code-review cycles. **Total tokens -77% / latency -83% vs baseline**, quality preserved.
