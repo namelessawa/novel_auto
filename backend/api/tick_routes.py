@@ -23,6 +23,7 @@ v2.26 multi-tenant 改造
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -388,6 +389,63 @@ async def list_narratives(
     return {
         "count": len(rows),
         "narratives": rows,
+        "start_tick": start_tick,
+        "end_tick": effective_end,
+        "current_tick": current_tick,
+        "truncated": len(rows) >= limit,
+    }
+
+
+@router.get("/critic-log")
+async def list_critic_log(
+    start_tick: int = Query(0, ge=0),
+    end_tick: int = Query(0, ge=0, description="0 = up to current tick"),
+    limit: int = Query(500, ge=1, le=2000),
+    runtime=Depends(_resolve_runtime),
+) -> dict:
+    """Phase 6-C iter#6 reader API — list critic decisions per tick.
+
+    数据源: ``{data_dir}/critic_log.jsonl`` (orchestrator 每 tick append 1 行,
+    iter#5 落定). 每条 ``{tick, action, surviving_codes, decision_trail,
+    new_opening_signature}`` — 段落级 quality marker / 长程分析 / iter trial
+    比较的统一数据基础.
+
+    与 ``/api/tick/narratives`` 的区别: narratives 给文本, 本端点给 critic
+    决策元数据 (per-tick surviving codes 等). 两者同步消费时 tick 字段对齐.
+    """
+    import os
+
+    ts = runtime.tick_state
+    current_tick = ts.current_tick
+    effective_end = end_tick if end_tick > 0 else current_tick
+    log_path = os.path.join(ts.data_dir, "critic_log.jsonl")
+
+    def _read_log_blocking() -> list[dict]:
+        if not os.path.isfile(log_path):
+            return []
+        rows: list[dict] = []
+        with open(log_path, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError as e:
+                    logger.warning("critic_log skip malformed line: %s", e)
+                    continue
+                tick = obj.get("tick", -1)
+                if not isinstance(tick, int) or tick < start_tick or tick > effective_end:
+                    continue
+                rows.append(obj)
+                if len(rows) >= limit:
+                    break
+        return rows
+
+    rows = await run_in_threadpool(_read_log_blocking)
+    return {
+        "count": len(rows),
+        "rows": rows,
         "start_tick": start_tick,
         "end_tick": effective_end,
         "current_tick": current_tick,
