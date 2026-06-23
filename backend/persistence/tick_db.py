@@ -233,6 +233,26 @@ class TickDB:
             ).fetchall()
         return [self._row_to_dict(r) for r in rows]
 
+    def get_world_time_map(self, tick_ids: list[int]) -> dict[int, int]:
+        """tick_id → world_time 批量映射, 供 reader API 一次 SQL 拿到时间标记.
+
+        Empty input returns ``{}``; missing tick_ids are omitted from the map
+        (caller decides whether to default-fill or drop). Uses a single
+        IN-clause query — Python's sqlite3 max host param ceiling is 999
+        so callers should chunk on length > 900 if ever invoked with that
+        many ticks (current reader limit caps at 2000, but the typical
+        request stays well under 500).
+        """
+        if not tick_ids:
+            return {}
+        placeholders = ",".join("?" * len(tick_ids))
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT tick_id, world_time FROM tick_log WHERE tick_id IN ({placeholders})",
+                tuple(tick_ids),
+            ).fetchall()
+        return {row["tick_id"]: row["world_time"] for row in rows}
+
     def get_events_in_range(self, from_tick: int, to_tick: int) -> list[dict]:
         with self._lock:
             rows = self._conn.execute(

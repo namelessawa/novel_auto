@@ -343,7 +343,9 @@ async def list_narratives(
     import re
 
     ts = runtime.tick_state
-    current_tick = ts.get_current_tick()
+    # v2.48 — current_tick 是 property 不是方法 (TickState.current_tick @ line 131).
+    # 修前: ts.get_current_tick() → AttributeError → 500.
+    current_tick = ts.current_tick
     effective_end = end_tick if end_tick > 0 else current_tick
 
     narratives_dir = os.path.join(ts.data_dir, "narratives")
@@ -370,6 +372,13 @@ async def list_narratives(
             out.append({"tick": tick, "text": text, "char_count": len(text)})
             if len(out) >= limit:
                 break
+        # Phase 6-B reader UI 需要按"故事时间"显示而非 tick_id 数字 — 一次
+        # 批量 SQL 拿 world_time, 比 N 次 single-row 查询省 99% lock 周期.
+        if out:
+            tick_ids = [row["tick"] for row in out]
+            wt_map = runtime.tick_db.get_world_time_map(tick_ids)
+            for row in out:
+                row["world_time"] = wt_map.get(row["tick"])
         return out
 
     # 整个 listdir + N 次同步 read 都跑在线程池, 防止 narratives 多 (1000+ tick)
