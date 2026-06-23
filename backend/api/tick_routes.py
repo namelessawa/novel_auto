@@ -453,6 +453,86 @@ async def list_critic_log(
     }
 
 
+@router.get("/critic-log/stats")
+async def critic_log_stats(
+    start_tick: int = Query(0, ge=0),
+    end_tick: int = Query(0, ge=0, description="0 = up to current tick"),
+    runtime=Depends(_resolve_runtime),
+) -> dict:
+    """Phase 6-C iter#7 — critic decision aggregated stats.
+
+    扫 ``{data_dir}/critic_log.jsonl`` 全文件, 输出长程聚合:
+    * ``action_distribution``: ACCEPT / REVISE / REWRITE / RED_TEAM 计数
+    * ``top_codes``: 触发 code 频次 top-10
+    * ``ticks_scanned``: 实际进入聚合的 tick 数
+    * ``empty_decision_ticks``: surviving_codes 全空的 tick 数 (clean output)
+
+    与 `/critic-log` (raw rows) 的区别: stats 是 dashboard 一目了然的
+    summary, 不返回 per-tick rows. 长程 500-tick 数据 ~100KB, 单次全扫
+    可接受 (~10ms).
+    """
+    import os
+    from collections import Counter
+
+    ts = runtime.tick_state
+    current_tick = ts.current_tick
+    effective_end = end_tick if end_tick > 0 else current_tick
+    log_path = os.path.join(ts.data_dir, "critic_log.jsonl")
+
+    def _scan_blocking() -> dict:
+        if not os.path.isfile(log_path):
+            return {
+                "action_distribution": {},
+                "top_codes": [],
+                "ticks_scanned": 0,
+                "empty_decision_ticks": 0,
+            }
+        action_counter: Counter[str] = Counter()
+        code_counter: Counter[str] = Counter()
+        ticks_scanned = 0
+        empty_decision_ticks = 0
+        with open(log_path, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError as e:
+                    logger.warning("critic_log skip malformed line: %s", e)
+                    continue
+                tick = obj.get("tick", -1)
+                if not isinstance(tick, int) or tick < start_tick or tick > effective_end:
+                    continue
+                ticks_scanned += 1
+                action = obj.get("action") or ""
+                if action:
+                    action_counter[action] += 1
+                codes = obj.get("surviving_codes") or []
+                if codes:
+                    for c in codes:
+                        if isinstance(c, str) and c:
+                            code_counter[c] += 1
+                else:
+                    empty_decision_ticks += 1
+        return {
+            "action_distribution": dict(action_counter),
+            "top_codes": [
+                {"code": code, "count": n} for code, n in code_counter.most_common(10)
+            ],
+            "ticks_scanned": ticks_scanned,
+            "empty_decision_ticks": empty_decision_ticks,
+        }
+
+    stats = await run_in_threadpool(_scan_blocking)
+    return {
+        **stats,
+        "start_tick": start_tick,
+        "end_tick": effective_end,
+        "current_tick": current_tick,
+    }
+
+
 @router.get("/diagnostic/hallucination")
 async def hallucination_diagnostic(runtime=Depends(_resolve_runtime)) -> dict:
     import os
