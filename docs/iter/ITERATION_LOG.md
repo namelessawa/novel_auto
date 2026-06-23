@@ -7,6 +7,7 @@
 | iter#1 (2026-06-24) | det metric · B4 inner-monologue | PASS | 870 tests / B4 healthy trigger 0.00% / +5 test |
 | iter#2 (2026-06-24) | agent code · narratives endpoint 双 fix | PASS | 879 tests / +9 (5 unit + 4 integration) / contract 锁定 |
 | iter#3 (2026-06-24) | det metric · E7 translation-artifact | PASS | 884 tests / E7 healthy trigger 0.00% / E 维度 det 补完 |
+| iter#4 (2026-06-24) | test · char_signal+translation dedicated test | PASS | 921 tests / +37 (18+18 dedicated, 1 算法精确化) |
 
 **候补 (未挑)**:
 - C6 章末无悬念 det check — semantic, det 层易 FP
