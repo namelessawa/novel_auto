@@ -1,5 +1,15 @@
 # Cost-Quality Iteration Loop — Full Journey
 
+## Phase 6 — Quality + product (2026-06-17+)
+
+| iter | scope | verdict | key metric |
+| --- | --- | --- | --- |
+| iter#1 (2026-06-24) | det metric · B4 inner-monologue | PASS | 870 tests / B4 healthy trigger 0.00% / +5 test |
+
+**候补 (未挑)**:
+- E7 翻译腔 pattern det check — healthy 触发预期 0, 实战 catch 弱
+- C6 章末无悬念 det check — semantic, det 层易 FP
+
 > Branch: `iter/cost-quality-loop`. 2026-06-10 → 2026-06-11.
 > 34 iterations + 9 code-review cycles. **Total tokens -77% / latency -83% vs baseline**, quality preserved.
 
