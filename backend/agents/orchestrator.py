@@ -31,6 +31,7 @@ NoveltyCritic 五个 agent 还未实现,Orchestrator 通过 Optional 参数兼�
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import uuid
@@ -94,6 +95,45 @@ class MemoryCompressorProtocol(Protocol):
 
 class ConsistencyGuardianProtocol(Protocol):
     async def scan(self, **kwargs) -> dict: ...
+
+
+# ---------------------------------------------------------------------------
+# Phase 6-C iter#5 — critic decision JSONL log helper
+# ---------------------------------------------------------------------------
+
+
+def _append_critic_log(
+    data_dir: str, tick: int, narrator_out: NarratorOutput
+) -> None:
+    """Append 1 row to ``{data_dir}/critic_log.jsonl`` with critic decision metadata.
+
+    Lightweight per-tick analytics record — final_text 已在
+    ``narratives/tick_NNNNNN.txt``, 本日志只持久化 trace 字段 (action /
+    surviving codes / decision trail). Empty critique_trace 直接跳过, no-op.
+
+    Schema (each JSONL row):
+    ``{tick, action, surviving_codes, decision_trail, new_opening_signature}``
+
+    Caller is responsible for try/except — IO errors are non-fatal but should
+    log warning rather than break the tick path.
+    """
+    trace = narrator_out.critique_trace or {}
+    if not trace:
+        return
+    log_path = os.path.join(data_dir, "critic_log.jsonl")
+    row = {
+        "tick": tick,
+        "action": narrator_out.critique_action or "",
+        "surviving_codes": sorted({
+            t["code"]
+            for t in trace.get("surviving_triggers", [])
+            if isinstance(t, dict) and t.get("code")
+        }),
+        "decision_trail": trace.get("decision_trail", []),
+        "new_opening_signature": narrator_out.new_opening_signature or "",
+    }
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 class NoveltyCriticProtocol(Protocol):
@@ -775,6 +815,12 @@ class Orchestrator:
         self._last_tick_events = all_events
         # v2.24 — 给 SectionTask executor 暴露完整 NarratorOutput.
         self._last_narrator_output = narrator_out
+
+        # Phase 6-C iter#5 — critic decision JSONL log (reader analytics 数据源).
+        try:
+            _append_critic_log(self._tick_state.data_dir, tick, narrator_out)
+        except Exception as e:  # pragma: no cover
+            logger.warning("critic_log append failed (non-fatal): %s", e)
 
         summary = TickSummary(
             tick=tick,
