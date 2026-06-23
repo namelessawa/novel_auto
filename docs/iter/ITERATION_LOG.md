@@ -10,6 +10,7 @@
 | iter#4 (2026-06-24) | test · char_signal+translation dedicated test | PASS | 921 tests / +37 (18+18 dedicated, 1 算法精确化) |
 | iter#5 (2026-06-24) | agent code · critic_log.jsonl 持久化 | PASS | 927 tests / 数据基础就位 (reader API + 长程分析 unlock) |
 | iter#6 (2026-06-24) | agent code · GET /api/tick/critic-log endpoint | PASS | 933 tests / reader 数据基础对偶完整 (text + decision) |
+| iter#7 (2026-06-24) | agent code · GET /api/tick/critic-log/stats aggregated | PASS | 940 tests / Phase 6-C reader 数据栈三件套完整 |
 
 **候补 (未挑)**:
 - C6 章末无悬念 det check — semantic, det 层易 FP
