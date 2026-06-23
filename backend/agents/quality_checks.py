@@ -423,6 +423,34 @@ def check_prose_dynamics(text: str) -> list[DeterministicTrigger]:
 # env knob CHARACTER_SIGNAL_ENABLE 默认 True, 0 时跳过.
 
 
+def check_translation_artifact(text: str) -> list[DeterministicTrigger]:
+    """E7 (lite): 翻译腔 pattern density ≥ 2 hits.
+
+    委托给 ``quality_metrics.translation_artifact`` — lazy import, 接入
+    ``run_deterministic_checks``. env knob ``TRANSLATION_ARTIFACT_ENABLE``
+    默认 True.
+
+    返回空列表 if:
+    * env disabled
+    * 文本空
+    * E7 未触发
+    """
+    if not env_bool("TRANSLATION_ARTIFACT_ENABLE", default=True):
+        return []
+    from quality_metrics.translation_artifact import translation_artifact_report
+
+    report = translation_artifact_report(text)
+    if not report.e7_triggered:
+        return []
+    return [
+        DeterministicTrigger(
+            code="E7",
+            severity="medium",
+            evidence=f"[translation_artifact] {report.e7_evidence}",
+        )
+    ]
+
+
 def check_inner_monologue_ratio(text: str) -> list[DeterministicTrigger]:
     """B4 (lite): 内心独白字数 > (行动+对话) 字数 × 1.5.
 
@@ -511,6 +539,7 @@ def run_deterministic_checks(
     out.extend(check_sentence_rhythm(text))
     out.extend(check_prose_dynamics(text))
     out.extend(check_inner_monologue_ratio(text))
+    out.extend(check_translation_artifact(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -551,6 +580,7 @@ __all__ = [
     "check_sentence_rhythm",
     "check_prose_dynamics",
     "check_inner_monologue_ratio",
+    "check_translation_artifact",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",

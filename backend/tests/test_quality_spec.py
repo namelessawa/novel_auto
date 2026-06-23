@@ -17,6 +17,7 @@ from agents.quality_checks import (
     check_opening_repetition,
     check_prose_dynamics,
     check_summary_ending,
+    check_translation_artifact,
     check_word_repetition,
     run_deterministic_checks,
     summarize_triggers,
@@ -827,3 +828,67 @@ def test_run_deterministic_checks_includes_b4() -> None:
     triggers = run_deterministic_checks(_CHAR_INNER_HEAVY_SAMPLE)
     codes = [t.code for t in triggers]
     assert "B4" in codes
+
+
+# ---------------------------------------------------------------------------
+# Phase 6-C 第四刀 — check_translation_artifact (E7) 接入
+# ---------------------------------------------------------------------------
+
+
+# Healthy: 实测 tick_99 长程段落, 无翻译腔 pattern.
+_TRANSLATION_HEALTHY_SAMPLE = (
+    "灰钢往下走。每走一步,鞋底的油膜就发出吱嘎声。"
+    "阶梯很长,比她预想的深。墙壁上的铜管越来越密。"
+    "铁门没锁。门轴转动时发出的是低沉的嗡鸣。"
+    "灰钢伸手去碰。指尖离表面还有一寸时,玻璃亮了。"
+)
+
+# Degenerate: 多种翻译腔 pattern 密集出现 — 触发 E7.
+_TRANSLATION_HEAVY_SAMPLE = (
+    "对于这件事来说,这是一个无法解释的现象。"
+    "对于林雪而言,被命运所束缚的感觉从未消失。"
+    "由于过去十年的原因,她的眼睛变成了纸。"
+    "这是一个让人无法接受的事实。"
+)
+
+# 单一 pattern 出现 1 次 — 不应触发 (default min_hits=2).
+_TRANSLATION_SINGLE_HIT = (
+    "他走进房间。对于他来说这并不重要。然后他坐下,打开窗子。"
+    "雨已经停了。地面上还留着水渍。他没有去擦。"
+)
+
+
+def test_check_translation_artifact_healthy_no_trigger() -> None:
+    """healthy 长程段落不触发 E7."""
+    triggers = check_translation_artifact(_TRANSLATION_HEALTHY_SAMPLE)
+    assert triggers == []
+
+
+def test_check_translation_artifact_heavy_triggers_e7() -> None:
+    """多种 pattern 密集出现触发 E7, evidence 带 [translation_artifact] 前缀."""
+    triggers = check_translation_artifact(_TRANSLATION_HEAVY_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "E7" in codes
+    e7 = next(t for t in triggers if t.code == "E7")
+    assert e7.severity == "medium"
+    assert "[translation_artifact]" in e7.evidence
+
+
+def test_check_translation_artifact_single_hit_no_trigger() -> None:
+    """单一 pattern 仅 1 次 — 不触发 (min_hits=2)."""
+    triggers = check_translation_artifact(_TRANSLATION_SINGLE_HIT)
+    assert triggers == []
+
+
+def test_check_translation_artifact_env_kill_switch(monkeypatch) -> None:
+    """TRANSLATION_ARTIFACT_ENABLE=0 时不触发, 即使样本会命中."""
+    monkeypatch.setenv("TRANSLATION_ARTIFACT_ENABLE", "0")
+    triggers = check_translation_artifact(_TRANSLATION_HEAVY_SAMPLE)
+    assert triggers == []
+
+
+def test_run_deterministic_checks_includes_e7() -> None:
+    """E7 通过 run_deterministic_checks 主入口可达."""
+    triggers = run_deterministic_checks(_TRANSLATION_HEAVY_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "E7" in codes
