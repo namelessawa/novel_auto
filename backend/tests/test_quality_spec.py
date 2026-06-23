@@ -13,6 +13,7 @@ from agents.narrative_critic import NarrativeCritic
 from agents.quality_checks import (
     check_ai_cliche_blacklist,
     check_cliche_blacklist,
+    check_inner_monologue_ratio,
     check_opening_repetition,
     check_prose_dynamics,
     check_summary_ending,
@@ -753,3 +754,76 @@ def test_run_deterministic_checks_includes_d6() -> None:
     triggers = run_deterministic_checks(_PROSE_ABSTRACT_SAMPLE)
     codes = [t.code for t in triggers]
     assert "D6" in codes
+
+
+# ---------------------------------------------------------------------------
+# Phase 6-C 第三刀 — check_inner_monologue_ratio (B4) 接入
+# ---------------------------------------------------------------------------
+#
+# 单元只测 wrapper 行为: env kill / trigger 转换 / [character_signal] evidence
+# 前缀 / 主入口集成. character_signal 内部精度归该模块自身覆盖.
+
+
+# Healthy: tick_99 实测段落 — 动作 + 对话密集, 几乎无内心独白.
+_CHAR_HEALTHY_SAMPLE = (
+    "灰钢往下走。每走一步,鞋底的油膜就发出吱嘎声。\n"
+    "\"地下三层。\"灰钢说。林雪没应。她的纸脸转向走廊尽头。\n"
+    "铁门没锁。门轴转动时发出的不是锈蚀的尖叫,而是低沉的嗡鸣。\n"
+    "灰钢伸手去碰。指尖离表面还有一寸时,玻璃亮了。"
+)
+
+# Degenerate: 全段内心独白堆积 (B4 设计意图捕获的 LLM 退化模式).
+# 6+ 句, 每句都含 marker, 总字数 > 100, dialogue=0 → 触发 fallback 比较.
+_CHAR_INNER_HEAVY_SAMPLE = (
+    "他心想这一切究竟意味着什么,是命运的玩笑还是早已注定的结局。"
+    "她暗忖自己是否还有退路,脑海中浮现出无数可能的未来。"
+    "他想到母亲临终前的眼神,意识到自己从未真正理解她的选择。"
+    "她回忆起那个雪夜,脑子里反复回放着两人最后一次对话的每一个字。"
+    "他默念着祖父留下的训诫,心中暗暗发誓要走完这条路。"
+    "她想道,或许真相比她预想的还要残酷。"
+)
+
+# 对话密集型样本 — 即使含少量内心词, B4 不应触发 (dialogue 远大于 inner).
+_CHAR_DIALOGUE_HEAVY_SAMPLE = (
+    "\"你确定是这里?\"他问,语气里有不易察觉的疲惫。\n"
+    "\"位置无误。坐标是档案馆给的,他们不会出错。\"她回答得很快。\n"
+    "\"那就走吧。\"他推开门,木门发出沉重的声响。\n"
+    "她跟在后面,把手电筒打开。光柱在尘埃里划出一道明亮的通路。\n"
+    "\"小心脚下。\"他低声说,\"这里的地板有破洞。\""
+)
+
+
+def test_check_inner_monologue_healthy_no_trigger() -> None:
+    """healthy narrative (动作+对话密集) 不触发 B4."""
+    triggers = check_inner_monologue_ratio(_CHAR_HEALTHY_SAMPLE)
+    assert triggers == []
+
+
+def test_check_inner_monologue_heavy_triggers_b4() -> None:
+    """全段内心独白堆积触发 B4, evidence 带 [character_signal] 前缀."""
+    triggers = check_inner_monologue_ratio(_CHAR_INNER_HEAVY_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "B4" in codes
+    b4 = next(t for t in triggers if t.code == "B4")
+    assert b4.severity == "medium"
+    assert "[character_signal]" in b4.evidence
+
+
+def test_check_inner_monologue_dialogue_heavy_no_trigger() -> None:
+    """对话密集 narrative 即使带少量 marker 也不触发 (dialogue >> inner)."""
+    triggers = check_inner_monologue_ratio(_CHAR_DIALOGUE_HEAVY_SAMPLE)
+    assert triggers == []
+
+
+def test_check_inner_monologue_env_kill_switch(monkeypatch) -> None:
+    """CHARACTER_SIGNAL_ENABLE=0 时不触发, 即使样本会命中 B4."""
+    monkeypatch.setenv("CHARACTER_SIGNAL_ENABLE", "0")
+    triggers = check_inner_monologue_ratio(_CHAR_INNER_HEAVY_SAMPLE)
+    assert triggers == []
+
+
+def test_run_deterministic_checks_includes_b4() -> None:
+    """B4 通过 run_deterministic_checks 主入口可达."""
+    triggers = run_deterministic_checks(_CHAR_INNER_HEAVY_SAMPLE)
+    codes = [t.code for t in triggers]
+    assert "B4" in codes

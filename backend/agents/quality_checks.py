@@ -413,6 +413,44 @@ def check_prose_dynamics(text: str) -> list[DeterministicTrigger]:
 
 
 # ---------------------------------------------------------------------------
+# Phase 6-C third slice — B4 inner-monologue ratio (character_signal)
+# ---------------------------------------------------------------------------
+#
+# 接入策略与 prose_dynamics 同构: lazy import quality_metrics.character_signal,
+# triggered 状态转 DeterministicTrigger(code="B4", severity="medium"), evidence
+# 前缀加 [character_signal] 区分.
+#
+# env knob CHARACTER_SIGNAL_ENABLE 默认 True, 0 时跳过.
+
+
+def check_inner_monologue_ratio(text: str) -> list[DeterministicTrigger]:
+    """B4 (lite): 内心独白字数 > (行动+对话) 字数 × 1.5.
+
+    委托给 ``quality_metrics.character_signal`` — 这里只把 triggered 状态
+    转成 ``DeterministicTrigger``, 接入 ``run_deterministic_checks``.
+
+    返回空列表 if:
+    * env ``CHARACTER_SIGNAL_ENABLE=0`` (kill switch)
+    * 文本无内容 / 内心独白字数低于绝对下限
+    * B4 未触发
+    """
+    if not env_bool("CHARACTER_SIGNAL_ENABLE", default=True):
+        return []
+    from quality_metrics.character_signal import character_signal_report
+
+    report = character_signal_report(text)
+    if not report.b4_triggered:
+        return []
+    return [
+        DeterministicTrigger(
+            code="B4",
+            severity="medium",
+            evidence=f"[character_signal] {report.b4_evidence}",
+        )
+    ]
+
+
+# ---------------------------------------------------------------------------
 # 开头句式相似性 (A5/A7) — 需要外部状态
 # ---------------------------------------------------------------------------
 
@@ -472,6 +510,7 @@ def run_deterministic_checks(
     out.extend(check_summary_ending(text))
     out.extend(check_sentence_rhythm(text))
     out.extend(check_prose_dynamics(text))
+    out.extend(check_inner_monologue_ratio(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -511,6 +550,7 @@ __all__ = [
     "check_summary_ending",
     "check_sentence_rhythm",
     "check_prose_dynamics",
+    "check_inner_monologue_ratio",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",
