@@ -103,10 +103,20 @@ def analyze(report: dict) -> dict:
             for r in recs
             if isinstance(r.get("open_loop_count"), int)
         ]
+        # bench_tick.py per_tick records leave agents_called=[] in current
+        # schema, so "MemoryCompressor" in agents_called is a perma-FP. The
+        # honest signal is in `by_agent_tokens` per-tick (when present) or
+        # `cumulative_tokens` deltas. Until per_tick gets memcompress traces,
+        # we skip D4 for individual buckets and re-derive at the report level
+        # via by_agent_cumulative growth (see post-bucket loop below).
         memcompress = sum(
             1
             for r in recs
-            if "MemoryCompressor" in (r.get("agents_called") or [])
+            if any(
+                "memory_compressor" in k.lower()
+                or "memorycompressor" in k.lower()
+                for k in (r.get("agents_called") or [])
+            )
         )
         contradictions = [
             r.get("contradiction_count")
@@ -181,13 +191,20 @@ def analyze(report: dict) -> dict:
                 f"(≥{_DRIFT_THRESHOLDS['open_loop_cap']})"
             )
 
-    for b in per_bucket:
-        if b["memcompress_hits"] < _DRIFT_THRESHOLDS["memory_compress_min_per_bucket"]:
-            findings.append(
-                f"[D4] memory_compress silent: {b['bucket']} hits="
-                f"{b['memcompress_hits']} (expected ≥ "
-                f"{_DRIFT_THRESHOLDS['memory_compress_min_per_bucket']})"
-            )
+    # D4 — bench schema currently does NOT populate per-tick agents_called,
+    # so per-bucket memcompress count is unreliable. We instead derive D4 at
+    # the REPORT level: if by_agent_cumulative['memory_compressor:l0_l1'] is
+    # zero AND completed_ticks >= 50, that's a real silent-compressor signal.
+    by_agent = report.get("by_agent_cumulative") or {}
+    mem_keys = [k for k in by_agent.keys() if "memory_compressor" in k.lower()]
+    mem_tokens = sum(by_agent.get(k, 0) for k in mem_keys)
+    completed = report.get("completed_ticks") or 0
+    if completed >= 50 and mem_tokens == 0:
+        findings.append(
+            f"[D4] memory_compressor silent: 0 tokens across {completed} ticks "
+            f"— L0→L1 never ran (expected at least once per ~50 ticks)"
+        )
+    # Per-bucket memcompress detection skipped — schema doesn't support it yet.
 
     if per_bucket and per_bucket[-1]["contradictions_last"]:
         last = per_bucket[-1]["contradictions_last"]
