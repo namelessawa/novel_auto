@@ -479,6 +479,43 @@ def check_inner_monologue_ratio(text: str) -> list[DeterministicTrigger]:
 
 
 # ---------------------------------------------------------------------------
+# Phase 6-C iter#C1 — C6 章末无悬念 (lite)
+# ---------------------------------------------------------------------------
+#
+# 与 prose_dynamics / character_signal / translation_artifact 同套路: lazy
+# import quality_metrics.section_closing, c6_triggered → DeterministicTrigger.
+# env kill switch SECTION_CLOSING_ENABLE 默认 True.
+
+
+def check_section_closing(text: str) -> list[DeterministicTrigger]:
+    """C6 (lite): 章节结尾显式 closure 语言.
+
+    Conservative — 只命中段末 60 字内的"尘埃落定 / 至此告一段落 / 再无悬念"
+    等显式 closure 套话. 见 ``quality_metrics.section_closing`` docstring 关
+    于 FP 控制策略.
+
+    返回空列表 if:
+    * env ``SECTION_CLOSING_ENABLE=0`` (kill switch)
+    * 文本 < 40 字 / closure marker 不在段末
+    * C6 未触发
+    """
+    if not env_bool("SECTION_CLOSING_ENABLE", default=True):
+        return []
+    from quality_metrics.section_closing import section_closing_report
+
+    report = section_closing_report(text)
+    if not report.c6_triggered:
+        return []
+    return [
+        DeterministicTrigger(
+            code="C6",
+            severity="medium",
+            evidence=f"[section_closing] {report.c6_evidence}",
+        )
+    ]
+
+
+# ---------------------------------------------------------------------------
 # 开头句式相似性 (A5/A7) — 需要外部状态
 # ---------------------------------------------------------------------------
 
@@ -540,6 +577,7 @@ def run_deterministic_checks(
     out.extend(check_prose_dynamics(text))
     out.extend(check_inner_monologue_ratio(text))
     out.extend(check_translation_artifact(text))
+    out.extend(check_section_closing(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -581,6 +619,7 @@ __all__ = [
     "check_prose_dynamics",
     "check_inner_monologue_ratio",
     "check_translation_artifact",
+    "check_section_closing",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",
