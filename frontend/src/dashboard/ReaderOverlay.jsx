@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DayNightToggle from './DayNightToggle'
+import { useReaderPrefs } from './useReaderPrefs'
 import {
   fetchCharacterStates,
   fetchTickNarratives,
@@ -18,10 +19,23 @@ export default function ReaderOverlay({ novel, onClose }) {
   const [selIdx, setSelIdx] = useState(0)
   const [body, setBody] = useState([])
   // iter#E — 连读 mode: 拉全本 narratives + inline section header 形式渲染.
-  const [continuousMode, setContinuousMode] = useState(false)
+  // iter#G — 偏好 + scroll 位置走 localStorage, 跨刷新保留.
+  const {
+    continuousMode,
+    setContinuousMode,
+    fontSize,
+    setFontSize,
+    lineHeight,
+    setLineHeight,
+    restoreScroll,
+    saveScroll,
+    FONT_SIZE_OPTIONS,
+    LINE_HEIGHT_OPTIONS,
+  } = useReaderPrefs(novel?.id)
   const [allNarratives, setAllNarratives] = useState([])
   const [continuousLoading, setContinuousLoading] = useState(false)
   const articleRef = useRef(null)
+  const mainRef = useRef(null)
   // v2.48 — § Arc/OpenLoops 侧栏 (移植 ReaderView 的 Phase 6-C narrative_critic 面板).
   // 这是 reader 唯一回答 "这一节为什么此刻重要" 的视图.
   const [loopsData, setLoopsData] = useState({ loops: [], count: 0, closed_total: 0 })
@@ -195,6 +209,31 @@ export default function ReaderOverlay({ novel, onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // iter#G — restore scroll on novel mount (after first paint).
+  useEffect(() => {
+    if (!mainRef.current) return undefined
+    // Defer slightly so initial content render finishes before scrolling.
+    const id = setTimeout(() => restoreScroll(mainRef.current), 50)
+    return () => clearTimeout(id)
+  }, [novel?.id, restoreScroll, continuousMode])
+
+  // iter#G — save scroll on user scroll (debounced via rAF).
+  useEffect(() => {
+    const el = mainRef.current
+    if (!el) return undefined
+    let ticking = false
+    function onScroll() {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        saveScroll(el.scrollTop)
+        ticking = false
+      })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [novel?.id, saveScroll, continuousMode])
+
   const selSec = sections[selIdx]
   const heading =
     selSec?.title ||
@@ -229,6 +268,22 @@ export default function ReaderOverlay({ novel, onClose }) {
           >
             {continuousMode ? '连读 ON' : '节模式'}
           </button>
+          {/* iter#G — 字体 size selector (16/18/20). Compact 3-chip group. */}
+          <ChipGroup
+            options={FONT_SIZE_OPTIONS}
+            value={fontSize}
+            onChange={setFontSize}
+            renderLabel={(v) => `${v}px`}
+            ariaLabel="字号"
+          />
+          {/* iter#G — 行距 selector. 3-chip group. */}
+          <ChipGroup
+            options={LINE_HEIGHT_OPTIONS}
+            value={lineHeight}
+            onChange={setLineHeight}
+            renderLabel={(v) => `×${v}`}
+            ariaLabel="行距"
+          />
           <DayNightToggle />
           <button
             type="button"
@@ -304,8 +359,12 @@ export default function ReaderOverlay({ novel, onClose }) {
           </div>
         </aside>
 
-        <div className="dc-reader-main">
-          <article className="dc-reader-article" ref={articleRef}>
+        <div className="dc-reader-main" ref={mainRef}>
+          <article
+            className="dc-reader-article"
+            ref={articleRef}
+            style={{ '--reader-font-size': `${fontSize}px`, '--reader-line-height': lineHeight }}
+          >
             {!continuousMode && (
               <div className="dc-reader-article-head">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -406,6 +465,48 @@ export default function ReaderOverlay({ novel, onClose }) {
           />
         </aside>
       </div>
+    </div>
+  )
+}
+
+// iter#G — 紧凑 chip 选择器, font / line-height 共用.
+function ChipGroup({ options, value, onChange, renderLabel, ariaLabel }) {
+  return (
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      style={{
+        display: 'inline-flex',
+        gap: 2,
+        padding: 2,
+        border: '1px solid var(--border)',
+        borderRadius: 3,
+      }}
+    >
+      {options.map((opt) => {
+        const active = opt === value
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            aria-pressed={active}
+            title={`${ariaLabel} ${renderLabel(opt)}`}
+            style={{
+              font: "500 10px/1 'JetBrains Mono', monospace",
+              padding: '4px 7px',
+              background: active ? 'var(--accent)' : 'transparent',
+              color: active ? 'var(--bg)' : 'var(--text3)',
+              border: 'none',
+              borderRadius: 2,
+              cursor: 'pointer',
+              minWidth: 36,
+            }}
+          >
+            {renderLabel(opt)}
+          </button>
+        )
+      })}
     </div>
   )
 }

@@ -813,7 +813,8 @@
   letter-spacing: -0.01em;
 }
 .dc-reader-article p {
-  font: 400 18px/2.05 'Noto Serif SC', serif;
+  /* iter#G — font-size + line-height 用 CSS 变量, 由 ReaderOverlay inline 注入 */
+  font: 400 var(--reader-font-size, 18px) / var(--reader-line-height, 2.05) 'Noto Serif SC', serif;
   color: var(--text2);
   margin: 0;
   text-wrap: pretty;
