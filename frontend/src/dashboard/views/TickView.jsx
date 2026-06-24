@@ -57,6 +57,9 @@ export default function TickView({
   })
   const [diagLoading, setDiagLoading] = useState(false)
   const [diagFailures, setDiagFailures] = useState(0)
+  // Phase 6-C iter#B — window=N selector for critic-log stats.
+  // 0 = 全部 (与 iter#A 行为一致), 50/100/200 = sliding window.
+  const [criticWindow, setCriticWindow] = useState(0)
 
   // v2.48 — § OpenLoop CRUD (移植 TickControlPanel). opened_tick 由前端 = current_tick+1.
   const [openLoops, setOpenLoops] = useState([])
@@ -145,7 +148,7 @@ export default function TickView({
       fetchActionPatterns(100),
       fetchNoveltyWarnings(),
       fetchStyleAnchors(20),
-      fetchCriticLogStats(),
+      fetchCriticLogStats({ window: criticWindow }),
     ])
     const [hd, cs, es, ap, nw, sa, ck] = results
     setDiag({
@@ -163,7 +166,7 @@ export default function TickView({
     })
     setDiagFailures(results.filter((r) => r.status === 'rejected').length)
     setDiagLoading(false)
-  }, [])
+  }, [criticWindow])
 
   useEffect(() => {
     refreshDiag()
@@ -279,6 +282,8 @@ export default function TickView({
         failures={diagFailures}
         endpointCount={7}
         onRefresh={refreshDiag}
+        criticWindow={criticWindow}
+        onCriticWindowChange={setCriticWindow}
       />
 
       {/* v2.48 — § OpenLoop CRUD: 列出 + 添加 + 关闭. 移植 TickControlPanel. */}
@@ -373,7 +378,16 @@ function ParamRow({ name, sub, val, unit, right }) {
 
 // v2.48 — § Diagnostics 集成 (legacy TickDiagnosticsPanel 6 cards 的 dashboard 版).
 // Phase 6-C iter#A — 加 CriticStatsCard (action_distribution + top_codes 概览).
-function DiagnosticsSection({ diag, loading, failures, endpointCount = 7, onRefresh }) {
+// Phase 6-C iter#B — CriticStatsCard 加 window 选择器 (全部 / 50 / 100 / 200).
+function DiagnosticsSection({
+  diag,
+  loading,
+  failures,
+  endpointCount = 7,
+  onRefresh,
+  criticWindow = 0,
+  onCriticWindowChange,
+}) {
   const {
     hallucination,
     characterStates,
@@ -405,7 +419,11 @@ function DiagnosticsSection({ diag, loading, failures, endpointCount = 7, onRefr
 
       <GuardianCard data={hallucination} />
 
-      <CriticStatsCard data={criticStats} />
+      <CriticStatsCard
+        data={criticStats}
+        window={criticWindow}
+        onWindowChange={onCriticWindowChange}
+      />
 
       <div className="dc-tk-diag-grid">
         <CharacterStatesCard states={characterStates} />
@@ -428,7 +446,7 @@ function DiagnosticsSection({ diag, loading, failures, endpointCount = 7, onRefr
 //   right  — top_codes: 触发 code top-10 list + bar
 //
 // Empty-state: stats null (端点失败) / ticks_scanned=0 (尚无 critic 行).
-function CriticStatsCard({ data }) {
+function CriticStatsCard({ data, window: criticWindow = 0, onWindowChange }) {
   const stats = data || {}
   const ticksScanned = stats.ticks_scanned ?? 0
   const emptyTicks = stats.empty_decision_ticks ?? 0
@@ -445,14 +463,52 @@ function CriticStatsCard({ data }) {
     ticksScanned > 0 ? `${((emptyTicks / ticksScanned) * 100).toFixed(0)}%` : '—'
 
   const codeMax = Math.max(1, ...topCodes.map((c) => Number(c.count) || 0))
+  // iter#B — window chips. 0 = 全部, 50/100/200 = 最近 N tick.
+  const WINDOW_OPTIONS = [0, 50, 100, 200]
 
   return (
     <div className="dc-tk-diag-card is-wide">
       <div className="dc-tk-diag-card-head">
-        <span className="dc-tk-diag-card-title">Critic Decisions · 长程聚合</span>
+        <span className="dc-tk-diag-card-title">
+          Critic Decisions · {criticWindow > 0 ? `最近 ${criticWindow} tick` : '长程聚合'}
+        </span>
         <span className="dc-tk-diag-card-meta">
           {ticksScanned} tick · {distTotal} action · clean {cleanRate}
         </span>
+        {onWindowChange && (
+          <div
+            style={{
+              display: 'flex',
+              gap: 4,
+              marginLeft: 'auto',
+              alignItems: 'center',
+            }}
+          >
+            {WINDOW_OPTIONS.map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => onWindowChange(w)}
+                className="dc-btn-ghost"
+                aria-pressed={criticWindow === w}
+                style={{
+                  font: "500 11px/1 'JetBrains Mono', monospace",
+                  padding: '4px 8px',
+                  background:
+                    criticWindow === w ? 'var(--accent, #5fa8d3)' : 'transparent',
+                  color:
+                    criticWindow === w ? 'var(--bg)' : 'var(--text3)',
+                  borderColor:
+                    criticWindow === w ? 'var(--accent, #5fa8d3)' : 'var(--border)',
+                  transition: 'background 120ms, color 120ms',
+                }}
+                title={w === 0 ? '全部 tick' : `最近 ${w} tick`}
+              >
+                {w === 0 ? '全部' : w}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       {ticksScanned === 0 ? (
         <div className="dc-tk-diag-empty">

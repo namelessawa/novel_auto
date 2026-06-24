@@ -163,3 +163,80 @@ def test_stats_endpoint_skips_malformed(client) -> None:
     body = c.get("/api/tick/critic-log/stats").json()
     assert body["ticks_scanned"] == 2
     assert body["action_distribution"] == {"ACCEPT": 1, "REVISE": 1}
+
+
+# ---------------------------------------------------------------------------
+# Phase 6-C iter#B — window=N sliding window
+# ---------------------------------------------------------------------------
+
+
+def test_stats_endpoint_window_keeps_last_n(client) -> None:
+    """window=N → 只统计最近 N 个 tick (按 jsonl 末尾 N 行)."""
+    c, data_dir = client
+    rows = [
+        {"tick": t, "action": "ACCEPT", "surviving_codes": []} for t in range(1, 21)
+    ]
+    _write_log(data_dir, rows)
+
+    body = c.get("/api/tick/critic-log/stats", params={"window": 5}).json()
+    assert body["ticks_scanned"] == 5
+    assert body["window"] == 5
+
+
+def test_stats_endpoint_window_zero_means_unlimited(client) -> None:
+    """window=0 (默认) → 不限, 与无 window 等价."""
+    c, data_dir = client
+    rows = [
+        {"tick": t, "action": "ACCEPT", "surviving_codes": []} for t in range(1, 11)
+    ]
+    _write_log(data_dir, rows)
+
+    body = c.get("/api/tick/critic-log/stats", params={"window": 0}).json()
+    assert body["ticks_scanned"] == 10
+
+
+def test_stats_endpoint_window_composes_with_range(client) -> None:
+    """window + range 同时给 → 先 range 过滤再取末 N. 顺序锁定."""
+    c, data_dir = client
+    rows = [
+        {"tick": t, "action": "REVISE", "surviving_codes": ["A1"]}
+        for t in range(1, 21)
+    ]
+    _write_log(data_dir, rows)
+
+    body = c.get(
+        "/api/tick/critic-log/stats",
+        params={"start_tick": 5, "end_tick": 15, "window": 3},
+    ).json()
+    # range 给出 5..15 共 11 个 tick, window=3 取末 3 个 (13/14/15)
+    assert body["ticks_scanned"] == 3
+
+
+def test_stats_endpoint_window_aggregates_correctly(client) -> None:
+    """window 截断后 action_distribution / top_codes 反映 window 内数据."""
+    c, data_dir = client
+    rows = [
+        {"tick": 1, "action": "ACCEPT", "surviving_codes": []},
+        {"tick": 2, "action": "ACCEPT", "surviving_codes": []},
+        {"tick": 3, "action": "REVISE", "surviving_codes": ["A1"]},
+        {"tick": 4, "action": "REWRITE", "surviving_codes": ["A4"]},
+        {"tick": 5, "action": "REVISE", "surviving_codes": ["A1", "D2"]},
+    ]
+    _write_log(data_dir, rows)
+
+    body = c.get("/api/tick/critic-log/stats", params={"window": 3}).json()
+    # 末 3 tick: 3/4/5 = REVISE/REWRITE/REVISE, codes A1/A4/A1+D2
+    assert body["action_distribution"] == {"REVISE": 2, "REWRITE": 1}
+    codes_map = {c["code"]: c["count"] for c in body["top_codes"]}
+    assert codes_map == {"A1": 2, "A4": 1, "D2": 1}
+    assert body["ticks_scanned"] == 3
+
+
+def test_stats_endpoint_window_default_reports_zero(client) -> None:
+    """默认 (无 window 参数) → response.window=0 表示未截断."""
+    c, data_dir = client
+    rows = [{"tick": 1, "action": "ACCEPT", "surviving_codes": []}]
+    _write_log(data_dir, rows)
+
+    body = c.get("/api/tick/critic-log/stats").json()
+    assert body["window"] == 0

@@ -778,13 +778,20 @@ export async function fetchHallucinationDiagnostic() {
   return assertOk(res)
 }
 
-// Phase 6-C iter#7 — critic decision aggregated stats (per-novel).
-// Backend: GET /api/tick/critic-log/stats?start_tick=&end_tick=
-// Returns: { action_distribution, top_codes, ticks_scanned, empty_decision_ticks }
-export async function fetchCriticLogStats({ startTick = 0, endTick = 0 } = {}) {
+// Phase 6-C iter#7 + iter#B — critic decision aggregated stats (per-novel).
+// Backend: GET /api/tick/critic-log/stats?start_tick=&end_tick=&window=
+// Returns: { action_distribution, top_codes, ticks_scanned,
+//            empty_decision_ticks, window }
+// iter#B `window=N`: only the most-recent N ticks after range filter (0=all).
+export async function fetchCriticLogStats({
+  startTick = 0,
+  endTick = 0,
+  window = 0,
+} = {}) {
   const params = new URLSearchParams()
   if (startTick > 0) params.set('start_tick', String(startTick))
   if (endTick > 0) params.set('end_tick', String(endTick))
+  if (window > 0) params.set('window', String(window))
   const qs = params.toString()
   const url = qs ? `/api/tick/critic-log/stats?${qs}` : '/api/tick/critic-log/stats'
   const res = await authedFetch(url)

@@ -457,22 +457,32 @@ async def list_critic_log(
 async def critic_log_stats(
     start_tick: int = Query(0, ge=0),
     end_tick: int = Query(0, ge=0, description="0 = up to current tick"),
+    window: int = Query(
+        0,
+        ge=0,
+        le=2000,
+        description="0 = unlimited; N = keep only the last N ticks (after range filter)",
+    ),
     runtime=Depends(_resolve_runtime),
 ) -> dict:
-    """Phase 6-C iter#7 — critic decision aggregated stats.
+    """Phase 6-C iter#7 + iter#B — critic decision aggregated stats.
 
     扫 ``{data_dir}/critic_log.jsonl`` 全文件, 输出长程聚合:
     * ``action_distribution``: ACCEPT / REVISE / REWRITE / RED_TEAM 计数
     * ``top_codes``: 触发 code 频次 top-10
     * ``ticks_scanned``: 实际进入聚合的 tick 数
     * ``empty_decision_ticks``: surviving_codes 全空的 tick 数 (clean output)
+    * ``window``: 截窗大小 (回显, 0 = 未截断)
 
     与 `/critic-log` (raw rows) 的区别: stats 是 dashboard 一目了然的
     summary, 不返回 per-tick rows. 长程 500-tick 数据 ~100KB, 单次全扫
     可接受 (~10ms).
+
+    iter#B `window=N`: range 过滤后再取末 N 行 (按 jsonl 顺序 = tick 顺序),
+    用于 dashboard "最近 50/100 tick 趋势" 视图. window=0 行为与 iter#7 一致.
     """
     import os
-    from collections import Counter
+    from collections import Counter, deque
 
     ts = runtime.tick_state
     current_tick = ts.current_tick
@@ -486,11 +496,13 @@ async def critic_log_stats(
                 "top_codes": [],
                 "ticks_scanned": 0,
                 "empty_decision_ticks": 0,
+                "window": window,
             }
-        action_counter: Counter[str] = Counter()
-        code_counter: Counter[str] = Counter()
-        ticks_scanned = 0
-        empty_decision_ticks = 0
+        # iter#B: 先 range-filter 进 deque(maxlen=window) 拿末 N 行 dict.
+        # window=0 → 不截窗, 用普通 list. 用 deque maxlen 避免预扫两次.
+        filtered: "deque[dict] | list[dict]" = (
+            deque(maxlen=window) if window > 0 else []
+        )
         with open(log_path, "r", encoding="utf-8") as f:
             for raw in f:
                 line = raw.strip()
@@ -504,17 +516,24 @@ async def critic_log_stats(
                 tick = obj.get("tick", -1)
                 if not isinstance(tick, int) or tick < start_tick or tick > effective_end:
                     continue
-                ticks_scanned += 1
-                action = obj.get("action") or ""
-                if action:
-                    action_counter[action] += 1
-                codes = obj.get("surviving_codes") or []
-                if codes:
-                    for c in codes:
-                        if isinstance(c, str) and c:
-                            code_counter[c] += 1
-                else:
-                    empty_decision_ticks += 1
+                filtered.append(obj)
+
+        action_counter: Counter[str] = Counter()
+        code_counter: Counter[str] = Counter()
+        ticks_scanned = 0
+        empty_decision_ticks = 0
+        for obj in filtered:
+            ticks_scanned += 1
+            action = obj.get("action") or ""
+            if action:
+                action_counter[action] += 1
+            codes = obj.get("surviving_codes") or []
+            if codes:
+                for c in codes:
+                    if isinstance(c, str) and c:
+                        code_counter[c] += 1
+            else:
+                empty_decision_ticks += 1
         return {
             "action_distribution": dict(action_counter),
             "top_codes": [
@@ -522,6 +541,7 @@ async def critic_log_stats(
             ],
             "ticks_scanned": ticks_scanned,
             "empty_decision_ticks": empty_decision_ticks,
+            "window": window,
         }
 
     stats = await run_in_threadpool(_scan_blocking)
