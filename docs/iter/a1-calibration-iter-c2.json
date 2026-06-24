@@ -1,0 +1,2523 @@
+{
+  "sample_size": 50,
+  "seed": 42,
+  "exempt_words_inferred": [
+    "不是",
+    "苏默",
+    "金属",
+    "声音",
+    "方向",
+    "苏墨",
+    "一下",
+    "一声",
+    "档案",
+    "卷宗",
+    "通道",
+    "出一",
+    "林雪",
+    "记忆",
+    "石板",
+    "边缘",
+    "阴影",
+    "锈蚀",
+    "头顶",
+    "手指",
+    "面上",
+    "冰面",
+    "光束",
+    "口袋",
+    "积水",
+    "水面",
+    "管道",
+    "手套",
+    "照片",
+    "一层",
+    "传来",
+    "沼泽",
+    "东西",
+    "雾里",
+    "怀里",
+    "楼梯",
+    "格栅",
+    "泡沫",
+    "上来",
+    "走廊"
+  ],
+  "avg_triggers_per_narrative": {
+    "base_3 (current, no exempt)": 4.58,
+    "base_3 + exempt (production-like)": 2.14,
+    "base_4 (+1, no exempt)": 2.26,
+    "delta_plus1": -2.32,
+    "delta_exempt": -2.44
+  },
+  "pct_clean_narratives": {
+    "base_3 (current, no exempt)": 12.0,
+    "base_3 + exempt (production-like)": 22.0,
+    "base_4 (+1, no exempt)": 32.0
+  },
+  "top_words_base_3": [
+    [
+      "不是",
+      10
+    ],
+    [
+      "金属",
+      9
+    ],
+    [
+      "苏默",
+      7
+    ],
+    [
+      "苏墨",
+      6
+    ],
+    [
+      "卷宗",
+      3
+    ],
+    [
+      "通道",
+      3
+    ],
+    [
+      "头顶",
+      3
+    ],
+    [
+      "林雪",
+      3
+    ],
+    [
+      "方向",
+      3
+    ],
+    [
+      "档案",
+      3
+    ],
+    [
+      "照片",
+      3
+    ],
+    [
+      "格栅",
+      2
+    ],
+    [
+      "手指",
+      2
+    ],
+    [
+      "冰面",
+      2
+    ],
+    [
+      "壮汉",
+      2
+    ]
+  ],
+  "top_words_base_4": [
+    [
+      "不是",
+      7
+    ],
+    [
+      "苏默",
+      6
+    ],
+    [
+      "苏墨",
+      4
+    ],
+    [
+      "金属",
+      3
+    ],
+    [
+      "格栅",
+      2
+    ],
+    [
+      "冰面",
+      2
+    ],
+    [
+      "壮汉",
+      2
+    ],
+    [
+      "灰袍",
+      2
+    ],
+    [
+      "袍人",
+      2
+    ],
+    [
+      "林雪",
+      2
+    ],
+    [
+      "记忆",
+      2
+    ],
+    [
+      "通道",
+      2
+    ],
+    [
+      "档案",
+      2
+    ],
+    [
+      "一下",
+      2
+    ],
+    [
+      "汽笛",
+      1
+    ]
+  ],
+  "top_words_base_3_with_exempt": [
+    [
+      "宗筒",
+      2
+    ],
+    [
+      "料堆",
+      1
+    ],
+    [
+      "混凝",
+      1
+    ],
+    [
+      "凝土",
+      1
+    ],
+    [
+      "结晶",
+      1
+    ],
+    [
+      "煤气",
+      1
+    ],
+    [
+      "气灯",
+      1
+    ],
+    [
+      "钥匙",
+      1
+    ],
+    [
+      "少年",
+      1
+    ],
+    [
+      "船夫",
+      1
+    ],
+    [
+      "木槌",
+      1
+    ],
+    [
+      "黑渣",
+      1
+    ],
+    [
+      "碎屑",
+      1
+    ],
+    [
+      "刻痕",
+      1
+    ],
+    [
+      "灰钢",
+      1
+    ]
+  ],
+  "per_bucket": {
+    "M (501-1500)": {
+      "count": 43,
+      "avg_len": 832.0,
+      "avg_triggers_base_3": 5.07,
+      "avg_triggers_base_4": 2.49,
+      "avg_triggers_base_3_exempt": 2.35
+    },
+    "S (≤500)": {
+      "count": 7,
+      "avg_len": 313.0,
+      "avg_triggers_base_3": 1.57,
+      "avg_triggers_base_4": 0.86,
+      "avg_triggers_base_3_exempt": 0.86
+    }
+  },
+  "rows": [
+    {
+      "label": "bench_iter140-seed1-sideline-active_1781307363/tick_000044.txt",
+      "length": 1285,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 6,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 1,
+      "delta": -4,
+      "delta_exempt": -5,
+      "base3_pairs": [
+        [
+          "汽笛",
+          5
+        ],
+        [
+          "废料",
+          5
+        ],
+        [
+          "陈阿",
+          4
+        ],
+        [
+          "阿福",
+          4
+        ],
+        [
+          "卷宗",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "汽笛",
+          5
+        ],
+        [
+          "废料",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "料堆",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter103-seed3-50tick_1781213180/tick_000016.txt",
+      "length": 950,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 7,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 3,
+      "delta": -3,
+      "delta_exempt": -4,
+      "base3_pairs": [
+        [
+          "金属",
+          5
+        ],
+        [
+          "混凝",
+          5
+        ],
+        [
+          "凝土",
+          5
+        ],
+        [
+          "格栅",
+          5
+        ],
+        [
+          "通道",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "金属",
+          5
+        ],
+        [
+          "混凝",
+          5
+        ],
+        [
+          "凝土",
+          5
+        ],
+        [
+          "格栅",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "混凝",
+          5
+        ],
+        [
+          "凝土",
+          5
+        ],
+        [
+          "结晶",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_steampunk_archive_literary_1781626555/tick_000003.txt",
+      "length": 766,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 6,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 3,
+      "delta": -6,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "煤气",
+          4
+        ],
+        [
+          "气灯",
+          4
+        ],
+        [
+          "不是",
+          4
+        ],
+        [
+          "苏墨",
+          4
+        ],
+        [
+          "泡沫",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "煤气",
+          4
+        ],
+        [
+          "气灯",
+          4
+        ],
+        [
+          "钥匙",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_republic_spy_literary_1781624543/tick_000001.txt",
+      "length": 323,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 0,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": 0,
+      "delta_exempt": 0,
+      "base3_pairs": [],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_m_history_military_ensemble_epic_1781623219/tick_000002.txt",
+      "length": 1003,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 3,
+      "triggers_base3_with_exempt": 3,
+      "delta": -2,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "少年",
+          7
+        ],
+        [
+          "船夫",
+          7
+        ],
+        [
+          "不是",
+          6
+        ],
+        [
+          "手指",
+          4
+        ],
+        [
+          "木槌",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "少年",
+          7
+        ],
+        [
+          "船夫",
+          7
+        ],
+        [
+          "不是",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "少年",
+          7
+        ],
+        [
+          "船夫",
+          7
+        ],
+        [
+          "木槌",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter146-seed2-cast221-sideline_1781329787/tick_000026.txt",
+      "length": 605,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 0,
+      "delta": -1,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "冰面",
+          6
+        ],
+        [
+          "面上",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "冰面",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_iter127-seed3-cast120_1781285705/tick_000050.txt",
+      "length": 582,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 1,
+      "delta": -1,
+      "delta_exempt": -4,
+      "base3_pairs": [
+        [
+          "壮汉",
+          7
+        ],
+        [
+          "裂缝",
+          6
+        ],
+        [
+          "苏默",
+          6
+        ],
+        [
+          "铁桶",
+          5
+        ],
+        [
+          "黑渣",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "壮汉",
+          7
+        ],
+        [
+          "裂缝",
+          6
+        ],
+        [
+          "苏默",
+          6
+        ],
+        [
+          "铁桶",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "黑渣",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_stage5-seed2-50tick_1781196517/tick_000033.txt",
+      "length": 30,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 0,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": 0,
+      "delta_exempt": 0,
+      "base3_pairs": [],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_iter126-seed1-cast120_1781278211/tick_000020.txt",
+      "length": 326,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 3,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 2,
+      "delta": -1,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "光束",
+          6
+        ],
+        [
+          "碎屑",
+          4
+        ],
+        [
+          "刻痕",
+          3
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "光束",
+          6
+        ],
+        [
+          "碎屑",
+          4
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "碎屑",
+          4
+        ],
+        [
+          "刻痕",
+          3
+        ]
+      ]
+    },
+    {
+      "label": "bench_phase6a2-longrange-500tick_1781696585/tick_000014.txt",
+      "length": 1005,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 10,
+      "triggers_base4": 8,
+      "triggers_base3_with_exempt": 3,
+      "delta": -2,
+      "delta_exempt": -7,
+      "base3_pairs": [
+        [
+          "灰钢",
+          7
+        ],
+        [
+          "手指",
+          6
+        ],
+        [
+          "不是",
+          6
+        ],
+        [
+          "留下",
+          6
+        ],
+        [
+          "灰袍",
+          6
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "灰钢",
+          7
+        ],
+        [
+          "手指",
+          6
+        ],
+        [
+          "不是",
+          6
+        ],
+        [
+          "留下",
+          6
+        ],
+        [
+          "灰袍",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "灰钢",
+          7
+        ],
+        [
+          "留下",
+          6
+        ],
+        [
+          "宗筒",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter103-seed3-50tick_1781213180/tick_000048.txt",
+      "length": 690,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 1,
+      "delta": -2,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "嗡鸣",
+          4
+        ],
+        [
+          "苏默",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "嗡鸣",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter103-seed3-50tick_1781213180/tick_000040.txt",
+      "length": 881,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 8,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 5,
+      "delta": -4,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "苏默",
+          5
+        ],
+        [
+          "紫色",
+          5
+        ],
+        [
+          "冰柱",
+          5
+        ],
+        [
+          "记忆",
+          5
+        ],
+        [
+          "金属",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "苏默",
+          5
+        ],
+        [
+          "紫色",
+          5
+        ],
+        [
+          "冰柱",
+          5
+        ],
+        [
+          "记忆",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "紫色",
+          5
+        ],
+        [
+          "冰柱",
+          5
+        ],
+        [
+          "冰层",
+          4
+        ],
+        [
+          "色光",
+          4
+        ],
+        [
+          "碎片",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter127-seed3-cast120_1781285705/tick_000005.txt",
+      "length": 783,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 0,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": 0,
+      "delta_exempt": 0,
+      "base3_pairs": [],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_m_high_fantasy_xuanh_somber_1781622848/tick_000001.txt",
+      "length": 670,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 1,
+      "delta": -1,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "板房",
+          5
+        ],
+        [
+          "方向",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "板房",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "板房",
+          5
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_modern_romance_colloquial_web_1781623745/tick_000001.txt",
+      "length": 776,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 4,
+      "delta": -1,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "弄堂",
+          7
+        ],
+        [
+          "叶子",
+          6
+        ],
+        [
+          "背面",
+          5
+        ],
+        [
+          "数字",
+          5
+        ],
+        [
+          "记号",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "弄堂",
+          7
+        ],
+        [
+          "叶子",
+          6
+        ],
+        [
+          "背面",
+          5
+        ],
+        [
+          "数字",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "弄堂",
+          7
+        ],
+        [
+          "叶子",
+          6
+        ],
+        [
+          "数字",
+          5
+        ],
+        [
+          "记号",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_stage3-longrange-50tick_1781155934/tick_000046.txt",
+      "length": 749,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 4,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 2,
+      "delta": -4,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "林雪",
+          4
+        ],
+        [
+          "晶体",
+          4
+        ],
+        [
+          "锈蚀",
+          4
+        ],
+        [
+          "藤蔓",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "晶体",
+          4
+        ],
+        [
+          "藤蔓",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter103-seed3-50tick_1781213180/tick_000023.txt",
+      "length": 597,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 4,
+      "delta": -1,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "阿土",
+          9
+        ],
+        [
+          "雷恩",
+          6
+        ],
+        [
+          "记忆",
+          5
+        ],
+        [
+          "守护",
+          5
+        ],
+        [
+          "忆守",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "阿土",
+          9
+        ],
+        [
+          "雷恩",
+          6
+        ],
+        [
+          "记忆",
+          5
+        ],
+        [
+          "守护",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "阿土",
+          9
+        ],
+        [
+          "雷恩",
+          6
+        ],
+        [
+          "守护",
+          5
+        ],
+        [
+          "忆守",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_stage5-seed3-50tick_1781203198/tick_000032.txt",
+      "length": 966,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 8,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 2,
+      "delta": -4,
+      "delta_exempt": -6,
+      "base3_pairs": [
+        [
+          "金属",
+          5
+        ],
+        [
+          "九娘",
+          5
+        ],
+        [
+          "通道",
+          5
+        ],
+        [
+          "楼梯",
+          5
+        ],
+        [
+          "积水",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "金属",
+          5
+        ],
+        [
+          "九娘",
+          5
+        ],
+        [
+          "通道",
+          5
+        ],
+        [
+          "楼梯",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "九娘",
+          5
+        ],
+        [
+          "铁门",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_apocalypse_wastela_noir_cold_1781621256/tick_000002.txt",
+      "length": 698,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 1,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 1,
+      "delta": -1,
+      "delta_exempt": 0,
+      "base3_pairs": [
+        [
+          "一滴",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "一滴",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_stage5-seed2-50tick_1781196517/tick_000032.txt",
+      "length": 869,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 4,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 2,
+      "delta": -2,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "档案",
+          8
+        ],
+        [
+          "案馆",
+          6
+        ],
+        [
+          "铅笔",
+          4
+        ],
+        [
+          "入口",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "档案",
+          8
+        ],
+        [
+          "案馆",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "案馆",
+          6
+        ],
+        [
+          "入口",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_phase6a-baseline-seed5-scifi_1781696583/tick_000091.txt",
+      "length": 1054,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 10,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 3,
+      "delta": -6,
+      "delta_exempt": -7,
+      "base3_pairs": [
+        [
+          "冰面",
+          7
+        ],
+        [
+          "苏墨",
+          5
+        ],
+        [
+          "通道",
+          5
+        ],
+        [
+          "频率",
+          5
+        ],
+        [
+          "管道",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "冰面",
+          7
+        ],
+        [
+          "苏墨",
+          5
+        ],
+        [
+          "通道",
+          5
+        ],
+        [
+          "频率",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "频率",
+          5
+        ],
+        [
+          "重力",
+          4
+        ],
+        [
+          "控制",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_high_fantasy_xuanh_xianxia_fast_1781622877/tick_000002.txt",
+      "length": 879,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 3,
+      "delta": -1,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "苏默",
+          10
+        ],
+        [
+          "不是",
+          6
+        ],
+        [
+          "陈岩",
+          6
+        ],
+        [
+          "门外",
+          5
+        ],
+        [
+          "门闩",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "苏默",
+          10
+        ],
+        [
+          "不是",
+          6
+        ],
+        [
+          "陈岩",
+          6
+        ],
+        [
+          "门外",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "陈岩",
+          6
+        ],
+        [
+          "门外",
+          5
+        ],
+        [
+          "门闩",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_phase6a2-longrange-500tick_1781696585/tick_000261.txt",
+      "length": 983,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 9,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 4,
+      "delta": -5,
+      "delta_exempt": -5,
+      "base3_pairs": [
+        [
+          "苏墨",
+          9
+        ],
+        [
+          "铁片",
+          8
+        ],
+        [
+          "镜面",
+          7
+        ],
+        [
+          "档案",
+          6
+        ],
+        [
+          "片脸",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "苏墨",
+          9
+        ],
+        [
+          "铁片",
+          8
+        ],
+        [
+          "镜面",
+          7
+        ],
+        [
+          "档案",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "镜面",
+          7
+        ],
+        [
+          "片脸",
+          4
+        ],
+        [
+          "面里",
+          4
+        ],
+        [
+          "案室",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_steampunk_archive_somber_1781626913/tick_000001.txt",
+      "length": 834,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 7,
+      "triggers_base4": 4,
+      "triggers_base3_with_exempt": 3,
+      "delta": -3,
+      "delta_exempt": -4,
+      "base3_pairs": [
+        [
+          "不是",
+          6
+        ],
+        [
+          "码头",
+          5
+        ],
+        [
+          "下来",
+          5
+        ],
+        [
+          "手套",
+          5
+        ],
+        [
+          "酸雾",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "不是",
+          6
+        ],
+        [
+          "码头",
+          5
+        ],
+        [
+          "下来",
+          5
+        ],
+        [
+          "手套",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "酸雾",
+          4
+        ],
+        [
+          "他把",
+          4
+        ],
+        [
+          "烟斗",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter103-seed1-50tick_1781219317/tick_000029.txt",
+      "length": 729,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 3,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 1,
+      "delta": -2,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "阶梯",
+          5
+        ],
+        [
+          "管壁",
+          4
+        ],
+        [
+          "光束",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "阶梯",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "阶梯",
+          5
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter148-seed3-cast221-sideline_1781337720/tick_000024.txt",
+      "length": 201,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 0,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": 0,
+      "delta_exempt": 0,
+      "base3_pairs": [],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_phase6a2-longrange-500tick_1781696585/tick_000021.txt",
+      "length": 1491,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 20,
+      "triggers_base4": 12,
+      "triggers_base3_with_exempt": 11,
+      "delta": -8,
+      "delta_exempt": -9,
+      "base3_pairs": [
+        [
+          "灰袍",
+          13
+        ],
+        [
+          "袍人",
+          13
+        ],
+        [
+          "管道",
+          8
+        ],
+        [
+          "林雪",
+          8
+        ],
+        [
+          "卷宗",
+          7
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "灰袍",
+          13
+        ],
+        [
+          "袍人",
+          13
+        ],
+        [
+          "管道",
+          8
+        ],
+        [
+          "林雪",
+          8
+        ],
+        [
+          "卷宗",
+          7
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "铜扣",
+          6
+        ],
+        [
+          "道壁",
+          5
+        ],
+        [
+          "人说",
+          5
+        ],
+        [
+          "菌丝",
+          5
+        ],
+        [
+          "三个",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_matrix-ancient_romance-lyrical_poetic_1781597716/tick_000001.txt",
+      "length": 448,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 3,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 0,
+      "delta": -1,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "底下",
+          4
+        ],
+        [
+          "一声",
+          4
+        ],
+        [
+          "水面",
+          3
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "底下",
+          4
+        ],
+        [
+          "一声",
+          4
+        ]
+      ],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_m_steampunk_archive_noir_cold_1781626894/tick_000003.txt",
+      "length": 998,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 8,
+      "triggers_base4": 5,
+      "triggers_base3_with_exempt": 3,
+      "delta": -3,
+      "delta_exempt": -5,
+      "base3_pairs": [
+        [
+          "栈桥",
+          7
+        ],
+        [
+          "墨青",
+          5
+        ],
+        [
+          "一下",
+          5
+        ],
+        [
+          "工人",
+          5
+        ],
+        [
+          "木板",
+          5
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "栈桥",
+          7
+        ],
+        [
+          "墨青",
+          5
+        ],
+        [
+          "一下",
+          5
+        ],
+        [
+          "工人",
+          5
+        ],
+        [
+          "木板",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "墨青",
+          5
+        ],
+        [
+          "工人",
+          5
+        ],
+        [
+          "木板",
+          5
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter148-seed3-cast221-sideline_1781337720/tick_000004.txt",
+      "length": 634,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 1,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 1,
+      "delta": -1,
+      "delta_exempt": 0,
+      "base3_pairs": [
+        [
+          "箱子",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "箱子",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_high_fantasy_xuanh_hot_blooded_1781622507/tick_000002.txt",
+      "length": 909,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 3,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 0,
+      "delta": -2,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "不是",
+          7
+        ],
+        [
+          "东西",
+          4
+        ],
+        [
+          "掌心",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "不是",
+          7
+        ]
+      ],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_m_xianxia_cultivatio_somber_1781630976/tick_000002.txt",
+      "length": 833,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 7,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 3,
+      "delta": -5,
+      "delta_exempt": -4,
+      "base3_pairs": [
+        [
+          "东西",
+          6
+        ],
+        [
+          "一下",
+          6
+        ],
+        [
+          "船家",
+          4
+        ],
+        [
+          "苔藓",
+          4
+        ],
+        [
+          "磷光",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "东西",
+          6
+        ],
+        [
+          "一下",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "船家",
+          4
+        ],
+        [
+          "苔藓",
+          4
+        ],
+        [
+          "磷光",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter127-seed3-cast120_1781285705/tick_000049.txt",
+      "length": 587,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 3,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 0,
+      "delta": -1,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "苏默",
+          9
+        ],
+        [
+          "壮汉",
+          5
+        ],
+        [
+          "裂缝",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "苏默",
+          9
+        ],
+        [
+          "壮汉",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_iter126-seed1-cast120_1781278211/tick_000049.txt",
+      "length": 606,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 0,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": 0,
+      "delta_exempt": 0,
+      "base3_pairs": [],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_phase5j-longrange-seed2-republic_1781689578/tick_000025.txt",
+      "length": 1099,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 11,
+      "triggers_base4": 6,
+      "triggers_base3_with_exempt": 9,
+      "delta": -5,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "顾明",
+          9
+        ],
+        [
+          "明远",
+          9
+        ],
+        [
+          "老周",
+          6
+        ],
+        [
+          "底片",
+          6
+        ],
+        [
+          "布鞋",
+          5
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "顾明",
+          9
+        ],
+        [
+          "明远",
+          9
+        ],
+        [
+          "老周",
+          6
+        ],
+        [
+          "底片",
+          6
+        ],
+        [
+          "布鞋",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "顾明",
+          9
+        ],
+        [
+          "明远",
+          9
+        ],
+        [
+          "老周",
+          6
+        ],
+        [
+          "底片",
+          6
+        ],
+        [
+          "布鞋",
+          5
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter127-seed3-cast120_1781285705/tick_000022.txt",
+      "length": 597,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 3,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 1,
+      "delta": -3,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "金属",
+          4
+        ],
+        [
+          "阴影",
+          4
+        ],
+        [
+          "屏幕",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "屏幕",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_phase5j-longrange-200tick_1781672606/tick_000028.txt",
+      "length": 848,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 1,
+      "delta": -3,
+      "delta_exempt": -4,
+      "base3_pairs": [
+        [
+          "不是",
+          7
+        ],
+        [
+          "通风",
+          6
+        ],
+        [
+          "档案",
+          4
+        ],
+        [
+          "案架",
+          4
+        ],
+        [
+          "金属",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "不是",
+          7
+        ],
+        [
+          "通风",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "案架",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_matrix-apocalypse_wasteland-somber_1781598486/tick_000001.txt",
+      "length": 487,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 5,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 4,
+      "delta": -3,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "告示",
+          4
+        ],
+        [
+          "示牌",
+          4
+        ],
+        [
+          "金属",
+          3
+        ],
+        [
+          "干净",
+          3
+        ],
+        [
+          "疤脸",
+          3
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "告示",
+          4
+        ],
+        [
+          "示牌",
+          4
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "告示",
+          4
+        ],
+        [
+          "示牌",
+          4
+        ],
+        [
+          "干净",
+          3
+        ],
+        [
+          "疤脸",
+          3
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_scifi_soft_lit_literary_1781626037/tick_000001.txt",
+      "length": 730,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 2,
+      "delta": -2,
+      "delta_exempt": 0,
+      "base3_pairs": [
+        [
+          "苏玫",
+          4
+        ],
+        [
+          "巷口",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "苏玫",
+          4
+        ],
+        [
+          "巷口",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter121-seed3-cast221_1781249938/tick_000005.txt",
+      "length": 754,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 1,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": -1,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "金属",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_phase6a2-longrange-500tick_1781696585/tick_000355.txt",
+      "length": 901,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 14,
+      "triggers_base4": 9,
+      "triggers_base3_with_exempt": 7,
+      "delta": -5,
+      "delta_exempt": -7,
+      "base3_pairs": [
+        [
+          "石板",
+          8
+        ],
+        [
+          "字符",
+          7
+        ],
+        [
+          "表面",
+          7
+        ],
+        [
+          "金属",
+          6
+        ],
+        [
+          "中心",
+          5
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "石板",
+          8
+        ],
+        [
+          "字符",
+          7
+        ],
+        [
+          "表面",
+          7
+        ],
+        [
+          "金属",
+          6
+        ],
+        [
+          "中心",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "字符",
+          7
+        ],
+        [
+          "表面",
+          7
+        ],
+        [
+          "中心",
+          5
+        ],
+        [
+          "铁锤",
+          5
+        ],
+        [
+          "油池",
+          5
+        ]
+      ]
+    },
+    {
+      "label": "bench_stage5-seed1-50tick-r_1781188010/tick_000039.txt",
+      "length": 841,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 5,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 3,
+      "delta": -4,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "水流",
+          5
+        ],
+        [
+          "金属",
+          4
+        ],
+        [
+          "不是",
+          4
+        ],
+        [
+          "靴声",
+          4
+        ],
+        [
+          "堑壕",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "水流",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "水流",
+          5
+        ],
+        [
+          "靴声",
+          4
+        ],
+        [
+          "堑壕",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter144-seed1-cast221-sideline_1781321931/tick_000012.txt",
+      "length": 379,
+      "effective_threshold_base3": 3,
+      "effective_threshold_base4": 4,
+      "triggers_base3": 0,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 0,
+      "delta": 0,
+      "delta_exempt": 0,
+      "base3_pairs": [],
+      "base4_pairs": [],
+      "base3_exempt_pairs": []
+    },
+    {
+      "label": "bench_phase5j-longrange-seed2-republic_1781689578/tick_000011.txt",
+      "length": 1054,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 4,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 2,
+      "delta": -2,
+      "delta_exempt": -2,
+      "base3_pairs": [
+        [
+          "苏默",
+          12
+        ],
+        [
+          "梁辰",
+          11
+        ],
+        [
+          "车门",
+          4
+        ],
+        [
+          "照片",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "苏默",
+          12
+        ],
+        [
+          "梁辰",
+          11
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "梁辰",
+          11
+        ],
+        [
+          "车门",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_iter125-seed2-cast120_1781271372/tick_000028.txt",
+      "length": 944,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 4,
+      "triggers_base4": 2,
+      "triggers_base3_with_exempt": 1,
+      "delta": -2,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "一层",
+          6
+        ],
+        [
+          "苏墨",
+          6
+        ],
+        [
+          "出一",
+          4
+        ],
+        [
+          "纸袋",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "一层",
+          6
+        ],
+        [
+          "苏墨",
+          6
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "纸袋",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_stage5-seed3-30tick-retry_1781183312/tick_000017.txt",
+      "length": 690,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 1,
+      "delta": -2,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "巷子",
+          4
+        ],
+        [
+          "深处",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "深处",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_urban_mystery_ensemble_epic_1781627813/tick_000003.txt",
+      "length": 966,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 4,
+      "triggers_base4": 3,
+      "triggers_base3_with_exempt": 1,
+      "delta": -1,
+      "delta_exempt": -3,
+      "base3_pairs": [
+        [
+          "照片",
+          6
+        ],
+        [
+          "不是",
+          5
+        ],
+        [
+          "格栅",
+          5
+        ],
+        [
+          "油布",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "照片",
+          6
+        ],
+        [
+          "不是",
+          5
+        ],
+        [
+          "格栅",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "油布",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_phase5j-longrange-200tick_1781672606/tick_000055.txt",
+      "length": 632,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 0,
+      "triggers_base3_with_exempt": 2,
+      "delta": -2,
+      "delta_exempt": 0,
+      "base3_pairs": [
+        [
+          "打字",
+          4
+        ],
+        [
+          "字机",
+          4
+        ]
+      ],
+      "base4_pairs": [],
+      "base3_exempt_pairs": [
+        [
+          "打字",
+          4
+        ],
+        [
+          "字机",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_v8-iter9-baseline_1781123199/tick_000003.txt",
+      "length": 575,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 2,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 1,
+      "delta": -1,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "苏默",
+          5
+        ],
+        [
+          "板上",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "苏默",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "板上",
+          4
+        ]
+      ]
+    },
+    {
+      "label": "bench_m_apocalypse_wastela_black_humor_1781663791/tick_000002.txt",
+      "length": 722,
+      "effective_threshold_base3": 4,
+      "effective_threshold_base4": 5,
+      "triggers_base3": 3,
+      "triggers_base4": 1,
+      "triggers_base3_with_exempt": 2,
+      "delta": -2,
+      "delta_exempt": -1,
+      "base3_pairs": [
+        [
+          "水渍",
+          5
+        ],
+        [
+          "苏墨",
+          4
+        ],
+        [
+          "备份",
+          4
+        ]
+      ],
+      "base4_pairs": [
+        [
+          "水渍",
+          5
+        ]
+      ],
+      "base3_exempt_pairs": [
+        [
+          "水渍",
+          5
+        ],
+        [
+          "备份",
+          4
+        ]
+      ]
+    }
+  ]
+}
