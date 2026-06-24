@@ -117,7 +117,13 @@ export default function ReaderOverlay({ novel, onClose }) {
         })
         secIdx++
       }
-      out.push({ kind: 'narr', tick: n.tick, text: n.text, world_time: n.world_time })
+      out.push({
+        kind: 'narr',
+        tick: n.tick,
+        text: n.text,
+        world_time: n.world_time,
+        viewpoint_character_id: n.viewpoint_character_id,
+      })
     }
     // trailing sections (no narrative yet) — still anchor them
     while (secIdx < secs.length) {
@@ -382,6 +388,7 @@ export default function ReaderOverlay({ novel, onClose }) {
                     key={`narr-${item.tick}`}
                     tick={item.tick}
                     text={item.text}
+                    viewpoint={item.viewpoint_character_id}
                   />
                 )
               })}
@@ -442,7 +449,8 @@ function ContinuousSectionMarker({ section, title, startTick, endTick }) {
 }
 
 // iter#E — 连读模式下的段落 + tick chip. chip 默认半透明, hover 时高亮.
-function ContinuousParagraph({ tick, text }) {
+// iter#F — 增加 viewpoint chip (角色名 short form) 替代/补充 tick chip.
+function ContinuousParagraph({ tick, text, viewpoint }) {
   return (
     <div
       style={{
@@ -453,25 +461,61 @@ function ContinuousParagraph({ tick, text }) {
         alignItems: 'flex-start',
       }}
     >
-      <span
-        title={`tick ${tick}`}
+      <div
         style={{
           flex: 'none',
-          font: "500 10px/1.6 'JetBrains Mono', monospace",
-          color: 'var(--text3)',
-          opacity: 0.6,
-          letterSpacing: '0.04em',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 2,
+          minWidth: 56,
           marginTop: 12,
-          minWidth: 36,
-          textAlign: 'right',
           userSelect: 'none',
         }}
       >
-        t{tick}
-      </span>
+        <span
+          title={`tick ${tick}`}
+          style={{
+            font: "500 10px/1.2 'JetBrains Mono', monospace",
+            color: 'var(--text3)',
+            opacity: 0.6,
+            letterSpacing: '0.04em',
+          }}
+        >
+          t{tick}
+        </span>
+        {viewpoint && (
+          <span
+            title={`视点角色: ${viewpoint}`}
+            style={{
+              font: "500 9px/1.2 'JetBrains Mono', monospace",
+              color: 'var(--accent)',
+              opacity: 0.8,
+              letterSpacing: '0.04em',
+              padding: '1px 5px',
+              border: '1px solid var(--accent)',
+              borderRadius: 2,
+              textTransform: 'lowercase',
+              maxWidth: 56,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {shortenViewpoint(viewpoint)}
+          </span>
+        )}
+      </div>
       <p style={{ margin: 0, flex: 1 }}>{text}</p>
     </div>
   )
+}
+
+// "char_su_mo" → "苏默" 不可行 (我们没字典); 取 "char_" 之后部分, 限 6 字符.
+function shortenViewpoint(vpid) {
+  if (!vpid) return ''
+  const stripped = vpid.startsWith('char_') ? vpid.slice(5) : vpid
+  return stripped.length > 8 ? stripped.slice(0, 8) : stripped
 }
 
 function ArcSnapshotPanel({ arcs, loading }) {

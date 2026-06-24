@@ -705,7 +705,20 @@ class Orchestrator:
                 final_text = (
                     safety_result.sanitized_text or narrator_out.narrative_text
                 )
-                await self._narrative_writer(tick, final_text)
+                # iter#F — 把 viewpoint 透传给 writer (default writer 会落 sidecar).
+                # 自定义 writer (test stub) 可能不接受 keyword arg, 用 try/except 兜底.
+                vp_id = (
+                    narrator_out.viewpoint_characters[0]
+                    if narrator_out.viewpoint_characters
+                    else ""
+                )
+                try:
+                    await self._narrative_writer(
+                        tick, final_text, viewpoint_character_id=vp_id,
+                    )
+                except TypeError:
+                    # 老 writer signature (tick, text) — fallback, sidecar 不写.
+                    await self._narrative_writer(tick, final_text)
                 # v2.37 — 刷新前文结尾, 下一段叙述从这里接续
                 self._prose_tail = final_text[-1500:]
                 # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
@@ -1868,23 +1881,44 @@ class Orchestrator:
                 hints.append(f"Character {cid} arc ripe for resolution (progress {prog:.0%})")
         return hints
 
-    async def _default_narrative_writer(self, tick: int, text: str) -> None:
+    async def _default_narrative_writer(
+        self,
+        tick: int,
+        text: str,
+        *,
+        viewpoint_character_id: str = "",
+    ) -> None:
         # v2.19.4 — 把同步 IO (mkdir + open + write) 卸到 worker 线程, 避免
         # 阻塞主 event loop。Narrator 写 1.5k-3k 字 narrative, 阻塞 5-50ms
         # 不仅吃 tick latency, 还会推迟 phase 7 并行只读 agent (Guardian /
         # Critic / ArcTracker) 的回调处理 — v2.18 Phase 7 的并发收益被打折。
+        # iter#F — viewpoint_character_id 走 sidecar JSON, 不污染 .txt 文本.
+        # 旧 narrative 路径无 sidecar 时 list_narratives 返回 None, 兼容.
         narratives_dir = os.path.join(self._tick_state.data_dir, "narratives")
         path = os.path.join(narratives_dir, f"tick_{tick:06d}.txt")
+        meta_path = os.path.join(narratives_dir, f"tick_{tick:06d}.meta.json")
 
         def _sync_write() -> None:
             os.makedirs(narratives_dir, exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
                 f.write(text)
+            if viewpoint_character_id:
+                # 同步落 sidecar — 与 .txt 同事务. orchestrator 写一次即可,
+                # endpoint 读一次, 不需要锁定语义 (文件级 atomic write 即可).
+                tmp_meta = meta_path + ".tmp"
+                with open(tmp_meta, "w", encoding="utf-8") as f:
+                    json.dump(
+                        {"viewpoint_character_id": viewpoint_character_id},
+                        f,
+                        ensure_ascii=False,
+                    )
+                os.replace(tmp_meta, meta_path)
 
         await asyncio.to_thread(_sync_write)
         logger.info(
-            "Narrative for tick %d written: %d chars → %s",
+            "Narrative for tick %d written: %d chars → %s (vp=%s)",
             tick,
             len(text),
             path,
+            viewpoint_character_id or "—",
         )

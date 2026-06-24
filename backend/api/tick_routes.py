@@ -38,6 +38,30 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/tick", tags=["tick"])
 
 
+# --- iter#F sidecar helper -------------------------------------------------
+def _read_narrative_sidecar(narratives_dir: str, tick: int) -> str | None:
+    """Best-effort 读 ``tick_NNNNNN.meta.json`` 的 viewpoint_character_id.
+
+    返回 None when: 文件不存在 / malformed JSON / 字段缺失. 不抛.
+    """
+    import os as _os
+
+    meta_path = _os.path.join(narratives_dir, f"tick_{tick:06d}.meta.json")
+    if not _os.path.isfile(meta_path):
+        return None
+    try:
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(meta, dict):
+        return None
+    vp = meta.get("viewpoint_character_id")
+    if isinstance(vp, str) and vp:
+        return vp
+    return None
+
+
 # --- 依赖解析 (request-scoped) ---------------------------------------------
 # tick_runtime 与 auth 在 Depends 内部 import — 避免模块加载期循环。
 def _resolve_runtime(*, _user_dep=None):
@@ -370,7 +394,15 @@ async def list_narratives(
             except OSError as e:
                 logger.warning("read narrative tick=%d failed: %s", tick, e)
                 continue
-            out.append({"tick": tick, "text": text, "char_count": len(text)})
+            # iter#F — sidecar meta.json (per tick): {viewpoint_character_id}.
+            # 旧 narrative 无 sidecar → None; malformed sidecar → None, 不抛.
+            viewpoint = _read_narrative_sidecar(narratives_dir, tick)
+            out.append({
+                "tick": tick,
+                "text": text,
+                "char_count": len(text),
+                "viewpoint_character_id": viewpoint,
+            })
             if len(out) >= limit:
                 break
         # Phase 6-B reader UI 需要按"故事时间"显示而非 tick_id 数字 — 一次
