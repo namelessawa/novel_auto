@@ -4,6 +4,7 @@ import {
   closeTickOpenLoop,
   fetchActionPatterns,
   fetchCharacterStates,
+  fetchCriticLogStats,
   fetchEventStats,
   fetchHallucinationDiagnostic,
   fetchNoveltyWarnings,
@@ -52,6 +53,7 @@ export default function TickView({
     actionPatterns: null,
     noveltyWarnings: [],
     styleAnchors: [],
+    criticStats: null,
   })
   const [diagLoading, setDiagLoading] = useState(false)
   const [diagFailures, setDiagFailures] = useState(0)
@@ -143,8 +145,9 @@ export default function TickView({
       fetchActionPatterns(100),
       fetchNoveltyWarnings(),
       fetchStyleAnchors(20),
+      fetchCriticLogStats(),
     ])
-    const [hd, cs, es, ap, nw, sa] = results
+    const [hd, cs, es, ap, nw, sa, ck] = results
     setDiag({
       hallucination: hd.status === 'fulfilled' ? hd.value : null,
       characterStates:
@@ -156,6 +159,7 @@ export default function TickView({
       noveltyWarnings:
         nw.status === 'fulfilled' ? nw.value?.warnings || [] : [],
       styleAnchors: sa.status === 'fulfilled' ? sa.value?.anchors || [] : [],
+      criticStats: ck.status === 'fulfilled' ? ck.value : null,
     })
     setDiagFailures(results.filter((r) => r.status === 'rejected').length)
     setDiagLoading(false)
@@ -273,6 +277,7 @@ export default function TickView({
         diag={diag}
         loading={diagLoading}
         failures={diagFailures}
+        endpointCount={7}
         onRefresh={refreshDiag}
       />
 
@@ -367,7 +372,8 @@ function ParamRow({ name, sub, val, unit, right }) {
 }
 
 // v2.48 — § Diagnostics 集成 (legacy TickDiagnosticsPanel 6 cards 的 dashboard 版).
-function DiagnosticsSection({ diag, loading, failures, onRefresh }) {
+// Phase 6-C iter#A — 加 CriticStatsCard (action_distribution + top_codes 概览).
+function DiagnosticsSection({ diag, loading, failures, endpointCount = 7, onRefresh }) {
   const {
     hallucination,
     characterStates,
@@ -375,6 +381,7 @@ function DiagnosticsSection({ diag, loading, failures, onRefresh }) {
     actionPatterns,
     noveltyWarnings,
     styleAnchors,
+    criticStats,
   } = diag
   return (
     <div className="dc-tk-diag">
@@ -382,7 +389,7 @@ function DiagnosticsSection({ diag, loading, failures, onRefresh }) {
         <span className="dc-tk-rtbar-kicker">DIAGNOSTICS · 质量门观测</span>
         {failures > 0 && (
           <span className="dc-tk-diag-warn">
-            {failures}/6 端点失败 — tick runtime 未注入或后端未启动
+            {failures}/{endpointCount} 端点失败 — tick runtime 未注入或后端未启动
           </span>
         )}
         <button
@@ -398,6 +405,8 @@ function DiagnosticsSection({ diag, loading, failures, onRefresh }) {
 
       <GuardianCard data={hallucination} />
 
+      <CriticStatsCard data={criticStats} />
+
       <div className="dc-tk-diag-grid">
         <CharacterStatesCard states={characterStates} />
         <EventStatsCard data={eventStats} />
@@ -407,6 +416,193 @@ function DiagnosticsSection({ diag, loading, failures, onRefresh }) {
 
       <StyleAnchorsCard anchors={styleAnchors} />
     </div>
+  )
+}
+
+// Phase 6-C iter#A — Critic decision aggregate dashboard.
+// 数据源: GET /api/tick/critic-log/stats (orchestrator critic_log.jsonl 全扫).
+//
+// 视觉:
+//   header — ticks_scanned · empty_decision rate (clean output 占比)
+//   left   — action_distribution: ACCEPT / REVISE / REWRITE / RED_TEAM 4 bar
+//   right  — top_codes: 触发 code top-10 list + bar
+//
+// Empty-state: stats null (端点失败) / ticks_scanned=0 (尚无 critic 行).
+function CriticStatsCard({ data }) {
+  const stats = data || {}
+  const ticksScanned = stats.ticks_scanned ?? 0
+  const emptyTicks = stats.empty_decision_ticks ?? 0
+  const dist = stats.action_distribution || {}
+  const topCodes = stats.top_codes || []
+
+  const distRows = ['ACCEPT', 'REVISE', 'REWRITE', 'RED_TEAM'].map((a) => ({
+    action: a,
+    count: Number(dist[a] || 0),
+  }))
+  const distMax = Math.max(1, ...distRows.map((r) => r.count))
+  const distTotal = distRows.reduce((acc, r) => acc + r.count, 0)
+  const cleanRate =
+    ticksScanned > 0 ? `${((emptyTicks / ticksScanned) * 100).toFixed(0)}%` : '—'
+
+  const codeMax = Math.max(1, ...topCodes.map((c) => Number(c.count) || 0))
+
+  return (
+    <div className="dc-tk-diag-card is-wide">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">Critic Decisions · 长程聚合</span>
+        <span className="dc-tk-diag-card-meta">
+          {ticksScanned} tick · {distTotal} action · clean {cleanRate}
+        </span>
+      </div>
+      {ticksScanned === 0 ? (
+        <div className="dc-tk-diag-empty">
+          critic_log.jsonl 暂无数据 — 推进调度产生 narrative 后会出现
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)',
+            gap: 18,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                font: "500 11px/1 'JetBrains Mono', monospace",
+                color: 'var(--text3)',
+                marginBottom: 10,
+                letterSpacing: 0.5,
+              }}
+            >
+              ACTION DISTRIBUTION
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {distRows.map((r) => (
+                <CriticDistRow
+                  key={r.action}
+                  action={r.action}
+                  count={r.count}
+                  max={distMax}
+                />
+              ))}
+            </div>
+          </div>
+          <div>
+            <div
+              style={{
+                font: "500 11px/1 'JetBrains Mono', monospace",
+                color: 'var(--text3)',
+                marginBottom: 10,
+                letterSpacing: 0.5,
+              }}
+            >
+              TOP CODES · top-10
+            </div>
+            {topCodes.length === 0 ? (
+              <div className="dc-tk-diag-empty">无 surviving code (全 clean)</div>
+            ) : (
+              <ul className="dc-tk-diag-list">
+                {topCodes.map((c, i) => (
+                  <CriticCodeRow
+                    key={`${c.code}-${i}`}
+                    code={c.code}
+                    count={Number(c.count) || 0}
+                    max={codeMax}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CriticDistRow({ action, count, max }) {
+  const pct = max > 0 ? Math.round((count / max) * 100) : 0
+  const accent =
+    action === 'ACCEPT' ? 'var(--accent, #5fa8d3)'
+      : action === 'REVISE' ? '#d9a55a'
+        : action === 'REWRITE' ? '#d9665a'
+          : '#a05ad9'
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 40px', alignItems: 'center', gap: 10 }}>
+      <span
+        className="is-mono"
+        style={{ font: "500 12px/1 'JetBrains Mono', monospace", color: 'var(--text2)' }}
+      >
+        {action}
+      </span>
+      <div
+        style={{
+          height: 10,
+          background: 'var(--bg)',
+          border: '1px solid var(--border)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: `${pct}%`,
+            background: accent,
+            opacity: count > 0 ? 0.85 : 0,
+            transition: 'width 180ms ease-out',
+          }}
+        />
+      </div>
+      <span
+        style={{
+          font: "500 12px/1 'JetBrains Mono', monospace",
+          color: count > 0 ? 'var(--text)' : 'var(--text3)',
+          textAlign: 'right',
+        }}
+      >
+        {count}
+      </span>
+    </div>
+  )
+}
+
+function CriticCodeRow({ code, count, max }) {
+  const pct = max > 0 ? Math.round((count / max) * 100) : 0
+  return (
+    <li style={{ display: 'grid', gridTemplateColumns: '100px 1fr 36px', gap: 10 }}>
+      <span className="is-mono" style={{ font: "500 12px/1 'JetBrains Mono', monospace" }}>
+        {code}
+      </span>
+      <div
+        style={{
+          height: 8,
+          background: 'var(--bg)',
+          border: '1px solid var(--border)',
+          position: 'relative',
+          overflow: 'hidden',
+          alignSelf: 'center',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: `${pct}%`,
+            background: 'var(--accent, #5fa8d3)',
+            opacity: 0.7,
+            transition: 'width 180ms ease-out',
+          }}
+        />
+      </div>
+      <span
+        className="dc-tk-diag-list-num"
+        style={{ textAlign: 'right', alignSelf: 'center' }}
+      >
+        {count}
+      </span>
+    </li>
   )
 }
 

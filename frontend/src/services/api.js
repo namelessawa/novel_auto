@@ -778,6 +778,33 @@ export async function fetchHallucinationDiagnostic() {
   return assertOk(res)
 }
 
+// Phase 6-C iter#7 — critic decision aggregated stats (per-novel).
+// Backend: GET /api/tick/critic-log/stats?start_tick=&end_tick=
+// Returns: { action_distribution, top_codes, ticks_scanned, empty_decision_ticks }
+export async function fetchCriticLogStats({ startTick = 0, endTick = 0 } = {}) {
+  const params = new URLSearchParams()
+  if (startTick > 0) params.set('start_tick', String(startTick))
+  if (endTick > 0) params.set('end_tick', String(endTick))
+  const qs = params.toString()
+  const url = qs ? `/api/tick/critic-log/stats?${qs}` : '/api/tick/critic-log/stats'
+  const res = await authedFetch(url)
+  return assertOk(res)
+}
+
+// Phase 6-C iter#6 — raw critic log rows (per-novel drill-down).
+export async function fetchCriticLogRows({
+  startTick = 0,
+  endTick = 0,
+  limit = 500,
+} = {}) {
+  const params = new URLSearchParams()
+  if (startTick > 0) params.set('start_tick', String(startTick))
+  if (endTick > 0) params.set('end_tick', String(endTick))
+  if (limit) params.set('limit', String(limit))
+  const res = await authedFetch(`/api/tick/critic-log?${params.toString()}`)
+  return assertOk(res)
+}
+
 // ---------------------------------------------------------------------------
 // Agent registry
 // ---------------------------------------------------------------------------
