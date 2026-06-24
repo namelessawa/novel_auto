@@ -11,11 +11,22 @@
 | iter#5 (2026-06-24) | agent code · critic_log.jsonl 持久化 | PASS | 927 tests / 数据基础就位 (reader API + 长程分析 unlock) |
 | iter#6 (2026-06-24) | agent code · GET /api/tick/critic-log endpoint | PASS | 933 tests / reader 数据基础对偶完整 (text + decision) |
 | iter#7 (2026-06-24) | agent code · GET /api/tick/critic-log/stats aggregated | PASS | 940 tests / Phase 6-C reader 数据栈三件套完整 |
+| iter#A (2026-06-24) | frontend · TickView CriticStatsCard 接 stats endpoint | PASS | 940 tests / +0 test (frontend wiring) / dashboard 三件套兑现 |
+| iter#B (2026-06-24) | api+frontend · critic-log/stats window=N sliding | PASS | 945 tests / +5 / deque-based last-N 截窗 |
+| iter#C1 (2026-06-24) | det metric · C6 章末无悬念 (lite) | PASS | 969 tests / +24 / 9 closure patterns + 60-char tail window |
+| iter#C2 (2026-06-24) | research · A1 校准抽样 50 narratives | PASS (no-op) | 969 tests / 真相: production avg=2.14/narr (非 iter#7 担忧 12+) |
+| iter#D (2026-06-24) | bench prep · 500-tick runbook + drift analyzer | PASS | 969 tests / 6 drift signals (D1-D6) / 留实际 bench 给用户 |
+| iter#E (2026-06-24) | frontend · reader 连读模式 + inline section anchor | PASS | 969 tests / Phase 6-B 第一次让"自动生成小说"作为连续读物 |
+| iter#C3 (2026-06-24) | det metric · A1 3-char 化合物 dedup | PASS | 979 tests / +10 / 噪声 4.58→2.98 A1/narr (-35%) |
+| iter#F (2026-06-24) | api+frontend · /narratives 加 viewpoint_character | PASS | 985 tests / +6 / sidecar JSON + reader 视点 chip |
+| iter#G (2026-06-24) | frontend · reader localStorage 偏好 + 字号行距 | PASS | 985 tests / +0 / per-novel scroll 还原 + 3-chip 字号/行距 |
 
-**候补 (未挑)**:
-- C6 章末无悬念 det check — semantic, det 层易 FP
-- A1 threshold 校准 — 271 narratives bench 显示 avg 12+ A1/narr, critic noise 大
-  but 改 threshold 是 high-risk regression
+**候补 (未挑) — 留 Phase 6-D 或 6-E**:
+- 4-char 化合物 dedup (钢筋混凝土 → 4-gram dedup): iter#C3 documented limitation
+- A1 stop_nominals 扩展 (校准 verdict 显示残余 FP 主要来自老的 2-gram, dedup 后已大幅缓解)
+- 视点角色 chip 显示 display_name (现是 char_id slug); 节模式 (section-by-section) 也加 vp chip
+- 4-char 跨节连读 paged fetch (> 2000 tick 时再做)
+- 实际 500-tick bench 跑 + verdict (用户 kickoff, runbook 就位)
 
 > Branch: `iter/cost-quality-loop`. 2026-06-10 → 2026-06-11.
 > 34 iterations + 9 code-review cycles. **Total tokens -77% / latency -83% vs baseline**, quality preserved.

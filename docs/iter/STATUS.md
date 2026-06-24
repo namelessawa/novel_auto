@@ -1,8 +1,26 @@
 # Cost-Quality-Loop Status (rolling)
 
-**Branch:** `iter/cost-quality-loop`
+**Branch:** `main`
 **Range:** baseline 16d5826 → HEAD
-**Last update:** 2026-06-11 (iter#72)
+**Last update:** 2026-06-24 (Phase 6-B/C iter#A-G batch)
+
+## Phase 6 Session Headline (2026-06-24)
+
+| iter | scope | tests | bundle Δ | key result |
+| --- | --- | ---: | ---: | --- |
+| iter#A | dashboard 接 critic-log/stats | 940 | +4 kB JS | Phase 6-C 数据栈兑现 |
+| iter#B | window=N sliding | +5 = 945 | +0.8 kB | last-N 截窗 (deque) |
+| iter#C1 | C6 章末无悬念 det | +24 = 969 | — | 9 closure pattern, healthy FP guard |
+| iter#C2 | A1 校准抽样 (no-op verdict) | 969 | — | 真相: production 2.14/narr ≠ iter#7 12+ |
+| iter#D | 500-tick runbook + drift analyzer | 969 | — | 6 drift signal, runbook 就位 |
+| iter#E | reader 连读模式 | 969 | +3.6 kB | inline section anchor + tick chip |
+| iter#C3 | A1 3-char 化合物 dedup | +10 = 979 | — | 噪声 4.58→2.98 A1/narr (-35%) |
+| iter#F | viewpoint sidecar + reader chip | +6 = 985 | +0.6 kB | sidecar JSON, vp chip |
+| iter#G | reader prefs (localStorage) | 985 | +2.8 kB | per-novel scroll, 字号/行距 chip |
+
+* +45 net tests (940 → 985). Frontend JS 297 → 309 kB (+12 kB / 4 features).
+* 0 backend regression across full 985-test suite (~72s).
+* CRITICAL: iter#C3 verified -35% A1 production noise via re-running C2 校准 (4.58 → 2.98 avg, 12% → 16% clean rate).
 
 ## Headline
 
