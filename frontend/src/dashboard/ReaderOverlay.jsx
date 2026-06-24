@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import DayNightToggle from './DayNightToggle'
-import { fetchTickNarratives, listTickSections } from '../services/api'
+import {
+  fetchCharacterStates,
+  fetchTickNarratives,
+  fetchTickOpenLoops,
+  listTickSections,
+} from '../services/api'
 
 // v2.47 — 全文阅读 overlay. 左侧节列表 + 右侧正文.
 
@@ -8,6 +13,11 @@ export default function ReaderOverlay({ novel, onClose }) {
   const [sections, setSections] = useState([])
   const [selIdx, setSelIdx] = useState(0)
   const [body, setBody] = useState([])
+  // v2.48 — § Arc/OpenLoops 侧栏 (移植 ReaderView 的 Phase 6-C narrative_critic 面板).
+  // 这是 reader 唯一回答 "这一节为什么此刻重要" 的视图.
+  const [loopsData, setLoopsData] = useState({ loops: [], count: 0, closed_total: 0 })
+  const [arcStates, setArcStates] = useState([])
+  const [sideLoading, setSideLoading] = useState(false)
 
   useEffect(() => {
     if (!novel?.id) return undefined
@@ -46,6 +56,39 @@ export default function ReaderOverlay({ novel, onClose }) {
       cancelled = true
     }
   }, [selIdx, sections, novel?.id])
+
+  // v2.48 — Side panels: loops + arc states. 失败不阻塞阅读, 仅清空.
+  useEffect(() => {
+    if (!novel?.id) return undefined
+    let cancelled = false
+    async function load() {
+      setSideLoading(true)
+      try {
+        const [loops, chars] = await Promise.all([
+          fetchTickOpenLoops(50),
+          fetchCharacterStates(),
+        ])
+        if (cancelled) return
+        setLoopsData({
+          loops: loops?.loops || [],
+          count: loops?.count ?? 0,
+          closed_total: loops?.closed_total ?? 0,
+        })
+        setArcStates(chars?.states || chars?.character_states || [])
+      } catch {
+        if (!cancelled) {
+          setLoopsData({ loops: [], count: 0, closed_total: 0 })
+          setArcStates([])
+        }
+      } finally {
+        if (!cancelled) setSideLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [novel?.id])
 
   // Esc to close
   useEffect(() => {
@@ -169,6 +212,105 @@ export default function ReaderOverlay({ novel, onClose }) {
             )}
           </article>
         </div>
+
+        {/* v2.48 — § 叙事状态侧栏: 当前角色弧线 + open loops */}
+        <aside className="dc-reader-side">
+          <ArcSnapshotPanel arcs={arcStates} loading={sideLoading} />
+          <OpenLoopsPanel
+            loops={loopsData.loops}
+            count={loopsData.count}
+            closedTotal={loopsData.closed_total}
+            loading={sideLoading}
+          />
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+function ArcSnapshotPanel({ arcs, loading }) {
+  return (
+    <div className="dc-reader-side-card">
+      <div className="dc-reader-side-head">
+        <span>角色弧线 · ARC</span>
+        <span className="dc-reader-side-count">{arcs.length}</span>
+      </div>
+      <div className="dc-reader-side-body">
+        {loading && arcs.length === 0 && (
+          <div className="dc-reader-side-empty">加载中…</div>
+        )}
+        {!loading && arcs.length === 0 && (
+          <div className="dc-reader-side-empty">尚无角色弧线</div>
+        )}
+        {arcs.map((c) => {
+          const progress = Math.max(0, Math.min(1, Number(c.arc_progress) || 0))
+          const pct = Math.round(progress * 100)
+          return (
+            <div key={c.character_id || c.name} className="dc-reader-arc-row">
+              <div className="dc-reader-arc-head">
+                <span className="dc-reader-arc-name">
+                  {c.name || c.character_id}
+                </span>
+                {c.arc_stage && (
+                  <span className="dc-reader-arc-stage">{c.arc_stage}</span>
+                )}
+              </div>
+              {c.arc_goal && (
+                <div className="dc-reader-arc-goal">目标 · {c.arc_goal}</div>
+              )}
+              <div className="dc-reader-arc-track">
+                <div
+                  className="dc-reader-arc-fill"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className="dc-reader-arc-meta">
+                {pct}%
+                {c.arc_stage_entered_tick != null && (
+                  <span> · 进入 stage @ t{c.arc_stage_entered_tick}</span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function OpenLoopsPanel({ loops, count, closedTotal, loading }) {
+  return (
+    <div className="dc-reader-side-card">
+      <div className="dc-reader-side-head">
+        <span>伏笔 · OPEN LOOPS</span>
+        <span className="dc-reader-side-count">
+          {count} 开 · {closedTotal} 关
+        </span>
+      </div>
+      <div className="dc-reader-side-body">
+        {loading && loops.length === 0 && (
+          <div className="dc-reader-side-empty">加载中…</div>
+        )}
+        {!loading && loops.length === 0 && (
+          <div className="dc-reader-side-empty">无开放伏笔</div>
+        )}
+        {loops.map((l) => {
+          const u = Number(l.urgency) || 0
+          const bucket = u >= 8 ? 'high' : u >= 5 ? 'mid' : 'low'
+          return (
+            <div
+              key={l.id}
+              className={`dc-reader-loop-row dc-reader-loop-${bucket}`}
+            >
+              <div className="dc-reader-loop-head">
+                <span className="dc-reader-loop-urg">u{u}</span>
+                <span className="dc-reader-loop-type">[{l.type || '?'}]</span>
+                <span className="dc-reader-loop-tick">@t{l.opened_tick ?? '?'}</span>
+              </div>
+              <div className="dc-reader-loop-desc">{l.description}</div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

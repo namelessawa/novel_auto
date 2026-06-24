@@ -1,17 +1,78 @@
-import React, { useState } from 'react'
-import { bootstrapWorld, createNovel } from '../../services/api'
+import React, { useEffect, useMemo, useState } from 'react'
+import { bootstrapWorld, createNovel, fetchPresets } from '../../services/api'
 import { showToast } from '../../utils/toast'
 
 // v2.47 — 新建小说 modal. 创建 + 立即 bootstrap_world.
+// v2.48 — 替换 7 chip 硬编码为 Phase 5+ preset matrix (theme + style + ⭐⚠ 推荐),
+// 加 advanced 折叠 (positioning + references), bootstrap 时带 also_generate_first_section=true.
 
-const GENRES = ['古典', '武侠', '科幻', '玄幻', '现实', '言情', '悬疑']
+const DEFAULT_POSITIONING = '古典含蓄、心理白描、节奏舒缓、避免华丽辞藻'
+const DEFAULT_REFERENCES = 'Le Guin / 古龙'
 
 export default function NewNovelModal({ onClose, onCreated }) {
   const [title, setTitle] = useState('')
   const [novelId, setNovelId] = useState('')
   const [seed, setSeed] = useState('')
-  const [genre, setGenre] = useState('古典')
+  const [theme, setTheme] = useState('')
+  const [style, setStyle] = useState('')
+  const [positioning, setPositioning] = useState('')
+  const [references, setReferences] = useState('')
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+
+  // Phase 5+ — 启动时拉 presets (21 theme × 16 style + 208-cell recommendations).
+  // 失败时 silent fallback (presets.available=false → 仅 seed 模式).
+  const [presets, setPresets] = useState({
+    themes: [],
+    styles: [],
+    available: false,
+    recommendations: { available: false, by_theme: {}, avoid_pairs: [] },
+  })
+
+  useEffect(() => {
+    let cancelled = false
+    fetchPresets()
+      .then((data) => {
+        if (!cancelled && data && data.available) setPresets(data)
+      })
+      .catch(() => {
+        /* silent — UI 回落到 seed-only 模式 */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Phase 5-D follow-up — 根据已选 theme 计算 ⭐ top-3 / ⚠ avoid / mean 标注.
+  const recommendedStyles = useMemo(() => {
+    if (!theme) return []
+    const rec = presets?.recommendations
+    if (!rec?.available) return []
+    return rec.by_theme?.[theme] || []
+  }, [theme, presets])
+
+  const recommendedByStyle = useMemo(() => {
+    const m = {}
+    for (const r of recommendedStyles) m[r.style] = r
+    return m
+  }, [recommendedStyles])
+
+  const avoidStyleKeys = useMemo(() => {
+    if (!theme) return new Set()
+    const rec = presets?.recommendations
+    if (!rec?.available) return new Set()
+    return new Set(
+      (rec.avoid_pairs || [])
+        .filter((p) => p.theme === theme)
+        .map((p) => p.style),
+    )
+  }, [theme, presets])
+
+  const sortedStyles = useMemo(() => {
+    if (!theme || recommendedStyles.length === 0) return presets.styles
+    const rankOf = (k) => recommendedByStyle[k]?.rank ?? 9999
+    return [...presets.styles].sort((a, b) => rankOf(a.key) - rankOf(b.key))
+  }, [theme, presets.styles, recommendedStyles, recommendedByStyle])
 
   async function submit() {
     if (!title.trim()) {
@@ -24,15 +85,24 @@ export default function NewNovelModal({ onClose, onCreated }) {
       const id = res?.id || res?.novel_id || novelId.trim() || null
       if (id) {
         try {
-          await bootstrapWorld(id, {
-            seed: seed.trim() || `${genre} · ${title.trim()}`,
-            genre,
-          })
+          // Phase 5+: theme + style 跟 seed 一起送, 后端持久化 style_preset_key.
+          // also_generate_first_section=true 链式触发首节生成 (HomeView 同款).
+          const payload = {
+            seed: seed.trim() || (theme
+              ? presets.themes.find((t) => t.key === theme)?.seed || `${theme} · ${title.trim()}`
+              : title.trim()),
+            also_generate_first_section: true,
+            positioning: positioning.trim() || DEFAULT_POSITIONING,
+            references: references.trim() || DEFAULT_REFERENCES,
+          }
+          if (theme) payload.theme = theme
+          if (style) payload.style = style
+          await bootstrapWorld(id, payload)
         } catch {
-          /* bootstrap 失败不阻塞 — 用户可在 home 重新点冷启动 */
+          /* bootstrap 失败不阻塞 — 用户可在 overview 重新触发冷启动 */
         }
       }
-      showToast('已创建作品 — 正在冷启动世界', 'success')
+      showToast('已创建作品 — 正在冷启动世界 + 首节', 'success')
       onCreated?.(id || title.trim())
       onClose?.()
     } catch (err) {
@@ -93,20 +163,81 @@ export default function NewNovelModal({ onClose, onCreated }) {
           />
         </div>
 
-        <div className="dc-modal-row">
-          <span className="dc-modal-row-label">题材</span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {GENRES.map((g) => (
-              <span
-                key={g}
-                className={`dc-chip ${genre === g ? 'is-active' : ''}`}
-                onClick={() => setGenre(g)}
+        {/* v2.48 — Phase 5+ preset matrix. presets 失败时不渲染下拉, fallback 到 seed only. */}
+        {presets.available && (
+          <>
+            <div className="dc-modal-row">
+              <span className="dc-modal-row-label">主题 preset (可选)</span>
+              <select
+                className="dc-input"
+                value={theme}
+                onChange={(e) => {
+                  const k = e.target.value
+                  const prevTheme = theme
+                  setTheme(k)
+                  // 选了主题且 seed 为空 → 自动填充
+                  if (k && !seed.trim()) {
+                    const t = presets.themes.find((x) => x.key === k)
+                    if (t) setSeed(t.seed)
+                  } else if (!k && prevTheme) {
+                    // 反选清空之前自动填充的 seed
+                    const old = presets.themes.find((x) => x.key === prevTheme)
+                    if (old && seed.trim() === old.seed.trim()) setSeed('')
+                  }
+                }}
               >
-                {g}
+                <option value="">(自定义 seed)</option>
+                {presets.themes.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="dc-modal-row">
+              <span className="dc-modal-row-label">
+                风格 preset (可选)
+                {theme && recommendedStyles.length > 0 && (
+                  <span className="dc-modal-row-hint"> · ⭐ 本主题推荐</span>
+                )}
               </span>
-            ))}
-          </div>
-        </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <select
+                  className="dc-input"
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  title={
+                    style
+                      ? presets.styles.find((x) => x.key === style)?.description || ''
+                      : '默认 literary (描写细致)'
+                  }
+                >
+                  <option value="">默认 (literary)</option>
+                  {sortedStyles.map((s) => {
+                    const rec = recommendedByStyle[s.key]
+                    const isAvoid = avoidStyleKeys.has(s.key)
+                    const prefix = rec?.is_top ? '⭐ ' : isAvoid ? '⚠ ' : ''
+                    const suffix = rec ? `  (${rec.mean.toFixed(2)})` : ''
+                    return (
+                      <option key={s.key} value={s.key}>
+                        {prefix}{s.label}{suffix}
+                      </option>
+                    )
+                  })}
+                </select>
+                {theme && recommendedStyles.length > 0 && (
+                  <div className="dc-modal-row-hint">
+                    推荐: {recommendedStyles.slice(0, 3).map((r) => {
+                      const s = presets.styles.find((x) => x.key === r.style)
+                      return s ? `${s.label} (${r.mean.toFixed(2)})` : r.style
+                    }).join(' / ')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="dc-modal-row">
           <span className="dc-modal-row-label">冷启动 seed (可选)</span>
@@ -119,6 +250,39 @@ export default function NewNovelModal({ onClose, onCreated }) {
             style={{ resize: 'none', fontFamily: "'Noto Serif SC', serif" }}
           />
         </div>
+
+        {/* v2.48 — Advanced: positioning + references, 默认折叠. 不填用 DEFAULT_*. */}
+        <div className="dc-modal-row">
+          <button
+            type="button"
+            className="dc-modal-advanced-toggle"
+            onClick={() => setAdvancedOpen((v) => !v)}
+          >
+            {advancedOpen ? '▾' : '▸'} 高级配置 (positioning / references)
+          </button>
+        </div>
+        {advancedOpen && (
+          <>
+            <div className="dc-modal-row">
+              <span className="dc-modal-row-label">写作定位</span>
+              <input
+                className="dc-input"
+                placeholder={DEFAULT_POSITIONING}
+                value={positioning}
+                onChange={(e) => setPositioning(e.target.value)}
+              />
+            </div>
+            <div className="dc-modal-row">
+              <span className="dc-modal-row-label">参考作家</span>
+              <input
+                className="dc-input"
+                placeholder={DEFAULT_REFERENCES}
+                value={references}
+                onChange={(e) => setReferences(e.target.value)}
+              />
+            </div>
+          </>
+        )}
 
         <div
           style={{
@@ -146,7 +310,7 @@ export default function NewNovelModal({ onClose, onCreated }) {
               color: 'var(--text3)',
             }}
           >
-            将以当前 LLM 提供方冷启动世界 · bootstrap_world
+            将以当前 LLM 提供方冷启动世界 + 自动入队首节 · bootstrap_world
           </span>
         </div>
 

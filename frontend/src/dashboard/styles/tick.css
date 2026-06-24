@@ -228,3 +228,181 @@
   transition: left 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .dc-tk-toggle.is-on .dc-tk-toggle-knob { left: 18px; }
+
+/* v2.48 — § Diagnostics: Guardian + CharStates + EventStats + ActionPatterns + Novelty + StyleAnchors */
+.dc-tk-diag {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dc-tk-diag-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.dc-tk-diag-warn {
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+.dc-tk-diag-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.dc-tk-diag-card {
+  background-color: var(--surf);
+  border: 1px solid var(--border);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.dc-tk-diag-card.is-wide { grid-column: 1 / -1; }
+.dc-tk-diag-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dc-tk-diag-card-title {
+  font: 600 13px/1 'Inter', sans-serif;
+  color: var(--text);
+}
+.dc-tk-diag-card-meta {
+  font: 400 11px/1 'JetBrains Mono', monospace;
+  color: var(--text3);
+  margin-left: auto;
+}
+.dc-tk-diag-empty {
+  font: 400 12px/1.5 'Inter', sans-serif;
+  color: var(--text4);
+}
+.dc-tk-diag-pill {
+  margin-left: auto;
+  padding: 4px 10px;
+  font: 500 10px/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--border);
+}
+.dc-tk-diag-pill.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--red-tint);
+}
+.dc-tk-diag-pill.is-shadow {
+  color: var(--text3);
+}
+.dc-tk-diag-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 12px/1.4 'Inter', sans-serif;
+}
+.dc-tk-diag-table thead th {
+  text-align: left;
+  padding: 8px 10px;
+  font: 500 10px/1 'JetBrains Mono', monospace;
+  color: var(--text4);
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--border);
+}
+.dc-tk-diag-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--track);
+  color: var(--text2);
+  font-variant-numeric: tabular-nums;
+}
+.dc-tk-diag-table tbody tr:last-child td { border-bottom: none; }
+.dc-tk-diag-table td.is-mono {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+.dc-tk-diag-table td.is-warn { color: var(--accent); }
+.dc-tk-diag-table.is-compact thead th { padding: 6px 8px; }
+.dc-tk-diag-table.is-compact tbody td { padding: 6px 8px; font-size: 11.5px; }
+.dc-tk-diag-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dc-tk-diag-badge {
+  padding: 4px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font: 400 11px/1.2 'JetBrains Mono', monospace;
+  color: var(--text2);
+}
+.dc-tk-diag-badge.is-anchor {
+  background: var(--red-tint);
+  color: var(--accent);
+  border-color: transparent;
+}
+.dc-tk-diag-badge-num { color: var(--text4); }
+.dc-tk-diag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: 400 12px/1.45 'Inter', sans-serif;
+  color: var(--text2);
+}
+.dc-tk-diag-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 10px;
+  border-left: 2px solid var(--border);
+}
+.dc-tk-diag-list.is-warn li {
+  border-left-color: var(--accent);
+  background: var(--red-tint);
+}
+.dc-tk-diag-list-num {
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  color: var(--text4);
+}
+
+/* v2.48 — § OpenLoops CRUD: urgency 着色 + 关闭按钮 + 添加表单 */
+.dc-tk-loop-urg {
+  display: inline-block;
+  margin: 0 8px 0 6px;
+  padding: 2px 7px;
+  font: 500 10px/1.2 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  flex: none;
+}
+.dc-tk-loop-urg-high { background: var(--red-tint); color: var(--accent); }
+.dc-tk-loop-urg-mid  { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+.dc-tk-loop-urg-low  { background: transparent; color: var(--text4); border: 1px solid var(--border); }
+
+.dc-tk-loop-close {
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  font: 500 10px/1 'JetBrains Mono', monospace;
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: border-color 130ms ease, color 130ms ease;
+}
+.dc-tk-loop-close:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.dc-tk-loop-close:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.dc-tk-loop-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dc-tk-loop-form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

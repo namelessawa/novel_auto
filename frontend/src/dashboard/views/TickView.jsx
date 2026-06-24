@@ -1,5 +1,17 @@
-import React, { useEffect, useState } from 'react'
-import { fetchTickHistory } from '../../services/api'
+import React, { useCallback, useEffect, useState } from 'react'
+import {
+  addTickOpenLoop,
+  closeTickOpenLoop,
+  fetchActionPatterns,
+  fetchCharacterStates,
+  fetchEventStats,
+  fetchHallucinationDiagnostic,
+  fetchNoveltyWarnings,
+  fetchStyleAnchors,
+  fetchTickHistory,
+  fetchTickOpenLoops,
+} from '../../services/api'
+import { showToast } from '../../utils/toast'
 import { formatTick } from '../utils'
 
 // v2.47 — § Tick 控制: runtime bar (大数字 + 启动/单步) + 7 阶段流水线 +
@@ -31,6 +43,80 @@ export default function TickView({
   onOpenInject,
 }) {
   const [history, setHistory] = useState([])
+  // v2.48 — § Diagnostics: 移植 TickDiagnosticsPanel 的 6 个端点 (Guardian / CharStates /
+  // EventStats / ActionPatterns / NoveltyWarn / StyleAnchors). settled-load, 任一失败不阻塞.
+  const [diag, setDiag] = useState({
+    hallucination: null,
+    characterStates: [],
+    eventStats: null,
+    actionPatterns: null,
+    noveltyWarnings: [],
+    styleAnchors: [],
+  })
+  const [diagLoading, setDiagLoading] = useState(false)
+  const [diagFailures, setDiagFailures] = useState(0)
+
+  // v2.48 — § OpenLoop CRUD (移植 TickControlPanel). opened_tick 由前端 = current_tick+1.
+  const [openLoops, setOpenLoops] = useState([])
+  const [loopForm, setLoopForm] = useState({
+    id: '', description: '', urgency: 5, involved_characters: '',
+  })
+  const [loopBusy, setLoopBusy] = useState(false)
+  const refreshLoops = useCallback(async () => {
+    try {
+      const r = await fetchTickOpenLoops(20)
+      setOpenLoops(r?.loops || [])
+    } catch {
+      setOpenLoops([])
+    }
+  }, [])
+  useEffect(() => {
+    refreshLoops()
+  }, [refreshLoops, tickStatus?.current_tick])
+
+  async function handleAddLoop(e) {
+    e?.preventDefault?.()
+    if (!loopForm.id.trim() || !loopForm.description.trim()) {
+      showToast('需要 id 和描述', 'error')
+      return
+    }
+    setLoopBusy(true)
+    try {
+      const involved = loopForm.involved_characters
+        .split(/[,,\s]+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+      await addTickOpenLoop({
+        id: loopForm.id.trim(),
+        description: loopForm.description.trim(),
+        urgency: Number(loopForm.urgency) || 5,
+        involved_characters: involved,
+        opened_tick: (tickStatus?.current_tick ?? 0) + 1,
+      })
+      showToast(`OpenLoop ${loopForm.id} 已添加`, 'success')
+      setLoopForm({ id: '', description: '', urgency: 5, involved_characters: '' })
+      await refreshLoops()
+    } catch (err) {
+      showToast('添加失败: ' + (err?.message || ''), 'error')
+    } finally {
+      setLoopBusy(false)
+    }
+  }
+
+  async function handleCloseLoop(loopId) {
+    if (!loopId) return
+    if (!window.confirm(`确认关闭 OpenLoop "${loopId}"? (无法恢复)`)) return
+    setLoopBusy(true)
+    try {
+      await closeTickOpenLoop(loopId)
+      showToast(`OpenLoop ${loopId} 已关闭`, 'success')
+      await refreshLoops()
+    } catch (err) {
+      showToast('关闭失败: ' + (err?.message || ''), 'error')
+    } finally {
+      setLoopBusy(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -47,6 +133,37 @@ export default function TickView({
       cancelled = true
     }
   }, [tickStatus?.current_tick])
+
+  const refreshDiag = useCallback(async () => {
+    setDiagLoading(true)
+    const results = await Promise.allSettled([
+      fetchHallucinationDiagnostic(),
+      fetchCharacterStates(),
+      fetchEventStats(50),
+      fetchActionPatterns(100),
+      fetchNoveltyWarnings(),
+      fetchStyleAnchors(20),
+    ])
+    const [hd, cs, es, ap, nw, sa] = results
+    setDiag({
+      hallucination: hd.status === 'fulfilled' ? hd.value : null,
+      characterStates:
+        cs.status === 'fulfilled'
+          ? cs.value?.character_states || cs.value?.states || []
+          : [],
+      eventStats: es.status === 'fulfilled' ? es.value : null,
+      actionPatterns: ap.status === 'fulfilled' ? ap.value : null,
+      noveltyWarnings:
+        nw.status === 'fulfilled' ? nw.value?.warnings || [] : [],
+      styleAnchors: sa.status === 'fulfilled' ? sa.value?.anchors || [] : [],
+    })
+    setDiagFailures(results.filter((r) => r.status === 'rejected').length)
+    setDiagLoading(false)
+  }, [])
+
+  useEffect(() => {
+    refreshDiag()
+  }, [refreshDiag, tickStatus?.current_tick])
 
   const running = Boolean(tickStatus && !tickStatus.is_paused)
   const currentTick =
@@ -150,6 +267,26 @@ export default function TickView({
         </div>
       </div>
 
+      {/* v2.48 — § Diagnostics: Guardian + CharStates + EventStats + ActionPatterns +
+          NoveltyWarn + StyleAnchors. 移植 TickDiagnosticsPanel 关键面板, 同样的端点. */}
+      <DiagnosticsSection
+        diag={diag}
+        loading={diagLoading}
+        failures={diagFailures}
+        onRefresh={refreshDiag}
+      />
+
+      {/* v2.48 — § OpenLoop CRUD: 列出 + 添加 + 关闭. 移植 TickControlPanel. */}
+      <OpenLoopsSection
+        loops={openLoops}
+        form={loopForm}
+        setForm={setLoopForm}
+        onAdd={handleAddLoop}
+        onClose={handleCloseLoop}
+        busy={loopBusy}
+        currentTick={tickStatus?.current_tick ?? 0}
+      />
+
       {/* params + log */}
       <div className="dc-tk-pl-row">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -225,6 +362,383 @@ function ParamRow({ name, sub, val, unit, right }) {
             {val} {unit}
           </span>
         )}
+    </div>
+  )
+}
+
+// v2.48 — § Diagnostics 集成 (legacy TickDiagnosticsPanel 6 cards 的 dashboard 版).
+function DiagnosticsSection({ diag, loading, failures, onRefresh }) {
+  const {
+    hallucination,
+    characterStates,
+    eventStats,
+    actionPatterns,
+    noveltyWarnings,
+    styleAnchors,
+  } = diag
+  return (
+    <div className="dc-tk-diag">
+      <div className="dc-tk-diag-head">
+        <span className="dc-tk-rtbar-kicker">DIAGNOSTICS · 质量门观测</span>
+        {failures > 0 && (
+          <span className="dc-tk-diag-warn">
+            {failures}/6 端点失败 — tick runtime 未注入或后端未启动
+          </span>
+        )}
+        <button
+          type="button"
+          className="dc-btn-ghost"
+          onClick={onRefresh}
+          disabled={loading}
+          style={{ marginLeft: 'auto' }}
+        >
+          {loading ? '加载中…' : '刷新'}
+        </button>
+      </div>
+
+      <GuardianCard data={hallucination} />
+
+      <div className="dc-tk-diag-grid">
+        <CharacterStatesCard states={characterStates} />
+        <EventStatsCard data={eventStats} />
+        <ActionPatternsCard data={actionPatterns} />
+        <NoveltyWarningsCard warnings={noveltyWarnings} />
+      </div>
+
+      <StyleAnchorsCard anchors={styleAnchors} />
+    </div>
+  )
+}
+
+function GuardianCard({ data }) {
+  const stats = data?.stats || {}
+  const agents = Object.entries(stats)
+  const autoDegrade = data?.auto_degrade_active
+  return (
+    <div className="dc-tk-diag-card is-wide">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">Guardian 幻觉率监控</span>
+        <span
+          className={`dc-tk-diag-pill ${autoDegrade ? 'is-active' : 'is-shadow'}`}
+        >
+          {autoDegrade ? 'ACTIVE · auto-degrade ON' : 'SHADOW · 仅统计'}
+        </span>
+      </div>
+      {agents.length === 0 ? (
+        <div className="dc-tk-diag-empty">
+          暂无被 Guardian 建议过降级的 agent
+        </div>
+      ) : (
+        <table className="dc-tk-diag-table">
+          <thead>
+            <tr>
+              <th>agent_id</th>
+              <th>命中</th>
+              <th>建议降级</th>
+              <th>最近 tick</th>
+              <th>override</th>
+            </tr>
+          </thead>
+          <tbody>
+            {agents.map(([agentId, s]) => (
+              <tr key={agentId}>
+                <td className="is-mono">{agentId}</td>
+                <td>{s.hallucination_hits ?? 0}</td>
+                <td>{s.degrade_recommendations ?? 0}</td>
+                <td>{s.last_degrade_recommended_tick ?? '—'}</td>
+                <td className={s.model_tier_override_active ? 'is-warn' : ''}>
+                  {s.model_tier_override_active ? '是' : '否'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
+function CharacterStatesCard({ states }) {
+  return (
+    <div className="dc-tk-diag-card">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">CharacterState · {states.length}</span>
+      </div>
+      {states.length === 0 ? (
+        <div className="dc-tk-diag-empty">暂无角色状态</div>
+      ) : (
+        <table className="dc-tk-diag-table is-compact">
+          <thead>
+            <tr>
+              <th>character</th>
+              <th>location</th>
+              <th>arc</th>
+            </tr>
+          </thead>
+          <tbody>
+            {states.slice(0, 6).map((s) => (
+              <tr key={s.character_id}>
+                <td className="is-mono">{s.character_id}</td>
+                <td>{s.current_location || '—'}</td>
+                <td>
+                  {s.arc_stage || '—'}
+                  {typeof s.arc_progress === 'number'
+                    ? ` (${(s.arc_progress * 100).toFixed(0)}%)`
+                    : ''}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
+function EventStatsCard({ data }) {
+  if (!data) {
+    return (
+      <div className="dc-tk-diag-card">
+        <div className="dc-tk-diag-card-head">
+          <span className="dc-tk-diag-card-title">事件统计</span>
+        </div>
+        <div className="dc-tk-diag-empty">暂无数据</div>
+      </div>
+    )
+  }
+  const byType = data.by_type || {}
+  const types = Object.entries(byType).sort((a, b) => b[1] - a[1])
+  const totalEvents = types.reduce((acc, [, n]) => acc + (Number(n) || 0), 0)
+  const narrationRate =
+    typeof data.narration_rate === 'number'
+      ? `${(data.narration_rate * 100).toFixed(0)}%`
+      : '—'
+  return (
+    <div className="dc-tk-diag-card">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">事件统计</span>
+        <span className="dc-tk-diag-card-meta">
+          {data.ticks_sampled ?? 0} tick · {totalEvents} 条 · narrate {narrationRate}
+        </span>
+      </div>
+      {types.length === 0 ? (
+        <div className="dc-tk-diag-empty">暂无事件</div>
+      ) : (
+        <div className="dc-tk-diag-badges">
+          {types.map(([t, n]) => (
+            <span key={t} className="dc-tk-diag-badge">
+              {t} · {n}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ActionPatternsCard({ data }) {
+  const patterns =
+    data?.frequent_prefixes || data?.patterns || data?.action_patterns || []
+  const totalSampled = data?.total_actions_sampled ?? 0
+  return (
+    <div className="dc-tk-diag-card">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">行动模式</span>
+        <span className="dc-tk-diag-card-meta">
+          {patterns.length} 前缀 · {totalSampled} 行动
+        </span>
+      </div>
+      {patterns.length === 0 ? (
+        <div className="dc-tk-diag-empty">暂无重复行动模式</div>
+      ) : (
+        <ul className="dc-tk-diag-list">
+          {patterns.slice(0, 8).map((p, i) => (
+            <li key={i}>
+              <span>{p.prefix || p.pattern || p.description || JSON.stringify(p)}</span>
+              {typeof p.count === 'number' && (
+                <span className="dc-tk-diag-list-num">× {p.count}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function NoveltyWarningsCard({ warnings }) {
+  return (
+    <div className="dc-tk-diag-card">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">NoveltyCritic · {warnings.length}</span>
+      </div>
+      {warnings.length === 0 ? (
+        <div className="dc-tk-diag-empty">暂无新颖度警告</div>
+      ) : (
+        <ul className="dc-tk-diag-list is-warn">
+          {warnings.slice(0, 6).map((w, i) => (
+            <li key={i}>
+              <strong>{w.code || w.warning_type || 'WARN'}</strong>{' '}
+              {w.description || w.message || ''}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// v2.48 — § OpenLoops 编辑器: 列出当前 N 个伏笔 + 添加表单 + 关闭按钮
+function OpenLoopsSection({ loops, form, setForm, onAdd, onClose, busy, currentTick }) {
+  return (
+    <div className="dc-tk-diag">
+      <div className="dc-tk-diag-head">
+        <span className="dc-tk-rtbar-kicker">OPEN LOOPS · 伏笔池</span>
+        <span className="dc-tk-diag-card-meta" style={{ marginLeft: 12 }}>
+          {loops.length} 条 · 当前 tick {currentTick}
+        </span>
+      </div>
+      <div className="dc-tk-diag-grid">
+        <div className="dc-tk-diag-card">
+          <div className="dc-tk-diag-card-head">
+            <span className="dc-tk-diag-card-title">现有伏笔</span>
+          </div>
+          {loops.length === 0 ? (
+            <div className="dc-tk-diag-empty">暂无开放伏笔</div>
+          ) : (
+            <ul className="dc-tk-diag-list">
+              {loops.map((l) => (
+                <li key={l.id}>
+                  <span>
+                    <strong>{l.id}</strong>
+                    <span className={`dc-tk-loop-urg dc-tk-loop-urg-${urgencyBucket(l.urgency)}`}>
+                      U{l.urgency ?? '?'}
+                    </span>
+                    {' '}{l.description || ''}
+                    {l.opened_tick != null && (
+                      <span className="dc-tk-diag-list-num"> · t{l.opened_tick}</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    className="dc-tk-loop-close"
+                    onClick={() => onClose(l.id)}
+                    disabled={busy}
+                    title="关闭这个伏笔"
+                  >
+                    × 关闭
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <form className="dc-tk-diag-card" onSubmit={onAdd}>
+          <div className="dc-tk-diag-card-head">
+            <span className="dc-tk-diag-card-title">添加伏笔</span>
+            <span className="dc-tk-diag-card-meta">opened_tick 自动 = t{currentTick + 1}</span>
+          </div>
+          <div className="dc-tk-loop-form">
+            <input
+              className="dc-input"
+              type="text"
+              placeholder="loop id (如 missing_letter)"
+              value={form.id}
+              onChange={(e) => setForm({ ...form, id: e.target.value })}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            />
+            <textarea
+              className="dc-input"
+              rows={2}
+              placeholder="描述这个伏笔(为什么读者会记得?)"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              style={{ resize: 'none' }}
+            />
+            <div className="dc-tk-loop-form-row">
+              <label style={{ font: "500 11px/1 'JetBrains Mono', monospace", color: 'var(--text3)' }}>
+                urgency
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={form.urgency}
+                  onChange={(e) => setForm({ ...form, urgency: e.target.value })}
+                  style={{
+                    marginLeft: 8,
+                    width: 60,
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    padding: '4px 6px',
+                    font: "500 12px/1 'JetBrains Mono', monospace",
+                    color: 'var(--text)',
+                  }}
+                />
+              </label>
+              <input
+                className="dc-input"
+                type="text"
+                placeholder="涉及角色 id (逗号分隔, 可选)"
+                value={form.involved_characters}
+                onChange={(e) => setForm({ ...form, involved_characters: e.target.value })}
+                style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace" }}
+              />
+              <button type="submit" className="dc-btn" disabled={busy}>+ 添加</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function urgencyBucket(u) {
+  const n = Number(u) || 0
+  if (n >= 8) return 'high'
+  if (n >= 5) return 'mid'
+  return 'low'
+}
+
+function StyleAnchorsCard({ anchors }) {
+  return (
+    <div className="dc-tk-diag-card is-wide">
+      <div className="dc-tk-diag-card-head">
+        <span className="dc-tk-diag-card-title">Style Anchors · {anchors.length}</span>
+      </div>
+      {anchors.length === 0 ? (
+        <div className="dc-tk-diag-empty">暂无风格锚点</div>
+      ) : (
+        <div className="dc-tk-diag-badges">
+          {anchors.map((a, i) => {
+            const excerpt = a.excerpt || a.example || a.snippet || ''
+            const sceneType =
+              a.scene_type || a.label || a.category || a.tag || 'general'
+            const weight =
+              typeof a.weight === 'number'
+                ? a.weight
+                : typeof a.score === 'number'
+                  ? a.score
+                  : null
+            const tooltip = a.selection_reason
+              ? `[${a.selection_reason}] ${excerpt}`
+              : excerpt
+            return (
+              <span
+                key={i}
+                className="dc-tk-diag-badge is-anchor"
+                title={tooltip}
+              >
+                {sceneType}
+                {weight !== null && (
+                  <span className="dc-tk-diag-badge-num">
+                    {' '}({weight.toFixed(2)})
+                  </span>
+                )}
+              </span>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

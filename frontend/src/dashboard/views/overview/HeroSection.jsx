@@ -11,6 +11,8 @@ export default function HeroSection({
   narrative,
   onJumpReader,
   onJumpChapter,
+  onContinueSection,
+  continuing,
 }) {
   const novelTitle = novel?.title || novel?.id || '未选择作品'
   const novelId = novel?.id || ''
@@ -74,6 +76,25 @@ export default function HeroSection({
               <span className="dc-ov-hero-stat-lbl">角色</span>
             </span>
           </div>
+
+          {/* v2.48 — § 续写下一节: 主要 CTA. 复刻 HomeView.handleContinue 逻辑,
+              race-safety 由 Shell.continueIdRef 处理. 任务进度在 sidebar 任务面板呈现. */}
+          {onContinueSection && (
+            <div className="dc-ov-hero-cta">
+              <button
+                type="button"
+                className="dc-ov-hero-cta-btn"
+                onClick={onContinueSection}
+                disabled={continuing || !novel?.id}
+                title={!novel?.id ? '请先选择作品' : '将"续写下一节"任务入队'}
+              >
+                {continuing ? '入队中…' : '续写下一节 →'}
+              </button>
+              <span className="dc-ov-hero-cta-hint">
+                生成下一节,进度看左侧任务面板
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Narrator excerpt card */}

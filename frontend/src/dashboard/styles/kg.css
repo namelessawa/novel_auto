@@ -248,3 +248,57 @@
   font: 400 14px/1 'Inter', sans-serif;
   color: var(--text3);
 }
+
+/* v2.48 — § KG CRUD: 删除按钮 + 添加 entity/relation 表单 */
+.dc-kg-detail-delete {
+  margin-top: 12px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color 130ms ease, color 130ms ease;
+}
+.dc-kg-detail-delete:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--surf);
+}
+.dc-kg-detail-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dc-kg-rel { position: relative; }
+.dc-kg-rel-delete {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--text4);
+  font: 400 14px/1 'Inter', sans-serif;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 130ms ease;
+}
+.dc-kg-rel-delete:hover:not(:disabled) { color: var(--accent); }
+.dc-kg-rel-delete:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.dc-kg-crud {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.dc-kg-crud-card {
+  background-color: var(--surf);
+  border: 1px solid var(--border);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dc-kg-crud-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.dc-kg-crud-row > .dc-input { flex: 1; min-width: 0; }
+.dc-kg-crud-row > .dc-btn { flex: none; }

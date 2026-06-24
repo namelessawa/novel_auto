@@ -3,12 +3,13 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 // v2.47 — Dashboard 左侧栏: 我的小说 + 视图 nav (滑动 indicator) + 后台任务.
 
 export const NAV_ITEMS = [
-  { key: 'overview', label: '总览' },
-  { key: 'tick',     label: 'Tick 控制' },
-  { key: 'agent',    label: 'Agent 上下文' },
-  { key: 'chapter',  label: '章节与多模态' },
-  { key: 'kg',       label: '知识图谱' },
-  { key: 'config',   label: '配置' },
+  { key: 'overview',   label: '总览' },
+  { key: 'tick',       label: 'Tick 控制' },
+  { key: 'agent',      label: 'Agent 上下文' },
+  { key: 'chapter',    label: '章节与多模态' },
+  { key: 'multimodal', label: '多模态生成' },
+  { key: 'kg',         label: '知识图谱' },
+  { key: 'config',     label: '配置' },
 ]
 
 export default function Sidebar({

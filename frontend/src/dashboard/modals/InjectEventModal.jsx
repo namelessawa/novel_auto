@@ -1,42 +1,75 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { injectTickEvent } from '../../services/api'
 import { showToast } from '../../utils/toast'
 
 // v2.47 — 注入事件 modal.
-// POST /api/tick/inject-event 接口字段:
-//   { event_type, description, target, narrative_value (1-10) }
+// v2.48 — 补全字段对齐 TickControlPanel:
+//   id (可选, 留空后端自动生成) / location / participants / visible_to /
+//   description / narrative_value (1-10).
+// POST /api/tick/inject-event 接口.
 
 const KINDS = [
-  { key: 'endogenous', label: '内生' },
-  { key: 'exogenous',  label: '外生' },
-  { key: 'dramatic',   label: '戏剧' },
-  { key: 'natural',    label: '自然' },
+  { key: 'dramatic',         label: '戏剧 · dramatic',         hint: '高戏剧性事件' },
+  { key: 'endogenous',       label: '内生 · endogenous',       hint: '角色内驱事件' },
+  { key: 'exogenous',        label: '外生 · exogenous',        hint: '外部环境事件' },
+  { key: 'character_action', label: '行动 · character_action', hint: '角色行动' },
 ]
 
+const DEFAULT_FORM = {
+  type: 'dramatic',
+  id: '',
+  location: '',
+  participants: '',
+  visible_to: '',
+  description: '',
+  narrative_value: 8,
+}
+
 export default function InjectEventModal({ tickStatus, onClose }) {
-  const [kind, setKind] = useState('dramatic')
-  const [target, setTarget] = useState('')
-  const [description, setDescription] = useState('')
+  const [form, setForm] = useState(DEFAULT_FORM)
   const [busy, setBusy] = useState(false)
+  // 防双击锁 — setState 异步, 快速双击会在 busy=false 时进第二次提交.
+  const busyRef = useRef(false)
+
+  function update(patch) {
+    setForm((prev) => ({ ...prev, ...patch }))
+  }
 
   async function submit() {
-    if (!description.trim()) {
+    if (busyRef.current) return
+    if (!form.description.trim()) {
       showToast('请填事件描述', 'error')
       return
     }
+    busyRef.current = true
     setBusy(true)
     try {
-      await injectTickEvent({
-        event_type: kind,
-        description: description.trim(),
-        target: target.trim() || null,
-        narrative_value: 7,
-      })
-      showToast('已加入下一 tick 队列, 由 EventInjector 应用', 'success')
+      const participants = form.participants
+        .split(/[,,\s]+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+      const visible_to = form.visible_to
+        .split(/[,,\s]+/)
+        .map((v) => v.trim())
+        .filter(Boolean)
+      const payload = {
+        type: form.type,
+        location: form.location.trim(),
+        participants,
+        description: form.description.trim(),
+        narrative_value: Number(form.narrative_value) || 5,
+      }
+      // 仅填了才透传 — 后端 id 自动生成, visible_to fallback 到 ['all_in_location'].
+      const trimmedId = form.id.trim()
+      if (trimmedId) payload.id = trimmedId
+      if (visible_to.length > 0) payload.visible_to = visible_to
+      const res = await injectTickEvent(payload)
+      showToast(`事件已注入 (tick ${res?.event?.tick ?? '?'})`, 'success')
       onClose?.()
     } catch (err) {
-      showToast(err.message || '注入失败', 'error')
+      showToast('注入失败: ' + (err?.message || '未知错误'), 'error')
     } finally {
+      busyRef.current = false
       setBusy(false)
     }
   }
@@ -80,8 +113,9 @@ export default function InjectEventModal({ tickStatus, onClose }) {
             {KINDS.map((k) => (
               <span
                 key={k.key}
-                className={`dc-chip ${kind === k.key ? 'is-active' : ''}`}
-                onClick={() => setKind(k.key)}
+                className={`dc-chip ${form.type === k.key ? 'is-active' : ''}`}
+                onClick={() => update({ type: k.key })}
+                title={k.hint}
               >
                 {k.label}
               </span>
@@ -90,13 +124,90 @@ export default function InjectEventModal({ tickStatus, onClose }) {
         </div>
 
         <div className="dc-modal-row">
-          <span className="dc-modal-row-label">作用对象</span>
+          <span className="dc-modal-row-label">
+            事件 id (可选)
+            <span className="dc-modal-row-hint"> · 留空后端自动生成 evt_user_{(tickStatus?.current_tick ?? 0)}_n</span>
+          </span>
           <input
             className="dc-input"
-            placeholder="角色 / 地点 / 物件 · 如 阿莱拉"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
+            placeholder="evt_meeting_001"
+            value={form.id}
+            onChange={(e) => update({ id: e.target.value })}
+            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}
           />
+        </div>
+
+        <div className="dc-modal-row">
+          <span className="dc-modal-row-label">作用地点 location</span>
+          <input
+            className="dc-input"
+            placeholder="十字路口 / 主城 / 山门外"
+            value={form.location}
+            onChange={(e) => update({ location: e.target.value })}
+          />
+        </div>
+
+        <div className="dc-modal-row">
+          <span className="dc-modal-row-label">
+            参与者 participants
+            <span className="dc-modal-row-hint"> · 逗号或空格分隔 character_id</span>
+          </span>
+          <input
+            className="dc-input"
+            placeholder="char_001, char_002"
+            value={form.participants}
+            onChange={(e) => update({ participants: e.target.value })}
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          />
+        </div>
+
+        <div className="dc-modal-row">
+          <span className="dc-modal-row-label">
+            可见性 visible_to
+            <span className="dc-modal-row-hint">
+              {' · 留空 = all_in_location (需配 location); 特殊 token: all / all_in_location'}
+            </span>
+          </span>
+          <input
+            className="dc-input"
+            placeholder="留空 / all / char_001, char_002"
+            value={form.visible_to}
+            onChange={(e) => update({ visible_to: e.target.value })}
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          />
+        </div>
+
+        <div className="dc-modal-row">
+          <span className="dc-modal-row-label">
+            narrative_value
+            <span className="dc-modal-row-hint"> · 1-10, Narrator 决策叙述基线</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={form.narrative_value}
+              onChange={(e) => update({ narrative_value: e.target.value })}
+              style={{ flex: 1 }}
+            />
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={form.narrative_value}
+              onChange={(e) => update({ narrative_value: e.target.value })}
+              style={{
+                width: 56,
+                background: 'var(--bg)',
+                border: '1px solid var(--border)',
+                padding: '7px 9px',
+                font: "500 13px/1 'JetBrains Mono', monospace",
+                color: 'var(--text)',
+                textAlign: 'center',
+              }}
+            />
+          </div>
         </div>
 
         <div className="dc-modal-row">
@@ -110,8 +221,8 @@ export default function InjectEventModal({ tickStatus, onClose }) {
               lineHeight: 1.55,
               fontFamily: "'Inter', sans-serif",
             }}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={form.description}
+            onChange={(e) => update({ description: e.target.value })}
           />
         </div>
 

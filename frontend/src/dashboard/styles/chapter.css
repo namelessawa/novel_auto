@@ -6,6 +6,53 @@
   gap: 36px;
 }
 
+/* v2.48 — § 续写 副按钮: 章节头右侧, ghost 样式 */
+.dc-ch-continue-btn {
+  margin-left: 12px;
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  background-color: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  transition: background-color 130ms ease, color 130ms ease;
+}
+.dc-ch-continue-btn:hover:not(:disabled) {
+  background-color: var(--accent);
+  color: var(--surf);
+}
+.dc-ch-continue-btn:disabled {
+  color: var(--text4);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+/* v2.48 — § 跳转到多模态 mini btn (在 mm tile grid header) */
+.dc-ch-mm-jump {
+  margin-left: auto;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  font: 500 11px/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+  color: var(--text2);
+  cursor: pointer;
+  transition: border-color 130ms ease, color 130ms ease;
+}
+.dc-ch-mm-jump:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* v2.48 — § Multimodal mount: 包裹 legacy MultimodalView (global.css .card),
+   提供 dashboard 风格 section header + spacing reset. 子内容沿用 .card/.btn. */
+.dc-mm-mount {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
 .dc-ch-row {
   display: grid;
   grid-template-columns: 0.8fr 1.2fr;

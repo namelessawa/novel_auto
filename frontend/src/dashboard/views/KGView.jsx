@@ -1,5 +1,49 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { fetchEntityDetail, fetchGraph } from '../../services/api'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  createEntity,
+  createRelation,
+  deleteEntity,
+  deleteRelation,
+  fetchEntityDetail,
+  fetchGraph,
+} from '../../services/api'
+import { showToast } from '../../utils/toast'
+
+// v2.48 — § KG CRUD: 解析 "k=v; k2=v2" 简易语法 → attributes 对象 (复刻 GraphView).
+// 设计取舍: 不引 JSON 编辑器, 4 字段表单, 用户直接打 "background=学者; loyalty=高".
+function parseAttributesString(s) {
+  if (!s || !s.trim()) return {}
+  const out = {}
+  for (const pair of s.split(/[;;]/)) {
+    const idx = pair.indexOf('=')
+    if (idx <= 0) continue
+    const k = pair.slice(0, idx).trim()
+    const v = pair.slice(idx + 1).trim()
+    if (k) out[k] = v
+  }
+  return out
+}
+
+const ENTITY_TYPES = [
+  { v: 'character', cn: '角色' },
+  { v: 'location', cn: '地点' },
+  { v: 'item', cn: '道具' },
+  { v: 'skill', cn: '技能' },
+  { v: 'faction', cn: '阵营' },
+]
+
+const RELATION_TYPES = [
+  { v: 'located_at', cn: '位于' },
+  { v: 'holds', cn: '持有' },
+  { v: 'knows', cn: '认识' },
+  { v: 'hostile', cn: '敌对' },
+  { v: 'allied', cn: '同盟' },
+  { v: 'loves', cn: '爱慕' },
+  { v: 'parent_of', cn: '父母' },
+  { v: 'member_of', cn: '所属' },
+  { v: 'master_of', cn: '师徒' },
+  { v: 'custom', cn: '自定义' },
+]
 
 // v2.47 — § 知识图谱. SVG canvas + 节点详情弹层 + 右侧 type stats / top entities / relations.
 
@@ -48,23 +92,104 @@ export default function KGView() {
   const [detail, setDetail] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      try {
-        const r = await fetchGraph()
-        if (!cancelled) {
-          setGraph({ nodes: r?.nodes || [], edges: r?.edges || [] })
-        }
-      } catch {
-        if (!cancelled) setGraph({ nodes: [], edges: [] })
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
+  // v2.48 — § CRUD 状态
+  const [entityForm, setEntityForm] = useState({
+    id: '', name: '', entity_type: 'character', attributes: '',
+  })
+  const [relationForm, setRelationForm] = useState({
+    source_id: '', target_id: '', relation_type: 'knows', label: '',
+  })
+  const [busy, setBusy] = useState(false)
+
+  const loadGraph = useCallback(async () => {
+    try {
+      const r = await fetchGraph()
+      setGraph({ nodes: r?.nodes || [], edges: r?.edges || [] })
+    } catch {
+      setGraph({ nodes: [], edges: [] })
     }
   }, [])
+
+  useEffect(() => {
+    loadGraph()
+  }, [loadGraph])
+
+  async function handleAddEntity(e) {
+    e.preventDefault()
+    if (!entityForm.id || !entityForm.name) {
+      showToast('实体需要 id 和名称', 'error')
+      return
+    }
+    setBusy(true)
+    try {
+      await createEntity({
+        id: entityForm.id,
+        name: entityForm.name,
+        entity_type: entityForm.entity_type,
+        attributes: parseAttributesString(entityForm.attributes),
+      })
+      setEntityForm({ id: '', name: '', entity_type: 'character', attributes: '' })
+      await loadGraph()
+      showToast('实体已添加', 'success')
+    } catch (err) {
+      showToast('添加失败: ' + (err?.message || '未知错误'), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleAddRelation(e) {
+    e.preventDefault()
+    if (!relationForm.source_id || !relationForm.target_id) {
+      showToast('关系需要源和目标 id', 'error')
+      return
+    }
+    setBusy(true)
+    try {
+      await createRelation(relationForm)
+      setRelationForm({ source_id: '', target_id: '', relation_type: 'knows', label: '' })
+      await loadGraph()
+      showToast('关系已添加', 'success')
+    } catch (err) {
+      showToast('添加关系失败: ' + (err?.message || '未知错误'), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleDeleteEntity(entityId, entityName) {
+    if (!entityId) return
+    if (!window.confirm(`确认删除实体 "${entityName || entityId}"? 关联关系也会被一并删除, 无法恢复。`)) {
+      return
+    }
+    setBusy(true)
+    try {
+      await deleteEntity(entityId)
+      setDetail(null)
+      setSelectedId(null)
+      await loadGraph()
+      showToast('实体已删除', 'success')
+    } catch (err) {
+      showToast('删除失败: ' + (err?.message || '未知错误'), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleDeleteRelation(sourceId, targetId) {
+    if (!sourceId || !targetId) return
+    if (!window.confirm(`确认删除关系 ${sourceId} → ${targetId}?`)) return
+    setBusy(true)
+    try {
+      await deleteRelation(sourceId, targetId)
+      await loadGraph()
+      showToast('关系已删除', 'success')
+    } catch (err) {
+      showToast('删除失败: ' + (err?.message || '未知错误'), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const positioned = useMemo(() => layoutNodes(graph.nodes), [graph.nodes])
   const posById = useMemo(() => new Map(positioned.map((p) => [p.id, p])), [positioned])
@@ -92,19 +217,6 @@ export default function KGView() {
       .sort((a, b) => (b.degree || 0) - (a.degree || 0))
       .slice(0, 7)
   }, [graph.nodes])
-
-  // relations triples
-  const relations = useMemo(() => {
-    return (graph.edges || []).slice(0, 8).map((e) => {
-      const s = posById.get(e.source) || graph.nodes.find((n) => n.id === e.source)
-      const o = posById.get(e.target) || graph.nodes.find((n) => n.id === e.target)
-      return {
-        s: s?.label || s?.name || e.source,
-        p: e.label || e.relation || e.type || 'rel',
-        o: o?.label || o?.name || e.target,
-      }
-    })
-  }, [graph.edges, graph.nodes, posById])
 
   async function selectNode(node) {
     setSelectedId(node.id)
@@ -246,6 +358,17 @@ export default function KGView() {
               {detail.description && (
                 <p className="dc-kg-detail-desc">{detail.description}</p>
               )}
+              {/* v2.48 — § 删除实体 */}
+              <button
+                type="button"
+                className="dc-kg-detail-delete"
+                onClick={() =>
+                  handleDeleteEntity(detail.id, detail.label || detail.name)
+                }
+                disabled={busy}
+              >
+                删除实体
+              </button>
             </div>
           )}
         </div>
@@ -300,16 +423,113 @@ export default function KGView() {
           <div>
             <span className="dc-kg-side-kicker">关系三元组 · RELATIONS</span>
             <div className="dc-kg-rels" style={{ marginTop: 12 }}>
-              {relations.map((r, i) => (
-                <div key={i} className="dc-kg-rel">
-                  <span className="dc-kg-rel-s">{r.s}</span>
-                  <span className="dc-kg-rel-p">{r.p}</span>
-                  <span className="dc-kg-rel-o">{r.o}</span>
-                </div>
-              ))}
+              {(graph.edges || []).slice(0, 8).map((e, i) => {
+                const s = posById.get(e.source) || graph.nodes.find((n) => n.id === e.source)
+                const o = posById.get(e.target) || graph.nodes.find((n) => n.id === e.target)
+                return (
+                  <div key={i} className="dc-kg-rel">
+                    <span className="dc-kg-rel-s">{s?.label || s?.name || e.source}</span>
+                    <span className="dc-kg-rel-p">{e.label || e.relation || e.type || 'rel'}</span>
+                    <span className="dc-kg-rel-o">{o?.label || o?.name || e.target}</span>
+                    <button
+                      type="button"
+                      className="dc-kg-rel-delete"
+                      onClick={() => handleDeleteRelation(e.source, e.target)}
+                      disabled={busy}
+                      title="删除这条关系"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* v2.48 — § CRUD: 添加实体 + 添加关系 表单 */}
+      <div className="dc-kg-crud">
+        <form className="dc-kg-crud-card" onSubmit={handleAddEntity}>
+          <span className="dc-kg-side-kicker">添加实体</span>
+          <div className="dc-kg-crud-row">
+            <input
+              className="dc-input"
+              type="text"
+              placeholder="id (如 protagonist)"
+              value={entityForm.id}
+              onChange={(e) => setEntityForm({ ...entityForm, id: e.target.value })}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            />
+            <input
+              className="dc-input"
+              type="text"
+              placeholder="名称"
+              value={entityForm.name}
+              onChange={(e) => setEntityForm({ ...entityForm, name: e.target.value })}
+            />
+          </div>
+          <div className="dc-kg-crud-row">
+            <select
+              className="dc-input"
+              value={entityForm.entity_type}
+              onChange={(e) => setEntityForm({ ...entityForm, entity_type: e.target.value })}
+            >
+              {ENTITY_TYPES.map((t) => (
+                <option key={t.v} value={t.v}>{t.cn} · {t.v}</option>
+              ))}
+            </select>
+            <button type="submit" className="dc-btn" disabled={busy}>+ 添加</button>
+          </div>
+          <input
+            className="dc-input"
+            type="text"
+            placeholder="属性 (可选): background=学者; loyalty=高"
+            value={entityForm.attributes}
+            onChange={(e) => setEntityForm({ ...entityForm, attributes: e.target.value })}
+          />
+        </form>
+
+        <form className="dc-kg-crud-card" onSubmit={handleAddRelation}>
+          <span className="dc-kg-side-kicker">添加关系</span>
+          <div className="dc-kg-crud-row">
+            <input
+              className="dc-input"
+              type="text"
+              placeholder="源 id"
+              value={relationForm.source_id}
+              onChange={(e) => setRelationForm({ ...relationForm, source_id: e.target.value })}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            />
+            <input
+              className="dc-input"
+              type="text"
+              placeholder="目标 id"
+              value={relationForm.target_id}
+              onChange={(e) => setRelationForm({ ...relationForm, target_id: e.target.value })}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            />
+          </div>
+          <div className="dc-kg-crud-row">
+            <select
+              className="dc-input"
+              value={relationForm.relation_type}
+              onChange={(e) => setRelationForm({ ...relationForm, relation_type: e.target.value })}
+            >
+              {RELATION_TYPES.map((t) => (
+                <option key={t.v} value={t.v}>{t.cn} · {t.v}</option>
+              ))}
+            </select>
+            <button type="submit" className="dc-btn" disabled={busy}>+ 添加</button>
+          </div>
+          <input
+            className="dc-input"
+            type="text"
+            placeholder="关系描述 (可选)"
+            value={relationForm.label}
+            onChange={(e) => setRelationForm({ ...relationForm, label: e.target.value })}
+          />
+        </form>
       </div>
     </div>
   )

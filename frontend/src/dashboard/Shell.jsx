@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import './styles/index.css'
 
 import TopBar from './TopBar'
@@ -11,6 +11,9 @@ import AgentView from './views/AgentView'
 import ChapterView from './views/ChapterView'
 import KGView from './views/KGView'
 import ConfigView from './views/ConfigView'
+// v2.48 — 多模态 authoring 直接挂载 legacy MultimodalView (996 行 SSE/blob/race-safe).
+// 重写风险大, 直接复用; 视觉用 global.css 的 .card/.btn 类, 暂与 dashboard chrome 风格略有差异.
+import MultimodalView from '../views/MultimodalView'
 import ReaderOverlay from './ReaderOverlay'
 import InjectEventModal from './modals/InjectEventModal'
 import NewNovelModal from './modals/NewNovelModal'
@@ -18,6 +21,7 @@ import NewNovelModal from './modals/NewNovelModal'
 import { useAuth } from '../auth/AuthContext'
 import SettingsModal from '../auth/SettingsModal'
 import {
+  createSectionTask,
   fetchNovels,
   fetchStats,
   fetchTickStatus,
@@ -55,6 +59,14 @@ function DashboardShellInner() {
   const [injectOpen, setInjectOpen] = useState(false)
   const [newNovelOpen, setNewNovelOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // —— 续写 race-safety: 镜像 activeNovelId 至 ref,await 期间用户切了别的小说就丢弃本次 UI 更新
+  // (任务本身已入队, 由 sidebar 任务面板呈现, 不会丢). 复刻 HomeView.continueIdRef.
+  const [continuing, setContinuing] = useState(false)
+  const continueIdRef = useRef(null)
+  useEffect(() => {
+    continueIdRef.current = activeNovelId
+  }, [activeNovelId])
 
   const refreshStats = useCallback(async () => {
     if (!hasToken) return
@@ -164,6 +176,26 @@ function DashboardShellInner() {
     }
   }
 
+  async function handleContinueSection() {
+    if (!activeNovelId) {
+      showToast('请先选择作品', 'error')
+      return
+    }
+    if (continuing) return
+    const requestedId = activeNovelId
+    setContinuing(true)
+    try {
+      await createSectionTask(requestedId)
+      if (continueIdRef.current !== requestedId) return
+      showToast('已入队续写任务,见左侧任务面板', 'success')
+      refreshTasks()
+    } catch (err) {
+      showToast(err.message || '续写失败', 'error')
+    } finally {
+      setContinuing(false)
+    }
+  }
+
   const activeNovel =
     novels.find((n) => n.id === activeNovelId) ||
     (activeNovelId ? { id: activeNovelId } : null)
@@ -205,6 +237,8 @@ function DashboardShellInner() {
               onToggleRun={handleToggleRun}
               onStepOne={handleStepOne}
               onOpenInject={() => setInjectOpen(true)}
+              onContinueSection={handleContinueSection}
+              continuing={continuing}
             />
           )}
           {view === 'tick' && (
@@ -221,7 +255,20 @@ function DashboardShellInner() {
             <ChapterView
               novel={activeNovel}
               onJumpReader={() => setReaderOpen(true)}
+              onContinueSection={handleContinueSection}
+              continuing={continuing}
+              onJumpMultimodal={() => setView('multimodal')}
             />
+          )}
+          {view === 'multimodal' && (
+            <div className="dc-view-switch dc-mm-mount">
+              <div className="dc-sec-head">
+                <span className="dc-sec-num">§ Multimodal</span>
+                <h2 className="dc-sec-title">多模态生成</h2>
+                <span className="dc-sec-sub">分段 · 图像 · TTS · 视频</span>
+              </div>
+              <MultimodalView novel={activeNovel} />
+            </div>
           )}
           {view === 'kg' && <KGView />}
           {view === 'config' && <ConfigView />}

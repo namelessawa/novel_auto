@@ -34,6 +34,8 @@ export default function OverviewView({
   onToggleRun,
   onStepOne,
   onOpenInject,
+  onContinueSection,
+  continuing,
 }) {
   const [narrative, setNarrative] = useState(null)
   const [history, setHistory] = useState([])
@@ -119,6 +121,8 @@ export default function OverviewView({
         narrative={narrative}
         onJumpReader={onJumpReader}
         onJumpChapter={onJumpChapter}
+        onContinueSection={onContinueSection}
+        continuing={continuing}
       />
 
       <MetricsSection

@@ -47,6 +47,38 @@
 .dc-ov-hero-stat-num { color: var(--text); font-variant-numeric: tabular-nums; }
 .dc-ov-hero-stat-lbl { color: var(--text4); }
 
+/* v2.48 — § 续写 CTA: 主行动按钮, ink-on-accent, 大点击区 */
+.dc-ov-hero-cta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.dc-ov-hero-cta-btn {
+  font: 600 13px/1 'Inter', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 26px;
+  background-color: var(--accent);
+  color: var(--surf);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  transition: opacity 130ms ease, transform 130ms ease;
+}
+.dc-ov-hero-cta-btn:hover:not(:disabled) { opacity: 0.88; }
+.dc-ov-hero-cta-btn:active:not(:disabled) { transform: translateY(1px); }
+.dc-ov-hero-cta-btn:disabled {
+  background-color: var(--surf2, var(--surf));
+  color: var(--text4);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+.dc-ov-hero-cta-hint {
+  font: 400 12px/1.4 'Inter', sans-serif;
+  color: var(--text4);
+}
+
 /* Narrator excerpt card */
 .dc-ov-narr {
   background-color: var(--surf);

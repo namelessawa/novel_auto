@@ -9,7 +9,13 @@ import {
 
 // v2.47 — § 章节与多模态. 左 section list, 右选中节正文 + 多模态资产 4 tile + mimo 评分.
 
-export default function ChapterView({ novel, onJumpReader }) {
+export default function ChapterView({
+  novel,
+  onJumpReader,
+  onContinueSection,
+  continuing,
+  onJumpMultimodal,
+}) {
   const [sections, setSections] = useState([])
   const [mmIndex, setMmIndex] = useState(new Map()) // key: chapter:section → status
   const [sel, setSel] = useState(null)
@@ -128,6 +134,17 @@ export default function ChapterView({ novel, onJumpReader }) {
         <span className="dc-sec-meta">
           {totalWords > 0 ? `${totalWords.toLocaleString()} 字` : '—'}
         </span>
+        {onContinueSection && (
+          <button
+            type="button"
+            className="dc-ch-continue-btn"
+            onClick={onContinueSection}
+            disabled={continuing || !novel?.id}
+            title="将续写任务入队 · 进度看左侧任务面板"
+          >
+            {continuing ? '入队中…' : '+ 续写下一节'}
+          </button>
+        )}
       </div>
 
       <div className="dc-ch-row">
@@ -223,6 +240,16 @@ export default function ChapterView({ novel, onJumpReader }) {
               <span style={{ font: "400 11px/1 'Inter', sans-serif", color: 'var(--text3)' }}>
                 {selManifest?.video_status || '—'}
               </span>
+              {onJumpMultimodal && (
+                <button
+                  type="button"
+                  className="dc-ch-mm-jump"
+                  onClick={onJumpMultimodal}
+                  title="跳到多模态生成视图 · 触发图/音/视频生成"
+                >
+                  {selManifest ? '管理 →' : '+ 生成多模态'}
+                </button>
+              )}
             </div>
             <div className="dc-ch-mm-grid" style={{ marginTop: 14 }}>
               {Array.from({ length: 4 }, (_, i) => {
