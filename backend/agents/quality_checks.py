@@ -228,10 +228,13 @@ def check_word_repetition(
 
     实词识别策略 (轻量, 无分词器依赖):
     * 按标点/空白把文本切成中文连续片段
-    * 每段内取所有 2-char 滑动窗口
+    * 每段内同时取 2-char + 3-char 滑动窗口 (iter#C3 加 3-gram)
     * 排除 _STOP_NOMINALS 中的常用功能词
     * 排除 ``exempt_words`` — 调用方传入的专有名词 (角色名、地点名),
       在场景中重复出现属自然文学使用, 不应触发 A1
+    * **3-char 化合物 dedup** (iter#C3): "混凝土" × 3 不再算成 "混凝" × 3 +
+      "凝土" × 3 两条 trigger, 而是 1 条 "混凝土". 算法: 3-gram 命中
+      数从重叠 2-gram count 中扣除. 校准 iter#C2 verdict 主要驱动.
     * 计数后取出现 ≥threshold 次的词作为触发
 
     Args:
@@ -252,10 +255,12 @@ def check_word_repetition(
                 exempt_set.add(w[i : i + 2])
             if len(w) == 2:
                 exempt_set.add(w)
-    counter: Counter[str] = Counter()
+    counter2: Counter[str] = Counter()
+    counter3: Counter[str] = Counter()
     for segment in _CJK_SEGMENT_PAT.findall(text):
         if len(segment) < 2:
             continue
+        # 2-gram (原有)
         for i in range(len(segment) - 1):
             w = segment[i : i + 2]
             if w in exempt_set:
@@ -265,9 +270,46 @@ def check_word_repetition(
                 continue
             if w[1] in _PARTICLE_SUFFIXES:
                 continue
-            counter[w] += 1
+            counter2[w] += 1
+        # 3-gram (iter#C3 加, 用于 dedup 3-char 化合物)
+        for i in range(len(segment) - 2):
+            w = segment[i : i + 3]
+            # 若两半都在 exempt 中, 3-gram 也视作 exempt 名字片段
+            if w[:2] in exempt_set and w[1:] in exempt_set:
+                continue
+            # 同样的助词头/尾过滤 (用第一字 / 最后一字)
+            if w[0] in _PARTICLE_PREFIXES:
+                continue
+            if w[-1] in _PARTICLE_SUFFIXES:
+                continue
+            counter3[w] += 1
+
+    # iter#C3 — 3-gram dedup: 仅当 3-gram 自身 ≥ 2 次时视作"真化合物"才扣减
+    # 重叠 2-gram count. 否则单次出现的 3-gram 是 2-gram 在不同上下文中的"路过",
+    # 不应该污染 2-gram 计数 (反例: "灯塔在夜里" 的 "灯塔在" 只 1 次, 不能让
+    # "灯塔" 净计数 -1).
+    _COMPOUND_MIN = 2
+    for trigram, n in counter3.items():
+        if n < _COMPOUND_MIN:
+            continue
+        left = trigram[:2]
+        right = trigram[1:]
+        if left in counter2:
+            counter2[left] = max(0, counter2[left] - n)
+        if right in counter2:
+            counter2[right] = max(0, counter2[right] - n)
+
+    # Merge 2-gram (post-subtract) + 3-gram counters, 按 count 降序统一筛选.
+    merged: Counter[str] = Counter()
+    for w, n in counter2.items():
+        if n > 0:
+            merged[w] = n
+    for w, n in counter3.items():
+        if n > 0:
+            merged[w] = n
+
     triggers: list[DeterministicTrigger] = []
-    for word, cnt in counter.most_common(20):
+    for word, cnt in merged.most_common(20):
         if cnt < effective_threshold:
             break
         triggers.append(
