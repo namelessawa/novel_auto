@@ -188,6 +188,12 @@ async def _bench(args) -> dict:
                 "duration_sec": round(dt, 2),
                 "narrator_chars": summary.narrator_output_chars,
                 "agents": delta,
+                # iter#K — analyzer 需要 agents_called 才能区分 silent tick
+                # (Narrator skip) vs 真 memcompress 触发 vs Guardian 上报矛盾.
+                # TickSummary 字段直传, 无新算力开销.
+                "agents_called": list(summary.agents_called),
+                "events_generated": list(summary.events_generated),
+                "narrator_produced": bool(summary.narrator_produced_text),
             }
         )
         tick_durations.append(dt)
