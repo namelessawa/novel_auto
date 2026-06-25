@@ -106,7 +106,7 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | `backend/main.py` | FastAPI 入口 + 静态资源 mount + lifecycle 钩子 |
 | `backend/tick_runtime.py` | Orchestrator + TickState + TickDB 单例容器 |
 | `backend/bootstrap_prompts.py` | 5 prompt 冷启动 CLI |
-| `backend/api/tick_routes.py` | 14 条 tick 控制 REST 端点 |
+| `backend/api/tick_routes.py` | 18+ 条 tick REST 端点 (含 Phase 6-B reader API: narratives 分页 + viewpoint sidecar + search; critic-log 三件套; status/run/pause/inject 等) |
 | `backend/api/routes.py` | 节级管线 REST + SSE(legacy 节级管线) |
 | `backend/api/multimodal_routes.py` | v2.33 多模态: 分段 + 图 + TTS + 视频 (复用 task_manager SSE) |
 | `backend/nf_core/text_segmenter.py` | 中文分段, 按句/逗号切, 段长 15-60 字 |
@@ -160,6 +160,15 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | `TRANSLATION_ARTIFACT_ENABLE`        | 1       | E7 翻译腔 lite det. 0=disable |
 | `D7_NARRATE_THRESHOLD`               | 0.70    | iter#Z — analyzer narrate-rate cascade 阈值 (bucket narrate_rate ≥ 此算入 cascade) |
 | `D7_MIN_BUCKETS`                     | 2       | iter#Z — 连续 ≥ 此个 bucket 才报 D7 (单 bucket spike 允许) |
+
+## Phase 6-B Reader API (新)
+
+| endpoint | scope | iter |
+| --- | --- | --- |
+| GET `/api/tick/narratives?start_tick=&end_tick=&limit=&page=&per_page=` | 列出 narrative 正文 + viewpoint_character_id (from sidecar) + world_time. paged 支持 (per_page=0 默认拿全部). | F + L |
+| GET `/api/tick/narratives/search?q=&start_tick=&end_tick=&limit=` | literal 关键词 grep 跨 narratives/*.txt, 返回 [{tick, char_count, snippet (q±40 chars), viewpoint_character_id}]. | AAA |
+| GET `/api/tick/critic-log?start_tick=&end_tick=&limit=` | 每 tick critic 决策 raw row (action / surviving_codes / decision_trail). 含 iter#R 加的 SKIP rows. | 6 + R |
+| GET `/api/tick/critic-log/stats?start_tick=&end_tick=&window=` | aggregated action_distribution + top_codes. window=N 截最近 N tick. | 7 + B |
 
 ### bench_tick.py 新参数 (iter#OO)
 
