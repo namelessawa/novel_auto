@@ -533,8 +533,18 @@ export default function ReaderOverlay({ novel, onClose }) {
                 该节没有正文 — 推进到该 tick 区间后由 Narrator 写入.
               </p>
             )}
+            {/* iter#U — 节模式也用 ContinuousParagraph (tick chip + vp chip),
+                与连读模式视觉对称. nameMap join 同一份 character_states 数据. */}
             {!continuousMode &&
-              body.map((n) => <p key={n.tick}>{n.text}</p>)}
+              body.map((n) => (
+                <ContinuousParagraph
+                  key={n.tick}
+                  tick={n.tick}
+                  text={n.text}
+                  viewpoint={n.viewpoint_character_id}
+                  nameMap={charNameMap}
+                />
+              ))}
 
             {/* iter#E — 连读模式: inline section headers + tick chip per paragraph */}
             {continuousMode && continuousLoading && (
