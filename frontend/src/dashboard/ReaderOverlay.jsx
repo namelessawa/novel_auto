@@ -39,8 +39,17 @@ export default function ReaderOverlay({ novel, onClose }) {
   } = useReaderPrefs(novel?.id)
   const [allNarratives, setAllNarratives] = useState([])
   const [continuousLoading, setContinuousLoading] = useState(false)
+  // iter#P — paged infinite scroll. continuousPage 是 NEXT 待加载页 (1-indexed).
+  // 重置时回 1; loadingMore 防止 IntersectionObserver 双触发.
+  const [continuousPage, setContinuousPage] = useState(1)
+  const [continuousHasMore, setContinuousHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const articleRef = useRef(null)
   const mainRef = useRef(null)
+  const sentinelRef = useRef(null)
+  // iter#P — per-page 200 narratives ≈ 200KB max payload.
+  // 总 narrative 数 < 200 时一次拉完, has_more=false.
+  const CONTINUOUS_PER_PAGE = 200
   // v2.48 — § Arc/OpenLoops 侧栏 (移植 ReaderView 的 Phase 6-C narrative_critic 面板).
   // 这是 reader 唯一回答 "这一节为什么此刻重要" 的视图.
   const [loopsData, setLoopsData] = useState({ loops: [], count: 0, closed_total: 0 })
@@ -86,27 +95,106 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
   }, [selIdx, sections, novel?.id, continuousMode])
 
-  // iter#E — continuous mode: 拉全本 narratives. 一次性 (limit=2000) 足够 ~500
-  // tick 连读, 超出 limit 会 truncate 但 UI 还能显示, 用户至少看到尾部之前.
+  // iter#E + P — continuous mode: 分页 + accumulate. 初次切到 continuous
+  // 模式 / 切 novel 时 reset 到 page=1, 装载第一页. 后续 sentinel 触发的
+  // loadMoreNarratives() 装载下一页.
   useEffect(() => {
     if (!novel?.id || !continuousMode) return undefined
     let cancelled = false
-    async function load() {
+    async function loadFirstPage() {
       setContinuousLoading(true)
+      setAllNarratives([])
+      setContinuousPage(1)
+      setContinuousHasMore(true)
       try {
-        const r = await fetchTickNarratives({ startTick: 0, endTick: 0, limit: 2000 })
-        if (!cancelled) setAllNarratives(r?.narratives || [])
+        const r = await fetchTickNarratives({
+          startTick: 0,
+          endTick: 0,
+          limit: 2000,
+          page: 1,
+          perPage: CONTINUOUS_PER_PAGE,
+        })
+        if (!cancelled) {
+          setAllNarratives(r?.narratives || [])
+          setContinuousHasMore(Boolean(r?.has_more))
+          setContinuousPage(2) // 下一次要拉的是 page 2
+        }
       } catch {
-        if (!cancelled) setAllNarratives([])
+        if (!cancelled) {
+          setAllNarratives([])
+          setContinuousHasMore(false)
+        }
       } finally {
         if (!cancelled) setContinuousLoading(false)
       }
     }
-    load()
+    loadFirstPage()
     return () => {
       cancelled = true
     }
   }, [novel?.id, continuousMode])
+
+  // iter#P — loadMoreNarratives: sentinel observer 触发, 拉下一页累计.
+  const loadMoreNarratives = useCallback(async () => {
+    if (!novel?.id || !continuousMode) return
+    if (loadingMore || !continuousHasMore) return
+    setLoadingMore(true)
+    try {
+      const r = await fetchTickNarratives({
+        startTick: 0,
+        endTick: 0,
+        limit: 2000,
+        page: continuousPage,
+        perPage: CONTINUOUS_PER_PAGE,
+      })
+      const newRows = r?.narratives || []
+      // 防重复 (race condition): 按 tick dedupe.
+      setAllNarratives((prev) => {
+        const seen = new Set(prev.map((n) => n.tick))
+        const merged = [...prev]
+        for (const n of newRows) {
+          if (!seen.has(n.tick)) merged.push(n)
+        }
+        return merged
+      })
+      setContinuousHasMore(Boolean(r?.has_more))
+      setContinuousPage((p) => p + 1)
+    } catch {
+      // 出错暂停自动加载, 用户可以滚回去重试 (refresh page).
+      setContinuousHasMore(false)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [
+    novel?.id,
+    continuousMode,
+    continuousPage,
+    continuousHasMore,
+    loadingMore,
+  ])
+
+  // iter#P — IntersectionObserver: sentinel 进入 viewport → loadMore.
+  // root = mainRef (scroll container). rootMargin 让 sentinel 提前触发,
+  // 用户滚到底前数据已来.
+  useEffect(() => {
+    if (!continuousMode) return undefined
+    const sentinel = sentinelRef.current
+    const root = mainRef.current
+    if (!sentinel || !root) return undefined
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && continuousHasMore && !loadingMore) {
+            loadMoreNarratives()
+          }
+        }
+      },
+      { root, rootMargin: '400px', threshold: 0 },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [continuousMode, continuousHasMore, loadingMore, loadMoreNarratives])
 
   // iter#E — 合并 sections + narratives 成 inline-marker 时间线.
   // 输出 [{kind: 'section', section, start_tick}, {kind: 'narr', tick, text}, ...]
@@ -482,6 +570,26 @@ export default function ReaderOverlay({ novel, onClose }) {
                   />
                 )
               })}
+
+            {/* iter#P — paged sentinel + load-more state line */}
+            {continuousMode && (
+              <div
+                ref={sentinelRef}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  padding: '32px 0 24px',
+                  font: "500 11px/1 'JetBrains Mono', monospace",
+                  color: 'var(--text3)',
+                  letterSpacing: '0.06em',
+                  minHeight: 32,
+                }}
+              >
+                {loadingMore && '加载下一页…'}
+                {!loadingMore && continuousHasMore && '滚到底自动加载'}
+                {!loadingMore && !continuousHasMore && allNarratives.length > 0 && '— 已到末尾 —'}
+              </div>
+            )}
           </article>
         </div>
 
