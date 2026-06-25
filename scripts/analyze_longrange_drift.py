@@ -245,7 +245,24 @@ def analyze(report: dict) -> dict:
             f"[D4] memory_compressor silent: 0 tokens across {completed} ticks "
             f"— L0→L1 never ran (expected at least once per ~50 ticks)"
         )
-    # Per-bucket memcompress detection skipped — schema doesn't support it yet.
+
+    # iter#S — Per-bucket D4 upgrade (依赖 iter#K schema). Only fire when
+    # schema is "new" (at least one tick in this report has non-empty
+    # agents_called) — 否则 legacy bench JSON 会 FP 报 D4 across all buckets.
+    has_new_schema = any(
+        bool(r.get("agents_called"))
+        for r in per_tick
+        if isinstance(r, dict)
+    )
+    if has_new_schema:
+        threshold = _DRIFT_THRESHOLDS["memory_compress_min_per_bucket"]
+        for b in per_bucket:
+            if b["memcompress_hits"] < threshold:
+                findings.append(
+                    f"[D4-bucket] memory_compressor silent in bucket "
+                    f"{b['bucket']}: {b['memcompress_hits']} hits "
+                    f"(expected ≥ {threshold})"
+                )
 
     if per_bucket and per_bucket[-1]["contradictions_last"]:
         last = per_bucket[-1]["contradictions_last"]
