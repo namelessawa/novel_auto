@@ -72,6 +72,10 @@ class NarratorOutput:
     draft_text: str = ""  # 修订前原稿 (用于审计)
     new_opening_signature: str = ""
     blacklist_to_add: list[str] = field(default_factory=list)
+    # iter#R — 当 critic 被 gate (length / importance / disabled) 跳过时记录
+    # 原因, _append_critic_log 据此写 SKIP 行. 空字符串 = critic 真跑了或
+    # narrator silent (上下文区分).
+    critique_skip_reason: str = ""
 
 
 NARRATOR_SYSTEM_PROMPT = (
@@ -509,6 +513,12 @@ class NarratorAgent:
             and parsed.narrative_text
             and len(parsed.narrative_text) >= _critic_min_narrative_len()
         )
+        # iter#R — 当 critic 没跑时记录 skip_reason 让 critic_log 写 SKIP 行.
+        if parsed.should_narrate and parsed.narrative_text:
+            if self._critic is None:
+                parsed.critique_skip_reason = "critic_disabled"
+            elif len(parsed.narrative_text) < _critic_min_narrative_len():
+                parsed.critique_skip_reason = "length_gate"
         if critic_eligible:
             importance = _tick_importance_score(tick_events)
             gate_importance = _critic_importance_min()
@@ -530,6 +540,8 @@ class NarratorAgent:
                     "narrator[tick=%d] critic skipped: importance=%d < gate=%d",
                     tick, importance, gate_importance,
                 )
+                # iter#R — 标记 critic_log 写 SKIP 行原因.
+                parsed.critique_skip_reason = "importance_gate"
         # iter#M — 记录本 tick narrative chars 入滚动窗口 (供下 tick 判断
         # 是否激活 intensity guard). should_narrate=False 时不记录, 让 silent
         # 段不污染窗口.

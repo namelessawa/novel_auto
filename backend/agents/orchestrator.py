@@ -118,20 +118,36 @@ def _append_critic_log(
     log warning rather than break the tick path.
     """
     trace = narrator_out.critique_trace or {}
-    if not trace:
+    skip_reason = getattr(narrator_out, "critique_skip_reason", "") or ""
+    # iter#R — 三种状态:
+    #   1. trace 非空 → critic 跑了, 写 ACCEPT/REVISE/REWRITE/RED_TEAM 行 (老行为)
+    #   2. trace 空 + skip_reason 设了 → critic 被 gate, 写 SKIP 行 (新)
+    #   3. trace 空 + skip_reason 空 → silent tick / narrator 也没跑, 不写
+    if not trace and not skip_reason:
         return
     log_path = os.path.join(data_dir, "critic_log.jsonl")
-    row = {
-        "tick": tick,
-        "action": narrator_out.critique_action or "",
-        "surviving_codes": sorted({
-            t["code"]
-            for t in trace.get("surviving_triggers", [])
-            if isinstance(t, dict) and t.get("code")
-        }),
-        "decision_trail": trace.get("decision_trail", []),
-        "new_opening_signature": narrator_out.new_opening_signature or "",
-    }
+    if trace:
+        row = {
+            "tick": tick,
+            "action": narrator_out.critique_action or "",
+            "surviving_codes": sorted({
+                t["code"]
+                for t in trace.get("surviving_triggers", [])
+                if isinstance(t, dict) and t.get("code")
+            }),
+            "decision_trail": trace.get("decision_trail", []),
+            "new_opening_signature": narrator_out.new_opening_signature or "",
+        }
+    else:
+        # SKIP row (iter#R)
+        row = {
+            "tick": tick,
+            "action": "SKIP",
+            "skip_reason": skip_reason,
+            "surviving_codes": [],
+            "decision_trail": [],
+            "new_opening_signature": "",
+        }
     with open(log_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
