@@ -114,3 +114,53 @@ bench_tick.py 不支持 mid-run resume (一次性 process). 中断后:
        --label phase6a-500tick-$(date +%Y%m%d) \
        > logs/phase6a-$(date +%Y%m%d).log 2>&1 &
 ```
+
+## 9 · Quota smoke (推荐流程)
+
+跑长程 bench 前用 `scripts/probe_quota.py` (iter#HHH) 1 个 LLM call 验证
+quota, 比老的 `bench_tick.py --ticks 1` 快 3x (≤1s vs 3s) 且 tokens 少 95%
+(~200 vs 4000).
+
+```bash
+python scripts/probe_quota.py
+echo "exit: $?"   # 0=healthy / 1=quota wall / 2=other error
+```
+
+cron 入口模板:
+
+```bash
+python scripts/probe_quota.py
+if [ $? -eq 0 ]; then
+    python scripts/bench_tick.py --ticks 500 ... &
+else
+    echo "quota not healthy, abort" >&2
+fi
+```
+
+## 10 · Cross-seed (3-seed) 批量
+
+iter#OO 加 `--themes` (comma-separated) 顺序跑 N seed, 比起 launch 3 次省事:
+
+```bash
+python scripts/bench_tick.py --ticks 500 \\
+    --themes 'steampunk_archive,republic_spy,apocalypse_wasteland' \\
+    --style literary \\
+    --cast-a-count 2 --cast-b-count 2 --cast-c-count 1 \\
+    --checkpoint-every 10 --longrange-every 5 \\
+    --label phase6a-multi-$(date +%Y%m%d)
+```
+
+完成后用 iter#TT3 的 `compare_bench.py` 出 cross-seed 对比 markdown:
+
+```bash
+python scripts/compare_bench.py \\
+    docs/iter/bench-phase6a-multi-*-steampunk_archive.json \\
+    docs/iter/bench-phase6a-multi-*-republic_spy.json \\
+    docs/iter/bench-phase6a-multi-*-apocalypse_wasteland.json \\
+    --out-md docs/iter/verdict-3seed-compare.md
+```
+
+**注意 quota**: 单 seed 500-tick ≈ 3M tokens, DeepSeek 5h 滚动窗约 ~5M.
+3-seed 顺序跑需要跨 ≥2 个 quota window (~10h+), 实测 quota 触底会被
+orchestrator 优雅降级 (LLM no-op), 后续 tick 0.3s/tick 完成但 narrative
+为空.
