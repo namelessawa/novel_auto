@@ -146,6 +146,29 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
 | `LLM_MAX_TOKENS_CAP`          | 65536   | LLMClient.chat 顶层 max_tokens 硬上限        |
 | `LLM_TIMEOUT`                 | 600     | LLM 调用超时 (秒). DEEPSEEK_TIMEOUT 为旧别名 |
 
+## Phase 6 新增 env (2026-06-25 iter A-Y batch)
+
+| env var                              | default | 用途 |
+| ------------------------------------ | ------: | ---- |
+| `NARRATOR_INTENSITY_GUARD_ENABLE`    | 1       | iter#M — narrator 高 intensity 段落上限护栏 (反 sustained-climax). 0=关闭 |
+| `NARRATOR_INTENSITY_GUARD_CHARS`     | 1500    | iter#M — 单段超此 chars 算"长". 默认 1500 与 spike 段 baseline 一致 |
+| `NARRATOR_INTENSITY_GUARD_COUNT`     | 5       | iter#M — 最近 10 tick 中 ≥ 此数长段 → 下 tick prompt 加 "请短促收尾" directive |
+| `CRITIC_FORCE_ABOVE_LEN`             | 2500    | iter#O — 段落超此 chars 强制 critic 即使 importance 不到 gate. 0=disable |
+| `SECTION_CLOSING_ENABLE`             | 1       | iter#C1 — C6 章末无悬念 det check kill switch. 0=disable |
+| `PROSE_DYNAMICS_ENABLE`              | 1       | E1 双保险 + D6 lite. 0=disable |
+| `CHARACTER_SIGNAL_ENABLE`            | 1       | B4 内心独白 ratio det. 0=disable |
+| `TRANSLATION_ARTIFACT_ENABLE`        | 1       | E7 翻译腔 lite det. 0=disable |
+| `D7_NARRATE_THRESHOLD`               | 0.70    | iter#Z — analyzer narrate-rate cascade 阈值 (bucket narrate_rate ≥ 此算入 cascade) |
+| `D7_MIN_BUCKETS`                     | 2       | iter#Z — 连续 ≥ 此个 bucket 才报 D7 (单 bucket spike 允许) |
+
+### bench_tick.py 新参数 (iter#OO)
+
+```
+--themes 'republic_spy,apocalypse_wasteland'   # comma-separated 顺序跑
+                                                # label = '{base_label}-{theme}'
+                                                # 任一 theme 抛 → 早退报已完成
+```
+
 ## Phase 2 Quality-First Loop 参数 (iter#76+)
 
 > Phase 1 (cost) 已饱和, Phase 2 切到 quality + cost 联合优化.
