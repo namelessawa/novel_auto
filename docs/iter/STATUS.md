@@ -2,7 +2,70 @@
 
 **Branch:** `main`
 **Range:** baseline 16d5826 → HEAD
-**Last update:** 2026-06-24 (Phase 6-B/C iter#A-G batch)
+**Last update:** 2026-06-25 18:30 (Phase 6 A-XX 全程批次 + republic 完成)
+
+## Phase 6 Big Picture (2026-06-25)
+
+### Phase 6-A 长程持久性 — **PASS**
+
+| run | 时间 | 结果 | verdict |
+| --- | --- | --- | --- |
+| Run 1 (steampunk) | 06-24 17:38→23:15 | 334/500 quota wall | CONDITIONAL PASS, 怀疑 drift |
+| Run 2 (steampunk retry) | 06-25 02:32→07:37 | **500/500 clean** | PASS, 反驳 drift 假设 |
+| Republic | 06-25 13:28→16:43 | 500/500 (350 effective) | WARN, t201 spike 同 pattern |
+| Apocalypse | 06-25 18:27→ (running) | ETA ~23:30 | TBD |
+
+**关键修正**: Phase 6-A plan 怕的"长程 drift" 不存在; Run 1 stuck-state 是 LLM 在
+plot beat (t200/t450) 的 stochasticity 局部均衡, 缺硬约束就持续. iter#M/O/Y/Z
+三层防护已建.
+
+### 三层防护链 (反 sustained-climax)
+
+| layer | iter | scope |
+| --- | --- | --- |
+| 生产 guard | M | narrator intensity guard (10-tick 滚动 + chars threshold) |
+| critic 加严 | O | length-gate — >2500 chars 强制 critic |
+| UI alert | Y | dashboard ⚠ INTENSITY chip (critic 真跑率 ≥ 70%) |
+| analyzer post-hoc | Z | D7 narrate-rate cascade detection |
+
+### Phase 6-B reader UI — 10 iter, 全部 ship
+
+`E` 连读 / `F` viewpoint chip / `G` localStorage 偏好 / `L` 分页+真名+字体 /
+`P` paged scroll / `U` 节模式视点 / `JJ` j/k/g 键盘 / `KK+TT` 状态栏+'?' help /
+`BBB` '/' 搜索 + 跳转 / `CCC` 高亮+历史. **reader 现可读 >2000 tick 长程小说**.
+
+### Phase 6-C det layer — 13/16 dimension 覆盖
+
+✓ A1 (含化合物 dedup) · A4 · A5/A7 · A6 · B4 · C6 · D1 · D2 · D3 · D5 · D6 ·
+E1 · E2 · E7 (`B/C/F/G` semantic 维度留 LLM critic).
+
+### 兼蓄基建
+
+`J` Goal validator · `K/S/V/Z` analyzer 升级 · `R/T` critic_log SKIP rows ·
+`AA` lazy chromadb (+19 tests 解锁) · `D` 500-tick runbook · `TT3` compare_bench ·
+`OO` --themes CLI · `W` milestone log · `X` INDEX.md · `AAA` search endpoint ·
+`HHH` probe_quota.py.
+
+### 数字
+
+| metric | value |
+| --- | --- |
+| Commits 单日 (06-25) | 54+ |
+| 测试 | 940 → 1061 PASS (+121, 0 backend regression) |
+| Frontend bundle | 297 → 320 KB (+23 KB / 10 features) |
+| Env knob 新加 | 10 (CLAUDE.md "Phase 6 新增 env" 段) |
+| Memory entry 新加 | 3 (quota / stuck-state / det coverage) |
+| docs/iter/ artifact | 800+ (含 INDEX.md 导航) |
+
+### Carry-forward (剩)
+
+1. **4-char 化合物 dedup** (钢筋混凝土) — iter#C3 documented limitation
+2. **B/C/F/G semantic 维度** — 留 LLM critic (det 边际 ROI 低)
+3. **跨 quota window resume 支持** — bench mid-run resume 现无
+4. **多 POV 切换** (Phase 6-D candidate, high risk) — Phase 7
+5. **多模态接入 reader** (Phase 6-E candidate) — 数据已有 (v2.33), reader 集成
+
+---
 
 ## Phase 6 Session Headline (2026-06-24)
 
