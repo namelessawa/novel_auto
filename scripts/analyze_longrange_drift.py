@@ -337,6 +337,32 @@ def analyze(report: dict) -> dict:
             "— Phase 6-A run 1 stuck-state pattern"
         )
 
+    # iter#TTT — D8 quota wall detection. ≥1 bucket avg_dur < threshold (+
+    # narrate_rate < 5% if new schema). Phase 6-A Run 1 + Republic_spy 都触底
+    # quota, 后段 LLM 429 退化 (orchestrator 跑 7 阶段但 LLM no-op, avg_dur
+    # 0.3-0.7s, narrate 0%). 显式 flag 让 verdict 不把 quota-degenerate
+    # 视作 healthy bucket. 0 = disable.
+    d8_avg_dur_max = _env_float("D8_AVG_DUR_MAX", 5.0)
+    d8_narrate_max = _env_float("D8_NARRATE_MAX", 0.05)
+    if d8_avg_dur_max > 0:
+        quota_buckets = []
+        for b in per_bucket:
+            dur = b.get("avg_dur_sec")
+            if dur is None or dur >= d8_avg_dur_max:
+                continue
+            rate = b.get("narrate_rate")
+            # rate=None (老 schema): 仅按 avg_dur 判.
+            # rate < threshold (新 schema): quota wall.
+            if rate is None or rate < d8_narrate_max:
+                quota_buckets.append(b["bucket"])
+        if quota_buckets:
+            findings.append(
+                f"[D8] quota wall: {len(quota_buckets)} bucket(s) avg_dur < "
+                f"{d8_avg_dur_max}s + narrate < {int(d8_narrate_max * 100)}% "
+                f"({', '.join(quota_buckets[:3])}"
+                f"{'…' if len(quota_buckets) > 3 else ''}) — LLM 429 退化模式"
+            )
+
     return {
         "label": report.get("label"),
         "ticks_target": report.get("ticks"),
