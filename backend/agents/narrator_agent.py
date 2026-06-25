@@ -31,7 +31,7 @@ from memory_system.models import (
     StyleAnchor,
     WorldState,
 )
-from nf_core.env_helpers import env_bool_tri
+from nf_core.env_helpers import env_bool, env_bool_tri
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak as _strip_reasoning_leak
@@ -276,10 +276,70 @@ class NarratorAgent:
         self._chapter_blacklist: set[str] = set()
         # v2.12 A1 豁免清单 — 专有名词 (角色名 + 地点名), Orchestrator 注入
         self._exempt_words: set[str] = set()
+        # iter#M — intensity guard 滚动窗口. 跟踪最近 10 tick 的 narrative
+        # chars. 当 ≥5 tick > 1500 chars → 下 tick prompt 加 "请短促收尾" directive.
+        # 防 Phase 6-A run 1 stuck-state. cap=10 由 deque(maxlen=10) 自动维护.
+        import collections as _coll
+        self._recent_narrative_chars: _coll.deque[int] = _coll.deque(maxlen=10)
 
     def set_exempt_words(self, words) -> None:
         """Orchestrator 在装配阶段 / 角色加入时调用, 注入专有名词豁免。"""
         self._exempt_words = set(w for w in words if w)
+
+    # ------------------------------------------------------------------
+    # iter#M — Intensity guard (反 sustained-climax)
+    # ------------------------------------------------------------------
+
+    def _record_narrative_chars(self, chars: int) -> None:
+        """Orchestrator/narrate() 在每次成功产出 narrative 后调用.
+
+        cap=10 由 deque maxlen 维护, 旧记录自动挤出.
+        """
+        try:
+            self._recent_narrative_chars.append(int(chars))
+        except (TypeError, ValueError):
+            return
+
+    def _intensity_guard_active(self) -> bool:
+        """≥ COUNT tick > CHARS chars in last 10 → True.
+
+        Env knobs (lazy read 以支持测试 monkeypatch):
+        * NARRATOR_INTENSITY_GUARD_ENABLE (default True)
+        * NARRATOR_INTENSITY_GUARD_CHARS (default 1500)
+        * NARRATOR_INTENSITY_GUARD_COUNT (default 5)
+        """
+        if not env_bool("NARRATOR_INTENSITY_GUARD_ENABLE", default=True):
+            return False
+        try:
+            chars_threshold = int(os.environ.get(
+                "NARRATOR_INTENSITY_GUARD_CHARS", "1500"
+            ))
+        except ValueError:
+            chars_threshold = 1500
+        try:
+            count_threshold = int(os.environ.get(
+                "NARRATOR_INTENSITY_GUARD_COUNT", "5"
+            ))
+        except ValueError:
+            count_threshold = 5
+        over = sum(1 for c in self._recent_narrative_chars if c > chars_threshold)
+        return over >= count_threshold
+
+    def _render_intensity_guard_block(self) -> str:
+        """Active 时返回插入 user_prompt 的 directive block."""
+        if not self._intensity_guard_active():
+            return ""
+        chars_in_window = list(self._recent_narrative_chars)
+        return (
+            "# ⚠ 节奏护栏 (intensity guard)\n\n"
+            "已连续高密度叙事 (最近 "
+            f"{len(chars_in_window)} tick 中 "
+            f"{sum(1 for c in chars_in_window if c > 1500)} 段超 1500 字). "
+            "此 tick 请: 短促收尾 / 留白 / 跳过细节展开. "
+            "目标 ≤ 800 字, 让读者喘口气. "
+            "若剧情节点无法回落, narrative_text 可留空 + "
+            "consistency_flags 说明.\n"
+        )
 
     # ------------------------------------------------------------------
 
@@ -424,6 +484,11 @@ class NarratorAgent:
                     "narrator[tick=%d] critic skipped: importance=%d < gate=%d",
                     tick, importance, gate_importance,
                 )
+        # iter#M — 记录本 tick narrative chars 入滚动窗口 (供下 tick 判断
+        # 是否激活 intensity guard). should_narrate=False 时不记录, 让 silent
+        # 段不污染窗口.
+        if parsed.should_narrate and parsed.narrative_text:
+            self._record_narrative_chars(len(parsed.narrative_text))
         return parsed
 
     # ------------------------------------------------------------------
@@ -787,6 +852,10 @@ class NarratorAgent:
 
         viewpoint_name = self._display_name(tracking_character_id, char_profiles)
 
+        # iter#M — intensity guard block (active 时插在 # 写作指令 之前,
+        # 让 LLM 看到节奏护栏后再读最终指令). inactive 时为空字符串.
+        intensity_block = self._render_intensity_guard_block()
+
         return f"""\
 {style_block}# 连载进度
 
@@ -809,7 +878,7 @@ class NarratorAgent:
 
 {summaries_text}
 
-# 写作指令
+{intensity_block}# 写作指令
 视点角色 {viewpoint_name} | 目标篇幅 {target_chars} (宁短勿水) | 从前文结尾自然接续 | 严格 JSON 输出 | 不值得讲时 narrative_text 留空 + consistency_flags 说明.
 """
 
