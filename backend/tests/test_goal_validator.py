@@ -195,3 +195,45 @@ def test_real_world_run2_payload_with_content() -> None:
     )
     assert g.description.startswith("解码")
     assert g.priority == 10
+
+
+# ---------------------------------------------------------------------------
+# iter#GG — bootstrap path coverage. Goal validator runs transitively when
+# CharacterState.model_validate processes current_goals list. 锁定: 不需要
+# bootstrap 改, J 已覆盖.
+# ---------------------------------------------------------------------------
+
+
+def test_bootstrap_character_state_passes_bad_goals_through_validator() -> None:
+    """CharacterState.model_validate with LLM bad goal payload → Goal validator
+    transparently coerces. 不需 bootstrap 改, J 已覆盖."""
+    from memory_system.models import CharacterState
+
+    payload = {
+        "character_id": "char_test",
+        "current_goals": [
+            {
+                "id": 10,
+                "description": "对比铜环刻度",
+                "priority": "critical",
+                "progress": "15%",
+            },
+            {
+                "id": "goal_y",
+                "content": "用 content alias",
+                "priority": "high",
+            },
+        ],
+    }
+    state = CharacterState.model_validate(payload)
+    assert state.character_id == "char_test"
+    assert len(state.current_goals) == 2
+    # int id → str
+    assert state.current_goals[0].id == "10"
+    # 'critical' → 10
+    assert state.current_goals[0].priority == 10
+    # '15%' → 0.15
+    assert state.current_goals[0].progress == pytest.approx(0.15)
+    # content alias → description
+    assert state.current_goals[1].description == "用 content alias"
+    assert state.current_goals[1].priority == 8
