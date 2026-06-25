@@ -453,7 +453,8 @@ function CriticStatsCard({ data, window: criticWindow = 0, onWindowChange }) {
   const dist = stats.action_distribution || {}
   const topCodes = stats.top_codes || []
 
-  const distRows = ['ACCEPT', 'REVISE', 'REWRITE', 'RED_TEAM'].map((a) => ({
+  // iter#T — 加 SKIP 行 (来自 iter#R, critic 被 gate 跳过, length/importance/disabled)
+  const distRows = ['ACCEPT', 'REVISE', 'REWRITE', 'RED_TEAM', 'SKIP'].map((a) => ({
     action: a,
     count: Number(dist[a] || 0),
   }))
@@ -578,11 +579,14 @@ function CriticStatsCard({ data, window: criticWindow = 0, onWindowChange }) {
 
 function CriticDistRow({ action, count, max }) {
   const pct = max > 0 ? Math.round((count / max) * 100) : 0
+  // iter#T — SKIP 用 灰 (length/importance/disabled gate, 非 critic 决策).
   const accent =
     action === 'ACCEPT' ? 'var(--accent, #5fa8d3)'
       : action === 'REVISE' ? '#d9a55a'
         : action === 'REWRITE' ? '#d9665a'
-          : '#a05ad9'
+          : action === 'RED_TEAM' ? '#a05ad9'
+            : action === 'SKIP' ? '#7a7a7a'
+              : 'var(--text3)'
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 40px', alignItems: 'center', gap: 10 }}>
       <span
