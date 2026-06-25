@@ -178,6 +178,16 @@ python run.py                     # FastAPI 把 frontend/dist 挂到根路径 /
                                                 # 任一 theme 抛 → 早退报已完成
 ```
 
+### Phase 6 新增 scripts
+
+| script | 用途 | iter |
+| --- | --- | --- |
+| `scripts/probe_quota.py` | 单 LLM call quota smoke (<1s, ~200 tokens). exit 0/1/2 = healthy / quota / error. | HHH |
+| `scripts/grep_narratives.py <dir> "q"` | CLI 跨 narratives/*.txt grep (literal). `/api/tick/narratives/search` 的 CLI 对偶. | QQQ |
+| `scripts/compare_bench.py <json1> <json2> ... --out-md` | N-bench side-by-side markdown 表 (drift verdict + tokens + narrate%). | TT3 |
+| `scripts/analyze_longrange_drift.py <bench.json>` | 8 个 drift signal (D1-D8) + per-bucket 报告. D7/D8 是今日新增. | D + Z + S + TTT |
+| `scripts/calibrate_a1.py --sample N --seed K` | A1 重复词 trigger 校准研究 (50-sample default). | C2 |
+
 ## Phase 2 Quality-First Loop 参数 (iter#76+)
 
 > Phase 1 (cost) 已饱和, Phase 2 切到 quality + cost 联合优化.
