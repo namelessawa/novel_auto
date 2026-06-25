@@ -906,6 +906,23 @@ export async function fetchTickNarratives({
   return assertOk(res)
 }
 
+// Phase 6 iter#AAA — narratives keyword search.
+// Backend: GET /api/tick/narratives/search?q=...&start_tick=&end_tick=&limit=
+// Returns: { count, results: [{tick, char_count, snippet, viewpoint_character_id}], q, truncated }
+export async function searchTickNarratives({
+  q,
+  startTick = 0,
+  endTick = 0,
+  limit = 50,
+} = {}) {
+  if (!q) throw new Error('q required')
+  const params = new URLSearchParams({ q, limit: String(limit) })
+  if (startTick > 0) params.set('start_tick', String(startTick))
+  if (endTick > 0) params.set('end_tick', String(endTick))
+  const res = await authedFetch(`/api/tick/narratives/search?${params.toString()}`)
+  return assertOk(res)
+}
+
 export async function createSectionTask(novelId = null) {
   const body = novelId ? { novel_id: novelId } : {}
   const res = await authedFetch('/api/section/generate', {

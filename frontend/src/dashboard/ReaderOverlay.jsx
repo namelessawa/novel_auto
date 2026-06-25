@@ -6,6 +6,7 @@ import {
   fetchTickNarratives,
   fetchTickOpenLoops,
   listTickSections,
+  searchTickNarratives,
 } from '../services/api'
 
 // v2.47 — 全文阅读 overlay. 左侧节列表 + 右侧正文.
@@ -48,6 +49,12 @@ export default function ReaderOverlay({ novel, onClose }) {
   const [currentVisibleTick, setCurrentVisibleTick] = useState(null)
   // iter#TT — keyboard help overlay 显示 toggle
   const [helpOpen, setHelpOpen] = useState(false)
+  // iter#BBB — narrative search modal
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState('')
   const articleRef = useRef(null)
   const mainRef = useRef(null)
   const sentinelRef = useRef(null)
@@ -337,6 +344,10 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
     function onKey(e) {
       if (e.key === 'Escape') {
+        if (searchOpen) {
+          setSearchOpen(false)
+          return
+        }
         if (helpOpen) {
           setHelpOpen(false)
           return
@@ -348,9 +359,15 @@ export default function ReaderOverlay({ novel, onClose }) {
       const tag = (e.target?.tagName || '').toLowerCase()
       if (tag === 'input' || tag === 'textarea') return
       // iter#TT — '?' 任何模式都可弹帮助
-      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+      if (e.key === '?') {
         e.preventDefault()
         setHelpOpen((v) => !v)
+        return
+      }
+      // iter#BBB — '/' 弹搜索 (节模式 / 连读都支持)
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault()
+        setSearchOpen(true)
         return
       }
       if (!continuousMode) return
@@ -373,7 +390,41 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, continuousMode, helpOpen])
+  }, [onClose, continuousMode, helpOpen, searchOpen])
+
+  // iter#BBB — search submit handler
+  const doSearch = useCallback(async () => {
+    const q = searchQuery.trim()
+    if (!q) return
+    setSearchLoading(true)
+    setSearchError('')
+    try {
+      const r = await searchTickNarratives({ q, limit: 50 })
+      setSearchResults(r?.results || [])
+    } catch (err) {
+      setSearchResults([])
+      setSearchError(err?.message || '搜索失败')
+    } finally {
+      setSearchLoading(false)
+    }
+  }, [searchQuery])
+
+  const jumpFromSearch = useCallback((tick) => {
+    setSearchOpen(false)
+    if (continuousMode) {
+      // 连读 mode: scroll to data-tick
+      if (articleRef.current) {
+        const el = articleRef.current.querySelector(`[data-tick="${tick}"]`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    } else {
+      // 节模式: 切到含该 tick 的 section
+      const idx = sections.findIndex(
+        (s) => (s.start_tick ?? 0) <= tick && tick <= (s.end_tick ?? 1e9),
+      )
+      if (idx >= 0) setSelIdx(idx)
+    }
+  }, [continuousMode, sections])
 
   // iter#KK — track current visible tick via IntersectionObserver on
   // [data-tick] elements. 选 ratio 最高 (最大可见面积) 的 tick 作 "当前".
@@ -728,6 +779,145 @@ export default function ReaderOverlay({ novel, onClose }) {
 
       {/* iter#TT — Keyboard help overlay (按 ? 触发). */}
       {helpOpen && <ReaderHelpOverlay onClose={() => setHelpOpen(false)} />}
+
+      {/* iter#BBB — Search modal (按 / 触发). */}
+      {searchOpen && (
+        <ReaderSearchModal
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          onSubmit={doSearch}
+          results={searchResults}
+          loading={searchLoading}
+          error={searchError}
+          onJump={jumpFromSearch}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+// iter#BBB — narrative 搜索 modal.
+function ReaderSearchModal({
+  query, onQueryChange, onSubmit, results, loading, error, onJump, onClose,
+}) {
+  const inputRef = React.useRef(null)
+  React.useEffect(() => {
+    if (inputRef.current) inputRef.current.focus()
+  }, [])
+  return (
+    <div
+      role="dialog"
+      aria-label="搜索 narrative"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
+        paddingTop: '12vh',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--surf)',
+          border: '1px solid var(--border)',
+          padding: '20px 24px',
+          maxWidth: 640,
+          width: '90vw',
+          color: 'var(--text)',
+          maxHeight: '70vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <form
+          onSubmit={(e) => { e.preventDefault(); onSubmit() }}
+          style={{ display: 'flex', gap: 8, marginBottom: 14 }}
+        >
+          <input
+            ref={inputRef}
+            className="dc-input"
+            type="search"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="搜索 narrative (Enter 提交, Esc 关闭)"
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              font: "400 14px/1 'Inter', sans-serif",
+              background: 'var(--bg)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+            }}
+          />
+          <button
+            type="submit"
+            className="dc-btn"
+            disabled={loading || !query.trim()}
+            style={{ font: "500 12px/1 'JetBrains Mono', monospace" }}
+          >
+            {loading ? '搜索…' : 'GO'}
+          </button>
+        </form>
+        {error && (
+          <div style={{ color: '#d9665a', font: "400 12px/1.5 'Inter', sans-serif", marginBottom: 8 }}>
+            ✕ {error}
+          </div>
+        )}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {!loading && results.length === 0 && query && (
+            <div style={{ color: 'var(--text3)', font: "400 13px/1.5 'Inter', sans-serif" }}>
+              无命中 — 试着换个关键词.
+            </div>
+          )}
+          {results.map((r) => (
+            <button
+              key={r.tick}
+              type="button"
+              onClick={() => onJump(r.tick)}
+              style={{
+                textAlign: 'left',
+                padding: '10px 12px',
+                background: 'transparent',
+                border: '1px solid var(--border)',
+                color: 'var(--text2)',
+                font: "400 13px/1.5 'Noto Serif SC', serif",
+                cursor: 'pointer',
+                transition: 'border-color 120ms',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+            >
+              <div
+                style={{
+                  font: "500 10px/1 'JetBrains Mono', monospace",
+                  color: 'var(--accent)',
+                  marginBottom: 4,
+                  letterSpacing: '0.06em',
+                }}
+              >
+                t{r.tick} · {r.char_count} 字
+                {r.viewpoint_character_id && ` · ${r.viewpoint_character_id}`}
+              </div>
+              <div>{r.snippet}</div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -786,8 +976,9 @@ function ReaderHelpOverlay({ onClose }) {
               ['j / ↓', '下一段 (基于当前可见位置)'],
               ['k / ↑', '上一段'],
               ['g', '跳到 tick (弹窗输入)'],
+              ['/', '搜索 narrative (iter#BBB)'],
               ['?', '显示/关闭此帮助'],
-              ['Esc', '关闭帮助 / 关闭 reader'],
+              ['Esc', '关闭帮助/搜索 / 关闭 reader'],
             ].map(([k, d]) => (
               <tr key={k}>
                 <td
