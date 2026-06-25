@@ -353,6 +353,10 @@ def analyze(report: dict) -> dict:
 
 
 def render_md(out: dict) -> str:
+    """iter#V — Render drift analysis as markdown. 老版 row builder 因
+    inline ternary 把 f-string 拼坏 (只输出部分 cell). 重写为 explicit
+    cell list + .join. 加 D7 narrate_rate 列 (iter#Z), 修 memC hits 列.
+    """
     lines = ["# Long-range drift analysis\n"]
     lines.append(
         f"* label: `{out.get('label')}` · ticks {out.get('ticks_completed')}/"
@@ -364,20 +368,35 @@ def render_md(out: dict) -> str:
         for f in out["drift_findings"]:
             lines.append(f"* {f}")
     else:
-        lines.append("\n## Findings\n* (none — all 6 drift signals within range)")
+        lines.append("\n## Findings\n* (none — all 7 drift signals within range)")
     lines.append("\n## Per-bucket\n")
-    lines.append(
-        "| bucket | n | avg_dur | cum_tok end | clean% | OL avg | OL@cap% | memC | contradictions |"
+    # 列: bucket | n | avg_dur | cum_tok end | narrate_rate | clean% | OL avg |
+    #     OL@cap% | memC | contradictions
+    header = (
+        "| bucket | n | avg_dur | cum_tok end | narrate% | clean% | "
+        "OL avg | OL@cap% | memC | contradictions |"
     )
-    lines.append(
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
-    )
+    sep = "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
+    lines.append(header)
+    lines.append(sep)
     for b in out.get("per_bucket", []):
-        lines.append(
-            f"| {b['bucket']} | {b['n']} | {b['avg_dur_sec']}s | "
-            f"{b['cumulative_tokens_at_end']:,}" if b['cumulative_tokens_at_end'] else
-            f"| {b['bucket']} | {b['n']} | — | —"
-        )
+        cells = [
+            str(b.get("bucket") or "—"),
+            str(b.get("n") or 0),
+            f"{b['avg_dur_sec']}s" if b.get("avg_dur_sec") is not None else "—",
+            f"{b['cumulative_tokens_at_end']:,}"
+            if b.get("cumulative_tokens_at_end") else "—",
+            f"{int(round(b['narrate_rate'] * 100))}%"
+            if b.get("narrate_rate") is not None else "—",
+            f"{b['clean_rate_pct']}%" if b.get("clean_rate_pct") is not None else "—",
+            f"{b['open_loop_avg']}" if b.get("open_loop_avg") is not None else "—",
+            f"{b['open_loop_at_cap_pct']}%"
+            if b.get("open_loop_at_cap_pct") is not None else "—",
+            str(b.get("memcompress_hits", 0)),
+            f"{b['contradictions_last']}"
+            if b.get("contradictions_last") is not None else "—",
+        ]
+        lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
 
 
