@@ -581,6 +581,30 @@ def check_section_closing(text: str) -> list[DeterministicTrigger]:
 # ---------------------------------------------------------------------------
 
 
+def check_parallelism(text: str) -> list[DeterministicTrigger]:
+    """E2 (lite): 句式过分对仗工整 (典型 AI 腔). HIGH severity.
+
+    委托 ``quality_metrics.parallelism`` — 段内 ≥ 3 对相邻同长同末字 clause +
+    总对仗率 ≥ 30% 才 trigger.
+
+    env kill switch: ``PARALLELISM_ENABLE`` (默认 True).
+    """
+    if not env_bool("PARALLELISM_ENABLE", default=True):
+        return []
+    from quality_metrics.parallelism import parallelism_report
+
+    report = parallelism_report(text)
+    if not report.e2_triggered:
+        return []
+    return [
+        DeterministicTrigger(
+            code="E2",
+            severity="high",  # spec: E2 是 high severity
+            evidence=f"[parallelism] {report.e2_evidence}",
+        )
+    ]
+
+
 def check_sense_diversity(text: str) -> list[DeterministicTrigger]:
     """D5 (lite): 整段只有视觉描写, 缺另一种感官.
 
@@ -669,6 +693,7 @@ def run_deterministic_checks(
     out.extend(check_translation_artifact(text))
     out.extend(check_section_closing(text))
     out.extend(check_sense_diversity(text))
+    out.extend(check_parallelism(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -712,6 +737,7 @@ __all__ = [
     "check_translation_artifact",
     "check_section_closing",
     "check_sense_diversity",
+    "check_parallelism",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",
