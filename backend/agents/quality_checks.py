@@ -104,20 +104,39 @@ def check_cliche_blacklist(text: str) -> list[DeterministicTrigger]:
 # 形容词堆砌 (D2)
 # ---------------------------------------------------------------------------
 
+# iter#SS — 老 regex 要求 N+1 个分隔符 ({3,} 重复), "高大、威武、英俊的男人"
+# 实际只有 2 个 顿号 不匹配. 改为 1-3 CJK + (delim + 1-3 CJK) × ≥2 + 可选 的.
 _ADJECTIVE_RUN_PAT = re.compile(
-    r"([一-龥]{1,3}(?:的)?(?:、|,|，)){3,}",
+    r"[一-龥]{1,3}(?:[、,，][一-龥]{1,3}){2,}(?:的)?",
 )
+
+# iter#SS — 名词列举排除: 后接以下动作动词 → 视作名词列举, skip.
+# 常见 narrative 动作动词集. 不全, 但能屏蔽大部分明显误报.
+_NOUN_LIST_FOLLOW_VERBS: frozenset[str] = frozenset({
+    "走", "坐", "来", "去", "站", "蹲", "跑", "跳", "看", "听", "说", "想",
+    "笑", "哭", "落", "掉", "砸", "堆", "摆", "挂", "卡", "塌", "倒", "流",
+    "动", "起", "止", "停", "撞", "碰", "推", "拉", "压", "放", "拿", "举",
+    "扔", "抛", "扔", "甩", "晃", "颤", "抖", "藏", "现",
+})
 
 
 def check_adjective_runs(text: str) -> list[DeterministicTrigger]:
     """D2 启发式: 连续 ≥3 个用顿号/逗号分隔的小词修饰同一事物。
 
     精确判定需要中文 POS 标注; 这里用 顿号/逗号 分隔的短词序列作为近似。
+    iter#SS: 后接动作动词 → 视作名词列举, 不触发 D2.
     """
     triggers: list[DeterministicTrigger] = []
     for match in _ADJECTIVE_RUN_PAT.finditer(text):
         evidence = match.group(0)
-        # 排除明显是名词列举的情况 (启发式: 后面紧跟动词)
+        # iter#SS — 名词列举排除. 因 {1,3} 贪婪, 末尾可能吃掉动作动词
+        # (例: "书籍" 后接 "堆", regex 实际 match "书籍堆"). 检查 evidence 末尾
+        # 是否为 _NOUN_LIST_FOLLOW_VERBS 之一.
+        if evidence.endswith("的"):
+            # "X、Y、Z 的 N" 形式 = 确定 D2 adjective list, 不排除.
+            pass
+        elif evidence and evidence[-1] in _NOUN_LIST_FOLLOW_VERBS:
+            continue  # 名词列举 + 动作动词 (被贪婪吃进 match), skip
         triggers.append(
             DeterministicTrigger(
                 code="D2",
