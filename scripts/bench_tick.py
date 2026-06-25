@@ -625,6 +625,55 @@ def _render_markdown(rep: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _run_multi_theme(parser, args, theme_keys):
+    """iter#OO — 顺序跑多 theme, 每个用 'label-theme' 作 label.
+
+    早退: 任一 theme bench 抛 (quota / config 错) 立即停止后续, 报告已完成的.
+    """
+    from novel_presets import get_theme_seed
+    base_label = args.label
+    original_seed = args.seed
+    original_theme = args.theme
+    completed = []
+    for tk in theme_keys:
+        try:
+            theme = get_theme_seed(tk)
+        except (ImportError, KeyError) as e:
+            parser.error(f"--themes 中 {tk!r} 解析失败: {e}")
+        args.label = f"{base_label}-{tk}"
+        args.theme = tk
+        # 仅当用户没显式给 seed 时, 用 theme.seed.
+        args.seed = theme.seed if original_seed == _DEFAULT_SEED else original_seed
+        if args.style:
+            os.environ["NOVEL_STYLE_PRESET"] = args.style
+        logging.basicConfig(
+            level=args.log_level.upper(),
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            force=True,
+        )
+        try:
+            rep = asyncio.run(_bench(args))
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("[multi-theme] %s 抛 (%s), 后续 %d 个 theme 跳过", tk, e,
+                         max(0, len(theme_keys) - len(completed) - 1))
+            break
+        out_dir = _REPO_ROOT / "docs" / "iter"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / f"bench-{args.label}.json").write_text(
+            json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
+        (out_dir / f"bench-{args.label}.md").write_text(
+            _render_markdown(rep), encoding="utf-8")
+        print(f"[OK] wrote bench-{args.label}.{{json,md}}")
+        print(f"  total_tokens={rep['total_tokens']} call_count={rep['call_count']}")
+        completed.append(tk)
+    print(f"[multi-theme] {len(completed)}/{len(theme_keys)} themes 完成: {completed}")
+    # restore for any caller introspecting args
+    args.label = base_label
+    args.theme = original_theme
+    args.seed = original_seed
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ticks", type=int, default=3)
@@ -648,6 +697,18 @@ def main():
     )
     parser.add_argument("--label", default="v0-baseline")
     parser.add_argument("--log-level", default="WARNING")
+    # iter#OO — multi-seed/theme batch. comma-separated theme keys → 顺序跑.
+    # 每个 theme 用 'label-{theme}' 作 label, 互不覆盖. --theme + --themes 同时
+    # 给 → 报错; --themes 给 → --theme 忽略.
+    parser.add_argument(
+        "--themes",
+        default="",
+        help=(
+            "iter#OO — comma-separated theme keys 顺序跑 bench. "
+            "如 'republic_spy,apocalypse_wasteland'. 每个 theme 用 "
+            "'{label}-{theme}' 作 label. 与 --theme 互斥."
+        ),
+    )
     # v2.38 Phase 2 (iter#80) — quality metrics integration.
     parser.add_argument(
         "--quality",
@@ -696,6 +757,16 @@ def main():
         help="精确 C 级角色数. 不设则 LLM 自由 (wide).",
     )
     args = parser.parse_args()
+
+    # iter#OO — multi-theme batch mode 优先. comma-separated 解析 + 逐 theme
+    # 顺序跑. base_label 派生为 {label}-{theme}. quota 触顶时整个 batch 早退.
+    if args.themes:
+        if args.theme:
+            parser.error("--themes 与 --theme 互斥; 选其一")
+        theme_keys = [t.strip() for t in args.themes.split(",") if t.strip()]
+        if not theme_keys:
+            parser.error("--themes 解析后为空")
+        return _run_multi_theme(parser, args, theme_keys)
 
     # Phase 5-D follow-up — --theme / --style 标准化 (PHASE5_PLAN K runbook).
     # 与 matrix_bench.py 走的两条路径对齐 (theme.seed 喂 --seed, style.key 喂 env).
