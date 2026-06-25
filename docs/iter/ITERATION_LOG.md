@@ -20,6 +20,16 @@
 | iter#C3 (2026-06-24) | det metric · A1 3-char 化合物 dedup | PASS | 979 tests / +10 / 噪声 4.58→2.98 A1/narr (-35%) |
 | iter#F (2026-06-24) | api+frontend · /narratives 加 viewpoint_character | PASS | 985 tests / +6 / sidecar JSON + reader 视点 chip |
 | iter#G (2026-06-24) | frontend · reader localStorage 偏好 + 字号行距 | PASS | 985 tests / +0 / per-novel scroll 还原 + 3-chip 字号/行距 |
+| iter#H · Phase 6-A bench run 1 (2026-06-24) | bench · 500-tick stress kickoff via cron | CONDITIONAL PASS | 334/500 有效 tick (DeepSeek quota wall 23:14), 4.45M tokens, drift t201+ stuck 100% narrate |
+| iter#H+ · Phase 6-A bench run 2 (2026-06-25) | bench · retry 02:32→07:37 quota healthy | PASS | 500/500 effective, 3.02M tokens, narrate% 48% baseline. 反驳 run 1 "drift" 假设 → LLM stochasticity |
+| iter#J (2026-06-25) | quality · Goal schema validator (LLM 强转) | PASS | +29 tests / priority='critical'→10 / progress='15%'→0.15 / id=int→str / content alias |
+| iter#? spike (2026-06-25) | research · spike root-cause 复查 | PASS (no-op) | critic 96% ACCEPT 无 loop, spike 是 narrative chars 暴涨 (plot beat 响应) |
+| iter#K (2026-06-25) | bench · per_tick schema 加 agents_called/events/narrator_produced | PASS | +2 tests / analyzer D2/D3/D5 数据通路打开 |
+| iter#L (2026-06-25) | api+frontend · /narratives 分页 + display_name + 字体家族 | PASS | +7 tests / page/per_page + 宋/黑/楷 chip + char_id→真名 |
+| iter#M (2026-06-25) | narrator · intensity guard (反 sustained-climax) | PASS | +13 tests / 10-tick 滚动窗口 + env knob (CHARS/COUNT/ENABLE) |
+| iter#O (2026-06-25) | critic · length-gate 加严 (>2500 chars 强制) | PASS | +10 tests / spike 段超长不再漏审 |
+| iter#P (2026-06-25) | frontend · reader IntersectionObserver paged scroll | PASS | per_page=200 + sentinel 滚到底 + dedupe |
+| iter#N (2026-06-25) | bench · cross-seed 3-seed scheduled (cron 14:03 + 22:07) | SCHEDULED | republic_spy + apocalypse_wasteland, 2 quota window |
 
 **候补 (未挑) — 留 Phase 6-D 或 6-E**:
 - 4-char 化合物 dedup (钢筋混凝土 → 4-gram dedup): iter#C3 documented limitation
