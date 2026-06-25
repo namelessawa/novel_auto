@@ -186,3 +186,68 @@ budget 教训 (一次改一变量).
 - 教训: `PHASE4_FINAL.md`, `PHASE5_FINAL.md`
 - 设计 rubric: `docs/design/novel_quality_critique_and_iteration.md`
 - 工具栈: `PAIRWISE_JUDGE_RUNBOOK.md`, `RECOMMENDED_PAIRS.md`
+
+---
+
+## 实际进展 (2026-06-25 更新)
+
+> 本节为 plan 后增, 记录真实执行情况. plan 本体保留 unchanged 作 proposal 参考.
+
+### Phase 6-A 长程持久性 — **PASS**
+
+| run | 时间 | 结果 | verdict |
+| --- | --- | --- | --- |
+| Run 1 | 06-24 17:38→23:15 | 334/500 quota wall | [verdict-phase6a-500tick.md](verdict-phase6a-500tick.md) — CONDITIONAL PASS |
+| Run 2 | 06-25 02:32→07:37 | **500/500 clean** | [verdict-phase6a-500tick-retry-0625.md](verdict-phase6a-500tick-retry-0625.md) — PASS, **反驳** "drift" 假设 |
+| spike rootcause | 06-25 | 调研 verdict | [verdict-spike-rootcause-0625.md](verdict-spike-rootcause-0625.md) — critic 96% ACCEPT, spike 是 narrator 自适应 plot beat |
+
+**关键修正**: plan 怕的"长程 drift" 不存在; 真问题是 Run 1 LLM stochasticity 进入 sustained-climax 局部均衡. **iter#M (生产 guard) + iter#O (critic length 加严) + iter#Y (UI alert) 三层防护已建** (见 ITERATION_LOG iter A-Y).
+
+cross-seed 验证: republic_spy + apocalypse_wasteland 14:00 + 22:07 cron 接力 ing.
+
+### Phase 6-B 长程 reader UI — **5 iter shipped**
+
+| iter | scope |
+| --- | --- |
+| E | 连读模式 (全本 inline section anchor + tick chip) |
+| F | viewpoint sidecar + vp chip |
+| G | localStorage 偏好 (字号 / 行距 / scroll 持久) |
+| L | /narratives 分页 + display_name + 字体家族 (宋/黑/楷) |
+| P | IntersectionObserver 滚到底 paged fetch |
+| U | 节模式也用 ContinuousParagraph |
+| JJ | j/k/g 键盘导航 |
+| KK+TT | 顶栏 tick indicator + '?' 帮助 overlay |
+
+reader 现可读 >2000 tick 长程小说, vim 风格导航, 字体家族切换. Phase 6-B 候选 B 已落地大部分.
+
+### Phase 6-C B-G det layer — **3 iter shipped**
+
+| iter | dimension | 状态 |
+| --- | --- | --- |
+| C1 | C6 章末无悬念 (lite) | 9 closure pattern + 60-char tail window |
+| C2 | A1 校准抽样 (no-op verdict) | production 噪声 2.14/narr ≠ 12+ (iter#7 担忧) |
+| C3 | A1 3-char 化合物 dedup | -35% noise |
+
+候选 A (B-G 完整 det 层) 仍未全做完 (D2 / E2 / F6 等留 future iter).
+
+### Phase 6 其他兼蓄
+
+- **iter#J** Goal schema validator (验证两次 bench ~100 个 LLM goal skip) → 跨 iter 持续受益.
+- **iter#K/S/V/Z** bench analyzer 升级 (per-tick schema / D4 per-bucket / render_md fix / D7 cascade).
+- **iter#R/T** critic-log SKIP rows + dashboard 显示.
+- **iter#AA** lazy chromadb import → 19 测试解锁.
+
+### 修正后的决策
+
+* ~~决策点 #1 方向~~: A/B/C 并行做了 — A 部分 (C1/C3), B 大部分 (E-P), C PASS.
+* ~~决策点 #2 节奏~~: 单 session 1 天 落 33 iter, sprint 概念 N/A.
+* ~~决策点 #3 判官~~: bench 用 deepseek 生成 + 没跑 pairwise (只 drift 分析).
+* ~~决策点 #4 seed 集~~: 留 cross-seed 14/22 cron 结果决定.
+
+### 实际 carry-forward (按重要性)
+
+1. **4-char 化合物 dedup** (钢筋混凝土 → 4-gram) — iter#C3 documented limitation
+2. **B-G det 维度补完** (D2 形容词堆砌 / E2 对仗 / F6 章节切分) — 候选 A 余项
+3. **跨 quota window resume 支持** — bench mid-run resume 现仍无
+4. **多 POV 切换决策** (候选 D, high risk) — 留 Phase 7
+5. **多模态接入 reader** (候选 E) — 数据已有 (v2.33), reader 集成留后续
