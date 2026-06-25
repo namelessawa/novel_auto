@@ -44,6 +44,10 @@ export default function ReaderOverlay({ novel, onClose }) {
   const [continuousPage, setContinuousPage] = useState(1)
   const [continuousHasMore, setContinuousHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  // iter#KK — current visible tick (用 scroll IntersectionObserver 反推)
+  const [currentVisibleTick, setCurrentVisibleTick] = useState(null)
+  // iter#TT — keyboard help overlay 显示 toggle
+  const [helpOpen, setHelpOpen] = useState(false)
   const articleRef = useRef(null)
   const mainRef = useRef(null)
   const sentinelRef = useRef(null)
@@ -333,12 +337,22 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
     function onKey(e) {
       if (e.key === 'Escape') {
+        if (helpOpen) {
+          setHelpOpen(false)
+          return
+        }
         onClose?.()
         return
       }
       // 忽略 input/textarea 输入 (prompt 等)
       const tag = (e.target?.tagName || '').toLowerCase()
       if (tag === 'input' || tag === 'textarea') return
+      // iter#TT — '?' 任何模式都可弹帮助
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault()
+        setHelpOpen((v) => !v)
+        return
+      }
       if (!continuousMode) return
       if (e.key === 'j' || e.key === 'ArrowDown') {
         if (e.altKey || e.metaKey || e.ctrlKey) return
@@ -359,7 +373,44 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, continuousMode])
+  }, [onClose, continuousMode, helpOpen])
+
+  // iter#KK — track current visible tick via IntersectionObserver on
+  // [data-tick] elements. 选 ratio 最高 (最大可见面积) 的 tick 作 "当前".
+  useEffect(() => {
+    if (!continuousMode || !articleRef.current || !mainRef.current) return undefined
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const root = mainRef.current
+    // 跟踪所有 data-tick 节点的 intersection ratio.
+    const ratioMap = new Map()
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const t = Number(e.target.getAttribute('data-tick'))
+          if (e.isIntersecting) {
+            ratioMap.set(t, e.intersectionRatio)
+          } else {
+            ratioMap.delete(t)
+          }
+        }
+        // 选 ratio 最大的 (并列时取 tick 最小, 即往上的段).
+        let bestTick = null
+        let bestRatio = -1
+        for (const [t, r] of ratioMap) {
+          if (r > bestRatio || (r === bestRatio && t < bestTick)) {
+            bestRatio = r
+            bestTick = t
+          }
+        }
+        setCurrentVisibleTick(bestTick)
+      },
+      { root, threshold: [0, 0.25, 0.5, 0.75, 1] },
+    )
+    // observe 所有现有节点 + 后续 mutation 通过 effect 重跑.
+    const nodes = articleRef.current.querySelectorAll('[data-tick]')
+    nodes.forEach((n) => observer.observe(n))
+    return () => observer.disconnect()
+  }, [continuousMode, continuousFeed.length])
 
   // iter#G — restore scroll on novel mount (after first paint).
   useEffect(() => {
@@ -401,6 +452,20 @@ export default function ReaderOverlay({ novel, onClose }) {
       <div className="dc-reader-top">
         <span className="dc-reader-kicker">阅读 · READER</span>
         <span className="dc-reader-title">{novel?.title || novel?.id}</span>
+        {/* iter#KK — current tick indicator. 仅连读模式有意义. */}
+        {continuousMode && currentVisibleTick != null && (
+          <span
+            style={{
+              marginLeft: 16,
+              font: "500 11px/1 'JetBrains Mono', monospace",
+              color: 'var(--text3)',
+              letterSpacing: '0.06em',
+            }}
+            title={`当前可见段落 tick=${currentVisibleTick} / 总 ${allNarratives.length}`}
+          >
+            t{currentVisibleTick} · {allNarratives.length} 段
+          </span>
+        )}
         <div className="dc-reader-right">
           {/* iter#E — 阅读模式切换. 节模式 = 当前节正文; 连读模式 = 全书 inline. */}
           <button
@@ -659,6 +724,99 @@ export default function ReaderOverlay({ novel, onClose }) {
             loading={sideLoading}
           />
         </aside>
+      </div>
+
+      {/* iter#TT — Keyboard help overlay (按 ? 触发). */}
+      {helpOpen && <ReaderHelpOverlay onClose={() => setHelpOpen(false)} />}
+    </div>
+  )
+}
+
+// iter#TT — 键盘快捷键帮助 overlay. 半透明全屏蒙层 + 居中卡片.
+function ReaderHelpOverlay({ onClose }) {
+  return (
+    <div
+      role="dialog"
+      aria-label="键盘快捷键"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--surf)',
+          border: '1px solid var(--border)',
+          padding: '24px 28px',
+          maxWidth: 480,
+          width: '90vw',
+          color: 'var(--text)',
+        }}
+      >
+        <div
+          style={{
+            font: "500 11px/1 'JetBrains Mono', monospace",
+            color: 'var(--accent)',
+            letterSpacing: '0.18em',
+            marginBottom: 8,
+          }}
+        >
+          键盘快捷键
+        </div>
+        <h2 style={{ font: "600 22px/1.3 'Noto Serif SC', serif", margin: '0 0 18px' }}>
+          连读模式导航
+        </h2>
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            font: "400 13px/1.6 'Inter', sans-serif",
+          }}
+        >
+          <tbody>
+            {[
+              ['j / ↓', '下一段 (基于当前可见位置)'],
+              ['k / ↑', '上一段'],
+              ['g', '跳到 tick (弹窗输入)'],
+              ['?', '显示/关闭此帮助'],
+              ['Esc', '关闭帮助 / 关闭 reader'],
+            ].map(([k, d]) => (
+              <tr key={k}>
+                <td
+                  style={{
+                    padding: '6px 14px 6px 0',
+                    font: "500 12px/1 'JetBrains Mono', monospace",
+                    color: 'var(--accent)',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'top',
+                  }}
+                >
+                  {k}
+                </td>
+                <td style={{ padding: '6px 0', color: 'var(--text2)' }}>{d}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border)',
+            font: "400 11px/1.5 'Inter', sans-serif",
+            color: 'var(--text3)',
+          }}
+        >
+          焦点在输入框时键盘不响应. 节模式 j/k/g 无效, 用左侧 sidebar 切节.
+        </div>
       </div>
     </div>
   )
