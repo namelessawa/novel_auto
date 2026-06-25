@@ -57,6 +57,21 @@ E1 · E2 · E7 (`B/C/F/G` semantic 维度留 LLM critic).
 | Memory entry 新加 | 3 (quota / stuck-state / det coverage) |
 | docs/iter/ artifact | 800+ (含 INDEX.md 导航) |
 
+### Analyzer drift 信号速查 (analyze_longrange_drift.py)
+
+| code | 意图 | trigger |
+| --- | --- | --- |
+| D1 | per-bucket avg_dur 漂移 | bucket > start × 1.5 |
+| D2 | clean_rate 跌 | drop ≥ 15pp (per_tick 含 critic_surviving_codes 时) |
+| D3 | open_loop cap 压力 | bucket 内 ≥ 70% 时间顶 cap (per_tick 含 open_loop_count 时) |
+| D4 | memcompress silent | report-level (legacy schema) + per-bucket (iter#K schema) |
+| D5 | contradictions cascade | tail bucket contradictions > 300 |
+| D6 | token cascade | per-bucket token 增长 > 1.5× first bucket |
+| D7 | narrate-rate cascade (iter#Z) | ≥ 2 consec buckets ≥ 70% narrate |
+| D8 | quota wall (iter#TTT) | bucket avg_dur < 5s + narrate < 5% |
+
+Verdict: 0 finding = PASS / ≤2 = WARN / >2 = FAIL.
+
 ### Carry-forward (剩)
 
 1. **4-char 化合物 dedup** (钢筋混凝土) — iter#C3 documented limitation
