@@ -577,6 +577,35 @@ def check_section_closing(text: str) -> list[DeterministicTrigger]:
 
 
 # ---------------------------------------------------------------------------
+# Phase 6 iter#UU — D5 single-sense paragraph (lite)
+# ---------------------------------------------------------------------------
+
+
+def check_sense_diversity(text: str) -> list[DeterministicTrigger]:
+    """D5 (lite): 整段只有视觉描写, 缺另一种感官.
+
+    委托 ``quality_metrics.sense_diversity`` — 视觉 ≥ 5 且其他 4 类全 0
+    才 trigger. 真"sterile visual stream" 信号, 普通景色描写不 FP.
+
+    env kill switch: ``SENSE_DIVERSITY_ENABLE`` (默认 True).
+    """
+    if not env_bool("SENSE_DIVERSITY_ENABLE", default=True):
+        return []
+    from quality_metrics.sense_diversity import sense_diversity_report
+
+    report = sense_diversity_report(text)
+    if not report.d5_triggered:
+        return []
+    return [
+        DeterministicTrigger(
+            code="D5",
+            severity="medium",
+            evidence=f"[sense_diversity] {report.d5_evidence}",
+        )
+    ]
+
+
+# ---------------------------------------------------------------------------
 # 开头句式相似性 (A5/A7) — 需要外部状态
 # ---------------------------------------------------------------------------
 
@@ -639,6 +668,7 @@ def run_deterministic_checks(
     out.extend(check_inner_monologue_ratio(text))
     out.extend(check_translation_artifact(text))
     out.extend(check_section_closing(text))
+    out.extend(check_sense_diversity(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -681,6 +711,7 @@ __all__ = [
     "check_inner_monologue_ratio",
     "check_translation_artifact",
     "check_section_closing",
+    "check_sense_diversity",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",
