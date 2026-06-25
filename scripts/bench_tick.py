@@ -280,6 +280,22 @@ async def _bench(args) -> dict:
             except Exception as e:  # pragma: no cover — 不让 checkpoint 失败 kill bench
                 logging.getLogger(__name__).warning("[bench] checkpoint failed: %s", e)
 
+        # iter#W — milestone progress at WARNING level (default --log-level
+        # 看得见). Cadence 与 checkpoint 同, 但若 checkpoint=0 就用 50.
+        # 长程 bench 5h+ 中间无可见进度让 user 焦虑, 这条 WARNING 不破坏 log
+        # noise 预算 (每 50 tick 一行, 500-tick bench ≤ 10 行).
+        milestone_every = max(checkpoint_every or 50, 50)
+        if (i + 1) % milestone_every == 0:
+            avg_recent = (
+                sum(tick_durations[-milestone_every:])
+                / max(1, len(tick_durations[-milestone_every:]))
+            )
+            tok_m = tracker.snapshot.total_tokens / 1_000_000
+            logging.getLogger(__name__).warning(
+                "[bench] tick %d/%d · avg_recent=%.1fs · tokens=%.2fM · narr=%d",
+                i + 1, args.ticks, avg_recent, tok_m, len(narratives),
+            )
+
     snap = tracker.snapshot
     report = _build_report_dict(
         label=args.label,
