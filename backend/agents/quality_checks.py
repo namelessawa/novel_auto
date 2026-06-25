@@ -581,6 +581,30 @@ def check_section_closing(text: str) -> list[DeterministicTrigger]:
 # ---------------------------------------------------------------------------
 
 
+def check_worldview_dump(text: str) -> list[DeterministicTrigger]:
+    """D1 (lite): 单次背景设定/世界观倾倒 >300 字. HIGH severity.
+
+    委托 ``quality_metrics.worldview_dump`` — 段内最长连续 ≥ 300 字
+    无对话/角色代词/动作动词 segment 才 trigger.
+
+    env kill switch: ``WORLDVIEW_DUMP_ENABLE`` (默认 True).
+    """
+    if not env_bool("WORLDVIEW_DUMP_ENABLE", default=True):
+        return []
+    from quality_metrics.worldview_dump import worldview_dump_report
+
+    report = worldview_dump_report(text)
+    if not report.d1_triggered:
+        return []
+    return [
+        DeterministicTrigger(
+            code="D1",
+            severity="high",  # spec: D1 高
+            evidence=f"[worldview_dump] {report.d1_evidence}",
+        )
+    ]
+
+
 def check_parallelism(text: str) -> list[DeterministicTrigger]:
     """E2 (lite): 句式过分对仗工整 (典型 AI 腔). HIGH severity.
 
@@ -694,6 +718,7 @@ def run_deterministic_checks(
     out.extend(check_section_closing(text))
     out.extend(check_sense_diversity(text))
     out.extend(check_parallelism(text))
+    out.extend(check_worldview_dump(text))
     if recent_openings is not None:
         out.extend(check_opening_repetition(text, recent_openings))
     return out
@@ -738,6 +763,7 @@ __all__ = [
     "check_section_closing",
     "check_sense_diversity",
     "check_parallelism",
+    "check_worldview_dump",
     "check_opening_repetition",
     "extract_opening_signature",
     "compute_sentence_length_stats",
