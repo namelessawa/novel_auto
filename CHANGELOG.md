@@ -5,6 +5,75 @@
 
 ---
 
+## [2.49] — 2026-06-25 — Phase 6 A-X batch (50+ iter 单日 ship)
+
+`docs/iter/ITERATION_LOG.md` Phase 6 段全程详记. 关键产出:
+
+### Phase 6-A 长程持久性 — **PASS**
+
+* Run 1 (06-24): 334/500 quota wall, CONDITIONAL PASS, 怀疑 narrate-rate drift.
+* Run 2 (06-25 retry): **500/500 effective**, 3.02M tokens, narrate% 48% baseline.
+  **反驳 Run 1 "drift" 假设** — 是 LLM stochasticity 非确定性问题.
+* `verdict-spike-rootcause-0625.md`: critic 96% ACCEPT, spike 是 narrative
+  chars 暴涨 (plot beat 响应), 不是 critic loop 也不是 system drift.
+
+### 三层防护 (反 sustained-climax)
+
+| layer | iter | scope |
+| --- | --- | --- |
+| 生产 | M | narrator intensity guard env knob (10-tick 滚动 + chars threshold) |
+| critic | O | length-gate 加严 — >2500 chars 强制 critic |
+| UI | Y | dashboard ⚠ INTENSITY chip (critic 真跑率 ≥ 70%) |
+| 检测 | Z | analyzer D7 narrate-rate cascade detection (post-hoc) |
+
+### Phase 6-B reader UI — 10 iter
+
+`E` 连读模式 / `F` viewpoint sidecar + chip / `G` localStorage 偏好 +
+字号/行距 / `L` 分页 + display_name + 字体家族 / `P` IntersectionObserver
+paged scroll / `U` 节模式视点 / `JJ` j/k/g 键盘导航 / `KK+TT` 状态栏 +
+'?' 帮助 / `BBB` '/' 搜索 + 跳转 / `CCC` 高亮 + 历史.
+
+### Phase 6-C det layer — 现 13/16 dimension 覆盖
+
+新加: `C1` C6 章末无悬念 / `C3` A1 3-char 化合物 dedup / `SS` D2 形容词
+堆砌 (regex 修 + 名词列举排除) / `UU` D5 单感官 / `VV` E2 对仗工整 /
+`XX` D1 世界观倾倒. 余下 ~B/C/F/G 多为 semantic 维度由 LLM critic 处理.
+
+### 工具栈与基建
+
+* `J` Goal schema validator (priority='critical'→10, progress='15%'→0.15,
+  id=int→str, content alias) → 两次 bench ~100 个 LLM goal skip 消除.
+* `K/S/V/Z` analyzer 升级 (per-tick schema, D4 per-bucket, render_md 修,
+  D7 cascade).
+* `R/T` critic_log SKIP rows + dashboard 显示.
+* `AA` lazy chromadb import → 19 测试解锁 (988 → 1061 PASS).
+* `D` Phase 6-A runbook + drift analyzer (6 signal → 7 with Z).
+* `TT3` compare_bench.py N-bench side-by-side 对比.
+* `OO` bench --themes batch CLI.
+* `W` bench WARNING milestone 每 50 tick.
+* `X` docs/iter/INDEX.md 787 artifact 导航.
+* `AAA` GET /api/tick/narratives/search literal 关键词搜索.
+* `HHH` standalone probe_quota.py (替代 bench_tick --ticks 1 smoke).
+
+### Cron 安排
+
+* 14:03 cron 已 user 11:35 取消 (quota 已恢复, 直接起 republic_spy).
+* 01:07 cron `ede3ebd3` — 00:36 quota 重置后 apocalypse_wasteland kickoff.
+
+### 数字
+
+* 50+ git commit (`feat`/`fix`/`test`/`docs`/`chore`/`verdict`).
+* 测试 940 → 1061 PASS (+121 净, 包含 4 pre-existing protobuf 实例化失败).
+* 前端 bundle 297 → 320 KB (+23 KB / ~10 features).
+* `0` backend regression.
+* `10` env knob family 加 CLAUDE.md (NARRATOR_INTENSITY_GUARD_* /
+  CRITIC_FORCE_ABOVE_LEN / SECTION_CLOSING_ENABLE / D7_NARRATE_* /
+  PARALLELISM_ENABLE / WORLDVIEW_DUMP_ENABLE / SENSE_DIVERSITY_ENABLE 等).
+* `3` memory entry (deepseek_5h_quota / narrate_rate_stuck_state /
+  phase6c_det_coverage).
+
+---
+
 ## [2.44] — 2026-06-17 — Phase 5 完成 + Phase 5-D follow-up (carry-forward 清零)
 
 `docs/iter/PHASE5_FINAL.md` + `docs/iter/PHASE5_PLAN.md`:
