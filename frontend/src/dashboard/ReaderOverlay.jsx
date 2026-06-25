@@ -392,7 +392,7 @@ export default function ReaderOverlay({ novel, onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose, continuousMode, helpOpen, searchOpen])
 
-  // iter#BBB — search submit handler
+  // iter#BBB — search submit handler. iter#CCC: persist history.
   const doSearch = useCallback(async () => {
     const q = searchQuery.trim()
     if (!q) return
@@ -401,6 +401,15 @@ export default function ReaderOverlay({ novel, onClose }) {
     try {
       const r = await searchTickNarratives({ q, limit: 50 })
       setSearchResults(r?.results || [])
+      // iter#CCC — push to history (cap 5, most-recent first, dedupe).
+      try {
+        const KEY = 'reader.searchHistory'
+        const raw = window.localStorage.getItem(KEY)
+        let arr = []
+        try { arr = raw ? JSON.parse(raw) : [] } catch { arr = [] }
+        arr = [q, ...arr.filter((x) => x !== q)].slice(0, 5)
+        window.localStorage.setItem(KEY, JSON.stringify(arr))
+      } catch { /* swallow */ }
     } catch (err) {
       setSearchResults([])
       setSearchError(err?.message || '搜索失败')
@@ -797,11 +806,52 @@ export default function ReaderOverlay({ novel, onClose }) {
   )
 }
 
-// iter#BBB — narrative 搜索 modal.
+// iter#CCC — highlight q occurrences in snippet (yellow background).
+function highlightSnippet(snippet, q) {
+  if (!q || !snippet) return snippet
+  const parts = []
+  let lastEnd = 0
+  // Use indexOf in a loop — q is literal (matches backend's text.find).
+  let idx = snippet.indexOf(q)
+  while (idx >= 0) {
+    if (idx > lastEnd) parts.push(snippet.slice(lastEnd, idx))
+    parts.push(
+      <mark
+        key={`m${idx}`}
+        style={{
+          background: 'rgba(217, 165, 90, 0.4)',
+          color: 'inherit',
+          padding: '0 2px',
+        }}
+      >
+        {q}
+      </mark>,
+    )
+    lastEnd = idx + q.length
+    idx = snippet.indexOf(q, lastEnd)
+  }
+  if (lastEnd < snippet.length) parts.push(snippet.slice(lastEnd))
+  return parts.length ? parts : snippet
+}
+
+// iter#CCC — read search history from localStorage.
+function readSearchHistory() {
+  try {
+    const raw = window.localStorage.getItem('reader.searchHistory')
+    if (!raw) return []
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.slice(0, 5) : []
+  } catch {
+    return []
+  }
+}
+
+// iter#BBB — narrative 搜索 modal. iter#CCC: + 高亮 + 历史.
 function ReaderSearchModal({
   query, onQueryChange, onSubmit, results, loading, error, onJump, onClose,
 }) {
   const inputRef = React.useRef(null)
+  const [history] = React.useState(() => readSearchHistory())
   React.useEffect(() => {
     if (inputRef.current) inputRef.current.focus()
   }, [])
@@ -870,6 +920,40 @@ function ReaderSearchModal({
             ✕ {error}
           </div>
         )}
+        {/* iter#CCC — search history chips. 仅当无 results 且无 query 时显示. */}
+        {!loading && results.length === 0 && !query && history.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div
+              style={{
+                font: "500 10px/1 'JetBrains Mono', monospace",
+                color: 'var(--text3)',
+                letterSpacing: '0.06em',
+                marginBottom: 6,
+              }}
+            >
+              最近搜索
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {history.map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => onQueryChange(h)}
+                  style={{
+                    font: "400 12px/1.2 'Inter', sans-serif",
+                    padding: '4px 10px',
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text2)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {h}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div
           style={{
             flex: 1,
@@ -913,7 +997,7 @@ function ReaderSearchModal({
                 t{r.tick} · {r.char_count} 字
                 {r.viewpoint_character_id && ` · ${r.viewpoint_character_id}`}
               </div>
-              <div>{r.snippet}</div>
+              <div>{highlightSnippet(r.snippet, query)}</div>
             </button>
           ))}
         </div>
