@@ -451,6 +451,87 @@ async def list_narratives(
     }
 
 
+@router.get("/narratives/search")
+async def search_narratives(
+    q: str = Query("", description="搜索关键词 (literal, 非正则)"),
+    start_tick: int = Query(0, ge=0),
+    end_tick: int = Query(0, ge=0, description="0 = up to current tick"),
+    limit: int = Query(100, ge=1, le=500, description="最多返回 N 条 match"),
+    runtime=Depends(_resolve_runtime),
+) -> dict:
+    """Phase 6 iter#AAA — narratives 关键词搜索.
+
+    跨 ``{data_dir}/narratives/tick_NNNNNN.txt`` 扫盘, 返回含 q 的 narrative
+    snippet (q 周围 ±40 chars). viewpoint_character_id 从 sidecar (iter#F).
+
+    q 当 literal 字符串处理, 不是正则. 大小写敏感 (中文无 case 影响).
+    空 q 返回 400.
+    """
+    import os
+    import re
+
+    if not q:
+        raise HTTPException(status_code=400, detail="q (搜索关键词) 不可为空")
+
+    ts = runtime.tick_state
+    current_tick = ts.current_tick
+    effective_end = end_tick if end_tick > 0 else current_tick
+
+    narratives_dir = os.path.join(ts.data_dir, "narratives")
+
+    def _search_blocking() -> list[dict]:
+        if not os.path.isdir(narratives_dir):
+            return []
+        pat = re.compile(r"^tick_(\d{6})\.txt$")
+        out: list[dict] = []
+        for fname in sorted(os.listdir(narratives_dir)):
+            m = pat.match(fname)
+            if not m:
+                continue
+            tick = int(m.group(1))
+            if tick < start_tick or tick > effective_end:
+                continue
+            path = os.path.join(narratives_dir, fname)
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    text = f.read()
+            except OSError as e:
+                logger.warning("search narrative tick=%d failed: %s", tick, e)
+                continue
+            idx = text.find(q)
+            if idx < 0:
+                continue
+            # snippet: q 周围 ±40 chars 上下文
+            snippet_start = max(0, idx - 40)
+            snippet_end = min(len(text), idx + len(q) + 40)
+            snippet = text[snippet_start:snippet_end]
+            if snippet_start > 0:
+                snippet = "…" + snippet
+            if snippet_end < len(text):
+                snippet = snippet + "…"
+            viewpoint = _read_narrative_sidecar(narratives_dir, tick)
+            out.append({
+                "tick": tick,
+                "char_count": len(text),
+                "snippet": snippet,
+                "viewpoint_character_id": viewpoint,
+            })
+            if len(out) >= limit:
+                break
+        return out
+
+    results = await run_in_threadpool(_search_blocking)
+    return {
+        "count": len(results),
+        "results": results,
+        "q": q,
+        "start_tick": start_tick,
+        "end_tick": effective_end,
+        "current_tick": current_tick,
+        "truncated": len(results) >= limit,
+    }
+
+
 @router.get("/critic-log")
 async def list_critic_log(
     start_tick: int = Query(0, ge=0),
