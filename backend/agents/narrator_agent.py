@@ -196,6 +196,42 @@ def _critic_min_narrative_len() -> int:
 _CRITIC_IMPORTANCE_MIN_DEFAULT = 7
 
 
+# iter#O — critic length-gate 加严. 段落超此长度强制 critic, 不再被
+# importance gate 跳过. 防 spike 段超长 narrative 漏审 (Phase 6-A run 2
+# 实测 max 4123 chars 段落). 0 = 禁用 (回 iter#O 之前行为).
+_CRITIC_FORCE_ABOVE_LEN_DEFAULT = 2500
+
+
+def _critic_force_above_len() -> int:
+    """Read CRITIC_FORCE_ABOVE_LEN env (lazy, for tests).
+
+    0 → disabled (永不强制).
+    invalid / 负值 → 回 default 2500.
+    """
+    raw = os.environ.get("CRITIC_FORCE_ABOVE_LEN", "").strip()
+    if not raw:
+        return _CRITIC_FORCE_ABOVE_LEN_DEFAULT
+    try:
+        v = int(raw)
+        if v < 0:
+            return _CRITIC_FORCE_ABOVE_LEN_DEFAULT
+        return v
+    except ValueError:
+        return _CRITIC_FORCE_ABOVE_LEN_DEFAULT
+
+
+def _should_force_critic_by_length(narrative_chars: int) -> bool:
+    """是否因 narrative 超长而强制 critic.
+
+    >: 严格大于 (boundary == threshold 不触发).
+    阈值 = 0 时永不触发 (env disable).
+    """
+    threshold = _critic_force_above_len()
+    if threshold <= 0:
+        return False
+    return narrative_chars > threshold
+
+
 def _critic_importance_min() -> int:
     raw = os.environ.get("CRITIC_IMPORTANCE_MIN", "").strip()
     if not raw:
@@ -476,7 +512,17 @@ class NarratorAgent:
         if critic_eligible:
             importance = _tick_importance_score(tick_events)
             gate_importance = _critic_importance_min()
-            if importance >= gate_importance:
+            # iter#O — 长 narrative (>2500 by default) 强制 critic 即使
+            # importance 不到 gate. 防 spike 段超长漏审.
+            force_by_length = _should_force_critic_by_length(
+                len(parsed.narrative_text)
+            )
+            if importance >= gate_importance or force_by_length:
+                if force_by_length and importance < gate_importance:
+                    logger.info(
+                        "narrator[tick=%d] critic FORCED by length: chars=%d > %d",
+                        tick, len(parsed.narrative_text), _critic_force_above_len(),
+                    )
                 parsed = await self._run_critique(parsed)
             else:
                 # 显式日志: 低重要性 tick 跳 critic. 不污染 consistency_flags.
