@@ -32,7 +32,34 @@ _DRIFT_THRESHOLDS = {
     "open_loop_cap": 6,  # 默认 EVENT_INJECTOR_OPEN_LOOP_CAP
     "open_loop_long_high_pct": 0.7,  # bucket 内 ≥ 70% 时间顶住 cap → WARN
     "memory_compress_min_per_bucket": 1,  # 每 50-tick bucket 至少 1 次
+    # iter#Z — D7: ≥ N consecutive buckets with narrate_rate ≥ threshold → 报
+    # narrate-rate cascade. Phase 6-A run 1 stuck-state pattern (t201-300 100%).
+    "d7_narrate_threshold": 0.70,  # bucket narrate_rate ≥ this 算入 cascade
+    "d7_min_buckets": 2,  # 连续 ≥ this 个 bucket 才报
 }
+
+
+def _env_float(key: str, default: float) -> float:
+    """Lazy env read for analyzer thresholds (test monkeypatch friendly)."""
+    import os
+    raw = os.environ.get(key, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _env_int(key: str, default: int) -> int:
+    import os
+    raw = os.environ.get(key, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
 
 _BUCKET_SIZE = 50
 
@@ -123,12 +150,26 @@ def analyze(report: dict) -> dict:
             for r in recs
             if isinstance(r.get("contradiction_count"), int)
         ]
+        # iter#Z — narrate_rate per bucket (依赖 iter#K 加的 narrator_produced 字段).
+        # 老 schema 无此字段 → 返回 None (D7 detection 跳过).
+        produced_flags = [
+            r.get("narrator_produced") for r in recs
+            if "narrator_produced" in r
+        ]
+        narrate_rate = (
+            sum(1 for x in produced_flags if x) / len(produced_flags)
+            if produced_flags
+            else None
+        )
         per_bucket.append(
             {
                 "bucket": _bucket_label(bid),
                 "n": len(recs),
                 "avg_dur_sec": round(_avg(durs), 1) if durs else None,
                 "cumulative_tokens_at_end": toks[-1] if toks else None,
+                "narrate_rate": (
+                    round(narrate_rate, 3) if narrate_rate is not None else None
+                ),
                 "clean_rate_pct": (
                     round(100.0 * len(clean) / len(recs), 1) if recs else 0
                 ),
@@ -236,6 +277,48 @@ def analyze(report: dict) -> dict:
                         f"{gw/base:.2f}×"
                     )
                     break
+
+    # iter#Z — D7 narrate-rate cascade detection.
+    # ≥ MIN_BUCKETS consecutive buckets with narrate_rate ≥ THRESHOLD → 报.
+    # Phase 6-A run 1 (24 日) t201-300 全 100% narrate 4 个 bucket 直到 quota wall —
+    # 这正是 D7 想抓的 pattern. iter#M (guard) 是预防, D7 是 post-hoc detection.
+    d7_thr = _env_float(
+        "D7_NARRATE_THRESHOLD", _DRIFT_THRESHOLDS["d7_narrate_threshold"]
+    )
+    d7_min = _env_int(
+        "D7_MIN_BUCKETS", _DRIFT_THRESHOLDS["d7_min_buckets"]
+    )
+    consec = 0
+    cascade_start = None
+    cascade_end = None
+    for b in per_bucket:
+        rate = b.get("narrate_rate")
+        if rate is None:
+            # 老 schema 无 narrator_produced → skip D7 整段 (重置 streak).
+            consec = 0
+            cascade_start = None
+            continue
+        if rate >= d7_thr:
+            if consec == 0:
+                cascade_start = b["bucket"]
+            consec += 1
+            cascade_end = b["bucket"]
+        else:
+            if consec >= d7_min:
+                findings.append(
+                    f"[D7] narrate-rate cascade: {consec} consecutive buckets "
+                    f"≥ {int(d7_thr * 100)}% narrate ({cascade_start} → {cascade_end}) "
+                    "— Phase 6-A run 1 stuck-state pattern"
+                )
+            consec = 0
+            cascade_start = None
+    # Tail flush — 如 cascade 延伸到最后 bucket
+    if consec >= d7_min:
+        findings.append(
+            f"[D7] narrate-rate cascade: {consec} consecutive buckets "
+            f"≥ {int(d7_thr * 100)}% narrate ({cascade_start} → {cascade_end}) "
+            "— Phase 6-A run 1 stuck-state pattern"
+        )
 
     return {
         "label": report.get("label"),
