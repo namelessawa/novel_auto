@@ -342,8 +342,68 @@ class CharacterProfile(_TickBase):
 
 
 
+# Phase 6 iter#J — Goal validator helpers (LLM 强转)
+_PRIORITY_NAME_MAP: dict[str, int] = {
+    "critical": 10, "urgent": 10, "highest": 10,
+    "high": 8, "important": 8,
+    "medium": 5, "normal": 5, "mid": 5,
+    "low": 3, "minor": 3,
+    "lowest": 1, "trivial": 1,
+}
+
+
+def _coerce_priority(v) -> int:
+    """LLM 常出 'critical' / '85' / -3 — 全部钳到 0-10 整数."""
+    if isinstance(v, str):
+        s = v.strip().lower()
+        if s in _PRIORITY_NAME_MAP:
+            return _PRIORITY_NAME_MAP[s]
+        try:
+            n = int(s)
+        except ValueError:
+            return 5  # unknown str → medium default
+    elif isinstance(v, (int, float)):
+        n = int(v)
+    else:
+        return 5
+    return max(0, min(10, n))
+
+
+def _coerce_progress(v) -> float:
+    """LLM 常出 '15%' / 15 / -0.2 / '???' — 全部钳到 0.0-1.0 float."""
+    if isinstance(v, str):
+        s = v.strip().rstrip("%").strip()
+        try:
+            n = float(s)
+        except ValueError:
+            return 0.0
+        # 原 str 含 '%' → 已是 percent
+        if "%" in v:
+            n = n / 100.0
+        elif n > 1.0:
+            # 整数 / 大数 解读为 percent
+            n = n / 100.0
+    elif isinstance(v, bool):
+        return float(v)
+    elif isinstance(v, (int, float)):
+        n = float(v)
+        if n > 1.0:
+            n = n / 100.0
+    else:
+        return 0.0
+    return max(0.0, min(1.0, n))
+
+
 class Goal(_TickBase):
-    """角色短期/长期目标。CharacterState.current_goals 持有。"""
+    """角色短期/长期目标。CharacterState.current_goals 持有。
+
+    Phase 6 iter#J: ``mode='before'`` validator 强转 LLM 常见违例:
+    * priority='critical'/'high'/'medium'/'low'/'urgent' → int 名称表
+    * priority 超 0-10 → clamp
+    * progress='15%' → 0.15, 整数 ≥1 解读为 percent (15 → 0.15)
+    * id=int → str
+    * description 缺失但有 content → alias 入 description
+    """
 
 
     id: str
@@ -351,6 +411,31 @@ class Goal(_TickBase):
     priority: int = Field(default=5, ge=0, le=10)
     progress: float = Field(default=0.0, ge=0.0, le=1.0)
     obstacles: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_llm_payload(cls, data):
+        if not isinstance(data, dict):
+            return data
+        out = dict(data)
+
+        # --- id: int → str ---
+        if "id" in out and isinstance(out["id"], int):
+            out["id"] = str(out["id"])
+
+        # --- description: 'content' alias (run 2 实测) ---
+        if "description" not in out and "content" in out:
+            out["description"] = out["content"]
+
+        # --- priority: 名称 / 数字 / 超出范围 ---
+        if "priority" in out:
+            out["priority"] = _coerce_priority(out["priority"])
+
+        # --- progress: '15%' / 整数 / 超出范围 ---
+        if "progress" in out:
+            out["progress"] = _coerce_progress(out["progress"])
+
+        return out
 
 
 class Relationship(_TickBase):
