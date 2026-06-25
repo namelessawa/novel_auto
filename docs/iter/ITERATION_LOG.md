@@ -31,7 +31,20 @@
 | iter#P (2026-06-25) | frontend · reader IntersectionObserver paged scroll | PASS | per_page=200 + sentinel 滚到底 + dedupe |
 | iter#N (2026-06-25) | bench · cross-seed 3-seed scheduled (cron 14:03 + 22:07) | SCHEDULED | republic_spy + apocalypse_wasteland, 2 quota window |
 
-**候补 (未挑) — 留 Phase 6-D 或 6-E**:
+| iter#Q-XX (2026-06-25 中下半场) | A-X 全程批次 (env doc / D2 / D5 / E2 / D1 / D8 / search / probe_quota / grep_narratives / D7 / compare_bench / runbook / CLAUDE.md scripts 表) | PASS | 1118+ tests / 320 KB bundle / 4 bench run / verdict-3seed-final.md |
+| **Phase 6 收档** (2026-06-25 22:47) | `PHASE6_FINAL.md` — 6-A/B/C 全 PASS, M 漏洞留 Phase 7 | DONE | apocalypse retry task `b1v3rkt3i` 跑完后再补 verdict |
+
+**候补 (未挑) — 留 Phase 7**:
+- **iter#YYY (必做)** narrate_rate-based intensity guard (M 漏洞: apocalypse 数据证明 length-only 防护漏掉 sustained-climax)
+- 4-char 化合物 dedup (优先级中)
+- B/C/F/G semantic 维度 (留 LLM critic)
+- 跨 quota window resume
+- 多 POV / 多模态接入 reader
+
+---
+
+## Old Phase 6 候补 (历史)
+
 - 4-char 化合物 dedup (钢筋混凝土 → 4-gram dedup): iter#C3 documented limitation
 - A1 stop_nominals 扩展 (校准 verdict 显示残余 FP 主要来自老的 2-gram, dedup 后已大幅缓解)
 - 视点角色 chip 显示 display_name (现是 char_id slug); 节模式 (section-by-section) 也加 vp chip

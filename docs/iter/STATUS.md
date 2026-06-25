@@ -2,7 +2,18 @@
 
 **Branch:** `main`
 **Range:** baseline 16d5826 → HEAD
-**Last update:** 2026-06-25 18:30 (Phase 6 A-XX 全程批次 + republic 完成)
+**Last update:** 2026-06-25 22:50 (Phase 6 收档 — 见 `PHASE6_FINAL.md`)
+
+## ⭐ Phase 6 PASS · 见 [PHASE6_FINAL.md](PHASE6_FINAL.md)
+
+* 6-A 长程持久性 — **PASS** (4 bench run, cross-seed 抓到 stuck-state pattern)
+* 6-B reader UI — **PASS** (10 iter ship, 全本可读)
+* 6-C B-G det 层 — **PASS** (13/16 dim 覆盖)
+* 三层防护 (M/O/Y/Z) — **建立**, M 漏洞留 Phase 7 (iter#YYY proposed)
+* 跨 seed 3-bench compare — `verdict-3seed-final.md`
+* Apocalypse retry (重启复跑) — task `b1v3rkt3i`, ETA ~04:00 次日, 完成后用同 verdict 模板
+
+
 
 ## Phase 6 Big Picture (2026-06-25)
 
