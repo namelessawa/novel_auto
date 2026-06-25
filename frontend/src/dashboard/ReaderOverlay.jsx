@@ -306,14 +306,60 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
   }, [novel?.id])
 
-  // Esc to close
+  // Esc to close + iter#JJ j/k/g 连读模式导航.
   useEffect(() => {
+    function jumpToTick(targetTick) {
+      if (!articleRef.current) return
+      const node = articleRef.current.querySelector(`[data-tick="${targetTick}"]`)
+      if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    function jumpRelative(direction) {
+      if (!continuousMode || !articleRef.current || !mainRef.current) return
+      const nodes = Array.from(
+        articleRef.current.querySelectorAll('[data-tick]'),
+      )
+      if (!nodes.length) return
+      const containerTop = mainRef.current.getBoundingClientRect().top
+      // 找到第一个 top >= containerTop + 8 (一点 buffer) 的 node = "当前段"
+      const currentIdx = nodes.findIndex(
+        (n) => n.getBoundingClientRect().top >= containerTop + 8,
+      )
+      const baseIdx = currentIdx === -1 ? nodes.length - 1 : currentIdx
+      const nextIdx = Math.max(
+        0,
+        Math.min(nodes.length - 1, baseIdx + direction),
+      )
+      nodes[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
     function onKey(e) {
-      if (e.key === 'Escape') onClose?.()
+      if (e.key === 'Escape') {
+        onClose?.()
+        return
+      }
+      // 忽略 input/textarea 输入 (prompt 等)
+      const tag = (e.target?.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'textarea') return
+      if (!continuousMode) return
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        if (e.altKey || e.metaKey || e.ctrlKey) return
+        e.preventDefault()
+        jumpRelative(1)
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        if (e.altKey || e.metaKey || e.ctrlKey) return
+        e.preventDefault()
+        jumpRelative(-1)
+      } else if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+        // 'g' alone (vim 风格) — 跳到 tick. 'gg' 直接跳第一段.
+        e.preventDefault()
+        const input = window.prompt('跳到 tick (输入数字, 留空取消):')
+        if (input == null) return
+        const t = parseInt(input.trim(), 10)
+        if (!isNaN(t) && t > 0) jumpToTick(t)
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, continuousMode])
 
   // iter#G — restore scroll on novel mount (after first paint).
   useEffect(() => {
@@ -705,12 +751,14 @@ function ContinuousSectionMarker({ section, title, startTick, endTick }) {
 function ContinuousParagraph({ tick, text, viewpoint, nameMap = {} }) {
   return (
     <div
+      data-tick={tick}
       style={{
         position: 'relative',
         display: 'flex',
         flexDirection: 'row',
         gap: 12,
         alignItems: 'flex-start',
+        scrollMarginTop: 32,
       }}
     >
       <div
