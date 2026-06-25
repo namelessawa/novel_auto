@@ -467,6 +467,16 @@ function CriticStatsCard({ data, window: criticWindow = 0, onWindowChange }) {
   // iter#B — window chips. 0 = 全部, 50/100/200 = 最近 N tick.
   const WINDOW_OPTIONS = [0, 50, 100, 200]
 
+  // iter#Y — intensity alert. critic 真跑率 = (非 SKIP) / scanned. ≥70% 表示
+  // narratives 普遍长 (passing length gate) → sustained-climax 风险 信号.
+  // 与 iter#M (backend guard) + iter#Z (analyzer post-hoc) 形成三层防护.
+  const nonSkipCount = distRows
+    .filter((r) => r.action !== 'SKIP')
+    .reduce((acc, r) => acc + r.count, 0)
+  const intensityRate = ticksScanned > 0 ? nonSkipCount / ticksScanned : 0
+  const INTENSITY_ALERT_THRESHOLD = 0.7
+  const intensityHigh = intensityRate >= INTENSITY_ALERT_THRESHOLD && ticksScanned >= 10
+
   return (
     <div className="dc-tk-diag-card is-wide">
       <div className="dc-tk-diag-card-head">
@@ -476,6 +486,24 @@ function CriticStatsCard({ data, window: criticWindow = 0, onWindowChange }) {
         <span className="dc-tk-diag-card-meta">
           {ticksScanned} tick · {distTotal} action · clean {cleanRate}
         </span>
+        {/* iter#Y — intensity alert chip (≥70% critic 真跑率 → sustained-climax 风险) */}
+        {intensityHigh && (
+          <span
+            title={`Critic 真跑率 ${(intensityRate * 100).toFixed(0)}% ≥ 70% — 检查 narrator intensity guard / sustained-climax 风险`}
+            style={{
+              marginLeft: 10,
+              padding: '2px 8px',
+              border: '1px solid #d9665a',
+              borderRadius: 3,
+              background: '#d9665a',
+              color: 'var(--bg)',
+              font: "600 10px/1 'JetBrains Mono', monospace",
+              letterSpacing: '0.06em',
+            }}
+          >
+            ⚠ INTENSITY {(intensityRate * 100).toFixed(0)}%
+          </span>
+        )}
         {onWindowChange && (
           <div
             style={{
