@@ -15,13 +15,27 @@ const KEYS = {
   continuous: 'reader.continuousMode',
   fontSize: 'reader.fontSize',
   lineHeight: 'reader.lineHeight',
+  fontFamily: 'reader.fontFamily',
   scrollPrefix: 'reader.scrollY.',
 }
 
 const DEFAULT_FONT_SIZE = 18
 const DEFAULT_LINE_HEIGHT = 2.05
+const DEFAULT_FONT_FAMILY = 'serif'
 const FONT_SIZE_OPTIONS = [16, 18, 20]
 const LINE_HEIGHT_OPTIONS = [1.6, 1.85, 2.05]
+// iter#L — 3 font family options. 值映射到 CSS font-family stack.
+const FONT_FAMILY_OPTIONS = ['serif', 'sans', 'kaiti']
+const FONT_FAMILY_STACK = {
+  serif: "'Noto Serif SC', 'Source Han Serif SC', serif",
+  sans: "'Noto Sans SC', 'Source Han Sans SC', 'Inter', sans-serif",
+  kaiti: "'STKaiti', 'KaiTi', '楷体', 'Noto Serif SC', serif",
+}
+const FONT_FAMILY_LABEL = {
+  serif: '宋',
+  sans: '黑',
+  kaiti: '楷',
+}
 
 function _safeGet(key, fallback) {
   try {
@@ -53,6 +67,10 @@ export function useReaderPrefs(novelId) {
     const raw = Number(_safeGet(KEYS.lineHeight, DEFAULT_LINE_HEIGHT))
     return LINE_HEIGHT_OPTIONS.includes(raw) ? raw : DEFAULT_LINE_HEIGHT
   })
+  const [fontFamily, setFontFamilyState] = useState(() => {
+    const raw = String(_safeGet(KEYS.fontFamily, DEFAULT_FONT_FAMILY))
+    return FONT_FAMILY_OPTIONS.includes(raw) ? raw : DEFAULT_FONT_FAMILY
+  })
 
   const setContinuousMode = useCallback((v) => {
     const next = typeof v === 'function' ? v((p) => p) : v
@@ -79,6 +97,14 @@ export function useReaderPrefs(novelId) {
       : DEFAULT_LINE_HEIGHT
     setLineHeightState(v)
     _safeSet(KEYS.lineHeight, v)
+  }, [])
+
+  const setFontFamily = useCallback((ff) => {
+    const v = FONT_FAMILY_OPTIONS.includes(String(ff))
+      ? String(ff)
+      : DEFAULT_FONT_FAMILY
+    setFontFamilyState(v)
+    _safeSet(KEYS.fontFamily, v)
   }, [])
 
   // ----- Per-novel scroll persistence ------------------------------------
@@ -129,9 +155,15 @@ export function useReaderPrefs(novelId) {
     setFontSize,
     lineHeight,
     setLineHeight,
+    // iter#L — font family
+    fontFamily,
+    setFontFamily,
+    fontFamilyStack: FONT_FAMILY_STACK[fontFamily],
     restoreScroll,
     saveScroll,
     FONT_SIZE_OPTIONS,
     LINE_HEIGHT_OPTIONS,
+    FONT_FAMILY_OPTIONS,
+    FONT_FAMILY_LABEL,
   }
 }

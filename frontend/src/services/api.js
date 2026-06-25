@@ -887,12 +887,21 @@ export async function fetchPresets() {
  *   truncated?: boolean,
  * }>}
  */
-export async function fetchTickNarratives({ startTick = 0, endTick = 0, limit = 500 } = {}) {
+export async function fetchTickNarratives({
+  startTick = 0,
+  endTick = 0,
+  limit = 500,
+  page = 1,
+  perPage = 0,
+} = {}) {
+  // Phase 6-B iter#L — page/perPage 可选, perPage=0 → 老行为 (拿全部)
   const params = new URLSearchParams({
     start_tick: String(startTick),
     end_tick: String(endTick),
     limit: String(limit),
   })
+  if (page > 1) params.set('page', String(page))
+  if (perPage > 0) params.set('per_page', String(perPage))
   const res = await authedFetch(`/api/tick/narratives?${params.toString()}`)
   return assertOk(res)
 }

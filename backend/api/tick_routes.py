@@ -353,12 +353,19 @@ async def list_narratives(
     start_tick: int = Query(0, ge=0),
     end_tick: int = Query(0, ge=0, description="0 = up to current tick"),
     limit: int = Query(500, ge=1, le=2000),
+    page: int = Query(1, ge=1, description="iter#L — 1-indexed pagination"),
+    per_page: int = Query(0, ge=0, le=2000, description="iter#L — page size (0 = use limit)"),
     runtime=Depends(_resolve_runtime),
 ) -> dict:
     """Phase 6-B reader API — 列出 tick 区间内的全部 narrative 正文.
 
-    返回顺序: 按 tick 升序. 每条 ``{tick, world_time, text, char_count}``.
-    ``end_tick=0`` 表示截至当前 tick. ``limit`` 防止误请整本.
+    返回顺序: 按 tick 升序. 每条 ``{tick, world_time, text, char_count,
+    viewpoint_character_id}``. ``end_tick=0`` 表示截至当前 tick.
+
+    分页 (iter#L): page=1 / per_page=N 把扫盘后结果切片, 长程小说 >2000 tick
+    场景可以分页拉取 (reader 连读模式滚到底动态加载). 老 ``limit`` 仍作扫盘
+    上限 (防误请万 tick); per_page 是结果切片. per_page=0 → 使用 limit
+    (兼容老调用).
 
     数据源: ``{data_dir}/narratives/tick_NNNNNN.txt`` (orchestrator 每 tick 写盘).
     与 ``/api/tick/history`` 的区别: history 给 TickSummary (摘要 + 元数据),
@@ -418,13 +425,29 @@ async def list_narratives(
     # 时一次请求把 event loop 卡数百 ms。
     rows = await run_in_threadpool(_read_narratives_blocking)
 
+    # iter#L — page/per_page slicing.
+    # per_page=0 (default) → 不分页, 与 iter#F 老行为一致.
+    # per_page>0 → 1-indexed page; out-of-range page 返回空 narratives + has_more=False.
+    total = len(rows)
+    effective_per_page = per_page if per_page > 0 else total
+    if per_page > 0:
+        start = (page - 1) * per_page
+        end = start + per_page
+        rows = rows[start:end]
+    has_more = (page * effective_per_page) < total if per_page > 0 else False
+
     return {
         "count": len(rows),
         "narratives": rows,
         "start_tick": start_tick,
         "end_tick": effective_end,
         "current_tick": current_tick,
-        "truncated": len(rows) >= limit,
+        "truncated": total >= limit,
+        # iter#L pagination metadata
+        "page": page,
+        "per_page": effective_per_page,
+        "total": total,
+        "has_more": has_more,
     }
 
 

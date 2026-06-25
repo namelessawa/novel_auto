@@ -27,10 +27,15 @@ export default function ReaderOverlay({ novel, onClose }) {
     setFontSize,
     lineHeight,
     setLineHeight,
+    fontFamily,
+    setFontFamily,
+    fontFamilyStack,
     restoreScroll,
     saveScroll,
     FONT_SIZE_OPTIONS,
     LINE_HEIGHT_OPTIONS,
+    FONT_FAMILY_OPTIONS,
+    FONT_FAMILY_LABEL,
   } = useReaderPrefs(novel?.id)
   const [allNarratives, setAllNarratives] = useState([])
   const [continuousLoading, setContinuousLoading] = useState(false)
@@ -153,6 +158,19 @@ export default function ReaderOverlay({ novel, onClose }) {
     }
     return out
   }, [continuousMode, allNarratives, sections])
+
+  // iter#L — display_name map: char_id → name (from /character-states).
+  // Reader chip 用此 map 把 "char_su_mo" 转成真名 "苏默". 若 map miss
+  // (老 narrative / 角色已删), 仍 fallback 到 shortenViewpoint slug.
+  const charNameMap = useMemo(() => {
+    const m = {}
+    for (const s of arcStates || []) {
+      const cid = s?.character_id || s?.id
+      const name = s?.name || s?.display_name
+      if (cid && name) m[cid] = name
+    }
+    return m
+  }, [arcStates])
 
   const scrollToSection = useCallback(
     (section) => {
@@ -284,6 +302,14 @@ export default function ReaderOverlay({ novel, onClose }) {
             renderLabel={(v) => `×${v}`}
             ariaLabel="行距"
           />
+          {/* iter#L — 字体家族 selector (宋/黑/楷). */}
+          <ChipGroup
+            options={FONT_FAMILY_OPTIONS}
+            value={fontFamily}
+            onChange={setFontFamily}
+            renderLabel={(v) => FONT_FAMILY_LABEL[v] || v}
+            ariaLabel="字体"
+          />
           <DayNightToggle />
           <button
             type="button"
@@ -363,7 +389,11 @@ export default function ReaderOverlay({ novel, onClose }) {
           <article
             className="dc-reader-article"
             ref={articleRef}
-            style={{ '--reader-font-size': `${fontSize}px`, '--reader-line-height': lineHeight }}
+            style={{
+              '--reader-font-size': `${fontSize}px`,
+              '--reader-line-height': lineHeight,
+              '--reader-font-family': fontFamilyStack,
+            }}
           >
             {!continuousMode && (
               <div className="dc-reader-article-head">
@@ -448,6 +478,7 @@ export default function ReaderOverlay({ novel, onClose }) {
                     tick={item.tick}
                     text={item.text}
                     viewpoint={item.viewpoint_character_id}
+                    nameMap={charNameMap}
                   />
                 )
               })}
@@ -551,7 +582,9 @@ function ContinuousSectionMarker({ section, title, startTick, endTick }) {
 
 // iter#E — 连读模式下的段落 + tick chip. chip 默认半透明, hover 时高亮.
 // iter#F — 增加 viewpoint chip (角色名 short form) 替代/补充 tick chip.
-function ContinuousParagraph({ tick, text, viewpoint }) {
+// iter#L — viewpoint chip 优先用 nameMap[char_id] (从 /character-states),
+//          map miss 时 fallback 到 shortenViewpoint slug.
+function ContinuousParagraph({ tick, text, viewpoint, nameMap = {} }) {
   return (
     <div
       style={{
@@ -587,23 +620,24 @@ function ContinuousParagraph({ tick, text, viewpoint }) {
         </span>
         {viewpoint && (
           <span
-            title={`视点角色: ${viewpoint}`}
+            title={`视点角色: ${nameMap[viewpoint] || viewpoint}`}
             style={{
               font: "500 9px/1.2 'JetBrains Mono', monospace",
               color: 'var(--accent)',
-              opacity: 0.8,
+              opacity: 0.85,
               letterSpacing: '0.04em',
               padding: '1px 5px',
               border: '1px solid var(--accent)',
               borderRadius: 2,
-              textTransform: 'lowercase',
-              maxWidth: 56,
+              // iter#L — 有真名时不强制 lowercase (中文不受影响, 英文 fallback 仍小写)
+              textTransform: nameMap[viewpoint] ? 'none' : 'lowercase',
+              maxWidth: 64,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
           >
-            {shortenViewpoint(viewpoint)}
+            {nameMap[viewpoint] || shortenViewpoint(viewpoint)}
           </span>
         )}
       </div>
