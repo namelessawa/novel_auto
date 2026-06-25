@@ -62,6 +62,7 @@ async def _probe() -> int:
                 "ratelimitexceeded",
                 "429",
                 "too many requests",
+                "toomanyrequests",  # DeepSeek/ARK type field (no spaces)
                 "quotaexceeded",
                 "serveroverloaded",
             )
