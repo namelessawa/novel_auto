@@ -1,31 +1,44 @@
-"""Vector Store — ChromaDB-backed RAG for long-term detail retrieval."""
+"""Vector Store — ChromaDB-backed RAG for long-term detail retrieval.
+
+iter#AA — module-level chromadb/posthog import 改 lazy. chromadb 在
+opentelemetry-proto 1.40 (需要 protobuf ≥ 4) 上有 transitive 导入失败,
+当前 env 是 protobuf 3.10. 13 个 backend 测试因此 collection error,
+其实只 import 本模块不实例化 VectorStore 不应触发 chromadb chain.
+"""
 
 from __future__ import annotations
 
 import logging
 import os
 
-# Suppress broken posthog telemetry in chromadb 0.5.x
-# The posthog 7.x capture() signature is incompatible with chromadb's usage.
+# Suppress broken posthog telemetry in chromadb 0.5.x — set env at module load
+# so any indirect import of posthog sees ANONYMIZED_TELEMETRY=False.
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 
-import posthog  # noqa: E402
-
-posthog.capture = lambda *args, **kwargs: None  # noqa: E402
-posthog.Posthog.capture = lambda *args, **kwargs: None  # noqa: E402
-
-import chromadb  # noqa: E402
-
-from config.settings import settings  # noqa: E402
-from memory_system.models import Section  # noqa: E402
+from config.settings import settings
+from memory_system.models import Section
 
 logger = logging.getLogger(__name__)
+
+
+def _patch_posthog() -> None:
+    """iter#AA — lazy posthog patch, only when VectorStore instantiated."""
+    try:
+        import posthog
+        posthog.capture = lambda *args, **kwargs: None
+        posthog.Posthog.capture = lambda *args, **kwargs: None
+    except ImportError:
+        pass
 
 
 class VectorStore:
     """Manages embedding storage and semantic retrieval of historical sections."""
 
     def __init__(self, persist_dir: str | None = None) -> None:
+        # iter#AA — chromadb 在 __init__ 内 import, 让 module load 不挂 protobuf
+        # 失败. 测试 import VectorStore 类但不实例化时安全.
+        _patch_posthog()
+        import chromadb  # noqa: WPS433 (intentional lazy)
         persist_dir = os.path.abspath(persist_dir or settings.chroma_persist_dir)
         os.makedirs(persist_dir, exist_ok=True)
         self._client = chromadb.PersistentClient(path=persist_dir)
