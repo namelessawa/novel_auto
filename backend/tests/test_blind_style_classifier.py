@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -11,6 +12,16 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 classifier = importlib.import_module("classify_styles_blind")
+
+
+def test_response_total_tokens_uses_typed_llm_response_fields() -> None:
+    response = SimpleNamespace(
+        usage_prompt_tokens=123,
+        usage_completion_tokens=45,
+        usage={"total_tokens": 999},
+    )
+
+    assert classifier._response_total_tokens(response) == 168
 
 
 def test_anonymous_prompt_hides_registry_keys_and_labels() -> None:

@@ -25,6 +25,22 @@ sys.path[:0] = [str(ROOT), str(ROOT / "backend"), str(ROOT / "scripts")]
 PROMPT_VERSION = "blind-style-v1"
 
 
+def _response_total_tokens(response) -> int:
+    """Read the repository's typed LLMResponse usage fields.
+
+    A small compatibility fallback is retained for script tests and older
+    response wrappers that exposed an OpenAI-like ``usage`` dictionary.
+    """
+    prompt_tokens = getattr(response, "usage_prompt_tokens", None)
+    completion_tokens = getattr(response, "usage_completion_tokens", None)
+    if prompt_tokens is not None or completion_tokens is not None:
+        return int(prompt_tokens or 0) + int(completion_tokens or 0)
+    usage = getattr(response, "usage", {}) or {}
+    if isinstance(usage, dict):
+        return int(usage.get("total_tokens", 0) or 0)
+    return int(getattr(usage, "total_tokens", 0) or 0)
+
+
 def _git_sha() -> str:
     try:
         return subprocess.check_output(
@@ -241,8 +257,7 @@ async def _judge_sample(text: str, style_keys: list[str], salt: str) -> tuple[di
         tick=0,
     )
     judgment = _normalise_judgment(parse_llm_json(response.content), id_to_key)
-    usage = getattr(response, "usage", {}) or {}
-    return judgment, int(usage.get("total_tokens", 0) or 0)
+    return judgment, _response_total_tokens(response)
 
 
 async def _run(args, report: dict, output: Path) -> dict:
