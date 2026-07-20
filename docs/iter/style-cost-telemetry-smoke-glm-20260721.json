@@ -1,0 +1,286 @@
+{
+  "metadata": {
+    "started_at": 1784579299,
+    "git_sha": "5949949a4c04ca32872306cefb6cea7d16d5b06b",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "model": "glm-5.2",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "compatible",
+    "ticks": 1,
+    "no_judge": false,
+    "max_revisions": 0,
+    "shared_bootstrap": true,
+    "last_run_mode": "compatible",
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784579299"
+    },
+    "finished_at": 1784579462,
+    "modes_present": [
+      "compatible"
+    ]
+  },
+  "results": [
+    {
+      "scenario": "compatible",
+      "theme": "apocalypse_wasteland",
+      "style": "rough_grit_realism",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1659,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "独臂人断肢处裹帆布的细节可进一步强化其肉身负担，如提及幻肢痛或残端摩擦感"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "rough_grit_realism",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+          "strict": true,
+          "before": {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "林雪听见绳索绷断的声音。\n\n不是啪的一声脆响，是纤维一根根撕裂的闷响，像骨头被慢慢掰断。她站在补给车左侧，肩膀抵着车厢铁皮，铁皮上的锈渣硌进肩胛骨，隔着已经磨薄的工作服，能感觉到锈片边缘的锋利。雨水顺着领口灌进去，冰凉，混着放射性尘埃的细微颗粒，在皮肤上留下针扎似的刺痛。\n\n“操！”前面拉绳的人骂出声，是个独臂的中年人，断肢处裹着块脏得看不出原色的帆布。他手里的绳子耷拉下来，断口处露出白色的纤维芯，像暴露的筋腱。\n\n补给车陷在城邦北门外的泥沟里，右后轮整个没进泥浆，泥浆是灰褐色的，表面浮着一层油污，雨水打上去溅不起水花，只是砸出一个个小坑，又被泥浆缓慢吞没。车上装着三桶滤芯和两箱压缩营养膏，这是从废墟里翻出来的最后一批库存，魏镇把运输任务交给了林雪和苏墨。\n\n“绳子不够了。”独臂人说，把断绳扔在地上，绳子落在泥里，溅起的泥点粘在他裤腿上。\n\n林雪没说话，绕到车后，蹲下来看陷进泥里的轮胎。轮胎橡胶已经龟裂，裂纹里嵌着碎石子，轮毂上的螺丝锈死了一半。她伸手探进泥浆，手指碰到轮轴，泥浆冷得刺骨，黏稠得像掺了胶水。\n\n“得垫东西。”她站起来，泥浆从手指上滴落，她在裤腿上蹭了蹭，留下几条灰黑色的痕迹。“木板、铁皮、碎石，什么都行。”\n\n独臂人回头看了眼城邦方向，高墙上的哨兵缩在岗亭里，看不清脸。他啐了口唾沫：“废墟里翻去，十分钟。”\n\n几个人散开，往路边倒塌的建筑残骸走去。林雪没动，她盯着补给车上的物资，滤芯桶用塑料布裹着，塑料布破了几个洞，雨水渗进去，桶身上凝着水珠。压缩营养膏的箱子歪了，绑绳松脱，箱子角磕在车厢挡板上，凹进去一块。\n\n苏墨从驾驶室跳下来，他的左腿有点跛，是上个月在灰烬平原踩进变异鼠洞扭伤的，一直没好利索。他走到林雪身边，指关节敲了敲车厢铁皮，发出沉闷的咚咚声。\n\n“齿轮在转，但轴承快断了。”他说，语速很快，雨水顺着他额头的皱纹淌下来，流进眼睛里，他眨也不眨。“我们拖不起，泥沟下面是软土层，越压越深。”\n\n林雪看了眼天色，铅灰色云层压得很低，风里带着臭氧的腥味，这是辐射风暴的前兆。她算了算时间，距离天黑还有不到两小时，如果补给车今晚进不了城，滤芯受潮，营养膏的密封一破，这批物资就废了。\n\n独臂人拖着一块门板回来，门板是复合材料的，边缘碎了，露出里面的蜂窝结构。他身后跟着两个人，抬着根锈穿的工字钢。\n\n“垫后轮。”林雪说，声音被风撕碎，她重复了一遍，指着泥沟里的轮胎。\n\n他们把门板塞进轮胎前面，工字钢卡在门板下当杠杆。独臂人重新找了根绳子，这根更旧，绳身上有干涸的血迹，黑褐色的，已经渗进纤维里。他把绳子绑在车头挂钩上，另一端甩给林雪。\n\n林雪接住绳子，粗糙的纤维磨着她掌心的旧茧，茧子边缘裂开，露出嫩红色的新肉。她把绳子在手上绕了两圈，勒紧，感觉到绳子吃进皮肤。\n\n“拉。”她说。\n\n六个人，六根绳子，肩膀抵着肩膀，脚蹬进泥里。林雪感觉到绳子绷直，纤维发出吱嘎声，肩关节传来钝痛，像有人用钝刀在关节缝里撬。她咬住牙，牙根发酸，雨水混着汗水流进嘴里，咸腥。\n\n轮胎在泥浆里空转了一圈，泥浆飞溅，打在林雪腿上。门板被压得嘎吱响，蜂窝结构塌陷下去，但没碎。\n\n“再来！”独臂人吼，嗓子破音。\n\n第二次拉，工字钢弯了，锈皮崩落，露出里面还算完整的钢芯。轮胎碾过门板，压碎了边缘，但终于咬住了硬地，车身晃了一下，往前挪了半米。\n\n半米，够了。\n\n林雪松开绳子，手掌上勒出两条紫红色的印子，皮没破，但皮下渗着血点。她甩了甩手，手指发麻，握不拢。\n\n补给车慢慢驶出泥沟，引擎发出不均匀的突突声，排气管喷出黑烟，烟里带着未燃尽的油雾。\n\n苏墨拍了拍车厢，铁皮上的锈渣簌簌往下掉。他回头看林雪，嘴唇动了动，没说话，只是点了点头。\n\n林雪没回应，她在看城邦高墙上的探照灯，灯光在雨幕里晕开，昏黄，像一只半睁的眼。风更大了，臭氧的腥味浓得呛人。\n\n“风暴要来了。”独臂人说，把断绳卷起来夹在腋下。“快进城。”\n\n补给车颠簸着驶向北门，车轮碾过碎石，溅起的泥水落在路边的废铁堆上，发出细碎的沙沙声。",
+          "style_trace": {
+            "preset_key": "rough_grit_realism",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+            "strict": true,
+            "before": {
+              "style_key": "rough_grit_realism",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北门避难城邦北门外泥沟旁",
+                "injuries": "手掌勒伤，皮下渗血点，肩关节钝痛",
+                "status": "存活，疲惫"
+              },
+              "char_sumo": {
+                "location": "北门避难城邦北门外，补给车驾驶室",
+                "injuries": "左腿旧伤未愈，跛行",
+                "status": "存活"
+              }
+            },
+            "items": {
+              "补给车": {
+                "owner": "北门避难城邦",
+                "contents": "三桶滤芯、两箱压缩营养膏（部分受潮风险）",
+                "condition": "右后轮脱困，车身多处锈蚀，引擎运转不稳"
+              },
+              "绳索": {
+                "owner": "北门避难城邦劳工",
+                "condition": "一根断裂，一根磨损严重带血迹",
+                "quantity": "2根（1根报废）"
+              }
+            },
+            "knowledge": [
+              "辐射风暴即将来临，距天黑不到两小时",
+              "补给车陷入的泥沟下方是软土层，拖延会导致更严重陷落",
+              "滤芯和营养膏是最后一批库存，受潮即报废"
+            ],
+            "time_marker": "深秋傍晚，辐射风暴前约两小时"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "补给车陷进泥沟，饥饿的人们必须用磨破的绳索和受伤的肩膀把它拖出。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "魏镇"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏墨",
+              "char_weizhen": "魏镇"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "补给车陷进泥沟，饥饿的人们必须用磨破的绳索和受伤的肩膀把它拖出。",
+                  "met": true,
+                  "prose_evidence": [
+                    "补给车陷在城邦北门外的泥沟里",
+                    "六个人，六根绳子，肩膀抵着肩膀，脚蹬进泥里",
+                    "林雪感觉到绳子绷直，纤维发出吱嘎声，肩关节传来钝痛",
+                    "补给车慢慢驶出泥沟"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.补给车.condition"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成绳索断裂、垫物、拉车脱困全过程，补给车最终驶出泥沟，与源事件要求和声明的结束状态一致，无硬矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "林雪听见绳索绷断的声音。\n\n不是啪的一声脆响，是纤维一根根撕裂的闷响，像骨头被慢慢掰断。她站在补给车左侧，肩膀抵着车厢铁皮，铁皮上的锈渣硌进肩胛骨，隔着已经磨薄的工作服，能感觉到锈片边缘的锋利。雨水顺着领口灌进去，冰凉，混着放射性尘埃的细微颗粒，在皮肤上留下针扎似的刺痛。\n\n“操！”前面拉绳的人骂出声，是个独臂的中年人，断肢处裹着块脏得看不出原色的帆布。他手里的绳子耷拉下来，断口处露出白色的纤维芯，像暴露的筋腱。\n\n补给车陷在城邦北门外的泥沟里，右后轮整个没进泥浆，泥浆是灰褐色的，表面浮着一层油污，雨水打上去溅不起水花，只是砸出一个个小坑，又被泥浆缓慢吞没。车上装着三桶滤芯和两箱压缩营养膏，这是从废墟里翻出来的最后一批库存，魏镇把运输任务交给了林雪和苏墨。\n\n“绳子不够了。”独臂人说，把断绳扔在地上，绳子落在泥里，溅起的泥点粘在他裤腿上。\n\n林雪没说话，绕到车后，蹲下来看陷进泥里的轮胎。轮胎橡胶已经龟裂，裂纹里嵌着碎石子，轮毂上的螺丝锈死了一半。她伸手探进泥浆，手指碰到轮轴，泥浆冷得刺骨，黏稠得像掺了胶水。\n\n“得垫东西。”她站起来，泥浆从手指上滴落，她在裤腿上蹭了蹭，留下几条灰黑色的痕迹。“木板、铁皮、碎石，什么都行。”\n\n独臂人回头看了眼城邦方向，高墙上的哨兵缩在岗亭里，看不清脸。他啐了口唾沫：“废墟里翻去，十分钟。”\n\n几个人散开，往路边倒塌的建筑残骸走去。林雪没动，她盯着补给车上的物资，滤芯桶用塑料布裹着，塑料布破了几个洞，雨水渗进去，桶身上凝着水珠。压缩营养膏的箱子歪了，绑绳松脱，箱子角磕在车厢挡板上，凹进去一块。\n\n苏墨从驾驶室跳下来，他的左腿有点跛，是上个月在灰烬平原踩进变异鼠洞扭伤的，一直没好利索。他走到林雪身边，指关节敲了敲车厢铁皮，发出沉闷的咚咚声。\n\n“齿轮在转，但轴承快断了。”他说，语速很快，雨水顺着他额头的皱纹淌下来，流进眼睛里，他眨也不眨。“我们拖不起，泥沟下面是软土层，越压越深。”\n\n林雪看了眼天色，铅灰色云层压得很低，风里带着臭氧的腥味，这是辐射风暴的前兆。她算了算时间，距离天黑还有不到两小时，如果补给车今晚进不了城，滤芯受潮，营养膏的密封一破，这批物资就废了。\n\n独臂人拖着一块门板回来，门板是复合材料的，边缘碎了，露出里面的蜂窝结构。他身后跟着两个人，抬着根锈穿的工字钢。\n\n“垫后轮。”林雪说，声音被风撕碎，她重复了一遍，指着泥沟里的轮胎。\n\n他们把门板塞进轮胎前面，工字钢卡在门板下当杠杆。独臂人重新找了根绳子，这根更旧，绳身上有干涸的血迹，黑褐色的，已经渗进纤维里。他把绳子绑在车头挂钩上，另一端甩给林雪。\n\n林雪接住绳子，粗糙的纤维磨着她掌心的旧茧，茧子边缘裂开，露出嫩红色的新肉。她把绳子在手上绕了两圈，勒紧，感觉到绳子吃进皮肤。\n\n“拉。”她说。\n\n六个人，六根绳子，肩膀抵着肩膀，脚蹬进泥里。林雪感觉到绳子绷直，纤维发出吱嘎声，肩关节传来钝痛，像有人用钝刀在关节缝里撬。她咬住牙，牙根发酸，雨水混着汗水流进嘴里，咸腥。\n\n轮胎在泥浆里空转了一圈，泥浆飞溅，打在林雪腿上。门板被压得嘎吱响，蜂窝结构塌陷下去，但没碎。\n\n“再来！”独臂人吼，嗓子破音。\n\n第二次拉，工字钢弯了，锈皮崩落，露出里面还算完整的钢芯。轮胎碾过门板，压碎了边缘，但终于咬住了硬地，车身晃了一下，往前挪了半米。\n\n半米，够了。\n\n林雪松开绳子，手掌上勒出两条紫红色的印子，皮没破，但皮下渗着血点。她甩了甩手，手指发麻，握不拢。\n\n补给车慢慢驶出泥沟，引擎发出不均匀的突突声，排气管喷出黑烟，烟里带着未燃尽的油雾。\n\n苏墨拍了拍车厢，铁皮上的锈渣簌簌往下掉。他回头看林雪，嘴唇动了动，没说话，只是点了点头。\n\n林雪没回应，她在看城邦高墙上的探照灯，灯光在雨幕里晕开，昏黄，像一只半睁的眼。风更大了，臭氧的腥味浓得呛人。\n\n“风暴要来了。”独臂人说，把断绳卷起来夹在腋下。“快进城。”\n\n补给车颠簸着驶向北门，车轮碾过碎石，溅起的泥水落在路边的废铁堆上，发出细碎的沙沙声。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "林雪听见绳索绷断的声音。\n\n不是啪的一声脆响，是纤维一根根撕裂的闷响，像骨头被慢慢掰断。她站在补给车左侧，肩膀抵着车厢铁皮，铁皮上的锈渣硌进肩胛骨，隔着已经磨薄的工作服，能感觉到锈片边缘的锋利。雨水顺着领口灌进去，冰凉，混着放射性尘埃的细微颗粒，在皮肤上留下针扎似的刺痛。\n\n“操！”前面拉绳的人骂出声，是个独臂的中年人，断肢处裹着块脏得看不出原色的帆布。他手里的绳子耷拉下来，断口处露出白色的纤维芯，像暴露的筋腱。\n\n补给车陷在城邦北门外的泥沟里，右后轮整个没进泥浆，泥浆是灰褐色的，表面浮着一层油污，雨水打上去溅不起水花，只是砸出一个个小坑，又被泥浆缓慢吞没。车上装着三桶滤芯和两箱压缩营养膏，这是从废墟里翻出来的最后一批库存，魏镇把运输任务交给了林雪和苏墨。\n\n“绳子不够了。”独臂人说，把断绳扔在地上，绳子落在泥里，溅起的泥点粘在他裤腿上。\n\n林雪没说话，绕到车后，蹲下来看陷进泥里的轮胎。轮胎橡胶已经龟裂，裂纹里嵌着碎石子，轮毂上的螺丝锈死了一半。她伸手探进泥浆，手指碰到轮轴，泥浆冷得刺骨，黏稠得像掺了胶水。\n\n“得垫东西。”她站起来，泥浆从手指上滴落，她在裤腿上蹭了蹭，留下几条灰黑色的痕迹。“木板、铁皮、碎石，什么都行。”\n\n独臂人回头看了眼城邦方向，高墙上的哨兵缩在岗亭里，看不清脸。他啐了口唾沫：“废墟里翻去，十分钟。”\n\n几个人散开，往路边倒塌的建筑残骸走去。林雪没动，她盯着补给车上的物资，滤芯桶用塑料布裹着，塑料布破了几个洞，雨水渗进去，桶身上凝着水珠。压缩营养膏的箱子歪了，绑绳松脱，箱子角磕在车厢挡板上，凹进去一块。\n\n苏墨从驾驶室跳下来，他的左腿有点跛，是上个月在灰烬平原踩进变异鼠洞扭伤的，一直没好利索。他走到林雪身边，指关节敲了敲车厢铁皮，发出沉闷的咚咚声。\n\n“齿轮在转，但轴承快断了。”他说，语速很快，雨水顺着他额头的皱纹淌下来，流进眼睛里，他眨也不眨。“我们拖不起，泥沟下面是软土层，越压越深。”\n\n林雪看了眼天色，铅灰色云层压得很低，风里带着臭氧的腥味，这是辐射风暴的前兆。她算了算时间，距离天黑还有不到两小时，如果补给车今晚进不了城，滤芯受潮，营养膏的密封一破，这批物资就废了。\n\n独臂人拖着一块门板回来，门板是复合材料的，边缘碎了，露出里面的蜂窝结构。他身后跟着两个人，抬着根锈穿的工字钢。\n\n“垫后轮。”林雪说，声音被风撕碎，她重复了一遍，指着泥沟里的轮胎。\n\n他们把门板塞进轮胎前面，工字钢卡在门板下当杠杆。独臂人重新找了根绳子，这根更旧，绳身上有干涸的血迹，黑褐色的，已经渗进纤维里。他把绳子绑在车头挂钩上，另一端甩给林雪。\n\n林雪接住绳子，粗糙的纤维磨着她掌心的旧茧，茧子边缘裂开，露出嫩红色的新肉。她把绳子在手上绕了两圈，勒紧，感觉到绳子吃进皮肤。\n\n“拉。”她说。\n\n六个人，六根绳子，肩膀抵着肩膀，脚蹬进泥里。林雪感觉到绳子绷直，纤维发出吱嘎声，肩关节传来钝痛，像有人用钝刀在关节缝里撬。她咬住牙，牙根发酸，雨水混着汗水流进嘴里，咸腥。\n\n轮胎在泥浆里空转了一圈，泥浆飞溅，打在林雪腿上。门板被压得嘎吱响，蜂窝结构塌陷下去，但没碎。\n\n“再来！”独臂人吼，嗓子破音。\n\n第二次拉，工字钢弯了，锈皮崩落，露出里面还算完整的钢芯。轮胎碾过门板，压碎了边缘，但终于咬住了硬地，车身晃了一下，往前挪了半米。\n\n半米，够了。\n\n林雪松开绳子，手掌上勒出两条紫红色的印子，皮没破，但皮下渗着血点。她甩了甩手，手指发麻，握不拢。\n\n补给车慢慢驶出泥沟，引擎发出不均匀的突突声，排气管喷出黑烟，烟里带着未燃尽的油雾。\n\n苏墨拍了拍车厢，铁皮上的锈渣簌簌往下掉。他回头看林雪，嘴唇动了动，没说话，只是点了点头。\n\n林雪没回应，她在看城邦高墙上的探照灯，灯光在雨幕里晕开，昏黄，像一只半睁的眼。风更大了，臭氧的腥味浓得呛人。\n\n“风暴要来了。”独臂人说，把断绳卷起来夹在腋下。“快进城。”\n\n补给车颠簸着驶向北门，车轮碾过碎石，溅起的泥水落在路边的废铁堆上，发出细碎的沙沙声。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_rough_grit_realism_1784579397836",
+      "cost": {
+        "duration_sec": 64.503,
+        "prompt_tokens": 9789,
+        "completion_tokens": 3499,
+        "total_tokens": 13288,
+        "cached_tokens": 0,
+        "call_count": 4,
+        "usage_status": "REPORTED",
+        "by_agent": {
+          "bootstrap:regenerate_style": 2175,
+          "narrative_state_verifier": 3802,
+          "narrator": 5790,
+          "style_validation_judge": 1521
+        },
+        "unattributed_tokens": 0
+      }
+    }
+  ],
+  "cost": {
+    "measurement_version": "token-tracker-v1",
+    "bootstrap_by_theme": {
+      "apocalypse_wasteland": {
+        "duration_sec": 96.672,
+        "prompt_tokens": 4374,
+        "completion_tokens": 5747,
+        "total_tokens": 10121,
+        "cached_tokens": 0,
+        "call_count": 4,
+        "usage_status": "REPORTED",
+        "by_agent": {
+          "bootstrap:characters": 4755,
+          "bootstrap:open_loops": 1845,
+          "bootstrap:style": 1561,
+          "bootstrap:world": 1960
+        },
+        "unattributed_tokens": 0
+      }
+    },
+    "samples_with_cost": 1,
+    "samples_without_cost": 0,
+    "total": {
+      "duration_sec": 161.175,
+      "prompt_tokens": 14163,
+      "completion_tokens": 9246,
+      "total_tokens": 23409,
+      "cached_tokens": 0,
+      "call_count": 8,
+      "usage_status": "REPORTED",
+      "by_agent": {
+        "bootstrap:characters": 4755,
+        "bootstrap:open_loops": 1845,
+        "bootstrap:regenerate_style": 2175,
+        "bootstrap:style": 1561,
+        "bootstrap:world": 1960,
+        "narrative_state_verifier": 3802,
+        "narrator": 5790,
+        "style_validation_judge": 1521
+      },
+      "unattributed_tokens": 0,
+      "missing_usage_blocks": 0
+    }
+  },
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "by_scenario": {
+      "compatible": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  }
+}
