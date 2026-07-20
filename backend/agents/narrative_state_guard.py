@@ -519,7 +519,6 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
                 r"(?:条件|必须|还要|任务|负责|修好|维修|寻找|带路|服役|"
                 r"抵押|没收|扣下|留下|留在|隔离|等待|禁止|不得|不能|"
                 r"交出(?![^，。；]{0,6}(?:地图|图纸|路线图))|外加|"
-                r"欠.{0,8}(?:一次|人情|债|账)|"
                 r"需要.{0,16}(?:你|修|找|带|滤芯|零件|任务|工作))"
             )
             non_map_item_cost = re.compile(
@@ -546,9 +545,8 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
 
         completion = re.compile(
             r"(?:进入|越过|穿过|跨过|钻过|挤进|走进|进到|"
-            r"(?:往|向)(?:里|内|外|城内|门内).{0,3}(?:走|挪|移)|"
             r"(?:挤|滑|滚|钻|跨|迈|拖).{0,4}(?:过|进)|"
-            r"(?:推|拉|拖|塞).{0,6}(?:出去|进去|过门|进门|进门缝|出门))"
+            r"(?:推|拉).{0,6}(?:出去|进去|过门))"
         )
         group_subject = re.compile(r"(?:两人|二人|他们|她们|我们)")
         if any(group_subject.search(quote) and completion.search(quote)
@@ -564,34 +562,15 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
                 for entity_id, name in entity_names.items()
                 if name and name in quote
             }
-            # “A 把 B 推进门缝”只证明 B 过门，不能顺带把 A 算作已过门；
-            # A 若随后“跟着钻过去”，下一条证据会单独计入 A。
-            passenger_ids = {
-                entity_id
-                for entity_id, name in entity_names.items()
-                if name and re.search(
-                    rf"把\s*{re.escape(name)}.{{0,6}}(?:推|拉|拖|塞)"
-                    rf".{{0,6}}(?:进|出|过)",
-                    quote,
-                )
-            }
-            if passenger_ids:
-                actor_ids.update(passenger_ids)
-            else:
-                actor_ids.update(named_here)
-                if tracking_character_id and re.search(
-                    r"(?:我|本人|她自己|他自己)", quote
-                ):
-                    actor_ids.add(tracking_character_id)
-                elif (
-                    tracking_character_id
-                    and re.search(r"(?:她|他)", quote)
-                    and any(
-                        entity_id != tracking_character_id
-                        for entity_id in named_here
-                    )
-                ):
-                    actor_ids.add(tracking_character_id)
+            actor_ids.update(named_here)
+            if tracking_character_id and re.search(r"(?:我|本人)", quote):
+                actor_ids.add(tracking_character_id)
+            elif (
+                tracking_character_id
+                and re.search(r"(?:她|他)(?:自己)?", quote)
+                and any(entity_id != tracking_character_id for entity_id in named_here)
+            ):
+                actor_ids.add(tracking_character_id)
             # “A扶/背/拖着B穿过门”本身明确覆盖动作双方。
             if re.search(r"(?:扶|架|背|拖|搀|抱).{0,12}(?:进入|越过|穿过|跨过|钻过|挤进|走进)", quote):
                 for entity_id, name in entity_names.items():
@@ -606,26 +585,12 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
     def _rain_damage_evidence_ok(
         *, prose_evidence: list[str], narrative_text: str
     ) -> bool:
-        item = re.compile(r"(?:图|图纸|地图|防水纸|水文|钛合金板|板子)")
-        damage = re.compile(r"(?:损|坏|破|蚀|糊|洞|烂|湿|洇|模糊|泛白)")
+        item = re.compile(r"(?:图|图纸|地图|防水纸)")
+        damage = re.compile(r"(?:损|坏|破|蚀|糊|洞|烂|湿|洇|模糊)")
         direct_rain = re.compile(r"(?:雨|酸雨|雨水|水滴|滴水|第[一二三四五六七八九十]+滴水)")
         for quote in prose_evidence:
             if item.search(quote) and damage.search(quote) and direct_rain.search(quote):
                 return True
-
-        # 真实输出常用“钛合金板/板子”承接上一句的水文地图，并在下一条
-        # evidence 写“酸雨渗进刻痕”。要求三类词都出现在同组逐字引文中。
-        combined_evidence = "。".join(prose_evidence)
-        rain_contact = re.compile(
-            r"(?:雨|酸雨|雨水).{0,12}(?:淋|浸|渗|蚀|落|打|砸)|"
-            r"(?:淋|浸|渗|蚀).{0,8}(?:雨|酸雨|雨水)"
-        )
-        if (
-            item.search(combined_evidence)
-            and damage.search(combined_evidence)
-            and rain_contact.search(combined_evidence)
-        ):
-            return True
 
         sentences = [
             sentence.strip()
@@ -639,11 +604,7 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
         for index, sentence in enumerate(sentences):
             if not (item.search(sentence) and damage.search(sentence)):
                 continue
-            # 中文叙事也会先写“地图湿了”，紧接着补一句“雨越下越大”。
-            # 只放宽到前后各两句，避免把远处无关天气误接为因果。
-            context = "".join(
-                sentences[max(0, index - 2):min(len(sentences), index + 3)]
-            )
+            context = "".join(sentences[max(0, index - 2):index + 1])
             if rain_started.search(context):
                 return True
         return False
