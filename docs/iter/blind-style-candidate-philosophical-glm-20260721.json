@@ -1,0 +1,482 @@
+{
+  "metadata": {
+    "started_at": 1784578904,
+    "git_sha": "41d363270836f50f9c03448f62e405217f4683f8",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "model": "glm-5.2",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "input": "E:\\pythonproject\\novel_auto\\docs\\iter\\style-candidate-philosophical-glm-20260721.json",
+    "input_sha256": "0d73b983f40089bee3cb2c16b87c15dfd474e0c3988aa95d6f38b6fe39deae9e",
+    "prompt_version": "blind-style-v1",
+    "style_schema_version": "2026-07-15.5",
+    "candidate_prompt_hashes": {
+      "black_humor": "498233bf72c7fe8dd37c961a12b263903fc1480f6b01ea45433815c6798dff2b",
+      "classical_chapter": "fd8d389a091ba4f9835971bde1e918242b5ecc3f2ff2b4c3a226d28b7258515d",
+      "colloquial_web": "5b5b025aa9627077d481df75148b0028180e35be230d574ba3289d49a3671e07",
+      "ensemble_epic": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "first_person_immersive": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+      "hot_blooded": "564b1b87c264c5a9f4ff404269e5869ad7971dd1f55f15212d7d3f3fe2a6e09a",
+      "literary": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+      "lyrical_poetic": "d3c1dfb9d4ea9d08c5c1f20fc5191685dd02ae413134090484e8e866b5b7d0c2",
+      "melancholic": "eaf91393ec594ed99f4fdd7170e12b30dccf3c2ac87ec5e99e3bb312491c6c64",
+      "noir_cold": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+      "philosophical_meditative": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+      "rough_grit_realism": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+      "screenplay_visual": "46665d8e8d55aff4b9390738fe9b3867dc5028f709e33be8468ac954fb7f558c",
+      "somber": "45db147b32aa31efa779ca166c25d13594fbcac9dd7f81e7d9376fcd4572bdb1",
+      "warm_healing": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+      "xianxia_fast": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58"
+    },
+    "target_identity_sent_to_judge": false,
+    "configured_judge_budget_tokens": 50000,
+    "finished_at": 1784578936
+  },
+  "results": [
+    {
+      "sample_id": "pressure:apocalypse_wasteland:philosophical_meditative:0",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "philosophical_meditative",
+      "char_count": 1355,
+      "text_sha256": "6e38572604204379470f1a3f4f2eb892547647c3b21bd3ab841da98662390345",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C09",
+            "style": "noir_cold",
+            "confidence": 0.92,
+            "evidence": [
+              "拒绝感伤化，心理活动转化成动作：'她没抬头，手也没停'、'她没擦'、'她没包扎'",
+              "信息克制，读者比角色多知0.5步：守门者不知道通讯器信号内容，读者也不知道，直到林雪说出'别来'才揭示",
+              "对白短，一句话一个意图：'闸门要封了。'、'不用跑。'、'别来。'",
+              "每段视点角色至少1个micro-action：'膝盖咔嗒响了一声'、'把带子在手腕上缠了两圈，打了个死结'"
+            ]
+          },
+          {
+            "candidate_id": "C13",
+            "style": "rough_grit_realism",
+            "confidence": 0.85,
+            "evidence": [
+              "肉身重量感强，正面写破损与负担：'膝盖位置的裤管撕开一道口子，血已经凝成黑块'、'骨头发出咯吱咯吱的声音'、'掌心有一道新划的口子'",
+              "物件残破才真实：'撬棍头上还挂着一片守门者制服上的铜扣'、'握柄上缠的胶布已经被血浸透，黏糊糊的'、'数字已经被磨掉一半'",
+              "角色累、疼、饿：'左腿拖在地上'、'脸憋得发紫'、'血渗得很慢'",
+              "拒绝美化：'锈水从墙缝滴落'、'铁锈和灰尘从门框上簌簌往下掉'、'血渗进水泥地的裂缝里'"
+            ]
+          },
+          {
+            "candidate_id": "C06",
+            "style": "xianxia_fast",
+            "confidence": 0.78,
+            "evidence": [
+              "前80字亮出具体阻碍：警报响、闸门要封、检查站扣了东西",
+              "角色立刻出手/取物/作选择：林雪拿过撬棍朝检查站走过去",
+              "同一场内兑现可用收益：用撬棍上的铜扣和'两个字'逼守门者扔回包",
+              "最后两句让更近的新威胁当场撞上来：'还有六十八小时'暗示更大时间压力"
+            ]
+          }
+        ],
+        "observed_features": [
+          "对白短促，一句话一个意图，无感叹号",
+          "心理活动完全转化为身体动作和物件反应",
+          "信息克制，关键信息延迟揭示（'别来'）",
+          "肉身负担正面描写：血、骨头声、伤口",
+          "物件残破细节密集：撬棍、铜扣、胶布、锈水",
+          "动作驱动叙事，每段有明确物理行动",
+          "结尾以新威胁（时间压力）和人物动作收束",
+          "拒绝感伤化，无抒情段落和内心独白"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 5184
+    },
+    {
+      "sample_id": "compatible:scifi_soft_lit:philosophical_meditative:1",
+      "scenario": "compatible",
+      "theme": "scifi_soft_lit",
+      "expected_style": "philosophical_meditative",
+      "char_count": 754,
+      "text_sha256": "a591ab708616a09f1e2086527c92f018eaca3c50f9048a2f6aa359155c714af3",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C16",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "拒绝感伤化，不用'突然'/'心跳加速'类直报情绪：全文无感叹号，无情绪直报词",
+              "心理活动转化成动作：'她把纸巾扔进垃圾桶，镜中的纸团在半空中停了一瞬才落进去'，'林雪把手抽回来'，'她关上抽屉，锁了'",
+              "信息克制——读者比角色多知0.5步：镜中延迟、名字移动、钟停，信息逐步释放，不解释",
+              "对白短，一句话一个意图：'明天会在哪里。'不是问句，克制"
+            ]
+          },
+          {
+            "candidate_id": "C15",
+            "style": "literary",
+            "confidence": 0.72,
+            "evidence": [
+              "每段至少一个摄像机拍得到的具体物：感应水龙头、纸巾、地图（折叠处磨出毛边）、锁扣、清算塔、霓虹广告",
+              "情绪由身体动作和物件反应承载：'她用纸巾擦手，纸巾碰到皮肤时，镜中的自己还没抬手'，'她用手指碰了碰那个名字。墨迹是干的，但指尖触到纸面时，名字的最后一笔……微微移动了'",
+              "内心1-2句白描即可：'她记得昨天名字写在清算塔东侧'，'四百米。她每天下班后走回家，路线经过清算塔东侧，从不到西边的神经漫道。名字不该在那里。'",
+              "对白节制，引号外配一个动作beat：'明天会在哪里。'——声音在空诊室里落下去，没人回答。她站起来，走到窗前"
+            ]
+          },
+          {
+            "candidate_id": "C11",
+            "style": "melancholic",
+            "confidence": 0.68,
+            "evidence": [
+              "整体压抑，但不靠惨剧堆量——用细节积累：钟停在14:07、镜中延迟、名字移动、酸雨、灰橙色云层",
+              "美感存在但不带温度：'镜中的纸团在半空中停了一瞬才落进去'，'名字的最后一笔——'雪'字的那一捺——微微移动了，像什么东西在纸下面推它'",
+              "角色克制：林雪全程无激烈情绪表达，'不是问句'，'没人回答'",
+              "首段前两句内点出视点角色名字：'林雪在诊所的洗手间里洗手'"
+            ]
+          }
+        ],
+        "observed_features": [
+          "第一人称未使用，全篇第三人称有限视点（林雪）",
+          "无感叹号，情绪克制，无直报情绪词",
+          "心理活动通过动作和物件反应承载（镜中延迟、名字移动、抽手、关抽屉）",
+          "信息逐步释放，读者与角色之间存在信息差（钟停、名字移动原因未解释）",
+          "对白极短且克制（仅一句'明天会在哪里。'，且非问句）",
+          "每段均有具体可感的物件（水龙头、纸巾、地图、锁扣、清算塔、霓虹广告）",
+          "细节积累压抑感（酸雨、灰橙色云层、钟停、名字自行移动）",
+          "段落短，动作密集，无长段心理独白或环境铺陈"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 4921
+    }
+  ],
+  "summary": {
+    "total_samples": 2,
+    "valid_samples": 2,
+    "top1_hits": 0,
+    "top3_hits": 0,
+    "top1_accuracy": 0.0,
+    "top3_accuracy": 0.0,
+    "by_scenario": {
+      "pressure": {
+        "total": 1,
+        "top1": 0,
+        "top3": 0
+      },
+      "compatible": {
+        "total": 1,
+        "top1": 0,
+        "top3": 0
+      }
+    },
+    "confusion_matrix": {
+      "black_humor": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "classical_chapter": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "colloquial_web": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "ensemble_epic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "first_person_immersive": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "hot_blooded": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "literary": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "lyrical_poetic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "melancholic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "noir_cold": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "philosophical_meditative": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 2,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "rough_grit_realism": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "screenplay_visual": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "somber": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "warm_healing": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "xianxia_fast": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      }
+    },
+    "top_confusions": [
+      {
+        "expected": "philosophical_meditative",
+        "predicted": "noir_cold",
+        "count": 2
+      }
+    ]
+  },
+  "execution": {
+    "status": "COMPLETE",
+    "configured_judge_budget_tokens": 50000,
+    "per_call_reserve_tokens": 5500,
+    "actual_judge_tokens": 10105,
+    "target_samples": 2,
+    "completed_samples": 2,
+    "remaining_samples": 0
+  }
+}

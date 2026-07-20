@@ -1,0 +1,462 @@
+{
+  "metadata": {
+    "started_at": 1784578531,
+    "git_sha": "41d363270836f50f9c03448f62e405217f4683f8",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "model": "glm-5.2",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "both",
+    "ticks": 1,
+    "no_judge": false,
+    "max_revisions": 0,
+    "shared_bootstrap": true,
+    "last_run_mode": "both",
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784578531",
+      "scifi_soft_lit": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_scifi_soft_lit_1784578531"
+    },
+    "finished_at": 1784578893,
+    "modes_present": [
+      "compatible",
+      "pressure"
+    ]
+  },
+  "results": [
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "philosophical_meditative",
+      "preset_version": "2026-07-21.1",
+      "prompt_hash": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1355,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "高压场景（闸门下降、郑铁柱顶门）保留了完整事件结果，未退化为纯短对白和动作流，但‘具体物→概念问题→人物选择’链在结尾处稍显隐晦，可更明确地让林雪对‘六十八小时’这一时间概念做出一个具身选择或代价承接。"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "philosophical_meditative",
+          "preset_version": "2026-07-21.1",
+          "prompt_hash": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+          "strict": true,
+          "before": {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报响的时候，林雪正蹲在三号闸门检修口旁边，用螺丝刀挑一块卡在齿轮里的碎骨。骨片很小，发黄，像是某个指关节。她没抬头，手也没停。警报声从头顶的扩音器里碾下来，那种老式电喇叭的嘶鸣，每隔两秒断一次，断的时候能听见自己牙关咬紧的声音。\n\n郑铁柱从甬道拐角撞出来，左腿拖在地上，膝盖位置的裤管撕开一道口子，血已经凝成黑块。他手里攥着半截撬棍，撬棍头上还挂着一片守门者制服上的铜扣。\n\n“闸门要封了。”他说，声音像从喉咙深处挤出来。“三分钟。检查站的人把东西扣了，说通行证过期。”\n\n林雪把螺丝刀插回腰间工具袋，站起来。膝盖咔嗒响了一声。她看向郑铁柱身后那条甬道，甬道尽头是检查站的铁栅栏，栅栏后面站着两个人影，其中一个肩上挎着她的帆布包。包里有一台便携式水质检测仪，一块旧时代军用通讯器的备用电池，还有小草昨天塞给她的一小袋变异菌干——那孩子说，菌干能顶两天。\n\n“他扣的不是通行证。”林雪说，“他扣的是时间。”\n\n郑铁柱用撬棍撑着墙壁，喘气声很重。“我试过讲道理。他说要等议事会的书面批文。书面批文——你听听，这都什么时候了。”\n\n扩音器里的警报断了一次，再响起来时，频率变了。从嘶鸣变成短促的嘟嘟声。那是封门倒计时进入最后一分钟的警告。\n\n林雪走过去，从郑铁柱手里拿过撬棍。撬棍很沉，握柄上缠的胶布已经被血浸透，黏糊糊的。她没擦。\n\n“你腿还能走？”\n\n“能走，但跑不了。”\n\n“不用跑。”\n\n她朝检查站走过去。甬道两侧的墙壁上渗着锈水，踩上去的每一步都带着黏腻的回声。栅栏后面那个挎包的守门者看见她，右手按上腰间的电击棍。\n\n“站住。我说过了，没有批文——”\n\n林雪把撬棍举起来，不是打人，是横在胸前，让他看清楚撬棍头上那片铜扣。铜扣上面刻着城邦守卫队的编号，数字已经被磨掉一半，但形状还在。\n\n“你扣的那个包，”她说，“里面有一块电池。电池是给一台军用通讯器用的。那台通讯器每隔四十七分钟发一次信号，信号内容只有两个字。”\n\n守门者的手停在电击棍上，没动。\n\n“你不想知道是哪两个字？”林雪问。\n\n警报声停了。甬道里突然很静，静得能听见锈水从墙缝滴落的声音。然后闸门开始下降，铁锈和灰尘从门框上簌簌往下掉。\n\n守门者看了一眼闸门，又看了一眼林雪手里的撬棍。他把包从肩上卸下来，扔过栅栏。包落在地上，溅起一片灰。\n\n林雪捡起包，转身往回走。郑铁柱已经挪到闸门边上，用肩膀顶着下降的门板，脸憋得发紫。门板压着他的肩胛骨，骨头发出咯吱咯吱的声音。\n\n她从门缝下面滑过去，反手拽住郑铁柱的衣领，把他整个人拖出来。闸门在他们身后砸到底，震起一团尘雾。\n\n郑铁柱躺在地上，左腿蜷着，血从膝盖渗出来，浸进水泥地的裂缝里。他盯着天花板，喉结滚了一下。“你刚才说的那两个字——是真的？”\n\n林雪蹲下来，拉开帆布包的拉链。检测仪还在，电池还在，菌干还在。她合上包，把带子在手腕上缠了两圈，打了个死结。\n\n“真的。”她说，“别来。”\n\n郑铁柱闭上眼睛，没再问。\n\n林雪站起来，把撬棍插进工具袋。她低头看了一眼自己手掌，掌心有一道新划的口子，是刚才滑过闸门时被铁皮割的。血渗得很慢，和撬棍上的旧血混在一起，分不清是谁的。\n\n她没包扎。她抬头看甬道尽头，检查站的灯还亮着，但栅栏后面已经没人了。\n\n“走吧。”她说，“还有六十八小时。”",
+          "style_trace": {
+            "preset_key": "philosophical_meditative",
+            "preset_version": "2026-07-21.1",
+            "prompt_hash": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+            "strict": true,
+            "before": {
+              "style_key": "philosophical_meditative",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "第七避难城邦三号闸门外侧甬道",
+                "injuries": "左手掌新割伤，未包扎",
+                "status": "存活，携带帆布包离开检查站"
+              },
+              "char_zhengtiezhu": {
+                "location": "第七避难城邦三号闸门外侧甬道",
+                "injuries": "左腿膝盖撕裂伤，无法奔跑",
+                "status": "存活，被林雪拖出闸门"
+              }
+            },
+            "items": {
+              "帆布包": "持有者林雪，内含便携式水质检测仪、军用通讯器备用电池、变异菌干一袋",
+              "撬棍": "持有者林雪，握柄缠胶布浸血，头上有守门者制服铜扣",
+              "军用加密通讯器": "仍在郑铁柱处（未提及移动），电池备用件在林雪包中"
+            },
+            "knowledge": [
+              "林雪向守门者透露了通讯器信号内容'别来'，守门者可能已知晓此信息",
+              "三号闸门已封死，城邦水储备剩余约68小时"
+            ],
+            "time_marker": "闸门封死后即刻，距水储备耗尽约68小时"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "小草",
+              "林雪",
+              "郑铁柱"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_zhengtiezhu": "郑铁柱",
+              "char_xiaocao": "小草"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪走过去，从郑铁柱手里拿过撬棍。",
+                    "她朝检查站走过去。",
+                    "林雪把撬棍举起来，不是打人，是横在胸前，让他看清楚撬棍头上那片铜扣。",
+                    "守门者看了一眼闸门，又看了一眼林雪手里的撬棍。他把包从肩上卸下来，扔过栅栏。",
+                    "林雪捡起包，转身往回走。",
+                    "她从门缝下面滑过去，反手拽住郑铁柱的衣领，把他整个人拖出来。",
+                    "她低头看了一眼自己手掌，掌心有一道新划的口子，是刚才滑过闸门时被铁皮割的。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.帆布包.holder",
+                    "characters.char_linxue.injuries",
+                    "characters.char_zhengtiezhu.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [
+                {
+                  "type": "det_ungrounded_named_entity",
+                  "name": "老赵",
+                  "reason": "正文给无名角色新增了源事件和既有人物表均未提供的专名"
+                }
+              ],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，无硬矛盾。源事件要求的选择、行动与可见后果均已兑现：林雪用撬棍铜扣施压取回帆布包，在闸门封死前拖出郑铁柱，手掌被割伤。结束状态与声明一致，无新增专名，无内部或账本冲突。"
+            },
+            "repair_declared": [
+              "删除无源专名'老赵'，改为'检查站的人'，保留源事件要求的无名角色和扣包交易结果。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "警报响的时候",
+                    "闸门要封了。三分钟。",
+                    "左腿拖在地上，膝盖位置的裤管撕开一道口子，血已经凝成黑块",
+                    "栅栏后面站着两个人影，其中一个肩上挎着她的帆布包",
+                    "她把包从肩上卸下来，扔过栅栏",
+                    "林雪捡起包，转身往回走",
+                    "她从门缝下面滑过去，反手拽住郑铁柱的衣领，把他整个人拖出来",
+                    "闸门在他们身后砸到底",
+                    "她低头看了一眼自己手掌，掌心有一道新划的口子"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_linxue.injuries",
+                    "characters.char_zhengtiezhu.injuries",
+                    "items.帆布包",
+                    "time_marker"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成源事件要求：警报响起、闸门三分钟后封死、同伴受伤、关键物件被扣、主角选择交涉并成功取回帆布包、在闸门关闭前拖出同伴、手掌新增割伤，所有结果均已兑现。内部状态一致，无新增专名，结束状态与声明一致。"
+            },
+            "adopted": true
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报响的时候，林雪正蹲在三号闸门检修口旁边，用螺丝刀挑一块卡在齿轮里的碎骨。骨片很小，发黄，像是某个指关节。她没抬头，手也没停。警报声从头顶的扩音器里碾下来，那种老式电喇叭的嘶鸣，每隔两秒断一次，断的时候能听见自己牙关咬紧的声音。\n\n郑铁柱从甬道拐角撞出来，左腿拖在地上，膝盖位置的裤管撕开一道口子，血已经凝成黑块。他手里攥着半截撬棍，撬棍头上还挂着一片守门者制服上的铜扣。\n\n“闸门要封了。”他说，声音像从喉咙深处挤出来。“三分钟。检查站的人把东西扣了，说通行证过期。”\n\n林雪把螺丝刀插回腰间工具袋，站起来。膝盖咔嗒响了一声。她看向郑铁柱身后那条甬道，甬道尽头是检查站的铁栅栏，栅栏后面站着两个人影，其中一个肩上挎着她的帆布包。包里有一台便携式水质检测仪，一块旧时代军用通讯器的备用电池，还有小草昨天塞给她的一小袋变异菌干——那孩子说，菌干能顶两天。\n\n“他扣的不是通行证。”林雪说，“他扣的是时间。”\n\n郑铁柱用撬棍撑着墙壁，喘气声很重。“我试过讲道理。他说要等议事会的书面批文。书面批文——你听听，这都什么时候了。”\n\n扩音器里的警报断了一次，再响起来时，频率变了。从嘶鸣变成短促的嘟嘟声。那是封门倒计时进入最后一分钟的警告。\n\n林雪走过去，从郑铁柱手里拿过撬棍。撬棍很沉，握柄上缠的胶布已经被血浸透，黏糊糊的。她没擦。\n\n“你腿还能走？”\n\n“能走，但跑不了。”\n\n“不用跑。”\n\n她朝检查站走过去。甬道两侧的墙壁上渗着锈水，踩上去的每一步都带着黏腻的回声。栅栏后面那个挎包的守门者看见她，右手按上腰间的电击棍。\n\n“站住。我说过了，没有批文——”\n\n林雪把撬棍举起来，不是打人，是横在胸前，让他看清楚撬棍头上那片铜扣。铜扣上面刻着城邦守卫队的编号，数字已经被磨掉一半，但形状还在。\n\n“你扣的那个包，”她说，“里面有一块电池。电池是给一台军用通讯器用的。那台通讯器每隔四十七分钟发一次信号，信号内容只有两个字。”\n\n守门者的手停在电击棍上，没动。\n\n“你不想知道是哪两个字？”林雪问。\n\n警报声停了。甬道里突然很静，静得能听见锈水从墙缝滴落的声音。然后闸门开始下降，铁锈和灰尘从门框上簌簌往下掉。\n\n守门者看了一眼闸门，又看了一眼林雪手里的撬棍。他把包从肩上卸下来，扔过栅栏。包落在地上，溅起一片灰。\n\n林雪捡起包，转身往回走。郑铁柱已经挪到闸门边上，用肩膀顶着下降的门板，脸憋得发紫。门板压着他的肩胛骨，骨头发出咯吱咯吱的声音。\n\n她从门缝下面滑过去，反手拽住郑铁柱的衣领，把他整个人拖出来。闸门在他们身后砸到底，震起一团尘雾。\n\n郑铁柱躺在地上，左腿蜷着，血从膝盖渗出来，浸进水泥地的裂缝里。他盯着天花板，喉结滚了一下。“你刚才说的那两个字——是真的？”\n\n林雪蹲下来，拉开帆布包的拉链。检测仪还在，电池还在，菌干还在。她合上包，把带子在手腕上缠了两圈，打了个死结。\n\n“真的。”她说，“别来。”\n\n郑铁柱闭上眼睛，没再问。\n\n林雪站起来，把撬棍插进工具袋。她低头看了一眼自己手掌，掌心有一道新划的口子，是刚才滑过闸门时被铁皮割的。血渗得很慢，和撬棍上的旧血混在一起，分不清是谁的。\n\n她没包扎。她抬头看甬道尽头，检查站的灯还亮着，但栅栏后面已经没人了。\n\n“走吧。”她说，“还有六十八小时。”"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报响的时候，林雪正蹲在三号闸门检修口旁边，用螺丝刀挑一块卡在齿轮里的碎骨。骨片很小，发黄，像是某个指关节。她没抬头，手也没停。警报声从头顶的扩音器里碾下来，那种老式电喇叭的嘶鸣，每隔两秒断一次，断的时候能听见自己牙关咬紧的声音。\n\n郑铁柱从甬道拐角撞出来，左腿拖在地上，膝盖位置的裤管撕开一道口子，血已经凝成黑块。他手里攥着半截撬棍，撬棍头上还挂着一片守门者制服上的铜扣。\n\n“闸门要封了。”他说，声音像从喉咙深处挤出来。“三分钟。检查站的人把东西扣了，说通行证过期。”\n\n林雪把螺丝刀插回腰间工具袋，站起来。膝盖咔嗒响了一声。她看向郑铁柱身后那条甬道，甬道尽头是检查站的铁栅栏，栅栏后面站着两个人影，其中一个肩上挎着她的帆布包。包里有一台便携式水质检测仪，一块旧时代军用通讯器的备用电池，还有小草昨天塞给她的一小袋变异菌干——那孩子说，菌干能顶两天。\n\n“他扣的不是通行证。”林雪说，“他扣的是时间。”\n\n郑铁柱用撬棍撑着墙壁，喘气声很重。“我试过讲道理。他说要等议事会的书面批文。书面批文——你听听，这都什么时候了。”\n\n扩音器里的警报断了一次，再响起来时，频率变了。从嘶鸣变成短促的嘟嘟声。那是封门倒计时进入最后一分钟的警告。\n\n林雪走过去，从郑铁柱手里拿过撬棍。撬棍很沉，握柄上缠的胶布已经被血浸透，黏糊糊的。她没擦。\n\n“你腿还能走？”\n\n“能走，但跑不了。”\n\n“不用跑。”\n\n她朝检查站走过去。甬道两侧的墙壁上渗着锈水，踩上去的每一步都带着黏腻的回声。栅栏后面那个挎包的守门者看见她，右手按上腰间的电击棍。\n\n“站住。我说过了，没有批文——”\n\n林雪把撬棍举起来，不是打人，是横在胸前，让他看清楚撬棍头上那片铜扣。铜扣上面刻着城邦守卫队的编号，数字已经被磨掉一半，但形状还在。\n\n“你扣的那个包，”她说，“里面有一块电池。电池是给一台军用通讯器用的。那台通讯器每隔四十七分钟发一次信号，信号内容只有两个字。”\n\n守门者的手停在电击棍上，没动。\n\n“你不想知道是哪两个字？”林雪问。\n\n警报声停了。甬道里突然很静，静得能听见锈水从墙缝滴落的声音。然后闸门开始下降，铁锈和灰尘从门框上簌簌往下掉。\n\n守门者看了一眼闸门，又看了一眼林雪手里的撬棍。他把包从肩上卸下来，扔过栅栏。包落在地上，溅起一片灰。\n\n林雪捡起包，转身往回走。郑铁柱已经挪到闸门边上，用肩膀顶着下降的门板，脸憋得发紫。门板压着他的肩胛骨，骨头发出咯吱咯吱的声音。\n\n她从门缝下面滑过去，反手拽住郑铁柱的衣领，把他整个人拖出来。闸门在他们身后砸到底，震起一团尘雾。\n\n郑铁柱躺在地上，左腿蜷着，血从膝盖渗出来，浸进水泥地的裂缝里。他盯着天花板，喉结滚了一下。“你刚才说的那两个字——是真的？”\n\n林雪蹲下来，拉开帆布包的拉链。检测仪还在，电池还在，菌干还在。她合上包，把带子在手腕上缠了两圈，打了个死结。\n\n“真的。”她说，“别来。”\n\n郑铁柱闭上眼睛，没再问。\n\n林雪站起来，把撬棍插进工具袋。她低头看了一眼自己手掌，掌心有一道新划的口子，是刚才滑过闸门时被铁皮割的。血渗得很慢，和撬棍上的旧血混在一起，分不清是谁的。\n\n她没包扎。她抬头看甬道尽头，检查站的灯还亮着，但栅栏后面已经没人了。\n\n“走吧。”她说，“还有六十八小时。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_philosophical_medi_1784578649918"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "scifi_soft_lit",
+      "style": "philosophical_meditative",
+      "preset_version": "2026-07-21.1",
+      "prompt_hash": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 754,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "概念问题可更明确地以一句话提炼，但已通过镜像延迟和名字移动充分呈现"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "philosophical_meditative",
+          "preset_version": "2026-07-21.1",
+          "prompt_hash": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+          "strict": true,
+          "before": {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "林雪在诊所的洗手间里洗手，洗了第三遍。水龙头是感应的，但她习惯用手背去碰开关，这个开关三年前就换成感应的了。她关上水，抬头看镜子。\n\n镜中的时钟停在14:07。她记得进来时是14:06，洗了三遍手，至少过了四分钟。钟没走。\n\n她用纸巾擦手，纸巾碰到皮肤时，镜中的自己还没抬手。延迟了，大概两秒。她把纸巾扔进垃圾桶，镜中的纸团在半空中停了一瞬才落进去。\n\n回到诊室，她拉开抽屉，取出那张地图。纸质地图，折叠处已经磨出了毛边，摊开时发出脆响。新安克雷奇的街道用黑色墨水标注，忘川港的位置画了一个圈，圈旁边写着她的名字——林雪。\n\n名字不在昨天那个位置。\n\n她记得昨天名字写在清算塔东侧，靠近记忆档案库的标记。现在名字移到了西边，压在神经漫道入口的坐标上，墨水渗进纸纤维，像写上去很久了。\n\n她拿起笔，在名字现在的位置画了一个小十字。昨天画的十字还在东边，两个标记之间隔了大约三厘米。地图比例尺显示，那是四百米。\n\n四百米。她每天下班后走回家，路线经过清算塔东侧，从不到西边的神经漫道。名字不该在那里。\n\n她用手指碰了碰那个名字。墨迹是干的，但指尖触到纸面时，名字的最后一笔——\"雪\"字的那一捺——微微移动了。不是晕开，是整笔往西挪了不到一毫米，像什么东西在纸下面推它。\n\n林雪把手抽回来。\n\n窗外响起低沉的确认音，周二下午的记忆删除例行广播。声音从清算塔方向传来，穿过酸雨，变得浑浊。她没抬头，盯着地图上那个名字。\n\n名字还在动。\n\n她关上抽屉，锁了。锁扣咔哒一声，她听见自己说：\"明天会在哪里。\"\n\n不是问句。声音在空诊室里落下去，没人回答。她站起来，走到窗前，背靠着墙，确认了门锁的状态，然后才看窗外。清算塔的顶端隐没在灰橙色的云层里，塔身上的霓虹广告闪烁着一个记忆诊所的号码。\n\n镜子里的钟还是14:07。",
+          "style_trace": {
+            "preset_key": "philosophical_meditative",
+            "preset_version": "2026-07-21.1",
+            "prompt_hash": "4f16f22d76ec0bc8f3371135c792eba15e098b407516a65ca5ea75fe479936a4",
+            "strict": true,
+            "before": {
+              "style_key": "philosophical_meditative",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "新安克雷奇记忆诊所诊室",
+                "injuries": [],
+                "status": "警觉，发现地图异常"
+              }
+            },
+            "items": {
+              "纸质地图": {
+                "owner": "char_linxue",
+                "status": "名字每日移动一格，已标记两个位置",
+                "location": "诊室抽屉（已锁）"
+              }
+            },
+            "knowledge": [
+              "林雪发现地图上自己的名字每天向西移动约四百米",
+              "镜中时钟停在14:07，镜像存在两秒延迟",
+              "名字的笔画在注视下继续缓慢移动"
+            ],
+            "time_marker": "周二下午，记忆删除确认音响起时"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "角色发现地图上自己的名字每天移动一格，镜中的时钟却始终停在昨天。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏陌",
+              "陈寂"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏陌",
+              "char_chenji": "陈寂"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "角色发现地图上自己的名字每天移动一格，镜中的时钟却始终停在昨天。",
+                  "met": true,
+                  "prose_evidence": [
+                    "她记得昨天名字写在清算塔东侧，靠近记忆档案库的标记。现在名字移到了西边，压在神经漫道入口的坐标上",
+                    "昨天画的十字还在东边，两个标记之间隔了大约三厘米。地图比例尺显示，那是四百米。",
+                    "名字还在动。",
+                    "镜中的时钟停在14:07。",
+                    "镜子里的钟还是14:07。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪发现地图上自己的名字每天向西移动约四百米",
+                    "knowledge.名字的笔画在注视下继续缓慢移动",
+                    "knowledge.镜中时钟停在14:07，镜像存在两秒延迟"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文完整兑现了源事件要求：林雪发现地图上名字每日移动一格（从清算塔东侧移至西侧神经漫道入口，相距约四百米），且镜中时钟始终停在14:07。所有声明的结束状态与正文结尾一致，无内部矛盾、无新增未授权实体、无修订事实变更。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "林雪在诊所的洗手间里洗手，洗了第三遍。水龙头是感应的，但她习惯用手背去碰开关，这个开关三年前就换成感应的了。她关上水，抬头看镜子。\n\n镜中的时钟停在14:07。她记得进来时是14:06，洗了三遍手，至少过了四分钟。钟没走。\n\n她用纸巾擦手，纸巾碰到皮肤时，镜中的自己还没抬手。延迟了，大概两秒。她把纸巾扔进垃圾桶，镜中的纸团在半空中停了一瞬才落进去。\n\n回到诊室，她拉开抽屉，取出那张地图。纸质地图，折叠处已经磨出了毛边，摊开时发出脆响。新安克雷奇的街道用黑色墨水标注，忘川港的位置画了一个圈，圈旁边写着她的名字——林雪。\n\n名字不在昨天那个位置。\n\n她记得昨天名字写在清算塔东侧，靠近记忆档案库的标记。现在名字移到了西边，压在神经漫道入口的坐标上，墨水渗进纸纤维，像写上去很久了。\n\n她拿起笔，在名字现在的位置画了一个小十字。昨天画的十字还在东边，两个标记之间隔了大约三厘米。地图比例尺显示，那是四百米。\n\n四百米。她每天下班后走回家，路线经过清算塔东侧，从不到西边的神经漫道。名字不该在那里。\n\n她用手指碰了碰那个名字。墨迹是干的，但指尖触到纸面时，名字的最后一笔——\"雪\"字的那一捺——微微移动了。不是晕开，是整笔往西挪了不到一毫米，像什么东西在纸下面推它。\n\n林雪把手抽回来。\n\n窗外响起低沉的确认音，周二下午的记忆删除例行广播。声音从清算塔方向传来，穿过酸雨，变得浑浊。她没抬头，盯着地图上那个名字。\n\n名字还在动。\n\n她关上抽屉，锁了。锁扣咔哒一声，她听见自己说：\"明天会在哪里。\"\n\n不是问句。声音在空诊室里落下去，没人回答。她站起来，走到窗前，背靠着墙，确认了门锁的状态，然后才看窗外。清算塔的顶端隐没在灰橙色的云层里，塔身上的霓虹广告闪烁着一个记忆诊所的号码。\n\n镜子里的钟还是14:07。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "林雪在诊所的洗手间里洗手，洗了第三遍。水龙头是感应的，但她习惯用手背去碰开关，这个开关三年前就换成感应的了。她关上水，抬头看镜子。\n\n镜中的时钟停在14:07。她记得进来时是14:06，洗了三遍手，至少过了四分钟。钟没走。\n\n她用纸巾擦手，纸巾碰到皮肤时，镜中的自己还没抬手。延迟了，大概两秒。她把纸巾扔进垃圾桶，镜中的纸团在半空中停了一瞬才落进去。\n\n回到诊室，她拉开抽屉，取出那张地图。纸质地图，折叠处已经磨出了毛边，摊开时发出脆响。新安克雷奇的街道用黑色墨水标注，忘川港的位置画了一个圈，圈旁边写着她的名字——林雪。\n\n名字不在昨天那个位置。\n\n她记得昨天名字写在清算塔东侧，靠近记忆档案库的标记。现在名字移到了西边，压在神经漫道入口的坐标上，墨水渗进纸纤维，像写上去很久了。\n\n她拿起笔，在名字现在的位置画了一个小十字。昨天画的十字还在东边，两个标记之间隔了大约三厘米。地图比例尺显示，那是四百米。\n\n四百米。她每天下班后走回家，路线经过清算塔东侧，从不到西边的神经漫道。名字不该在那里。\n\n她用手指碰了碰那个名字。墨迹是干的，但指尖触到纸面时，名字的最后一笔——\"雪\"字的那一捺——微微移动了。不是晕开，是整笔往西挪了不到一毫米，像什么东西在纸下面推它。\n\n林雪把手抽回来。\n\n窗外响起低沉的确认音，周二下午的记忆删除例行广播。声音从清算塔方向传来，穿过酸雨，变得浑浊。她没抬头，盯着地图上那个名字。\n\n名字还在动。\n\n她关上抽屉，锁了。锁扣咔哒一声，她听见自己说：\"明天会在哪里。\"\n\n不是问句。声音在空诊室里落下去，没人回答。她站起来，走到窗前，背靠着墙，确认了门锁的状态，然后才看窗外。清算塔的顶端隐没在灰橙色的云层里，塔身上的霓虹广告闪烁着一个记忆诊所的号码。\n\n镜子里的钟还是14:07。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_philosophical_medi_1784578843208"
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "by_scenario": {
+      "compatible": {
+        "total": 1,
+        "passed": 1
+      },
+      "pressure": {
+        "total": 1,
+        "passed": 1
+      }
+    }
+  }
+}
