@@ -128,6 +128,18 @@ def test_every_style_has_addendum() -> None:
         )
         assert style.label.strip()
         assert style.description.strip()
+        assert style.version.strip()
+        assert style.final_checklist.strip()
+        assert style.det_rules
+        assert 1 <= style.strict_every_ticks <= 10
+        assert len(style.prompt_hash) == 64
+        assert style.to_snapshot()["prompt_hash"] == style.prompt_hash
+
+
+def test_tail_checklist_is_materially_smaller_than_full_contract() -> None:
+    """每 tick 尾部复核不得再次复制整份 addendum。"""
+    for key, style in STYLE_PRESETS.items():
+        assert len(style.final_checklist) < len(style.narrator_addendum), key
 
 
 def test_literary_default_preserved() -> None:
@@ -165,6 +177,28 @@ def test_style_addendums_independent() -> None:
                 f"style {key!r} addendum is byte-identical to {seen[body]!r}"
             )
         seen[body] = key
+
+
+@pytest.mark.parametrize(
+    ("key", "required_fragments"),
+    [
+        ("xianxia_fast", ("强制四拍", "同一场内", "找到线索不算兑现")),
+        ("hot_blooded", ("两级升级动作", "誓言/挑战", "感叹号")),
+        ("somber", ("3-5 段", "最多 120 字", "300 字以上无句号")),
+        ("black_humor", ("强制三拍", "独立写一句 narrator", "单独划出一句笑点")),
+        ("warm_healing", ("照料、修补、分享或体谅", "收件人日后能认出的回执", "不能只修完就独自离开")),
+        ("melancholic", ("硬约束", "第一段前两句", "具体愿望")),
+        ("classical_chapter", ("末段首句必须逐字", "无人开口时不得使用", "无人物的古风天气报告")),
+        ("screenplay_visual", ("写作思维而非正文术语", "镜头跟随", "摄影机元语言")),
+    ],
+)
+def test_semantic_style_contracts_keep_observable_acceptance_criteria(
+    key: str, required_fragments: tuple[str, ...]
+) -> None:
+    """回归真实生成暴露的失败: 色调词不能替代可验收的行为约束。"""
+    addendum = STYLE_PRESETS[key].narrator_addendum
+    for fragment in required_fragments:
+        assert fragment in addendum, f"{key} lost acceptance criterion: {fragment}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,29 @@
 # Cost-Quality Iteration Loop — Full Journey
 
+## Phase 7 — Style generation + long-range truthfulness (2026-07-14~15)
+
+| iter | scope | verdict | key metric |
+| --- | --- | --- | --- |
+| style-1 | 16 StylePreset × pressure/compatible real generation | PASS | 32/32 single-tick, Codex manual read |
+| style-2 | cross-tick seams + persistent continuity ledger | PASS | scene reset/replay detectors + state injection |
+| style-3 | NarrativeStateGuard + required-end-state evidence | PASS | prose quote + ledger path + bounded repair/reverify |
+| style-4 | SectionEditor + fact verifier | PASS | seam edit cannot change independent facts/causes/knowledge |
+| style-5 | representative 3-style × 4-tick stress | OPEN | v3 0/3 full-section; retained 6681 chars, remaining failures genuine |
+| style-6 | false-positive/false-negative calibration | PASS | group endpoints, rain cause, holder drift, exact locations, independent cost |
+
+Parameter decisions:
+
+- `NARRATOR_TEMPERATURE` default `0.65`: lower cross-tick stochastic drift while retaining prose variation;
+  runtime clamp `0.0-1.2`.
+- event-fulfillment repair length ratio `1.45 → 1.70`: real first-person sample needed `1.62` to finish
+  the already-consumed 400 m endpoint; repair still undergoes deterministic guards and independent reverify.
+- state repair attempts `1 → 2`: the second attempt is only verifier-directed and no third repair is allowed.
+- deterministic evidence accepts adjacent causal sentences and exact two-character quotes, while old false-positive
+  samples (dirty water ≠ rainwater; only one person inside) remain regression failures.
+
+Verification: 1210 backend tests pass; related `ruff` checks pass. Manual report:
+`style-sequence-validation-manual-20260715.md`.
+
 ## Phase 6 — Quality + product (2026-06-17+)
 
 | iter | scope | verdict | key metric |

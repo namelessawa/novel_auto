@@ -147,6 +147,9 @@ async def _bench(args) -> dict:
         cast_a_count=args.cast_a_count,
         cast_b_count=args.cast_b_count,
         cast_c_count=args.cast_c_count,
+        # v2.46: 让 bootstrap StyleAnchor 与实际 narrator preset 同源；此前只
+        # 设 env，锚点仍按通用 positioning 生成，可能与 preset 打架。
+        style_preset_key=getattr(args, "style", "") or "",
     )
     bootstrap_sec = time.perf_counter() - t0
 
@@ -159,10 +162,8 @@ async def _bench(args) -> dict:
     narratives: list[dict] = []
     # v2.38 Phase 2 Stage 3 (iter#87) — longrange 采样.
     open_loop_snapshots: list[dict] = []  # foreshadowing 曲线原料
-    # v2.38 (iter#88 review fix) — novelty_records 字段保留作 schema 占位,
-    # 实际填充逻辑 (从 NoveltyCriticOutput 回调累计) 留给 iter#89+ 加 orchestrator
-    # hook 后接通. 当前 bench 跑出来此字段恒为空, 是 by design 而非 bug.
-    novelty_records: list[dict] = []  # 占位 — TODO iter#89 接 novelty_critic hook
+    # NoveltyCritic 每次真实触发后采集结构化输出，供 novelty_decay_curve 使用。
+    novelty_records: list[dict] = []
     longrange_sample_every = max(1, getattr(args, "longrange_every", 5))
     # Phase 5+ J: 长程 bench 用 — 每 N tick 把当前 bench JSON 落盘, 让 ARK
     # 撞顶 / OOM / 手动 kill 时不丢前 N-1 tick 的进度. 默认 0 = 不 checkpoint.
@@ -211,6 +212,28 @@ async def _bench(args) -> dict:
                 {"tick": summary.tick, "chars": summary.narrator_output_chars, "text": text}
             )
 
+        if "novelty_critic" in summary.agents_called:
+            novelty_out = getattr(
+                rt.orchestrator, "last_novelty_critic_output", None
+            )
+            if novelty_out is not None:
+                patterns = list(
+                    getattr(novelty_out, "detected_patterns", []) or []
+                )
+                novelty_records.append(
+                    {
+                        "tick": summary.tick,
+                        "overall_score": int(
+                            getattr(novelty_out, "overall_novelty_score", 5) or 5
+                        ),
+                        "pattern_count": len(patterns),
+                        "detected_patterns": patterns,
+                        "recommendations": list(
+                            getattr(novelty_out, "recommendations", []) or []
+                        ),
+                    }
+                )
+
         # v2.38 Phase 2 Stage 3 (iter#87) — 长程采样.
         cur_tick = summary.tick
         if cur_tick % longrange_sample_every == 0:
@@ -219,14 +242,16 @@ async def _bench(args) -> dict:
                 open_count = len(loops)
                 stale_open = sum(
                     1
-                    for l in loops
+                    for loop in loops
                     if (cur_tick - max(
-                        getattr(l, "last_referenced_tick", 0) or 0,
-                        getattr(l, "opened_tick", 0) or 0,
+                        getattr(loop, "last_referenced_tick", 0) or 0,
+                        getattr(loop, "opened_tick", 0) or 0,
                     )) > 20
                 )
                 avg_urg = (
-                    sum(getattr(l, "urgency", 0) or 0 for l in loops) / open_count
+                    sum(
+                        getattr(loop, "urgency", 0) or 0 for loop in loops
+                    ) / open_count
                     if open_count
                     else 0.0
                 )
@@ -376,8 +401,8 @@ async def _compute_quality(
             for p in rt.tick_state.list_character_profiles()
         ]
         locs = [
-            LocationFact(id=l.id, name=l.name)
-            for l in rt.tick_state.world_state.locations
+            LocationFact(id=location.id, name=location.name)
+            for location in rt.tick_state.world_state.locations
         ]
         snap = WorldSnapshot(characters=chars, locations=locs)
         cons_view = consistency_report(texts, [snap] * len(texts)).to_dict()
@@ -773,7 +798,7 @@ def main():
     # 用户显式 --seed 优先 (== _DEFAULT_SEED 之外的值), --theme 只作 seed 的替代.
     if args.theme:
         try:
-            from novel_presets import get_theme_seed  # noqa: WPS433 (local import)
+            from novel_presets import get_theme_seed
 
             theme = get_theme_seed(args.theme)
         except (ImportError, KeyError) as e:
@@ -782,7 +807,7 @@ def main():
             args.seed = theme.seed
     if args.style:
         try:
-            from novel_presets import get_style_preset  # noqa: WPS433
+            from novel_presets import get_style_preset
 
             style = get_style_preset(args.style)
         except (ImportError, KeyError) as e:
@@ -808,7 +833,7 @@ def main():
     print(f"[OK] wrote {json_path}")
     print(f"[OK] wrote {md_path}")
     print(f"total_tokens={rep['total_tokens']} call_count={rep['call_count']}")
-    print(f"top by_agent: " + ", ".join(
+    print("top by_agent: " + ", ".join(
         f"{k}={v}" for k, v in sorted(rep["by_agent_cumulative"].items(), key=lambda kv: -kv[1])[:5]
     ))
 

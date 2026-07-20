@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 from memory.tick_state import TickState
 from memory_system.models import (
     CharacterProfile,
@@ -33,10 +31,10 @@ def test_open_loop_sort_by_urgency(tmp_path) -> None:
     ts.add_open_loop(OpenLoop(id="l3", opened_tick=3, description="mid", urgency=5))
 
     loops = ts.get_open_loops()
-    assert [l.id for l in loops] == ["l2", "l3", "l1"]
+    assert [loop.id for loop in loops] == ["l2", "l3", "l1"]
 
     high_only = ts.get_open_loops(min_urgency=6)
-    assert [l.id for l in high_only] == ["l2"]
+    assert [loop.id for loop in high_only] == ["l2"]
 
 
 def test_reap_stale_open_loops(tmp_path) -> None:
@@ -143,6 +141,37 @@ def test_style_preset_key_persist_roundtrip(tmp_path) -> None:
     ts2 = _make_state(str(tmp_path))
     assert ts2.load() is True
     assert ts2.style_preset_key == "xianxia_fast"
+    # 旧 key-only 状态首次读取时冻结到当前版本；下次 save 后不再自动漂移。
+    assert ts2.style_preset_version
+    assert ts2.style_preset_prompt_hash
+    assert ts2.style_preset_snapshot["key"] == "xianxia_fast"
+
+
+def test_style_preset_contract_snapshot_persists(tmp_path) -> None:
+    from novel_presets import get_style_preset
+
+    preset = get_style_preset("classical_chapter")
+    ts = _make_state(str(tmp_path))
+    ts.set_style_preset_contract(preset.key, preset.to_snapshot())
+    ts.save()
+
+    loaded = _make_state(str(tmp_path))
+    assert loaded.load() is True
+    assert loaded.style_preset_version == preset.version
+    assert loaded.style_preset_prompt_hash == preset.prompt_hash
+    assert loaded.style_preset_snapshot["narrator_addendum"] == preset.narrator_addendum
+
+
+def test_changing_style_key_clears_stale_snapshot(tmp_path) -> None:
+    from novel_presets import get_style_preset
+
+    preset = get_style_preset("literary")
+    ts = _make_state(str(tmp_path))
+    ts.set_style_preset_contract(preset.key, preset.to_snapshot())
+    ts.set_style_preset_key("hot_blooded")
+    assert ts.style_preset_version == ""
+    assert ts.style_preset_prompt_hash == ""
+    assert ts.style_preset_snapshot == {}
 
 
 def test_style_preset_key_load_missing_field_defaults_empty(tmp_path) -> None:

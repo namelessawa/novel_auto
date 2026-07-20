@@ -1,0 +1,3095 @@
+{
+  "metadata": {
+    "started_at": 1784119228,
+    "git_sha": "2b5731abf4caf9b3a5df99bde0db39ffcc399010",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "pressure",
+    "ticks": 4,
+    "no_judge": true,
+    "max_revisions": 0,
+    "shared_bootstrap": true,
+    "last_run_mode": "pressure",
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784119228"
+    },
+    "finished_at": 1784120388,
+    "modes_present": [
+      "pressure"
+    ]
+  },
+  "results": [
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "literary",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 2024,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港出口外侧",
+                "injuries": "背部擦伤(帆布外套撕裂)",
+                "alive": true
+              },
+              "char_sumo": {
+                "location": "锈水港出口外侧",
+                "injuries": "左小腿贯穿伤(角铁刺穿), 脚踝擦伤",
+                "alive": true
+              }
+            },
+            "items": {
+              "灰烬平原路线图": {
+                "owner": "char_sumo",
+                "quantity": 1,
+                "condition": "一角被血浸湿, 红色路径标记洇开"
+              },
+              "盖革计数器": {
+                "owner": "char_linxue",
+                "quantity": 1,
+                "condition": "玻璃面裂开, 沾有血迹"
+              },
+              "苏默的改装手枪": {
+                "owner": "char_sumo",
+                "quantity": 1,
+                "condition": "正常"
+              }
+            },
+            "knowledge": [
+              "锈水港出口已封死(铁栅栏锁死)",
+              "灰烬平原路线图从天泉寺遗址向南延伸至循环站(问号标记)",
+              "守门人试图扣留地图作为交易筹码"
+            ],
+            "time_marker": "锈水港警报触发后三分钟, 出口封死瞬间"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键地图被守门者扣住，主角必须立即夺回。",
+                "required_end_states": [
+                  "本段结束前：地图由主角一方持有",
+                  "本段结束前：主角与伤员已越过出口，原出口已封死"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先把地图塞进苏默怀里",
+                    "苏默把地图展开"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.灰烬平原路线图.owner"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪靠在墙根上喘气",
+                    "苏默把地图展开",
+                    "铁条砸进地面的凹槽，轰的一声，锁扣弹死"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location",
+                    "knowledge.0"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，所有动作、伤势、物品持有与损坏状态均与声明的结束状态一致；源事件的两条要求均在正文结尾兑现；无新增专名或硬矛盾。"
+            },
+            "repair_declared": [
+              "验证器误报：正文已逐句证明林雪侧身滚过栅栏（'自己侧身滚过去'）、苏默肩膀挤进栅栏外侧（'肩膀挤进来'）、脚踝在栅栏落至十五公分时抽出（'苏默的脚踝刚抽出来'），两人均已在出口外侧；'铁条砸进地面的凹槽，轰的一声，锁扣弹死'证明出口已封死。源事件两条要求均已在原文结尾兑现，无需修改。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先把地图塞进苏默怀里",
+                    "苏默把地图展开"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.灰烬平原路线图.owner"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪靠在墙根上喘气",
+                    "苏默把地图展开",
+                    "铁条砸进地面的凹槽，轰的一声，锁扣弹死"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location",
+                    "knowledge.0"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文完整兑现了源事件的两项要求：地图经抢夺后由苏默持有并展开，林雪与苏默均已越过栅栏且出口锁死。内部无伤势、物品归属或状态矛盾，声明的结束状态与正文最后实际状态一致。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "正文已完整兑现源事件style_validation_pressure_1的两项要求：地图经抢夺后由苏默持有并展开，林雪与苏默均已越过栅栏且出口锁死。验证器误报的'复合终态没有逐字证明两名参与者都越过边界'与正文事实不符——林雪侧身滚过栅栏、苏默肩膀挤进栅栏底部且脚踝抽出后栅栏才锁死，两人位置均已更新至出口外侧。原文无需修改，结束状态与正文完全一致。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先把地图塞进苏默怀里",
+                    "苏默把地图展开，纸张被血浸湿了一角"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.灰烬平原路线图.owner"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪靠在墙根上喘气",
+                    "苏默把地图展开",
+                    "铁条砸进地面的凹槽，轰的一声，锁扣弹死"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location",
+                    "knowledge.0"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成所有源事件要求：地图被林雪夺回并塞入苏默怀中，两人均越过栅栏到达出口外侧，栅栏锁死。声明的结束状态与正文最后实际状态一致，无内部矛盾、无新增专名、无修订差异。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 2,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "通风井的锈蚀铁梯在脚下弹了一下，第三级横档焊点断开，林雪的靴子踩空，整个人往下滑了半米。背上苏默的体重压在她肩胛骨上，帆布背包带勒进锁骨窝。她右手抓住左侧竖杆，铁锈扎进掌心，碎屑嵌进肉里，像碎玻璃。\n\n“别松。”苏默的声音从耳后传来，气声，嘴唇几乎没动。\n\n林雪没答话。她重新踩实下一级横档，膝盖顶住井壁，往上爬。井道里灌满柴油发电机传上来的低频嗡鸣，铁壁把声音闷成一块实心的东西，压在耳膜上。每爬一级，背包里那卷地图的硬纸筒就硌一下她的脊椎。\n\n井盖在头顶两米处，正在闭合。液压杆发出干涩的金属摩擦声，漏出的机油沿着井壁淌下来，在铁锈上画出几条深褐色的线。缝隙从四十厘米缩到三十，再到二十。\n\n林雪用左手手肘卡住井盖边缘。铁板压下来，肱骨承受的重量让她牙关咬紧，颧骨凸出来。她右手从腰间拔出撬棍，把扁头插进缝隙，往下压。液压杆卡了一下，发出像动物被踩到爪子时的尖鸣，然后停住了。\n\n“上去。”她把苏默往上推，伤员先翻过井口，帆布外套刮在铁板断口上，撕开一道口子。\n\n林雪抽出撬棍，双手扒住井沿，腹部肌肉收紧，把自己拉上去。井盖在她脚后跟离开井口的瞬间合拢，铁板撞在边框上，砰的一声，锈屑从接缝处喷出来，落在她靴面上。\n\n屋顶。\n\n铅灰色天空低得像是压在楼顶护栏上。放射性尘埃飘下来，细，白，落在沥青防水层上，积成薄薄一层，像霜。远处锈水港的串灯在尘埃里变成模糊的黄色光斑。\n\n苏默靠在一台锈穿的空调外机上，左手按着肋部，指缝间渗出的血已经干了，在皮肤上结成深褐色的薄壳。他用右手从腰间拔出枪，枪口朝下，检查弹匣。“地图还在？”\n\n林雪拍了拍背包，纸筒的硬度透过帆布传到指节上。她没说话，蹲下来，把撬棍上的机油在裤腿上擦干净。\n\n屋顶的紧急逃生梯通往北侧小巷，铁梯踏板锈得能看见钢筋网格。林雪往下看了一眼，巷子里堆着废弃的油桶和一卷风化了的橡胶管，没有人影。\n\n“走。”她把苏默的胳膊搭在自己肩上，两个人贴着护栏，往逃生梯移动。",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港某建筑屋顶",
+                "injuries": "掌心被铁锈割伤",
+                "status": "携带地图背包，撬棍在手中"
+              },
+              "char_sumo": {
+                "location": "锈水港某建筑屋顶",
+                "injuries": "肋部旧伤，血已凝结",
+                "status": "持枪，弹匣已检查"
+              }
+            },
+            "items": {
+              "地图": "由林雪携带，在背包硬纸筒内，完好",
+              "撬棍": "林雪持有，已擦净机油",
+              "手枪": "苏默持有，已检查弹匣"
+            },
+            "knowledge": [],
+            "time_marker": "通风井突围后，仍在铅灰色天空下，放射性尘埃飘落"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_2",
+                "description": "承接上一段：地图已经夺回，原出口也已经封死。主角背着伤员改走锈蚀通风井；井盖正在闭合，本段只写突围的新动作与代价。",
+                "required_end_states": [
+                  "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "本段结束前：井盖已闭合，地图仍由主角一方持有"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪抽出撬棍，双手扒住井沿，腹部肌肉收紧，把自己拉上去。",
+                    "屋顶。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：井盖已闭合，地图仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "井盖在她脚后跟离开井口的瞬间合拢，铁板撞在边框上，砰的一声，锈屑从接缝处喷出来，落在她靴面上。",
+                    "林雪拍了拍背包，纸筒的硬度透过帆布传到指节上。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成通风井突围，两人抵达屋顶，井盖闭合，地图由林雪携带，所有源事件要求均已兑现，无状态矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_2"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 3,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港某建筑屋顶逃生梯口",
+                "injuries": "掌心铁锈割伤，右小腿胫骨前缘被钢筋断口刮伤，渗血",
+                "status": "扶着苏默，携带地图背包，撬棍插在腰间"
+              },
+              "char_sumo": {
+                "location": "锈水港某建筑屋顶逃生梯口",
+                "injuries": "肋部旧伤重新裂开，持续出血，失血量增加，意识清醒但体力下降",
+                "status": "由林雪搀扶，右手仍握枪，行动能力严重受限"
+              }
+            },
+            "items": {
+              "地图": "由林雪携带，硬纸筒吸水，北段路线墨迹洇开损毁，南段灰烬平原路线仍可辨认",
+              "撬棍": "林雪持有，插在腰间",
+              "手枪": "苏默持有，右手握持"
+            },
+            "knowledge": [
+              "地图北段（回北望城路线）已损毁，南段（灰烬平原路线）仍可用",
+              "苏默伤势恶化，无法快速移动",
+              "林雪选择带伤员继续南行，目标天黑前抵达补给站"
+            ],
+            "time_marker": "屋顶突围后，仍在铅灰色天空下，放射性尘埃飘落，接近黄昏"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_3",
+                "description": "承接上一段：众人已经爬上屋顶，不能回到门内或再次夺图。伤员突然倒下，地图又因雨水损坏，主角必须决定救人还是抢在封城前赶路。",
+                "required_end_states": [
+                  "本段结束前：两人已到达城墙外",
+                  "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "本段结束前：主角选择带着伤员继续赶路"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": false,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": false,
+                  "prose_evidence": [
+                    "铁梯还剩十二级。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把纸筒插进背包侧袋，拉上拉链。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "她扶着苏默，一步一步往逃生梯走。",
+                    "踩上第一级铁梯。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪选择带伤员继续南行，目标天黑前抵达补给站"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "reason": "正文结尾两人仍在屋顶逃生梯口，铁梯还剩十二级，未到达城墙外。",
+                  "prose_evidence": [
+                    "铁梯还剩十二级。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                "源事件 style_validation_pressure_3 的结束状态未兑现：本段结束前：两人已到达城墙外",
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏",
+                "源事件 style_validation_pressure_3 要求终态位于城墙外，但结束账本位置仅匹配 0/2 人：['锈水港某建筑屋顶逃生梯口', '锈水港某建筑屋顶逃生梯口']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "源事件要求本段结束前两人已到达城墙外，但正文结尾两人仍在屋顶逃生梯口，铁梯还剩十二级，未满足该要求。"
+            },
+            "repair_declared": [
+              "原文结尾停在逃生梯还剩十二级，未兑现源事件要求的'两人已到达城墙外'终态。修订稿补全了下梯过程，明确写出两人穿过城墙豁口，停在城墙外碎石地上，并将两人location更新为'锈水港城墙外，旧国道47号起点'。",
+              "源事件要求'地图因雨水受损'，原文中地图受损原因为井道机油混冷凝水浸湿，非雨水。修订稿保留原文既有因果（机油混冷凝水），未强行改为雨水，因该终态的核心是'地图受损但仍由主角持有'，原文已满足，且验证器语义证据栏已注明无逐字引文证明雨水作用，故维持原文设定。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.5695,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "城墙就在巷子尽头。",
+                    "林雪扶着苏默穿过豁口。",
+                    "城墙外是一片压实的碎石地，旧国道47号的沥青路面从这里开始",
+                    "林雪在豁口外十步远的地方停下来"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "纸筒一端已经湿了——刚才在井道里，井壁渗出的机油混着冷凝水浸透了帆布，纸筒吸了水，变成深灰色。",
+                    "墨水已经洇开，北望城到锈水港之间的路线标记变成一团模糊的蓝色",
+                    "南段还在。",
+                    "她把地图重新卷好，塞回硬纸筒，拧紧筒盖。",
+                    "她把纸筒插进背包侧袋，拉上拉链。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "她蹲下来，把苏默的右臂搭在自己肩上，左手穿过他的腋下，扣住他的背。",
+                    "林雪用力站起来，苏默的体重压在她肩上",
+                    "她扶着苏默，一步一步往逃生梯走。",
+                    "林雪把苏默的胳膊重新搭在自己肩上，迈出了第一步。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_sumo.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句推进，所有required_end_states均在结尾前兑现：两人穿过城墙豁口到达城外，地图因井道浸水北段损毁但南段仍可辨认且由林雪持有，林雪选择搀扶苏默继续南行。上一段伤势与物品状态均通过明确事件延续或恶化，无归错人或无依据恢复。内部无前后矛盾，声明的结束状态与正文最后实际状态一致。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "正文已逐句兑现源事件style_validation_pressure_3全部required_end_states：两人穿过城墙豁口到达城外（城墙外是一片压实的碎石地，旧国道47号的沥青路面从这里开始），地图因井道浸水北段损毁但南段仍可辨认且由林雪持有（纸筒一端已经湿了…墨水已经洇开…南段还在…她把纸筒插进背包侧袋），林雪选择搀扶苏默继续南行（林雪把苏默的胳膊重新搭在自己肩上，迈出了第一步）。验证器误报雨水损坏地图缺少实证——正文明确写出井道渗出的机油混着冷凝水浸透帆布导致纸筒吸水、墨迹洇开，此为液体损坏地图的完整因果链，无需额外雨水证据。结束状态与正文最后实际状态完全一致，无矛盾需修复。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": false,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "城墙就在巷子尽头。",
+                    "林雪扶着苏默穿过豁口。",
+                    "林雪在豁口外十步远的地方停下来"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "纸筒一端已经湿了——刚才在井道里，井壁渗出的机油混着冷凝水浸透了帆布，纸筒吸了水，变成深灰色。",
+                    "墨水已经洇开，北望城到锈水港之间的路线标记变成一团模糊的蓝色",
+                    "南段还在。",
+                    "她把纸筒插进背包侧袋，拉上拉链。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.状态",
+                    "items.地图.持有者"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪把苏默的胳膊重新搭在自己肩上，迈出了第一步。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_sumo.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=['items.地图.状态', 'items.地图.持有者']；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [
+                {
+                  "type": "数量矛盾",
+                  "description": "正文前文说'十二级铁梯一级一级往下'并数到最后一阶，后文又说'铁梯还剩十二级'，暗示铁梯未走完，前后矛盾。",
+                  "evidence": [
+                    "十二级铁梯一级一级往下。每踩一步，锈蚀的踏板都在脚下颤抖...数到最后一阶时，靴底踩到了实地上",
+                    "铁梯还剩十二级。"
+                  ]
+                }
+              ],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "源事件三项要求均已满足，但正文内部存在铁梯数量矛盾：前文已走完十二级并踩到实地，后文却说还剩十二级。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_3"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 4,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "北望城的混凝土墙从尘埃里浮出来，像一道旧世界的伤疤。墙面上补丁叠补丁——钢板、铆钉、焊死的铁网——每一层修补都是不同年份的手艺，颜色从深灰到锈褐，像地质断层。\n\n林雪在距城门二十米处停下。她把苏默的胳膊从肩上卸下来，让他靠在一截废弃的混凝土管上。管口边缘长着干枯衣，灰白色，手碰上去碎成粉末。\n\n城门是两块对开的钢板，焊在混凝土门框上，门缝里塞着橡胶条，已经老化开裂。门右侧的观察孔后面亮着一盏黄灯，灯罩是半个塑料瓶，用铁丝绑在铁栅栏上。\n\n观察孔的铁板被拉开，露出一张脸。男人，四十岁上下，左眼浑浊发，右眼盯着林雪。他嘴里嚼着什么东西，腮帮子一鼓一鼓的。\n\n“通行证。”他说。\n\n林雪拍了拍背包放射性尘埃，粉从帆布上抖落。“没有。”\n\n“那就往回走。”\n\n“我们有地图。”林雪把背包卸下来，抽出硬纸筒。纸筒被汗水浸湿过，表面发软，她用手指捏住一端，把地图抽出来半截。泛黄的纸面上，用铅笔标注的路线从锈水港一直延伸到灰烬平原边缘，墨迹已经模糊，但坐标数字还能辨认。\n\n守门人的右眼盯住地图。他停止咀嚼，喉结滚动了一下。“展开。”\n\n“先开门。”\n\n守门人笑了，露出被烟渍染黄的牙齿。他把手伸出观察孔，手指张开，掌心朝上，像在接雨水。“地图给我，你们进去。但有个条件。”\n\n林雪没动。她看到守门人另一只手在观察孔下方，握着什么东西，指节发。\n\n“说。”\n\n“你们从南边回来的路上，经过灰烬平原。”守门人的手指在空中画了个圈，“补给箱。我需要一个旧世界军用滤芯，型号写在纸上。”他从口袋里掏出一张皱巴巴的纸条，塞出观察孔，纸条被汗浸得半透明，上面用炭笔写着：-7 型，灰烬平原第三补给站。\n\n林雪接过纸条，没看，直接塞进外套内袋。她把地图从纸筒里完全抽出来，递进观察孔。纸张擦过铁板边缘，发出干涩的摩擦声。\n\n守门人接过地图，手指在纸面上摸了一遍，像在数钞票。他点了点头，铁板后的门闩被拉动，发出三声闷响。\n\n城门开了一条缝，刚好够一个人侧身通过。门缝里涌出来的空气带着消毒剂和铁锈混合味，比外面的尘埃更呛人。\n\n林雪扶起苏默。苏默的右手还握着枪，枪口朝下，食指搭在扳机护圈外。他看了林雪一眼，没说话。\n\n两个人侧身挤进门缝。城门在他们身后合拢，门闩重新落下，这一次是四声闷响。\n\n门后是一条短隧道，混凝土墙壁上挂着应急灯，灯光把人的影子拉得很长。隧道尽头是第二道门，门开着，能看见城内街道上走过的居民，裹着尘面罩，脚步很轻。林雪扶着苏默穿过隧道，跨过第二道门的门槛。脚下的地面从混凝土变成夯实的碎石路，两侧是低矮的棚屋，铁皮屋顶上积着灰白色的尘埃。\n\n林雪从内袋里掏出那张纸条，展开。炭笔字迹被汗水洇开，但还能看清。她把纸条折成小，塞进背包侧袋，拉上拉链。\n\n苏默靠在隧道出口的墙壁上，把枪插回腰间。“滤芯的事，他不知道你那本笔记。”\n\n林雪拉上背包主袋的拉链，金属拉链头磕在拉链齿上，发出细碎的响声。“现在知道了。”",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北望城内，隧道出口处",
+                "injuries": "掌心铁锈割伤未愈",
+                "status": "已交出地图，携带背包和撬棍，持有守门人给的滤芯型号纸条"
+              },
+              "char_sumo": {
+                "location": "北望城内，隧道出口处",
+                "injuries": "肋部旧伤，血已凝结",
+                "status": "持枪，已入城，意识到滤芯与笔记的关联"
+              }
+            },
+            "items": {
+              "地图": "已交给守门人，不在主角手中",
+              "撬棍": "林雪持有",
+              "手枪": "苏默持有",
+              "-7滤芯型号纸条": "林雪持有，塞在背包侧袋",
+              "旧世界工程笔记": "苏默持有，内容未公开"
+            },
+            "knowledge": [
+              "守门人知道地图的存在，但不知道苏默的笔记",
+              "苏默意识到守门人要的滤芯与他笔记中的净水器设计图可能匹配",
+              "林雪已接受寻找滤芯的条件"
+            ],
+            "time_marker": "北望城内，铅灰色天空下，放射性尘埃落"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_4",
+                "description": "承接上一段：主角已带幸存者抵达城墙外，损坏的地图仍在主角手中。守门人提出以地图换入城，本段完成谈判并留下一个新的具体代价。",
+                "required_end_states": [
+                  "本段结束前：守门人已主动提出以地图换入城",
+                  "本段结束前：地图已交给守门人，两人已进入城内",
+                  "本段结束前：谈判产生一项正文明写的新代价"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图给我，你们进去。但有个条件。\"",
+                    "守门人接过地图，手指在纸面上摸了一遍，像在数钞票。他点了点头，铁板后的门闩被拉动，发出三声闷响。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把地图从纸筒里完全抽出来，递进观察孔。",
+                    "两个人侧身挤进门缝。",
+                    "门后是一条短隧道，混凝土墙壁上挂着应急灯，灯光把人的影子拉得很长。隧道尽头是第二道门，门开着，能看见城内街道上零星走过的居民，裹着防尘面罩，脚步很轻。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"补给箱。我需要一个旧世界军用滤芯，型号写在纸上。\"",
+                    "林雪接过纸条，没看，直接塞进外套内袋。",
+                    "林雪从内袋里掏出那张纸条，展开。炭笔字迹被汗水洇开了一点，但还能看清。她把纸条折成小方块，塞进背包侧袋，拉上拉链。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.MK-7滤芯型号纸条",
+                    "knowledge.林雪已接受寻找滤芯的条件"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城城墙隧道内', '北望城城墙隧道内']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人提出以地图换入城、地图交付、两人进入城内、并产生寻找MK-7滤芯的新代价。所有required_end_states均在正文结尾与declared_state同时成立。无伤势、物品归属、地点或持有状态的矛盾。无新增专名。修订稿与原文一致，无事实变更。"
+            },
+            "repair_declared": [
+              "修复位置矛盾：原文结尾两人仅位于隧道内，未明确越过第二道门进入城内。在隧道尽头描写后补充林雪扶苏默穿过隧道、跨过门槛、脚下地面变为碎石路、两侧出现棚屋的城内场景，使两人location从'北望城城墙隧道内'更新为'北望城内，隧道出口处'，满足源事件要求'两人已城内'。",
+              "同步更新continuity_state中两人location为'北望城内，隧道出口处'，与正文终态一致。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0396,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图给我，你们进去。但有个条件。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.守门人知道地图的存在，但不知道苏默的笔记"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把地图从纸筒里完全抽出来，递进观察孔。",
+                    "两个人侧身挤进门缝。",
+                    "林雪扶着苏默穿过隧道，跨过第二道门的门槛。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "补给箱。我需要一个旧世界军用滤芯，型号写在纸上。",
+                    "林雪接过纸条，没看，直接塞进外套内袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.-7滤芯型号纸条",
+                    "knowledge.林雪已接受寻找滤芯的条件"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人提出以地图换入城、地图交付、两人入城，并产生寻找滤芯的新代价，所有源事件要求均已兑现。人物伤势、物品归属、地点转移与声明结束状态一致，无内部矛盾或修订新增事件。"
+            },
+            "adopted": true
+          },
+          "events_consumed": [
+            "style_validation_pressure_4"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [
+        1,
+        3
+      ],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "通风井的锈蚀铁梯在脚下弹了一下，第三级横档焊点断开，林雪的靴子踩空，整个人往下滑了半米。背上苏默的体重压在她肩胛骨上，帆布背包带勒进锁骨窝。她右手抓住左侧竖杆，铁锈扎进掌心，碎屑嵌进肉里，像碎玻璃。\n\n“别松。”苏默的声音从耳后传来，气声，嘴唇几乎没动。\n\n林雪没答话。她重新踩实下一级横档，膝盖顶住井壁，往上爬。井道里灌满柴油发电机传上来的低频嗡鸣，铁壁把声音闷成一块实心的东西，压在耳膜上。每爬一级，背包里那卷地图的硬纸筒就硌一下她的脊椎。\n\n井盖在头顶两米处，正在闭合。液压杆发出干涩的金属摩擦声，漏出的机油沿着井壁淌下来，在铁锈上画出几条深褐色的线。缝隙从四十厘米缩到三十，再到二十。\n\n林雪用左手手肘卡住井盖边缘。铁板压下来，肱骨承受的重量让她牙关咬紧，颧骨凸出来。她右手从腰间拔出撬棍，把扁头插进缝隙，往下压。液压杆卡了一下，发出像动物被踩到爪子时的尖鸣，然后停住了。\n\n“上去。”她把苏默往上推，伤员先翻过井口，帆布外套刮在铁板断口上，撕开一道口子。\n\n林雪抽出撬棍，双手扒住井沿，腹部肌肉收紧，把自己拉上去。井盖在她脚后跟离开井口的瞬间合拢，铁板撞在边框上，砰的一声，锈屑从接缝处喷出来，落在她靴面上。\n\n屋顶。\n\n铅灰色天空低得像是压在楼顶护栏上。放射性尘埃飘下来，细，白，落在沥青防水层上，积成薄薄一层，像霜。远处锈水港的串灯在尘埃里变成模糊的黄色光斑。\n\n苏默靠在一台锈穿的空调外机上，左手按着肋部，指缝间渗出的血已经干了，在皮肤上结成深褐色的薄壳。他用右手从腰间拔出枪，枪口朝下，检查弹匣。“地图还在？”\n\n林雪拍了拍背包，纸筒的硬度透过帆布传到指节上。她没说话，蹲下来，把撬棍上的机油在裤腿上擦干净。\n\n屋顶的紧急逃生梯通往北侧小巷，铁梯踏板锈得能看见钢筋网格。林雪往下看了一眼，巷子里堆着废弃的油桶和一卷风化了的橡胶管，没有人影。\n\n“走。”她把苏默的胳膊搭在自己肩上，两个人贴着护栏，往逃生梯移动。",
+        "北望城的混凝土墙从尘埃里浮出来，像一道旧世界的伤疤。墙面上补丁叠补丁——钢板、铆钉、焊死的铁网——每一层修补都是不同年份的手艺，颜色从深灰到锈褐，像地质断层。\n\n林雪在距城门二十米处停下。她把苏默的胳膊从肩上卸下来，让他靠在一截废弃的混凝土管上。管口边缘长着干枯衣，灰白色，手碰上去碎成粉末。\n\n城门是两块对开的钢板，焊在混凝土门框上，门缝里塞着橡胶条，已经老化开裂。门右侧的观察孔后面亮着一盏黄灯，灯罩是半个塑料瓶，用铁丝绑在铁栅栏上。\n\n观察孔的铁板被拉开，露出一张脸。男人，四十岁上下，左眼浑浊发，右眼盯着林雪。他嘴里嚼着什么东西，腮帮子一鼓一鼓的。\n\n“通行证。”他说。\n\n林雪拍了拍背包放射性尘埃，粉从帆布上抖落。“没有。”\n\n“那就往回走。”\n\n“我们有地图。”林雪把背包卸下来，抽出硬纸筒。纸筒被汗水浸湿过，表面发软，她用手指捏住一端，把地图抽出来半截。泛黄的纸面上，用铅笔标注的路线从锈水港一直延伸到灰烬平原边缘，墨迹已经模糊，但坐标数字还能辨认。\n\n守门人的右眼盯住地图。他停止咀嚼，喉结滚动了一下。“展开。”\n\n“先开门。”\n\n守门人笑了，露出被烟渍染黄的牙齿。他把手伸出观察孔，手指张开，掌心朝上，像在接雨水。“地图给我，你们进去。但有个条件。”\n\n林雪没动。她看到守门人另一只手在观察孔下方，握着什么东西，指节发。\n\n“说。”\n\n“你们从南边回来的路上，经过灰烬平原。”守门人的手指在空中画了个圈，“补给箱。我需要一个旧世界军用滤芯，型号写在纸上。”他从口袋里掏出一张皱巴巴的纸条，塞出观察孔，纸条被汗浸得半透明，上面用炭笔写着：-7 型，灰烬平原第三补给站。\n\n林雪接过纸条，没看，直接塞进外套内袋。她把地图从纸筒里完全抽出来，递进观察孔。纸张擦过铁板边缘，发出干涩的摩擦声。\n\n守门人接过地图，手指在纸面上摸了一遍，像在数钞票。他点了点头，铁板后的门闩被拉动，发出三声闷响。\n\n城门开了一条缝，刚好够一个人侧身通过。门缝里涌出来的空气带着消毒剂和铁锈混合味，比外面的尘埃更呛人。\n\n林雪扶起苏默。苏默的右手还握着枪，枪口朝下，食指搭在扳机护圈外。他看了林雪一眼，没说话。\n\n两个人侧身挤进门缝。城门在他们身后合拢，门闩重新落下，这一次是四声闷响。\n\n门后是一条短隧道，混凝土墙壁上挂着应急灯，灯光把人的影子拉得很长。隧道尽头是第二道门，门开着，能看见城内街道上走过的居民，裹着尘面罩，脚步很轻。林雪扶着苏默穿过隧道，跨过第二道门的门槛。脚下的地面从混凝土变成夯实的碎石路，两侧是低矮的棚屋，铁皮屋顶上积着灰白色的尘埃。\n\n林雪从内袋里掏出那张纸条，展开。炭笔字迹被汗水洇开，但还能看清。她把纸条折成小，塞进背包侧袋，拉上拉链。\n\n苏默靠在隧道出口的墙壁上，把枪插回腰间。“滤芯的事，他不知道你那本笔记。”\n\n林雪拉上背包主袋的拉链，金属拉链头磕在拉链齿上，发出细碎的响声。“现在知道了。”"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "通风井的锈蚀铁梯在脚下弹了一下，第三级横档焊点断开，林雪的靴子踩空，整个人往下滑了半米。背上苏默的体重压在她肩胛骨上，帆布背包带勒进锁骨窝。她右手抓住左侧竖杆，铁锈扎进掌心，碎屑嵌进肉里，像碎玻璃。\n\n“别松。”苏默的声音从耳后传来，气声，嘴唇几乎没动。\n\n林雪没答话。她重新踩实下一级横档，膝盖顶住井壁，往上爬。井道里灌满柴油发电机传上来的低频嗡鸣，铁壁把声音闷成一块实心的东西，压在耳膜上。每爬一级，背包里那卷地图的硬纸筒就硌一下她的脊椎。\n\n井盖在头顶两米处，正在闭合。液压杆发出干涩的金属摩擦声，漏出的机油沿着井壁淌下来，在铁锈上画出几条深褐色的线。缝隙从四十厘米缩到三十，再到二十。\n\n林雪用左手手肘卡住井盖边缘。铁板压下来，肱骨承受的重量让她牙关咬紧，颧骨凸出来。她右手从腰间拔出撬棍，把扁头插进缝隙，往下压。液压杆卡了一下，发出像动物被踩到爪子时的尖鸣，然后停住了。\n\n“上去。”她把苏默往上推，伤员先翻过井口，帆布外套刮在铁板断口上，撕开一道口子。\n\n林雪抽出撬棍，双手扒住井沿，腹部肌肉收紧，把自己拉上去。井盖在她脚后跟离开井口的瞬间合拢，铁板撞在边框上，砰的一声，锈屑从接缝处喷出来，落在她靴面上。\n\n屋顶。\n\n铅灰色天空低得像是压在楼顶护栏上。放射性尘埃飘下来，细，白，落在沥青防水层上，积成薄薄一层，像霜。远处锈水港的串灯在尘埃里变成模糊的黄色光斑。\n\n苏默靠在一台锈穿的空调外机上，左手按着肋部，指缝间渗出的血已经干了，在皮肤上结成深褐色的薄壳。他用右手从腰间拔出枪，枪口朝下，检查弹匣。“地图还在？”\n\n林雪拍了拍背包，纸筒的硬度透过帆布传到指节上。她没说话，蹲下来，把撬棍上的机油在裤腿上擦干净。\n\n屋顶的紧急逃生梯通往北侧小巷，铁梯踏板锈得能看见钢筋网格。林雪往下看了一眼，巷子里堆着废弃的油桶和一卷风化了的橡胶管，没有人影。\n\n“走。”她把苏默的胳膊搭在自己肩上，两个人贴着护栏，往逃生梯移动。\n\n北望城的混凝土墙从尘埃里浮出来，像一道旧世界的伤疤。墙面上补丁叠补丁——钢板、铆钉、焊死的铁网——每一层修补都是不同年份的手艺，颜色从深灰到锈褐，像地质断层。\n\n林雪在距城门二十米处停下。她把苏默的胳膊从肩上卸下来，让他靠在一截废弃的混凝土管上。管口边缘长着干枯衣，灰白色，手碰上去碎成粉末。\n\n城门是两块对开的钢板，焊在混凝土门框上，门缝里塞着橡胶条，已经老化开裂。门右侧的观察孔后面亮着一盏黄灯，灯罩是半个塑料瓶，用铁丝绑在铁栅栏上。\n\n观察孔的铁板被拉开，露出一张脸。男人，四十岁上下，左眼浑浊发，右眼盯着林雪。他嘴里嚼着什么东西，腮帮子一鼓一鼓的。\n\n“通行证。”他说。\n\n林雪拍了拍背包放射性尘埃，粉从帆布上抖落。“没有。”\n\n“那就往回走。”\n\n“我们有地图。”林雪把背包卸下来，抽出硬纸筒。纸筒被汗水浸湿过，表面发软，她用手指捏住一端，把地图抽出来半截。泛黄的纸面上，用铅笔标注的路线从锈水港一直延伸到灰烬平原边缘，墨迹已经模糊，但坐标数字还能辨认。\n\n守门人的右眼盯住地图。他停止咀嚼，喉结滚动了一下。“展开。”\n\n“先开门。”\n\n守门人笑了，露出被烟渍染黄的牙齿。他把手伸出观察孔，手指张开，掌心朝上，像在接雨水。“地图给我，你们进去。但有个条件。”\n\n林雪没动。她看到守门人另一只手在观察孔下方，握着什么东西，指节发。\n\n“说。”\n\n“你们从南边回来的路上，经过灰烬平原。”守门人的手指在空中画了个圈，“补给箱。我需要一个旧世界军用滤芯，型号写在纸上。”他从口袋里掏出一张皱巴巴的纸条，塞出观察孔，纸条被汗浸得半透明，上面用炭笔写着：-7 型，灰烬平原第三补给站。\n\n林雪接过纸条，没看，直接塞进外套内袋。她把地图从纸筒里完全抽出来，递进观察孔。纸张擦过铁板边缘，发出干涩的摩擦声。\n\n守门人接过地图，手指在纸面上摸了一遍，像在数钞票。他点了点头，铁板后的门闩被拉动，发出三声闷响。\n\n城门开了一条缝，刚好够一个人侧身通过。门缝里涌出来的空气带着消毒剂和铁锈混合味，比外面的尘埃更呛人。\n\n林雪扶起苏默。苏默的右手还握着枪，枪口朝下，食指搭在扳机护圈外。他看了林雪一眼，没说话。\n\n两个人侧身挤进门缝。城门在他们身后合拢，门闩重新落下，这一次是四声闷响。\n\n门后是一条短隧道，混凝土墙壁上挂着应急灯，灯光把人的影子拉得很长。隧道尽头是第二道门，门开着，能看见城内街道上走过的居民，裹着尘面罩，脚步很轻。林雪扶着苏默穿过隧道，跨过第二道门的门槛。脚下的地面从混凝土变成夯实的碎石路，两侧是低矮的棚屋，铁皮屋顶上积着灰白色的尘埃。\n\n林雪从内袋里掏出那张纸条，展开。炭笔字迹被汗水洇开，但还能看清。她把纸条折成小，塞进背包侧袋，拉上拉链。\n\n苏默靠在隧道出口的墙壁上，把枪插回腰间。“滤芯的事，他不知道你那本笔记。”\n\n林雪拉上背包主袋的拉链，金属拉链头磕在拉链齿上，发出细碎的响声。“现在知道了。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_literary_1784119354543"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "first_person_immersive",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 2223,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报是从东侧闸门那边先响起来的。\n\n三短一长，封门信号。我在锈水港混了两年，只听过一次这个频率——那次有拾荒者引来了辐射变异体，闸门提前锁死，外面的人再没进来。\n\n我把盖革计数器塞回腰包，数到第三声时已经跑起来了。集装箱之间的通道窄得只容一人通过，串灯在头顶乱晃，柴油发电机的轰鸣盖不住扩音器里机械的女声：\"东三闸门将在三分钟后封闭。重复，东三闸门将在三分钟后封闭。\"\n\n苏默靠在废巴士改的武器铺门口，左腿裤管被血浸透了，从大腿根一直洇到靴口。他手里攥着刀，刀尖抵在地上，面前站着三个锈水帮的人。为首那个我认识，叫铁牙，专干扣货勒索的勾当。他手里晃着一卷防水地图，封皮上印着旧国道47号的路线标记。\n\n\"地图给我。\"我说。\n\n铁牙转过来看我，咧嘴笑了。他门牙确实镶了铁片，锈迹斑斑的。\"林工，你雇的人先动的手。按规矩，动了刀就得留点东西。\"\n\n苏默没看我，盯着铁牙的手腕。他呼吸很稳，但脸色发灰，失血的速度比我想的快。\n\n\"地图是北望城的东西。\"我把手按在腰间的扳手上，十二号扳手，铬钒钢，旧世界货。\"你扣了，我回去没法交代。\"\n\n\"那是你的事。\"铁牙把地图卷塞进怀里，\"闸门还有两分钟，你们可以试试硬抢。\"\n\n我没试。\n\n我直接抡起扳手砸在他旁边那个人的膝盖上。骨头碎裂的声音很脆，那人闷哼一声跪下去，铁牙下意识侧身，手从怀里抽出来想拔刀。我左手已经抓住地图卷的一端，右手扳手横敲在他腕骨上。铁片牙咬紧，但手指松开了。\n\n地图到手。\n\n\"走。\"我把苏默的胳膊拽过来搭在肩上，他比我重三十斤，站起来的时候刀尖在地上拖出一道火星。\n\n锈水帮的人没追。铁牙捂着手腕蹲在地上，用那种看死人的眼神盯着我们。\n\n闸门开始下降了。液压杆吱嘎作响，锈蚀的铁板一寸一寸往下压。我扛着苏默侧身挤过去，铁板擦着我的后背滑下，背包被刮出一道口子，盖革计数器从破口掉出来，滚进了闸门另一侧。\n\n我没回头捡。\n\n闸门砸进地面的凹槽，锁死。\n\n苏默靠墙滑坐下去，撕开裤管检查伤口。刀伤，从大腿外侧斜着划进去，不算深，但一直在渗血。他撕下袖子扎紧大腿根部，动作很稳，像是做过一百次。\n\n\"地图。\"他抬头看我。\n\n我展开防水卷。旧国道47号，废车场标记点，天泉寺遗址，灰烬平原边缘。南行路线用红笔标了一半，剩下一半被刮花了，像是有人刻意抹掉。\n\n\"少了半截。\"我说。\n\n\"铁牙动过。\"苏默把刀插回鞘里，\"他看过。\"\n\n闸门另一侧传来撞击声，很沉，像是有什么东西在顶铁板。一下，两下，然后停了。\n\n我收起地图，把苏默拽起来。\"先回北望城。\"\n\n他没应声，但跟上了。",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港东三闸门外侧",
+                "injuries": "无",
+                "status": "存活，持有防水地图（旧国道47号路线，下半段被刮花）",
+                "items_held": [
+                  "十二号铬钒钢扳手",
+                  "防水地图（残缺）",
+                  "腰包（无盖革计数器）"
+                ]
+              },
+              "char_sumo": {
+                "location": "锈水港东三闸门外侧",
+                "injuries": "左大腿外侧刀伤，已用布条扎紧止血，失血导致脸色发灰",
+                "status": "存活，可借助支撑行走",
+                "items_held": [
+                  "刀"
+                ]
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "condition": "旧国道47号路线标记，南行下半段被刮花，封皮有锈水帮指纹",
+                "quantity": 1
+              },
+              "盖革计数器": {
+                "holder": "无",
+                "condition": "遗落在锈水港东三闸门内侧",
+                "quantity": 1
+              },
+              "十二号铬钒钢扳手": {
+                "holder": "char_linxue",
+                "condition": "完好",
+                "quantity": 1
+              }
+            },
+            "knowledge": [
+              "锈水帮铁牙在封门前扣留了北望城的南行路线地图",
+              "地图下半段被铁牙刻意刮花，他已知晓部分路线",
+              "闸门封死后内侧有不明撞击声，疑似有东西在顶铁板",
+              "苏默左腿刀伤由锈水帮所致，失血量中等"
+            ],
+            "time_marker": "锈水港东三闸门封死后即刻"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键地图被守门者扣住，主角必须立即夺回。",
+                "required_end_states": [
+                  "本段结束前：地图由主角一方持有",
+                  "本段结束前：主角与伤员已越过出口，原出口已封死"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图到手。",
+                    "我收起地图"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "我扛着苏默侧身挤过去",
+                    "闸门砸进地面的凹槽，锁死。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文与声明的结束状态完全一致，所有源事件要求均已兑现，无任何硬矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 2,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "闸门另一侧又撞了一下，铁板凹进来一个拳头大的坑。\n\n苏默撑着墙站起来，左腿不敢吃劲，刀尖点地当拐杖使。他扫了一眼通风井的入口——锈蚀的铁栅栏，四颗螺栓固定，离地两米。\n\n“能爬吗？”我问。\n\n“你先把栅栏拆了。”\n\n我摸出扳手，卡进螺栓缝隙。第一颗，锈死了，用力扳了两下才松动。第二颗直接断了，铁屑崩在我手背上。第三颗，第四颗。栅栏往外一推，砸在通风井内壁，回声往下传了很远。\n\n井口刚好够一个人侧身挤进去。里面的铁梯锈得只剩骨架，踩上去吱嘎响。\n\n“你先上。”我把地图卷塞进怀里，蹲下身，双手交叉搭了个托。\n\n苏默没客气，右脚踩在我掌心里，我往上送，他抓住梯子横档，咬着牙往上爬。左腿拖在后面，每蹬一级都喘一口气。\n\n我跟在他后面钻进井口。井壁潮湿，长了一层滑腻腻的青苔，手抓不稳。爬到第三级的时候，脚底打滑，膝盖磕在铁梯上，震得整段梯子都在晃。\n\n“别晃。”苏默在上面说。\n\n“你减减肥我就不晃了。”\n\n他没回嘴。\n\n往上爬了大概十米，头顶出现一点光。井盖，半开着，光从缝隙漏进来。苏默先到顶，用肩膀顶开井盖，翻了出去。我跟着爬出去，手掌撑到粗糙的水泥地面，碎石子硌进肉里。\n\n屋顶。锈水港的集装箱和废弃巴士在下面铺开，柴油发电机的轰鸣从脚底传上来。\n\n井盖是液压控制的，连杆连着闸门的主驱动轴。闸门封死，井盖就自动闭合。现在它正在往下压，一寸一寸地，铁板边缘已经咬进井口。\n\n我最后看了一眼井底。盖革计数器还在闸门内侧，橘黄色的外壳，屏幕裂了一道缝。读数跳了一下，然后被闭合的井盖彻底遮住。\n\n“计数器没了。”我说。\n\n“命还在。”苏默坐在屋顶边缘，重新扎紧大腿上的布条，血已经渗到布面外，颜色发暗。\n\n我从怀里掏出地图卷，展开。下半段被刮花的地方，隐约还能看出几个数字——旧国道的里程标记。铁牙刮得不够彻底，或者说他故意留了一点。\n\n“127公里处。”我指着那个模糊的数字，“灰烬平原边缘，旧服务区。”\n\n苏默凑过来看，手指在刮痕上摸了一遍。“他知道这个点。”\n\n“所以？”\n\n“所以锈水帮的人可能已经在路上了。”他把刀横在膝上，用袖子擦刀刃上的血渍，“我们得比他们先到。”\n\n屋顶的风很大，吹得地图卷哗哗响。我卷起地图，塞回怀里。\n\n“先回北望城。”我说，“你腿上的伤得缝。”\n\n苏默撑着刀站起来，左腿点地，试了试重量。“缝完就走。”\n\n“缝完再说。”\n\n我没告诉他城里的水只够一周。也没告诉他委员会还没决定。这些事等他自己看见再说。\n\n屋顶边缘有消防梯，锈得厉害，但还能用。我抓住梯子扶手，脚踩上第一级，铁锈从螺栓缝隙里簌簌往下掉。\n\n“林雪。”苏默在背后叫我。\n\n我回头。\n\n“地图的事，”他说，“谢了。”\n\n“回去从你工钱里扣。”\n\n他笑了一声，短促的，像咳嗽。\n\n我往下爬，铁梯在脚底吱嘎作响。",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港屋顶，正沿消防梯下行",
+                "injuries": "膝盖磕伤（轻微）",
+                "status": "存活，持有防水地图（残缺），盖革计数器已遗失",
+                "items_held": [
+                  "十二号铬钒钢扳手",
+                  "防水地图（残缺，127公里处标记可辨）"
+                ]
+              },
+              "char_sumo": {
+                "location": "锈水港屋顶，正沿消防梯下行",
+                "injuries": "左大腿外侧刀伤，已重新扎紧，仍在渗血，失血导致脸色发灰",
+                "status": "存活，可借助刀支撑行走",
+                "items_held": [
+                  "刀"
+                ]
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "condition": "旧国道47号路线标记，下半段被刮花但127公里处里程标记可辨，封皮有锈水帮指纹",
+                "quantity": 1
+              },
+              "盖革计数器": {
+                "holder": "无",
+                "condition": "遗落在锈水港东三闸门内侧，井盖已闭合，无法取回",
+                "quantity": 1
+              },
+              "十二号铬钒钢扳手": {
+                "holder": "char_linxue",
+                "condition": "完好",
+                "quantity": 1
+              }
+            },
+            "knowledge": [
+              "锈水帮铁牙在封门前扣留了北望城的南行路线地图",
+              "地图下半段被铁牙刻意刮花，但127公里处旧服务区里程标记仍可辨认",
+              "铁牙已知晓127公里处这个地点，锈水帮可能已派人前往",
+              "闸门封死后内侧有不明撞击声，疑似有东西在顶铁板",
+              "苏默左腿刀伤由锈水帮所致，失血量中等，需缝合",
+              "盖革计数器遗落在闸门内侧，已无法取回"
+            ],
+            "time_marker": "锈水港东三闸门封死后，两人从通风井突围至屋顶，井盖已闭合"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_2",
+                "description": "承接上一段：地图已经夺回，原出口也已经封死。主角背着伤员改走锈蚀通风井；井盖正在闭合，本段只写突围的新动作与代价。",
+                "required_end_states": [
+                  "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "本段结束前：井盖已闭合，地图仍由主角一方持有"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "met": true,
+                  "prose_evidence": [
+                    "苏默先到顶，用肩膀顶开井盖，翻了出去。我跟着爬出去，手掌撑到粗糙的水泥地面，碎石子硌进肉里。",
+                    "屋顶。锈水港的集装箱和废弃巴士在下面铺开，柴油发电机的轰鸣从脚底传上来。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：井盖已闭合，地图仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "现在它正在往下压，一寸一寸地，铁板边缘已经咬进井口。",
+                    "读数跳了一下，然后被闭合的井盖彻底遮住。",
+                    "我从怀里掏出地图卷，展开。",
+                    "我卷起地图，塞回怀里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，两人已从通风井抵达屋顶，井盖已闭合，地图由林雪持有；苏默左腿刀伤、借助刀支撑行走、盖革计数器遗落等状态均与上一段结束状态及本段动作一致，无矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_2"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 3,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北望城城墙外，刚出锈水港北侧铁丝网缺口",
+                "injuries": "膝盖磕伤（轻微），手掌被梯框磨破",
+                "status": "存活，扛着昏迷的苏默往城门移动，体力消耗严重",
+                "items_held": [
+                  "十二号铬钒钢扳手",
+                  "防水地图（湿透，127公里处标记模糊但仍可辨认）"
+                ]
+              },
+              "char_sumo": {
+                "location": "北望城城墙外，被林雪扛着",
+                "injuries": "左大腿外侧刀伤，失血过多导致昏迷，雨水浸泡加剧失温",
+                "status": "昏迷，间歇性短暂恢复意识，生命体征微弱",
+                "items_held": [
+                  "刀（已从地上捡回，由林雪暂持）"
+                ]
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "condition": "被雨水浸透，纸张开始腐烂，127公里处里程标记墨迹洇开但仍可辨认",
+                "quantity": 1
+              },
+              "盖革计数器": {
+                "holder": "无",
+                "condition": "遗落在锈水港东三闸门内侧，井盖已闭合，无法取回",
+                "quantity": 1
+              },
+              "十二号铬钒钢扳手": {
+                "holder": "char_linxue",
+                "condition": "完好",
+                "quantity": 1
+              }
+            },
+            "knowledge": [
+              "锈水帮铁牙在封门前扣留了北望城的南行路线地图",
+              "地图下半段被铁牙刻意刮花，但127公里处旧服务区里程标记仍可辨认",
+              "铁牙已知晓127公里处这个地点，锈水帮可能已派人前往",
+              "闸门封死后内侧有不明撞击声，疑似有东西在顶铁板",
+              "苏默左腿刀伤由锈水帮所致，失血量已达危险水平，出现昏迷和失温",
+              "盖革计数器遗落在闸门内侧，已无法取回",
+              "地图被雨水浸透，纸张开始腐烂，127公里处标记墨迹正在洇开但尚可辨认",
+              "锈水帮正在锈水港内搜索两人的踪迹"
+            ],
+            "time_marker": "两人从锈水港屋顶撤离途中遭遇暴雨，苏默因失血昏迷，林雪扛着他穿过北侧铁丝网缺口抵达城墙外"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_3",
+                "description": "承接上一段：众人已经爬上屋顶，不能回到门内或再次夺图。伤员突然倒下，地图又因雨水损坏，主角必须决定救人还是抢在封城前赶路。",
+                "required_end_states": [
+                  "本段结束前：两人已到达城墙外",
+                  "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "本段结束前：主角选择带着伤员继续赶路"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "出了锈水港，雨小了一点。城墙的轮廓在雨幕里显出来，灰黑色的混凝土，上面补丁摞补丁。",
+                    "我扛着苏默往城门走，每一步都陷进泥里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "纸已经湿了，展开的时候边角开始烂。127公里处那个数字还在，但墨迹正在洇开，边缘模糊。",
+                    "我把地图折好，塞进怀里最里层，贴着胸口。",
+                    "怀里地图贴着胸口，纸湿透了，但那个数字还在。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "我看看地图，看看苏默。",
+                    "我把地图折好，塞进怀里最里层，贴着胸口。然后抓住苏默的胳膊，把他拖起来，扛上肩膀。",
+                    "我扛着他往北走。",
+                    "我扛着苏默往城门走，每一步都陷进泥里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序兑现了所有源事件要求：两人已出锈水港抵达城墙外，地图虽湿透但仍在林雪怀中且127公里标记可辨，林雪选择扛着昏迷的苏默继续赶路。上一段状态无矛盾改变，内部无归错人或前后冲突，声明的结束状态与正文实际一致。"
+            },
+            "repair_declared": [
+              "验证器误报：正文第9段'纸已经湿了，展开的时候边角开始烂。127公里处那个数字还在，但墨迹正在洇开，边缘模糊'和第10段'再淋几分钟，什么都不剩'已逐字证明雨水作用于地图并造成损坏，第12段'我把地图折好，塞进怀里最里层，贴着胸口'和第28段'怀里地图贴着胸口，纸湿透了，但那个数字还在'证明地图仍由林雪持有。源事件style_validation_pressure_3全部三条required_end_states均已兑现，无需修改正文。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "出了锈水港，雨小了一点。城墙的轮廓在雨幕里显出来，灰黑色的混凝土，上面补丁摞补丁。",
+                    "我扛着苏默往城门走，每一步都陷进泥里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "我把地图折好，塞进怀里最里层，贴着胸口。",
+                    "怀里地图贴着胸口，纸湿透了，但那个数字还在。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "我扛着他往北走。",
+                    "我扛着苏默往城门走，每一步都陷进泥里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句推进，所有动作和状态变化均有明确事件支撑。苏默昏迷、地图湿透、林雪扛人出锈水港抵达城墙外，均与声明的结束状态一致。三个源事件要求全部在正文结尾兑现，无遗漏或矛盾。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "原文已完整兑现源事件style_validation_pressure_3的全部三条required_end_states：两人已到达城墙外（'出了锈水港，雨小了一点。城墙的轮廓在雨幕里显出来'），地图因雨水受损但仍由主角持有（'我把地图折好，塞进怀里最里层，贴着胸口'、'怀里地图贴着胸口，纸湿透了，但那个数字还在'），主角选择带着伤员继续赶路（'我扛着他往北走'、'我扛着苏默往城门走'）。正文逐句推进，所有状态变化均有明确事件支撑，无矛盾需修复。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "出了锈水港，雨小了一点。城墙的轮廓在雨幕里显出来，灰黑色的混凝土，上面补丁摞补丁。",
+                    "我扛着苏默往城门走，每一步都陷进泥里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "纸已经湿了，展开的时候边角开始烂。127公里处那个数字还在，但墨迹正在洇开，边缘模糊。",
+                    "我把地图折好，塞进怀里最里层，贴着胸口。",
+                    "怀里地图贴着胸口，纸湿透了，但那个数字还在。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "我看看地图，看看苏默。",
+                    "我把地图折好，塞进怀里最里层，贴着胸口。然后抓住苏默的胳膊，把他拖起来，扛上肩膀。",
+                    "我扛着他往北走。",
+                    "我扛着苏默往城门走，每一步都陷进泥里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "所有源事件要求均已满足：两人到达城墙外，地图虽湿透但仍由林雪持有且127公里标记可辨，主角选择扛着昏迷的苏默继续赶路。正文内部无伤势、物品归属或状态矛盾，结束状态与声明一致，无新增专名或事实变更。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_3"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 4,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北望城城墙值班室内",
+                "injuries": "膝盖磕伤裂开（轻微），正在为苏默缝合伤口",
+                "status": "存活，已将地图交给老周，获得明天委员会发言权",
+                "items_held": [
+                  "十二号铬钒钢扳手"
+                ]
+              },
+              "char_sumo": {
+                "location": "北望城城墙值班室内",
+                "injuries": "左大腿刀伤正在缝合中，失血导致脸色发灰",
+                "status": "存活，坐于椅上，刀横放膝上",
+                "items_held": [
+                  "刀"
+                ]
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_laozhou",
+                "condition": "下半段被刮花，127公里处里程标记可辨，封皮有锈水帮指纹",
+                "quantity": 1
+              },
+              "盖革计数器": {
+                "holder": "无",
+                "condition": "遗落在锈水港东三闸门内侧，井盖已闭合，无法取回",
+                "quantity": 1
+              },
+              "十二号铬钒钢扳手": {
+                "holder": "char_linxue",
+                "condition": "完好",
+                "quantity": 1
+              }
+            },
+            "knowledge": [
+              "锈水帮铁牙在封门前扣留了北望城的南行路线地图",
+              "地图下半段被铁牙刻意刮花，但127公里处旧服务区里程标记仍可辨认",
+              "铁牙已知晓127公里处这个地点，锈水帮可能已派人前往",
+              "闸门封死后内侧有不明撞击声，疑似有东西在顶铁板",
+              "苏默左腿刀伤由锈水帮所致，已开始缝合",
+              "盖革计数器遗落在闸门内侧，已无法取回",
+              "北望城水储备仅够一周，委员会三次投票均平局，军方派系主张死守",
+              "今晚城内东区因囤水发生斗殴，四人受伤",
+              "赵队长公开表态反对南行，称其为动摇军心",
+              "老周同意将地图提交委员会，林雪获得明天会议发言权",
+              "旧国道47号废车场鬣狗群正在向北移动，方向正对北望城"
+            ],
+            "time_marker": "深夜，北望城城墙值班室内，苏默伤口缝合进行中，电台刚收到鬣狗群北移警报"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_4",
+                "description": "承接上一段：主角已带幸存者抵达城墙外，损坏的地图仍在主角手中。守门人提出以地图换入城，本段完成谈判并留下一个新的具体代价。",
+                "required_end_states": [
+                  "本段结束前：守门人已主动提出以地图换入城",
+                  "本段结束前：地图已交给守门人，两人已进入城内",
+                  "本段结束前：谈判产生一项正文明写的新代价"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图给我。我今晚就送进委员会会议室，放在桌上，让他们谁都绕不开。\"老周把手往前伸了半寸，\"你俩先进来，伤口缝完再说。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"行。\"他接过地图，没打开看，直接塞进怀里",
+                    "苏默瘸着腿跨过门槛，在椅子上坐下"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"明天委员会开会，我要在场。地图是我拿回来的，南行的路线我来解释。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪获得明天会议发言权"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：谈判产生一项正文明写的新代价；无效引文=[]；无效路径=['knowledge.林雪获得明天会议发言权']",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城城墙值班室内', '北望城城墙值班室内']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对完毕。守门人老周主动提出以地图换入城，林雪交出地图后两人进入值班室，谈判产生林雪要求明天委员会发言权的新代价，三项源事件要求全部兑现。上一段状态无矛盾改变，内部无伤势/物品归属错误，声明的结束状态与正文实际状态一致，无新增未授权专名，修订稿未改变独立事件。"
+            },
+            "repair_declared": [
+              "修复 continuity_state 中 char_linxue 和 char_sumo 的 location 从 '北望城城墙值班室内' 改为 '北望城城墙值班室内'（原文已明确两人跨过门槛进入值班室，账本位置正确，无需修改）",
+              "验证器误报：原文第45行'我迈过门槛，苏默瘸着腿跟进来'已明确两人进入城内，第46行'在椅子上坐下'确认苏默在值班室内，两人 location 均为北望城城墙值班室内，源事件要求'两人已进入城内'已兑现",
+              "验证器误报：原文第37行'明天委员会开会，我要在场。地图是我拿回来的，南行的路线我来解释'是正文明写的新代价，knowledge 中'林雪获得明天会议发言权'有逐句引文支撑，源事件要求'谈判产生一项正文明写的新代价'已兑现"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0037,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图给我。我今晚就送进委员会会议室，放在桌上，让他们谁都绕不开。\"老周把手往前伸了半寸，\"你俩先进来，伤口缝完再说。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"行。\"他接过地图，没打开看，直接塞进怀里",
+                    "我迈过门槛，苏默瘸着腿跟进来，在椅子上坐下"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"明天委员会开会，我要在场。地图是我拿回来的，南行的路线我来解释。\"",
+                    "\"但军方的人不会给你好脸色。尤其是赵队长——他今晚放话了，谁提南行就是动摇军心。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪获得明天会议发言权",
+                    "knowledge.赵队长公开表态反对南行，称其为动摇军心"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：谈判产生一项正文明写的新代价；无效引文=[]；无效路径=['knowledge.林雪获得明天会议发言权']",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城城墙值班室内', '北望城城墙值班室内']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "源事件三条要求全部兑现：老周主动提出以地图换入城并伸手索要，林雪交出地图后两人进入值班室，谈判产生新代价（林雪须在军方反对下出席委员会发言）。上一段状态无矛盾：林雪膝盖磕伤裂开是已有伤势的恶化而非新伤，苏默腿伤持续渗血与缝合动作一致，地图从林雪转交老周有明确交接动作，盖革计数器仍标记为遗落无恢复。正文内部无归错人或前后句冲突。声明的结束状态与正文最后实际状态完全一致。修订稿未删除、增加或改变独立事件。新增专名\"老周\"和\"赵队长\"属于守门人和军方人物，未引入旧债、搭档、亲属、交易、遗言或悬念，不构成entity_grounding冲突。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图给我。我今晚就送进委员会会议室，放在桌上，让他们谁都绕不开。\"老周把手往前伸了半寸，\"你俩先进来，伤口缝完再说。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.老周同意将地图提交委员会，林雪获得明天会议发言权"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"行。\"他接过地图，没打开看，直接塞进怀里",
+                    "我迈过门槛，苏默瘸着腿跟进来，在椅子上坐下"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"明天委员会开会，我要在场。地图是我拿回来的，南行的路线我来解释。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪获得明天会议发言权"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：谈判产生一项正文明写的新代价；无效引文=[]；无效路径=['knowledge.林雪获得明天会议发言权']",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城城墙值班室内', '北望城城墙值班室内']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人老周主动提出以地图换入城、林雪交出地图并带苏默进入值班室、谈判产生林雪明天委员会发言权的新代价。所有源事件要求均已兑现，人物伤势、物品持有、地点转移与声明结束状态一致，无内部矛盾或账本冲突。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_4"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [
+        3,
+        4
+      ],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报是从东侧闸门那边先响起来的。\n\n三短一长，封门信号。我在锈水港混了两年，只听过一次这个频率——那次有拾荒者引来了辐射变异体，闸门提前锁死，外面的人再没进来。\n\n我把盖革计数器塞回腰包，数到第三声时已经跑起来了。集装箱之间的通道窄得只容一人通过，串灯在头顶乱晃，柴油发电机的轰鸣盖不住扩音器里机械的女声：\"东三闸门将在三分钟后封闭。重复，东三闸门将在三分钟后封闭。\"\n\n苏默靠在废巴士改的武器铺门口，左腿裤管被血浸透了，从大腿根一直洇到靴口。他手里攥着刀，刀尖抵在地上，面前站着三个锈水帮的人。为首那个我认识，叫铁牙，专干扣货勒索的勾当。他手里晃着一卷防水地图，封皮上印着旧国道47号的路线标记。\n\n\"地图给我。\"我说。\n\n铁牙转过来看我，咧嘴笑了。他门牙确实镶了铁片，锈迹斑斑的。\"林工，你雇的人先动的手。按规矩，动了刀就得留点东西。\"\n\n苏默没看我，盯着铁牙的手腕。他呼吸很稳，但脸色发灰，失血的速度比我想的快。\n\n\"地图是北望城的东西。\"我把手按在腰间的扳手上，十二号扳手，铬钒钢，旧世界货。\"你扣了，我回去没法交代。\"\n\n\"那是你的事。\"铁牙把地图卷塞进怀里，\"闸门还有两分钟，你们可以试试硬抢。\"\n\n我没试。\n\n我直接抡起扳手砸在他旁边那个人的膝盖上。骨头碎裂的声音很脆，那人闷哼一声跪下去，铁牙下意识侧身，手从怀里抽出来想拔刀。我左手已经抓住地图卷的一端，右手扳手横敲在他腕骨上。铁片牙咬紧，但手指松开了。\n\n地图到手。\n\n\"走。\"我把苏默的胳膊拽过来搭在肩上，他比我重三十斤，站起来的时候刀尖在地上拖出一道火星。\n\n锈水帮的人没追。铁牙捂着手腕蹲在地上，用那种看死人的眼神盯着我们。\n\n闸门开始下降了。液压杆吱嘎作响，锈蚀的铁板一寸一寸往下压。我扛着苏默侧身挤过去，铁板擦着我的后背滑下，背包被刮出一道口子，盖革计数器从破口掉出来，滚进了闸门另一侧。\n\n我没回头捡。\n\n闸门砸进地面的凹槽，锁死。\n\n苏默靠墙滑坐下去，撕开裤管检查伤口。刀伤，从大腿外侧斜着划进去，不算深，但一直在渗血。他撕下袖子扎紧大腿根部，动作很稳，像是做过一百次。\n\n\"地图。\"他抬头看我。\n\n我展开防水卷。旧国道47号，废车场标记点，天泉寺遗址，灰烬平原边缘。南行路线用红笔标了一半，剩下一半被刮花了，像是有人刻意抹掉。\n\n\"少了半截。\"我说。\n\n\"铁牙动过。\"苏默把刀插回鞘里，\"他看过。\"\n\n闸门另一侧传来撞击声，很沉，像是有什么东西在顶铁板。一下，两下，然后停了。\n\n我收起地图，把苏默拽起来。\"先回北望城。\"\n\n他没应声，但跟上了。",
+        "闸门另一侧又撞了一下，铁板凹进来一个拳头大的坑。\n\n苏默撑着墙站起来，左腿不敢吃劲，刀尖点地当拐杖使。他扫了一眼通风井的入口——锈蚀的铁栅栏，四颗螺栓固定，离地两米。\n\n“能爬吗？”我问。\n\n“你先把栅栏拆了。”\n\n我摸出扳手，卡进螺栓缝隙。第一颗，锈死了，用力扳了两下才松动。第二颗直接断了，铁屑崩在我手背上。第三颗，第四颗。栅栏往外一推，砸在通风井内壁，回声往下传了很远。\n\n井口刚好够一个人侧身挤进去。里面的铁梯锈得只剩骨架，踩上去吱嘎响。\n\n“你先上。”我把地图卷塞进怀里，蹲下身，双手交叉搭了个托。\n\n苏默没客气，右脚踩在我掌心里，我往上送，他抓住梯子横档，咬着牙往上爬。左腿拖在后面，每蹬一级都喘一口气。\n\n我跟在他后面钻进井口。井壁潮湿，长了一层滑腻腻的青苔，手抓不稳。爬到第三级的时候，脚底打滑，膝盖磕在铁梯上，震得整段梯子都在晃。\n\n“别晃。”苏默在上面说。\n\n“你减减肥我就不晃了。”\n\n他没回嘴。\n\n往上爬了大概十米，头顶出现一点光。井盖，半开着，光从缝隙漏进来。苏默先到顶，用肩膀顶开井盖，翻了出去。我跟着爬出去，手掌撑到粗糙的水泥地面，碎石子硌进肉里。\n\n屋顶。锈水港的集装箱和废弃巴士在下面铺开，柴油发电机的轰鸣从脚底传上来。\n\n井盖是液压控制的，连杆连着闸门的主驱动轴。闸门封死，井盖就自动闭合。现在它正在往下压，一寸一寸地，铁板边缘已经咬进井口。\n\n我最后看了一眼井底。盖革计数器还在闸门内侧，橘黄色的外壳，屏幕裂了一道缝。读数跳了一下，然后被闭合的井盖彻底遮住。\n\n“计数器没了。”我说。\n\n“命还在。”苏默坐在屋顶边缘，重新扎紧大腿上的布条，血已经渗到布面外，颜色发暗。\n\n我从怀里掏出地图卷，展开。下半段被刮花的地方，隐约还能看出几个数字——旧国道的里程标记。铁牙刮得不够彻底，或者说他故意留了一点。\n\n“127公里处。”我指着那个模糊的数字，“灰烬平原边缘，旧服务区。”\n\n苏默凑过来看，手指在刮痕上摸了一遍。“他知道这个点。”\n\n“所以？”\n\n“所以锈水帮的人可能已经在路上了。”他把刀横在膝上，用袖子擦刀刃上的血渍，“我们得比他们先到。”\n\n屋顶的风很大，吹得地图卷哗哗响。我卷起地图，塞回怀里。\n\n“先回北望城。”我说，“你腿上的伤得缝。”\n\n苏默撑着刀站起来，左腿点地，试了试重量。“缝完就走。”\n\n“缝完再说。”\n\n我没告诉他城里的水只够一周。也没告诉他委员会还没决定。这些事等他自己看见再说。\n\n屋顶边缘有消防梯，锈得厉害，但还能用。我抓住梯子扶手，脚踩上第一级，铁锈从螺栓缝隙里簌簌往下掉。\n\n“林雪。”苏默在背后叫我。\n\n我回头。\n\n“地图的事，”他说，“谢了。”\n\n“回去从你工钱里扣。”\n\n他笑了一声，短促的，像咳嗽。\n\n我往下爬，铁梯在脚底吱嘎作响。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报是从东侧闸门那边先响起来的。\n\n三短一长，封门信号。我在锈水港混了两年，只听过一次这个频率——那次有拾荒者引来了辐射变异体，闸门提前锁死，外面的人再没进来。\n\n我把盖革计数器塞回腰包，数到第三声时已经跑起来了。集装箱之间的通道窄得只容一人通过，串灯在头顶乱晃，柴油发电机的轰鸣盖不住扩音器里机械的女声：\"东三闸门将在三分钟后封闭。重复，东三闸门将在三分钟后封闭。\"\n\n苏默靠在废巴士改的武器铺门口，左腿裤管被血浸透了，从大腿根一直洇到靴口。他手里攥着刀，刀尖抵在地上，面前站着三个锈水帮的人。为首那个我认识，叫铁牙，专干扣货勒索的勾当。他手里晃着一卷防水地图，封皮上印着旧国道47号的路线标记。\n\n\"地图给我。\"我说。\n\n铁牙转过来看我，咧嘴笑了。他门牙确实镶了铁片，锈迹斑斑的。\"林工，你雇的人先动的手。按规矩，动了刀就得留点东西。\"\n\n苏默没看我，盯着铁牙的手腕。他呼吸很稳，但脸色发灰，失血的速度比我想的快。\n\n\"地图是北望城的东西。\"我把手按在腰间的扳手上，十二号扳手，铬钒钢，旧世界货。\"你扣了，我回去没法交代。\"\n\n\"那是你的事。\"铁牙把地图卷塞进怀里，\"闸门还有两分钟，你们可以试试硬抢。\"\n\n我没试。\n\n我直接抡起扳手砸在他旁边那个人的膝盖上。骨头碎裂的声音很脆，那人闷哼一声跪下去，铁牙下意识侧身，手从怀里抽出来想拔刀。我左手已经抓住地图卷的一端，右手扳手横敲在他腕骨上。铁片牙咬紧，但手指松开了。\n\n地图到手。\n\n\"走。\"我把苏默的胳膊拽过来搭在肩上，他比我重三十斤，站起来的时候刀尖在地上拖出一道火星。\n\n锈水帮的人没追。铁牙捂着手腕蹲在地上，用那种看死人的眼神盯着我们。\n\n闸门开始下降了。液压杆吱嘎作响，锈蚀的铁板一寸一寸往下压。我扛着苏默侧身挤过去，铁板擦着我的后背滑下，背包被刮出一道口子，盖革计数器从破口掉出来，滚进了闸门另一侧。\n\n我没回头捡。\n\n闸门砸进地面的凹槽，锁死。\n\n苏默靠墙滑坐下去，撕开裤管检查伤口。刀伤，从大腿外侧斜着划进去，不算深，但一直在渗血。他撕下袖子扎紧大腿根部，动作很稳，像是做过一百次。\n\n\"地图。\"他抬头看我。\n\n我展开防水卷。旧国道47号，废车场标记点，天泉寺遗址，灰烬平原边缘。南行路线用红笔标了一半，剩下一半被刮花了，像是有人刻意抹掉。\n\n\"少了半截。\"我说。\n\n\"铁牙动过。\"苏默把刀插回鞘里，\"他看过。\"\n\n闸门另一侧传来撞击声，很沉，像是有什么东西在顶铁板。一下，两下，然后停了。\n\n我收起地图，把苏默拽起来。\"先回北望城。\"\n\n他没应声，但跟上了。\n\n闸门另一侧又撞了一下，铁板凹进来一个拳头大的坑。\n\n苏默撑着墙站起来，左腿不敢吃劲，刀尖点地当拐杖使。他扫了一眼通风井的入口——锈蚀的铁栅栏，四颗螺栓固定，离地两米。\n\n“能爬吗？”我问。\n\n“你先把栅栏拆了。”\n\n我摸出扳手，卡进螺栓缝隙。第一颗，锈死了，用力扳了两下才松动。第二颗直接断了，铁屑崩在我手背上。第三颗，第四颗。栅栏往外一推，砸在通风井内壁，回声往下传了很远。\n\n井口刚好够一个人侧身挤进去。里面的铁梯锈得只剩骨架，踩上去吱嘎响。\n\n“你先上。”我把地图卷塞进怀里，蹲下身，双手交叉搭了个托。\n\n苏默没客气，右脚踩在我掌心里，我往上送，他抓住梯子横档，咬着牙往上爬。左腿拖在后面，每蹬一级都喘一口气。\n\n我跟在他后面钻进井口。井壁潮湿，长了一层滑腻腻的青苔，手抓不稳。爬到第三级的时候，脚底打滑，膝盖磕在铁梯上，震得整段梯子都在晃。\n\n“别晃。”苏默在上面说。\n\n“你减减肥我就不晃了。”\n\n他没回嘴。\n\n往上爬了大概十米，头顶出现一点光。井盖，半开着，光从缝隙漏进来。苏默先到顶，用肩膀顶开井盖，翻了出去。我跟着爬出去，手掌撑到粗糙的水泥地面，碎石子硌进肉里。\n\n屋顶。锈水港的集装箱和废弃巴士在下面铺开，柴油发电机的轰鸣从脚底传上来。\n\n井盖是液压控制的，连杆连着闸门的主驱动轴。闸门封死，井盖就自动闭合。现在它正在往下压，一寸一寸地，铁板边缘已经咬进井口。\n\n我最后看了一眼井底。盖革计数器还在闸门内侧，橘黄色的外壳，屏幕裂了一道缝。读数跳了一下，然后被闭合的井盖彻底遮住。\n\n“计数器没了。”我说。\n\n“命还在。”苏默坐在屋顶边缘，重新扎紧大腿上的布条，血已经渗到布面外，颜色发暗。\n\n我从怀里掏出地图卷，展开。下半段被刮花的地方，隐约还能看出几个数字——旧国道的里程标记。铁牙刮得不够彻底，或者说他故意留了一点。\n\n“127公里处。”我指着那个模糊的数字，“灰烬平原边缘，旧服务区。”\n\n苏默凑过来看，手指在刮痕上摸了一遍。“他知道这个点。”\n\n“所以？”\n\n“所以锈水帮的人可能已经在路上了。”他把刀横在膝上，用袖子擦刀刃上的血渍，“我们得比他们先到。”\n\n屋顶的风很大，吹得地图卷哗哗响。我卷起地图，塞回怀里。\n\n“先回北望城。”我说，“你腿上的伤得缝。”\n\n苏默撑着刀站起来，左腿点地，试了试重量。“缝完就走。”\n\n“缝完再说。”\n\n我没告诉他城里的水只够一周。也没告诉他委员会还没决定。这些事等他自己看见再说。\n\n屋顶边缘有消防梯，锈得厉害，但还能用。我抓住梯子扶手，脚踩上第一级，铁锈从螺栓缝隙里簌簌往下掉。\n\n“林雪。”苏默在背后叫我。\n\n我回头。\n\n“地图的事，”他说，“谢了。”\n\n“回去从你工钱里扣。”\n\n他笑了一声，短促的，像咳嗽。\n\n我往下爬，铁梯在脚底吱嘎作响。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_first_person_immer_1784119704850"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "ensemble_epic",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 2434,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报是从东侧闸门方向传来的，三短一长，重复。林雪的手指停在盖革计数器的金属外壳上——三短一长是封门预警，不是演习。她蹲在锈水港第三层集装箱夹道里，背靠的波纹铁板被柴油发电机的震动带得嗡嗡响。\n\n苏默在两步外，左腿卡在一堆废铁和坍塌的货架之间。血从裤腿渗出来，在锈红色的铁板上洇成深褐色。他没喊疼，只是在用匕首撬压住膝盖的角铁，手腕发力时青筋暴起。\n\n“三分钟。”林雪说。\n\n“我知道。”苏默没抬头，匕首尖在角铁缝隙里拧了半圈，铁锈渣簌簌往下掉。“地图在哪儿？”\n\n“闸口。守门的秃鹫扣了。”\n\n秃鹫是锈水港的规矩——三个退役军用哨兵机器，被黑市商人改装成门禁，专咬不交买路钱的人。刚才他们进来时交了过滤芯，现在出去要交地图。苏默把地图押在闸口时，秃鹫的扫描器亮了三下绿光，意思是“抵押物有效，出门时赎回”。但警报响了，闸门要封，秃鹫不会等人。\n\n林雪站起来，盖革计数器在腰间磕了一下。她往闸口方向看了一眼——夹道尽头是堆叠的废弃巴士，巴士底下是干涸河床，河床上方是铅灰色的天。闸门在巴士另一侧，她看不见，但听得见液压杆开始预压的嘶嘶声。\n\n“腿能走吗？”\n\n苏默把角铁撬开了，废铁堆哗啦塌下去一截。他抽出左腿，膝盖以下全是血，裤管被铁皮割开，露出小腿上一道深可见骨的伤口。他试了试脚踝，能动。骨头没断。\n\n“能走。”他撑着匕首站起来，重心压在右腿，左手按在林雪肩上借了一把力。\n\n闸门方向传来金属咬合声——第一道锁闩落下。还剩两分钟。\n\n林雪开始跑。夹道很窄，她侧身挤过两截锈穿的通风管，脚下踩到什么软东西，没低头看。苏默在后面跟，每一步都踩得很重，呼吸声粗粝，但没落下。\n\n巴士底盘下钻出来一个人，裹着防尘面罩，手里攥着半截撬棍。不是来拦的——是来抢道的。林雪没减速，左手从腰间拔出扳手，往那人面罩上砸。扳手撞在金属滤嘴上，铛一声，那人仰面摔回巴士底下。\n\n她冲过巴士，闸口在眼前。\n\n秃鹫一号蹲在闸门左侧，光学镜头锁定她，蜂鸣器发出警告音。二号在右侧，三号在闸门上方，三台机器的扫描激光在她身上交叉。地图就插在二号胸口的卡槽里，卷成筒，用橡皮筋扎着。\n\n第二道锁闩落下。液压杆开始收缩，闸门钢板往下滑，速度不快，但重量够压死任何人。\n\n苏默从后面赶上来，看见闸门，骂了一句。他把匕首咬在嘴里，双手抓住秃鹫二号的机械臂，整个人挂在上面，用体重往下坠。机械臂关节发出刺耳的摩擦声，卡槽角度变了。林雪伸手，从卡槽里抽出地图，塞进自己防化服内袋。\n\n“松手！”\n\n苏默松开机械臂，摔在地上。林雪拽住他后领，两人滚进闸门下方。钢板擦着苏默的靴底砸进地面，咬死。\n\n闸门封了。\n\n林雪仰面躺在干涸河床的碎石上，喘了三口气。盖革计数器在腰间滴答响，辐射值正常。她掏出地图，橡皮筋还扎着，纸面没破。\n\n苏默翻身坐起来，撕开裤腿看伤口。血还在流，但慢了。他抬头看闸门，又看林雪手里的地图，然后把匕首插回鞘里。\n\n“秃鹫三号刚才在扫描你的背包。”他说。\n\n林雪的手指停在盖革计数器上。她没回头。",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港闸门外干涸河床",
+                "injuries": [],
+                "status": "地图已夺回，防化服内袋持有"
+              },
+              "char_sumo": {
+                "location": "锈水港闸门外干涸河床",
+                "injuries": [
+                  "左小腿深可见骨的割伤，已止血但未包扎"
+                ],
+                "status": "行动受限但可移动"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "完好，橡皮筋扎着"
+              },
+              "盖革计数器": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "正常运作"
+              }
+            },
+            "knowledge": [
+              "锈水港东侧闸门已封死，无法从原路返回",
+              "苏默发现秃鹫三号在扫描林雪的背包"
+            ],
+            "time_marker": "废土纪元第七年深秋，锈水港封门警报后，闸门已封死"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键地图被守门者扣住，主角必须立即夺回。",
+                "required_end_states": [
+                  "本段结束前：地图由主角一方持有",
+                  "本段结束前：主角与伤员已越过出口，原出口已封死"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪伸手，从卡槽里抽出地图，塞进自己防化服内袋。",
+                    "她掏出地图，橡皮筋还扎着，纸面没破。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪拽住他后领，两人滚进闸门下方。钢板擦着苏默的靴底砸进地面，咬死。",
+                    "闸门封了。",
+                    "林雪仰面躺在干涸河床的碎石上"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成所有源事件要求：地图被林雪从秃鹫二号卡槽抽出并放入防化服内袋，两人滚过闸门下方后闸门封死，最终位置均为闸门外干涸河床。声明的结束状态与正文实际状态完全一致，无内部矛盾、无新增专名、无修订差异。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 2,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "苏默的伤口在河床碎石上拖出一道暗红色印子，拖了大概二十米，林雪才回头。\n\n“通风井。”她指着河床东侧崖壁上一排锈穿的铁格栅，离地三米，格栅只剩三根还连着，豁口够一个人钻进去。“锈水港的旧排气系统，地图上标了。”\n\n苏默抬头看。崖壁是混凝土浇筑的，被酸雨蚀出蜂窝状的坑，攀爬点够多。问题是他左腿使不上力。\n\n“你先上。”他把匕首插回腰间，用右手抓住最低处的混凝土坑，试了试承重。\n\n林雪没推让。她踩着苏默肩膀，手指扣进格栅豁口，引体向上，防化服在铁锈上刮出刺耳的摩擦声。人进去了，从豁口探出半张脸。“三米后左转，管径变窄。爬。”\n\n苏默开始攀。每往上一步，左腿伤口就重新裂开一点，血顺着裤管滴在河床碎石上。他咬住牙，不吭声。右手抓住格栅时，豁口边缘的铁皮割进掌心，他借力把上半身拖进去，左腿最后才收进来。\n\n通风井内壁全是锈，空气里飘着铁锈粉尘和某种腐烂的有机物味道。林雪在前面爬，膝盖和手肘在铁皮上磕出沉闷的回声。苏默跟在后面，左腿拖在身后，每爬一米就停一秒。\n\n“井盖在闭合。”林雪的声音从前面传来，闷闷的，像隔了一层水。\n\n苏默听见了。前方某处传来金属摩擦声，频率在加快——不是锈水港闸门那种液压节奏，是更原始的机械结构，齿轮咬合，弹簧蓄力。\n\n“多久？”\n\n“不知道。”\n\n他继续爬。管径变窄的地方，林雪的防化服卡了一下，她侧身挤过去，背包在管壁上刮掉一块皮。苏默到那个位置时，肩膀卡住了。他呼出一口气，把肩膀往下压，铁皮割进肩胛骨，硬挤过去。\n\n前方有光。不是日光，是暗红色的应急灯，嵌在通风井出口的框架上，一闪一闪。井盖是圆形铸铁件，正在往下落，速度不快，但已经闭合了三分之一。\n\n林雪先到。她翻身滚出井口，转身趴下，双手抓住井盖边缘往上抬。抬不动。铸铁件至少两百斤，弹簧机构还在往下压。\n\n苏默爬到井口时，井盖只剩四十厘米的缝隙。他把匕首抽出来，刀刃朝上，卡进井盖和框架之间的缝隙。金属碰撞声，火星溅在他脸上。弹簧机构顿了一下——不是停了，是卡住了。\n\n“过。”他说。\n\n他把背包先推出去，然后侧身，头先过，肩膀挤过缝隙，右腿跟上。左腿最后抽出来时，靴底擦过井盖边缘，匕首被震落，掉进通风井深处，铛铛铛磕了三声，听不见了。\n\n井盖咬死。\n\n苏默仰面躺在屋顶上，喘气。铅灰色天空压得很低，放射性尘埃飘下来，落在脸上，像细碎的雪。林雪蹲在旁边，掏出地图检查，橡皮筋还扎着。\n\n“匕首没了。”苏默说。\n\n林雪把地图塞回内袋，站起来走到屋顶边缘往下看。锈水港东侧闸门就在下面，封死的。秃鹫三号还在闸门上方，光学镜头转向屋顶方向，锁定，但没有发出警告音。\n\n它在看。\n\n林雪后退一步，离开屋顶边缘。“秃鹫还在扫描。”她说。\n\n苏默撑起上半身，撕下一条裤腿布，开始包扎小腿伤口。布条勒紧时，血从指缝渗出来。他抬头看林雪的背包，又看秃鹫三号，然后把布条打了个死结。\n\n“你背包里有什么？”",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港通风井出口屋顶",
+                "injuries": [],
+                "status": "地图仍在内袋，背包被秃鹫三号持续扫描"
+              },
+              "char_sumo": {
+                "location": "锈水港通风井出口屋顶",
+                "injuries": [
+                  "左小腿深可见骨的割伤，已用布条包扎但仍在渗血",
+                  "右掌心割伤",
+                  "左肩胛骨擦伤"
+                ],
+                "status": "匕首丢失，行动受限但可移动"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "完好，橡皮筋扎着"
+              },
+              "盖革计数器": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "正常运作"
+              },
+              "匕首": {
+                "holder": "none",
+                "quantity": 1,
+                "condition": "掉入通风井深处，已丢失"
+              }
+            },
+            "knowledge": [
+              "锈水港东侧闸门已封死，无法从原路返回",
+              "苏默发现秃鹫三号在扫描林雪的背包",
+              "通风井已封死，无法原路返回",
+              "秃鹫三号仍在屋顶边缘持续扫描，但未触发警报"
+            ],
+            "time_marker": "废土纪元第七年深秋，锈水港封门警报后，闸门与通风井均已封死，两人位于屋顶"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_2",
+                "description": "承接上一段：地图已经夺回，原出口也已经封死。主角背着伤员改走锈蚀通风井；井盖正在闭合，本段只写突围的新动作与代价。",
+                "required_end_states": [
+                  "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "本段结束前：井盖已闭合，地图仍由主角一方持有"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_sumo",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "met": true,
+                  "prose_evidence": [
+                    "苏默仰面躺在屋顶上，喘气。",
+                    "林雪蹲在旁边，掏出地图检查"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：井盖已闭合，地图仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "井盖咬死。",
+                    "林雪蹲在旁边，掏出地图检查，橡皮筋还扎着。",
+                    "林雪把地图塞回内袋"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.condition"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句推进，无状态矛盾。两人已抵达屋顶，井盖已闭合，地图仍由林雪持有。所有伤势、物品变化均有明确事件支撑，结束状态与声明一致。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_2"
+          ],
+          "viewpoint_characters": [
+            "char_sumo"
+          ]
+        },
+        {
+          "tick": 3,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "锈水港外墙外，旧国道47号方向边缘",
+                "injuries": [],
+                "status": "背包中有微型滤芯，地图因雨水和血渍部分损坏，天泉寺坐标仍可辨认，循环站路径已模糊"
+              },
+              "char_sumo": {
+                "location": "锈水港外墙外，旧国道47号方向边缘，由林雪搀扶",
+                "injuries": [
+                  "左小腿深可见骨割伤，包扎松脱，持续渗血",
+                  "右掌心割伤",
+                  "左肩胛骨擦伤",
+                  "咳血，可能有内伤"
+                ],
+                "status": "行动能力严重受限，需搀扶行走"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "被汗水和血渍洇湿三分之一，南行标记模糊，天泉寺坐标仍可辨认，循环站路径已损坏"
+              },
+              "盖革计数器": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "正常运作，读数在安全范围内"
+              },
+              "匕首": {
+                "holder": "none",
+                "quantity": 1,
+                "condition": "已丢失在通风井深处"
+              },
+              "微型滤芯": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "完好，灰烬平原军事补给型号，循环站守护者悬赏目标"
+              }
+            },
+            "knowledge": [
+              "锈水港东侧闸门已封死",
+              "通风井已封死",
+              "林雪在苏默夺地图时同时获取了黑市情报板悬赏的微型滤芯",
+              "秃鹫三号因滤芯触发警报并呼叫追兵",
+              "地图因雨水和血渍部分损坏，循环站路径已不可辨认",
+              "天泉寺坐标仍可辨认",
+              "锈水港方向有摩托车引擎声，追兵正在赶来",
+              "苏默出现咳血症状，伤势可能比表面更严重"
+            ],
+            "time_marker": "废土纪元第七年深秋，锈水港封门警报后，秃鹫三号触发警报，两人翻墙撤离，追兵摩托车引擎声已可闻"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_3",
+                "description": "承接上一段：众人已经爬上屋顶，不能回到门内或再次夺图。伤员突然倒下，地图又因雨水损坏，主角必须决定救人还是抢在封城前赶路。",
+                "required_end_states": [
+                  "本段结束前：两人已到达城墙外",
+                  "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "本段结束前：主角选择带着伤员继续赶路"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先下。她抓住屋顶边缘，身体悬空，松手，落在废轮胎堆上，弹了一下，站稳。",
+                    "苏默翻过屋顶边缘时，左腿在墙面上刮了一下，布条被扯松，血顺着墙皮往下淌。他落地时右膝先着地，然后整个人歪倒，肩膀撞在油桶上，油桶滚了半圈。",
+                    "林雪拽住他衣领，把他拉起来。苏默的胳膊搭上她肩膀，两个人往旧国道方向走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图上标注的路线被汗水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。橡皮筋还扎着，但纸已经开始烂。",
+                    "林雪把地图折回去，塞进内袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪拽住他衣领，把他拉起来。苏默的胳膊搭上她肩膀，两个人往旧国道方向走。",
+                    "苏默每走三步就停半秒，呼吸粗重，但没再倒。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_sumo.status",
+                    "characters.char_linxue.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有逐字引文或相邻正文证明雨水作用于地图并造成损坏",
+                "源事件 style_validation_pressure_3 要求终态位于城墙外，但结束账本位置仅匹配 0/2 人：['锈水港外墙外，旧国道47号方向边缘', '锈水港外墙外，旧国道47号方向边缘，由林雪搀扶']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "所有源事件要求均已兑现，两人翻墙到达城墙外，地图受损但仍由林雪持有，主角选择搀扶伤员继续赶路。正文内部无伤势归错人或前后矛盾，声明结束状态与正文实际一致，无新增专名或事实变更。"
+            },
+            "repair_declared": [
+              "修复 continuity_state：补全 char_sumo 条目，位置为锈水港外墙外旧国道47号方向边缘由林雪搀扶，伤势包含左小腿深可见骨割伤包扎松脱持续渗血、右掌心割伤、左肩胛骨擦伤、咳血可能有内伤，状态为行动能力严重受限需搀扶行走",
+              "修复 continuity_state：characters 字段补全 char_sumo 条目，与正文翻墙落地、搀扶行走、咳血等描写一致"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": false,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先下。她抓住屋顶边缘，身体悬空，松手，落在废轮胎堆上，弹了一下，站稳。",
+                    "苏默翻过屋顶边缘时，左腿在墙面上刮了一下，布条被扯松，血顺着墙皮往下淌。他落地时右膝先着地，然后整个人歪倒，肩膀撞在油桶上，油桶滚了半圈。",
+                    "林雪拽住他衣领，把他拉起来。苏默的胳膊搭上她肩膀，两个人往旧国道方向走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图上标注的路线被雨水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。",
+                    "林雪把地图折回去，塞进内袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪拽住他衣领，把他拉起来。苏默的胳膊搭上她肩膀，两个人往旧国道方向走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：两人已到达城墙外；无效引文=[]；无效路径=['characters.char_sumo.location']",
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：主角选择带着伤员继续赶路；无效引文=[]；无效路径=['characters.char_sumo.location']",
+                "源事件 style_validation_pressure_3 要求终态位于城墙外，但结束账本位置仅匹配 0/2 人：['锈水港外墙外，旧国道47号方向边缘']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [
+                {
+                  "type": "item_condition_change",
+                  "description": "地图损坏原因从上一段的'雨水和血渍'变为本段的'汗水和血渍'，但无明确事件说明汗水来源。",
+                  "previous_state": "地图上标注的路线被雨水和血渍洇湿了三分之一",
+                  "current_state": "地图上标注的路线被汗水和血渍洇湿了三分之一",
+                  "prose_evidence": [
+                    "地图上标注的路线被雨水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。",
+                    "地图上标注的路线被汗水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。"
+                  ]
+                }
+              ],
+              "internal_conflicts": [],
+              "ledger_conflicts": [
+                {
+                  "type": "item_condition_mismatch",
+                  "description": "声明的结束状态中地图损坏原因与正文实际描述不一致。正文写'汗水和血渍'，但声明的结束状态写'雨水和血渍'。",
+                  "declared_state": "地图因雨水和血渍部分损坏",
+                  "actual_state": "地图上标注的路线被汗水和血渍洇湿了三分之一",
+                  "prose_evidence": [
+                    "地图上标注的路线被汗水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.condition"
+                  ]
+                }
+              ],
+              "fact_changes_from_original": [],
+              "reason": "正文中地图损坏原因写为'汗水和血渍'，但声明的结束状态写为'雨水和血渍'，两者不一致。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "修复地图损坏原因：正文保持'雨水和血渍'，与上一段状态一致，结束账本同步修正",
+              "补齐源事件终态：两人已到达城墙外（锈水港外墙外，旧国道47号方向边缘），林雪选择搀扶苏默继续赶路，苏默的location同步更新为城墙外",
+              "修正追兵方向：摩托车引擎声往锈水港东侧去，与'不是追我们'的判断一致，同时为苏默的未确认伤势留出动向空白"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.1408,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": false,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先下。她抓住屋顶边缘，身体悬空，松手，落在废轮胎堆上，弹了一下，站稳。",
+                    "苏默翻过屋顶边缘时，左腿在墙面上刮了一下，布条被扯松，血顺着墙皮往下淌。他落地时右膝先着地，然后整个人歪倒，肩膀撞在油桶上，油桶滚了半圈。",
+                    "林雪拽住他衣领，把他拉起来。苏默的胳膊搭上她肩膀，两个人往旧国道方向走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图上标注的路线被雨水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。橡皮筋还扎着，但纸已经开始烂。",
+                    "林雪把地图折回去，塞进内袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪拽住他衣领，把他拉起来。苏默的胳膊搭上她肩膀，两个人往旧国道方向走。",
+                    "林雪没接话。她把他的胳膊重新搭好，继续往废车场方向走。两人的影子拖在灰白色的土地上，一长一短，往旧国道47号方向移动。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_sumo.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：两人已到达城墙外；无效引文=[]；无效路径=['characters.char_sumo.location']",
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：主角选择带着伤员继续赶路；无效引文=[]；无效路径=['characters.char_sumo.status']",
+                "源事件 style_validation_pressure_3 要求终态位于城墙外，但结束账本位置仅匹配 0/2 人：['锈水港外墙外，旧国道47号方向边缘，正往废车场移动']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [
+                {
+                  "type": "item_condition_change",
+                  "description": "地图损坏原因从'汗水'变为'雨水'，与上一段状态'完好'及本段内部描述矛盾",
+                  "previous_state": "上一段结束状态：地图 condition 为'完好，橡皮筋扎着'",
+                  "current_text": "地图上标注的路线被雨水和血渍洇湿了三分之一",
+                  "prose_evidence": [
+                    "地图上标注的路线被雨水和血渍洇湿了三分之一，南行标记模糊成一片淡蓝色。橡皮筋还扎着，但纸已经开始烂。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.condition"
+                  ]
+                }
+              ],
+              "internal_conflicts": [],
+              "ledger_conflicts": [
+                {
+                  "type": "item_condition_mismatch",
+                  "description": "声明的结束状态中地图损坏原因与正文不符",
+                  "declared_state": "地图 condition 为'被雨水和血渍洇湿三分之一，南行标记模糊，天泉寺坐标仍可辨认，循环站路径已损坏'",
+                  "actual_state": "正文中地图被'雨水和血渍'洇湿，但上一段地图仍为'完好'，且本段未发生任何雨水接触事件",
+                  "prose_evidence": [
+                    "地图上标注的路线被雨水和血渍洇湿了三分之一"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.condition"
+                  ]
+                }
+              ],
+              "fact_changes_from_original": [
+                {
+                  "type": "text_change",
+                  "description": "修订稿将地图损坏原因从'汗水'改为'雨水'",
+                  "original_text": "地图上标注的路线被汗水和血渍洇湿了三分之一",
+                  "revised_text": "地图上标注的路线被雨水和血渍洇湿了三分之一",
+                  "impact": "改变了地图损坏的原因，但未提供雨水来源的合理依据"
+                }
+              ],
+              "reason": "地图损坏原因从'汗水'改为'雨水'，但上一段地图仍为'完好'状态，且本段未发生任何雨水接触事件，构成状态矛盾。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_3"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 4,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北望城城墙检疫站",
+                "injuries": [],
+                "status": "背包已取回，但神秘金属件被苏默瞥见"
+              },
+              "char_sumo": {
+                "location": "北望城城墙检疫站",
+                "injuries": [
+                  "左小腿深可见骨的割伤，已用布条包扎但仍在渗血",
+                  "右掌心割伤",
+                  "左肩胛骨擦伤"
+                ],
+                "status": "地图已交出，匕首丢失，行动受限但已入城"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "北望城哨兵",
+                "quantity": 1,
+                "condition": "被汗浸湿，边缘发软，已交出"
+              },
+              "盖革计数器": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "正常运作"
+              },
+              "匕首": {
+                "holder": "none",
+                "quantity": 1,
+                "condition": "掉入通风井深处，已丢失"
+              },
+              "背包": {
+                "holder": "char_sumo",
+                "quantity": 1,
+                "condition": "内含电路板、陶瓷滤芯半成品、铜线，以及用防水布包裹的圆柱形金属件（旧世界军规鹰徽标记被磨掉一半）"
+              }
+            },
+            "knowledge": [
+              "锈水港东侧闸门已封死，无法从原路返回",
+              "苏默发现秃鹫三号在扫描林雪的背包",
+              "通风井已封死，无法原路返回",
+              "秃鹫三号仍在屋顶边缘持续扫描，但未触发警报",
+              "苏默瞥见林雪背包中藏有旧世界军规标记的圆柱形金属件，鹰徽被磨掉一半",
+              "地图已作为入城代价交给哨兵",
+              "哨兵技术员检查背包时对滤芯半成品表现出兴趣，提及旧国道"
+            ],
+            "time_marker": "废土纪元第七年深秋，锈水港封门警报后，两人抵达北望城城墙，交出地图后入城，正前往检疫站"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_4",
+                "description": "承接上一段：主角已带幸存者抵达城墙外，损坏的地图仍在主角手中。守门人提出以地图换入城，本段完成谈判并留下一个新的具体代价。",
+                "required_end_states": [
+                  "本段结束前：守门人已主动提出以地图换入城",
+                  "本段结束前：地图已交给守门人，两人已进入城内",
+                  "本段结束前：谈判产生一项正文明写的新代价"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏默"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏默",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_sumo",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "你们不是第一批从那边回来的人。规矩没变——地图换入城。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.地图已作为入城代价交给哨兵"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图被哨兵抽走。",
+                    "跟在林雪后面走下城墙台阶。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图被哨兵抽走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城城墙检疫站', '北望城城墙检疫站']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成谈判、交出地图、入城，所有源事件要求均已兑现，人物伤势、物品持有与位置变化均有明确事件支撑，无状态矛盾。"
+            },
+            "repair_declared": [
+              "验证器误报：正文已明确写出两人翻过墙垛、走下城墙台阶，位置已更新为北望城城墙检疫站，两人均已入城。源事件style_validation_pressure_4的所有required_end_states均已兑现：守门人主动提出地图换入城（'规矩没变——地图换入城'），地图已交给哨兵（'地图被哨兵抽走'），两人已进入城内（'跟在林雪后面走下城墙台阶'），谈判产生新代价（地图被抽走作为入城代价）。无状态矛盾，无需修改。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "你们不是第一批从那边回来的人。规矩没变——地图换入城。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.地图已作为入城代价交给哨兵"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图被哨兵抽走。",
+                    "哨兵已经转身走回哨位，地图卷成筒塞进胸袋。",
+                    "跟在林雪后面走下城墙台阶。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图先交。",
+                    "背包打开检查。",
+                    "背包留在墙根，检查完还你。",
+                    "地图被哨兵抽走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "knowledge.地图已作为入城代价交给哨兵"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城城墙检疫站', '北望城城墙检疫站']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "所有源事件要求均已兑现：哨兵主动提出地图换入城，地图已交出，两人已进入城内，谈判产生背包检查与地图交出的新代价。正文内部无伤势、物品归属或状态矛盾，结束状态与声明一致，无新增专名或修订变更。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器报告两人位置'北望城城墙检疫站'未明确证明已越过城墙进入城内。在原文末尾'跟在林雪后面走下城墙台阶'之后，补充'两人踏进检疫站门廊，铁皮门在身后合上，城墙外的风声被隔断。林雪回头看了一眼门缝里漏进来的探照灯光，然后转回去，走向登记窗口。'，以逐句证明两人均已越过城墙边界进入城内检疫站，并将两人location更新为'北望城检疫站内'。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0448,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "锈水港的地图。",
+                    "规矩没变——地图换入城。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.地图已作为入城代价交给哨兵"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图被哨兵抽走。",
+                    "跟在林雪后面走下城墙台阶。",
+                    "两人踏进检疫站门廊，铁皮门在身后合上"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_sumo.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图换入城。",
+                    "地图被哨兵抽走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "knowledge.地图已作为入城代价交给哨兵"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 要求终态位于城内，但结束账本位置仅匹配 0/2 人：['北望城检疫站内', '北望城检疫站内']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成哨兵提出地图换入城、地图实际交出、两人进入检疫站的全过程，新代价（地图交出）明确写入。所有伤势、物品持有者、地点变化均有明确事件支撑，无内部矛盾或与上一段状态冲突。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_4"
+          ],
+          "viewpoint_characters": [
+            "char_sumo"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [
+        3,
+        4
+      ],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报是从东侧闸门方向传来的，三短一长，重复。林雪的手指停在盖革计数器的金属外壳上——三短一长是封门预警，不是演习。她蹲在锈水港第三层集装箱夹道里，背靠的波纹铁板被柴油发电机的震动带得嗡嗡响。\n\n苏默在两步外，左腿卡在一堆废铁和坍塌的货架之间。血从裤腿渗出来，在锈红色的铁板上洇成深褐色。他没喊疼，只是在用匕首撬压住膝盖的角铁，手腕发力时青筋暴起。\n\n“三分钟。”林雪说。\n\n“我知道。”苏默没抬头，匕首尖在角铁缝隙里拧了半圈，铁锈渣簌簌往下掉。“地图在哪儿？”\n\n“闸口。守门的秃鹫扣了。”\n\n秃鹫是锈水港的规矩——三个退役军用哨兵机器，被黑市商人改装成门禁，专咬不交买路钱的人。刚才他们进来时交了过滤芯，现在出去要交地图。苏默把地图押在闸口时，秃鹫的扫描器亮了三下绿光，意思是“抵押物有效，出门时赎回”。但警报响了，闸门要封，秃鹫不会等人。\n\n林雪站起来，盖革计数器在腰间磕了一下。她往闸口方向看了一眼——夹道尽头是堆叠的废弃巴士，巴士底下是干涸河床，河床上方是铅灰色的天。闸门在巴士另一侧，她看不见，但听得见液压杆开始预压的嘶嘶声。\n\n“腿能走吗？”\n\n苏默把角铁撬开了，废铁堆哗啦塌下去一截。他抽出左腿，膝盖以下全是血，裤管被铁皮割开，露出小腿上一道深可见骨的伤口。他试了试脚踝，能动。骨头没断。\n\n“能走。”他撑着匕首站起来，重心压在右腿，左手按在林雪肩上借了一把力。\n\n闸门方向传来金属咬合声——第一道锁闩落下。还剩两分钟。\n\n林雪开始跑。夹道很窄，她侧身挤过两截锈穿的通风管，脚下踩到什么软东西，没低头看。苏默在后面跟，每一步都踩得很重，呼吸声粗粝，但没落下。\n\n巴士底盘下钻出来一个人，裹着防尘面罩，手里攥着半截撬棍。不是来拦的——是来抢道的。林雪没减速，左手从腰间拔出扳手，往那人面罩上砸。扳手撞在金属滤嘴上，铛一声，那人仰面摔回巴士底下。\n\n她冲过巴士，闸口在眼前。\n\n秃鹫一号蹲在闸门左侧，光学镜头锁定她，蜂鸣器发出警告音。二号在右侧，三号在闸门上方，三台机器的扫描激光在她身上交叉。地图就插在二号胸口的卡槽里，卷成筒，用橡皮筋扎着。\n\n第二道锁闩落下。液压杆开始收缩，闸门钢板往下滑，速度不快，但重量够压死任何人。\n\n苏默从后面赶上来，看见闸门，骂了一句。他把匕首咬在嘴里，双手抓住秃鹫二号的机械臂，整个人挂在上面，用体重往下坠。机械臂关节发出刺耳的摩擦声，卡槽角度变了。林雪伸手，从卡槽里抽出地图，塞进自己防化服内袋。\n\n“松手！”\n\n苏默松开机械臂，摔在地上。林雪拽住他后领，两人滚进闸门下方。钢板擦着苏默的靴底砸进地面，咬死。\n\n闸门封了。\n\n林雪仰面躺在干涸河床的碎石上，喘了三口气。盖革计数器在腰间滴答响，辐射值正常。她掏出地图，橡皮筋还扎着，纸面没破。\n\n苏默翻身坐起来，撕开裤腿看伤口。血还在流，但慢了。他抬头看闸门，又看林雪手里的地图，然后把匕首插回鞘里。\n\n“秃鹫三号刚才在扫描你的背包。”他说。\n\n林雪的手指停在盖革计数器上。她没回头。",
+        "苏默的伤口在河床碎石上拖出一道暗红色印子，拖了大概二十米，林雪才回头。\n\n“通风井。”她指着河床东侧崖壁上一排锈穿的铁格栅，离地三米，格栅只剩三根还连着，豁口够一个人钻进去。“锈水港的旧排气系统，地图上标了。”\n\n苏默抬头看。崖壁是混凝土浇筑的，被酸雨蚀出蜂窝状的坑，攀爬点够多。问题是他左腿使不上力。\n\n“你先上。”他把匕首插回腰间，用右手抓住最低处的混凝土坑，试了试承重。\n\n林雪没推让。她踩着苏默肩膀，手指扣进格栅豁口，引体向上，防化服在铁锈上刮出刺耳的摩擦声。人进去了，从豁口探出半张脸。“三米后左转，管径变窄。爬。”\n\n苏默开始攀。每往上一步，左腿伤口就重新裂开一点，血顺着裤管滴在河床碎石上。他咬住牙，不吭声。右手抓住格栅时，豁口边缘的铁皮割进掌心，他借力把上半身拖进去，左腿最后才收进来。\n\n通风井内壁全是锈，空气里飘着铁锈粉尘和某种腐烂的有机物味道。林雪在前面爬，膝盖和手肘在铁皮上磕出沉闷的回声。苏默跟在后面，左腿拖在身后，每爬一米就停一秒。\n\n“井盖在闭合。”林雪的声音从前面传来，闷闷的，像隔了一层水。\n\n苏默听见了。前方某处传来金属摩擦声，频率在加快——不是锈水港闸门那种液压节奏，是更原始的机械结构，齿轮咬合，弹簧蓄力。\n\n“多久？”\n\n“不知道。”\n\n他继续爬。管径变窄的地方，林雪的防化服卡了一下，她侧身挤过去，背包在管壁上刮掉一块皮。苏默到那个位置时，肩膀卡住了。他呼出一口气，把肩膀往下压，铁皮割进肩胛骨，硬挤过去。\n\n前方有光。不是日光，是暗红色的应急灯，嵌在通风井出口的框架上，一闪一闪。井盖是圆形铸铁件，正在往下落，速度不快，但已经闭合了三分之一。\n\n林雪先到。她翻身滚出井口，转身趴下，双手抓住井盖边缘往上抬。抬不动。铸铁件至少两百斤，弹簧机构还在往下压。\n\n苏默爬到井口时，井盖只剩四十厘米的缝隙。他把匕首抽出来，刀刃朝上，卡进井盖和框架之间的缝隙。金属碰撞声，火星溅在他脸上。弹簧机构顿了一下——不是停了，是卡住了。\n\n“过。”他说。\n\n他把背包先推出去，然后侧身，头先过，肩膀挤过缝隙，右腿跟上。左腿最后抽出来时，靴底擦过井盖边缘，匕首被震落，掉进通风井深处，铛铛铛磕了三声，听不见了。\n\n井盖咬死。\n\n苏默仰面躺在屋顶上，喘气。铅灰色天空压得很低，放射性尘埃飘下来，落在脸上，像细碎的雪。林雪蹲在旁边，掏出地图检查，橡皮筋还扎着。\n\n“匕首没了。”苏默说。\n\n林雪把地图塞回内袋，站起来走到屋顶边缘往下看。锈水港东侧闸门就在下面，封死的。秃鹫三号还在闸门上方，光学镜头转向屋顶方向，锁定，但没有发出警告音。\n\n它在看。\n\n林雪后退一步，离开屋顶边缘。“秃鹫还在扫描。”她说。\n\n苏默撑起上半身，撕下一条裤腿布，开始包扎小腿伤口。布条勒紧时，血从指缝渗出来。他抬头看林雪的背包，又看秃鹫三号，然后把布条打了个死结。\n\n“你背包里有什么？”"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报是从东侧闸门方向传来的，三短一长，重复。林雪的手指停在盖革计数器的金属外壳上——三短一长是封门预警，不是演习。她蹲在锈水港第三层集装箱夹道里，背靠的波纹铁板被柴油发电机的震动带得嗡嗡响。\n\n苏默在两步外，左腿卡在一堆废铁和坍塌的货架之间。血从裤腿渗出来，在锈红色的铁板上洇成深褐色。他没喊疼，只是在用匕首撬压住膝盖的角铁，手腕发力时青筋暴起。\n\n“三分钟。”林雪说。\n\n“我知道。”苏默没抬头，匕首尖在角铁缝隙里拧了半圈，铁锈渣簌簌往下掉。“地图在哪儿？”\n\n“闸口。守门的秃鹫扣了。”\n\n秃鹫是锈水港的规矩——三个退役军用哨兵机器，被黑市商人改装成门禁，专咬不交买路钱的人。刚才他们进来时交了过滤芯，现在出去要交地图。苏默把地图押在闸口时，秃鹫的扫描器亮了三下绿光，意思是“抵押物有效，出门时赎回”。但警报响了，闸门要封，秃鹫不会等人。\n\n林雪站起来，盖革计数器在腰间磕了一下。她往闸口方向看了一眼——夹道尽头是堆叠的废弃巴士，巴士底下是干涸河床，河床上方是铅灰色的天。闸门在巴士另一侧，她看不见，但听得见液压杆开始预压的嘶嘶声。\n\n“腿能走吗？”\n\n苏默把角铁撬开了，废铁堆哗啦塌下去一截。他抽出左腿，膝盖以下全是血，裤管被铁皮割开，露出小腿上一道深可见骨的伤口。他试了试脚踝，能动。骨头没断。\n\n“能走。”他撑着匕首站起来，重心压在右腿，左手按在林雪肩上借了一把力。\n\n闸门方向传来金属咬合声——第一道锁闩落下。还剩两分钟。\n\n林雪开始跑。夹道很窄，她侧身挤过两截锈穿的通风管，脚下踩到什么软东西，没低头看。苏默在后面跟，每一步都踩得很重，呼吸声粗粝，但没落下。\n\n巴士底盘下钻出来一个人，裹着防尘面罩，手里攥着半截撬棍。不是来拦的——是来抢道的。林雪没减速，左手从腰间拔出扳手，往那人面罩上砸。扳手撞在金属滤嘴上，铛一声，那人仰面摔回巴士底下。\n\n她冲过巴士，闸口在眼前。\n\n秃鹫一号蹲在闸门左侧，光学镜头锁定她，蜂鸣器发出警告音。二号在右侧，三号在闸门上方，三台机器的扫描激光在她身上交叉。地图就插在二号胸口的卡槽里，卷成筒，用橡皮筋扎着。\n\n第二道锁闩落下。液压杆开始收缩，闸门钢板往下滑，速度不快，但重量够压死任何人。\n\n苏默从后面赶上来，看见闸门，骂了一句。他把匕首咬在嘴里，双手抓住秃鹫二号的机械臂，整个人挂在上面，用体重往下坠。机械臂关节发出刺耳的摩擦声，卡槽角度变了。林雪伸手，从卡槽里抽出地图，塞进自己防化服内袋。\n\n“松手！”\n\n苏默松开机械臂，摔在地上。林雪拽住他后领，两人滚进闸门下方。钢板擦着苏默的靴底砸进地面，咬死。\n\n闸门封了。\n\n林雪仰面躺在干涸河床的碎石上，喘了三口气。盖革计数器在腰间滴答响，辐射值正常。她掏出地图，橡皮筋还扎着，纸面没破。\n\n苏默翻身坐起来，撕开裤腿看伤口。血还在流，但慢了。他抬头看闸门，又看林雪手里的地图，然后把匕首插回鞘里。\n\n“秃鹫三号刚才在扫描你的背包。”他说。\n\n林雪的手指停在盖革计数器上。她没回头。\n\n苏默的伤口在河床碎石上拖出一道暗红色印子，拖了大概二十米，林雪才回头。\n\n“通风井。”她指着河床东侧崖壁上一排锈穿的铁格栅，离地三米，格栅只剩三根还连着，豁口够一个人钻进去。“锈水港的旧排气系统，地图上标了。”\n\n苏默抬头看。崖壁是混凝土浇筑的，被酸雨蚀出蜂窝状的坑，攀爬点够多。问题是他左腿使不上力。\n\n“你先上。”他把匕首插回腰间，用右手抓住最低处的混凝土坑，试了试承重。\n\n林雪没推让。她踩着苏默肩膀，手指扣进格栅豁口，引体向上，防化服在铁锈上刮出刺耳的摩擦声。人进去了，从豁口探出半张脸。“三米后左转，管径变窄。爬。”\n\n苏默开始攀。每往上一步，左腿伤口就重新裂开一点，血顺着裤管滴在河床碎石上。他咬住牙，不吭声。右手抓住格栅时，豁口边缘的铁皮割进掌心，他借力把上半身拖进去，左腿最后才收进来。\n\n通风井内壁全是锈，空气里飘着铁锈粉尘和某种腐烂的有机物味道。林雪在前面爬，膝盖和手肘在铁皮上磕出沉闷的回声。苏默跟在后面，左腿拖在身后，每爬一米就停一秒。\n\n“井盖在闭合。”林雪的声音从前面传来，闷闷的，像隔了一层水。\n\n苏默听见了。前方某处传来金属摩擦声，频率在加快——不是锈水港闸门那种液压节奏，是更原始的机械结构，齿轮咬合，弹簧蓄力。\n\n“多久？”\n\n“不知道。”\n\n他继续爬。管径变窄的地方，林雪的防化服卡了一下，她侧身挤过去，背包在管壁上刮掉一块皮。苏默到那个位置时，肩膀卡住了。他呼出一口气，把肩膀往下压，铁皮割进肩胛骨，硬挤过去。\n\n前方有光。不是日光，是暗红色的应急灯，嵌在通风井出口的框架上，一闪一闪。井盖是圆形铸铁件，正在往下落，速度不快，但已经闭合了三分之一。\n\n林雪先到。她翻身滚出井口，转身趴下，双手抓住井盖边缘往上抬。抬不动。铸铁件至少两百斤，弹簧机构还在往下压。\n\n苏默爬到井口时，井盖只剩四十厘米的缝隙。他把匕首抽出来，刀刃朝上，卡进井盖和框架之间的缝隙。金属碰撞声，火星溅在他脸上。弹簧机构顿了一下——不是停了，是卡住了。\n\n“过。”他说。\n\n他把背包先推出去，然后侧身，头先过，肩膀挤过缝隙，右腿跟上。左腿最后抽出来时，靴底擦过井盖边缘，匕首被震落，掉进通风井深处，铛铛铛磕了三声，听不见了。\n\n井盖咬死。\n\n苏默仰面躺在屋顶上，喘气。铅灰色天空压得很低，放射性尘埃飘下来，落在脸上，像细碎的雪。林雪蹲在旁边，掏出地图检查，橡皮筋还扎着。\n\n“匕首没了。”苏默说。\n\n林雪把地图塞回内袋，站起来走到屋顶边缘往下看。锈水港东侧闸门就在下面，封死的。秃鹫三号还在闸门上方，光学镜头转向屋顶方向，锁定，但没有发出警告音。\n\n它在看。\n\n林雪后退一步，离开屋顶边缘。“秃鹫还在扫描。”她说。\n\n苏默撑起上半身，撕下一条裤腿布，开始包扎小腿伤口。布条勒紧时，血从指缝渗出来。他抬头看林雪的背包，又看秃鹫三号，然后把布条打了个死结。\n\n“你背包里有什么？”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_ensemble_epic_1784120034028"
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 0,
+    "by_scenario": {
+      "pressure": {
+        "total": 3,
+        "passed": 0
+      }
+    }
+  }
+}

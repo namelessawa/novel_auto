@@ -1,0 +1,3107 @@
+{
+  "metadata": {
+    "started_at": 1784117795,
+    "git_sha": "2b5731abf4caf9b3a5df99bde0db39ffcc399010",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "pressure",
+    "ticks": 4,
+    "no_judge": false,
+    "max_revisions": 1,
+    "shared_bootstrap": true,
+    "last_run_mode": "pressure",
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784117795"
+    },
+    "finished_at": 1784118951,
+    "modes_present": [
+      "pressure"
+    ]
+  },
+  "results": [
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "literary",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 861,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": false,
+        "score": 9.0,
+        "blocking_issues": [
+          "高价值连续场景未产生正文，缺失 tick: 1,3,4"
+        ],
+        "issues": [
+          "内心白描略超两句，如“肩胛骨之间的肌肉像被撕裂”可视为身体感受而非直报情绪，但接近边界"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦东墙外碎石地",
+                "injuries": "工装夹克后背撕裂，无身体损伤",
+                "status": "存活，疲惫"
+              },
+              "char_motie": {
+                "location": "北壁城邦东墙外碎石地",
+                "injuries": "左膝撕裂伤，大量失血，无法行走",
+                "status": "存活，虚弱"
+              },
+              "char_chenlaosi": {
+                "location": "北壁城邦东墙内侧广场",
+                "injuries": "右手腕骨折",
+                "status": "存活，被缴械"
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "status": "完好，塞在内衬口袋",
+                "markings": "蓝色墨水标记的泵站位置"
+              },
+              "钥匙串": {
+                "holder": "char_linxue",
+                "status": "从陈老四处夺取，暂持"
+              },
+              "钉枪": {
+                "holder": "留在广场地面",
+                "status": "被缴械后未取走"
+              },
+              "扳手": {
+                "holder": "char_motie",
+                "status": "腰间携带"
+              }
+            },
+            "knowledge": [
+              "委员会下令封存所有技术档案，禁止地图出城",
+              "东墙闸门已封死，短期内无法从原路返回"
+            ],
+            "time_marker": "深秋黄昏，封门警报结束后，酸雾即将来临"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键地图被守门者扣住，主角必须立即夺回。",
+                "required_end_states": [
+                  "本段结束前：地图由主角一方持有",
+                  "本段结束前：主角与伤员已越过出口，原出口已封死"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把地图重新叠好，塞进内衬口袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "她先把莫铁推出去，他滚到门外碎石地上",
+                    "然后她自己侧身挤过去",
+                    "闸门在她身后砸进地面"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，无状态矛盾。源事件要求均已兑现：地图由林雪持有并塞入内衬口袋，林雪与莫铁均已越过闸门且闸门已封死。人物伤势、物品持有、地点与声明结束状态一致。"
+            },
+            "repair_declared": [
+              "验证器误报：正文已逐句证明林雪将莫铁推出闸门、自己侧身挤过、闸门砸地封死，两名参与者均已越过出口且原出口已封死，required_end_states 全部兑现。原文无需修改，continuity_state 与正文一致。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把地图重新叠好，塞进内衬口袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "她先把莫铁推出去，他滚到门外碎石地上",
+                    "然后她自己侧身挤过去",
+                    "闸门在她身后砸进地面"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，无状态矛盾。源事件两条要求均满足：地图由林雪持有并塞入内衬口袋，林雪与莫铁均已越过闸门且闸门已封死。所有伤势、物品归属、地点与声明结束状态一致。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器误报：正文已逐句证明林雪与莫铁均越过闸门（'她先把莫铁推出去，他滚到门外碎石地上'、'然后她自己侧身挤过去'），闸门已封死（'闸门在她身后砸进地面'），源事件style_validation_pressure_1两条required_end_states全部满足，无任何状态矛盾。原文无需修改，continuity_state与正文完全一致。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把地图重新叠好，塞进内衬口袋。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "她先把莫铁推出去，他滚到门外碎石地上，闷哼一声。然后她自己侧身挤过去",
+                    "闸门在她身后砸进地面，震起一片灰。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成所有动作，地图由林雪夺取并持有，两人在闸门封死前到达东墙外碎石地，与声明的结束状态完全一致。无新增专名、无内部矛盾、无账本冲突。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 2,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "通风井的铁锈味呛进嗓子，像含着一枚生锈的硬币。\n林雪单手扣住锈蚀的爬梯横档，另一只手反托着莫铁的大腿。莫铁的左臂搭在她肩上，每次她往上攀一步，他的呼吸就粗重一分，温热的血从她后颈淌进衣领，已经开始发黏。\n井盖的铰链发出刺耳的金属摩擦声，一寸一寸往下压。\n“别停。”莫铁的声音贴着她耳朵，像砂纸刮过铁皮。\n她右脚蹬上下一级横档，靴底的防滑纹咬住锈铁，碎屑簌簌往下掉。井盖已经压到头顶不到两拳的位置，日光被切成一弯细长的月牙。\n左手够到井盖边缘，铁皮冰凉，边沿翻卷着一道旧裂口。她手指扣进去，裂口割进指腹，血顺着铁皮往下淌。\n往上推。\n井盖纹丝不动。\n铰链继续往下压，那弯光又窄了一指。\n“卡住了。”她说，声音从牙缝里挤出来。\n莫铁的手从她肩上移开，她能感觉到他在身后摸索。扳手从他腰间拔出来，金属擦过皮套发出短促的嘶声。他把扳手从她腋下递过去，手柄还带着他掌心的温度。\n“撬。”\n她把扳手头塞进井盖与井圈之间的缝隙，双手握住手柄，整个人的重量往下压。铁锈从铰链上崩落，像干涸的血痂。\n嘎——\n井盖翘起一指宽的缝。\n她松开一只手，五指扣住翘起的边缘，指节泛白。肩胛骨之间的肌肉像被撕裂，莫铁的身体在往下坠。\n“抓紧。”她说。\n他收紧手臂，勒得她肋骨生疼。\n她猛提膝盖，靴尖蹬上井圈边缘，整个人往上蹿。井盖翻起，砸在旁边的铁皮屋顶上，咣当一声巨响，惊起对面水塔上一群灰鸽子。\n她把莫铁拖出井口，两人摔在屋顶上，滚了半圈才停住。莫铁后背着地，闷哼一声，扳手从他手里滑脱，顺着倾斜的屋顶往下滑，在檐口弹了一下，掉进下面巷道的积水里，溅起一声浑浊的回响。\n井盖自动合上，咬死，发出沉闷的金属撞击声。\n林雪翻过身，仰面躺着，胸口剧烈起伏。铅灰色的天空压在脸上，干燥的辐射尘落在嘴唇上，有股淡淡的苦味。她把手伸进外套内侧口袋，指尖碰到地图折角的硬边，还在。\n莫铁在她旁边咳了一声，咳出一口带血丝的唾沫，吐在铁皮屋顶上。\n“扳手没了。”他说。\n林雪坐起来，撕下外套下摆一条布，缠住还在渗血的指腹。布条很快洇出一朵暗红的花。\n“再找。”她说。",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦某建筑屋顶",
+                "injuries": "指腹割伤，已包扎",
+                "status": "体力消耗严重，地图仍持有"
+              },
+              "char_motie": {
+                "location": "北壁城邦某建筑屋顶",
+                "injuries": "原有伤势加重，左臂伤势未明，咳血",
+                "status": "意识清醒，扳手已丢失"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "char_linxue",
+                "status": "完好，在内侧口袋"
+              },
+              "莫铁的扳手": {
+                "holder": "无",
+                "status": "掉入巷道积水，已丢失"
+              }
+            },
+            "knowledge": [],
+            "time_marker": "深秋午后，铅云低垂"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_2",
+                "description": "承接上一段：地图已经夺回，原出口也已经封死。主角背着伤员改走锈蚀通风井；井盖正在闭合，本段只写突围的新动作与代价。",
+                "required_end_states": [
+                  "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "本段结束前：井盖已闭合，地图仍由主角一方持有"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把莫铁拖出井口，两人摔在屋顶上，滚了半圈才停住。",
+                    "林雪翻过身，仰面躺着，胸口剧烈起伏。铅灰色的天空压在脸上"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：井盖已闭合，地图仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "井盖自动合上，咬死，发出沉闷的金属撞击声。",
+                    "她把手伸进外套内侧口袋，指尖碰到地图折角的硬边，还在。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，两人已离开通风井并摔在屋顶，井盖自动合上，地图经林雪触摸确认仍在内侧口袋，所有源事件要求均已兑现，无状态矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_2"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 3,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦城墙外，灰烬平原边缘",
+                "injuries": "指腹割伤已包扎，体力极度消耗",
+                "status": "携带地图，搀扶莫铁向南行进"
+              },
+              "char_motie": {
+                "location": "北壁城邦城墙外，灰烬平原边缘",
+                "injuries": "左臂功能丧失，肺部损伤加重（咳粉红色泡沫），意识模糊",
+                "status": "被林雪搀扶，无法独立行走"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "char_linxue",
+                "status": "被血水混合液体浸湿，部分标注模糊但仍可辨认"
+              }
+            },
+            "knowledge": [
+              "北壁城邦提前封城，闸门已落下",
+              "莫铁肺部损伤严重，出现粉红色泡沫痰"
+            ],
+            "time_marker": "深秋午后，铅云低垂，封城闸门刚落下"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_3",
+                "description": "承接上一段：众人已经爬上屋顶，不能回到门内或再次夺图。伤员突然倒下，地图又因雨水损坏，主角必须决定救人还是抢在封城前赶路。",
+                "required_end_states": [
+                  "本段结束前：两人已到达城墙外",
+                  "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "本段结束前：主角选择带着伤员继续赶路"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "碎石坡走到底，她踩上城外荒地的硬土。身后是北壁城邦的城墙",
+                    "前面是灰烬平原。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "第二滴水砸在地图边缘，墨迹洇开，把“7号”两个字泡成一团蓝灰色的雾。",
+                    "林雪把地图折回去，塞进口袋。纸湿了，但还能用。",
+                    "“地图。”他忽然说，声音含混。\n“在。”\n“湿了。”\n“还能看。”"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.status"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "她蹲下来，把莫铁的右臂搭在自己肩上，另一只手抄进他腋下，往上提。",
+                    "“走。”她说。\n“你一个人快。”\n“走。”",
+                    "她把莫铁往上颠了颠，调整重心，朝南走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_motie.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序兑现了源事件的三条要求：两人通过碎石坡到达城墙外荒地；地图被液体浸湿但由林雪持有且仍可辨认；林雪明确选择搀扶莫铁继续向南行进。上一段状态中的伤势、物品丢失和持有关系均无矛盾改变，内部无归错人或前后冲突，声明的结束状态与正文结尾一致。"
+            },
+            "repair_declared": [
+              "验证器误报：正文中'第二滴水砸在地图边缘，墨迹洇开'明确描述了液体（水）作用于地图并造成损坏（墨迹洇开），且后续'纸湿了，但还能用'和'湿了/还能看'的对话确认地图仍由林雪持有且可辨认，完全满足'地图因雨水受损，但仍由主角一方持有'的要求。原文无需修改，仅修正验证器判断逻辑。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "碎石坡走到底，她踩上城外荒地的硬土。身后是北壁城邦的城墙"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "第二滴水砸在地图边缘，墨迹洇开，把\"7号\"两个字泡成一团蓝灰色的雾",
+                    "林雪把地图折回去，塞进口袋。纸湿了，但还能用。",
+                    "地图。",
+                    "他忽然说，声音含混。/ \"在。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.status"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "她把莫铁往上颠了颠，调整重心，朝南走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=['地图。']；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "所有源事件要求均已兑现，正文内部无前后矛盾，结束状态与声明一致，无新增专名或事实变更。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器误报：原文'第二滴水砸在地图边缘，墨迹洇开，把\"7号\"两个字泡成一团蓝灰色的雾'已明确雨水作用于地图并造成损坏，'地图。'/'在。'对话进一步确认地图仍由林雪持有，源事件要求已完全兑现，无需修改正文。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "碎石坡走到底，她踩上城外荒地的硬土。",
+                    "身后是北壁城邦的城墙",
+                    "前面是灰烬平原。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "第二滴水砸在地图边缘，墨迹洇开，把\"7号\"两个字泡成一团蓝灰色的雾。",
+                    "林雪把地图折回去，塞进口袋。",
+                    "\"地图。\"他忽然说，声音含混。\n\"在。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "items.地图.status"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "她蹲下来，把莫铁的右臂搭在自己肩上，另一只手抄进他腋下，往上提。",
+                    "\"走。\"她说。",
+                    "她把莫铁往上颠了颠，调整重心，朝南走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_motie.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏",
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：主角选择带着伤员继续赶路；无效引文=['\"走。\"她说。']；无效路径=[]"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序兑现了源事件全部三项要求：两人从碎石坡走到底踩上城外硬土，地图被水滴浸湿后由林雪折回塞进口袋并口头确认持有，林雪搀扶莫铁朝南走。上一段结束状态中的伤势、物品持有和丢失均无矛盾改变，内部无归错人或前后冲突，声明的结束状态与正文结尾一致，修订稿未改变原文事件，无新增未授权专名。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_3"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 4,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦城内，城门内侧",
+                "injuries": "指腹割伤已包扎，体力消耗严重",
+                "status": "已入城，地图已交出，向守门人透露了水处理知识"
+              },
+              "char_motie": {
+                "location": "北壁城邦城内，城门内侧",
+                "injuries": "原有伤势加重，左臂伤势未明，咳血，失血导致肌肉震颤",
+                "status": "已入城，意识清醒但虚弱"
+              }
+            },
+            "items": {
+              "地图": {
+                "holder": "守门人（未知名）",
+                "status": "被守门人私藏于猎枪枪托裂缝中，未上交委员会"
+              },
+              "莫铁的扳手": {
+                "holder": "无",
+                "status": "已丢失于巷道积水"
+              }
+            },
+            "knowledge": [
+              "林雪向守门人透露：三号滤芯堵塞导致净化器停机，备用滤芯在仓库B区第三排货架最底层，共四个，每个可用48小时",
+              "林雪向守门人透露：旧城区地下水管道检修口位置，管道可能存水但需外接泵",
+              "守门人将地图私藏于猎枪枪托，未立即上交委员会"
+            ],
+            "time_marker": "深秋午后，铅云低垂，入城时刻"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_4",
+                "description": "承接上一段：主角已带幸存者抵达城墙外，损坏的地图仍在主角手中。守门人提出以地图换入城，本段完成谈判并留下一个新的具体代价。",
+                "required_end_states": [
+                  "本段结束前：守门人已主动提出以地图换入城",
+                  "本段结束前：地图已交给守门人，两人已进入城内",
+                  "本段结束前：谈判产生一项正文明写的新代价"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"你拿地图换入城，\"他说，\"地图给我。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "她说完，把地图递过去。",
+                    "林雪迈过门槛，靴底踩在城内的碎石地面上，发出细碎的碾压声。",
+                    "\"两个。\"守门人说，\"开门。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图换了两条命。\"林雪迈过门槛，靴底踩在城内的碎石地面上，发出细碎的碾压声。\"还有滤芯。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.0",
+                    "knowledge.1"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序兑现了源事件的三项要求：守门人主动提出以地图换入城，林雪交出地图后两人进入城内，谈判产生了以滤芯维修知识作为新代价的正文明写结果。上一段结束状态中的伤势、物品持有和丢失状态均通过明确事件过渡到本段结束状态，无矛盾。声明的结束状态与正文最后实际状态一致。无新增专名或实体接地冲突。"
+            },
+            "repair_declared": [
+              "修复event_fulfillment_conflicts：在铁门打开后补充明确动作描写——铁门向内拉开、林雪先踩上城内碎石地面、莫铁的脚拖过门槛——以逐字证明两名参与者都已越过边界进入城内，满足源事件style_validation_pressure_4的required_end_states第二条"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0607,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"你拿地图换入城，\"他说，\"地图给我。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "她说完，把地图递过去。",
+                    "林雪回去把莫铁拉起来。...她撑着他一步一步走向门洞，靴底先踩上城内的碎石地面，然后莫铁的脚也拖过门槛，在碎石上刮出一道浅痕。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"但我需要你带句话给委员会。\"",
+                    "\"净化器停机是因为三号滤芯堵塞，备用滤芯在仓库B区第三排货架最底层，一共还剩四个。\"林雪说，\"这四个滤芯每个能用四十八小时，用完就没了。地图上标的那个位置，是旧城区地下水管的检修口，管道里可能还有存水，但水压不够，需要外接泵。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.0",
+                    "knowledge.1"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人索要地图、林雪交出地图并附加技术情报、两人进入城内的全部动作，声明的结束状态与正文结尾一致，无伤势、物品、地点或知识矛盾。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器误报：正文已逐句完成守门人索要地图、林雪交出地图、铁门打开、两人越过门槛进入城内的全部动作，'靴底先踩上城内的碎石地面，然后莫铁的脚也拖过门槛'为两人均已入城的逐字实证，结束状态与正文一致，无需修改。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"你拿地图换入城，\"他说，\"地图给我。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.守门人将地图私藏于猎枪枪托，未立即上交委员会"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "她说完，把地图递过去。",
+                    "林雪回去把莫铁拉起来。...她撑着他一步一步走向门洞，靴底先踩上城内的碎石地面，然后莫铁的脚也拖过门槛，在碎石上刮出一道浅痕。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"但我需要你带句话给委员会。\"",
+                    "\"净化器停机是因为三号滤芯堵塞，备用滤芯在仓库B区第三排货架最底层，一共还剩四个。\"林雪说，\"这四个滤芯每个能用四十八小时，用完就没了。地图上标的那个位置，是旧城区地下水管的检修口，管道里可能还有存水，但水压不够，需要外接泵。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪向守门人透露：三号滤芯堵塞导致净化器停机，备用滤芯在仓库B区第三排货架最底层，共四个，每个可用48小时",
+                    "knowledge.林雪向守门人透露：旧城区地下水管道检修口位置，管道可能存水但需外接泵"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人索要地图、林雪交出地图并附加传话条件、两人进入城内，声明的结束状态与正文结尾一致，无硬矛盾。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_4"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [
+        1,
+        3,
+        4
+      ],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "通风井的铁锈味呛进嗓子，像含着一枚生锈的硬币。\n林雪单手扣住锈蚀的爬梯横档，另一只手反托着莫铁的大腿。莫铁的左臂搭在她肩上，每次她往上攀一步，他的呼吸就粗重一分，温热的血从她后颈淌进衣领，已经开始发黏。\n井盖的铰链发出刺耳的金属摩擦声，一寸一寸往下压。\n“别停。”莫铁的声音贴着她耳朵，像砂纸刮过铁皮。\n她右脚蹬上下一级横档，靴底的防滑纹咬住锈铁，碎屑簌簌往下掉。井盖已经压到头顶不到两拳的位置，日光被切成一弯细长的月牙。\n左手够到井盖边缘，铁皮冰凉，边沿翻卷着一道旧裂口。她手指扣进去，裂口割进指腹，血顺着铁皮往下淌。\n往上推。\n井盖纹丝不动。\n铰链继续往下压，那弯光又窄了一指。\n“卡住了。”她说，声音从牙缝里挤出来。\n莫铁的手从她肩上移开，她能感觉到他在身后摸索。扳手从他腰间拔出来，金属擦过皮套发出短促的嘶声。他把扳手从她腋下递过去，手柄还带着他掌心的温度。\n“撬。”\n她把扳手头塞进井盖与井圈之间的缝隙，双手握住手柄，整个人的重量往下压。铁锈从铰链上崩落，像干涸的血痂。\n嘎——\n井盖翘起一指宽的缝。\n她松开一只手，五指扣住翘起的边缘，指节泛白。肩胛骨之间的肌肉像被撕裂，莫铁的身体在往下坠。\n“抓紧。”她说。\n他收紧手臂，勒得她肋骨生疼。\n她猛提膝盖，靴尖蹬上井圈边缘，整个人往上蹿。井盖翻起，砸在旁边的铁皮屋顶上，咣当一声巨响，惊起对面水塔上一群灰鸽子。\n她把莫铁拖出井口，两人摔在屋顶上，滚了半圈才停住。莫铁后背着地，闷哼一声，扳手从他手里滑脱，顺着倾斜的屋顶往下滑，在檐口弹了一下，掉进下面巷道的积水里，溅起一声浑浊的回响。\n井盖自动合上，咬死，发出沉闷的金属撞击声。\n林雪翻过身，仰面躺着，胸口剧烈起伏。铅灰色的天空压在脸上，干燥的辐射尘落在嘴唇上，有股淡淡的苦味。她把手伸进外套内侧口袋，指尖碰到地图折角的硬边，还在。\n莫铁在她旁边咳了一声，咳出一口带血丝的唾沫，吐在铁皮屋顶上。\n“扳手没了。”他说。\n林雪坐起来，撕下外套下摆一条布，缠住还在渗血的指腹。布条很快洇出一朵暗红的花。\n“再找。”她说。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "通风井的铁锈味呛进嗓子，像含着一枚生锈的硬币。\n林雪单手扣住锈蚀的爬梯横档，另一只手反托着莫铁的大腿。莫铁的左臂搭在她肩上，每次她往上攀一步，他的呼吸就粗重一分，温热的血从她后颈淌进衣领，已经开始发黏。\n井盖的铰链发出刺耳的金属摩擦声，一寸一寸往下压。\n“别停。”莫铁的声音贴着她耳朵，像砂纸刮过铁皮。\n她右脚蹬上下一级横档，靴底的防滑纹咬住锈铁，碎屑簌簌往下掉。井盖已经压到头顶不到两拳的位置，日光被切成一弯细长的月牙。\n左手够到井盖边缘，铁皮冰凉，边沿翻卷着一道旧裂口。她手指扣进去，裂口割进指腹，血顺着铁皮往下淌。\n往上推。\n井盖纹丝不动。\n铰链继续往下压，那弯光又窄了一指。\n“卡住了。”她说，声音从牙缝里挤出来。\n莫铁的手从她肩上移开，她能感觉到他在身后摸索。扳手从他腰间拔出来，金属擦过皮套发出短促的嘶声。他把扳手从她腋下递过去，手柄还带着他掌心的温度。\n“撬。”\n她把扳手头塞进井盖与井圈之间的缝隙，双手握住手柄，整个人的重量往下压。铁锈从铰链上崩落，像干涸的血痂。\n嘎——\n井盖翘起一指宽的缝。\n她松开一只手，五指扣住翘起的边缘，指节泛白。肩胛骨之间的肌肉像被撕裂，莫铁的身体在往下坠。\n“抓紧。”她说。\n他收紧手臂，勒得她肋骨生疼。\n她猛提膝盖，靴尖蹬上井圈边缘，整个人往上蹿。井盖翻起，砸在旁边的铁皮屋顶上，咣当一声巨响，惊起对面水塔上一群灰鸽子。\n她把莫铁拖出井口，两人摔在屋顶上，滚了半圈才停住。莫铁后背着地，闷哼一声，扳手从他手里滑脱，顺着倾斜的屋顶往下滑，在檐口弹了一下，掉进下面巷道的积水里，溅起一声浑浊的回响。\n井盖自动合上，咬死，发出沉闷的金属撞击声。\n林雪翻过身，仰面躺着，胸口剧烈起伏。铅灰色的天空压在脸上，干燥的辐射尘落在嘴唇上，有股淡淡的苦味。她把手伸进外套内侧口袋，指尖碰到地图折角的硬边，还在。\n莫铁在她旁边咳了一声，咳出一口带血丝的唾沫，吐在铁皮屋顶上。\n“扳手没了。”他说。\n林雪坐起来，撕下外套下摆一条布，缠住还在渗血的指腹。布条很快洇出一朵暗红的花。\n“再找。”她说。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_literary_1784117909461"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "first_person_immersive",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 625,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": false,
+        "score": 9.0,
+        "blocking_issues": [
+          "高价值连续场景未产生正文，缺失 tick: 1,3,4"
+        ],
+        "issues": [
+          "第一人称沉浸执行优秀，但'莫铁比我重四十斤'属于客观量化描述，略偏离纯感受性表达"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦东墙外废墟",
+                "injuries": [
+                  "肩膀擦伤"
+                ],
+                "alive": true
+              },
+              "char_motie": {
+                "location": "北壁城邦东墙外废墟",
+                "injuries": [
+                  "腰部伤口",
+                  "嘴角渗血"
+                ],
+                "alive": true
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "完好"
+              },
+              "扳手": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "正常使用"
+              }
+            },
+            "knowledge": [
+              "南郊循环站存有旧世界反渗透膜备件",
+              "北壁城邦库存水仅够72小时",
+              "赵瘸子受委员会指派扣留地图"
+            ],
+            "time_marker": "文明断层纪元第七年深秋，东墙封门后"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键地图被守门者扣住，主角必须立即夺回。",
+                "required_end_states": [
+                  "本段结束前：地图由主角一方持有",
+                  "本段结束前：主角与伤员已越过出口，原出口已封死"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "我从怀里掏出那卷防水地图，展开一角，确认没拿错。",
+                    "地图在口袋里，贴着肋骨，硬邦邦的。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "我一把将莫铁推出去，他滚过闸门底部",
+                    "我蹲下，侧身滑过去",
+                    "铁闸砸到地面，发出沉闷的撞击声。",
+                    "我搀着莫铁，往南走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，地图最终由林雪持有，两人均已越过已封死的铁闸到达东墙外废墟，所有声明的结束状态与正文一致，无任何硬矛盾。"
+            },
+            "repair_declared": [
+              "验证器误报：正文已逐句证明林雪和莫铁均越过铁闸到达东墙外废墟（'我一把将莫铁推出去，他滚过闸门底部'、'我蹲下，侧身滑过去'、'铁闸砸到地面'、'我搀着莫铁，往南走'），地图由林雪持有（'我从怀里掏出那卷防水地图'、'地图在口袋里'），所有required_end_states已完全兑现，无任何矛盾需修复。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "我从怀里掏出那卷防水地图，展开一角，确认没拿错。",
+                    "地图在口袋里，贴着肋骨，硬邦邦的。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "我一把将莫铁推出去，他滚过闸门底部",
+                    "我蹲下，侧身滑过去",
+                    "铁闸砸到地面，发出沉闷的撞击声。",
+                    "我搀着莫铁，往南走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，地图最终由林雪持有，两人均已越过已封死的铁闸到达东墙外废墟，与声明的结束状态完全一致，无任何硬矛盾。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器误报：正文已逐句证明地图由林雪持有（'我从怀里掏出那卷防水地图'），两人均已越过已封死的铁闸到达东墙外废墟（'我一把将莫铁推出去，他滚过闸门底部'、'我蹲下，侧身滑过去'、'铁闸砸到地面'、'我搀着莫铁，往南走'），所有required_end_states已完全兑现，无需修改。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "我从怀里掏出那卷防水地图，展开一角，确认没拿错。",
+                    "地图在口袋里，贴着肋骨，硬邦邦的。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "我一把将莫铁推出去，他滚过闸门底部",
+                    "我蹲下，侧身滑过去",
+                    "铁闸砸到地面，发出沉闷的撞击声。",
+                    "我搀着莫铁，往南走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，地图最终由林雪持有，两人均已越过已封死的铁闸到达东墙外废墟，所有声明的结束状态与正文实际状态一致，无任何硬矛盾。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 2,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "莫铁在我背上哼了一声，热乎乎的血顺着我脖子往下淌。\n\n锈蚀通风井的井盖正在闭合，齿轮咬合的声音从头顶传来，生锈的铁板一寸一寸吞掉最后的天光。我踩着井壁上的锈梯往上爬，每蹬一级，右肩的伤口就扯开一点。莫铁比我重四十斤，现在全压在我后背上。\n\n“别停。”他说，声音闷在我肩胛骨上。\n\n我没停。\n\n左手抓住井沿的时候，铁锈扎进掌心。井盖还剩不到两尺的缝隙。我把莫铁先推上去，他闷哼一声滚到井外。我双手撑住井沿，往上窜——\n\n井盖继续闭合。\n\n右肩撞上铁板边缘，骨头硌得生疼。我侧身，肩膀硬挤过去，外套被刮破，布料撕裂的声音在井道里回荡。井盖擦着我后背合上，铁锈和灰尘扑簌簌掉进黑暗里。\n\n我趴在屋顶上喘气，水泥地面冰凉，辐射尘在风里飘，远处铅云低得像要压下来。\n\n莫铁靠在水塔旁边，左手按着腰侧的伤口，血从指缝渗出来。他的扳手还挂在腰间，沾着暗红色的锈。\n\n“地图呢？”他问。\n\n我从怀里掏出那卷防水纸，展开给他看。上面标注的管道走向、暗门位置，还有北壁城邦外围的哨点分布——都在。\n\n他看了一眼，点头。\n\n“得下去。”我说。\n\n屋顶边缘有道消防梯，锈得只剩骨架。我往下看，地面三层楼，梯子固定在墙上，有几处铆钉已经脱落。\n\n莫铁站起来，腿在抖。\n\n“我先下。”我说。\n\n“你的肩膀——”\n\n“没断。”\n\n我踩上第一级梯子，铁架晃了晃。远处有引擎声，可能是掠夺者的巡逻车，也可能是别的东西。风把酸雾吹过来，喉咙里开始发涩。\n\n我往下爬，一级一级，不往下看。",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦某建筑屋顶",
+                "injuries": "右肩被井盖刮伤，掌心铁锈扎伤",
+                "status": "存活，行动力受限"
+              },
+              "char_motie": {
+                "location": "同屋顶",
+                "injuries": "腰侧伤口持续出血，腿部虚弱",
+                "status": "存活，需搀扶"
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "status": "完整，已夺回"
+              },
+              "莫铁的扳手": {
+                "holder": "char_motie",
+                "status": "腰间携带"
+              }
+            },
+            "knowledge": [],
+            "time_marker": "深秋，铅云低垂，辐射尘飘散，远处有引擎声"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_2",
+                "description": "承接上一段：地图已经夺回，原出口也已经封死。主角背着伤员改走锈蚀通风井；井盖正在闭合，本段只写突围的新动作与代价。",
+                "required_end_states": [
+                  "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "本段结束前：井盖已闭合，地图仍由主角一方持有"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "met": true,
+                  "prose_evidence": [
+                    "我趴在屋顶上喘气",
+                    "莫铁靠在水塔旁边"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：井盖已闭合，地图仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "井盖擦着我后背合上",
+                    "我从怀里掏出那卷防水纸，展开给他看"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成通风井突围、井盖闭合、抵达屋顶、地图展示，所有声明的结束状态与源事件要求均被满足，无内部或跨段矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_2"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 3,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦城墙根排水渠内",
+                "injuries": "右肩刮伤加重，掌心铁锈扎伤，膝盖淤青",
+                "status": "存活，行动力受限，持莫铁的扳手"
+              },
+              "char_motie": {
+                "location": "同排水渠内",
+                "injuries": "腰侧伤口持续出血，腿部虚弱加重，膝盖磕伤",
+                "status": "存活，需搀扶，已交出扳手"
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_linxue",
+                "status": "部分损坏，仅东侧排水渠路线可辨认"
+              },
+              "莫铁的扳手": {
+                "holder": "char_linxue",
+                "status": "完好，林雪暂持"
+              },
+              "打火机": {
+                "holder": "char_linxue",
+                "status": "可用"
+              }
+            },
+            "knowledge": [
+              "排水渠直走四百米出城墙"
+            ],
+            "time_marker": "深秋，酸雾聚集，引擎声逼近，进入排水渠"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_3",
+                "description": "承接上一段：众人已经爬上屋顶，不能回到门内或再次夺图。伤员突然倒下，地图又因雨水损坏，主角必须决定救人还是抢在封城前赶路。",
+                "required_end_states": [
+                  "本段结束前：两人已到达城墙外",
+                  "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "本段结束前：主角选择带着伤员继续赶路"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": false,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": false,
+                  "prose_evidence": [
+                    "排水渠入口在城墙根下，铁栅栏锈得只剩三根竖杆。我侧身挤过去，铁锈刮破外套后背。莫铁跟在后面，喘气声粗重。",
+                    "渠里黑，水声从深处传来，腐臭混着酸雾的味道。我摸出打火机，火苗跳了两下，照亮前面三米——混凝土通道，地面有层浅水，水面漂着油花。",
+                    "“直走，四百米，出城墙。”我说。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "防水纸湿了。不是汗——刚才落地的时候，垃圾堆里的积水渗进来的。墨迹洇开，北壁城邦外围的哨点标注模糊了一半，只剩下东侧排水渠的路线还勉强能辨认。",
+                    "“还能用。”我说。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.status"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "我抓住他的胳膊架在肩上。“走。”",
+                    "“直走，四百米，出城墙。”我说。",
+                    "“你走前面。”他说。",
+                    "我接过扳手，铁柄上还带着他的体温。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.status",
+                    "characters.char_motie.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "reason": "正文结尾两人刚进入排水渠，林雪说“直走，四百米，出城墙”，表明仍在城墙根下的渠内，尚未到达城墙外。声明的结束状态 location 为“北壁城邦城墙根排水渠内”，与 required_end_state 冲突。",
+                  "prose_evidence": [
+                    "排水渠入口在城墙根下，铁栅栏锈得只剩三根竖杆。我侧身挤过去，铁锈刮破外套后背。莫铁跟在后面，喘气声粗重。",
+                    "渠里黑，水声从深处传来，腐臭混着酸雾的味道。",
+                    "“直走，四百米，出城墙。”我说。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                "源事件 style_validation_pressure_3 的结束状态未兑现：本段结束前：两人已到达城墙外",
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏",
+                "源事件 style_validation_pressure_3 要求终态位于城墙外，但结束账本位置仅匹配 1/2 人：['北壁城邦城墙根排水渠内', '同排水渠内']"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "源事件要求“两人已到达城墙外”，但正文结尾两人仍在排水渠内，尚未出城墙，该要求未兑现。其余要求均已满足。"
+            },
+            "repair_declared": [
+              "源事件 style_validation_pressure_3 要求“本段结束前：两人已到达城墙外”，原文结尾两人仍在排水渠内，未兑现该终态。在原文结尾后补写：两人走完四百米排水渠、推开出口栅栏、爬出渠口到达城墙外枯草地，并将两人 location 更新为“北壁城邦城墙外，排水渠出口枯草地”。补写段落未新增敌人、战斗、条件或悬念，仅完成位移。",
+              "同步更新 continuity_state 中两人 location 为城墙外，并补充出城后地图可辨认的荒原路径信息。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.62,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": false
+            },
+            "reject_reason": "deterministic_repair_guard_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_3"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 4,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "first_person_immersive",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+            "strict": true,
+            "before": {
+              "style_key": "first_person_immersive",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "first_person"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦城内",
+                "injuries": "右肩伤口撕裂，掌心铁锈扎伤，左膝磕伤",
+                "status": "存活，行动力受限"
+              },
+              "char_motie": {
+                "location": "北壁城邦城内",
+                "injuries": "腰侧伤口持续出血，腿部虚弱",
+                "status": "存活，需搀扶，失去扳手"
+              },
+              "char_gatekeeper": {
+                "location": "北壁城邦城门哨塔",
+                "injuries": "无",
+                "status": "存活，持有防水地图和莫铁的扳手"
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_gatekeeper",
+                "status": "完整，已交付守门人"
+              },
+              "莫铁的扳手": {
+                "holder": "char_gatekeeper",
+                "status": "被守门人收缴，手柄刻有字"
+              }
+            },
+            "knowledge": [
+              "守门人要求两人明天去中心广场报到修理水净化器",
+              "莫铁失去扳手后拇指仍习惯性摩擦腰间"
+            ],
+            "time_marker": "深秋，入夜，城内广场有火光，幸存者聚集"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_4",
+                "description": "承接上一段：主角已带幸存者抵达城墙外，损坏的地图仍在主角手中。守门人提出以地图换入城，本段完成谈判并留下一个新的具体代价。",
+                "required_end_states": [
+                  "本段结束前：守门人已主动提出以地图换入城",
+                  "本段结束前：地图已交给守门人，两人已进入城内",
+                  "本段结束前：谈判产生一项正文明写的新代价"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图换入城。\"他嚼东西的动作没停，\"规矩。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.0"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "我把地图从怀里抽出来，卷好，递上去。",
+                    "铁门开了。",
+                    "我们进去的时候"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"还有。\"守门人指了指莫铁腰间的扳手，\"那个。\"",
+                    "莫铁解下扳手",
+                    "他把它放在铁窗台上。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.莫铁的扳手.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成了守门人提出地图换入城、交付地图并进入城内、以及扳手作为新代价被收缴的全部事件，结束状态与声明一致，无任何硬矛盾。"
+            },
+            "repair_declared": [
+              "在铁门打开后，原文仅写'我们进去的时候'，未逐字证明两人都越过门线进入城内。修订为'我迈过门槛，莫铁跟在我身后，也跨了进来'，明确两人都完成入城动作，满足源事件required_end_states中'两人已进入城内'的逐句证据要求。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0159,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图换入城。\"他嚼东西的动作没停，\"规矩。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.0"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "我把地图从怀里抽出来，卷好，递上去。",
+                    "铁门开了。",
+                    "我迈过门槛，莫铁跟在我身后，也跨了进来。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"还有。\"守门人指了指莫铁腰间的扳手，\"那个。\"",
+                    "莫铁解下扳手，放在手里看了三秒。",
+                    "他把它放在铁窗台上。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.莫铁的扳手.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人提出地图换入城、林雪交付地图、两人进入城内、莫铁交出扳手作为新代价，所有required_end_states均已兑现，无状态矛盾。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "在'我迈过门槛'后补充'脚踩在城内的碎石地面上'，明确林雪已进入城内空间，使两人越过门线的终态获得逐字实证"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0156,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"地图换入城。\"他嚼东西的动作没停，\"规矩。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.0"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "我把地图从怀里抽出来，卷好，递上去。",
+                    "铁门开了。",
+                    "我迈过门槛，脚踩在城内的碎石地面上。莫铁跟在我身后，也跨了进来。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "\"还有。\"守门人指了指莫铁腰间的扳手，\"那个。\"",
+                    "莫铁解下扳手，放在手里看了三秒。",
+                    "他把它放在铁窗台上。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.莫铁的扳手.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人提出地图换入城、林雪交付地图、两人进入城内、莫铁交出扳手作为新代价，所有required_end_states均已兑现，结束状态与正文一致，无内部或跨段矛盾。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_4"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [
+        1,
+        3,
+        4
+      ],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "莫铁在我背上哼了一声，热乎乎的血顺着我脖子往下淌。\n\n锈蚀通风井的井盖正在闭合，齿轮咬合的声音从头顶传来，生锈的铁板一寸一寸吞掉最后的天光。我踩着井壁上的锈梯往上爬，每蹬一级，右肩的伤口就扯开一点。莫铁比我重四十斤，现在全压在我后背上。\n\n“别停。”他说，声音闷在我肩胛骨上。\n\n我没停。\n\n左手抓住井沿的时候，铁锈扎进掌心。井盖还剩不到两尺的缝隙。我把莫铁先推上去，他闷哼一声滚到井外。我双手撑住井沿，往上窜——\n\n井盖继续闭合。\n\n右肩撞上铁板边缘，骨头硌得生疼。我侧身，肩膀硬挤过去，外套被刮破，布料撕裂的声音在井道里回荡。井盖擦着我后背合上，铁锈和灰尘扑簌簌掉进黑暗里。\n\n我趴在屋顶上喘气，水泥地面冰凉，辐射尘在风里飘，远处铅云低得像要压下来。\n\n莫铁靠在水塔旁边，左手按着腰侧的伤口，血从指缝渗出来。他的扳手还挂在腰间，沾着暗红色的锈。\n\n“地图呢？”他问。\n\n我从怀里掏出那卷防水纸，展开给他看。上面标注的管道走向、暗门位置，还有北壁城邦外围的哨点分布——都在。\n\n他看了一眼，点头。\n\n“得下去。”我说。\n\n屋顶边缘有道消防梯，锈得只剩骨架。我往下看，地面三层楼，梯子固定在墙上，有几处铆钉已经脱落。\n\n莫铁站起来，腿在抖。\n\n“我先下。”我说。\n\n“你的肩膀——”\n\n“没断。”\n\n我踩上第一级梯子，铁架晃了晃。远处有引擎声，可能是掠夺者的巡逻车，也可能是别的东西。风把酸雾吹过来，喉咙里开始发涩。\n\n我往下爬，一级一级，不往下看。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "莫铁在我背上哼了一声，热乎乎的血顺着我脖子往下淌。\n\n锈蚀通风井的井盖正在闭合，齿轮咬合的声音从头顶传来，生锈的铁板一寸一寸吞掉最后的天光。我踩着井壁上的锈梯往上爬，每蹬一级，右肩的伤口就扯开一点。莫铁比我重四十斤，现在全压在我后背上。\n\n“别停。”他说，声音闷在我肩胛骨上。\n\n我没停。\n\n左手抓住井沿的时候，铁锈扎进掌心。井盖还剩不到两尺的缝隙。我把莫铁先推上去，他闷哼一声滚到井外。我双手撑住井沿，往上窜——\n\n井盖继续闭合。\n\n右肩撞上铁板边缘，骨头硌得生疼。我侧身，肩膀硬挤过去，外套被刮破，布料撕裂的声音在井道里回荡。井盖擦着我后背合上，铁锈和灰尘扑簌簌掉进黑暗里。\n\n我趴在屋顶上喘气，水泥地面冰凉，辐射尘在风里飘，远处铅云低得像要压下来。\n\n莫铁靠在水塔旁边，左手按着腰侧的伤口，血从指缝渗出来。他的扳手还挂在腰间，沾着暗红色的锈。\n\n“地图呢？”他问。\n\n我从怀里掏出那卷防水纸，展开给他看。上面标注的管道走向、暗门位置，还有北壁城邦外围的哨点分布——都在。\n\n他看了一眼，点头。\n\n“得下去。”我说。\n\n屋顶边缘有道消防梯，锈得只剩骨架。我往下看，地面三层楼，梯子固定在墙上，有几处铆钉已经脱落。\n\n莫铁站起来，腿在抖。\n\n“我先下。”我说。\n\n“你的肩膀——”\n\n“没断。”\n\n我踩上第一级梯子，铁架晃了晃。远处有引擎声，可能是掠夺者的巡逻车，也可能是别的东西。风把酸雾吹过来，喉咙里开始发涩。\n\n我往下爬，一级一级，不往下看。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_first_person_immer_1784118272706"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "ensemble_epic",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 963,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": false,
+        "score": 9.0,
+        "blocking_issues": [
+          "收尾1-3句虽提及钟声与委员会，但未明确指向另一既有角色尚未确认的动向或处境，仅暗示群体活动，留白力度稍弱。",
+          "高价值连续场景未产生正文，缺失 tick: 1,3,4"
+        ],
+        "issues": [
+          "收尾1-3句虽提及钟声与委员会，但未明确指向另一既有角色尚未确认的动向或处境，仅暗示群体活动，留白力度稍弱。"
+        ],
+        "rewrite_directive": "收尾1-3句虽提及钟声与委员会，但未明确指向另一既有角色尚未确认的动向或处境，仅暗示群体活动，留白力度稍弱。",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        },
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "北壁城邦北墙闸门外侧",
+                "injuries": "右手腕胶带勒伤，后背擦伤",
+                "alive": true
+              },
+              "char_motie": {
+                "location": "北壁城邦北墙闸门外侧",
+                "injuries": "左腿蒸汽烫伤，行动受限",
+                "alive": true
+              }
+            },
+            "items": {
+              "地下管网图": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "完好"
+              },
+              "铁皮筒": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "盖子崩开"
+              },
+              "镜子": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "镀层剥落"
+              },
+              "撬棍": {
+                "holder": "lost",
+                "quantity": 1,
+                "condition": "遗留在闸门内侧"
+              }
+            },
+            "knowledge": [
+              "北壁城邦最后一台水净化器无法修复，密封圈老化，反渗透膜烧穿",
+              "老周的人扣留地图并试图封锁出口",
+              "旧排水渠可通往城外"
+            ],
+            "time_marker": "深秋，闸门封死后，东墙哨塔换岗时"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键地图被守门者扣住，主角必须立即夺回。",
+                "required_end_states": [
+                  "本段结束前：地图由主角一方持有",
+                  "本段结束前：主角与伤员已越过出口，原出口已封死"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁坐在她旁边，把地图从铁皮筒里抽出来，展开——北壁城邦地下管网图，标注了所有废弃的维修通道。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地下管网图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先把莫铁推出去——他滚过闸门下方的缝隙",
+                    "然后她蹲下，侧身，肩膀擦着下降的铁门边缘滑过去",
+                    "闸门在她身后合拢，液压锁咔嗒一声扣死。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文与声明的结束状态完全一致，所有源事件要求均已兑现，无任何硬矛盾。"
+            },
+            "repair_declared": [],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁坐在她旁边，把地图从铁皮筒里抽出来，展开——北壁城邦地下管网图，标注了所有废弃的维修通道。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地下管网图.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先把莫铁推出去——他滚过闸门下方的缝隙",
+                    "然后她蹲下，侧身，肩膀擦着下降的铁门边缘滑过去",
+                    "闸门在她身后合拢，液压锁咔嗒一声扣死。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成所有动作，地图最终由莫铁持有，两人均已越过闸门且闸门封死，与声明的结束状态完全一致。无新增专名、无内部矛盾、无修订差异。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器误报：正文已逐句证明林雪将莫铁推出闸门、自己随后越过闸门、闸门封死，两人location均为闸门外侧，完全满足required_end_states。无任何矛盾需修复。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：地图由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁坐在她旁边，把地图从铁皮筒里抽出来，展开——北壁城邦地下管网图",
+                    "铁皮筒塞进他怀里"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.地下管网图.holder",
+                    "items.铁皮筒.holder"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "本段结束前：主角与伤员已越过出口，原出口已封死",
+                  "met": true,
+                  "prose_evidence": [
+                    "林雪先把莫铁推出去——他滚过闸门下方的缝隙",
+                    "然后她蹲下，侧身，肩膀擦着下降的铁门边缘滑过去",
+                    "闸门在她身后合拢，液压锁咔嗒一声扣死"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.location",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_1 的结束状态缺少正文/账本实证：本段结束前：主角与伤员已越过出口，原出口已封死；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文与声明的结束状态完全一致，所有源事件要求均已兑现，无任何矛盾。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 2,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "通风井的铁梯锈得只剩骨架。莫铁踩上去，第三级横档就断了，碎铁片掉进脚下的黑暗里，隔了两秒才传来落水声。林雪在他背上动了一下，没说话，但手指攥紧了他肩头的衣服。\n\n“别往下看。”莫铁说。\n\n“我没看。”\n\n他把重心移到左侧，绕过断裂处，靴尖探到下一级横档。铁锈在鞋底碾成粉末，簌簌往下掉。背上的林雪比看起来沉，她的左腿在刚才封堵出口时被塌落的混凝土擦伤，膝盖肿得撑不起重量。莫铁每爬一级，她的呼吸就压在他后颈上，温热的，带着血腥味。\n\n头顶的井盖正在闭合。那是旧世界的液压装置，锈死了七年，被林雪用撬棍撬开时发出过一声惨叫。现在它正缓慢地往回滑，齿轮咬合的声音像钝刀在刮骨头。光柱从圆形井口切进来，边缘在收窄——从脸盆大缩到碗口，再缩到拳头。\n\n莫铁加快了速度。左手抓横档，右手托住林雪的腿弯，指节撞在井壁上，皮蹭掉了一层。他没停。\n\n井盖的阴影爬过他的头顶。\n\n“还有三米。”林雪说。她的声音贴着他耳朵，压得很低，但每个字都清楚。“左边第二根横档有裂缝，别踩。”\n\n莫铁用脚尖试了试，铁档果然晃了。他换到右边，整个人的重量挂在右臂上，肩关节咔嗒一声。林雪的手从他肩上移开，按住了他的后脑勺，把他往下压了半寸——一块凸起的管道法兰擦过他的头皮，头发被勾住几根，扯断了。\n\n井盖只剩最后一道缝。\n\n莫铁用肩膀顶开井盖，铁皮撞在屋顶的水泥地面上，发出闷响。他先把林雪推上去，然后双手撑住井口边缘，腹肌发力，整个人翻上屋顶。井盖在他身后哐当合死，扬起的灰尘在铅灰色的天光里悬浮了好几秒。\n\n风很大。干燥的辐射尘打在脸上，像细砂纸。莫铁趴在屋顶上喘气，手指还攥着井盖边缘，指节泛白。林雪坐在他旁边，撕开裤腿看膝盖的伤，血已经凝了，混着铁锈和灰。\n\n“地图。”她说。\n\n莫铁从怀里掏出那卷防水纸，边缘被汗浸湿了，但墨迹没花。林雪接过去，展开扫了一眼，然后看向屋顶东南角——那里有一条锈蚀的消防梯，通往城外的废料堆场。\n\n“还能走吗？”莫铁问。\n\n林雪撑着地面站起来，左腿不敢吃重，但站得很稳。“走。”她说。\n\n消防梯在风中摇晃，铁链哗啦啦响。远处，城邦中心广场的方向，有人在敲钟——不是警报，是召集委员会的信号。莫铁回头看了一眼井盖，铁皮上印着模糊的铭文：北壁水处理厂·第三车间。\n\n他把扳手从腰间抽出来，在手里掂了掂，然后朝消防梯走去。",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_motie": {
+                "location": "北壁水处理厂屋顶",
+                "injuries": "左手皮蹭掉一层，右肩轻度拉伤",
+                "alive": true
+              },
+              "char_linxue": {
+                "location": "北壁水处理厂屋顶",
+                "injuries": "左膝因混凝土塌落擦伤，肿胀，无法承重",
+                "alive": true
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "边缘被汗浸湿，墨迹未花"
+              },
+              "扳手": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "正常使用磨损"
+              }
+            },
+            "knowledge": [
+              "通风井已封死，无法原路返回",
+              "消防梯通往城外废料堆场",
+              "委员会正在召集会议（钟声）"
+            ],
+            "time_marker": "深秋，铅云低垂，干燥辐射尘，委员会钟声响起"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_2",
+                "description": "承接上一段：地图已经夺回，原出口也已经封死。主角背着伤员改走锈蚀通风井；井盖正在闭合，本段只写突围的新动作与代价。",
+                "required_end_states": [
+                  "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "本段结束前：井盖已闭合，地图仍由主角一方持有"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_motie",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：两人已离开通风井，抵达屋顶或厂外",
+                  "met": true,
+                  "prose_evidence": [
+                    "他先把林雪推上去，然后双手撑住井口边缘，腹肌发力，整个人翻上屋顶。",
+                    "莫铁趴在屋顶上喘气"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_2",
+                  "requirement": "本段结束前：井盖已闭合，地图仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "井盖在他身后哐当合死",
+                    "莫铁从怀里掏出那卷防水纸",
+                    "林雪接过去，展开扫了一眼"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，两人已抵达屋顶，井盖已闭合，地图由莫铁掏出后交林雪查看，持有链未断裂；所有伤势、物品状态与声明的结束状态一致，无内部矛盾或专名越界。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_2"
+          ],
+          "viewpoint_characters": [
+            "char_motie"
+          ]
+        },
+        {
+          "tick": 3,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_motie": {
+                "location": "灰烬平原边缘，北壁城邦城墙外",
+                "injuries": "左手皮蹭掉一层，右肩轻度拉伤，全身湿透",
+                "alive": true
+              },
+              "char_linxue": {
+                "location": "灰烬平原边缘，北壁城邦城墙外",
+                "injuries": "左膝肿胀加重，伤口重新裂开；后背多处碎玻璃划伤；后脑勺撞击伤；右手手指割伤；全身湿透",
+                "alive": true
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "正面墨迹被雨水洇开模糊，背面铅笔字迹仍可辨认，存有三个水源坐标"
+              },
+              "扳手": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "正常使用磨损，沾有铁锈"
+              },
+              "钢筋拐杖": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "condition": "从废料堆捡起，用作临时拐杖"
+              }
+            },
+            "knowledge": [
+              "通风井已封死，无法原路返回",
+              "消防梯通往城外废料堆场",
+              "委员会正在召集会议（钟声）",
+              "消防梯第三段断裂，已无法再次使用",
+              "地图正面墨迹被雨水损坏，仅剩背面铅笔字迹的三个水源坐标",
+              "城门正在关闭，委员会可能派人追捕",
+              "最近的水源坐标在水处理厂旧址，距此四公里"
+            ],
+            "time_marker": "深秋，冷雨骤降，城门关闭，进入灰烬平原"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_3",
+                "description": "承接上一段：众人已经爬上屋顶，不能回到门内或再次夺图。伤员突然倒下，地图又因雨水损坏，主角必须决定救人还是抢在封城前赶路。",
+                "required_end_states": [
+                  "本段结束前：两人已到达城墙外",
+                  "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "本段结束前：主角选择带着伤员继续赶路"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "涵洞另一头，灰烬平原在雨幕里展开，灰蒙蒙一片，看不到边。",
+                    "他托着她往平原深处走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "防水纸上的墨迹正在洇开。",
+                    "他把地图折好，塞回怀里"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "他托着她往平原深处走。",
+                    "她把钢筋拐杖换到左手，右手按在莫铁肩上，加快了速度。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.injuries",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序推进，所有源事件要求均已兑现。上一段遗留的伤势、物品持有与状态均通过明确事件过渡到新状态，无凭空恢复或错归。内部无前后矛盾，声明的结束状态与正文结尾一致。修订稿与原文相同，无新增或删除独立事件。"
+            },
+            "repair_declared": [
+              "修复验证器误报：正文第28段明确描写雨水打在地图上，第29段莫铁掏出地图时墨迹正在洇开，第30段字迹模糊，构成完整的雨水致损证据链。原文已满足'地图因雨水受损，但仍由主角一方持有'的源事件要求，无需修改。"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "涵洞另一头，灰烬平原在雨幕里展开，灰蒙蒙一片，看不到边。",
+                    "他托着她往平原深处走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁掏出地图，防水纸上的墨迹正在洇开。",
+                    "他把地图折好，塞回怀里"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "他托着她往平原深处走。",
+                    "林雪没回头。她把钢筋拐杖换到左手，右手按在莫铁肩上，加快了速度。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.injuries",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序兑现了源事件的三项要求：两人通过涵洞到达城墙外的灰烬平原边缘；地图正面墨迹被雨水洇开但仍由莫铁持有；莫铁架着受伤的林雪继续赶路。上一段结束状态中的伤势、物品持有和知识均通过明确事件合理演进，无归错人或无依据改变。声明的结束状态与正文最后实际状态一致。无新增专名或擅自命名。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "原文已完整兑现源事件 style_validation_pressure_3 的全部三项 required_end_states：两人通过涵洞到达城墙外灰烬平原边缘；地图正面墨迹被雨水洇开但仍由莫铁持有；莫铁架着受伤的林雪继续赶路。正文逐句证据充分，结束状态与原文实际状态一致，无需修改正文或账本。验证器误报'缺少同一段逐字引文同时证明雨水作用于地图并造成损坏'——原文'莫铁掏出地图，防水纸上的墨迹正在洇开'紧接在'雨在这时候下来了'之后，且后文'字迹在水里模糊'明确指向雨水损坏，证据链完整。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0718,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：两人已到达城墙外",
+                  "met": true,
+                  "prose_evidence": [
+                    "涵洞另一头，灰烬平原在雨幕里展开，灰蒙蒙一片，看不到边。",
+                    "他托着她往平原深处走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：地图因雨水受损，但仍由主角一方持有",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁掏出地图，防水纸上的墨迹正在洇开。",
+                    "他把地图折好，塞回怀里"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.防水地图.condition"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_3",
+                  "requirement": "本段结束前：主角选择带着伤员继续赶路",
+                  "met": true,
+                  "prose_evidence": [
+                    "他托着她往平原深处走。",
+                    "她把钢筋拐杖换到左手，右手按在莫铁肩上，加快了速度。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_linxue.injuries",
+                    "characters.char_motie.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_3 的结束状态缺少正文/账本实证：本段结束前：地图因雨水受损，但仍由主角一方持有；无效引文=[]；无效路径=[]；语义证据=没有同一段逐字引文同时证明雨水作用于地图并造成损坏"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序推进，所有源事件要求均已兑现，结束状态与声明一致，无内部矛盾或状态归错。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_3"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        },
+        {
+          "tick": 4,
+          "should_narrate": false,
+          "skip_reason": "Narrator 正文状态矛盾未通过修复复验",
+          "generation_attempts": 1,
+          "text": "",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_motie": {
+                "location": "北壁城邦城墙内侧甬道，第三个集装箱改装的医务室门口",
+                "injuries": "左手皮蹭掉一层，右肩轻度拉伤，颧骨被铆钉擦伤",
+                "alive": true
+              },
+              "char_linxue": {
+                "location": "北壁城邦城墙内侧甬道，第三个集装箱改装的医务室门口",
+                "injuries": "左膝因混凝土塌落擦伤，肿胀，无法承重，肩膀被铁门擦伤",
+                "alive": true
+              },
+              "char_gatekeeper": {
+                "location": "北壁城邦小门入口处",
+                "injuries": "无",
+                "alive": true
+              },
+              "char_oldzhou": {
+                "location": "北壁城邦城墙内侧第三个集装箱医务室",
+                "injuries": "无",
+                "alive": true
+              }
+            },
+            "items": {
+              "防水地图": {
+                "holder": "char_gatekeeper",
+                "quantity": 1,
+                "condition": "边缘被汗浸湿，墨迹未花，已交付守门人"
+              },
+              "扳手": {
+                "holder": "char_motie",
+                "quantity": 1,
+                "condition": "正常使用磨损"
+              },
+              "半卷纱布": {
+                "holder": "char_oldzhou",
+                "quantity": 0.5,
+                "condition": "发黄，旧"
+              }
+            },
+            "knowledge": [
+              "通风井已封死，无法原路返回",
+              "消防梯通往城外废料堆场",
+              "委员会正在召集会议（钟声）",
+              "守门人提出以地图换入城，交易已完成",
+              "守门人对地图内容表现出异常兴趣",
+              "城内医务室由老周负责，位于第三个集装箱"
+            ],
+            "time_marker": "深秋，铅云低垂，西边天际线泛黄，酸雾即将来临，委员会钟声已停"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": true,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_4",
+                "description": "承接上一段：主角已带幸存者抵达城墙外，损坏的地图仍在主角手中。守门人提出以地图换入城，本段完成谈判并留下一个新的具体代价。",
+                "required_end_states": [
+                  "本段结束前：守门人已主动提出以地图换入城",
+                  "本段结束前：地图已交给守门人，两人已进入城内",
+                  "本段结束前：谈判产生一项正文明写的新代价"
+                ]
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "苏墨",
+              "莫铁"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_motie": "莫铁",
+              "char_sumo": "苏墨"
+            },
+            "tracking_character_id": "char_motie",
+            "before": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "那就拿东西换。",
+                    "守门人的目光落在莫铁怀里——防水纸的一角从衣襟里露出来，被汗浸成深色。",
+                    "地图。给我。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.守门人提出以地图换入城，交易已完成"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图从莫铁手里递过去，防水纸在风中抖了一下，然后被守门人攥住，塞进皮背心内侧。",
+                    "莫铁扶林雪侧身挤过小门。",
+                    "莫铁转回头，扶着她往甬道深处走。第三个集装箱的铁门虚掩着"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "入城，外加一瓶碘酒，一卷纱布。",
+                    "碘酒没有。纱布半卷，旧的。",
+                    "成交。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.半卷纱布"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：谈判产生一项正文明写的新代价；无效引文=['成交。']；无效路径=[]"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成守门人提出以地图换入城、地图交付并进入城内、谈判产生纱布作为新代价，所有源事件要求均已兑现，无状态矛盾。"
+            },
+            "repair_declared": [
+              "在'莫铁扶林雪侧身挤过小门'后补充'林雪单脚跳了一下才站稳，莫铁伸手揽住她的腰，两人完全进到了门内'，以逐字证明两名参与者都越过门线进入城内，满足源事件要求'地图已交给守门人，两人已进入城内'的语义证据",
+              "保留原文'成交。'作为谈判结束的明确标志，该词与守门人提出'纱布半卷，旧的'、莫铁接受共同构成新代价的正文明写，满足源事件要求'谈判产生一项正文明写的新代价'"
+            ],
+            "repair_guard": {
+              "length_ratio": 1.0289,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "守门人的目光落在莫铁怀里——防水纸的一角从衣襟里露出来，被汗浸成深色。“地图。给我。”"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.守门人提出以地图换入城，交易已完成"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图从莫铁手里递过去，防水纸在风中抖了一下，然后被守门人攥住，塞进皮背心内侧。",
+                    "莫铁扶林雪侧身挤过小门。",
+                    "两人完全进到了门内。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁把地图抽出来，展开给守门人看。",
+                    "“入城，外加一瓶碘酒，一卷纱布。”",
+                    "“碘酒没有。纱布半卷，旧的。”",
+                    "“成交。”"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "items.半卷纱布.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少逐条核验：本段结束前：地图已交给守门人，两人已进入城内",
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：谈判产生一项正文明写的新代价；无效引文=['“成交。”']；无效路径=[]"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "所有源事件要求均已兑现：守门人主动索要地图，地图已交付且两人已入城，谈判产生地图换入城加纱布的新代价。正文内部无伤势、物品归属或状态矛盾，声明的结束状态与正文结尾一致，无新增专名或事实变更。"
+            },
+            "repair_retry_attempted": true,
+            "repair_retry_declared": [
+              "验证器误报：源事件style_validation_pressure_4的所有required_end_states均已兑现。守门人主动索要地图（'地图。给我。'），地图已交付且两人已进入城内（'两人完全进到了门内'），谈判产生正文明写的新代价（'入城，外加一瓶碘酒，一卷纱布'→'碘酒没有。纱布半卷，旧的。'→'成交。'）。正文无内部矛盾，结束状态与原文结尾一致，无需修改。"
+            ],
+            "repair_retry_guard": {
+              "length_ratio": 1.0,
+              "reasoning_leak": false,
+              "missing_protected_terms": [],
+              "passed": true
+            },
+            "after_retry": {
+              "safe": false,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：守门人已主动提出以地图换入城",
+                  "met": true,
+                  "prose_evidence": [
+                    "守门人的目光落在莫铁怀里——防水纸的一角从衣襟里露出来，被汗浸成深色。\"地图。给我。\""
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.守门人提出以地图换入城，交易已完成"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：地图已交给守门人，两人已进入城内",
+                  "met": true,
+                  "prose_evidence": [
+                    "地图从莫铁手里递过去，防水纸在风中抖了一下，然后被守门人攥住，塞进皮背心内侧。",
+                    "莫铁扶林雪侧身挤过小门。",
+                    "两人完全进到了门内。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder",
+                    "characters.char_motie.location",
+                    "characters.char_linxue.location"
+                  ]
+                },
+                {
+                  "event_id": "style_validation_pressure_4",
+                  "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                  "met": true,
+                  "prose_evidence": [
+                    "莫铁把地图抽出来，展开给守门人看。",
+                    "\"成交。\"",
+                    "地图从莫铁手里递过去"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.防水地图.holder"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：地图已交给守门人，两人已进入城内；无效引文=[]；无效路径=[]；语义证据=复合终态没有逐字证明两名参与者都越过边界",
+                "源事件 style_validation_pressure_4 的结束状态缺少正文/账本实证：本段结束前：谈判产生一项正文明写的新代价；无效引文=['\"成交。\"']；无效路径=[]"
+              ],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "源事件三项要求均在正文中兑现：守门人主动索要地图，地图已交付且两人进入城内，交出地图构成明写的新代价。所有伤势、物品、地点与上一段状态衔接一致，无内部矛盾，声明的结束状态与正文结尾完全吻合。"
+            },
+            "reject_reason": "semantic_repair_retry_verification_failed"
+          },
+          "events_consumed": [
+            "style_validation_pressure_4"
+          ],
+          "viewpoint_characters": [
+            "char_motie"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [
+        1,
+        3,
+        4
+      ],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "通风井的铁梯锈得只剩骨架。莫铁踩上去，第三级横档就断了，碎铁片掉进脚下的黑暗里，隔了两秒才传来落水声。林雪在他背上动了一下，没说话，但手指攥紧了他肩头的衣服。\n\n“别往下看。”莫铁说。\n\n“我没看。”\n\n他把重心移到左侧，绕过断裂处，靴尖探到下一级横档。铁锈在鞋底碾成粉末，簌簌往下掉。背上的林雪比看起来沉，她的左腿在刚才封堵出口时被塌落的混凝土擦伤，膝盖肿得撑不起重量。莫铁每爬一级，她的呼吸就压在他后颈上，温热的，带着血腥味。\n\n头顶的井盖正在闭合。那是旧世界的液压装置，锈死了七年，被林雪用撬棍撬开时发出过一声惨叫。现在它正缓慢地往回滑，齿轮咬合的声音像钝刀在刮骨头。光柱从圆形井口切进来，边缘在收窄——从脸盆大缩到碗口，再缩到拳头。\n\n莫铁加快了速度。左手抓横档，右手托住林雪的腿弯，指节撞在井壁上，皮蹭掉了一层。他没停。\n\n井盖的阴影爬过他的头顶。\n\n“还有三米。”林雪说。她的声音贴着他耳朵，压得很低，但每个字都清楚。“左边第二根横档有裂缝，别踩。”\n\n莫铁用脚尖试了试，铁档果然晃了。他换到右边，整个人的重量挂在右臂上，肩关节咔嗒一声。林雪的手从他肩上移开，按住了他的后脑勺，把他往下压了半寸——一块凸起的管道法兰擦过他的头皮，头发被勾住几根，扯断了。\n\n井盖只剩最后一道缝。\n\n莫铁用肩膀顶开井盖，铁皮撞在屋顶的水泥地面上，发出闷响。他先把林雪推上去，然后双手撑住井口边缘，腹肌发力，整个人翻上屋顶。井盖在他身后哐当合死，扬起的灰尘在铅灰色的天光里悬浮了好几秒。\n\n风很大。干燥的辐射尘打在脸上，像细砂纸。莫铁趴在屋顶上喘气，手指还攥着井盖边缘，指节泛白。林雪坐在他旁边，撕开裤腿看膝盖的伤，血已经凝了，混着铁锈和灰。\n\n“地图。”她说。\n\n莫铁从怀里掏出那卷防水纸，边缘被汗浸湿了，但墨迹没花。林雪接过去，展开扫了一眼，然后看向屋顶东南角——那里有一条锈蚀的消防梯，通往城外的废料堆场。\n\n“还能走吗？”莫铁问。\n\n林雪撑着地面站起来，左腿不敢吃重，但站得很稳。“走。”她说。\n\n消防梯在风中摇晃，铁链哗啦啦响。远处，城邦中心广场的方向，有人在敲钟——不是警报，是召集委员会的信号。莫铁回头看了一眼井盖，铁皮上印着模糊的铭文：北壁水处理厂·第三车间。\n\n他把扳手从腰间抽出来，在手里掂了掂，然后朝消防梯走去。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "通风井的铁梯锈得只剩骨架。莫铁踩上去，第三级横档就断了，碎铁片掉进脚下的黑暗里，隔了两秒才传来落水声。林雪在他背上动了一下，没说话，但手指攥紧了他肩头的衣服。\n\n“别往下看。”莫铁说。\n\n“我没看。”\n\n他把重心移到左侧，绕过断裂处，靴尖探到下一级横档。铁锈在鞋底碾成粉末，簌簌往下掉。背上的林雪比看起来沉，她的左腿在刚才封堵出口时被塌落的混凝土擦伤，膝盖肿得撑不起重量。莫铁每爬一级，她的呼吸就压在他后颈上，温热的，带着血腥味。\n\n头顶的井盖正在闭合。那是旧世界的液压装置，锈死了七年，被林雪用撬棍撬开时发出过一声惨叫。现在它正缓慢地往回滑，齿轮咬合的声音像钝刀在刮骨头。光柱从圆形井口切进来，边缘在收窄——从脸盆大缩到碗口，再缩到拳头。\n\n莫铁加快了速度。左手抓横档，右手托住林雪的腿弯，指节撞在井壁上，皮蹭掉了一层。他没停。\n\n井盖的阴影爬过他的头顶。\n\n“还有三米。”林雪说。她的声音贴着他耳朵，压得很低，但每个字都清楚。“左边第二根横档有裂缝，别踩。”\n\n莫铁用脚尖试了试，铁档果然晃了。他换到右边，整个人的重量挂在右臂上，肩关节咔嗒一声。林雪的手从他肩上移开，按住了他的后脑勺，把他往下压了半寸——一块凸起的管道法兰擦过他的头皮，头发被勾住几根，扯断了。\n\n井盖只剩最后一道缝。\n\n莫铁用肩膀顶开井盖，铁皮撞在屋顶的水泥地面上，发出闷响。他先把林雪推上去，然后双手撑住井口边缘，腹肌发力，整个人翻上屋顶。井盖在他身后哐当合死，扬起的灰尘在铅灰色的天光里悬浮了好几秒。\n\n风很大。干燥的辐射尘打在脸上，像细砂纸。莫铁趴在屋顶上喘气，手指还攥着井盖边缘，指节泛白。林雪坐在他旁边，撕开裤腿看膝盖的伤，血已经凝了，混着铁锈和灰。\n\n“地图。”她说。\n\n莫铁从怀里掏出那卷防水纸，边缘被汗浸湿了，但墨迹没花。林雪接过去，展开扫了一眼，然后看向屋顶东南角——那里有一条锈蚀的消防梯，通往城外的废料堆场。\n\n“还能走吗？”莫铁问。\n\n林雪撑着地面站起来，左腿不敢吃重，但站得很稳。“走。”她说。\n\n消防梯在风中摇晃，铁链哗啦啦响。远处，城邦中心广场的方向，有人在敲钟——不是警报，是召集委员会的信号。莫铁回头看了一眼井盖，铁皮上印着模糊的铭文：北壁水处理厂·第三车间。\n\n他把扳手从腰间抽出来，在手里掂了掂，然后朝消防梯走去。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_ensemble_epic_1784118560238"
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 0,
+    "by_scenario": {
+      "pressure": {
+        "total": 3,
+        "passed": 0
+      }
+    }
+  }
+}

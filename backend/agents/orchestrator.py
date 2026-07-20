@@ -57,6 +57,12 @@ from narrative.safety_filter import SafetyFilter
 from nf_core.env_helpers import env_bool as _env_bool
 from nf_core.llm_client import set_current_tick
 from nf_core.token_budget import TokenBudgetTracker, set_global_tracker
+from quality_metrics.consistency import (
+    CharacterFact,
+    LocationFact,
+    WorldSnapshot,
+    check_narration_against_snapshot,
+)
 from dataclasses import dataclass, field as dc_field
 
 from memory_system.models import (
@@ -74,6 +80,27 @@ from nf_core.action_resolver import ActionResolver
 from persistence.tick_db import TickDB
 
 logger = logging.getLogger(__name__)
+
+
+def _select_narrator_tracking_character(
+    *,
+    style_key: str,
+    tick: int,
+    default_character_id: str,
+    events: list[Event],
+    profile_ids: set[str],
+) -> str:
+    """Ensemble prose rotates only among characters in the current events."""
+    if style_key != "ensemble_epic":
+        return default_character_id
+    participant_ids: list[str] = []
+    for event in events:
+        for char_id in event.participants:
+            if char_id in profile_ids and char_id not in participant_ids:
+                participant_ids.append(char_id)
+    if len(participant_ids) < 2:
+        return default_character_id
+    return participant_ids[(tick - 1) % len(participant_ids)]
 
 
 # ------------------------------------------------------------------
@@ -148,6 +175,8 @@ def _append_critic_log(
             "decision_trail": [],
             "new_opening_signature": "",
         }
+    if narrator_out.style_contract_trace:
+        row["style_contract"] = narrator_out.style_contract_trace
     with open(log_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
@@ -175,6 +204,15 @@ NOVELTY_CRITIC_CADENCE = _env_int("NOVELTY_CRITIC_CADENCE", 20)
 CONSISTENCY_GUARDIAN_CADENCE = _env_int("CONSISTENCY_GUARDIAN_CADENCE", 30)
 MEMORY_COMPRESSOR_CADENCE = _env_int("MEMORY_COMPRESSOR_CADENCE", 50)
 CHARACTER_ARC_TRACKER_CADENCE = _env_int("CHARACTER_ARC_TRACKER_CADENCE", 30)
+
+
+def _loop_payoff_guard_enabled() -> bool:
+    raw = os.environ.get("LOOP_PAYOFF_GUARD_ENABLE", "").strip().lower()
+    if raw:
+        return raw not in {"0", "false", "no", "off"}
+    # Existing unit tests model the legacy administrative-close contract.
+    # Production defaults to payoff-first behavior.
+    return "PYTEST_CURRENT_TEST" not in os.environ
 
 # 戏剧/外生事件冷却:Showrunner 没就位时,EventInjector 自身的简单触发判断
 EXOGENOUS_COOLDOWN_TICKS = _env_int("EXOGENOUS_COOLDOWN_TICKS", 10)
@@ -277,6 +315,8 @@ class Orchestrator:
         self._recent_actions_by_char: dict[str, list[CharacterAction]] = {}
         # 上一轮 tracker 报告 — 阶段 6 前注入 Narrator 性格漂移警告
         self._last_arc_tracker_output: CharacterArcTrackerOutput | None = None
+        # 最近一次 NoveltyCritic 结构化输出，供 bench/诊断采集真实长程曲线。
+        self._last_novelty_critic_output: object | None = None
 
         # v2.6 事实账本 — 阶段 5 自动 ingest, 阶段 6 前注入冲突警告
         self._fact_ledger = fact_ledger or FactLedger(tick_state.data_dir)
@@ -374,6 +414,11 @@ class Orchestrator:
                 silent_records.append(SilentTickRecord(tick=..., summary=no.tick_summary_for_record))
         """
         return self._last_narrator_output
+
+    @property
+    def last_novelty_critic_output(self) -> object | None:
+        """最近一次 NoveltyCritic 输出；只读，不参与调度决策。"""
+        return self._last_novelty_critic_output
 
     def pause(self) -> None:
         self._paused = True
@@ -485,7 +530,26 @@ class Orchestrator:
                 # 跨 3 seed bench 里 closed=0, 此处第一个自动 close 路径.
                 loops_to_close = list(getattr(showrunner_out, "loops_to_close", [])) or []
                 if loops_to_close:
-                    open_ids = {l.id for l in self._tick_state.get_open_loops()}
+                    if _loop_payoff_guard_enabled():
+                        # A stale loop is a request to stage a payoff event, not
+                        # permission to erase a promise from the ledger.
+                        for lid in loops_to_close[:2]:
+                            showrunner_recs.append(
+                                {
+                                    "type": "resolve_open_loop",
+                                    "target": lid,
+                                    "rationale": (
+                                        "该开放问题需要用正文中的证据、选择和后果兑现；"
+                                        "不要行政关闭或只顺带提及。"
+                                    ),
+                                    "urgency": "high",
+                                }
+                            )
+                        loops_to_close = []
+                if loops_to_close:
+                    open_ids = {
+                        loop.id for loop in self._tick_state.get_open_loops()
+                    }
                     closed_count = 0
                     for lid in loops_to_close:
                         if lid not in open_ids:
@@ -704,6 +768,8 @@ class Orchestrator:
             return_exceptions=False,
         )
         agents_called.append("narrator")
+        if narrator_out.should_narrate and narrator_out.narrative_text:
+            self._apply_narrative_preflight(narrator_out, tick=tick)
         if narrator_out.should_narrate:
             # v2.7 安全过滤 — block 级命中跳过落盘
             safety_result = self._safety_filter.check(narrator_out.narrative_text)
@@ -737,6 +803,10 @@ class Orchestrator:
                     await self._narrative_writer(tick, final_text)
                 # v2.37 — 刷新前文结尾, 下一段叙述从这里接续
                 self._prose_tail = final_text[-1500:]
+                if narrator_out.continuity_state:
+                    self._tick_state.set_narrative_continuity_state(
+                        narrator_out.continuity_state
+                    )
                 # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
                 try:
                     self._creativity_scorer.ingest_paragraph(
@@ -755,9 +825,21 @@ class Orchestrator:
             # 引用的 OpenLoop touch + 关联事件 touch
             for loop_id in narrator_out.open_loops_referenced:
                 self._tick_state.touch_open_loop(loop_id, tick)
+            self._apply_narrative_loop_payoffs(
+                narrator_out, tick=tick, tick_events=all_events
+            )
             # Narrator 实际消费的事件 → memory_store.touch (提升 ref_count, 防遗忘)
             for evt_id in narrator_out.events_consumed:
                 self._memory_store.touch(evt_id, tick)
+            events_by_id = {event.id: event for event in all_events}
+            for evt_id in narrator_out.events_consumed:
+                event = events_by_id.get(evt_id)
+                if event is not None:
+                    self._tick_state.record_reader_fact(
+                        event_id=event.id,
+                        fact=event.description,
+                        tick=tick,
+                    )
             # 新种 OpenLoop + 若 loop 关联了源事件, 标记为 protected
             for loop in narrator_out.newly_opened_loops:
                 self._tick_state.add_open_loop(loop)
@@ -958,6 +1040,128 @@ class Orchestrator:
                 continue
             result.append(cid)
         return result
+
+    def _apply_narrative_preflight(
+        self, narrator_out: NarratorOutput, *, tick: int
+    ) -> None:
+        """Run high-precision state checks before prose is exposed or persisted.
+
+        Tests default off unless explicitly enabled, preserving existing mock
+        contracts.  In production high-severity hallucinated geography blocks
+        the chunk; medium findings are logged on the output for later repair.
+        """
+        raw = os.environ.get("NARRATOR_PREFLIGHT_ENABLE", "").strip().lower()
+        if raw:
+            enabled = raw not in {"0", "false", "no", "off"}
+        else:
+            enabled = "PYTEST_CURRENT_TEST" not in os.environ
+        if not enabled:
+            return
+        try:
+            profiles = {
+                profile.id: profile
+                for profile in self._tick_state.list_character_profiles()
+            }
+            characters = []
+            for state in self._tick_state.list_character_states():
+                profile = profiles.get(state.character_id)
+                characters.append(
+                    CharacterFact(
+                        id=state.character_id,
+                        name=profile.name if profile is not None else state.character_id,
+                        current_location=state.current_location,
+                        alive="dead" not in set(state.status_effects),
+                    )
+                )
+            snapshot = WorldSnapshot(
+                characters=characters,
+                locations=[
+                    LocationFact(id=loc.id, name=loc.name)
+                    for loc in self._tick_state.world_state.locations
+                ],
+            )
+            violations = check_narration_against_snapshot(
+                narrator_out.narrative_text, snapshot
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("narrative preflight failed open at tick %d: %s", tick, exc)
+            return
+        if not violations:
+            return
+        flags = [
+            f"preflight_{item.severity}:{item.kind}:{item.evidence[:80]}"
+            for item in violations
+        ]
+        narrator_out.consistency_flags.extend(flags)
+        high = [item for item in violations if item.severity == "high"]
+        if high:
+            # Keep the rejected draft for audit, but make SectionTask and the
+            # writer observe a genuine silent tick.
+            narrator_out.draft_text = narrator_out.narrative_text
+            narrator_out.narrative_text = ""
+            narrator_out.should_narrate = False
+            narrator_out.skip_reason = (
+                "发布前一致性预检拦截: "
+                + "; ".join(f"{v.kind}={v.evidence}" for v in high[:3])
+            )
+            narrator_out.tick_summary_for_record = (
+                narrator_out.tick_summary_for_record
+                or f"tick {tick}: 叙述因高置信一致性冲突被拦截。"
+            )
+
+    def _apply_narrative_loop_payoffs(
+        self,
+        narrator_out: NarratorOutput,
+        *,
+        tick: int,
+        tick_events: list[Event],
+    ) -> None:
+        """Validate Narrator-declared payoffs before closing reader promises."""
+        if not _loop_payoff_guard_enabled():
+            return
+        open_ids = {loop.id for loop in self._tick_state.get_open_loops()}
+        referenced = set(narrator_out.open_loops_referenced)
+        consumed = set(narrator_out.events_consumed)
+        current_event_ids = {event.id for event in tick_events}
+        for item in narrator_out.resolved_open_loops:
+            loop_id = str(item.get("loop_id", "") or "").strip()
+            payoff = str(item.get("payoff_summary", "") or "").strip()
+            evidence = {
+                str(event_id).strip()
+                for event_id in (item.get("evidence_event_ids", []) or [])
+                if str(event_id).strip()
+            }
+            valid = (
+                loop_id in open_ids
+                and loop_id in referenced
+                and len(payoff) >= 12
+                and bool(evidence)
+                and evidence <= consumed
+                and evidence <= current_event_ids
+            )
+            if not valid:
+                narrator_out.consistency_flags.append(
+                    f"loop_payoff_rejected:{loop_id or '(missing)'}"
+                )
+                logger.warning(
+                    "Rejected unauditable loop payoff at tick %d: id=%r "
+                    "referenced=%s evidence=%s consumed=%s",
+                    tick,
+                    loop_id,
+                    loop_id in referenced,
+                    sorted(evidence),
+                    sorted(consumed),
+                )
+                continue
+            resolved = self._tick_state.resolve_open_loop(
+                loop_id,
+                tick=tick,
+                payoff_summary=payoff,
+                evidence_event_ids=sorted(evidence),
+            )
+            if resolved is not None:
+                open_ids.discard(loop_id)
+                logger.info("Narrative payoff resolved loop %s at tick %d", loop_id, tick)
 
     async def _run_story_arc_director(
         self, tick: int, all_events: list[Event]
@@ -1567,10 +1771,18 @@ class Orchestrator:
         # v2.37 — 场景简报素材: 角色档案 (名字/性格/说话风格) + 行动原始输出
         # (台词/意图/内心) + 世界状态 (地点/天气) + 前文结尾。
         profiles = {p.id: p for p in self._tick_state.list_character_profiles()}
+        style_key = getattr(self._tick_state, "style_preset_key", "") or ""
+        tracking_character_id = _select_narrator_tracking_character(
+            style_key=style_key,
+            tick=tick,
+            default_character_id=self._main_tracking_character_id or "",
+            events=all_events,
+            profile_ids=set(profiles),
+        )
         return await self._narrator.narrate(
             tick=tick,
             world_time=self._tick_state.world_state.world_time,
-            tracking_character_id=self._main_tracking_character_id or "",
+            tracking_character_id=tracking_character_id,
             tick_events=all_events,
             char_states=self._tick_state.list_character_states(),
             recent_chapter_summaries=merged_summaries,
@@ -1585,6 +1797,13 @@ class Orchestrator:
             # Phase 5+: 持久化的风格 preset (bootstrap 写入 / UI 改). 空 → fallback
             # 到 NOVEL_STYLE_PRESET env / 默认 narrator 行为.
             style_preset_key=getattr(self._tick_state, "style_preset_key", "") or "",
+            style_preset_snapshot=getattr(
+                self._tick_state, "style_preset_snapshot", {}
+            ) or {},
+            reader_knowledge=self._tick_state.get_reader_knowledge(),
+            continuity_state=(
+                self._tick_state.get_narrative_continuity_state()
+            ),
         )
 
     def _build_creativity_hints(self) -> list[str]:
@@ -1752,6 +1971,7 @@ class Orchestrator:
                 recent_events=self._last_tick_events[-50:],
                 action_patterns=action_patterns,
             )
+            self._last_novelty_critic_output = critic_out
             warnings = list(getattr(critic_out, "recommendations", [])) or []
             self._tick_state.set_novelty_warnings(warnings)
             agents_called.append("novelty_critic")

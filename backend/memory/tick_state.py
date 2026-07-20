@@ -97,6 +97,13 @@ class TickState:
         # open_loop 数. Stage 3 longrange 度量需要它算 open/closed ratio.
         # 持久化时序列化, load 时恢复. 0 是合法初始状态.
         self._loops_closed_total: int = 0
+        # 只记录经 Narrator 正文兑现并携带当 tick 事件证据的关闭；与行政
+        # close/reap 分开，便于衡量“关闭数量”与“兑现质量”。
+        self._resolved_loop_records: list[dict] = []
+        self._reader_known_facts: list[dict] = []
+        # Narrator 正文中的局部状态不一定进入 WorldState（如“地图湿透”、
+        # “药片已用完”）。持久化一份小账本，为下段续写提供硬边界。
+        self._narrative_continuity_state: dict = {}
 
         # iter#139 Phase 4-E — 运行时 sideline: char_id → ticks_remaining.
         # Showrunner 推荐 sideline 时入字段, 每 tick orchestrator 递减,
@@ -109,6 +116,11 @@ class TickState:
         # bootstrap 时写入, narrator 每 tick 读取并把对应 preset.narrator_addendum
         # 拼到 user_prompt 头部. 空字符串 = 用 narrator 默认行为 (与老 bench 等价).
         self._style_preset_key: str = ""
+        # v2.46: 冻结所选风格契约。key 只说明“叫什么”，version/hash/snapshot
+        # 才能确保注册表升级后旧小说仍按当时契约生成。
+        self._style_preset_version: str = ""
+        self._style_preset_prompt_hash: str = ""
+        self._style_preset_snapshot: dict = {}
 
         # EventInjector / Narrator 调度参考
         self._last_event_tick_by_type: dict[str, int] = {}
@@ -163,13 +175,44 @@ class TickState:
         """Phase 5+: 当前小说的风格 preset key (空 = 默认 literary 行为)."""
         return self._style_preset_key
 
+    @property
+    def style_preset_version(self) -> str:
+        return self._style_preset_version
+
+    @property
+    def style_preset_prompt_hash(self) -> str:
+        return self._style_preset_prompt_hash
+
+    @property
+    def style_preset_snapshot(self) -> dict:
+        """返回副本，避免调用方原地改坏持久化契约。"""
+        return dict(self._style_preset_snapshot)
+
     def set_style_preset_key(self, key: str) -> None:
         """更新 style preset key. bootstrap 或 UI rename 同步.
 
         空字符串视为"清空" (回到默认 narrator 行为). 不在此层验证 key 是否
         在 STYLE_PRESETS 注册 — narrator 渲染时 silent fallback 到空块.
         """
-        self._style_preset_key = (key or "").strip()
+        new_key = (key or "").strip()
+        if new_key != self._style_preset_key:
+            self._style_preset_version = ""
+            self._style_preset_prompt_hash = ""
+            self._style_preset_snapshot = {}
+        self._style_preset_key = new_key
+
+    def set_style_preset_contract(self, key: str, snapshot: dict | None) -> None:
+        """原子地绑定 key 与冻结契约；bootstrap/显式风格切换调用。"""
+        resolved = (key or "").strip()
+        snap = dict(snapshot or {})
+        if resolved and snap.get("key") not in (None, "", resolved):
+            raise ValueError(
+                f"style snapshot key {snap.get('key')!r} != selected {resolved!r}"
+            )
+        self._style_preset_key = resolved
+        self._style_preset_version = str(snap.get("version", "") or "")
+        self._style_preset_prompt_hash = str(snap.get("prompt_hash", "") or "")
+        self._style_preset_snapshot = snap if resolved else {}
 
     # ------------------------------------------------------------------
     # tick 推进
@@ -262,14 +305,103 @@ class TickState:
             self._loops_closed_total += 1
         return out
 
+    def resolve_open_loop(
+        self,
+        loop_id: str,
+        *,
+        tick: int,
+        payoff_summary: str,
+        evidence_event_ids: list[str],
+    ) -> OpenLoop | None:
+        """Close a loop only with an auditable narrative payoff record."""
+        loop = self._open_loops.pop(loop_id, None)
+        if loop is None:
+            return None
+        self._loops_closed_total += 1
+        self._resolved_loop_records.append(
+            {
+                "loop_id": loop.id,
+                "tick": int(tick),
+                "description": loop.description,
+                "promised_question": loop.promised_question,
+                "payoff_summary": payoff_summary.strip(),
+                "evidence_event_ids": list(dict.fromkeys(evidence_event_ids)),
+                "reference_count": loop.reference_count,
+            }
+        )
+        if len(self._resolved_loop_records) > 500:
+            self._resolved_loop_records = self._resolved_loop_records[-300:]
+        return loop
+
+    def list_resolved_loop_records(self) -> list[dict]:
+        return [dict(item) for item in self._resolved_loop_records]
+
+    def record_reader_fact(
+        self, *, event_id: str, fact: str, tick: int
+    ) -> None:
+        """Record only event material the Narrator declared as consumed."""
+        event_id = event_id.strip()
+        fact = fact.strip()
+        if not event_id or not fact:
+            return
+        if any(item.get("event_id") == event_id for item in self._reader_known_facts):
+            return
+        self._reader_known_facts.append(
+            {"event_id": event_id, "fact": fact[:240], "tick": int(tick)}
+        )
+        if len(self._reader_known_facts) > 500:
+            self._reader_known_facts = self._reader_known_facts[-300:]
+
+    def get_reader_knowledge(self, top_k: int = 30) -> dict:
+        """Facts shown to readers, promised questions, and recent payoffs."""
+        questions = [
+            {
+                "loop_id": loop.id,
+                "question": loop.promised_question or loop.description,
+                "opened_tick": loop.opened_tick,
+                "reference_count": loop.reference_count,
+            }
+            for loop in self.get_open_loops()
+        ]
+        return {
+            "known_facts": [dict(item) for item in self._reader_known_facts[-top_k:]],
+            "open_questions": questions[:15],
+            "recent_answers": [
+                dict(item) for item in self._resolved_loop_records[-10:]
+            ],
+        }
+
+    def set_narrative_continuity_state(self, state: dict) -> None:
+        """替换 Narrator 在最近正文结尾声明的完整状态账本。"""
+        if not isinstance(state, dict) or not state:
+            return
+        try:
+            encoded = json.dumps(state, ensure_ascii=False)
+            if len(encoded) > 16_000:
+                logger.warning("Narrative continuity state too large; ignored")
+                return
+            self._narrative_continuity_state = json.loads(encoded)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            logger.warning("Invalid narrative continuity state; ignored")
+
+    def get_narrative_continuity_state(self) -> dict:
+        """返回隔离副本，避免调用方绕过 save 契约就地修改。"""
+        return json.loads(json.dumps(
+            self._narrative_continuity_state, ensure_ascii=False
+        ))
+
     def get_open_loops(
         self,
         min_urgency: int = 0,
         top_k: int | None = None,
     ) -> list[OpenLoop]:
         """按 urgency 降序返回。``top_k`` 用于限制 Narrator prompt 大小。"""
-        loops = [l for l in self._open_loops.values() if l.urgency >= min_urgency]
-        loops.sort(key=lambda l: (-l.urgency, l.opened_tick))
+        loops = [
+            loop
+            for loop in self._open_loops.values()
+            if loop.urgency >= min_urgency
+        ]
+        loops.sort(key=lambda loop: (-loop.urgency, loop.opened_tick))
         if top_k is not None:
             loops = loops[:top_k]
         return loops
@@ -280,9 +412,9 @@ class TickState:
     def reap_stale_open_loops(self, current_tick: int) -> list[str]:
         """强制关闭超过 ``max_age_ticks`` 未消费的 loops,防数量失控。"""
         stale_ids = [
-            l.id
-            for l in self._open_loops.values()
-            if current_tick - l.opened_tick > l.max_age_ticks
+            loop.id
+            for loop in self._open_loops.values()
+            if current_tick - loop.opened_tick > loop.max_age_ticks
         ]
         # Phase 2 Stage 3 (iter#91) + iter#93 review fix — 累计实际 pop 成功的
         # 数, 不是 stale_ids 长度. 单线程环境下两者相等; 防御性写法挡未来
@@ -315,7 +447,10 @@ class TickState:
         if loop is None:
             return
         self._open_loops[loop_id] = loop.model_copy(
-            update={"last_referenced_tick": tick}
+            update={
+                "last_referenced_tick": tick,
+                "reference_count": loop.reference_count + 1,
+            }
         )
 
     # ------------------------------------------------------------------
@@ -543,14 +678,21 @@ class TickState:
                 for cid, s in self._character_states.items()
             },
             "open_loops": {
-                lid: l.model_dump(mode="json") for lid, l in self._open_loops.items()
+                lid: loop.model_dump(mode="json")
+                for lid, loop in self._open_loops.items()
             },
             # Phase 2 Stage 3 (iter#91) — 累计 close 数.
             "loops_closed_total": self._loops_closed_total,
+            "resolved_loop_records": list(self._resolved_loop_records),
+            "reader_known_facts": list(self._reader_known_facts),
+            "narrative_continuity_state": self._narrative_continuity_state,
             # iter#139 Phase 4-E — sideline TTL map.
             "sidelined_characters": dict(self._sidelined_characters),
             "style_anchors": [a.model_dump(mode="json") for a in self._style_anchors],
             "style_preset_key": self._style_preset_key,
+            "style_preset_version": self._style_preset_version,
+            "style_preset_prompt_hash": self._style_preset_prompt_hash,
+            "style_preset_snapshot": self._style_preset_snapshot,
             "last_event_tick_by_type": dict(self._last_event_tick_by_type),
             "novelty_warnings": list(self._novelty_warnings),
             "story_arc": (
@@ -602,6 +744,16 @@ class TickState:
             self._last_narration_tick = int(payload.get("last_narration_tick", 0))
             self._novel_title = str(payload.get("novel_title", "") or "")
             self._style_preset_key = str(payload.get("style_preset_key", "") or "")
+            self._style_preset_version = str(
+                payload.get("style_preset_version", "") or ""
+            )
+            self._style_preset_prompt_hash = str(
+                payload.get("style_preset_prompt_hash", "") or ""
+            )
+            raw_style_snapshot = payload.get("style_preset_snapshot", {})
+            self._style_preset_snapshot = (
+                dict(raw_style_snapshot) if isinstance(raw_style_snapshot, dict) else {}
+            )
             self._world_state = WorldState.model_validate(
                 payload.get("world_state", {})
             )
@@ -619,6 +771,18 @@ class TickState:
             }
             # Phase 2 Stage 3 (iter#91) — 老 state file 没此字段, 视作 0.
             self._loops_closed_total = int(payload.get("loops_closed_total", 0) or 0)
+            raw_resolved = payload.get("resolved_loop_records", []) or []
+            self._resolved_loop_records = [
+                dict(item) for item in raw_resolved if isinstance(item, dict)
+            ][-500:]
+            raw_reader_facts = payload.get("reader_known_facts", []) or []
+            self._reader_known_facts = [
+                dict(item) for item in raw_reader_facts if isinstance(item, dict)
+            ][-500:]
+            raw_continuity = payload.get("narrative_continuity_state", {}) or {}
+            self._narrative_continuity_state = (
+                dict(raw_continuity) if isinstance(raw_continuity, dict) else {}
+            )
             # iter#139 Phase 4-E + iter#151 review HIGH-1: 防御 list/wrong
             # type payload (e.g. ["char_a"] 是 list, .items() 会抛
             # AttributeError). 非 dict 视作 {}.
@@ -668,6 +832,27 @@ class TickState:
             # 重置为干净状态,避免半截数据污染下游
             self.__init__(self._data_dir)
             return False
+
+        # v2.46 legacy migration: 旧文件只有 key，历史契约已不可恢复。首次加载时
+        # 明确采用当前注册表版本并冻结到内存；下一次正常 tick save 后永久锁定。
+        # 已有 snapshot 的 novel 永远不自动升级，需走显式 style-preset 端点。
+        if self._style_preset_key and not self._style_preset_snapshot:
+            try:
+                from novel_presets import get_style_preset
+
+                preset = get_style_preset(self._style_preset_key)
+                self.set_style_preset_contract(
+                    self._style_preset_key, preset.to_snapshot()
+                )
+                logger.warning(
+                    "Migrated legacy style key=%s to frozen version=%s hash=%s",
+                    preset.key, preset.version, preset.prompt_hash[:12],
+                )
+            except (ImportError, KeyError) as exc:
+                logger.warning(
+                    "Could not freeze legacy style key=%s: %s",
+                    self._style_preset_key, exc,
+                )
 
         logger.info(
             "TickState restored: tick=%d open_loops=%d chars=%d anchors=%d",

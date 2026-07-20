@@ -49,6 +49,7 @@ class TickSection(BaseModel):
     tick_count: int = 0
     silent_tick_count: int = 0
     closure_supplement: str = ""
+    editor_trace: dict = Field(default_factory=dict)
     created_at: str = ""
 
     @staticmethod

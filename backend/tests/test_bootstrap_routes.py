@@ -218,7 +218,7 @@ async def test_bootstrap_world_chains_first_section_task(
     novel = novel_manager.create_novel(user.id, "测试链式")
     nid = novel["id"]
 
-    snap = await bootstrap_world_endpoint(
+    await bootstrap_world_endpoint(
         nid,
         BootstrapWorldRequest(
             seed="任意",
@@ -273,7 +273,7 @@ async def test_bootstrap_world_passes_user_inputs_to_seed_function(
     ts2 = TickState(data_dir=data_dir)
     ts2.load()
     loops = ts2.get_open_loops()
-    assert any("自定义种子文本" in l.description for l in loops)
+    assert any("自定义种子文本" in loop.description for loop in loops)
 
 
 @pytest.mark.asyncio
@@ -383,6 +383,56 @@ async def test_bootstrap_world_failure_marks_task_failed(
     assert "LLM 配额耗尽" in final.error
     # 只应当有这 1 个任务 — 失败不链式
     assert len(mgr.list_for_user_and_novel(user.id, nid)) == 1
+
+
+@pytest.mark.asyncio
+async def test_switch_style_preset_is_atomic_and_preserves_tick_state(
+    isolated_env, monkeypatch
+):
+    import novel_manager
+    from api.bootstrap_routes import (
+        SwitchStylePresetRequest,
+        switch_style_preset_endpoint,
+    )
+    from memory.tick_state import TickState
+    from memory_system.models import StyleAnchor
+    from novel_presets import get_style_preset
+
+    user = _fake_user("u_style_switch")
+    novel = novel_manager.create_novel(user.id, "风格切换测试")
+    data_dir = novel_manager.get_novel_data_dir(user.id, novel["id"])
+    ts = TickState(data_dir=data_dir)
+    ts.advance_tick()
+    old = get_style_preset("literary")
+    ts.set_style_preset_contract(old.key, old.to_snapshot())
+    ts.add_style_anchor(
+        StyleAnchor(excerpt="旧锚点", scene_type="general", weight=1.0)
+    )
+    ts.save()
+
+    async def _fake_anchors(**kwargs):
+        assert kwargs["style_preset_key"] == "hot_blooded"
+        assert kwargs["style_preset_snapshot"]["key"] == "hot_blooded"
+        return [StyleAnchor(excerpt="新热血锚点", scene_type="action", weight=2.0)]
+
+    monkeypatch.setattr(
+        "api.bootstrap_routes.generate_style_anchors", _fake_anchors
+    )
+    monkeypatch.setattr("api.bootstrap_routes._reload_runtime", lambda *_: None)
+
+    result = await switch_style_preset_endpoint(
+        novel["id"],
+        SwitchStylePresetRequest(style="hot_blooded"),
+        current_user=user,
+    )
+    assert result["style_preset_key"] == "hot_blooded"
+
+    restored = TickState(data_dir=data_dir)
+    assert restored.load() is True
+    selected = get_style_preset("hot_blooded")
+    assert restored.current_tick == 1
+    assert restored.style_preset_prompt_hash == selected.prompt_hash
+    assert [a.excerpt for a in restored.list_style_anchors()] == ["新热血锚点"]
 
 
 @pytest.mark.asyncio

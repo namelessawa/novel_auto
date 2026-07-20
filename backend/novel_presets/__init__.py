@@ -29,6 +29,7 @@ from .recommended_pairs import (
     top_styles_for_theme,
 )
 from .style_presets import (
+    STYLE_PRESET_SCHEMA_VERSION,
     STYLE_PRESETS,
     StylePreset,
     get_style_preset,
@@ -43,6 +44,7 @@ from .theme_seeds import (
 
 __all__ = [
     "STYLE_PRESETS",
+    "STYLE_PRESET_SCHEMA_VERSION",
     "StylePreset",
     "get_style_preset",
     "list_style_keys",

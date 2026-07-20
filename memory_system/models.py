@@ -557,6 +557,19 @@ class OpenLoop(_TickBase):
         default_factory=list,
         description="开 loop 时关联的源事件 id; mark_protected 跳过压缩",
     )
+    promised_question: str = Field(
+        default="",
+        description="向读者承诺最终回答的具体问题；空表示旧存档尚未结构化",
+    )
+    payoff_requirements: list[str] = Field(
+        default_factory=list,
+        description="允许关闭前应满足的证据/选择/后果条件",
+    )
+    reference_count: int = Field(
+        default=0,
+        ge=0,
+        description="Narrator 明确引用次数；仅引用不等于兑现",
+    )
 
 
 class MemoryEntry(_TickBase):

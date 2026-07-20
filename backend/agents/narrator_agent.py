@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from agents.narrative_critic import CritiqueOutput, NarrativeCritic
 from agents.quality_spec import render_narrator_discipline_block
@@ -35,13 +35,14 @@ from nf_core.env_helpers import env_bool, env_bool_tri
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak as _strip_reasoning_leak
+from quality_metrics.style_contract import style_contract_report
 
 # Phase 5+: style preset 由 env 控制 — bootstrap / matrix bench 在 spawn 子进程
 # 时设 NOVEL_STYLE_PRESET=<key>, narrator 在 user_prompt 头部追加预设的写作契约.
 # 未设 / 空 / unknown key 时 silent fallback 到默认行为 (= literary preset 但不
 # 显式注入, 老 bench 完全等价).
 try:
-    from novel_presets import get_style_preset, list_style_keys
+    from novel_presets import StylePreset, get_style_preset, list_style_keys
     _STYLE_PRESETS_AVAILABLE = True
 except ImportError:  # pragma: no cover — defensive 在裸 import 环境
     _STYLE_PRESETS_AVAILABLE = False
@@ -61,7 +62,12 @@ class NarratorOutput:
     scene_focus: str = ""
     events_consumed: list[str] = field(default_factory=list)
     open_loops_referenced: list[str] = field(default_factory=list)
+    resolved_open_loops: list[dict] = field(default_factory=list)
     newly_opened_loops: list[OpenLoop] = field(default_factory=list)
+    # 正文结束时的叙事层状态（非 WorldState），用于约束下一段中的
+    # 伤势、物品归属/数量/损坏与角色知识。
+    continuity_state: dict = field(default_factory=dict)
+    continuity_guard_trace: dict = field(default_factory=dict)
     style_diagnostics: dict = field(default_factory=dict)
     consistency_flags: list[str] = field(default_factory=list)
     tick_summary_for_record: str = ""
@@ -76,6 +82,8 @@ class NarratorOutput:
     # 原因, _append_critic_log 据此写 SKIP 行. 空字符串 = critic 真跑了或
     # narrator silent (上下文区分).
     critique_skip_reason: str = ""
+    # v2.46: 风格专属 det 验收 + 最多一次定向重写审计记录。
+    style_contract_trace: dict = field(default_factory=dict)
 
 
 NARRATOR_SYSTEM_PROMPT = (
@@ -100,6 +108,8 @@ NARRATOR_SYSTEM_PROMPT = (
 # 信息纪律
 
 * 人物 / 地点 / 势力 / 既定事实以简报为准, 不发明新设定。
+* 高价值源事件是模拟世界中已经发生的事实，不是可选灵感。若你在
+  events_consumed 声明消费，正文必须写到它的明确结果，不得停在准备行动时。
 * 允许无害补白(器物、天气、动作、过场对话), 不许引入新事实或改变角色
   立场 / 知识范围。
 * 角色只知道他该知道的事; 矛盾不要自行修正, 写进 consistency_flags。
@@ -108,7 +118,20 @@ NARRATOR_SYSTEM_PROMPT = (
 
 优先级: 拐点 > 揭示 > 对峙 > 有信息量的日常。素材整段不值得写时
 narrative_text 留空, 系统会自动记账。伏笔: 优先呼应开放 loops, 至多新
-种 1 个 (在 origin_event_ids 列触发事件 id)。
+种 1 个 (在 origin_event_ids 列触发事件 id)。只有正文已经给出明确回答、人物
+选择及可见后果时才能填 resolved_open_loops；必须同时引用真实 loop_id 和本 tick
+已消费的 evidence_event_ids。仅仅再次提到、变冷或想减少池子都不算兑现。
+新种 loop 时必须填写 promised_question（读者最终等待回答的具体问题）以及
+payoff_requirements（至少包含“证据”“人物选择”“可见后果”中的一项）。
+
+# 跨段状态账本
+
+* 用 continuity_state 输出“本段正文结束时”的完整状态，不是变化摘要。
+  至少核对 characters（地点/伤势/存亡）、items（持有者/数量/状况）、
+  knowledge（只记本段新增的重要已知信息）和 time_marker。
+* 上一段账本是当前状态。保留仍然有效的旧条目；只有正文明写交付、
+  使用、损坏、移动、受伤或得知事件时才能更新。已交付/用完/损坏的
+  物品不得恢复；变化必须在 narrative_text 中看得见。
 
 """
     + render_narrator_discipline_block()
@@ -135,7 +158,9 @@ narrative_text 留空, 系统会自动记账。伏笔: 优先呼应开放 loops,
   "scene_focus": "苏默冒雨向安全屋移动",
   "events_consumed": ["evt_001"],
   "open_loops_referenced": [],
+  "resolved_open_loops": [],
   "newly_opened_loops": [],
+  "continuity_state": {"characters": {}, "items": {}, "knowledge": [], "time_marker": ""},
   "style_diagnostics": {"avg_sentence_length": 18, "rhetoric_density": "low"},
   "consistency_flags": []
 }
@@ -162,6 +187,59 @@ _PROSE_TAIL_MAX_CHARS = 800
 # 反而稀释 Narrator 注意力, 同时占 input prompt 体积。
 _MAX_BRIEF_CHARS_COUNT = 5
 _MAX_BRIEF_EVENTS = 16
+_NARRATOR_TEMPERATURE_DEFAULT = 0.65
+
+
+def _compact_continuity_value(value, *, depth: int = 0):
+    """限制模型返回的状态账本体积，避免未受控 JSON 污染后续 prompt。"""
+    if depth >= 4:
+        return str(value)[:240]
+    if isinstance(value, dict):
+        compact: dict[str, object] = {}
+        for raw_key, raw_value in list(value.items())[:40]:
+            key = str(raw_key).strip()[:80]
+            if key:
+                compact[key] = _compact_continuity_value(
+                    raw_value, depth=depth + 1
+                )
+        return compact
+    if isinstance(value, list):
+        return [
+            _compact_continuity_value(item, depth=depth + 1)
+            for item in value[:30]
+        ]
+    if isinstance(value, str):
+        return value.strip()[:300]
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    return str(value)[:240]
+
+
+def _normalise_continuity_state(value) -> dict:
+    if not isinstance(value, dict):
+        return {}
+    compact = _compact_continuity_value(value)
+    return compact if isinstance(compact, dict) else {}
+
+
+def _continuity_guard_enabled() -> bool:
+    raw = os.environ.get("NARRATOR_STATE_VERIFY_ENABLE", "").strip().lower()
+    if raw:
+        return raw not in {"0", "false", "no", "off"}
+    # 单元测默认不额外消耗 mock 响应；生产与实写默认开。
+    return "PYTEST_CURRENT_TEST" not in os.environ
+
+
+def _narrator_temperature() -> float:
+    raw = os.environ.get("NARRATOR_TEMPERATURE", "").strip()
+    if not raw:
+        return _NARRATOR_TEMPERATURE_DEFAULT
+    try:
+        return min(1.2, max(0.0, float(raw)))
+    except ValueError:
+        return _NARRATOR_TEMPERATURE_DEFAULT
+
+
 # v2.38 (iter#10) — 短段落跳过 critic 的字数下限. 一次 critique+rewrite
 # ~4500 tokens 比 < 400 字段落本身还多, 收益不成比例.
 # v2.38 (iter#12 review fix) — 此前定义在 narrate() 方法体里, 不利于
@@ -402,6 +480,9 @@ class NarratorAgent:
         prose_tail: str = "",
         # Phase 5+: TickState 持久化的 style preset key (空 → fallback 到 env / 默认)
         style_preset_key: str = "",
+        style_preset_snapshot: dict | None = None,
+        reader_knowledge: dict | None = None,
+        continuity_state: dict | None = None,
     ) -> NarratorOutput:
         """主入口。无事件或事件价值过低时返回 should_narrate=False。
 
@@ -479,13 +560,16 @@ class NarratorAgent:
             prose_tail=prose_tail,
             style_anchors=style_anchors,
             style_preset_key=style_preset_key,
+            style_preset_snapshot=style_preset_snapshot,
+            reader_knowledge=reader_knowledge or {},
+            continuity_state=continuity_state or {},
         )
 
         try:
             resp = await llm_client.chat(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                temperature=0.85,
+                temperature=_narrator_temperature(),
                 max_tokens=max_output_tokens,
                 agent_id="narrator",
                 priority="critical",
@@ -500,6 +584,16 @@ class NarratorAgent:
             )
 
         parsed = self._parse_output(resp.content, estimated_length, tick, tick_events)
+        preset = self._resolve_style_preset(
+            style_preset_key, style_preset_snapshot
+        )
+        if parsed.should_narrate and parsed.narrative_text and preset is not None:
+            parsed = await self._enforce_style_contract(
+                parsed,
+                preset=preset,
+                strict=self._is_strict_style_tick(preset, tick, tick_events),
+                tick=tick,
+            )
         # 4. CRITIQUE → REVISE/REWRITE 循环
         # v2.38 (iter#10) — 短段落跳过 critic, 阈值通过 _critic_min_narrative_len()
         # 每次 lazy 读 env (允许 monkeypatch.setenv 后立即生效).
@@ -542,12 +636,186 @@ class NarratorAgent:
                 )
                 # iter#R — 标记 critic_log 写 SKIP 行原因.
                 parsed.critique_skip_reason = "importance_gate"
+        # 正文、风格修订和 critic 都完成后，再做一次叙事状态闭环。
+        # 放在最后是为了避免后续 rewrite 让 continuity_state 再次过时。
+        if (
+            parsed.should_narrate
+            and parsed.narrative_text
+            and _continuity_guard_enabled()
+        ):
+            from agents.narrative_state_guard import NarrativeStateGuard
+
+            consumed_ids = set(parsed.events_consumed)
+            required_events = [
+                {
+                    "id": event.id,
+                    "description": event.description,
+                    "required_end_states": list(event.consequences),
+                }
+                for event in tick_events
+                if event.id in consumed_ids
+            ]
+            if not required_events:
+                required_events = [
+                    {
+                        "id": event.id,
+                        "description": event.description,
+                        "required_end_states": list(event.consequences),
+                    }
+                    for event in tick_events
+                    if self._effective_value(event) >= _NARRATE_SKIP_THRESHOLD
+                ][:3]
+            guard_out = await NarrativeStateGuard().guard(
+                narrative_text=parsed.narrative_text,
+                previous_state=continuity_state or {},
+                declared_state=parsed.continuity_state,
+                required_events=required_events,
+                style_contract=(preset.narrator_addendum if preset else ""),
+                protected_terms=[
+                    profile.name
+                    for profile in (char_profiles or {}).values()
+                    if profile.name
+                ],
+                entity_names={
+                    character_id: profile.name
+                    for character_id, profile in (char_profiles or {}).items()
+                    if profile.name
+                },
+                tracking_character_id=tracking_character_id,
+                tick=tick,
+            )
+            if guard_out.safe:
+                parsed = replace(
+                    parsed,
+                    narrative_text=guard_out.narrative_text,
+                    continuity_state=_normalise_continuity_state(
+                        guard_out.continuity_state
+                    ),
+                    continuity_guard_trace=guard_out.trace,
+                )
+            else:
+                parsed = replace(
+                    parsed,
+                    should_narrate=False,
+                    narrative_text="",
+                    skip_reason="Narrator 正文状态矛盾未通过修复复验",
+                    consistency_flags=(
+                        list(parsed.consistency_flags)
+                        + ["narrative_state_guard_failed"]
+                    ),
+                    continuity_guard_trace=guard_out.trace,
+                )
         # iter#M — 记录本 tick narrative chars 入滚动窗口 (供下 tick 判断
         # 是否激活 intensity guard). should_narrate=False 时不记录, 让 silent
         # 段不污染窗口.
         if parsed.should_narrate and parsed.narrative_text:
             self._record_narrative_chars(len(parsed.narrative_text))
         return parsed
+
+    # ------------------------------------------------------------------
+
+    async def _enforce_style_contract(
+        self,
+        draft: NarratorOutput,
+        *,
+        preset,
+        strict: bool,
+        tick: int,
+    ) -> NarratorOutput:
+        """跑风格 det gate；high 违约时最多调用一次定向重写。"""
+        before = style_contract_report(
+            preset.key,
+            draft.narrative_text,
+            preset.det_rules,
+            strict=strict,
+        )
+        trace = {
+            "preset_key": preset.key,
+            "preset_version": preset.version,
+            "prompt_hash": preset.prompt_hash,
+            "strict": strict,
+            "before": before.to_dict(),
+            "rewrite_attempted": False,
+            "rewrite_adopted": False,
+        }
+        flags = list(draft.consistency_flags)
+        if not before.requires_rewrite:
+            return replace(draft, style_contract_trace=trace)
+
+        trace["rewrite_attempted"] = True
+        finding_text = "\n".join(
+            f"- [{f.code}] {f.message}"
+            for f in before.findings
+            if f.severity == "high"
+        )
+        prompt = f"""\
+请只修复下面小说正文中已经被确定性检查证实的风格违约。保留全部事件、因果、
+人物立场、知识边界、伏笔与大致篇幅，不新增事实；不要解释修改过程。
+
+# 风格契约
+{preset.narrator_addendum.strip()}
+
+# 本次必须修复
+{finding_text}
+
+# 原正文
+{draft.narrative_text}
+
+严格输出 JSON：{{"narrative_text":"修订后的完整正文"}}
+"""
+        try:
+            resp = await llm_client.chat(
+                system_prompt=(
+                    "你是小说风格修订器。只做最小必要修改，严格输出 JSON，"
+                    "绝不输出分析或说明。"
+                ),
+                user_prompt=prompt,
+                temperature=0.35,
+                max_tokens=min(5500, max(1200, len(draft.narrative_text) * 2)),
+                agent_id="narrator_style_rewrite",
+                priority="critical",
+                tick=tick,
+            )
+            payload = parse_llm_json(resp.content)
+            candidate = str(payload.get("narrative_text", "") or "").strip()
+            if not candidate:
+                raise ValueError("style rewrite returned empty narrative_text")
+            # 防止修订器把正文压成摘要或成倍注水。
+            ratio = len(candidate) / max(1, len(draft.narrative_text))
+            if not 0.55 <= ratio <= 1.8:
+                raise ValueError(f"style rewrite length ratio out of range: {ratio:.2f}")
+            after = style_contract_report(
+                preset.key, candidate, preset.det_rules, strict=strict
+            )
+            trace["after"] = after.to_dict()
+            # 只有 high 数严格减少才采纳；一次后仍失败也不递归重试。
+            before_high = sum(f.severity == "high" for f in before.findings)
+            after_high = sum(f.severity == "high" for f in after.findings)
+            if after_high < before_high:
+                trace["rewrite_adopted"] = True
+                if after_high:
+                    flags.append("style_contract_surviving_high")
+                return replace(
+                    draft,
+                    narrative_text=candidate,
+                    draft_text=draft.draft_text or draft.narrative_text,
+                    consistency_flags=flags,
+                    style_contract_trace=trace,
+                )
+            trace["rewrite_error"] = "rewrite did not reduce high findings"
+        except Exception as exc:
+            logger.warning(
+                "NarratorAgent style rewrite failed (non-fatal, tick=%d): %s",
+                tick, exc,
+            )
+            trace["rewrite_error"] = str(exc)[:240]
+
+        flags.append("style_contract_rewrite_failed")
+        return replace(
+            draft,
+            consistency_flags=flags,
+            style_contract_trace=trace,
+        )
 
     # ------------------------------------------------------------------
 
@@ -598,7 +866,10 @@ class NarratorAgent:
             scene_focus=draft.scene_focus,
             events_consumed=draft.events_consumed,
             open_loops_referenced=draft.open_loops_referenced,
+            resolved_open_loops=draft.resolved_open_loops,
             newly_opened_loops=draft.newly_opened_loops,
+            continuity_state=draft.continuity_state,
+            continuity_guard_trace=draft.continuity_guard_trace,
             style_diagnostics=draft.style_diagnostics,
             consistency_flags=new_flags,
             tick_summary_for_record=draft.tick_summary_for_record,
@@ -608,6 +879,7 @@ class NarratorAgent:
             draft_text=original,
             new_opening_signature=out.new_opening_signature,
             blacklist_to_add=out.blacklist_to_add,
+            style_contract_trace=draft.style_contract_trace,
         )
 
     def reset_chapter_state(self) -> None:
@@ -666,7 +938,39 @@ class NarratorAgent:
         )
 
     @staticmethod
-    def _render_style_preset_block(key: str | None = None) -> str:
+    def _resolve_style_preset(
+        key: str | None = None, snapshot: dict | None = None
+    ):
+        """优先恢复 novel 冻结快照；没有快照的旧存档才查当前注册表。"""
+        if not _STYLE_PRESETS_AVAILABLE:
+            return None
+        resolved = (key or "").strip() or (
+            os.environ.get("NOVEL_STYLE_PRESET") or ""
+        ).strip()
+        if not resolved:
+            return None
+        try:
+            if snapshot:
+                preset = StylePreset.from_snapshot(snapshot)
+                if preset.key != resolved:
+                    logger.warning(
+                        "style snapshot key=%r mismatches selected key=%r; using registry",
+                        preset.key, resolved,
+                    )
+                else:
+                    return preset
+            return get_style_preset(resolved)
+        except (KeyError, TypeError, ValueError):
+            logger.warning(
+                "style preset key=%r invalid — ignoring (valid: %s)",
+                resolved, ",".join(list_style_keys()),
+            )
+            return None
+
+    @classmethod
+    def _render_style_preset_block(
+        cls, key: str | None = None, snapshot: dict | None = None
+    ) -> str:
         """Phase 5+: 渲染风格 preset block.
 
         解析顺序:
@@ -676,20 +980,65 @@ class NarratorAgent:
         未设 / 空 / 未知 key 都安静返回空串 — 老 bench / 未升级用户完全等价.
         位置在 user_prompt 头部, 在 style_anchors 块之前.
         """
-        if not _STYLE_PRESETS_AVAILABLE:
-            return ""
-        resolved = (key or "").strip() or (os.environ.get("NOVEL_STYLE_PRESET") or "").strip()
-        if not resolved:
-            return ""
-        try:
-            preset = get_style_preset(resolved)
-        except KeyError:
-            logger.warning(
-                "style preset key=%r unknown — ignoring (valid: %s)",
-                resolved, ",".join(list_style_keys()),
-            )
-            return ""
-        return preset.narrator_addendum
+        preset = cls._resolve_style_preset(key, snapshot)
+        return preset.narrator_addendum if preset is not None else ""
+
+    @staticmethod
+    def _is_strict_style_tick(preset, tick: int, tick_events: list[Event]) -> bool:
+        """确定性 cadence：首段、每 N tick、或高重要性场景执行强格式。"""
+        every = max(1, int(getattr(preset, "strict_every_ticks", 1) or 1))
+        importance = _tick_importance_score(tick_events)
+        return (
+            every == 1
+            or tick <= 1
+            or tick % every == 0
+            or importance >= int(getattr(preset, "strict_importance", 7) or 7)
+        )
+
+    @staticmethod
+    def _infer_scene_mode(
+        tick_events: list[Event], tick_actions: list[CharacterAction]
+    ) -> str:
+        """Cheap semantic scene mode used to vary prose rhythm by situation."""
+        material = " ".join(e.description for e in tick_events)
+        if any(a.dialogue_spoken for a in tick_actions):
+            dialogue_weight = sum(bool(a.dialogue_spoken) for a in tick_actions)
+        else:
+            dialogue_weight = 0
+        keyword_modes: tuple[tuple[str, tuple[str, ...]], ...] = (
+            ("revelation", ("揭露", "真相", "秘密", "认出", "证据显出", "证明了")),
+            ("investigation", ("调查", "搜查", "追踪", "检查", "线索", "推断", "暗号")),
+            ("recovery", ("疗伤", "休息", "包扎", "发烧", "疲惫", "安顿", "照料")),
+            ("travel", ("赶往", "抵达", "离开", "穿过", "上路", "撤离", "绕行")),
+            ("relationship", ("道歉", "告别", "和解", "误会", "信任", "承诺", "拒绝")),
+            ("action", ("追", "逃", "冲", "夺", "攻击", "爆炸", "封死", "战斗", "开火")),
+        )
+        for mode, keywords in keyword_modes:
+            if any(keyword in material for keyword in keywords):
+                return mode
+        if dialogue_weight >= 2:
+            return "dialogue"
+        if dialogue_weight == 1:
+            return "dialogue_action"
+        return "transition"
+
+    @staticmethod
+    def _render_scene_mode_block(mode: str) -> str:
+        directives = {
+            "action": "只写新的动作与后果；缩短判断，避免再次布置已经成立的危机。",
+            "dialogue": "让立场差异推动场面；对白之间必须有动作反应，避免轮流说明信息。",
+            "dialogue_action": "对白必须改变下一步行动，不把人物已经知道的事再讲一遍。",
+            "investigation": "每个观察都导向一个可验证推断；不要提前宣布尚无证据的真相。",
+            "revelation": "先落证据与人物反应，再给结论；本段只揭示素材支持的那一层。",
+            "recovery": "降低强度，写伤势、照料或关系变化；不要凭空追加新袭击。",
+            "travel": "用位置变化和途中选择推进，不重复出发原因，不写流水账。",
+            "relationship": "用选择、沉默和具体动作改变关系，不用总结句替人物下结论。",
+            "transition": "短写状态变化与新落点，为下一场留出空间，不强造高潮。",
+        }
+        return (
+            "# 场景模式\n\n"
+            f"{mode} — {directives.get(mode, directives['transition'])}\n\n"
+        )
 
     # -- 场景简报渲染 ---------------------------------------------------
 
@@ -765,6 +1114,10 @@ class NarratorAgent:
                     if p.speech_style:
                         bits.append(f"说话: {p.speech_style[:40]}")
                 if st is not None:
+                    if st.speech_fingerprint_features:
+                        bits.append(
+                            "声纹: " + "、".join(st.speech_fingerprint_features[:4])
+                        )
                     if st.emotional_state and st.emotional_state != "neutral":
                         bits.append(f"情绪: {st.emotional_state[:24]}")
                     rel_bits = []
@@ -850,15 +1203,39 @@ class NarratorAgent:
         # Phase 5+: 显式 style preset key (TickState 透传过来),
         # _render_style_preset_block 会优先用它, fallback 到 env.
         style_preset_key: str = "",
+        style_preset_snapshot: dict | None = None,
+        reader_knowledge: dict | None = None,
+        continuity_state: dict | None = None,
     ) -> str:
         tick_actions = tick_actions or []
         char_profiles = char_profiles or {}
         style_anchors = style_anchors or []
+        reader_knowledge = reader_knowledge or {}
+        continuity_state = continuity_state or {}
         # Phase 5+: 顺序 = preset addendum (本作怎么写) → style_anchors (语感示例)
-        # 两个都拼在 # 连载进度 之前. 都为空时返回空串, 老 bench bit-identical.
-        preset_block = self._render_style_preset_block(style_preset_key)
+        # 两个都拼在 # 连载进度 之前. preset 另在最终写作指令前复核一次, 防止
+        # 长素材 prompt 稀释头部风格契约; 未绑定 preset 时仍 bit-identical.
+        preset = self._resolve_style_preset(
+            style_preset_key, style_preset_snapshot
+        )
+        preset_block = preset.narrator_addendum if preset is not None else ""
         anchor_block = self._render_style_anchor_block(style_anchors)
         style_block = preset_block + anchor_block
+        style_recheck_block = ""
+        if preset is not None:
+            strict_style = self._is_strict_style_tick(preset, tick, tick_events)
+            cadence_note = (
+                "本 tick 是严格风格节拍，短清单全部为硬验收项。"
+                if strict_style
+                else "本 tick 是过渡节拍：保留辨识度，但不要机械凑齐强格式。"
+            )
+            style_recheck_block = (
+                "# 最终风格验收 (高优先级, 输出 JSON 前逐条执行)\n\n"
+                "素材决定发生什么, 本作风格契约决定怎么讲; 不得改动既定事实, "
+                "也不得让素材的默认语调吞掉风格。"
+                f"{cadence_note}\n- {preset.final_checklist}\n"
+                f"- 冲突策略: {preset.conflict_policy}\n\n"
+            )
 
         scene_block = self._render_scene_block(
             tick_events=tick_events,
@@ -872,6 +1249,8 @@ class NarratorAgent:
             tick_actions=tick_actions,
             char_profiles=char_profiles,
         )
+        scene_mode = self._infer_scene_mode(tick_events, tick_actions)
+        scene_mode_block = self._render_scene_mode_block(scene_mode)
 
         # v2.38 (iter#7) — loops 8→5, summaries 8→5. 焦点放在最紧迫/最近的;
         # 旧 8 条对应单段 tick 是噪声, 模型会试图全部呼应导致内容散乱.
@@ -879,10 +1258,19 @@ class NarratorAgent:
         if open_loops:
             # 按 urgency 降序排, 取前 5 紧迫. OpenLoop.urgency 是非 nullable
             # int (默认 5), 不需要 getattr 防御性默认.
-            top_loops = sorted(open_loops, key=lambda l: -l.urgency)[:5]
+            top_loops = sorted(open_loops, key=lambda loop: -loop.urgency)[:5]
             loops_text = "\n".join(
-                f"- [{l.id}] ({l.type}, 紧迫{l.urgency}) {l.description[:80]}"
-                for l in top_loops
+                f"- [{loop.id}] ({loop.type}, 紧迫{loop.urgency}) "
+                f"{loop.description[:80]}"
+                + (
+                    f" | 承诺问题: {loop.promised_question[:60]}"
+                    if loop.promised_question else ""
+                )
+                + (
+                    f" | 已引用{loop.reference_count}次"
+                    if loop.reference_count else ""
+                )
+                for loop in top_loops
             )
 
         # iter#114 试 [-5:] → [-3:], iter#115 bench 反向: tokens +4.9%,
@@ -907,6 +1295,60 @@ class NarratorAgent:
             if prose_tail.strip()
             else "# 前文结尾\n\n(这是本书的第一段正文 — 用一个具体的场景开场, 不要写楔子式的世界观介绍)\n"
         )
+        continuity_block = (
+            "# 跨段连续性硬约束\n\n"
+            "前文结尾是当前状态，优先级高于素材中重复出现的危机背景。只写从该状态"
+            "到本 tick 新结果的增量：已经完成的夺取、交易、开门、倒计时、受伤、"
+            "抵达和发现不得换一种说法重演。若素材仍复述旧起点，把它理解为尚存压力，"
+            "不要让人物和物品回到先前位置。第一句从前文最后一个动作之后开始。\n\n"
+            if prose_tail.strip()
+            else ""
+        )
+        reader_known = list(reader_knowledge.get("known_facts", []) or [])[-12:]
+        reader_questions = list(reader_knowledge.get("open_questions", []) or [])[:8]
+        reader_answers = list(reader_knowledge.get("recent_answers", []) or [])[-5:]
+        reader_block = (
+            "# 读者信息边界\n\n"
+            f"已明确展示的事实（可自然引用，不得再次当作新揭示）："
+            f"{json.dumps(reader_known, ensure_ascii=False)}\n"
+            f"仍等待回答的问题（本段可推进，不可无证据宣布解决）："
+            f"{json.dumps(reader_questions, ensure_ascii=False)}\n"
+            f"最近已经兑现的问题（不得重新悬置）："
+            f"{json.dumps(reader_answers, ensure_ascii=False)}\n\n"
+            if reader_known or reader_questions or reader_answers
+            else ""
+        )
+        narrative_state_block = (
+            "# 上一段结束时的叙事状态账本（当前事实）\n\n"
+            f"{json.dumps(continuity_state, ensure_ascii=False)}\n\n"
+            "账本中仍有效的伤势、地点、物品持有者/数量/状况必须延续。"
+            "只有本段正文明写改变动作才能更新；输出时再给出完整的"
+            " continuity_state。\n\n"
+            if continuity_state
+            else ""
+        )
+        committed_events = [
+            event for event in tick_events
+            if self._effective_value(event) >= _NARRATE_SKIP_THRESHOLD
+        ][:5]
+        event_commitment_block = (
+            "# 本段必须兑现的高价值源事件（不是可选灵感）\n\n"
+            + "\n".join(
+                f"- [{event.id}] {event.description}"
+                + (
+                    "\n  必须达到的结束状态：" + "；".join(event.consequences)
+                    if event.consequences
+                    else ""
+                )
+                for event in committed_events
+            )
+            + "\n正文必须到达上述结果；若源事件声明‘已经’，用最小过渡承认该"
+            "前态，不得退回重演。只有真正写入的事件才能列入 "
+            "events_consumed。源事件只写‘守门人、掠夺者、路人’等称谓时，"
+            "必须沿用称谓，不得擅自取名、加绰号或写成主角早就认识的人。\n\n"
+            if committed_events
+            else ""
+        )
 
         viewpoint_name = self._display_name(tracking_character_id, char_profiles)
 
@@ -920,6 +1362,7 @@ class NarratorAgent:
 {title_line}世界时间 {world_time} (第 {tick} 段素材)
 
 {tail_block}
+{continuity_block}{narrative_state_block}{reader_block}{scene_mode_block}
 # 场景
 
 {scene_block}
@@ -936,7 +1379,7 @@ class NarratorAgent:
 
 {summaries_text}
 
-{intensity_block}# 写作指令
+{intensity_block}{style_recheck_block}{event_commitment_block}# 写作指令
 视点角色 {viewpoint_name} | 目标篇幅 {target_chars} (宁短勿水) | 从前文结尾自然接续 | 严格 JSON 输出 | 不值得讲时 narrative_text 留空 + consistency_flags 说明.
 """
 
@@ -1001,7 +1444,6 @@ class NarratorAgent:
         cjk_groups = narrative_text.count("……")
         is_placeholder = (
             ascii_groups >= 4
-            or cjk_groups + ascii_groups >= 6
             or narrative_text.strip().startswith("...")
             or "实际的中文小说正文" in narrative_text
             or "char_id_1" in narrative_text
@@ -1023,6 +1465,10 @@ class NarratorAgent:
 
         narrative_text, leaked = _strip_reasoning_leak(narrative_text)
         extra_flags = ["reasoning_leak"] if leaked else []
+        # 中文对话里的停顿可能自然超过 6 组，不能因此丢弃整段。保留诊断给
+        # critic/bench；真正 schema leak 仍由字段名和 ASCII 占位符拦截。
+        if cjk_groups >= 6:
+            extra_flags.append("excessive_cjk_ellipsis")
         if leaked:
             logger.warning(
                 "NarratorAgent[tick=%d] reasoning leak detected, stripped %d chars",
@@ -1063,11 +1509,47 @@ class NarratorAgent:
                 continue
             try:
                 # 用户产出可能省略 id/opened_tick - 补齐
+                if not loop_raw.get("id") and loop_raw.get("loop_id"):
+                    loop_raw["id"] = loop_raw.get("loop_id")
+                if not loop_raw.get("type") and loop_raw.get("loop_type"):
+                    loop_raw["type"] = loop_raw.get("loop_type")
+                if not loop_raw.get("description"):
+                    loop_raw["description"] = (
+                        loop_raw.get("promised_question")
+                        or "；".join(loop_raw.get("payoff_requirements", []) or [])
+                        or "待兑现的开放问题"
+                    )
                 loop_raw.setdefault("id", f"loop_t{tick}_{idx}")
                 loop_raw.setdefault("opened_tick", tick)
                 new_loops.append(OpenLoop.model_validate(loop_raw))
             except Exception as e:
                 logger.warning("Skip invalid newly_opened_loop (%s): %s", e, loop_raw)
+
+        resolved_loops: list[dict] = []
+        for raw_item in payload.get("resolved_open_loops", []) or []:
+            if not isinstance(raw_item, dict):
+                continue
+            loop_id = str(raw_item.get("loop_id", "") or "").strip()
+            payoff = str(raw_item.get("payoff_summary", "") or "").strip()
+            evidence = [
+                str(item).strip()
+                for item in (raw_item.get("evidence_event_ids", []) or [])
+                if str(item).strip()
+            ]
+            if loop_id and payoff and evidence:
+                resolved_loops.append(
+                    {
+                        "loop_id": loop_id,
+                        "payoff_summary": payoff[:300],
+                        "evidence_event_ids": evidence[:10],
+                    }
+                )
+
+        continuity_state = _normalise_continuity_state(
+            payload.get("continuity_state", {})
+        )
+        if not continuity_state:
+            extra_flags.append("continuity_state_missing")
 
         return NarratorOutput(
             should_narrate=True,
@@ -1077,7 +1559,9 @@ class NarratorAgent:
             scene_focus=str(payload.get("scene_focus", "")),
             events_consumed=list(payload.get("events_consumed", []) or []),
             open_loops_referenced=list(payload.get("open_loops_referenced", []) or []),
+            resolved_open_loops=resolved_loops,
             newly_opened_loops=new_loops,
+            continuity_state=continuity_state,
             style_diagnostics=dict(payload.get("style_diagnostics", {}) or {}),
             consistency_flags=list(payload.get("consistency_flags", []) or [])
             + extra_flags,

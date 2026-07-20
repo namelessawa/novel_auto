@@ -179,3 +179,54 @@ async def test_empty_anchors_yields_no_anchor_block_in_user(mock_llm) -> None:
     assert "【语感示例" not in user_prompt
     # USER prompt should start with "# 连载进度" header, no preceding empty lines.
     assert user_prompt.lstrip().startswith("# 连载进度")
+
+
+def test_selected_style_is_rechecked_immediately_before_writing_instruction() -> None:
+    """长素材不能把 user prompt 头部的 preset 稀释掉。"""
+    agent = NarratorAgent(enable_critic=False)
+    prompt = agent._build_user_prompt(
+        tick=1,
+        world_time=1,
+        tracking_character_id="c1",
+        tick_events=[],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        target_chars="short",
+        style_preset_key="hot_blooded",
+    )
+
+    head_contract = prompt.find("# 本作风格契约 — hot_blooded")
+    body = prompt.find("# 连载进度")
+    recheck = prompt.find("# 最终风格验收")
+    writing = prompt.find("# 写作指令")
+    assert 0 <= head_contract < body < recheck < writing
+    assert prompt.count("# 本作风格契约 — hot_blooded") == 1
+    assert "两级升级动作" in prompt[recheck:writing]
+    assert len(prompt[recheck:writing]) < len(
+        prompt[head_contract:body]
+    )
+
+
+def test_style_snapshot_wins_over_new_registry_value() -> None:
+    """已有 novel 使用冻结 snapshot，而不是未来注册表当前值。"""
+    from novel_presets import get_style_preset
+
+    agent = NarratorAgent(enable_critic=False)
+    preset = get_style_preset("literary")
+    snap = preset.to_snapshot()
+    snap["narrator_addendum"] = "# 冻结旧契约\n旧版专属句。\n\n"
+    prompt = agent._build_user_prompt(
+        tick=2,
+        world_time=2,
+        tracking_character_id="c1",
+        tick_events=[],
+        char_states=[],
+        recent_chapter_summaries=[],
+        open_loops=[],
+        target_chars="short",
+        style_preset_key="literary",
+        style_preset_snapshot=snap,
+    )
+    assert "冻结旧契约" in prompt
+    assert "旧版专属句" in prompt

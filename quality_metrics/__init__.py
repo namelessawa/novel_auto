@@ -76,6 +76,11 @@ from quality_metrics.repetition import (
     word_ngram_distinct,
     word_ngram_overlap,
 )
+from quality_metrics.style_contract import (
+    StyleContractFinding,
+    StyleContractReport,
+    style_contract_report,
+)
 
 __all__ = [
     # diversity (Phase 3-C, iter#116)
@@ -92,6 +97,10 @@ __all__ = [
     "repetition_report",
     "word_ngram_distinct",
     "word_ngram_overlap",
+    # style preset contract
+    "StyleContractFinding",
+    "StyleContractReport",
+    "style_contract_report",
     # consistency
     "CharacterFact",
     "ConsistencyReport",

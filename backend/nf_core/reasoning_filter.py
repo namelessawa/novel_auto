@@ -150,6 +150,25 @@ def strip_reasoning_leak(text: str) -> tuple[str, bool]:
     """
     if not text:
         return text, False
+    # JSON 字段中的正文偶尔仍被模型套一层 Markdown fence；JSON 解析会保留
+    # fence 的语言标签，最终表现为小说中间单独一行 ``text`` / ``markdown``。
+    # 这些整行标记没有叙事语义，可以安全删除；普通句子里的同名单词不动。
+    fence_tokens = {"```", "```text", "```markdown", "```json", "text", "markdown"}
+    lines = text.splitlines()
+    cleaned_lines = [
+        line for line in lines if line.strip().lower() not in fence_tokens
+    ]
+    wrapper_leaked = len(cleaned_lines) != len(lines)
+    if wrapper_leaked:
+        text = "\n".join(cleaned_lines).strip()
+    # 少数兼容层会把 fence 语言标签残片直接黏到中文首句，如 ``ther她抽出``。
+    # 只处理行首限定 token + 紧邻 CJK，避免删除正文里的普通英文单词。
+    text, prefix_count = re.subn(
+        r"(?im)^\s*(?:text|markdown|other|ther)(?=[\u3400-\u9fff])",
+        "",
+        text,
+    )
+    wrapper_leaked = wrapper_leaked or prefix_count > 0
     # 高置信度信号 — 真小说正文不会含 JSON schema 字段名 / 写作方法标题
     for hi_marker in _HIGH_CONFIDENCE_LEAK_MARKERS:
         if hi_marker in text:
@@ -157,7 +176,7 @@ def strip_reasoning_leak(text: str) -> tuple[str, bool]:
     norm = _normalise_punct(text)
     m = _PATTERN.search(norm)
     if not m:
-        return text, False
+        return text, wrapper_leaked
     pos = m.start()
     # 段落起点 = 文本开头 / 前两个字符是 \n\n
     at_para_start = pos == 0 or norm[max(0, pos - 2) : pos] == "\n\n"

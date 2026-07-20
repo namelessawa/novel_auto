@@ -40,16 +40,17 @@ for p in (_PROJECT_ROOT, _BACKEND_DIR):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from memory.tick_state import TickState
-from memory_system.models import (
+from memory.tick_state import TickState  # noqa: E402
+from memory_system.models import (  # noqa: E402
     CharacterProfile,
     CharacterState,
     OpenLoop,
     StyleAnchor,
     WorldState,
 )
-from nf_core.json_utils import parse_llm_json
-from nf_core.llm_client import llm_client
+from nf_core.json_utils import parse_llm_json  # noqa: E402
+from nf_core.llm_client import llm_client  # noqa: E402
+from novel_presets import StylePreset, get_style_preset  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +239,10 @@ PROMPT_STYLE = """\
 
 {references}
 
+# 已选风格 preset (高优先级；锚点必须演示这份契约，而不是另起炉灶)
+
+{style_contract}
+
 请生成 3-5 段风格锚点示例,每段约 300 字,模拟 Narrator 未来产出时应有的腔调。
 这些段落将作为 Narrator 每次调用时的 style_anchors 参数。
 
@@ -313,6 +318,8 @@ async def generate_style_anchors(
     title: str,
     positioning: str,
     references: str,
+    style_preset_key: str = "",
+    style_preset_snapshot: dict | None = None,
 ) -> list[StyleAnchor]:
     """单独执行 Step 4 (风格锚点生成). 供 regenerate-style-anchors 端点复用 —
     bootstrap 全流程不变, 这里只跑文风那一阶段, 让上层用新的 prompt 与 title
@@ -323,6 +330,9 @@ async def generate_style_anchors(
             title=title or "(未指定标题 — 根据 positioning / references 自由发挥)",
             positioning=positioning,
             references=references,
+            style_contract=_style_contract_for_anchor_prompt(
+                style_preset_key, style_preset_snapshot
+            ),
         ),
         # v2.38 (iter#31) — 与正常 bootstrap style stage 一致 (4096), 此前
         # regenerate-style 单走的 path 漏修.
@@ -336,6 +346,25 @@ async def generate_style_anchors(
         except Exception as e:
             logger.warning("Skip invalid StyleAnchor (%s): %s", e, anchor_raw)
     return anchors
+
+
+def _style_contract_for_anchor_prompt(
+    key: str, snapshot: dict | None = None
+) -> str:
+    """优先使用 novel 冻结快照，避免锚点与实际 Narrator 契约错版。"""
+    try:
+        preset = (
+            StylePreset.from_snapshot(snapshot)
+            if snapshot
+            else get_style_preset(key)
+        )
+    except (KeyError, TypeError, ValueError):
+        return "(未绑定 preset — 仅按 positioning / references 生成通用语感锚点)"
+    return (
+        f"preset={preset.key} version={preset.version} "
+        f"hash={preset.prompt_hash[:12]}\n{preset.narrator_addendum.strip()}\n"
+        f"最终短清单: {preset.final_checklist}\n冲突策略: {preset.conflict_policy}"
+    )
 
 
 async def bootstrap_world(
@@ -364,7 +393,10 @@ async def bootstrap_world(
         ts.set_novel_title(title)
     # Phase 5+: 持久化用户选定的 style preset. 空字符串 = 默认行为.
     if style_preset_key:
-        ts.set_style_preset_key(style_preset_key)
+        selected_style = get_style_preset(style_preset_key)
+        ts.set_style_preset_contract(
+            style_preset_key, selected_style.to_snapshot()
+        )
 
     # === Step 1: WorldState ============================================
     logger.info("[1/4] Generating WorldState…")
@@ -547,6 +579,9 @@ async def bootstrap_world(
             title=title or "(未指定标题 — 根据 positioning / references 自由发挥)",
             positioning=positioning,
             references=references,
+            style_contract=_style_contract_for_anchor_prompt(
+                ts.style_preset_key, ts.style_preset_snapshot
+            ),
         ),
         # v2.38 (iter#11) — 3-5 style_anchors × ~400 tokens ≈ 2000.
         max_tokens=4096,
@@ -595,7 +630,6 @@ def main(argv: list[str] | None = None) -> int:
     # 直接调) 不被强制依赖.
     try:
         from novel_presets import (
-            STYLE_PRESETS,
             THEME_SEEDS,
             list_style_keys,
             list_theme_keys,
@@ -603,7 +637,6 @@ def main(argv: list[str] | None = None) -> int:
         _presets_available = True
     except ImportError:
         _presets_available = False
-        STYLE_PRESETS = {}
         THEME_SEEDS = {}
         list_theme_keys = lambda: []  # noqa: E731
         list_style_keys = lambda: []  # noqa: E731

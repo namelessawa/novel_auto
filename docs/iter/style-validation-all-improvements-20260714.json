@@ -1,0 +1,1712 @@
+{
+  "metadata": {
+    "started_at": 1784038347,
+    "git_sha": "2b5731abf4caf9b3a5df99bde0db39ffcc399010",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "pressure",
+    "ticks": 1,
+    "no_judge": true,
+    "max_revisions": 0,
+    "shared_bootstrap": true,
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784038347",
+      "scifi_soft_lit": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_scifi_soft_lit_1784038347",
+      "xianxia_cultivation": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_xianxia_cultivation_1784038347",
+      "system_cheat": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_system_cheat_1784038347",
+      "mecha_pilot": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_mecha_pilot_1784038347",
+      "republic_spy": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_republic_spy_1784038347",
+      "ancient_romance": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_ancient_romance_1784038347",
+      "workplace_drama": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_workplace_drama_1784038347",
+      "gourmet_culinary": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_gourmet_culinary_1784038347",
+      "campus_youth": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_campus_youth_1784038347",
+      "urban_mystery": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_urban_mystery_1784038347",
+      "history_military": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_history_military_1784038347",
+      "wuxia_jianghu": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_wuxia_jianghu_1784038347"
+    },
+    "finished_at": 1784043130,
+    "last_run_mode": "compatible",
+    "modes_present": [
+      "compatible",
+      "pressure"
+    ]
+  },
+  "results": [
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "literary",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "f645a4b01e61d1ffb95285470476d4a51a596535a91dea486444a774ea7a5eee",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1365,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "literary",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "f645a4b01e61d1ffb95285470476d4a51a596535a91dea486444a774ea7a5eee",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报是从地底传上来的。\n\n先是一声闷响，像有人往深井里扔了块铁，然后墙上的红色警报灯开始旋转，把混凝土穹顶上的裂缝照成一张蛛网。林雪蹲在配给站后面的铁架下，手指正搭在第三个水壶外壁——空的，敲上去的回声短促，尾音发干。她把水壶放回原处，指尖在铁架边缘蹭了一下，指甲缝里的灰蹭掉了，露出底下咬得参差不齐的月牙白。\n\n东南角的闸门正在下降。液压杆锈得厉害，每落一寸就发出一声尖啸，像被踩住尾巴的变异鼠。她数过，从警报响起到闸门封死，标准的九十秒，但今天液压杆卡了两次，一次在头顶三米，一次在离地一米五。\n\n她站起来，防化服袖口在铁架角上刮了一下，发出尼龙撕裂前的那种细响。没破。\n\n苏末在哪。\n\n她扫了一眼中央广场。难民们已经散了，像被风吹跑的灰，只剩一个孩子蹲在干涸的喷泉池里，手里攥着半截塑料管，管口对准池底那条龟裂的缝隙，还在等水。卫兵在闸门前排成两列，枪托抵着肩窝，枪口对准正在涌来的最后一批人。他们的水壶挂在腰上，晃荡的时候没有声音。\n\n三分钟。不，两分半。\n\n她往东侧走廊跑，靴底踩在混凝土碎渣上，每一步都发出碾碎骨头的脆响。走廊尽头是旧维修通道，铁门半开着，门缝里透出昏黄的灯光，还有一股铁锈和汗混合的气味。\n\n苏末在门里面。\n\n他背对着她，蹲在一个翻倒的工具箱旁边，骨刀搁在膝盖上，刀刃上沾着新鲜的深褐色——不是血，是变异兽骨髓里的油脂，那种东西氧化得很快，从暗红变成深褐只需要十几秒。他的右手握着一团撕破的帆布，正在往左脚踝上缠，缠得很紧，帆布边缘勒进皮肉，把皮肤压出一圈白印。\n\n脚边躺着一个铁皮箱，箱盖被撬开了，锁扣上挂着一截断掉的铁丝。箱子里是空的。\n\n林雪在门口停住，手指搭上门框，指尖触到铁锈剥落的颗粒。\"东西呢？\"\n\n苏末没抬头。他把帆布打了个死结，用牙咬住一端拽紧，然后才开口，声音闷在斗篷里，像从很深的井底传上来。\"被扣了。\"他松开牙，把骨刀插回腰间的皮鞘，刀刃入鞘时发出一声干涩的摩擦音。\"守门的那个独眼，说我没带通行牌。\"\n\n\"你带了。\"\n\n\"他拿走了。\"苏末站起来，重心压在右脚上，左脚只点地，像踩在一块烧红的铁板上。\"通行牌和那个芯片。一起。\"\n\n闸门方向传来一声沉重的撞击——液压杆彻底卡死了，金属摩擦声从尖啸变成闷响，最后只剩嗡鸣。\n\n林雪看着他的左脚。帆布外面已经渗出了暗色的湿痕，面积还在扩大，像一朵在布面上慢慢绽开的铁锈花。\n\n\"能走？\"\n\n\"能。\"他走了两步，第三步的时候膝盖弯了一下，手撑在墙上，指节扣进墙皮裂缝，石灰碎屑簌簌往下掉。他没吭声，只是把重心重新压回右脚，手指从墙上移开，在墙面上留下五道抓痕，最深处露出灰色的砖。\n\n\"闸门还有多久？\"他问。\n\n\"不到两分钟。\"\n\n苏末从腰后摸出一样东西，丢给她。是一把十字螺丝刀，刀柄上缠着已经发黑的绝缘胶带，刀头崩了一个口。\"维修通道的通风口，往东拐，第二个井盖，螺丝是十字的。\"他说完，弯腰从工具箱里捡起一卷焊锡丝，塞进斗篷内侧口袋。\n\n\"你呢？\"\n\n\"我去把芯片拿回来。\"\n\n他把斗篷的兜帽拉低，遮住半张脸，只露出下巴和紧抿的嘴唇。然后从她身边走过，左脚拖在地上，每一步都在水泥地面上蹭出一道浅浅的血痕。\n\n林雪攥紧螺丝刀。胶带上的纹路硌进掌心，粘腻的触感像握住一条蛇蜕。\n\n闸门方向的嗡鸣声停了。\n\n她转身往东跑，没回头。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_literary_1784038347_1784038476317"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "xianxia_fast",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "048b464acff76dd172e2b008eff740331c3f7de725ecb1661e718670abcd88f5",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 835,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "xianxia_fast",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "active_ending"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "xianxia_fast",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "048b464acff76dd172e2b008eff740331c3f7de725ecb1661e718670abcd88f5",
+          "strict": true,
+          "before": {
+            "style_key": "xianxia_fast",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "active_ending"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报声从北壁城邦内墙的扩音器里炸出来，三短一长——封门信号。\n林雪的手指还插在配给站水泵的滤芯槽里，闻声抬头，污水顺着指缝滴在水泥地上。她抽手，在裤腿上抹了两把，抓起地上的背包。\n“走。”\n苏末没动。她蹲在配给站后墙的阴影里，骨刀抵着磨石，一下一下，节奏比平时快一倍。\n“你走。”苏末说，下巴朝配给站门口一扬。“你的东西还在守门人手里。”\n林雪脚步顿住。\n那个帆布包——里面装着老王的数据芯片，还有她从旧47号公路的废车残骸里拆下来的辐射净水器滤芯。进门时被守门人扣下，说是例行检查。现在三分钟计时，守门人已经撤了，铁柜锁死。\n“钥匙在他身上。”苏末站起来，把骨刀插进腰间的皮鞘，斗篷下摆扫过地面。“他往东侧门跑了。”\n林雪没说话，转身冲向配给站内室。\n铁柜是战前的老式保险柜，机械锁，锈得厉害。她一拳砸在柜门上，听回音——实心，钢板厚度至少五毫米。撬不开。\n警报第二遍响起。\n林雪蹲下，从背包侧袋抽出一截细钢钎，插进锁孔。她不是锁匠，但水泵维修教会她一件事：锈蚀的机械结构，脆弱点总在受力面。\n钢钎顶住锁芯内部，她深吸一口气，用全身重量压下去。\n咔——锁芯崩裂，弹片飞出来划破她手背。\n林雪拉开柜门，帆布包还在。她拽出来，手指探进包内，摸到芯片的硬角，滤芯的金属外壳。都在。\n警报第三遍。\n她跑出内室，苏末已经不在原地。\n林雪冲到配给站门口，看见苏末正蹲在二十米外的东侧门通道口，手里攥着什么东西——守门人的铜哨。\n“他跑了。”苏末把铜哨扔过来，林雪单手接住。“门还有四十秒。”\n林雪把哨子塞进背包，跑向通道。\n东侧门的铁闸正缓缓下降，离地还剩一米二。她侧身滑进去，背包带刮到闸门边缘，扯得她肩膀一歪。苏末跟在她身后钻进来，斗篷被闸门压住一角，她直接割断，刀刃切布料的声音干脆利落。\n两人滚进通道另一侧，铁闸在身后砸到底，锁死。\n林雪撑起身，发现通道尽头不是出口。\n是中央广场。\n三百多个干渴的难民正盯着她们，人群里挤出卫兵制服的身影，枪口已经抬起来。\n苏末拔出骨刀。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_xianxia_fast_1784038347_1784038552501"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "colloquial_web",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "e3d2c88aaf71ce6e9277f5fdde0e641324911ee246df1ee3bdd68690374fadee",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1142,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "colloquial_web",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "short_paragraphs"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "colloquial_web",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "e3d2c88aaf71ce6e9277f5fdde0e641324911ee246df1ee3bdd68690374fadee",
+          "strict": true,
+          "before": {
+            "style_key": "colloquial_web",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "short_paragraphs"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报响的时候林雪正蹲在三号水塔的检修口旁边。\n\n手指刚敲到第三下，回声不对——空的。她把耳朵贴上去，里面有种低沉的共鸣，像是整个塔身都在抖。\n\n然后警报就响了。\n\n那种老式汽笛，从北壁城邦的墙头传过来，三长两短。封门信号。\n\n“操。”林雪站起来，工具箱从膝盖上滑下去，扳手砸在混凝土地面上弹了一下。\n\n苏末在十步外，背靠着水塔的支架，正用骨刀刮什么东西。警报响了他也没停，只是刀锋在兽骨上走得更快了，刮出的粉末飘在铅灰色的光线里。\n\n“三分钟。”林雪说。\n\n“知道。”\n\n“你那个东西呢？”\n\n苏末终于抬起眼，但看的是林雪脚边的影子。“被扣了。”\n\n林雪没问被谁扣了。她看见苏末斗篷袖口磨破的地方，手腕上有一圈青紫的勒痕。守门者。那些人在封门前会搜身，值钱的东西全扣，理由永远是“违禁品登记”。\n\n“芯片？”\n\n苏末点了一下头。\n\n林雪咬了咬指甲。她指尖上本来就有旧咬痕，现在又添了新的。芯片里是老王的坐标，深绿循环站的位置。没有那个，他们连往哪个方向走都不知道。\n\n“去拿。”她说。\n\n“拿不回来。”\n\n“那就抢。”\n\n苏末把骨刀插进腰间的皮鞘，动作很慢。他站起来的时候，林雪看见他右腿在抖——不是怕，是刚才翻墙摔的。从水塔到哨站，他跑了三个来回，最后一次回来时嘴角有血。\n\n“你还能走？”\n\n“不能也得能。”苏末拉上斗篷的兜帽，遮住大半张脸。“你走东门。我走西门。谁先到码头谁等。”\n\n“等多久？”\n\n“等到封门。”\n\n林雪没说话。她弯腰捡起扳手，掂了掂重量。不够沉。她扔了扳手，从工具箱里抽出根撬棍。\n\n“西门。”她说。“你走东门。”\n\n苏末的影子在墙上晃了一下。他没问为什么，只是转身往东边的通道走。瘸着腿，但走得很快。\n\n林雪往西跑。\n\n撬棍抓在右手，左手按着腰间的辐射检测仪。指针在黄色区域边缘抖。她跑过配给站的时候，看见卫兵正在往枪膛里压子弹。排队的人散了，有人抱着空水壶蹲在地上哭。\n\n她没停。\n\n西门哨站的铁栅栏已经降了一半。守门者站在闸口旁边，手里拿着登记簿，腰上挂着七八个布袋——全是扣下来的东西。\n\n林雪看见了苏末的芯片袋。黑色的，系绳上有个烧焦的结。\n\n她冲过去的时候守门者还没反应过来。撬棍砸在他手腕上，登记簿飞出去，纸页散了一地。守门者惨叫，弯腰去捂手，林雪一把扯下那个黑色布袋，转身就跑。\n\n栅栏还在往下落。\n\n离地面只剩半米。\n\n她把撬棍横过来卡在栅栏和地面之间，金属摩擦的声音刺得牙酸。栅栏停了一秒，撬棍弯了，但没断。\n\n林雪从缝隙里滚出去。\n\n撬棍在她身后崩断，铁栅栏砸到底，碎石溅起来打在她后背上。\n\n她趴在旧47号公路的沥青路面上，喘了五秒，然后爬起来继续跑。\n\n手里攥着那个黑色布袋。\n\n东边传来枪声。一声。两声。然后停了。\n\n她没有回头。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_colloquial_web_1784038347_1784038596241"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "hot_blooded",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "f758e1f15ca53c07d802f45f2664f931a5c9e2c5f48ad268c5eccbb9e4b2a6b6",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 1234,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "hot_blooded",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "hot_blooded_observables",
+          "active_ending"
+        ],
+        "passed": false,
+        "requires_rewrite": false,
+        "findings": [
+          {
+            "code": "active_ending",
+            "severity": "medium",
+            "message": "严格节拍未以人物动作/出手收尾"
+          }
+        ]
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "hot_blooded",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "f758e1f15ca53c07d802f45f2664f931a5c9e2c5f48ad268c5eccbb9e4b2a6b6",
+          "strict": true,
+          "before": {
+            "style_key": "hot_blooded",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "hot_blooded_observables",
+              "active_ending"
+            ],
+            "passed": false,
+            "requires_rewrite": false,
+            "findings": [
+              {
+                "code": "active_ending",
+                "severity": "medium",
+                "message": "严格节拍未以人物动作/出手收尾"
+              }
+            ]
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报声不是从喇叭里传出来的——是铁锈摩擦钢铁的尖叫，来自头顶那座锈穿了三分之一的瞭望塔。\n\n林雪的手指刚离开滤芯外壳，那声音就撕开了配给站上空的死寂。她转身，肩膀撞上苏末，骨刀在苏末手里偏了一下，刀尖划过她防化服的袖口，没破。\n\n“三号闸门！”卫兵的喊声被扩音器炸成碎片，“三号闸门紧急封闭！所有人后退！”\n\n林雪已经开始跑。\n\n她的靴底碾过龟裂的沥青，每一步都踩碎干涸的水渍痕迹。三号闸门是北壁城邦西侧唯一还能开启的出口，离这里两百米，中间隔着翻倒的运水车和一堆正在拆卸的报废空气净化器。她能听见液压杆开始泄压的声音——那种沉闷的、带着回响的噗嗤声，像巨兽在咽下最后一口气。\n\n“林雪！”苏末的声音从背后追上来，沙哑得像砂纸刮过铁板，“你那个塔——！”\n\n“塔可以等！”林雪没回头，吼出来的句子被风撕成碎片，“闸门关了我们都得死在里面！”\n\n她绕过运水车残骸，看见闸门了。\n\n三号闸门正在下落。那扇由三块装甲板焊接成的巨门，以肉眼可见的速度碾过滑轨，底部已经吞没了三分之一的门框。门外是旧47号公路的灰色天际线，是唯一能通往深绿循环站的路线。\n\n闸门下方还躺着一个人。\n\n林雪认出了那件北壁卫兵的制服——是赵老四，早晨还在配给站分过水。现在他一条腿卡在滑轨槽里，膝盖以下被落下的闸门碾碎了胫骨，血从制服裤腿里涌出来，在铁锈色的地面上铺成深黑色的泥浆。他还没昏过去，两只手拼命扒着地面，指甲盖翻起来，露出粉红色的肉。\n\n“救我！”他看见林雪，眼白里全是血丝，“求求你——！”\n\n林雪冲到他身边，蹲下，双手插进他腋窝，发力。赵老四的体重加上防化服的重量超过一百八十斤，她第一次拉只把他拖动了不到十厘米。闸门继续下落，离地面只剩一米五。\n\n“松手！”苏末追上来了，一把拽住林雪的肩带往后扯，“你拉不动他！闸门压下来你也会被切成两半！”\n\n林雪甩开她的手，第二次发力。赵老四的腿卡在滑轨里，像被巨人攥住的火柴棍。她听见自己脊椎在咯吱响，听见闸门液压杆发出最后一声泄压的嘶鸣。\n\n“那就一起死！”林雪喊出来，声音撕裂了喉咙，带着血味，“我他妈不丢活人！”\n\n苏末愣了一秒。\n\n然后她跪下去，骨刀插进滑轨槽的缝隙，用刀背当撬棍，全身重量压在刀柄上。滑轨变形的钢板被撬开了一条缝，赵老四的腿松动了。林雪抓住这一瞬间，腰腹爆发，把赵老四整个人拖了出来。\n\n三个人滚倒在闸门内侧。\n\n闸门砸下来，离林雪的靴尖不到五厘米，撞上地面时溅起的碎石打在她脸上，留下一道血痕。\n\n警报还在响，但林雪已经听不见了。她躺在冰冷的地面上，胸口剧烈起伏，每一次呼吸都像在吞咽砂纸。赵老四在她旁边，抱着断腿，从牙缝里挤出断断续续的呻吟。\n\n苏末爬起来，拔出骨刀，刀尖指着林雪的脸。\n\n“你欠我一条命。”她说，声音里没有愤怒，只有冷冰冰的记账，“记上了。”\n\n林雪盯着刀尖，然后笑了——那种嘴角裂开、露出牙床的笑，在废土上比眼泪更罕见。\n\n“记上。”她说，“现在打开那扇该死的闸门，我们还有循环站要去找。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_hot_blooded_1784038347_1784038639502"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "somber",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "46a5f3e22c0301eb1718efd4f5e4eaaabf466e3e0c8ac16d2c68e0f9d8b8c233",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 1316,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "somber",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "somber_structure",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "somber",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "46a5f3e22c0301eb1718efd4f5e4eaaabf466e3e0c8ac16d2c68e0f9d8b8c233",
+          "strict": true,
+          "before": {
+            "style_key": "somber",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "somber_structure",
+              "character_presence"
+            ],
+            "passed": false,
+            "requires_rewrite": true,
+            "findings": [
+              {
+                "code": "somber_structure",
+                "severity": "high",
+                "message": "沉郁严格节拍应为3-5段，实际1段"
+              }
+            ]
+          },
+          "rewrite_attempted": true,
+          "rewrite_adopted": true,
+          "after": {
+            "style_key": "somber",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "somber_structure",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        }
+      ],
+      "initial_text": "",
+      "text": "警报响起的时候林雪正蹲在那辆翻倒的运水车残骸旁边，指尖还贴在苏末小腿的伤口上——血从防化服裂口里渗出来，黏稠的，颜色比正常血液更深，像掺了锈粉。她的第一反应不是抬头看警报灯，而是把掌心整个压上去，用力按住，感觉苏末的肌肉在她掌下痉挛了一下，然后才松开。警报声从墙顶的扩音器里劈下来，三短一长，重复三遍，那种频率不是警告，是倒计时。林雪数到第三遍的时候站了起来，膝盖骨咔嚓响了一声，她没管，视线扫过广场上开始骚动的人群——难民在往配给站方向挤，卫兵的枪口抬高了半寸，一个孩子被挤倒在地上，哭声被警报吞掉。\n\n她看见东侧闸门已经开始下降，钢缆在滑轮上摩擦出刺耳的尖啸，铁锈碎屑从门框上方簌簌往下掉，在灰蒙蒙的光线里像一场小型的锈雨。闸门降到一半的时候卡了一下，又继续往下，速度比刚才更快，液压杆在门框两侧喷出白色的蒸汽。她转身看向苏末，苏末正用骨刀撑着地面试图站起来，斗篷兜帽滑到脑后，露出颧骨上一道还在渗血的新擦伤，伤口边缘粘着灰紫色的灌木花粉，颗粒状的，在皮肤上微微发亮。“门，”林雪说，声音被警报压得只剩半个音节，她用拇指朝闸门方向比了一下，手指上还沾着苏末的血。\n\n苏末没看门，在看自己的左手——手腕上那根皮绳断了，原本挂在上面的东西不见了。林雪顺着她的视线看过去，心里有什么东西沉了一下，不是恐惧，是那种你明明算过所有变量却发现漏了一个关键数字时的冷。苏末那只手在发抖，不是因为疼，是因为愤怒，骨刀被她攥得太紧，指节从破手套的洞里露出来，白得像磨过的骨头。她抬起头，用下巴指向闸门侧面的哨站，那里站着一个穿北壁卫兵制服的胖子，制服腋下有两圈深色的汗渍，正把什么东西往腰包里塞——一个巴掌大的金属盒，外壳上还缠着苏末那根断掉的皮绳。\n\n“三分钟，”林雪说出声来，这次是完整的句子，但每个字都像从牙缝里挤出来的，“闸门封死之前我们得出去，或者把东西拿回来，或者——”她没说完，因为她看见苏末已经朝哨站迈出了第一步，瘸着腿，骨刀在身侧划出一道弧线，刀尖在水泥地面上拖出刺耳的刮擦声。林雪伸手抓住苏末的胳膊，手指扣进防化服袖口的褶皱里，感觉到下面那条手臂的肌肉绷得像钢缆。苏末甩了一下没甩开，侧过头来，眼睛在斗篷的阴影里亮得不对劲，像两颗被压得太紧的炭。\n\n林雪松开手，但不是妥协——她弯下腰，从地上捡起一块半个巴掌大的碎玻璃，边缘锋利，握在手里的时候割破了她的虎口，血顺着玻璃棱角往下淌，滴在她们两人之间的灰土地上，圆形的，渗得很快，在干燥的尘土表面留下一个接一个的深色斑点。她没看伤口，看着苏末，用那块碎玻璃朝哨站方向指了一下，然后朝闸门方向指了一下，最后把玻璃塞进苏末没拿刀的那只手里。苏末低头看了一眼掌心里的玻璃，又看了一眼林雪还在流血的手，喉咙里滚过一个含混的音节，像是想说什么又咽回去了。她把玻璃攥紧，碎碴子扎进掌心的旧伤疤里，然后转身，一瘸一拐地朝哨站走去，步伐不快，但每一步都踩得很实，靴底在水泥地上留下断续的血印，不是她的血，是林雪的。林雪站在原地，数着自己的呼吸，数到第三下的时候转身朝闸门跑过去，靴子踩碎地上的干草茎，每一步都带起一小团灰扑扑的辐射尘，在铅灰色的天光里飘散得很慢，像水底的淤泥被搅起来又沉不下去。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_somber_1784038347_1784038689032"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "lyrical_poetic",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "42a62c47a2687a1c1ab5a4874da530924c23a573ddfc7a761d672f59a8a769d0",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1133,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "lyrical_poetic",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "lyrical_poetic",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "42a62c47a2687a1c1ab5a4874da530924c23a573ddfc7a761d672f59a8a769d0",
+          "strict": true,
+          "before": {
+            "style_key": "lyrical_poetic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报是从骨髓里响起来的。\n\n不是耳朵先听见，是牙根。低频的震颤顺着水泥地爬上来，咬住林雪的臼齿，再窜进颅骨。她蹲在配给站后巷的铁皮棚下，正把水壶倒扣过来。一滴。两滴。第三滴悬在壶口，裹着灰，迟迟不落。\n\n警报响了。\n\n壶口那滴水震落，砸在她虎口上，凉的。\n\n她站起来，肩胛骨撞上铁皮，砰的一声闷在风里。三分钟。出口封死是三分钟。她开始数。手指在腿侧敲——一下，两下，三下——像敲一只空桶。眼睛已经扫过巷子两端：南边卷帘门落了一半，锈死的铰链卡在半空，门齿离地不足一臂。北边是墙。\n\n“苏末。”\n\n她没回头喊。声音压得很低，像从牙缝里挤水。\n\n巷子深处有人应了一声。不是答应，是骨刀磕在水泥上的脆响。苏末从报废的净水器后面挪出来，右腿拖着，膝盖以下不听使唤。防化服裤管撕开一道口子，血和辐射尘混成泥，糊在胫骨上。她没看林雪。眼睛盯着自己的影子，影子被警报震得一颤一颤。\n\n“门。”林雪说。\n\n“守门的扣了东西。”苏末从斗篷里摸出骨刀，刀背抵住掌心，刀刃朝外，来回拉了三下。刮擦声刺耳，像鼠爪挠铁皮。“芯片。”\n\n林雪的手指停了一拍。\n\n那枚战前数据芯片。老王用命换来的坐标，加密层裹着深绿循环站的位置。苏末信它是救命的钥匙。林雪不信。但她知道守门的人信——信它能换三天的水，或者一条命。\n\n第二波警报切进来，比第一波更尖，像铁片刮玻璃。两分钟。\n\n林雪蹲下去，手伸进苏末腋下，把她拽起来。苏末的体重压过来，带着血腥和铁锈味。骨刀还在她手里，刀尖抵着林雪腰侧，没用力，也没移开。\n\n“芯片不要了。”林雪说。\n\n苏末的呼吸顿了一瞬。然后她笑了。笑声破得像踩碎干叶。“你说了不算。”\n\n“你那条腿说了算。”\n\n林雪拖着她往南边走。卷帘门下的缝隙很小，一个人侧身能过，两个人不行。她让苏末先靠墙坐下，自己蹲下去，手扣住门沿，往上抬。铁皮割进掌心，血顺着腕骨淌，黏稠的，温热的，像一条活物往袖管里钻。\n\n门纹丝不动。\n\n警报第三次响起。不再是震颤，是吼。铁与铁摩擦的吼声从墙体内侧传出来，封门的机械已经开始运转。一分钟。\n\n苏末把骨刀插回腰间，手伸进斗篷内袋，摸出一样东西。\n\n不是芯片。\n\n是一枚电池。银亮的，裹着塑料膜，没有一丝划痕。她搁在地上，搁在两人之间，小小的，像一颗刚落下的牙。\n\n“换。”她说。\n\n林雪看着那枚电池。又看着苏末。\n\n“你疯了。”\n\n“守门的缺电。”苏末的拇指摩挲着骨刀刀柄，指节发白。“芯片换电池，再加一条腿——够不够。”\n\n林雪没回答。她松开卷帘门，血从掌心滴落，在水泥地上砸出深色的小坑。她弯腰捡起电池，转身，向巷子另一端跑去。\n\n靴底敲击地面，急促，破碎，像一把石子撒在铁板上。\n\n身后传来苏末用骨刀敲墙的声音。一下。两下。三下。\n\n像在数。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_lyrical_poetic_1784038347_1784038767720"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "noir_cold",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "9adb3a5a0826d49f00f2939423c39038003cfcee65adc2e9a53bf6653d209daf",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 918,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "noir_cold",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "no_exclamation",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "noir_cold",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "9adb3a5a0826d49f00f2939423c39038003cfcee65adc2e9a53bf6653d209daf",
+          "strict": true,
+          "before": {
+            "style_key": "noir_cold",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_exclamation",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报响起的时候，林雪正在数水壶里的倒计时。\n\n三声短，两声长。封门警报。她抬起头，手指从水壶外壁移开，指尖上还沾着锈红色的灰尘。苏末蹲在两米外，骨刀停在磨石上，没动。\n\n“三分钟。”林雪说。\n\n“知道。”\n\n配给站的铁门开始下降，液压杆发出干涩的摩擦声。排队的人群散了，卫兵在往后退，枪口还在对着难民，但他们的眼睛已经在找别的出口。孩子的哭声被警报盖过去，又被金属摩擦声吞掉。\n\n林雪站起来，往东侧通道走。第二步踩到什么东西，低头看，一只干瘪的水袋，踩破了，里面连一滴水渍都没留下。\n\n东侧通道的铁闸已经降到一半。闸口下面，一个卫兵倒在地上，腿被砸落的混凝土块压住，血从膝盖以下渗出来，在灰尘里洇成深黑色的泥。\n\n他看见林雪，嘴张开，没发出声音，手指了指腰间。\n\n水壶。军规配给，壶身还带着北壁卫兵的徽记。壶底有一道裂缝，水正往外渗，一滴一滴砸在地上。\n\n林雪蹲下来，指尖轻敲壶壁。回声沉闷。三分之一。\n\n“拖我出去。”卫兵说。声音像砂纸。\n\n铁闸继续下降，离地还剩一米二。\n\n苏末从后面走过来，骨刀已经收进斗篷。她看了一眼卫兵，又看了一眼闸口，没说话。\n\n林雪抓住卫兵的肩膀，往闸口方向拖。混凝土块卡在膝盖位置，拖不动。卫兵闷哼一声，手指抠进地面，指甲劈开，血从指缝里渗出来。\n\n铁闸降到八十公分。\n\n“松手。”苏末说。\n\n林雪没松。她换了个角度，用脚蹬住混凝土块，把卫兵的腿往外掰。骨头错位的声音闷响。卫兵叫了一声，然后咬住自己的袖子，声音被布料堵回去。\n\n铁闸五十公分。\n\n林雪把卫兵拖出闸口，混凝土块留在里面。铁闸砸到底，地面震了一下，灰尘从门缝里喷出来。\n\n卫兵靠在墙上，呼吸急促，手还在摸腰间的水壶。\n\n林雪把水壶从他腰间解下来，拧开壶盖，往他嘴里倒了一口。卫兵咽下去，咳嗽，又咽。\n\n苏末站在旁边，斗篷兜帽遮住半张脸，影子在墙上拉得很长。\n\n“走。”林雪站起来，把水壶挂在自己腰间。\n\n“去哪。”\n\n“旧47号。循环站。”\n\n苏末的骨刀从斗篷里滑出来，刃口在指尖转了一圈。“你信那个芯片。”\n\n“我不信。”林雪说，“但北壁撑不过三天。”\n\n她把防化服的袖口收紧，指尖在袖口上蹭了一下，指甲上的咬痕被灰尘填满，看起来像旧伤。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_noir_cold_1784038347_1784038822365"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "warm_healing",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "36b52ea3cdb8f432b27bc05a6e83d01c003473def530a90f68b57c41e8a38261",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 1225,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "warm_healing",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "warm_safety",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "warm_healing",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "36b52ea3cdb8f432b27bc05a6e83d01c003473def530a90f68b57c41e8a38261",
+          "strict": true,
+          "before": {
+            "style_key": "warm_healing",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "warm_safety",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报声从墙顶的扬声器里撕出来，像一把锈刀划过铁皮。\n\n林雪的手指正按在苏末防化服的袖口上，那里的布料裂了一道口子，她用胶带从内侧贴了三层，正在压紧最后一层。警报响的时候她没抬头，只是把胶带卷搁在膝盖上，用牙咬断贴好的那段，指腹沿着胶带边缘按了一圈，确认没有气泡。\n\n“三分钟。”苏末说。她蹲在配给站后墙的阴影里，背靠着混凝土，骨刀搁在腿上，刀锋上还沾着磨下来的骨粉。她没看林雪，盯着墙顶扬声器的方向，像在判断声音的远近。\n\n林雪站起来，把胶带卷塞进苏末防化服外侧的口袋里。“能走吗。”\n\n苏末试着屈伸右腿。膝盖外侧的淤青从裤管破口处露出来，紫黑色，肿得有拳头大。她的脚踝在刚才翻越废车堆时扭伤了，现在撑地就发颤。“走不快。”她说，声音很平，像在陈述别人的伤。\n\n出口的铁门已经开始下降。液压杆发出干涩的摩擦声，门体一寸一寸往下落，离地面只剩一米五的缝隙。两个卫兵在门边推着挤在栅栏前的难民，枪托砸在铁栅栏上，哐哐地响。有人把手臂从栅栏缝里伸进来，手里举着空水壶，壶口朝下，一滴水也倒不出来。\n\n林雪把苏末的胳膊搭在自己肩上，另一只手搂住苏末的腰。苏末比她高半个头，重心压下来的时候，林雪的靴底在沙土地上滑了一下，又站稳了。\n\n“骨刀。”苏末说。\n\n林雪低头看，骨刀还在地上。她弯腰去捡，苏末的重量全压在她肩上，她咬住下唇，指尖够到刀柄，捞起来塞进苏末手里。刀柄上缠的旧布已经被磨得起了毛边，苏末的手指收紧，指节发白。\n\n她们朝出口挪。每走一步，苏末的右脚就拖一下地面，在沙土上划出一道浅沟。门缝只剩半米了。\n\n卫兵回头看了她们一眼。林雪对上那个卫兵的视线，没说话，只是把苏末的胳膊又往上抬了抬，让苏末的脚能少沾一点地。卫兵移开目光，继续推栅栏前的人群，但身体往旁边让了半步，留出更多空间。\n\n她们弯腰钻过门缝时，林雪的后背蹭到了铁门底部，防化服发出一声刺耳的摩擦声。门在她们身后砸到底，锁扣咔嗒一声咬合。\n\n外面是旧47号公路。风卷着辐射尘从报废的车架间穿过，天色暗得像被蒙了一层灰布。林雪把苏末扶到一辆翻倒的货车旁，让她靠着轮胎坐下。轮胎早就干裂了，橡胶碎屑粘在苏末的后背上。\n\n林雪从自己腰间解下水壶，晃了晃。壶里还剩不到三分之一，她拧开盖子，递给苏末。\n\n苏末看了水壶一眼，又看林雪。“你呢。”\n\n“喝。”林雪说。\n\n苏末接过壶，喝了一小口，含在嘴里停了片刻才咽下去。她把壶递回来，林雪没接。\n\n“再喝一口。”\n\n苏末又喝了一小口，然后把壶盖拧紧，搁在林雪膝盖上。壶底磕在膝盖骨上，闷闷地响了一声。\n\n林雪把水壶挂回腰间，在苏末旁边坐下。风从货车残骸的缝隙里灌进来，吹起苏末斗篷的一角，林雪伸手把那角压下去，掖在苏末腿侧。\n\n“循环站的地图还在老王那儿。”苏末说，声音比刚才更轻。\n\n“先歇。”林雪说。她看着公路尽头灰蒙蒙的地平线，手指无意识地摸到自己防化服袖口的磨损处，那里已经薄得透光。她在心里数了数修补胶带还剩几卷。\n\n三卷。够再补四次。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_warm_healing_1784038347_1784038925475"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "melancholic",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "94457dae8985d08baf4886b06066d7ee3763340032405c534b6b4c6a8186f799",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 619,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "melancholic",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "melancholic",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "94457dae8985d08baf4886b06066d7ee3763340032405c534b6b4c6a8186f799",
+          "strict": true,
+          "before": {
+            "style_key": "melancholic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "林雪的指尖掐在袖口磨破的线头上，扯了两下，没扯断。警报响了。低频的蜂鸣从墙体内侧渗出来，像铁锈在水里化开。她先看天花板——通风口栅栏还在，螺丝锈死了。再看门——北侧的铁门，卫兵平时站岗的那扇，已经开始往下落。三分钟。苏末蹲在配给站柜台后面，骨刀搁在膝盖上，没在磨。他的影子斜在墙根，一动不动。“东西还在他们手里。”他说。林雪没应。她盯着那扇正在闭合的铁门，门缝越来越窄，外面是广场，再外面是旧47号公路，再往外——她不知道。她只知道水塔的滤芯拆开看过，不是堵。是菌膜进了核心层，三天，顶多三天。守门卫兵扣下了那盒净水片，苏末用半条胳膊换来的，现在锁在岗亭的铁柜里。她转身往柜台走。脚步声被警报吞掉一半，鞋底踩碎一块剥落的墙皮，咔嚓一下，很轻。苏末站起来，骨刀插回腰间，斗篷口拉紧，遮住下巴上新添的擦伤。他没看她，看着她投在墙上的影子。“拿不回来。”他说，声音压得比警报低。“你走，我留。”林雪从他身边擦过，手指扫过柜台上那卷绷带——旧的，洗过，边缘起毛，还带着没洗干净的褐色印子。她攥进手里，塞进防化服内袋。袋口太小，塞了两下才进去。她想起那盆薄荷，搪瓷缸底裂了条缝，浇水时总漏。走的时候她没带上。现在该枯了。她拉上拉链，往北侧铁门走。门已经降到胸口。她弯腰，侧身，肩膀挤过门缝，防化服刮在铁框上擦出刺耳的响。苏末没跟上来。她没回头。门外是广场，人群散了一半，孩子的哭声停了，只剩风卷着辐射尘刮过干涸的水泥地。她往岗亭走，手里什么都没有。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_pressure_melancholic_1784038347_1784038972683"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "first_person_immersive",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "b89ec82b5936f69cd3ef3a67d0fea08fa20fec5aeafc74936e8321f3c2cc5cdb",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 948,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "first_person_immersive",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "first_person"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "b89ec82b5936f69cd3ef3a67d0fea08fa20fec5aeafc74936e8321f3c2cc5cdb",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报响起的时候，我正蹲在配给站后墙的阴影里数水壶。\n\n空的。三个都是空的。\n\n苏末的骨刀停在磨石上，刀锋朝上，刃口映出一条抖动的红光。警报灯。墙头那盏老旧的旋转灯居然还能转，齿轮咬合声像指甲刮铁板。\n\n“封门。”苏末没抬头，骨刀翻了个面，继续磨。\n\n我站起来，膝盖骨咔嗒一声。北壁的警报系统七年没响过，有人说过它早锈死了。现在它活着，声音尖利，像婴儿在哭。\n\n三分钟。\n\n南门液压闸开始下沉，铁锈从铰链上簌簌往下掉。难民群里有人尖叫，有人往闸口跑。卫兵举起枪，枪口晃，不知道该对准谁。\n\n“走。”我拽苏末的斗篷。\n\n他甩开我的手。“东西还在老周那儿。”\n\n老周。守西门的瘸子。三天前我们托他搞一根反渗透膜管，用来修水塔滤芯。他答应了，条件是苏末那把骨刀。刀还在苏末手里，膜管也没到手。现在警报一响，老周会第一个封死西门。\n\n“没时间了。”我说。\n\n“你欠我的。”苏末终于看我，眼睛在斗篷兜帽下只剩两个黑洞。“上个月，水塔顶上，我拉你上来的时候你说过。”\n\n我记得。那天我的防化服右腿刮破，辐射尘灌进来，是他用胶带封住裂口。我说欠他一条命。\n\n“现在要我还？”\n\n“现在。”\n\n苏末站起来，骨刀插进腰间的皮鞘。他转身朝西门跑，脚踩在碎石地上，声音碎而急。\n\n我跟他跑。\n\n闸门只剩一半高了。空气里铁锈味混着辐射尘的干燥感，每吸一口都像吞沙子。我的防化服袖口在铁丝网上刮了一下，裂口扩大，露出里面缠的胶带。\n\n西门。老周的岗亭还在，但门开着，椅子翻倒。桌上摊着半包烟，烟丝散出来，还没被风吹走。\n\n“跑了。”苏末说。\n\n岗亭后墙有个铁柜，锁被撬开。里面三根膜管，两盒子弹，半瓶碘酒。苏末抓膜管，我抓子弹。\n\n闸门离地只剩一米。\n\n苏末趴下，侧身滚出去。我跟着趴下，背包带卡在碎石缝里。我扯，没扯开。\n\n闸门压下来。\n\n我扭肩膀，背包带断裂，整个人滚出去。闸门砸上地面，碎石溅起来打在后脑勺上。\n\n回头。门封死了。\n\n苏末蹲在三米外，膜管握在手里，指节发白。他看着我，没说话。\n\n我站起来，左肩疼。背包留在门里，里面有半块压缩饼干。\n\n“刀。”我说。\n\n苏末低头看腰间。皮鞘空了。骨刀不在。\n\n他回头望着封死的闸门。刀在门里。在岗亭地上。\n\n远处，旧47号公路的方向，风吹过报废车架，发出哨音般的呜咽。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_first_person_immer_1784039030340"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "ensemble_epic",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "a0224d9e60670149625f543519aebe34b079787ec9d6227ee92464128f6cc876",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1309,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "ensemble_epic",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "a0224d9e60670149625f543519aebe34b079787ec9d6227ee92464128f6cc876",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报是从北墙根炸开的。\n\n林雪正蹲在配给站的水泥台上，指尖刚敲完第三只空桶——回声钝，内壁挂的菌膜有三指厚。她站起来时膝盖骨咔嚓响了一声，像踩碎枯枝。\n\n“封门了。”苏末在两步外说。她没看林雪，盯着地面上一摊干涸的水渍，骨刀在指间翻了个花，刃口刮过拇指指甲，发出砂纸擦铁皮的细响。“东三门，三分钟。老周扣了你的滤芯。”\n\n滤芯。林雪舌尖抵住上颚，没说话。那是她从旧47号公路的废车里拆下来的，十二层陶瓷膜，只有最外层裂了道缝。老周要它干什么——配给站的水净化器早报废了，他连替换滤芯的扳手都没有。\n\n广场上的人群开始移动。有人推搡，有人踩翻了水桶，铁皮在水泥地上滚出闷响。一个孩子哭起来，声音尖锐，随即被捂住嘴。卫兵在往东三门跑，枪托撞在防暴盾上，当，当，当。\n\n林雪从水泥台上跳下来，靴底碾过碎玻璃渣。她扫了一眼东三门的方向——铁闸正在往下落，液压杆锈得厉害，降速不均匀，左侧卡了一下，又继续降。距离大约四十米，人群堵在闸口，像碎骨卡在喉咙里。\n\n她转身往西墙走。\n\n“滤芯不要了？”苏末的声音从背后追上来。\n\n“老周在三分钟之内不会死。”林雪没回头，手指摸过腰间的工具袋——扳手，钳子，一截铜管。铜管是苏末给她的，管身上刻着“B-7”字样，第七水塔的物资编号。苏末从哪里弄来的，她不说。“你腿怎么了。”\n\n“没怎么。”\n\n林雪这才回头。苏末右腿的斗篷下摆湿了一片，不是水——颜色发暗，黏稠，在防化服表面洇成一团。骨刀还攥在手里，但指节发白。\n\n“什么时候。”\n\n“刚才。翻配给站后墙时被钢筋挂了。”苏末把骨刀插回腰间，动作很慢，像在数自己的呼吸。“别看我，看路。”\n\n西墙有一道检修梯，锈得只剩骨架。林雪抓住最下面一截横杆，用力拽了一下——螺栓松动，但还吃得住力。她开始往上爬，铁锈扎进掌心，细碎的刺痛像被蚂蚁啃。爬到第三格时她听见苏末在下面骂了一句，是废土黑话，意思是“烂铁”。\n\n然后苏末开始爬。\n\n林雪没帮她，也没往下看。她爬到墙顶时天空是铅灰色的，辐射尘在风里翻卷，像谁把灰烬倒进了风里。她蹲下身，手探下去，抓住苏末的手腕。苏末的手很凉，指尖有茧，骨刀磨出来的茧。\n\n拽上来时苏末右腿拖在墙垛上，留下一道暗红色的印子。\n\n“三分钟到了。”苏末说。\n\n东边传来铁闸砸到底的巨响，闷得像地底传来的雷。\n\n林雪没回头。她盯着墙外的旧47号公路——龟裂的沥青路面，翻倒的车辆残骸，灰紫色的变异灌木在风里抖动。远处有什么东西在移动，看不清是兽群还是人。\n\n“滤芯还在老周手里。”她说。\n\n“嗯。”\n\n“你腿上的口子需要缝。”\n\n“嗯。”\n\n林雪从工具袋里摸出那截铜管，在掌心里转了一圈。B-7。第七水塔离这里两公里，塔底有急救箱，她上次去时还剩半卷缝合线。\n\n她把铜管塞回腰间，站起来。\n\n苏末从斗篷内侧摸出一样东西递过来——骨刀，刀柄朝外，刃口上还沾着暗红色的血。她自己的血。\n\n“拿着。”苏末说，“你走前面。”\n\n林雪接过刀。骨头磨成的刃在铅灰色天光下泛着蜡黄，握柄被磨得光滑，贴合掌心的弧度。她不知道苏末用了多少年才磨出这把刀，也不知道她为什么现在递过来。\n\n她没问。\n\n墙下传来变异灌木折断的脆响，由远及近。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_ensemble_epic_1784039079153"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "classical_chapter",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "0b1f7868d8fecfd457661536dd2c049c26466a43cf0837449f44243b40710d8d",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 1032,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "classical_chapter",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "classical_markers",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "classical_chapter",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "0b1f7868d8fecfd457661536dd2c049c26466a43cf0837449f44243b40710d8d",
+          "strict": true,
+          "before": {
+            "style_key": "classical_chapter",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "classical_markers",
+              "character_presence"
+            ],
+            "passed": false,
+            "requires_rewrite": true,
+            "findings": [
+              {
+                "code": "classical_markers",
+                "severity": "high",
+                "message": "末段未以“正是/却闻/只见”之一领起"
+              }
+            ]
+          },
+          "rewrite_attempted": true,
+          "rewrite_adopted": true,
+          "after": {
+            "style_key": "classical_chapter",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "classical_markers",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        }
+      ],
+      "initial_text": "",
+      "text": "却说林雪正蹲在配给站后巷的废料堆旁，指尖轻叩一只锈穿的滤芯外壳——回声空而短，内里菌膜已蛀透了第三层钢网。她将滤芯搁下，抬眼看巷口卫兵的身影被探照灯拉得忽长忽短，心里默默数过三个出口：北墙豁口、排水涵洞、还有那辆翻倒的运水车底盘下的窄缝。\n\n便在此时，警报声撕裂了广场上干渴的窃语。那声音不是寻常的集水预警，是封门——三短一长，重复三遍。林雪霍然起身，防化服袖口在铁皮上刮出一道白印。她看见中央水塔顶端的红灯开始频闪，高墙四角的闸门绞盘已隆隆转动。\n\n苏末从巷弄阴影里踱出来，手里那把骨刀磨得比平日更急，刀锋在磨石上擦出刺耳的尖啸。他盯着林雪投在墙上的影子，道：“你那个塔，修不好。菌膜进了核心层，三天前我就说过。”林雪没应声，只将目光投向配给站门口——老王正被两个卫兵架着往闸门方向拖，他怀里死死攥着那枚数据芯片，指甲都嵌进了掌心。\n\n原来老王今晨曾私下寻过林雪，说芯片里不止有循环站的坐标，还有一份北壁城邦水网的全套管线图，若落入守门卫兵之手，城邦最后一处秘密水源便将暴露。他当时将一枚锈钥匙塞进林雪手心，低声道：“我若走不脱，你替我去锈水码头，找一个叫老魏的。”言罢，便被巷口的脚步声惊散了。\n\n此刻警报已响过两轮，闸门落下一半。林雪将锈钥匙攥紧，指节发白，忽道：“他走不脱。”苏末停下磨刀的手，终于抬眼看向她本人，而非影子。林雪已朝配给站奔去，脚下碎沥青咔咔作响，她边跑边将滤芯外壳残片塞进腰间——那东西边缘锋利，能当短刃使。\n\n但见卫兵已将老王按在闸门前的铁栅上，正掰他的手指夺那芯片。老王一口唾沫啐在卫兵面甲上，嘶声道：“老子在废土活了七年，不是给你们这帮看门狗当水票的！”闸门距地面只剩三尺，绞盘声震得人牙根发酸。\n\n林雪在距铁栅十步处猛然刹住——她看见卫兵队长的枪口已抵上老王后颈。苏末自后赶上，压低声音道：“三秒。你选。”\n\n正是三秒将尽，林雪弯腰从地上抄起半截锈水管，朝铁栅猛力掷去。水管砸在栅栏上，哐当一声弹开，卫兵队长下意识偏头——只这一瞬，林雪已滑铲钻过即将闭合的闸门缝隙，防化服后背在铁闸上刮出刺耳的撕裂声。她伸手去夺芯片，老王却将芯片塞进她掌心，猛力推了她一把，自己反身抱住卫兵队长的腿。\n\n只见闸门轰然落地，将老王的惨呼和卫兵的怒骂一同截断在内。林雪趴在闸门外冰冷的混凝土地面上，掌心摊开——芯片上沾着老王指甲断裂留下的血迹，还温热。苏末从排水涵洞那头绕出来，看了眼她撕裂的防化服，又看了眼紧闭的闸门，道：“欠他一条命。记在账上。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_classical_chapter_1784039131892"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "philosophical_meditative",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "4fc8f67417d4fcd6a09f5e16baafb0c9fe681bfedb8752c77be0f83d477cf99b",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1177,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "philosophical_meditative",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "philosophical_meditative",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "4fc8f67417d4fcd6a09f5e16baafb0c9fe681bfedb8752c77be0f83d477cf99b",
+          "strict": true,
+          "before": {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报不是响起的。是切入——像有人把一根铁片直接插进耳道，再拧了一下。\n\n林雪的手指还停在滤芯外壳上，指尖的触感从金属的冰凉跳成了骨头的刺痛。她收回手，看见食指指甲缝里嵌着灰绿色的菌膜碎屑。\n\n三分钟。\n\n她默数这个数字时，不是用语言。是用脚底已经转向的方向——东侧墙的裂缝，够一个人侧身挤过去，前提是裂缝还没被封死。她三天前量过，肩宽减掉防化服的厚度，余量四厘米。\n\n苏末在墙角磨刀。骨刀刮过砂岩的声响比警报更刺耳，节奏没变。他的斗篷兜帽压得很低，影子投在开裂的混凝土墙面上，比他的身体先动。\n\n“门。”林雪说。\n\n“封了。”苏末没抬头。骨刀翻面，刀脊上一条旧裂纹被砂粒填满，灰白的粉末落在他的靴面上。“南门。液压栓降到底，我听见了。”\n\n林雪走到北侧铁柜前。柜门虚掩，她伸脚勾开。里面是空的，连隔板都被拆走了。但她敲了敲柜背板——回声短，闷，不是金属。是木板后面有东西。\n\n“你那个塔，”苏末的刀停了，“菌膜进了核心层，修不好。”\n\n“现在不是塔。”\n\n她蹲下，用指甲抠柜背板的接缝。灰浆碎成渣，木板松动了半寸。板后是暗的，她摸到冷而光滑的弧面——一个圆柱形容器，横放着。瓶。\n\n警报的音调变了。从切入变成压迫，像整栋建筑的钢架都在收缩。\n\n苏末站起来。骨刀入鞘的动作比平时多了半个停顿，刀尖刮到鞘口的铜箍，发出短促的尖音。\n\n“守门者在扣东西。”他说，“老王的芯片。他儿子在门禁室，要用水换。”\n\n林雪把瓶拽出来。玻璃瓶身，密封圈老化发黄，里面的液体浑浊，但能看出分层——上层是水，下层是深色沉淀。瓶底压着一张折成方块的纸，她抽出来，展开。\n\n纸上是地图。手绘的，线条断续，但标注点清晰：旧47号公路，北壁城邦，一个用红圈标出的坐标，旁边写着“深绿”。\n\n笔迹是老王的。\n\n但纸的右下角有一行小字，不是老王的——笔画更细，像用针尖蘸着灰浆写的：\n\n“循环站的水不能喝。但有人喝了。”\n\n她把纸翻过来。背面是半张字条，撕口参差，只剩一行：\n\n“——末，别信那个坐标。”\n\n警报第三声。天花板开始落灰，细密如干雪。\n\n林雪把纸塞进防化服内袋，瓶放进背包外侧。拉链拉到一半卡住，她没扯。\n\n“东墙裂缝，”她说，“三分钟够。”\n\n“不够。”苏末终于看向她，但视线落在她肩后的影子上。“你背包太宽。”\n\n她没回答。走到裂缝前，侧身，肩部抵住混凝土边缘。\n\n她吸气。\n\n防化服摩擦墙面发出沙沙声。肩过去了，背包卡住。她用力一挣，背包外侧的瓶撞上钢筋，发出闷响。\n\n没碎。\n\n她挤出去，冷风扑面，辐射尘落在她的护目镜上，灰紫色的光折射在镜片边缘。\n\n身后，苏末还没出来。\n\n裂缝里传出他的声音，像隔着水：“你拿了什么？”\n\n林雪没回头。她看着旧47号公路的方向，把护目镜上的灰擦掉，指腹在镜片上留下一条干净的弧线。\n\n“一张地图。”她说，“和我们上次念错的名字。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_philosophical_medi_1784039193867"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "screenplay_visual",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "385a10cfb9dfeffad685015d9d489a0b0e74ee91ee68d638ed42a6d6e3a58de9",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 1254,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "screenplay_visual",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "no_camera_meta"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "screenplay_visual",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "385a10cfb9dfeffad685015d9d489a0b0e74ee91ee68d638ed42a6d6e3a58de9",
+          "strict": true,
+          "before": {
+            "style_key": "screenplay_visual",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_camera_meta"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "北壁城邦配给站前，铁栅栏上挂着的空水壶被风吹得磕碰作响，叮当，叮当，像某种倒计时。\n\n林雪的指尖从栅栏横杆上移开，锈屑粘在指腹上，她没擦。她在数人。排队的难民，持枪的卫兵，蜷在墙角的孩子——三个出口，两个被堵死，只剩配给站后方的维修通道。她记下了。\n\n警报声从东墙方向传来，先是低沉的嗡鸣，然后拔尖，撕裂空气。\n\n人群开始骚动。有人撞翻了空水桶，塑料壳在水泥地上滚出沉闷的鼓点。卫兵举起枪，但他们的眼神也在往东墙飘。\n\n“三分钟。”苏末的声音从她身后传来，低，硬，像砂石刮过铁板。\n\n林雪转头。苏末蹲在配给站铁皮棚的阴影里，骨刀横在膝上，刀刃抵着磨石，来回推，沙沙沙。她的斗篷兜帽压得很低，只露出下巴和一小截脖颈。脖颈上有道新伤，结痂还泛着粉色。\n\n“出口封死前，我们有九十秒。”苏末没抬头，刀锋翻面，继续磨。“你那个塔，修不好。菌膜进了核心层，滤芯换了也没用。”\n\n林雪没接话。她盯着苏末的斗篷口袋——口袋边缘露出一角灰白色，是纸。浸过水的纸，边缘卷曲，上面有字。她只看到半个字，但那个字的笔画她认得。\n\n警报第二声响起，更近了。\n\n维修通道的铁门开始下降，液压杆发出刺耳的摩擦声。门缝在收窄，从一米缩到半米，再缩到三十厘米。\n\n“走。”林雪抓住苏末的手腕，指尖扣进防化服袖口的磨损处。\n\n苏末挣开，骨刀入鞘，动作快得像刀刃反光。“芯片。”她说，两个字，咬得很重。\n\n林雪的手顿在半空。\n\n那枚芯片——老王的战前数据芯片，加密着深绿循环站的坐标——在过关卡时被守门卫兵扣下了。卫兵队长是个疤脸女人，把芯片扔进铁盒里，锁上，钥匙挂在脖子里，贴着防毒面具的滤罐。“可疑物品，审查七十二小时。”她说这话时眼睛盯着苏末的骨刀。\n\n门缝收到二十厘米。\n\n“拿不回来。”林雪说。\n\n苏末终于抬头，兜帽下露出半张脸，眼睛没看林雪，看的是林雪的影子。“欠我的。”她说完，转身往铁门方向冲。\n\n林雪没动。她看着苏末的背影——斗篷下摆扬起，露出腰间的骨刀刀柄和一把扳手，扳手上还沾着水塔滤芯的锈渍。\n\n警报第三声。\n\n她转身，往配给站前台跑。铁盒还在，锁扣上挂着一把铜锁，钥匙不在。但铁盒底部有锈蚀，焊接点松了。她从腰间抽出匕首，刀尖插进焊缝，用力一撬。金属发出尖叫，铁盒底板翘起一角。\n\n难民从她身边挤过，有人踩到她的脚踝，她没停。手指伸进铁盒缝隙，摸到芯片，塑料壳，冰凉，没碎。\n\n门缝还剩十厘米。\n\n苏末已经滑进门内，侧身，手伸出门缝往回够。斗篷袖子被门框刮破，露出小臂上旧伤疤，一道一道，像干涸的河床。\n\n林雪攥紧芯片，跑。\n\n铁门压下来，橡胶密封条擦过她的后脑勺，扯断几根头发。她侧身挤进去，肩膀撞上苏末的手掌，掌心是湿的，有磨石粉的粗糙感。\n\n门合上，锁死。\n\n通道里只剩两个人的呼吸声，和远处警报的余音。苏末收回手，骨刀重新出鞘，刀尖抵着磨石，但这次没动。\n\n“芯片。”她说。\n\n林雪摊开手掌，芯片上沾着锈屑和一小片指甲盖大小的血——她自己的，食指指甲劈了。\n\n苏末看着芯片，又看着那片血，喉结动了一下，没说话。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_screenplay_visual_1784039251293"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "rough_grit_realism",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "32b84f52b42242b303dd61429dd52a43159eba0fbc77ec93a3bf35dfc7adb1e4",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1420,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "rough_grit_realism",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "rough_grit_realism",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "32b84f52b42242b303dd61429dd52a43159eba0fbc77ec93a3bf35dfc7adb1e4",
+          "strict": true,
+          "before": {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报声是从东南角塔楼先响起来的。\n林雪正蹲在配给站后面的水沟边，手指插进干裂的泥缝里——底下还有湿气，很少，但够舔一口。她收回手，指尖沾着泥，指甲缝里嵌进细沙。站起来的时候，膝盖咔嚓一响，防化服左腿的密封条又裂了半寸，辐射尘从破口钻进去，皮肤上起了细密的红疹。\n第二声警报。\n不是演习。\n她从配给站后墙绕出来，看见广场上的人开始跑。一个抱着孩子的女人撞翻了水桶，铁皮桶在石板上滚，干涸的内部发出空洞的哐啷声。没人去捡。\n“林雪。”\n苏末的声音从左边传来。他靠在配给站的水泥柱上，手里那把骨刀磨得只剩巴掌长，刀刃上沾着灰白色的粉末。他的斗篷兜帽压得很低，眼睛藏在阴影里，只露出下巴上三天没刮的胡茬。\n“出口。”他说，骨刀往北一指，“三分钟。”\n林雪没问他是怎么知道的。她转身往北门跑，靴子踩在碎石上，脚底的旧伤又开始疼——左脚第二根跖骨，去年在旧47号公路被变异鼠咬穿，愈合后骨头长歪了，每走一步都像踩在石子上。\n北门。\n铁栅栏正在下降。锈红色的齿轮嘎吱嘎吱往下碾，碎铁屑从轨道里掉出来，落在地上像干涸的血迹。守门的是个卫兵，脸被辐射斑啃掉了一半，左眼只剩个黑洞。他站在栅栏内侧，手里攥着个东西——\n她的水壶。\n那个铝制军用水壶，壶身磕得坑坑洼洼，壶嘴的橡胶圈已经老化发硬。壶里还有半升水，从旧47号公路的废车水箱里滤出来的，带着铁锈味和油花，但能喝。\n“扣下了。”卫兵说，声音像砂纸刮铁皮，“新规矩，出城物资一律征用。”\n身后传来苏末的脚步声，还有他拖着的什么东西——\n是人。\n老陈。北壁城邦最后的水管工，三天前还在试图修那个报废的净水器。现在他的右腿从膝盖以下断了，用破布条扎着止血带，布条已经浸透了，往下滴暗红色的液体。老陈的嘴张着，嘴唇干裂得翻出白肉，喉咙里发出嗬嗬的声音，像破风箱漏气。\n“锈蚀之子。”苏末把老陈拖到墙边，骨刀插回腰间，“他们在旧47号公路设伏。老陈踩了钉子板。”\n栅栏还在往下落。离地只剩一米二。\n林雪看着卫兵手里的水壶，又看着老陈那条断腿。血滴在地上，渗进水泥缝里，溅起的灰尘变成暗红色的小泥球。\n她转身，一把扯过苏末腰间的骨刀。\n苏末没拦。\n林雪走到卫兵面前，把骨刀拍在他手里。骨刀磕在卫兵的铁护腕上，当的一声，刀刃上崩了个米粒大的缺口。\n“水壶换刀。”她说，“刀是兽骨打的，能卖。”\n卫兵那只独眼盯着骨刀，喉结上下滚动了一下。他松开手，水壶掉下来。\n林雪接住，壶身撞在掌心，铝壳上又多了一个坑。她蹲下，把水壶嘴塞进老陈嘴里，倾斜壶身。水从壶嘴漏出来，混着铁锈味，流进老陈干裂的嘴唇。老陈的喉结动了，咽下去，咳嗽，咳出带血丝的唾沫。\n栅栏降到离地半米。\n苏末拽起老陈另一条胳膊，扛在肩上。林雪收起水壶，弯腰钻过栅栏，铁齿刮过后背，防化服又多了一道口子。\n她钻出去，回头。\n苏末把老陈塞过来，自己跟着滚出来。栅栏在他身后砸在地上，当的一声，溅起一蓬铁锈。\n老陈的断腿磕在沥青路面上，他又开始嗬嗬地叫，声音比刚才更弱。\n林雪拧开水壶盖，喝了一口。水是温的，铁锈味比早上更重，但喉咙还是烧——干渴比铁锈更难忍。她把壶递给苏末，苏末摇头，斗篷下露出的手指在打磨骨刀留下的老茧上蹭了蹭。\n旧47号公路在正前方，龟裂的沥青路面延伸到灰紫色的灌木丛里，废车残骸的轮廓在铅灰色天空下像死掉的巨兽骨架。风穿过车架，发出哨音般的呜咽。\n林雪站起来，左脚的跖骨又开始疼。她没看身后的城墙，把水壶拧紧，塞进防化服内袋。\n“走。”她说。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_rough_grit_realism_1784039305593"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "scifi_soft_lit",
+      "style": "literary",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "f645a4b01e61d1ffb95285470476d4a51a596535a91dea486444a774ea7a5eee",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 857,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "literary",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "f645a4b01e61d1ffb95285470476d4a51a596535a91dea486444a774ea7a5eee",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "叶宁把茶杯搁回托盘，瓷底磕出短促的一声。杯子是白瓷的，杯口有一道细裂纹，从釉面一直裂到胎骨，泡过太多次热水，裂纹里渗进了茶渍，洗不掉了。\n\n他盯着那道裂纹看了两秒，然后视线移向杯底压着的东西。\n\n一张便条，对折，纸边已经泛黄，折痕磨出了毛边。不是他放上去的。托盘是今早从消毒柜里取出来的，杯子也是，他记得。\n\n窗外雨声绵密，敲在玻璃幕墙上，把记忆清除广告的全息投影震得微微发颤。冷白色的环形灯光从隔壁工作室渗过来，在托盘边缘镀了一层薄光。\n\n叶宁没碰便条。他先看了一眼门口——门还关着，磨砂玻璃上没有人影。预约记录显示客户会在四分钟后到。\n\n他用拇指和食指捏起便条的一角，翻开。\n\n纸面上的字迹是手写的，蓝色墨水，笔锋偏左，收笔时拖出细长的尾线。只写了一行: \"第三备份区，B-7 架，2047 号日志。\"\n\n没有署名。\n\n叶宁把便条翻过来，背面空白。他凑近闻了一下——纸张带着潮气，还有一点消毒柜里的臭氧味，但没有墨水以外的气味。\n\n他把便条搁回原处，手指压在纸面上，指尖正好盖住\"2047\"这个数字。\n\n2047 号日志。三天前，他从一个客户的记忆日志深处挖出了那段加密的递归记忆片段，日志编号就是 2047。他记得自己把它标记为异常，上传到管理局的审核队列，然后删除了本地缓存。\n\n但便条上写的是\"第三备份区\"。\n\n管理局的备份区只有两个。第一备份区是公开档案，第二备份区是加密档案，都需要双因子授权才能访问。第三备份区这个编号——如果它存在——不在任何官方文件里。\n\n叶宁的食指在便条上敲了一下，指甲磕在纸面上，声音轻得几乎被雨声盖住。\n\n走廊里传来脚步声，鞋底踩在防静电地板上的节奏，不快，但很稳。不是客户的步态——客户通常走得更犹豫，会在门口停一下，确认门牌号。这个脚步声没有停的意思。\n\n叶宁把便条折回去，对折，再对折，塞进白大褂内侧的口袋里。布料贴着胸口，纸角硌在肋骨上，有一点硬。\n\n门把手转动的时候，他已经把托盘端起来，放进水槽，拧开龙头。水流冲在杯壁上，把裂纹里的茶渍冲淡了一点，但没冲干净。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_literary_1784039555880"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "xianxia_cultivation",
+      "style": "xianxia_fast",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "048b464acff76dd172e2b008eff740331c3f7de725ecb1661e718670abcd88f5",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 829,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "xianxia_fast",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "active_ending"
+        ],
+        "passed": false,
+        "requires_rewrite": false,
+        "findings": [
+          {
+            "code": "active_ending",
+            "severity": "medium",
+            "message": "严格节拍未以人物动作/出手收尾"
+          }
+        ]
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "xianxia_fast",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "048b464acff76dd172e2b008eff740331c3f7de725ecb1661e718670abcd88f5",
+          "strict": true,
+          "before": {
+            "style_key": "xianxia_fast",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "active_ending"
+            ],
+            "passed": false,
+            "requires_rewrite": false,
+            "findings": [
+              {
+                "code": "active_ending",
+                "severity": "medium",
+                "message": "严格节拍未以人物动作/出手收尾"
+              }
+            ]
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "通行令磕在青石台面上，转了个圈，停住。\n守关修士三根手指压着令牌边缘，指节粗大，指甲缝里嵌着洗不净的丹砂。他没看云逍，眼睛盯着身后山道——山道尽头，执法堂的遁光正穿过晨雾，一前两后，速度很快。\n“这位师弟，”守关修士开口，语气像在念规矩，“令牌灵气波动异常，暂扣核验。请在一旁等候。”\n云逍没动。\n他的手指摩挲衣角，粗布在指腹下碾过三回。柳青还在临渊渡等他，包袱里那卷拓片不能在山门多耽搁一刻。镇魔灯示警三日，宗门封山令随时会下——到那时，任何通行令都成废铁。\n遁光近了。领头那人的灵压已经压上后背，像一块湿冷的石板贴上脊骨。\n云逍伸手，不是去夺令牌，而是从袖中摸出一枚铜钱。\n铜钱正面铸着青云宗山门图，背面是守关堂的印符——三天前，柳青在坊市赌摊上赢来的，当稀奇玩意儿塞给他。云逍当时没在意，此刻却将它按在青石台上，铜钱压住令牌一角。\n“令牌灵气波动异常，是因为加持了一道破禁符。”云逍抬眼，盯住守关修士的瞳孔，“你袖口沾着同样的符灰。昨夜有人用这道符进出山门，你放行的。”\n守关修士的眼皮跳了一下。\n云逍不等他反应，三指扣住令牌边缘，往回一抽。令牌脱手，铜钱翻倒，在石台上叮叮当当滚出三圈。守关修士伸手要拦，云逍已经退后半步，左手将令牌拍进山门禁制的凹槽。\n禁制亮起。青芒从凹槽蔓延，石门震动，缓缓开启一道缝。\n“拦住他！”\n身后，执法堂弟子落地，靴底碾碎石板上的霜晶。为首那人抬手，一道缚灵索从袖口激射而出，直取云逍后颈。\n云逍侧身，让索链擦过耳廓，同时右手探进包袱，摸到那卷拓片。\n他扯出拓片一角，往门缝里塞。\n拓片边缘触到禁制青芒的瞬间，壁画上的仙人吞日图案突然发烫，透过纸背映出暗金色的光。缚灵索在半空顿住，像被什么东西烧了一下，缩回执法堂弟子袖中。\n石门轰然洞开。\n云逍闪身入内，反手将拓片从门缝里抽回。他没回头，但听见身后执法堂弟子拔剑的声音——以及更远处，山门外，另一道灵压正在逼近。\n这道灵压比执法堂所有人加起来都沉。\n云逍往山道深处跑。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_xianxia_fast_1784039738765"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "system_cheat",
+      "style": "colloquial_web",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "e3d2c88aaf71ce6e9277f5fdde0e641324911ee246df1ee3bdd68690374fadee",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 941,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "colloquial_web",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "short_paragraphs"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "colloquial_web",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "e3d2c88aaf71ce6e9277f5fdde0e641324911ee246df1ee3bdd68690374fadee",
+          "strict": true,
+          "before": {
+            "style_key": "colloquial_web",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "short_paragraphs"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "何辰第三次把U盘插进读卡器的时候，门禁面板的绿灯突然灭了。\n\n屏幕闪了两下，跳成红字——[系统故障，重新认证]。\n\n“操。”\n\n他拔下U盘塞进内兜，数据线缠在手腕上扯了两下没扯断，干脆连着线一起揣进兜里。\n\n苏墨的手指还停在键盘上，头也没抬：“你碰了什么？”\n\n“什么都没碰。”\n\n“那它自己坏的？”\n\n“可能。”\n\n走廊尽头传来脚步声，橡胶鞋底碾在水泥地上，节奏不快，但方向明确。管理员在往这边走。\n\n何辰扫了一眼房间。苏墨的笔记本接了六块外接硬盘，线缆铺了一地，像某种电子生物的血管网络。显示器上滚动着十六进制代码，破解进度条卡在百分之八十七，已经卡了四十分钟。\n\n他需要的东西在机房最里面——那台标注“零号”的服务器机柜，门锁着，钥匙挂在骸骨的手指上。\n\n“还能拖多久？”他问。\n\n苏墨终于抬头看了他一眼，眼镜片反射着屏幕的蓝光：“你问系统还是问管理员？”\n\n“都问。”\n\n“系统的话，我能在三分钟内伪造一个假认证信号，但需要物理接触门禁面板。”苏墨从包里摸出一把螺丝刀，语速快得像在念代码注释，“管理员的话，从脚步声判断，体重约八十公斤，穿的是硬底鞋，不是战斗靴，大概率是值班的技术员，不是保安。技术员会先检查面板，再进机房，你有大概两分钟。”\n\n“够了。”\n\n何辰跨过地上的线缆，走向那具骸骨。\n\n灵气藤蔓从机柜缝隙里垂下来，发着幽蓝色的光，像某种寄生植物的触须。它们缠绕在骸骨的肋骨间，随着机房里的气流微微颤动，仿佛还在呼吸。\n\n骸骨的右手握着一把钥匙，铜质的，表面没有锈蚀，刻着“零号”两个字。\n\n何辰掰开它的手指。指骨咔嗒一声断了。\n\n他没犹豫，抓起钥匙插进机柜锁孔。\n\n门禁面板那边传来螺丝刀转动的声响，苏墨已经开始拆面板了。走廊上的脚步声停了一下，然后又响起来，更快了。\n\n柜门弹开。\n\n里面只有一块硬盘，老式的机械硬盘，巴掌大，外壳上贴着一张泛黄的标签，手写的三个字——何夕。\n\n何辰盯着那两个字，手在半空中停了半秒。\n\n然后他把硬盘拔下来，塞进怀里。\n\n机柜深处，一块他之前没注意到的屏幕突然亮了，滚过一行代码——[零号协议已激活，倒计时：72:00:00]。\n\n倒计时开始跳。\n\n“何辰，”苏墨的声音从门口传来，第一次不带任何技术术语，“管理员到门口了。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_colloquial_web_1784039916333"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "mecha_pilot",
+      "style": "hot_blooded",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "f758e1f15ca53c07d802f45f2664f931a5c9e2c5f48ad268c5eccbb9e4b2a6b6",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 1290,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "hot_blooded",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "hot_blooded_observables",
+          "active_ending"
+        ],
+        "passed": false,
+        "requires_rewrite": false,
+        "findings": [
+          {
+            "code": "hot_blooded_observables",
+            "severity": "medium",
+            "message": "未检出角色说出口的誓言或挑战"
+          },
+          {
+            "code": "active_ending",
+            "severity": "medium",
+            "message": "严格节拍未以人物动作/出手收尾"
+          }
+        ]
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "hot_blooded",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "f758e1f15ca53c07d802f45f2664f931a5c9e2c5f48ad268c5eccbb9e4b2a6b6",
+          "strict": true,
+          "before": {
+            "style_key": "hot_blooded",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "hot_blooded_observables",
+              "active_ending"
+            ],
+            "passed": false,
+            "requires_rewrite": false,
+            "findings": [
+              {
+                "code": "hot_blooded_observables",
+                "severity": "medium",
+                "message": "未检出角色说出口的誓言或挑战"
+              },
+              {
+                "code": "active_ending",
+                "severity": "medium",
+                "message": "严格节拍未以人物动作/出手收尾"
+              }
+            ]
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "锚点-7的警报声不是从喇叭里传出来的——是从骨头里。低频震颤沿着地面爬上来，穿过脚踝、膝盖、脊椎，最后在牙关咬紧的臼齿上嗡嗡响。林雪从行军床上弹起来的时候，右手已经抓到了床头柜上的配枪，左手同时按亮了墙上的战术面板。\n\n屏幕上跳出一行红字：三号机库，结构坍塌，两人被困。\n\n她没穿外套，光脚踩进靴子就冲了出去。酸雨砸在脸上，铁锈味冲进鼻腔，探照灯把她的影子拉得又细又长，像一根绷紧的弦。三号机库是退役机甲的拆解车间，头顶的行车吊着半截\"铁幕\"的胸甲，锈水从断裂的液压管滴下来，在水泥地上烫出一个个小坑。\n\n苏陌的声音从通讯器里炸出来：\"别进来！主梁断了，整个二层平台——\"\n\n话没说完，一声金属撕裂的巨响吞掉了后半句。林雪看见他了——苏陌被压在一条工字钢下面，左腿卡在钢梁和坍塌的整备架之间，血从裤管渗出来，混在地上的机油里，颜色发黑。他旁边还躺着一个人，是整备班的赵工，半边身子埋在碎钢板和电缆里，已经不动了。\n\n\"苏陌！\"\n\n林雪冲过去，双手扣住工字钢的边缘，膝盖顶地，腰腹发力——往上抬。钢梁纹丝不动。她的指节发白，指甲掐进钢梁表面的锈蚀层，锈渣扎进肉里，疼得她吸了一口冷气。但她没松手，肩膀在抖，手臂在抖，整个身体都在和这根该死的东西较劲。\n\n苏陌咬着牙，声音从牙缝里挤出来：\"别管我……先拉赵工！\"\n\n\"闭嘴！\"\n\n她吼出这两个字的时候，嗓子眼里涌上一股血腥味。钢梁动了一点，不到一厘米，又落回去。她的膝盖在水泥地上磨破了，靴底打滑，整个人往前一栽，额头磕在钢梁上，撞出一声闷响。\n\n第一波冲锋，碎了。\n\n林雪跪在地上喘了两秒，血从额角淌下来，糊住了左眼。她用手背擦了一把，擦得满脸都是红的，然后撑着膝盖站起来，腿在抖，但站直了。\n\n她没有再看苏陌，转身扫视整个机库——行车、吊钩、钢缆、液压千斤顶。视线锁在墙角那台锈迹斑斑的维修机甲上，机甲趴着，但右臂的液压钳还完整。\n\n林雪跑过去，跳上机甲背部的维修梯，一把扯开驾驶舱盖。舱内积了半掌深的雨水，仪表盘全黑，但她不管，手指在配电箱里翻找，找到那根红色的应急启动线，扯出来，剥开绝缘层，铜丝咬在嘴里——\n\n\"林雪你疯了！那台老古董的电池——\"\n\n她把铜丝怼进应急接口。\n\n电流烧焦了她指尖的皮肤，一股焦臭味冲进鼻腔。机甲的眼睛亮了，液压泵开始轰鸣，整台机体的骨架在颤抖，抖得像要散架。林雪从驾驶舱里探出半个身子，右手攥着操纵杆，左手死死抠住舱门边缘，冲着苏陌的方向吼：\n\n\"你他妈给我撑住！\"\n\n液压钳夹住工字钢的一瞬，她推死操纵杆，把动力输出推到极限。钢梁发出刺耳的尖叫，开始弯曲，然后——断了。\n\n苏陌被拖出来的时候，林雪从机甲上跳下来，双腿一软，直接跪在地上。她低头看着自己焦黑的指尖，忽然笑了，笑得浑身发抖，然后抬起头，盯着还在燃烧的机甲电池，又盯着苏陌那条还在流血的腿，一字一顿：\n\n\"下次再让我别管你，我就把你也塞进维修机甲里，自己操作给你看。\"\n\n她把苏陌的胳膊架在自己肩膀上，拖着他往门外走。酸雨淋在两个人的伤口上，疼得苏陌嘶了一声。林雪没回头，只是把步子踩得更稳，更沉。\n\n\"听证会还没开，你死不了。\"",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_hot_blooded_1784040092257"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "republic_spy",
+      "style": "somber",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "46a5f3e22c0301eb1718efd4f5e4eaaabf466e3e0c8ac16d2c68e0f9d8b8c233",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 856,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "somber",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "somber_structure",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "somber",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "46a5f3e22c0301eb1718efd4f5e4eaaabf466e3e0c8ac16d2c68e0f9d8b8c233",
+          "strict": true,
+          "before": {
+            "style_key": "somber",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "somber_structure",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "信封在桌上放了很久，久到林雪能数出信封角上那道折痕里嵌着的每一粒灰尘。信封是土纸做的，粗糙得像树皮，收信人地址用蓝黑墨水写着她三年前在闸北的住址，墨水已经褪成一种发灰的蓝，像隔夜的茶水渍。信封旁边搁着一颗铜纽扣，扣面上刻着麦穗纹，麦穗纹的凹槽里嵌着一些灰白色的污垢，她认得这颗扣子，三年前她亲手把它缝在那件藏青色大衣的袖口上，缝了三针，第三针扎破了她的食指，血珠渗进扣眼里的线头，现在那线头还在，但血的颜色已经变成了铁锈般的暗褐。\n\n她没碰信封，先拿起那颗扣子，扣子在指尖翻过来，背面刻着两个字——\"平安\"。字是用小刀刻的，笔画深浅不一，\"平\"字第三横刻歪了，斜斜地往上挑，像一个人说话说到一半时嘴角不自觉的抽搐。她把扣子搁回桌上，扣子磕在桌面上发出一声极轻的脆响，那声音让她想起三年前闸北那个早晨，她帮他把大衣扣子扣好，他说\"等我回来\"，然后转身走进雾里，雾浓得他走了三步就看不见背影。\n\n她抬起眼，扫了一遍房间的窗户和门，这个动作已经变成了肌肉记忆，不需要经过大脑。窗户对着霞飞路，玻璃上蒙着一层薄薄的水汽，透过水汽能看见街对面俄侨面包房的霓虹招牌，招牌上的\"B\"字不亮了，剩下的字母在雾气里晕成一片模糊的红。门是关着的，门锁完好，但她还是注意到门缝底下塞着的那张报纸边缘，报纸是她早上塞的，如果有人开过门，报纸的位置会变。\n\n苏墨站在墙角，背靠着墙，手里的打火机开盖关盖，\"咔嗒\"，\"咔嗒\"，节奏越来越快，像码头上绞盘收紧缆绳时的声音，每一声都比前一声更短促。他说：\"拆不拆？\"声音压得很低，尾音往下沉，沉进打火机下一声\"咔嗒\"里。\n\n林雪把信封翻过来，封口是火漆封的，火漆上盖着一枚私印，印文已经模糊了，只能看出一个\"顾\"字的轮廓。她用手指沿着封口慢慢摸过去，火漆是脆的，指尖能感觉到裂痕，只要轻轻一压，封口就会碎开。她的手停在封口上，停了很久，久到苏墨的打火机又响了七声，然后她说：\"这封信，不该现在寄到。\"她的声音很平，像在口述一封电报，每个字之间都有逗号那么长的停顿。\"寄信的人，三年前，就死了。\"",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_somber_1784040279938"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "ancient_romance",
+      "style": "lyrical_poetic",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "42a62c47a2687a1c1ab5a4874da530924c23a573ddfc7a761d672f59a8a769d0",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1255,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "lyrical_poetic",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "lyrical_poetic",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "42a62c47a2687a1c1ab5a4874da530924c23a573ddfc7a761d672f59a8a769d0",
+          "strict": true,
+          "before": {
+            "style_key": "lyrical_poetic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "水声先于人影到了。\n\n护城河在清明雨里涨了三寸，浑黄的浪头拍着石岸，把纸灰与柳絮一并卷走。谢知微立在岸边的老槐下，袖口被河风吹得猎猎作响，指尖攥着那只旧梨木匣——匣角抵进掌心，钝钝的，像一枚未吐出的字。\n\n身后有脚步声，踏碎一片水洼。\n\n她没回头。\n\n“东西带来了。”沈砚书的声音从三步外传来，比平日低了些，尾音被河风削去半截。\n\n她这才转过身。\n\n他今日未着官袍，一袭青衫立在斜雨里，肩头洇湿了一片，袖口却仍整整齐齐地折了三折。他手里也提着一只匣子——比她这只更旧，漆皮剥落，露出底下灰白的木纹。\n\n“我娘的遗物，”她开口，声音薄薄的，像刀刃划过冰面，“你从何处得来？”\n\n他没答。只是上前一步，将手里的匣子搁在她脚边的石阶上。匣底碰着青石，一声闷响，沉沉的，不像木头该有的分量。\n\n“先看。”他说。\n\n谢知微盯着他的眼睛。那双眼睛里有血丝，细细的，从眼角蔓延到瞳仁边缘，像瓷器的裂纹。她忽然想起迦蓝寺废墟里那些断头佛像——也是这样，裂而不碎。\n\n她蹲下身，指尖触上匣盖。\n\n木纹是凉的，带着河水的潮气，但底下压着什么更冷的东西——不是温度，是记忆。她闭上眼，秘法在指尖苏醒，像一根针，刺进木纹深处。\n\n然后她看见了母亲。\n\n不是在工部尚书府的后院，不是在病榻上。是在一处地宫里，四面石壁上刻满迦蓝密教的符文，火把的光晃得人影支离破碎。母亲跪在石棺前，手里攥着半枚玉佩，嘴唇翕动，在念什么——她听不清，只看见母亲忽然回头，眼里的恐惧像被掐灭的烛火，啪地一声，归于死寂。\n\n“谢小姐。”\n\n沈砚书的声音把她拽回来。\n\n她睁开眼，指尖还按在匣盖上，指节发白，像新雪压折的竹枝。河风灌进袖口，她才发现自己在发抖。\n\n“你看见了什么？”他问，语气里没有试探，倒像在确认一件早已知道的事。\n\n她站起来，把旧梨木匣递还给他。匣子交到半空，两人的指尖几乎相触，却又同时停住——隔着三寸的距离，隔着雨丝，隔着那只匣子里藏着的所有秘密。\n\n“迦蓝寺地宫，”她说，声音稳了下来，稳得像绷紧的弦，“你要我找的东西，就在那里。”\n\n他接过匣子，指腹擦过她指尖，凉的，像一片落在皮肤上的雪。\n\n“我知道。”他说。\n\n雨忽然大了，砸在槐叶上，噼噼啪啪，把河面打出无数细密的洞。她转身要走，袖口却被他攥住——不紧，只虚虚地拢着，她一挣便能脱开。\n\n“谢知微。”他叫她的名字，全名，不是谢小姐。\n\n她停住。\n\n“那只匣子，”他顿了顿，像在斟酌每个字的分量，“是你母亲留给我的。三年前，迦蓝寺废墟，她临死前。”\n\n她没回头。雨水顺着鬓角淌下来，滑过下颌，滴进领口。\n\n“她让我交给你，”他的声音更低了，低到几乎被雨声吞没，“还有一句话——‘别恨你父亲。’”\n\n河风灌满她的袖口，鼓鼓的，像要飞起来。终究没飞。她只是站着，看河面上那些纸灰被雨打散，碎成无数片，顺流而下。\n\n“放开。”她说。\n\n他松了手。\n\n她踏进水洼里，泥水溅上裙摆，洇开一朵一朵暗色的花。走了七步，她停下，没回头，只把半句话抛进雨里——\n\n“沈砚书，你欠我的，不止这一句。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_lyrical_poetic_1784040471810"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "republic_spy",
+      "style": "noir_cold",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "9adb3a5a0826d49f00f2939423c39038003cfcee65adc2e9a53bf6653d209daf",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1028,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "noir_cold",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "no_exclamation",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "noir_cold",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "9adb3a5a0826d49f00f2939423c39038003cfcee65adc2e9a53bf6653d209daf",
+          "strict": true,
+          "before": {
+            "style_key": "noir_cold",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_exclamation",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "雨是从天黑开始下的。\n\n十六铺码头的煤油路灯被水汽裹住，光晕缩成拳头大的一团。江面上日本军舰的探照灯扫过来，又扫过去，照得跳板上的苦力们低下头，像一排被风吹弯的芦苇。\n\n林雪站在三号货栈的屋檐下，雨水顺着铁皮檐沟灌下来，在青石板上砸出白沫。她没打伞。左手插在大衣口袋里，指尖抵着一把勃朗宁的枪柄。\n\n十点过三分。\n\n接头的人迟到了。\n\n她把右手从口袋里抽出来，在裤缝上擦了一下。掌心是湿的，分不清是雨还是汗。\n\n有人从码头上过来。脚步声很沉，踩在积水里，不躲不避。一个穿油布雨衣的身影从雾里走出来，帽檐压得很低，遮住了上半张脸。\n\n那人走到她面前三步远，停下。\n\n“有火吗。”\n\n林雪没动。暗号错了。应该是“借个火”，不是“有火吗”。\n\n她把那人上下扫了一遍。雨衣下面是粗布短褂，袖口有磨损，码头苦力的打扮。但他的手——右手食指第二关节有茧，枪茧。苦力不会有这个。\n\n“不借。”她说。\n\n那人愣了一下。这个反应不对。如果是自己人，应该接下一句。但他没接。\n\n雨声很大。\n\n林雪看见那人喉结动了一下，右手从雨衣口袋里抽出来。动作很慢，像在水里。\n\n她的拇指推开勃朗宁的保险。金属撞击声被雨盖住了。\n\n那人递过来一个信封。牛皮纸的，封口没粘，敞着。\n\n“给你的。”\n\n林雪没接。她盯着那人的手——指甲缝里有煤灰，虎口有老茧，但中指第一个关节内侧有墨水渍。蓝黑色的。码头上写字的人。\n\n“谁让送的。”\n\n“苏老板。”\n\n苏墨。\n\n林雪伸手接过信封，指尖碰到纸面的一瞬间，她感觉到信封里不是纸。是照片。硬的，四角硌手。\n\n她把信封口朝下，抖了一下。一张照片滑出来，落在她掌心里。\n\n照片上是一个人。躺在血泊里，胸口两个弹孔，嘴张着，像在喊什么。\n\n她认识这张脸。\n\n军统上海站，电讯科，周明远。三天前还在发报。\n\n林雪把照片翻过来。背面用钢笔写了一行字，墨水被雨水洇开了，但还看得清：\n\n“钟楼，第三个钟面，左眼。”\n\n她抬起头。那人已经退后两步，雨水顺着帽檐往下淌，在下巴汇成一条线。\n\n“苏老板说，你看了就明白。”\n\n林雪没答。她把照片装回信封，塞进大衣内侧口袋。手指碰到枪柄，又松开。\n\n那人转身走了。脚步声在雨里越来越远，最后被江风吞掉。\n\n林雪站在屋檐下，看着江面上又扫过来一道探照灯。白光划过去，又划回来。\n\n她把手从口袋里抽出来，点了一根烟。火柴擦了两下才着，火苗在风里抖，照得她脸上忽明忽暗。\n\n第三个钟面。左眼。\n\n海关钟楼上的大钟停了三个月了。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_noir_cold_1784040524268"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "gourmet_culinary",
+      "style": "warm_healing",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "36b52ea3cdb8f432b27bc05a6e83d01c003473def530a90f68b57c41e8a38261",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 869,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "warm_healing",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "warm_safety",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "warm_healing",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "36b52ea3cdb8f432b27bc05a6e83d01c003473def530a90f68b57c41e8a38261",
+          "strict": true,
+          "before": {
+            "style_key": "warm_healing",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "warm_safety",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "林海玄把裂成两半的瓷碗合在一起，对着灶台上的油灯看。缝很细，合上去几乎看不出来，但一松手就垮。\n\n苏晚晴坐在对面，袖口卷到肘弯，露出小臂上一道旧伤疤。她没看他，低头翻着那本巴掌大的账本，手指摩挲书脊，纸页沙沙响。\n\n“用糯米浆。”她翻过一页，头也没抬，“后厨第二个柜子，左边第三格。”\n\n他没动。\n\n灶上的砂锅还在咕嘟，汤已经快凉了，表面凝了一层薄油。鱼汤，下午刚熬的，本来想端去前头铺子里喝，结果碗摔了。\n\n苏晚晴终于抬起眼，目光从账本移到那两半瓷片上，又移到林海玄脸上。\n\n“你爸教过你修碗，你不记得了？”\n\n这话像根刺。林海玄把碗片搁在灶台上，转身去开柜子。第二个柜子，左边第三格，果然有一小罐糯米浆，罐口封着蜡，蜡面落了灰。他拿指甲抠开，浆液还润。\n\n“你比我清楚我家的柜子。”\n\n“你家的柜子我从十三岁翻到现在。”苏晚晴站起来，走到灶边，拿起勺子搅了搅砂锅里的汤，“鱼汤，放姜了没有？”\n\n“放了。”\n\n“不够。”她从灶台角上拈起半块老姜，在案板上拍碎，丢进锅里。姜汁溅出来，她用手背蹭了蹭鼻子。\n\n林海玄把糯米浆抹在碗沿断口上，两片合拢，虎口压紧。浆液从缝里挤出来，他用拇指抹掉，动作很慢。\n\n“你今晚来，不是为了喝汤。”他说。\n\n“不是。”苏晚晴承认得干脆，又从筷笼里抽出两双筷子，一双搁在修好的碗边，一双自己握着，“但汤可以喝。”\n\n她把砂锅端下来，先给他舀了一碗。鱼汤奶白，姜丝浮在面上，热气重新升起来。\n\n“碗修好了，趁热。”\n\n林海玄接过碗，指尖碰到她的指节，凉得像雨。他没说话，低头喝了一口。姜味确实比之前重，但汤更鲜了。\n\n苏晚晴也给自己舀了半碗，没喝，只捧着暖手。\n\n“你爸那封信，”她忽然开口，声音比刚才轻，“我也有份。不是害他。”\n\n林海玄搁下碗，瓷底磕在灶台上，清脆一响。\n\n“我知道。”\n\n他把修好的碗推过去，换她手里那半碗凉的。苏晚晴愣了一下，然后慢慢地笑了，笑得很浅，嘴角只弯了一下。\n\n“这碗修得不错。”她说。\n\n外头雨还在下，打在门板上闷闷地响。灶台上的油灯晃了晃，两个人的影子在墙上叠在一起。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_warm_healing_1784040883236"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "campus_youth",
+      "style": "melancholic",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "94457dae8985d08baf4886b06066d7ee3763340032405c534b6b4c6a8186f799",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 741,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "melancholic",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "melancholic",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "94457dae8985d08baf4886b06066d7ee3763340032405c534b6b4c6a8186f799",
+          "strict": true,
+          "before": {
+            "style_key": "melancholic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "苏屿把自动铅笔按出铅芯，又按回去。咔嗒，咔嗒，咔嗒。窗外银杏树的轮廓已经看不清了，操场的灯熄了二十分钟，末班车还有七分钟到站。他靠在公交站牌的铁杆上，杆子凉，透过校服外套渗进肩胛骨。手里那个牛皮纸信封被他捏了一路，边角起了皱，铅笔头在纸面上硌出几道浅痕。不是情书。是去年校刊第三期的排版样张，封面那页他留了半年，一直没给出去。\n\n站台上只剩他一个人。便利店的灯箱嗡嗡响，白光打在湿漉漉的柏油路上。下午那场阵雨已经停了，积水从站台顶棚的缝隙里往下滴，滴在垃圾桶的铁皮盖上，节奏很慢，像在数秒。他把信封翻过来，背面铅笔字还在：\"答案在铁轨尽头\"。不是他写的。是去年冬天，那个人在旧编辑部里，用他的铅笔，在他那张样张背面，写完这六个字就推回来。\"你留着。\"那个人说。然后停电了。\n\n远处车灯晃了一下，不是公交车。一辆摩托车突突突地过去，尾灯红了一瞬，又暗下去。苏屿把信封塞回书包侧袋，手指碰到里面那支削得太尖的铅笔，笔尖扎进指腹，他缩了一下手。没出血。他把铅笔拿出来，看了看断掉的铅芯，放回笔袋最里层。\n\n他想，如果她来了，他就把样张给她，不问那句话是什么意思。如果她不来，他就把信封留在站台椅子上，谁爱捡谁捡。\n\n末班车的引擎声从街角拐过来，车灯扫过站牌，扫过他的脸，又扫过去。车门开了，司机看了他一眼，没催。他等了三秒。车厢里空荡荡的，荧光灯管嗡嗡响，和教学楼里那种声音一模一样。他上车，投币，走到最后一排靠窗的位置坐下。\n\n车开了。他把书包放在旁边座位上，没再看窗外。信封还在侧袋里，压在一本没翻过的习题册下面。他伸手进去，指尖碰到牛皮纸的边角，没抽出来。\n\n公交车颠了一下，头顶的灯管闪了闪。他闭上眼，又睁开。车窗外，桐城的街灯一盏一盏往后退，每盏都亮着，每盏都照不到车里的暗处。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_melancholic_1784041069755"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "urban_mystery",
+      "style": "first_person_immersive",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "b89ec82b5936f69cd3ef3a67d0fea08fa20fec5aeafc74936e8321f3c2cc5cdb",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 872,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "first_person_immersive",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "first_person"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "first_person_immersive",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "b89ec82b5936f69cd3ef3a67d0fea08fa20fec5aeafc74936e8321f3c2cc5cdb",
+          "strict": true,
+          "before": {
+            "style_key": "first_person_immersive",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "first_person"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "灯灭了。不是跳闸——跳闸前灯会闪两下，这次是直接黑。冰箱压缩机的声音从墙根沉下去，整栋楼像被按住了喉咙。\n\n我坐在沙发上没动。茶几上的烟灰缸还在，手摸过去，缸沿磕着指尖，凉的。窗外没有光透进来，连路灯都灭了。\n\n雨声还在。至少雨声还在。\n\n三下敲门。\n\n指关节叩在防盗门上，笃、笃、笃——间隔一样，力道一样。这个节奏我认得。\n\n林雪。\n\n但她的习惯是敲完直接报名字。\"周岭，开门。\"每次都这样，语速快，不容商量。今晚门外是沉默。\n\n我站起来，膝盖撞上茶几角，烟灰缸晃了一下，没倒。手按在墙上往玄关摸，墙皮潮湿，有股霉味。经过电表箱时我停了一步，打开箱门，手指摸到总闸的塑料壳——闸是跳着的，被人推上去又弹下来。\n\n有人动过电表箱。\n\n\"谁。\"\n\n我没问\"谁啊\"，就一个字。\n\n门外有三秒没动静。然后那个声音说：\"我。\"\n\n是林雪的声音，但不对。她说话嗓门亮，这个声音压得太低，像嗓子眼里含着什么东西。\n\n\"停电了。\"门外又补了一句。\n\n我没开门。左手摸到鞋柜上的钥匙串，三把铜的，红绳拴着，其中一把是林雪三天前给的。她说\"帮我喂猫\"，钥匙塞进我手里就走了。\n\n猫不在。\n\n\"猫呢。\"我隔着门问。\n\n门外沉默。\n\n雨声忽然大了，像有人在天台上往下倒水。我把钥匙串攥紧，红绳勒进指缝，断口处的毛刺扎在虎口上。\n\n\"猫我送人了。\"门外的声音说。\n\n我把钥匙插进锁孔，没拧。金属碰金属的声音在黑暗里很脆。\n\n\"林雪。\"我说，\"你上次说，猫死也不送人。\"\n\n锁孔里传来轻微的震动——门外的人在动。不是走，是换了个站姿。鞋底蹭过水泥地，声音很轻，但方向是往后退。\n\n后退了半步。\n\n我在黑暗里笑了一下，没出声。手从钥匙上松开，摸到门边的消防栓。玻璃门没锁，我推开，手指碰到冰凉的金属把手。\n\n灭火器。\n\n\"敲门节奏可以学。\"我说，把灭火器从架子上取下来，沉，铁皮罐子贴着腿侧，\"但猫的事，你没做功课。\"\n\n门外彻底安静了。\n\n雨声盖过了一切。我背靠墙站着，灭火器拎在右手，左手按在门锁上。防盗门那头的呼吸声很轻，但听得出——不是一个人的呼吸。\n\n至少两个。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_first_person_immer_1784041256593"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "history_military",
+      "style": "ensemble_epic",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "a0224d9e60670149625f543519aebe34b079787ec9d6227ee92464128f6cc876",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 827,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "ensemble_epic",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "a0224d9e60670149625f543519aebe34b079787ec9d6227ee92464128f6cc876",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "姜淮把三块木牍排在案上，指节叩了桌面三下，才拉开胡凳坐下。牍上的封泥都碎了，像是被同一把刀挑开的——不是江东军的制式匕首，刃口偏薄，留下的切口毛糙，是北边的铁。\n\n酒肆里挤满了等渡江的人，有人压着嗓子在隔壁桌争论曹军前锋到了哪里，声音抖得跟桌上的油灯一样。姜淮没看那边。他先看第一块牍——夏口大营的军报，说曹军水师已至乌林，前锋斗舰昨夜过了江心洲。第二块牍是樊口渡的斥候急报，说乌林水道起了大雾，曹军船队一夜之间消失，连桅灯都看不见。第三块牍没有漆封，只有半张被火燎过的桑皮纸，纸角夹着一枚铜钱。\n\n铜钱不是江东的，是荆州刘表旧铸的五铢，边缘磨得锃亮，像是被人攥在手里很久。\n\n姜淮捏起铜钱，翻过来，背面刻了两个字——\"小乙\"。\n\n韩萧的独子。\n\n他把铜钱搁在案上，没碰那半张桑皮纸。纸上的字迹歪扭，像是就着火光匆忙写的：\"乌林古道第三岔口，换岗亥时。\"下面还有一行字，被火烧掉了大半，只剩\"画完最后一段水路就\"几个字，\"就\"字后面是一道拖长的墨痕，笔尖在那个位置顿了很久。\n\n姜淮抬起眼。酒肆门口有个卖干饼的老妪正往筐里收铜钱，手指冻得发红，一枚一枚地数。檐下蹲着三个等船的民夫，裹着破袄，其中一个怀里抱着个七八岁的孩子，孩子睡着了，脸埋在父亲胸口。\n\n韩萧此刻在哪里？他想起三天前在樊口渡黑市，韩萧把铜钱在指间翻了三圈，说\"这桩买卖，你的本金是命\"，然后笑了一声，笑意没到眼睛。那时候小乙已经被扣了三天，韩萧没提，一个字都没提。\n\n姜淮把三块木牍重新叠好，铜钱压在桑皮纸上。他用指节叩了第三下桌面，起身，胡凳在泥地上拖出一声短促的闷响。\n\n\"北风刮了三天，\"他对柜台后的酒保说，\"江面冻雨，今晚渡口封不封？\"\n\n酒保摇头，还没来得及答话，门口的老妪忽然抬头，盯着姜淮腰间的令牌看了一眼，又把头低下去，继续数铜钱。\n\n姜淮没回头。他推开酒肆的破门板，冷风灌进来，吹得油灯晃了一下。外面江雾沉沉的，栈桥上的军旗被冻雨打得贴在旗杆上，看不清是哪一家的旗号。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_ensemble_epic_1784041454145"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "wuxia_jianghu",
+      "style": "classical_chapter",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "0b1f7868d8fecfd457661536dd2c049c26466a43cf0837449f44243b40710d8d",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 741,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "classical_chapter",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "classical_markers",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "classical_chapter",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "0b1f7868d8fecfd457661536dd2c049c26466a43cf0837449f44243b40710d8d",
+          "strict": true,
+          "before": {
+            "style_key": "classical_chapter",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "classical_markers",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "且说沈砚清独坐锦官城东茶馆末座，背倚土墙，目光扫过堂中茶客。窗外秋雨淅沥，青石板上水光潋滟，街角悬赏告示墨迹洇开，依稀可见'沈氏'二字。他左手搁在桌面，食指无意识地轻叩，似在数更漏，又似在等人。\n\n忽听门帘一掀，进来一人，头戴斗笠，雨水顺着笠沿往下淌。那人径直走到末座，将一物轻轻搁在桌上。沈砚清低头看去，却是一枚铜扣，扣面錾刻麒麟纹，正是当年锦衣卫北镇抚司的旧物。那人摘下斗笠，露出一张瘦削面孔，低声道：“沈兄，别来无恙。”\n\n沈砚清认得，此人姓陆名文渊，原是北镇抚司的文案，永徽二十一年那场大清洗后便没了音讯。他不动声色，将铜扣推回，道：“你认错人了。”陆文渊却不接，只道：“当年指挥使交代过，若有不测，便由沈兄持此信物，去落刀寺取一件东西。”言罢，从怀中摸出一封火漆封缄的信函，推到沈砚清面前。\n\n沈砚清未接，只盯着对方面孔，道：“你如何找到我的？”陆文渊道：“青泥岭上那群搜身的怪人，便是巡捕营梁安布下的眼线。他们不劫财，专搜女子，实则是在找沈家当年托付给奶娘的那件东西。我在剑门关听闻此事，便知你必定会来锦官城。”\n\n原来陆文渊自从北镇抚司散伙后，便隐姓埋名，在剑门关下开了间棺材铺，暗中替旧日同僚传递消息。他此番前来，正是奉了七派中一位遗老之命，要将这封密信交到沈砚清手中。沈砚清默然片刻，伸手取过信函，但见火漆上那枚麒麟印，赫然是已销毁的指挥使印信。\n\n正待拆信，忽听茶馆外马蹄声急，由远及近。陆文渊脸色一变，起身便走，道：“梁安的人来了，沈兄保重。”言罢，戴上斗笠，从后门闪出。\n\n沈砚清将信函揣入怀中，正欲起身，却见门帘一掀，进来三个穿皂靴的汉子，为首那人目光如锥，环视堂中，最后落在末座。他只觉怀中那封信函，烫得厉害。\n\n正是茶馆外雨势转急，巡捕已将前后门围住。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_classical_chapter_1784041646152"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "scifi_soft_lit",
+      "style": "philosophical_meditative",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "4fc8f67417d4fcd6a09f5e16baafb0c9fe681bfedb8752c77be0f83d477cf99b",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 874,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "philosophical_meditative",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "philosophical_meditative",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "4fc8f67417d4fcd6a09f5e16baafb0c9fe681bfedb8752c77be0f83d477cf99b",
+          "strict": true,
+          "before": {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "叶宁在出门前检查了地图。\n\n新思城的街道图摊在桌上，纸张边缘被雨水泡过三次，折痕处起了毛。他手指沿常走的路线划过去——遗忘缓冲区东入口、废弃净水厂、苏墨的临时工作室——然后停在了一个不该有标记的地方。\n\n他的名字。\n\n“叶宁”两个字印在清水巷拐角，离他昨天住的地方隔了七条街。他记得昨天看的时候，这两个字还在遗忘缓冲区西侧，挨着那家倒闭的记忆鉴定所。\n\n他拿起地图靠近窗边。灰蓝色的数据雾霾贴着玻璃流动，把纸面上的街道染成深浅不一的暗色。名字确实移动了。不是印刷错误，不是水渍——两个字的位置往东偏了整整一格，正好是他今天打算走的路线。\n\n他把地图翻过来。背面是空白，只有左下角一行小字：印制于记忆清算纪元第三年。第三年就是今年。但他不记得自己买过这张地图。\n\n墙上的镜子响了一声。\n\n不是碎裂，是一声很轻的嗡鸣，像钟表走到整点前的半秒。叶宁抬头，看见镜面里的时钟停在十一点十七分。他回头看桌上的电子钟——十一点二十三分。\n\n差了六分钟。\n\n他走近镜子。镜中的自己也在靠近，但动作慢了半拍，像在穿过一层看不见的胶质。那只手抬到胸口的高度时，镜子里的手还垂在腰侧。\n\n“你慢了。”叶宁对镜子说。\n\n镜中人张了张嘴，声音从玻璃后面传出来，被压缩成扁平的金属音：“你昨天也这么说。”\n\n“昨天我没看镜子。”\n\n“你看了。十一点十七分。你站在这里，说了同样的话。”\n\n叶宁的手指碰到镜面。冰凉的触感顺着指尖爬上来，玻璃没有吞掉他的手指，只是反射出他身后的房间——桌子、地图、电子钟。钟上的数字跳到了十一点二十四分。\n\n镜中的时钟还是十一点十七分。\n\n他退后一步。镜中人没有退，还站在玻璃内侧，脸贴得很近，近到呼吸在镜面上留下一层薄雾。然后那层雾自己散开了，从里面散开的。\n\n叶宁拿起地图，重新折好，塞进外套内侧的口袋。他没再看镜子。出门前他按惯例检查了记忆删除管理局的监控日志——最后一条异常访问记录的时间是今天凌晨三点零九分，访问者编号是空的。\n\n他关掉终端，把工作室的门锁好。钥匙转动时，他听见镜子里传来第二声嗡鸣，比第一声短，像一句话被掐掉了后半截。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_philosophical_medi_1784041693646"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "apocalypse_wasteland",
+      "style": "rough_grit_realism",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "32b84f52b42242b303dd61429dd52a43159eba0fbc77ec93a3bf35dfc7adb1e4",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1052,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "rough_grit_realism",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "rough_grit_realism",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "32b84f52b42242b303dd61429dd52a43159eba0fbc77ec93a3bf35dfc7adb1e4",
+          "strict": true,
+          "before": {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "绳索吃进肩膀时，林雪听见纤维在耳边绷断的声音——不是一根，是三根，像牙签被掰断那样脆。她把重心往后压，鞋底在碎石子上打滑，磨出一条浅沟。补给车还在泥沟里歪着，左后轮陷进去半截，轮毂上糊满了灰紫色的泥浆，那是变异灌木烂根沤出来的玩意儿，黏性比沼泽还狠。\n\n“别硬拽。”苏末蹲在车尾，拿骨刀敲了敲车斗的锈铁皮，铛铛两声，像在敲一扇锁死的门。“绳子要断了，你肩膀先脱臼。”\n\n林雪没回头。她盯着自己攥绳子的手，指节白得发青，指甲缝里嵌着上午扒滤芯时留下的黑垢。防化服袖口磨破了，露出里面一截手腕，皮肤皴裂，汗渗进去杀得生疼。她把绳子在手上又绕了一圈，勒紧，掌心的老茧被粗麻绳磨得发烫。\n\n“你倒是来搭把手。”她说话时嗓子干得像砂纸，每个字都刮着喉咙。\n\n苏末站起来，斗篷下摆蹭过车斗，带下一片锈屑。他没接绳子，而是绕到车后，蹲下，伸手探进泥浆里。泥浆没到手腕，拔出来时带出一团灰紫色的黏丝，像拔了一根烂掉的筋。他凑近闻了闻，眉头皱起来，骨刀在泥里搅了搅，挑出一块碎掉的塑料件——原本是车轮的挡泥板，现在只剩巴掌大一块，边缘被腐蚀得像被什么东西啃过。\n\n“菌泥。”他把塑料片扔在地上，在裤腿上擦手，但越擦越脏，泥浆干了以后结成一层面壳，扯得汗毛生疼。“这沟里是菌泥，不是普通烂泥。车越拽越沉。”\n\n林雪松开绳子，肩膀火辣辣地疼，像被烙铁烫过。她活动了一下肩胛骨，关节咔嚓响了一声，是那种闷闷的、带着酸胀的响。围在车边的难民们没散，但也没人上前，就那么站着，嘴唇干裂，眼眶凹陷，盯着车斗上那几只封死的塑料桶——那是最后一批没被辐射尘污染的水，运到配给站够撑三天。\n\n三天。林雪舔了舔下唇，嘴皮上翘起一块死皮，她用牙咬住扯下来，扯出血，舌尖尝到一股铁锈味。\n\n“把货卸了，先抬车。”她弯腰捡起绳子，这回没往肩上搭，而是绑在车斗的角铁上，打了个水手结，拽紧，结头咬死。角铁上的漆皮龟裂，被绳子一勒，掉下几片，露出底下褐红色的锈。\n\n苏末看了她一眼，不是看脸，是看影子——斜阳把她影子拉得老长，投在龟裂的沥青路面上，脑袋的位置正好落在一道裂缝里，像被劈开。他把骨刀插回腰间的皮鞘，鞘口磨得发亮，边角却起了毛。\n\n“卸货行。但卸完你得告诉我一件事。”\n\n林雪停下动作，手指还勾着绳子。\n\n“说。”\n\n“你那水塔滤芯，”苏末的声音压得很低，只有她听得见，“拆开的时候，有没有看见菌膜。”\n\n林雪没答。她盯着车斗上的塑料桶，桶壁内侧凝着水珠，在灰蒙蒙的光线下，那几滴水珠看起来比任何东西都干净。\n\n她弯腰开始解第一只桶的绑带。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_rough_grit_realism_1784041786463"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "mecha_pilot",
+      "style": "screenplay_visual",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "385a10cfb9dfeffad685015d9d489a0b0e74ee91ee68d638ed42a6d6e3a58de9",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 842,
+      "anchor_count": 5,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "screenplay_visual",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "no_camera_meta"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": null,
+      "production_style_traces": [
+        {
+          "preset_key": "screenplay_visual",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "385a10cfb9dfeffad685015d9d489a0b0e74ee91ee68d638ed42a6d6e3a58de9",
+          "strict": true,
+          "before": {
+            "style_key": "screenplay_visual",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_camera_meta"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "锚点-7 的第三维修通道尽头，警示灯从猩红跳成暗绿。\n\n林雪的肩胛骨抵在冷轧钢板门框上，右手食指搭在腰侧手枪的保险机锤上。酸雨敲击头顶的波纹钢遮板，节奏像倒计时的秒针。\n\n“断电了。”苏陌的声音从门板另一侧传来，压得极低，但每个字都清晰，“备用电路也断了。你那边？”\n\n“一样。”林雪的视线扫过头顶走线槽——三根主电缆，两根备用线，全部被从根部切断，切口平整，是激光切割器的手笔。“有人比我们先到。”\n\n门板传来两声指节敲击，急促，间隔零点三秒。苏陌的暗号。\n\n林雪回敲了一下，拇指同时推开保险。\n\n液压门阀发出嘶哑的排气声，门板向两侧滑开三十公分，露出苏陌的半张脸。他额角沾着油污，左手握着一把改装的等离子焊枪，枪口还泛着余热。\n\n“交换位置。”苏陌侧身挤出门缝，把焊枪换到右手，“你进控制室，我守门。神经元校准模块还在里面，如果被动了手脚——”\n\n“我知道。”林雪闪身进入门内，靴底踩到一滩液体。\n\n她低头。冷却剂，从控制台下方的主机柜渗出，在防静电地板上蔓延成一片荧绿色的水洼。主机柜的检修面板被撬开，里面的生物凝胶接口裸露在外，三根光纤线缆被齐根剪断。\n\n控制台的显示器还亮着，屏幕上是未完成的神经同步协议界面，光标在“双人桥接——第二阶段”的进度条上闪烁，停在百分之四十七。\n\n林雪的手指贴上触控板，调出操作日志。最后一条记录显示在十四分钟前，操作者ID被抹除，只留下一个时间戳和一行乱码。\n\n她正要深挖日志底层数据，门外的苏陌突然压低声音：“有人。”\n\n林雪的手从触控板移回枪柄。\n\n通道尽头传来脚步声，两双军靴踩在钢格栅上，节奏均匀，没有掩饰的意思。探照灯的光柱扫过通道拐角，在墙壁上投下两个拉长的人影。\n\n“巡逻队。”苏陌背靠门框，焊枪贴着大腿外侧，“三分钟后到门口。”\n\n林雪扫了一眼显示器上的进度条，又看了一眼被剪断的光纤线缆。她伸手拔下左腕上的战术数据线，一头插进主机柜的备用接口，另一头接上自己的个人终端。\n\n屏幕弹出下载进度：47秒。\n\n“拖住他们。”她说。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_screenplay_visual_1784042349422"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "black_humor",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "8500a84cbc4ac6956f151420ba1bd0df689531a78034cb9a3cda592d0a03bbf0",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 1284,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "black_humor",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence",
+          "black_humor_originality"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "issues": [
+          "旁白段中‘北壁城邦封门管理条例第8条规定’的行政措辞与现场后果的逻辑错位可更尖锐，当前‘被退了三次’的讽刺力度稍弱于前文‘门快关了’的荒诞感，但整体仍符合干冷反讽要求。"
+        ],
+        "rewrite_directive": ""
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "black_humor",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "8500a84cbc4ac6956f151420ba1bd0df689531a78034cb9a3cda592d0a03bbf0",
+          "strict": true,
+          "before": {
+            "style_key": "black_humor",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence",
+              "black_humor_originality"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "警报响的时候林雪正蹲在配给站后墙根，用指甲敲第三根水管。\n\n空响。她敲了四截，三截空响，一截闷响。闷响那截里还有半管泥浆水，得拆弯头才能取出来。她把位置记在脑子里——东墙往北数第七根，弯头锈死，需要扳手。\n\n警报是突然炸开的。铁皮喇叭挂在哨塔顶上，声音像钝刀刮骨头，三短一长，重复三遍。封门警报。\n\n林雪站起来，膝盖咔嗒一声。配给站后巷的阴影里，苏末正蹲在一辆翻倒的装甲车残骸旁，用骨刀刮车底板上的锈。她没抬头，但打磨的动作停了。\n\n“三分钟。”林雪说。\n\n苏末把骨刀插回腿侧皮鞘，站起来，斗篷兜帽往下滑了一截，露出下巴上新结的痂。“你那个塔，西南角有个排水格栅，锈穿了，但卡扣是好的。”她说话时没看林雪，盯着装甲车残骸投在地上的影子，“我拆下来了。”\n\n林雪没接话。她在算时间。从配给站到南门，正常走两分半。但苏末右腿膝盖以下裹着撕成条的防化服内衬，血已经渗到第三层。那是昨天在旧47号公路翻废车时，一块翘起的钢板割的。伤口没缝，只用酒精擦过一遍。\n\n“卡扣给我。”林雪伸出手。\n\n苏末从斗篷内袋里摸出一块巴掌大的铁扣，丢过来。林雪接住，翻面看了看。卡扣边缘有苏末用骨刀撬过的痕迹，凹槽里还嵌着半片干涸的菌膜。她把它塞进腰包，扣紧搭扣。\n\n南门方向传来液压轴沉闷的运转声。封门开始了。\n\n“你走东排水沟。”林雪说，“沟底有去年埋的备用管，能爬出去。”\n\n“你呢。”\n\n“我走南门。”\n\n苏末终于转过头看她。不是看脸，是看林雪右肩——防化服肩部接缝处有一道三厘米的裂口，露出里面灰蓝色的棉质内衬。那不是利器划的，是反复弯折后材料疲劳崩开的。\n\n“你那个裂口，辐射尘进去，七十二小时肺水肿。”苏末说。\n\n“那就别让我白跑。”林雪把防化服袖口往下拽了拽，盖住指尖的咬痕，“卡扣我带出去。你芯片坐标给我。”\n\n苏末从斗篷里摸出那枚数据芯片。旧式军用规格，指甲盖大小，金属外壳上刻着褪色的序列号。她把它塞进林雪手里，指尖碰到林雪掌心时顿了一下。\n\n“老王说循环站入口有验证闸，需要卫兵级权限卡。”苏末说，“我只有这个。”\n\n林雪把芯片握在手心，金属外壳还有苏末的体温。她转身往南门跑。\n\n液压轴的声音越来越沉。南门是一整块二十厘米厚的钢板，正以每秒两厘米的速度往下落。门缝已经缩到一米二。\n\n哨塔上的卫兵在喊什么，林雪没听清。她跑过配给站正门时，看见两个持枪卫兵正把一具尸体从排队队列里拖出来。尸体穿着北壁卫兵制服，嘴唇发白，嘴角有干涸的水渍。排队的人往两侧让开，动作整齐得像被训练过。\n\n林雪没停。她侧身冲进南门门缝，左肩擦过钢板下缘，防化服裂口处刮掉一块布片。\n\n门在她身后砸进地槽，扬起的灰呛进她肺里。\n\n北壁城邦封门管理条例第8条规定，凡在封门警报响后仍强行穿越门禁者，当日配给份额自动清零，且需在三个工作日内补交一份穿越理由说明，格式见附件三。林雪上个月交过一份，因为帮苏末抢修水塔延误了撤离。那份说明被退了三次，理由是“穿越理由”一栏不能填“门快关了”。\n\n她把芯片塞进腰包夹层，往旧47号公路的方向走。右肩裂口灌进干燥的风，辐射尘附在棉质内衬上，像一层灰色的霜。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_black_humor_1784042857908"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "workplace_drama",
+      "style": "black_humor",
+      "preset_version": "2026-07-14.1",
+      "prompt_hash": "8500a84cbc4ac6956f151420ba1bd0df689531a78034cb9a3cda592d0a03bbf0",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 1327,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "style_key": "black_humor",
+        "strict": true,
+        "checked_rules": [
+          "no_meta_leak",
+          "character_presence",
+          "black_humor_originality"
+        ],
+        "passed": true,
+        "requires_rewrite": false,
+        "findings": []
+      },
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "干冷旁白句可更独立，当前与叙述段落粘连；真实代价可更尖锐"
+        ],
+        "rewrite_directive": ""
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "black_humor",
+          "preset_version": "2026-07-14.1",
+          "prompt_hash": "8500a84cbc4ac6956f151420ba1bd0df689531a78034cb9a3cda592d0a03bbf0",
+          "strict": true,
+          "before": {
+            "style_key": "black_humor",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence",
+              "black_humor_originality"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "initial_text": "",
+      "text": "食堂的配餐窗口前贴了一张新告示，A4纸，宋体四号，抬头是《关于规范员工餐补申领流程的补充说明（2026年第三版）》。夏宁站在告示前，手里捏着空饭盒，饭盒是不锈钢的，前总监留下的，底部刻着“创邑十年”四个字，已经磨得有点模糊了。\n\n告示第三条写明：申领午餐补贴的员工须先至行政部领取《个人生存状态确认表》，由直属上级签字证明“该员工截至填表时尚具备劳动能力”，再经财务部复核盖章，方可凭表至食堂窗口刷卡领取当日餐补。\n\n窗口后面的阿姨把刷卡机推过来，屏幕亮着，显示余额为零。\n\n“表呢？”阿姨问。\n\n夏宁转身去了行政部。行政部在二楼夹层，门口堆着三箱未拆封的并购尽调文件，纸箱上贴着封条，封条日期是前总监失踪那天。行政专员从抽屉里翻出一沓空白表格，抽出最上面那张，递给夏宁，同时递过来一支签字笔。\n\n表格分四栏：姓名、工号、最近一次进食时间（精确到小时）、当前身体状况（勾选：可站立/可坐立/仅能卧床）。夏宁逐项填写。填到“最近一次进食时间”时，她看了眼手机——昨天下午三点，会议室里，陆远山叫了外卖，没叫她。她写上“27小时前”。\n\n“身体状况”那栏，她勾了“可站立”。\n\n然后她拿着表去找陆远山签字。陆远山在会议室里，背对窗户，面前摊着一份比稿方案，封面上印着“新天地商业体·创邑广告·机密”。他接过表格，逐行看，看到“27小时前”时，手指在桌面上敲了两下。\n\n“这个数字，你确定准确？”他问。\n\n“昨天下午三点，你叫外卖，没叫我。”\n\n“那是因为你在电话里说你在外面跑客户。”\n\n“所以我没吃。”\n\n陆远山没再说话，从西装内袋里掏出钢笔，在“直属上级签字”栏签了自己的名字，字迹工整，每一笔都落在该落的位置。他把表格递回来，指腹在纸面上压了一下，留下一个浅浅的汗印。\n\n“财务部今天下午三点开会，”他说，“你最好三点之前把章盖了。”\n\n夏宁拿着表格去财务部。财务部的门半掩着，里面传出计算器按键声，节奏均匀，像某种工业设备的运转。她推门进去，把表格放在财务经理桌上。财务经理看了一眼，从抽屉里取出公章，在印泥上按了两下，然后在表格右下角盖了一个鲜红的圆章。\n\n“下次早点来，”财务经理说，“这个月餐补预算还剩三百，先到先得。”\n\n夏宁拿着盖完章的表格回到食堂。窗口阿姨接过表格，核对签名和公章，核对了两遍，然后把表格收进一个文件夹，文件夹侧面贴着标签：“2026年10月·餐补申领存档”。\n\n“刷卡吧。”阿姨说。\n\n夏宁把饭卡贴在刷卡机上。机器嘀了一声，屏幕跳出一行字：余额 0.00 元，本月餐补已发放完毕。\n\n阿姨探头看了一眼屏幕，又看了一眼夏宁手里的空饭盒。\n\n“明天早点来，”她说，“餐补每天早上八点开始申领，先到先得。”\n\n夏宁把空饭盒扣在刷卡机上，转身走出食堂。\n\n行政部于当日下午四点群发全员邮件，标题为《关于规范员工餐补申领流程的整改通报》，正文称“本次流程优化有效提升了行政效能，申领效率较上月提升百分之四十，员工满意度显著提高”。\n\n夏宁在工位上打开邮件，看了一眼，然后关掉。她打开抽屉，从最里面摸出半包压缩饼干，是前总监走之前塞给她的，包装袋上印着保质期：2025年12月。\n\n她撕开包装，咬了一口。饼干受潮了，嚼起来像硬纸板。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_black_humor_1784043070952"
+    }
+  ],
+  "summary": {
+    "total": 32,
+    "passed": 32,
+    "by_scenario": {
+      "compatible": {
+        "total": 16,
+        "passed": 16
+      },
+      "pressure": {
+        "total": 16,
+        "passed": 16
+      }
+    }
+  }
+}

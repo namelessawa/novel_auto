@@ -155,6 +155,39 @@ def _make_section_executor(
     async def _executor(updater: ProgressUpdater, user_id: str, novel_id: str) -> dict:
         runtime = get_runtime(user_id, novel_id)
         orch = runtime.orchestrator
+        tick_state = getattr(runtime, "tick_state", None)
+
+        protected_terms: list[str] = []
+        style_contract = ""
+        if tick_state is not None:
+            try:
+                profiles = tick_state.list_character_profiles()
+                protected_terms.extend(p.name for p in profiles if p.name)
+                protected_terms.extend(
+                    loc.name for loc in tick_state.world_state.locations if loc.name
+                )
+                snapshot = tick_state.style_preset_snapshot
+                if snapshot:
+                    style_contract = "\n".join(
+                        part
+                        for part in (
+                            str(snapshot.get("narrator_addendum", "") or "").strip(),
+                            str(snapshot.get("final_checklist", "") or "").strip(),
+                        )
+                        if part
+                    )
+                voice_contract = [
+                    f"- {p.name}: {p.speech_style}"
+                    for p in profiles
+                    if p.name and p.speech_style
+                ]
+                if voice_contract:
+                    style_contract += (
+                        "\n人物声纹必须保留，编辑对白时不得互相同质化：\n"
+                        + "\n".join(voice_contract)
+                    )
+            except Exception as e:
+                logger.warning("section editor context build failed (non-fatal): %s", e)
 
         tick_start = orch.current_tick
         narrative_parts: list[str] = []
@@ -224,6 +257,9 @@ def _make_section_executor(
             chapter=chapter,
             section_no=section_no,
             novel_title=novel_title,
+            narrative_parts=narrative_parts,
+            protected_terms=protected_terms,
+            style_contract=style_contract,
         )
 
         tick_end = orch.current_tick
@@ -238,6 +274,7 @@ def _make_section_executor(
             tick_count=tick_count,
             silent_tick_count=len(silent_records),
             closure_supplement=out.closure_supplement,
+            editor_trace=out.editor_trace,
             created_at=TickSection.now_iso(),
         )
         store.append(section_record)

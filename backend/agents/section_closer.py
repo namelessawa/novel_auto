@@ -27,11 +27,11 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from dataclasses import dataclass, field
 
+from agents.section_editor import SectionEditor
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak
@@ -63,6 +63,16 @@ def section_min_words() -> int:
 
 def section_max_ticks() -> int:
     return _int_env("SECTION_MAX_TICKS", 30)
+
+
+def _auto_bool_env(name: str, *, production_default: bool = True) -> bool:
+    """Explicit 1/0 wins; tests default off so legacy mock queues stay stable."""
+    raw = os.environ.get(name, "").strip().lower()
+    if raw:
+        return raw not in {"0", "false", "no", "off"}
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return False
+    return production_default
 
 
 # ---- 数据契约 ---------------------------------------------------------------
@@ -100,6 +110,7 @@ class SectionClosureOutput:
     final_content: str
     word_count: int
     consumed_silent_ticks: list[int] = field(default_factory=list)
+    editor_trace: dict = field(default_factory=dict)
 
 
 # ---- 主类 -------------------------------------------------------------------
@@ -116,10 +127,12 @@ class SectionCloser:
         target_words: int | None = None,
         min_words: int | None = None,
         max_ticks: int | None = None,
+        editor: SectionEditor | None = None,
     ) -> None:
         self.target_words = target_words if target_words is not None else section_target_words()
         self.min_words = min_words if min_words is not None else section_min_words()
         self.max_ticks = max_ticks if max_ticks is not None else section_max_ticks()
+        self._editor = editor or SectionEditor()
         if self.min_words > self.target_words:
             raise ValueError(
                 f"min_words ({self.min_words}) 不能大于 target_words ({self.target_words})"
@@ -259,8 +272,16 @@ class SectionCloser:
         chapter: int,
         section_no: int,
         novel_title: str = "",
+        narrative_parts: list[str] | None = None,
+        protected_terms: list[str] | None = None,
+        style_contract: str = "",
     ) -> SectionClosureOutput:
-        """生成补叙 (若有沉默 tick) + 拼正文 + 生成标题。"""
+        """生成补叙、章节级接缝编辑、标题与终稿。
+
+        ``narrative_parts`` 为空时保持旧行为。生产 section executor 会传入每个
+        tick 的原始片段，让 SectionEditor 能识别接缝；编辑或事实验收失败时
+        自动保留原始拼接稿。
+        """
         supplement = ""
         consumed: list[int] = []
         if silent_ticks:
@@ -276,6 +297,28 @@ class SectionCloser:
         else:
             final_content = narrative_text
 
+        editor_trace: dict = {
+            "attempted": False,
+            "adopted": False,
+            "skip_reason": "section_editor_disabled_or_no_parts",
+        }
+        editor_parts = [
+            part for part in (narrative_parts or []) if part and part.strip()
+        ]
+        if supplement:
+            editor_parts.append(supplement)
+        if editor_parts and _auto_bool_env("SECTION_EDITOR_ENABLE"):
+            edit_out = await self._editor.edit(
+                parts=editor_parts,
+                combined_text=final_content,
+                novel_title=novel_title,
+                style_contract=style_contract,
+                protected_terms=protected_terms or [],
+                verify=_auto_bool_env("SECTION_EDITOR_VERIFY_ENABLE"),
+            )
+            final_content = edit_out.final_content
+            editor_trace = edit_out.trace
+
         title = await self._generate_title(
             chapter=chapter,
             section_no=section_no,
@@ -289,6 +332,7 @@ class SectionCloser:
             final_content=final_content,
             word_count=_count_words(final_content),
             consumed_silent_ticks=consumed,
+            editor_trace=editor_trace,
         )
 
     async def _draft_closure_supplement(

@@ -32,8 +32,6 @@ try:
     from novel_presets import (
         STYLE_PRESETS,
         THEME_SEEDS,
-        get_style_preset,
-        get_theme_seed,
         recommended_pairs_api_payload,
     )
     _PRESETS_AVAILABLE = True
@@ -85,6 +83,9 @@ async def get_presets(current_user: User = Depends(get_current_user)):
                 "key": s.key,
                 "label": s.label,
                 "description": s.description,
+                "version": s.version,
+                "prompt_hash": s.prompt_hash,
+                "strict_every_ticks": s.strict_every_ticks,
             }
             for s in STYLE_PRESETS.values()
         ],
@@ -312,6 +313,8 @@ async def regenerate_style_anchors_endpoint(
             title=novel_title,
             positioning=req.positioning,
             references=req.references,
+            style_preset_key=ts.style_preset_key,
+            style_preset_snapshot=ts.style_preset_snapshot,
         )
     except Exception as e:
         logger.exception(
@@ -339,6 +342,74 @@ async def regenerate_style_anchors_endpoint(
         "style_anchors_count": len(new_anchors),
         "message": f"已重新生成 {len(new_anchors)} 段风格锚点",
         "scene_types": [a.scene_type for a in new_anchors],
+        "style_preset_key": ts.style_preset_key,
+        "style_preset_version": ts.style_preset_version,
+        "style_preset_prompt_hash": ts.style_preset_prompt_hash,
+    }
+
+
+class SwitchStylePresetRequest(BaseModel):
+    style: str = Field(description="目标 style preset key；空字符串回到默认行为")
+    positioning: str = Field(default=DEFAULT_POSITIONING)
+    references: str = Field(default=DEFAULT_REFERENCES)
+    regenerate_anchors: bool = Field(
+        default=True,
+        description="true 时先生成与新 preset 一致的锚点；false 时清空旧锚点",
+    )
+
+
+@router.post("/api/novels/{novel_id}/style-preset")
+async def switch_style_preset_endpoint(
+    novel_id: str,
+    req: SwitchStylePresetRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """显式升级/切换风格，并冻结新版本契约；不悄然升级旧存档。"""
+    novel = novel_manager.get_novel(current_user.id, novel_id)
+    if novel is None:
+        raise HTTPException(status_code=404, detail=f"novel {novel_id!r} 不存在")
+    style_key = (req.style or "").strip()
+    if style_key and (not _PRESETS_AVAILABLE or style_key not in STYLE_PRESETS):
+        raise HTTPException(
+            status_code=400,
+            detail=f"style {style_key!r} not in registry",
+        )
+
+    data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
+    ts = TickState(data_dir=data_dir)
+    if not ts.load():
+        raise HTTPException(status_code=409, detail="小说尚未完成世界冷启动")
+
+    snapshot = STYLE_PRESETS[style_key].to_snapshot() if style_key else {}
+    new_anchors = []
+    if req.regenerate_anchors:
+        try:
+            new_anchors = await generate_style_anchors(
+                title=(novel.get("title") or "").strip(),
+                positioning=req.positioning,
+                references=req.references,
+                style_preset_key=style_key,
+                style_preset_snapshot=snapshot,
+            )
+        except Exception as exc:
+            logger.exception("style switch anchor generation failed: %s", novel_id)
+            raise HTTPException(status_code=502, detail=f"风格锚点生成失败: {exc}")
+        if not new_anchors:
+            raise HTTPException(status_code=502, detail="新风格锚点为空，未切换")
+
+    # 先生成成功，最后一次性更新内存并原子 save；失败不会留下半切换状态。
+    ts.set_style_preset_contract(style_key, snapshot)
+    ts.replace_style_anchors(new_anchors)
+    ts.save()
+    _reload_runtime(current_user.id, novel_id)
+    novel_manager.touch_last_accessed(current_user.id, novel_id)
+    return {
+        "novel_id": novel_id,
+        "style_preset_key": style_key,
+        "style_preset_version": ts.style_preset_version,
+        "style_preset_prompt_hash": ts.style_preset_prompt_hash,
+        "style_anchors_count": len(new_anchors),
+        "message": "风格契约与锚点已同步切换",
     }
 
 
