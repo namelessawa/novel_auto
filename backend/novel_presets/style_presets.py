@@ -286,14 +286,19 @@ STYLE_PRESETS: dict[str, StylePreset] = {
     "philosophical_meditative": StylePreset(
         key="philosophical_meditative",
         label="哲思冥想 (博尔赫斯式)",
+        version="2026-07-21.1",
         description=(
             "外象事件少, 时间感破碎, 角色行动是哲学命题的载体. 适合实验/哲思文学."
         ),
         narrator_addendum=(
             "# 本作风格契约 — philosophical_meditative\n"
             "外象事件可压缩, 重点是角色被某个概念 (镜像 / 时间 / 名字 / 选择) "
-            "缠住的状态. 一段允许 1-2 句抽象命题但必须落到一个具体物 (一面镜, "
-            "一张地图, 一个名字的发音变了). 时间感可错位 (此刻同时是十年后).\n"
+            "缠住的状态. 每个叙述单元必须推进一个可辨认的概念问题: 用 1-2 句"
+            "说清问题, 落到一个具体物 (一面镜, 一张地图, 一个名字的发音变了), "
+            "再由视点人物的选择或代价承接, 不作议论文结论. 时间感可错位 "
+            "(此刻同时是十年后). 高压场景也不得退化成纯短对白和动作流: 至少保留"
+            "一次“具体物→概念问题→人物选择”链, 同时完整写出事件结果, 不为哲思"
+            "新增事实.\n"
             "**最低人物存在度**: 哲学命题挂在视点角色的具体反应上 (停下, 重读, "
             "抬眼), 不写无角色的概念散文.\n\n"
         ),
@@ -393,7 +398,7 @@ _STYLE_RUNTIME_CONTRACTS: dict[str, dict[str, Any]] = {
         "strict_every_ticks": 3,
     },
     "philosophical_meditative": {
-        "final_checklist": "抽象命题落到具体物，并挂在视点人物的反应上。",
+        "final_checklist": "至少一条可辨认概念问题；以具体物触发，由视点人物选择或代价承接；高压场景不丢事件结果。",
         "det_rules": ("no_meta_leak", "character_presence"),
     },
     "screenplay_visual": {
