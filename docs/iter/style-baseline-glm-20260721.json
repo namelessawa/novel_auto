@@ -1,0 +1,2430 @@
+{
+  "metadata": {
+    "started_at": 1784568995,
+    "git_sha": "0d91d575dccceb71e8258cb94b822a6e55a4307c",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "model": "glm-5.2",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "both",
+    "ticks": 1,
+    "no_judge": false,
+    "max_revisions": 0,
+    "shared_bootstrap": true,
+    "last_run_mode": "both",
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784568995",
+      "xianxia_cultivation": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_xianxia_cultivation_1784568995",
+      "republic_spy": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_republic_spy_1784568995",
+      "gourmet_culinary": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_gourmet_culinary_1784568995",
+      "history_military": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_history_military_1784568995",
+      "scifi_soft_lit": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_scifi_soft_lit_1784568995"
+    },
+    "finished_at": 1784570436,
+    "modes_present": [
+      "compatible",
+      "pressure"
+    ]
+  },
+  "results": [
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "xianxia_fast",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 836,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "xianxia_fast",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "active_ending"
+            ],
+            "passed": false,
+            "requires_rewrite": false,
+            "findings": [
+              {
+                "code": "active_ending",
+                "severity": "medium",
+                "message": "严格节拍未以人物动作/出手收尾"
+              }
+            ]
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "第三拍兑现稍弱：铅盒夺回后仅用于敲击关节，未立刻用它打开门、逼退阻碍或抢先一步，可用收益偏向物理打击而非信息差兑现"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "xianxia_fast",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58",
+          "strict": true,
+          "before": {
+            "style_key": "xianxia_fast",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "active_ending"
+            ],
+            "passed": false,
+            "requires_rewrite": false,
+            "findings": [
+              {
+                "code": "active_ending",
+                "severity": "medium",
+                "message": "严格节拍未以人物动作/出手收尾"
+              }
+            ]
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报声撕开铅灰色天空。\n陆深的手指刚从水泵外壳上移开——他敲了三下，第三声回音发闷，内部齿轮咬死。还没来得及拆，墙头的警报器就炸了。\n红色的光扫过防壁，扫过街道上呆滞的人群，然后所有人都开始跑。\n苏茉在他身后三米处，左腿跪在地上。刚才一块锈蚀的钢板从防壁上剥落，砸中她的膝盖。血从裤管渗出来，和地上的金属粉尘混成泥。\n她手里攥着一个铅盒。\n那是陆深从旧气象中心带回来的日志，最后一页残留的荧光粉末还没化验。苏茉说她知道一个地方能检测，但必须带出城。现在铅盒被巡逻队长扣在手里，对方正把它往腰包里塞。\n“三分钟封门。”巡逻队长看了一眼腕表，转身往出口走。\n陆深跨过苏茉，追上去。\n不是跑——他迈步的节奏像在丈量距离，三步追上，右手扣住队长的肩胛骨，左手从他腰包里抽出铅盒。动作不快，但每一下都卡在对方迈步的间隙里，等队长反应过来，铅盒已经在陆深手里。\n“你——”队长拔枪。\n陆深没给他抬腕的机会。他用铅盒的棱角敲在队长腕关节上，骨节错位的声音比警报还脆。枪掉在地上，陆深一脚踢进排水沟。\n他转身，把铅盒塞进苏茉手里。“走。”\n苏茉撑着墙站起来，左腿不能承重，她用右腿跳着往前挪。出口的钢闸门已经开始下降，液压杆收缩，铁锈碎屑簌簌往下掉。\n距离闸门还有二十米。\n十五米。\n陆深弯腰，把苏茉的胳膊架在自己肩上，半拖半扛地冲向闸门。钢闸降到胸口高度，冷风从缝隙灌进来，带着酸雨的灼烧味。\n他先把苏茉推出去，然后自己侧身滚过闸门。\n钢闸砸进地面的凹槽，溅起碎石。\n陆深站起来，检查铅盒——外壳凹了一块，但锁扣完好。苏茉靠着防壁外墙，撕下袖子扎紧膝盖上方的动脉。\n“巡逻队会追出来。”她说。\n陆深没回答。他盯着防壁外三十米处，三辆改装过的焊甲车正从尘雾里驶出，车顶的重机枪还没预热，但车身上涂的标记他认得——汽车坟场的掠夺者帮派。\n为首那辆车的副驾探出半个身子，手里举着一支印有北壁城邦标记的制式步枪。\n“陆深。”苏茉抓紧铅盒，“那些枪，就是我侦察时看到的。”\n掠夺者的车队开始加速。",
+          "style_trace": {
+            "preset_key": "xianxia_fast",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58",
+            "strict": true,
+            "before": {
+              "style_key": "xianxia_fast",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "active_ending"
+              ],
+              "passed": false,
+              "requires_rewrite": false,
+              "findings": [
+                {
+                  "code": "active_ending",
+                  "severity": "medium",
+                  "message": "严格节拍未以人物动作/出手收尾"
+                }
+              ]
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦防壁外侧",
+                "injuries": [],
+                "status": "活跃"
+              },
+              "char_sumo": {
+                "location": "北壁城邦防壁外侧",
+                "injuries": [
+                  "左膝被钢板砸伤，无法承重"
+                ],
+                "status": "负伤"
+              }
+            },
+            "items": {
+              "铅盒": {
+                "holder": "char_sumo",
+                "quantity": 1,
+                "condition": "外壳凹痕，锁扣完好，内含旧气象中心日志及残留荧光粉末"
+              },
+              "制式步枪": {
+                "holder": "掠夺者",
+                "quantity": 1,
+                "condition": "印有北壁城邦标记，被掠夺者持有"
+              }
+            },
+            "knowledge": [
+              "巡逻队长扣留铅盒时试图将其据为己有",
+              "掠夺者持有北壁城邦制式武器，证实内部存在武器交易"
+            ],
+            "time_marker": "警报触发后三分钟，钢闸已封死，掠夺者车队出现"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "陆深跨过苏茉，追上去。",
+                    "左手从他腰包里抽出铅盒。",
+                    "他用铅盒的棱角敲在队长腕关节上",
+                    "他转身，把铅盒塞进苏茉手里。",
+                    "陆深弯腰，把苏茉的胳膊架在自己肩上，半拖半扛地冲向闸门。",
+                    "他先把苏茉推出去，然后自己侧身滚过闸门。",
+                    "钢闸砸进地面的凹槽，溅起碎石。",
+                    "陆深站起来，检查铅盒——外壳凹了一块，但锁扣完好。",
+                    "苏茉靠着防壁外墙，撕下袖子扎紧膝盖上方的动脉。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.铅盒.holder",
+                    "items.铅盒.condition",
+                    "characters.char_sumo.injuries",
+                    "characters.char_lushen.location",
+                    "characters.char_sumo.location",
+                    "time_marker"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文完整兑现了源事件要求：主角在警报封门压力下立即行动，从巡逻队长手中夺回铅盒，带受伤同伴冲出闸门，承受了铅盒凹痕、苏茉膝伤加重等可见后果。结束状态与声明一致，无内部矛盾、无新增专名、无修订差异。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报声撕开铅灰色天空。\n陆深的手指刚从水泵外壳上移开——他敲了三下，第三声回音发闷，内部齿轮咬死。还没来得及拆，墙头的警报器就炸了。\n红色的光扫过防壁，扫过街道上呆滞的人群，然后所有人都开始跑。\n苏茉在他身后三米处，左腿跪在地上。刚才一块锈蚀的钢板从防壁上剥落，砸中她的膝盖。血从裤管渗出来，和地上的金属粉尘混成泥。\n她手里攥着一个铅盒。\n那是陆深从旧气象中心带回来的日志，最后一页残留的荧光粉末还没化验。苏茉说她知道一个地方能检测，但必须带出城。现在铅盒被巡逻队长扣在手里，对方正把它往腰包里塞。\n“三分钟封门。”巡逻队长看了一眼腕表，转身往出口走。\n陆深跨过苏茉，追上去。\n不是跑——他迈步的节奏像在丈量距离，三步追上，右手扣住队长的肩胛骨，左手从他腰包里抽出铅盒。动作不快，但每一下都卡在对方迈步的间隙里，等队长反应过来，铅盒已经在陆深手里。\n“你——”队长拔枪。\n陆深没给他抬腕的机会。他用铅盒的棱角敲在队长腕关节上，骨节错位的声音比警报还脆。枪掉在地上，陆深一脚踢进排水沟。\n他转身，把铅盒塞进苏茉手里。“走。”\n苏茉撑着墙站起来，左腿不能承重，她用右腿跳着往前挪。出口的钢闸门已经开始下降，液压杆收缩，铁锈碎屑簌簌往下掉。\n距离闸门还有二十米。\n十五米。\n陆深弯腰，把苏茉的胳膊架在自己肩上，半拖半扛地冲向闸门。钢闸降到胸口高度，冷风从缝隙灌进来，带着酸雨的灼烧味。\n他先把苏茉推出去，然后自己侧身滚过闸门。\n钢闸砸进地面的凹槽，溅起碎石。\n陆深站起来，检查铅盒——外壳凹了一块，但锁扣完好。苏茉靠着防壁外墙，撕下袖子扎紧膝盖上方的动脉。\n“巡逻队会追出来。”她说。\n陆深没回答。他盯着防壁外三十米处，三辆改装过的焊甲车正从尘雾里驶出，车顶的重机枪还没预热，但车身上涂的标记他认得——汽车坟场的掠夺者帮派。\n为首那辆车的副驾探出半个身子，手里举着一支印有北壁城邦标记的制式步枪。\n“陆深。”苏茉抓紧铅盒，“那些枪，就是我侦察时看到的。”\n掠夺者的车队开始加速。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报声撕开铅灰色天空。\n陆深的手指刚从水泵外壳上移开——他敲了三下，第三声回音发闷，内部齿轮咬死。还没来得及拆，墙头的警报器就炸了。\n红色的光扫过防壁，扫过街道上呆滞的人群，然后所有人都开始跑。\n苏茉在他身后三米处，左腿跪在地上。刚才一块锈蚀的钢板从防壁上剥落，砸中她的膝盖。血从裤管渗出来，和地上的金属粉尘混成泥。\n她手里攥着一个铅盒。\n那是陆深从旧气象中心带回来的日志，最后一页残留的荧光粉末还没化验。苏茉说她知道一个地方能检测，但必须带出城。现在铅盒被巡逻队长扣在手里，对方正把它往腰包里塞。\n“三分钟封门。”巡逻队长看了一眼腕表，转身往出口走。\n陆深跨过苏茉，追上去。\n不是跑——他迈步的节奏像在丈量距离，三步追上，右手扣住队长的肩胛骨，左手从他腰包里抽出铅盒。动作不快，但每一下都卡在对方迈步的间隙里，等队长反应过来，铅盒已经在陆深手里。\n“你——”队长拔枪。\n陆深没给他抬腕的机会。他用铅盒的棱角敲在队长腕关节上，骨节错位的声音比警报还脆。枪掉在地上，陆深一脚踢进排水沟。\n他转身，把铅盒塞进苏茉手里。“走。”\n苏茉撑着墙站起来，左腿不能承重，她用右腿跳着往前挪。出口的钢闸门已经开始下降，液压杆收缩，铁锈碎屑簌簌往下掉。\n距离闸门还有二十米。\n十五米。\n陆深弯腰，把苏茉的胳膊架在自己肩上，半拖半扛地冲向闸门。钢闸降到胸口高度，冷风从缝隙灌进来，带着酸雨的灼烧味。\n他先把苏茉推出去，然后自己侧身滚过闸门。\n钢闸砸进地面的凹槽，溅起碎石。\n陆深站起来，检查铅盒——外壳凹了一块，但锁扣完好。苏茉靠着防壁外墙，撕下袖子扎紧膝盖上方的动脉。\n“巡逻队会追出来。”她说。\n陆深没回答。他盯着防壁外三十米处，三辆改装过的焊甲车正从尘雾里驶出，车顶的重机枪还没预热，但车身上涂的标记他认得——汽车坟场的掠夺者帮派。\n为首那辆车的副驾探出半个身子，手里举着一支印有北壁城邦标记的制式步枪。\n“陆深。”苏茉抓紧铅盒，“那些枪，就是我侦察时看到的。”\n掠夺者的车队开始加速。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_xianxia_fast_1784569112875"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "noir_cold",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 940,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "noir_cold",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_exclamation",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": false,
+        "score": 9.0,
+        "blocking_issues": [
+          "纯环境镜头略超2句：'通风井的铁栅已经锈断了两根...'段落前两句无人物动作或对白，但整体克制且信息密度高，未严重违反契约。"
+        ],
+        "issues": [
+          "纯环境镜头略超2句：'通风井的铁栅已经锈断了两根...'段落前两句无人物动作或对白，但整体克制且信息密度高，未严重违反契约。"
+        ],
+        "rewrite_directive": "纯环境镜头略超2句：'通风井的铁栅已经锈断了两根...'段落前两句无人物动作或对白，但整体克制且信息密度高，未严重违反契约。",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "noir_cold",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+          "strict": true,
+          "before": {
+            "style_key": "noir_cold",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_exclamation",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报声从防壁哨站的东侧走廊炸开，三短一长，重复三次。封门倒计时。\n\n陆深把水泵残骸搁在水泥台上，手指敲了三下外壳——闷响，内部齿轮没咬死。他抬头看苏茉。\n\n她左小腿被倒下的货架划开一道口子，血从绑腿布里渗出来，染黑了帆布。她靠在墙边，手里攥着那本从旧气象中心带回的研究日志，封皮上沾着荧光粉末，在警报红灯下泛出淡绿。\n\n“守门人扣下了你的工具箱。”苏茉说，声音压过警报，“他说你上次出城没报备，这是扣押物。”\n\n陆深没接话。他走到走廊拐角，往东侧出口看了一眼。\n\n铁栅栏正在下降，速度不快，每分钟降二十厘米。栅栏后面站着守门人，一个穿民兵旧制服的中年人，腰间别着电击棍。他脚边放着陆深的工具箱，铁皮外壳，四个角磨出铜色。\n\n两分四十秒。\n\n陆深走回苏茉跟前，蹲下。撕开她裤腿的破口，伤口五厘米长，不深，但肌肉层露出来了。她从腰包里掏出半卷纱布，他接过去，缠了两圈，用力拉紧。\n\n苏茉吸了口气，没出声。\n\n“工具箱里有什么。”她问。\n\n“净水器核心。守望者的存储芯片。”陆深把纱布打结，站起来，“还有半包烟。”\n\n“你能不要什么。”\n\n“烟。”\n\n他转身朝栅栏走去。守门人看见他，右手按在电击棍上。\n\n“封门了，退回去。”守门人说。\n\n陆深在栅栏前一米停住。铁栅栏降到胸口高度，还剩一分半。\n\n“工具箱还我。”陆深说。\n\n“扣押物，等明天审查。”\n\n“我可以等。”陆深从夹克内兜掏出那半包烟，烟纸发黄，没霉。他抽出三根，从栅栏缝隙递过去，“明天审查，烟还我。”\n\n守门人盯着烟看了三秒，伸手接了。他把工具箱拎起来，从栅栏下方塞出来。\n\n陆深拎起工具箱，转身往回走。苏茉已经撑着墙站起来，瘸着腿往西侧走廊挪。\n\n“西侧通风井。”她说，“爬三十米，出防壁外层。”\n\n陆深把工具箱换到左手，右手架住她腋下。两个人贴着墙根移动，警报声还在响，红灯把他们的影子拉成两条扭曲的线。\n\n铁栅栏在他们身后磕上地面，发出一声闷响。\n\n通风井的铁栅已经锈断了两根，剩下的空隙刚好够一个人侧身挤过去。陆深先把工具箱塞出去，然后托着苏茉的腰把她推上去。她咬着牙，左腿使不上力，手指扣住锈铁边缘，翻了出去。\n\n陆深最后回头看了一眼走廊。守门人站在栅栏后面，正在点烟。\n\n他钻出通风井，酸雨打在脸上，冷得像针。",
+          "style_trace": {
+            "preset_key": "noir_cold",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+            "strict": true,
+            "before": {
+              "style_key": "noir_cold",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "no_exclamation",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦防壁哨站外层，通风井出口外",
+                "condition": "正常",
+                "injuries": []
+              },
+              "char_sumo": {
+                "location": "北壁城邦防壁哨站外层，通风井出口外",
+                "condition": "左小腿割伤，已包扎，行动受限",
+                "injuries": [
+                  "左小腿5厘米割伤，肌肉层暴露，纱布包扎"
+                ]
+              }
+            },
+            "items": {
+              "toolbox_lushen": {
+                "owner": "char_lushen",
+                "contents": [
+                  "净水器核心",
+                  "守望者存储芯片",
+                  "半包烟（已消耗三根）"
+                ],
+                "condition": "完好"
+              },
+              "research_log": {
+                "owner": "char_sumo",
+                "condition": "封皮沾有荧光粉末",
+                "location": "苏茉手中"
+              },
+              "cigarettes_half_pack": {
+                "owner": "char_lushen",
+                "quantity": "剩余约7根",
+                "condition": "烟纸发黄"
+              }
+            },
+            "knowledge": [
+              "守门人以未报备出城为由扣押了陆深的工具箱",
+              "工具箱内包含净水器核心和守望者AI存储芯片",
+              "防壁哨站东侧走廊有通风井可通往防壁外层",
+              "苏茉持有旧气象中心的研究日志，上面有荧光粉末"
+            ],
+            "time_marker": "封门倒计时结束，两人逃出哨站，酸雨正在下"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "警报声从防壁哨站的东侧走廊炸开，三短一长，重复三次。封门倒计时。",
+                    "她左小腿被倒下的货架划开一道口子，血从绑腿布里渗出来，染黑了帆布。",
+                    "守门人扣下了你的工具箱。",
+                    "陆深从夹克内兜掏出那半包烟，烟纸发黄，没霉。他抽出三根，从栅栏缝隙递过去",
+                    "他把工具箱拎起来，从栅栏下方塞出来。",
+                    "陆深把工具箱换到左手，右手架住她腋下。两个人贴着墙根移动",
+                    "他钻出通风井，酸雨打在脸上，冷得像针。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "time_marker",
+                    "characters.char_sumo.injuries",
+                    "items.toolbox_lushen.owner",
+                    "items.cigarettes_half_pack.quantity",
+                    "characters.char_lushen.location",
+                    "characters.char_sumo.location"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文完整兑现了源事件要求：警报封门倒计时、同伴受伤、工具箱被扣均已呈现，主角用三根烟换回工具箱并架着苏茉从通风井逃出，酸雨打在脸上作为可见后果。结束状态与声明一致，无内部矛盾、无新增专名、无修订差异。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报声从防壁哨站的东侧走廊炸开，三短一长，重复三次。封门倒计时。\n\n陆深把水泵残骸搁在水泥台上，手指敲了三下外壳——闷响，内部齿轮没咬死。他抬头看苏茉。\n\n她左小腿被倒下的货架划开一道口子，血从绑腿布里渗出来，染黑了帆布。她靠在墙边，手里攥着那本从旧气象中心带回的研究日志，封皮上沾着荧光粉末，在警报红灯下泛出淡绿。\n\n“守门人扣下了你的工具箱。”苏茉说，声音压过警报，“他说你上次出城没报备，这是扣押物。”\n\n陆深没接话。他走到走廊拐角，往东侧出口看了一眼。\n\n铁栅栏正在下降，速度不快，每分钟降二十厘米。栅栏后面站着守门人，一个穿民兵旧制服的中年人，腰间别着电击棍。他脚边放着陆深的工具箱，铁皮外壳，四个角磨出铜色。\n\n两分四十秒。\n\n陆深走回苏茉跟前，蹲下。撕开她裤腿的破口，伤口五厘米长，不深，但肌肉层露出来了。她从腰包里掏出半卷纱布，他接过去，缠了两圈，用力拉紧。\n\n苏茉吸了口气，没出声。\n\n“工具箱里有什么。”她问。\n\n“净水器核心。守望者的存储芯片。”陆深把纱布打结，站起来，“还有半包烟。”\n\n“你能不要什么。”\n\n“烟。”\n\n他转身朝栅栏走去。守门人看见他，右手按在电击棍上。\n\n“封门了，退回去。”守门人说。\n\n陆深在栅栏前一米停住。铁栅栏降到胸口高度，还剩一分半。\n\n“工具箱还我。”陆深说。\n\n“扣押物，等明天审查。”\n\n“我可以等。”陆深从夹克内兜掏出那半包烟，烟纸发黄，没霉。他抽出三根，从栅栏缝隙递过去，“明天审查，烟还我。”\n\n守门人盯着烟看了三秒，伸手接了。他把工具箱拎起来，从栅栏下方塞出来。\n\n陆深拎起工具箱，转身往回走。苏茉已经撑着墙站起来，瘸着腿往西侧走廊挪。\n\n“西侧通风井。”她说，“爬三十米，出防壁外层。”\n\n陆深把工具箱换到左手，右手架住她腋下。两个人贴着墙根移动，警报声还在响，红灯把他们的影子拉成两条扭曲的线。\n\n铁栅栏在他们身后磕上地面，发出一声闷响。\n\n通风井的铁栅已经锈断了两根，剩下的空隙刚好够一个人侧身挤过去。陆深先把工具箱塞出去，然后托着苏茉的腰把她推上去。她咬着牙，左腿使不上力，手指扣住锈铁边缘，翻了出去。\n\n陆深最后回头看了一眼走廊。守门人站在栅栏后面，正在点烟。\n\n他钻出通风井，酸雨打在脸上，冷得像针。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报声从防壁哨站的东侧走廊炸开，三短一长，重复三次。封门倒计时。\n\n陆深把水泵残骸搁在水泥台上，手指敲了三下外壳——闷响，内部齿轮没咬死。他抬头看苏茉。\n\n她左小腿被倒下的货架划开一道口子，血从绑腿布里渗出来，染黑了帆布。她靠在墙边，手里攥着那本从旧气象中心带回的研究日志，封皮上沾着荧光粉末，在警报红灯下泛出淡绿。\n\n“守门人扣下了你的工具箱。”苏茉说，声音压过警报，“他说你上次出城没报备，这是扣押物。”\n\n陆深没接话。他走到走廊拐角，往东侧出口看了一眼。\n\n铁栅栏正在下降，速度不快，每分钟降二十厘米。栅栏后面站着守门人，一个穿民兵旧制服的中年人，腰间别着电击棍。他脚边放着陆深的工具箱，铁皮外壳，四个角磨出铜色。\n\n两分四十秒。\n\n陆深走回苏茉跟前，蹲下。撕开她裤腿的破口，伤口五厘米长，不深，但肌肉层露出来了。她从腰包里掏出半卷纱布，他接过去，缠了两圈，用力拉紧。\n\n苏茉吸了口气，没出声。\n\n“工具箱里有什么。”她问。\n\n“净水器核心。守望者的存储芯片。”陆深把纱布打结，站起来，“还有半包烟。”\n\n“你能不要什么。”\n\n“烟。”\n\n他转身朝栅栏走去。守门人看见他，右手按在电击棍上。\n\n“封门了，退回去。”守门人说。\n\n陆深在栅栏前一米停住。铁栅栏降到胸口高度，还剩一分半。\n\n“工具箱还我。”陆深说。\n\n“扣押物，等明天审查。”\n\n“我可以等。”陆深从夹克内兜掏出那半包烟，烟纸发黄，没霉。他抽出三根，从栅栏缝隙递过去，“明天审查，烟还我。”\n\n守门人盯着烟看了三秒，伸手接了。他把工具箱拎起来，从栅栏下方塞出来。\n\n陆深拎起工具箱，转身往回走。苏茉已经撑着墙站起来，瘸着腿往西侧走廊挪。\n\n“西侧通风井。”她说，“爬三十米，出防壁外层。”\n\n陆深把工具箱换到左手，右手架住她腋下。两个人贴着墙根移动，警报声还在响，红灯把他们的影子拉成两条扭曲的线。\n\n铁栅栏在他们身后磕上地面，发出一声闷响。\n\n通风井的铁栅已经锈断了两根，剩下的空隙刚好够一个人侧身挤过去。陆深先把工具箱塞出去，然后托着苏茉的腰把她推上去。她咬着牙，左腿使不上力，手指扣住锈铁边缘，翻了出去。\n\n陆深最后回头看了一眼走廊。守门人站在栅栏后面，正在点烟。\n\n他钻出通风井，酸雨打在脸上，冷得像针。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_noir_cold_1784569173561"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "warm_healing",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+      "strict_every_ticks": 2,
+      "accepted": false,
+      "char_count": 1262,
+      "anchor_count": 5,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "warm_healing",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "warm_safety",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": false,
+        "score": 9.0,
+        "blocking_issues": [
+          "警报与倒计时营造的紧张感略强，略微冲淡了慢生活基调，但未违反硬契约"
+        ],
+        "issues": [
+          "警报与倒计时营造的紧张感略强，略微冲淡了慢生活基调，但未违反硬契约"
+        ],
+        "rewrite_directive": "警报与倒计时营造的紧张感略强，略微冲淡了慢生活基调，但未违反硬契约",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "warm_healing",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+          "strict": true,
+          "before": {
+            "style_key": "warm_healing",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "warm_safety",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报响起来的时候，陆深正蹲在那台老水泵前，手指刚敲完第三下外壳。声音闷，里头还有水。他抬头看了一眼天花板上的红色警示灯，一闪一闪的，把墙上的锈迹照成暗褐色。\n\n苏茉靠在门框上，左腿裤管从小腿那儿撕开了，血顺着脚踝往下淌，已经在水泥地上积了硬币大的一小滩。她没吭声，只拿枪托敲了敲门框，金属碰撞声压过了警报的尾音。\n\n“三分钟。”她说，声音比平时低，语速也慢。“守门那家伙扣了你的工具箱。说通行证过期。”\n\n陆深站起来，膝盖咔嗒响了一声。他走到苏茉跟前，蹲下去看她的腿。伤口不深，但口子长，从脚踝拉到小腿肚，边缘翻着，沾了铁锈和灰。他扯下脖子上的汗巾，叠了两叠，按在她伤口上。\n\n苏茉嘶了一声，手指攥紧枪托。\n\n“工具箱里有什么？”陆深问。\n\n“净水器核心。你在灰烬平原捡的那个。”\n\n陆深的手停了一下，然后继续把汗巾绕她小腿扎紧，打了一个结。他站起来，从自己腰包里摸出半卷医用胶带，塞进苏茉手里。“按住。别动。”\n\n他转身往出口走。通道不长，三十步到头，守门人站在铁栅栏前，怀里抱着他的工具箱——一个绿漆剥落的铁皮箱子，提手用铜丝缠过。守门人是个四十出头的男人，制服袖口磨得发白，脸上没表情。\n\n“通行证。”守门人说。\n\n陆深从口袋里掏出通行证，递过去。守门人接过来，翻了两翻，又递回来。“过期三天。”\n\n警报又响了一轮，这次更尖，像铁片刮玻璃。头顶的广播开始倒数：一百二十秒。\n\n陆深把通行证收回口袋，手没抽出来，指尖碰到口袋里一个硬东西——半块压缩饼干，用油纸包着，是早上苏茉塞给他的。他拿出来，搁在工具箱上。\n\n“饼干换箱子。”他说。\n\n守门人低头看了看饼干，又看了看陆深。“不够。”\n\n陆深把腰包解下来，倒出里面的东西：三颗净水片，一卷铜丝，一把折叠钳。他把净水片捡起来，两颗放在饼干旁边，剩下一颗捏在指间。“这颗留给我。她腿伤了，得换药。”\n\n守门人沉默了一会儿。广播里数到九十秒。他把工具箱从怀里放下来，推到陆深脚边，拿走了饼干和两颗净水片。\n\n陆深拎起箱子往回走。苏茉还靠在门框上，胶带已经缠好了，汗巾上渗出一小片暗红。他把箱子放在她脚边，蹲下去，手穿过她腋下，把她架起来。\n\n“箱子拿回来了。”他说。\n\n苏茉的胳膊搭在他肩上，手指扣住他工装背部的布料。“你给了他什么？”\n\n“饼干。”\n\n“还有呢？”\n\n陆深没回答，架着她往出口走。铁栅栏在他们身后落下来，砸进地面，溅起一小撮灰。\n\n出了通道，外面的风裹着酸雨味儿，打在脸上又湿又刺。陆深把苏茉扶到一处雨棚下，让她靠着墙坐好，然后打开工具箱。净水器核心还在，裹在一块旧帆布里，表面沾着荧光粉末，在昏暗里微微发亮。他合上箱子，从腰包里掏出最后一颗净水片，掰成两半，一半递给苏茉。\n\n“含着。别吞。”\n\n苏茉接过去，塞进嘴里，腮帮子鼓起一小块。她看着陆深，嘴唇动了动，最后只说了一句：“你那半块饼干，早上我没吃。”\n\n陆深把另一半净水片含进嘴里，舌尖尝到一股金属味。他把工具箱往怀里拢了拢，背靠着墙，闭上眼。\n\n雨棚外头，酸雨开始落下来，打在铁皮上，嗒嗒嗒地响。",
+          "style_trace": {
+            "preset_key": "warm_healing",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+            "strict": true,
+            "before": {
+              "style_key": "warm_healing",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "warm_safety",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦某通道出口处雨棚下",
+                "injuries": "无新伤",
+                "status": "存活，含半片净水片，持有工具箱（内有净水器核心）"
+              },
+              "char_sumo": {
+                "location": "北壁城邦某通道出口处雨棚下",
+                "injuries": "左小腿割伤，已用汗巾和胶带包扎，仍渗血",
+                "status": "存活，含半片净水片，被陆深架着撤离"
+              }
+            },
+            "items": {
+              "工具箱": "持有者：陆深。绿漆铁皮箱，提手用铜丝缠过，内装净水器核心（裹在旧帆布里，表面有荧光粉末）",
+              "净水器核心": "持有者：陆深（在工具箱内）。从灰烬平原捡回，内含AI'守望者'，表面有荧光粉末",
+              "净水片": "剩余0颗完整（已掰成两半分给陆深和苏茉含服）",
+              "压缩饼干": "已消耗（作为交换给了守门人）",
+              "汗巾": "已消耗（包扎在苏茉左小腿伤口上）",
+              "医用胶带": "持有者：苏茉（已使用部分包扎伤口）"
+            },
+            "knowledge": [
+              "守门人以通行证过期为由扣留了陆深的工具箱",
+              "陆深用半块压缩饼干和两颗净水片换回了工具箱",
+              "净水器核心仍在工具箱内，表面沾有荧光粉末"
+            ],
+            "time_marker": "警报封锁后，酸雨开始落下"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "警报响起来的时候",
+                    "三分钟",
+                    "守门那家伙扣了你的工具箱",
+                    "陆深站起来",
+                    "他转身往出口走",
+                    "饼干换箱子",
+                    "陆深把腰包解下来，倒出里面的东西",
+                    "他把工具箱从怀里放下来，推到陆深脚边，拿走了饼干和两颗净水片",
+                    "陆深拎起箱子往回走",
+                    "出了通道，外面的风裹着酸雨味儿",
+                    "雨棚外头，酸雨开始落下来"
+                  ],
+                  "ledger_evidence_paths": [
+                    "time_marker",
+                    "characters.char_sumo.injuries",
+                    "items.工具箱",
+                    "items.压缩饼干",
+                    "items.净水片"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成警报、受伤、扣箱、交换、撤离、酸雨等所有源事件要求，结束状态与声明一致，无内部矛盾或修订变更。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报响起来的时候，陆深正蹲在那台老水泵前，手指刚敲完第三下外壳。声音闷，里头还有水。他抬头看了一眼天花板上的红色警示灯，一闪一闪的，把墙上的锈迹照成暗褐色。\n\n苏茉靠在门框上，左腿裤管从小腿那儿撕开了，血顺着脚踝往下淌，已经在水泥地上积了硬币大的一小滩。她没吭声，只拿枪托敲了敲门框，金属碰撞声压过了警报的尾音。\n\n“三分钟。”她说，声音比平时低，语速也慢。“守门那家伙扣了你的工具箱。说通行证过期。”\n\n陆深站起来，膝盖咔嗒响了一声。他走到苏茉跟前，蹲下去看她的腿。伤口不深，但口子长，从脚踝拉到小腿肚，边缘翻着，沾了铁锈和灰。他扯下脖子上的汗巾，叠了两叠，按在她伤口上。\n\n苏茉嘶了一声，手指攥紧枪托。\n\n“工具箱里有什么？”陆深问。\n\n“净水器核心。你在灰烬平原捡的那个。”\n\n陆深的手停了一下，然后继续把汗巾绕她小腿扎紧，打了一个结。他站起来，从自己腰包里摸出半卷医用胶带，塞进苏茉手里。“按住。别动。”\n\n他转身往出口走。通道不长，三十步到头，守门人站在铁栅栏前，怀里抱着他的工具箱——一个绿漆剥落的铁皮箱子，提手用铜丝缠过。守门人是个四十出头的男人，制服袖口磨得发白，脸上没表情。\n\n“通行证。”守门人说。\n\n陆深从口袋里掏出通行证，递过去。守门人接过来，翻了两翻，又递回来。“过期三天。”\n\n警报又响了一轮，这次更尖，像铁片刮玻璃。头顶的广播开始倒数：一百二十秒。\n\n陆深把通行证收回口袋，手没抽出来，指尖碰到口袋里一个硬东西——半块压缩饼干，用油纸包着，是早上苏茉塞给他的。他拿出来，搁在工具箱上。\n\n“饼干换箱子。”他说。\n\n守门人低头看了看饼干，又看了看陆深。“不够。”\n\n陆深把腰包解下来，倒出里面的东西：三颗净水片，一卷铜丝，一把折叠钳。他把净水片捡起来，两颗放在饼干旁边，剩下一颗捏在指间。“这颗留给我。她腿伤了，得换药。”\n\n守门人沉默了一会儿。广播里数到九十秒。他把工具箱从怀里放下来，推到陆深脚边，拿走了饼干和两颗净水片。\n\n陆深拎起箱子往回走。苏茉还靠在门框上，胶带已经缠好了，汗巾上渗出一小片暗红。他把箱子放在她脚边，蹲下去，手穿过她腋下，把她架起来。\n\n“箱子拿回来了。”他说。\n\n苏茉的胳膊搭在他肩上，手指扣住他工装背部的布料。“你给了他什么？”\n\n“饼干。”\n\n“还有呢？”\n\n陆深没回答，架着她往出口走。铁栅栏在他们身后落下来，砸进地面，溅起一小撮灰。\n\n出了通道，外面的风裹着酸雨味儿，打在脸上又湿又刺。陆深把苏茉扶到一处雨棚下，让她靠着墙坐好，然后打开工具箱。净水器核心还在，裹在一块旧帆布里，表面沾着荧光粉末，在昏暗里微微发亮。他合上箱子，从腰包里掏出最后一颗净水片，掰成两半，一半递给苏茉。\n\n“含着。别吞。”\n\n苏茉接过去，塞进嘴里，腮帮子鼓起一小块。她看着陆深，嘴唇动了动，最后只说了一句：“你那半块饼干，早上我没吃。”\n\n陆深把另一半净水片含进嘴里，舌尖尝到一股金属味。他把工具箱往怀里拢了拢，背靠着墙，闭上眼。\n\n雨棚外头，酸雨开始落下来，打在铁皮上，嗒嗒嗒地响。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报响起来的时候，陆深正蹲在那台老水泵前，手指刚敲完第三下外壳。声音闷，里头还有水。他抬头看了一眼天花板上的红色警示灯，一闪一闪的，把墙上的锈迹照成暗褐色。\n\n苏茉靠在门框上，左腿裤管从小腿那儿撕开了，血顺着脚踝往下淌，已经在水泥地上积了硬币大的一小滩。她没吭声，只拿枪托敲了敲门框，金属碰撞声压过了警报的尾音。\n\n“三分钟。”她说，声音比平时低，语速也慢。“守门那家伙扣了你的工具箱。说通行证过期。”\n\n陆深站起来，膝盖咔嗒响了一声。他走到苏茉跟前，蹲下去看她的腿。伤口不深，但口子长，从脚踝拉到小腿肚，边缘翻着，沾了铁锈和灰。他扯下脖子上的汗巾，叠了两叠，按在她伤口上。\n\n苏茉嘶了一声，手指攥紧枪托。\n\n“工具箱里有什么？”陆深问。\n\n“净水器核心。你在灰烬平原捡的那个。”\n\n陆深的手停了一下，然后继续把汗巾绕她小腿扎紧，打了一个结。他站起来，从自己腰包里摸出半卷医用胶带，塞进苏茉手里。“按住。别动。”\n\n他转身往出口走。通道不长，三十步到头，守门人站在铁栅栏前，怀里抱着他的工具箱——一个绿漆剥落的铁皮箱子，提手用铜丝缠过。守门人是个四十出头的男人，制服袖口磨得发白，脸上没表情。\n\n“通行证。”守门人说。\n\n陆深从口袋里掏出通行证，递过去。守门人接过来，翻了两翻，又递回来。“过期三天。”\n\n警报又响了一轮，这次更尖，像铁片刮玻璃。头顶的广播开始倒数：一百二十秒。\n\n陆深把通行证收回口袋，手没抽出来，指尖碰到口袋里一个硬东西——半块压缩饼干，用油纸包着，是早上苏茉塞给他的。他拿出来，搁在工具箱上。\n\n“饼干换箱子。”他说。\n\n守门人低头看了看饼干，又看了看陆深。“不够。”\n\n陆深把腰包解下来，倒出里面的东西：三颗净水片，一卷铜丝，一把折叠钳。他把净水片捡起来，两颗放在饼干旁边，剩下一颗捏在指间。“这颗留给我。她腿伤了，得换药。”\n\n守门人沉默了一会儿。广播里数到九十秒。他把工具箱从怀里放下来，推到陆深脚边，拿走了饼干和两颗净水片。\n\n陆深拎起箱子往回走。苏茉还靠在门框上，胶带已经缠好了，汗巾上渗出一小片暗红。他把箱子放在她脚边，蹲下去，手穿过她腋下，把她架起来。\n\n“箱子拿回来了。”他说。\n\n苏茉的胳膊搭在他肩上，手指扣住他工装背部的布料。“你给了他什么？”\n\n“饼干。”\n\n“还有呢？”\n\n陆深没回答，架着她往出口走。铁栅栏在他们身后落下来，砸进地面，溅起一小撮灰。\n\n出了通道，外面的风裹着酸雨味儿，打在脸上又湿又刺。陆深把苏茉扶到一处雨棚下，让她靠着墙坐好，然后打开工具箱。净水器核心还在，裹在一块旧帆布里，表面沾着荧光粉末，在昏暗里微微发亮。他合上箱子，从腰包里掏出最后一颗净水片，掰成两半，一半递给苏茉。\n\n“含着。别吞。”\n\n苏茉接过去，塞进嘴里，腮帮子鼓起一小块。她看着陆深，嘴唇动了动，最后只说了一句：“你那半块饼干，早上我没吃。”\n\n陆深把另一半净水片含进嘴里，舌尖尝到一股金属味。他把工具箱往怀里拢了拢，背靠着墙，闭上眼。\n\n雨棚外头，酸雨开始落下来，打在铁皮上，嗒嗒嗒地响。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_warm_healing_1784569231736"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "ensemble_epic",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1213,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "收尾留白指向苏茉的未确认处境，但苏茉的动向（停在铁门那头）已明确，未完全形成“尚未确认的动向或处境”的悬置感；可强化她未回应或未跟上的不确定性。"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报是从东墙哨口传来的，三短一长，封门信号。\n\n陆深的手指还卡在水泵的滤芯里，锈水顺着腕骨往下淌。他敲了三下泵体外壳——笃、笃、笃，闷响，第三声有回震，里面第三层齿轮咬合偏了半齿。能修好，但需要十二分钟。\n\n现在只剩三分钟。\n\n“陆深！”苏茉的声音从哨口方向砸过来，她跑得急，靴底在混凝土碎渣上打滑，右肩撞上墙角的废铁管，整根管子嗡地震颤。她没停，左手攥着什么东西，指缝间漏出一截皮绳。\n\n“出口要封死了，守门的不放行。”她喘着气，把右手摊开——掌心躺着三颗净水片，灰白色，边缘有磕碰的缺口。“他说你的通行证过期，要补交这个。我给了，他又说不够。”\n\n陆深从泵体里抽出手指，在裤腿上蹭掉锈水。他没看那三颗净水片，盯着苏茉左肩——她撞上铁管的位置，夹克破了一道口子，血从里面渗出来，不多，但颜色发暗，混着铁锈的橘红色。\n\n“你受伤了。”\n\n“皮外伤。守门的扣住了你的工具箱，说里面有违禁零件。”苏茉把净水片塞进他胸袋，手指碰到他胸口时顿了一下，像在确认心跳还在。“我跟他吵了两分钟，没用。他说要么留下箱子，要么留下人。”\n\n警报又响了一遍，这次更短促，只剩两分钟。\n\n陆深弯腰，从水泵底座抓起一把扳手，掂了掂分量。然后他往东墙哨口走，步子不快，但每一步都踩实在碎渣上，碾出咯吱的声响。苏茉跟在后面，呼吸还没平复，但没再说话。\n\n哨口的铁门已经降下一半，守门人站在闸机旁，一只手按在控制杆上，另一只手搭在腰间枪套上。陆深的工具箱搁在他脚边，盖子被撬开，里面的齿轮组和铜线散了一地。\n\n“箱子留下。”守门人抬起下巴，拇指蹭过枪套搭扣。“你，可以走。”\n\n陆深没停。他走到铁门前，蹲下，把散落的齿轮一颗颗捡回工具箱。铜线绕在食指上，三圈，塞进侧袋。守门人盯着他，喉结上下滚动了一次。\n\n“我说了，箱子——”\n\n扳手从陆深手里飞出去，砸在控制杆的连杆上，铁器撞铁器，哐当一声，连杆弯了，控制杆卡死在半程。铁门停住，离地面还有一米二。\n\n守门人拔枪。\n\n苏茉的匕首先到，刀尖钉进他枪套的皮带扣里，皮子裂开，枪套歪向一边。守门人手指扣空，踉跄后退，后背撞上闸机，警报器被他压住，声音闷了。\n\n陆深扣上工具箱的锁扣，站起来，从守门人脚边跨过去，弯腰钻过铁门。苏茉拔出匕首，跟上来，左肩的血滴在闸机边缘，冒了一丝白烟——酸雨开始下了。\n\n铁门在身后轰一声落到底，封死。\n\n陆深把工具箱放在地上，打开，从底层翻出一卷绷带，扔给苏茉。她接住，没打开，盯着他。\n\n“你的水泵没修完。”\n\n“齿轮偏了半齿，强行运行三天会卡死。”他把工具箱合上，扛上肩。“三天后，我回来修。”\n\n苏茉撕开绷带，缠上左肩，血从绷带下洇出来，她没低头看。\n\n“守门人认得你的脸。”\n\n“他认得的是通行证。”陆深转身，往酸雨深处走。“下次，我给他看别的。”\n\n工具箱在他肩头晃了一下，里面某个零件磕在铁皮上，发出一声脆响。苏茉没跟上来，她的脚步声停在铁门那头，然后被雨声盖住。",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦东墙哨口外，酸雨中",
+                "injuries": [],
+                "status": "携带工具箱，暴露在酸雨中"
+              },
+              "char_sumo": {
+                "location": "北壁城邦东墙哨口内，铁门已封死",
+                "injuries": [
+                  "左肩撞击伤，已初步包扎"
+                ],
+                "status": "与陆深被铁门隔开"
+              }
+            },
+            "items": {
+              "toolbox_lushen": {
+                "owner": "char_lushen",
+                "contents": [
+                  "齿轮组",
+                  "铜线",
+                  "绷带（已用）"
+                ],
+                "status": "被守门人撬开过，已收回"
+              },
+              "water_purifier_tablets": {
+                "owner": "char_lushen",
+                "quantity": 3,
+                "status": "苏茉塞入陆深胸袋"
+              }
+            },
+            "knowledge": [
+              "守门人扣押陆深工具箱的理由是违禁零件",
+              "苏茉与守门人争执两分钟未果",
+              "陆深破坏了哨口控制杆，铁门无法再正常开启"
+            ],
+            "time_marker": "酸雨开始降落，东墙哨口封死"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "扳手从陆深手里飞出去，砸在控制杆的连杆上，铁器撞铁器，哐当一声，连杆弯了，控制杆卡死在半程。",
+                    "陆深扣上工具箱的锁扣，站起来，从守门人脚边跨过去，弯腰钻过铁门。",
+                    "铁门在身后轰一声落到底，封死。",
+                    "陆深把工具箱放在地上，打开，从底层翻出一卷绷带，扔给苏茉。",
+                    "陆深转身，往酸雨深处走。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_lushen.location",
+                    "characters.char_sumo.location",
+                    "items.toolbox_lushen.status",
+                    "time_marker"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文完整兑现了源事件要求：陆深在时间压力下选择破坏控制杆、夺回工具箱并钻过铁门，承受了与苏茉被铁门隔开、暴露在酸雨中的后果。所有动作、伤势、物品持有和位置变化均与声明的结束状态一致，无内部矛盾或与上一段状态的冲突。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报是从东墙哨口传来的，三短一长，封门信号。\n\n陆深的手指还卡在水泵的滤芯里，锈水顺着腕骨往下淌。他敲了三下泵体外壳——笃、笃、笃，闷响，第三声有回震，里面第三层齿轮咬合偏了半齿。能修好，但需要十二分钟。\n\n现在只剩三分钟。\n\n“陆深！”苏茉的声音从哨口方向砸过来，她跑得急，靴底在混凝土碎渣上打滑，右肩撞上墙角的废铁管，整根管子嗡地震颤。她没停，左手攥着什么东西，指缝间漏出一截皮绳。\n\n“出口要封死了，守门的不放行。”她喘着气，把右手摊开——掌心躺着三颗净水片，灰白色，边缘有磕碰的缺口。“他说你的通行证过期，要补交这个。我给了，他又说不够。”\n\n陆深从泵体里抽出手指，在裤腿上蹭掉锈水。他没看那三颗净水片，盯着苏茉左肩——她撞上铁管的位置，夹克破了一道口子，血从里面渗出来，不多，但颜色发暗，混着铁锈的橘红色。\n\n“你受伤了。”\n\n“皮外伤。守门的扣住了你的工具箱，说里面有违禁零件。”苏茉把净水片塞进他胸袋，手指碰到他胸口时顿了一下，像在确认心跳还在。“我跟他吵了两分钟，没用。他说要么留下箱子，要么留下人。”\n\n警报又响了一遍，这次更短促，只剩两分钟。\n\n陆深弯腰，从水泵底座抓起一把扳手，掂了掂分量。然后他往东墙哨口走，步子不快，但每一步都踩实在碎渣上，碾出咯吱的声响。苏茉跟在后面，呼吸还没平复，但没再说话。\n\n哨口的铁门已经降下一半，守门人站在闸机旁，一只手按在控制杆上，另一只手搭在腰间枪套上。陆深的工具箱搁在他脚边，盖子被撬开，里面的齿轮组和铜线散了一地。\n\n“箱子留下。”守门人抬起下巴，拇指蹭过枪套搭扣。“你，可以走。”\n\n陆深没停。他走到铁门前，蹲下，把散落的齿轮一颗颗捡回工具箱。铜线绕在食指上，三圈，塞进侧袋。守门人盯着他，喉结上下滚动了一次。\n\n“我说了，箱子——”\n\n扳手从陆深手里飞出去，砸在控制杆的连杆上，铁器撞铁器，哐当一声，连杆弯了，控制杆卡死在半程。铁门停住，离地面还有一米二。\n\n守门人拔枪。\n\n苏茉的匕首先到，刀尖钉进他枪套的皮带扣里，皮子裂开，枪套歪向一边。守门人手指扣空，踉跄后退，后背撞上闸机，警报器被他压住，声音闷了。\n\n陆深扣上工具箱的锁扣，站起来，从守门人脚边跨过去，弯腰钻过铁门。苏茉拔出匕首，跟上来，左肩的血滴在闸机边缘，冒了一丝白烟——酸雨开始下了。\n\n铁门在身后轰一声落到底，封死。\n\n陆深把工具箱放在地上，打开，从底层翻出一卷绷带，扔给苏茉。她接住，没打开，盯着他。\n\n“你的水泵没修完。”\n\n“齿轮偏了半齿，强行运行三天会卡死。”他把工具箱合上，扛上肩。“三天后，我回来修。”\n\n苏茉撕开绷带，缠上左肩，血从绷带下洇出来，她没低头看。\n\n“守门人认得你的脸。”\n\n“他认得的是通行证。”陆深转身，往酸雨深处走。“下次，我给他看别的。”\n\n工具箱在他肩头晃了一下，里面某个零件磕在铁皮上，发出一声脆响。苏茉没跟上来，她的脚步声停在铁门那头，然后被雨声盖住。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报是从东墙哨口传来的，三短一长，封门信号。\n\n陆深的手指还卡在水泵的滤芯里，锈水顺着腕骨往下淌。他敲了三下泵体外壳——笃、笃、笃，闷响，第三声有回震，里面第三层齿轮咬合偏了半齿。能修好，但需要十二分钟。\n\n现在只剩三分钟。\n\n“陆深！”苏茉的声音从哨口方向砸过来，她跑得急，靴底在混凝土碎渣上打滑，右肩撞上墙角的废铁管，整根管子嗡地震颤。她没停，左手攥着什么东西，指缝间漏出一截皮绳。\n\n“出口要封死了，守门的不放行。”她喘着气，把右手摊开——掌心躺着三颗净水片，灰白色，边缘有磕碰的缺口。“他说你的通行证过期，要补交这个。我给了，他又说不够。”\n\n陆深从泵体里抽出手指，在裤腿上蹭掉锈水。他没看那三颗净水片，盯着苏茉左肩——她撞上铁管的位置，夹克破了一道口子，血从里面渗出来，不多，但颜色发暗，混着铁锈的橘红色。\n\n“你受伤了。”\n\n“皮外伤。守门的扣住了你的工具箱，说里面有违禁零件。”苏茉把净水片塞进他胸袋，手指碰到他胸口时顿了一下，像在确认心跳还在。“我跟他吵了两分钟，没用。他说要么留下箱子，要么留下人。”\n\n警报又响了一遍，这次更短促，只剩两分钟。\n\n陆深弯腰，从水泵底座抓起一把扳手，掂了掂分量。然后他往东墙哨口走，步子不快，但每一步都踩实在碎渣上，碾出咯吱的声响。苏茉跟在后面，呼吸还没平复，但没再说话。\n\n哨口的铁门已经降下一半，守门人站在闸机旁，一只手按在控制杆上，另一只手搭在腰间枪套上。陆深的工具箱搁在他脚边，盖子被撬开，里面的齿轮组和铜线散了一地。\n\n“箱子留下。”守门人抬起下巴，拇指蹭过枪套搭扣。“你，可以走。”\n\n陆深没停。他走到铁门前，蹲下，把散落的齿轮一颗颗捡回工具箱。铜线绕在食指上，三圈，塞进侧袋。守门人盯着他，喉结上下滚动了一次。\n\n“我说了，箱子——”\n\n扳手从陆深手里飞出去，砸在控制杆的连杆上，铁器撞铁器，哐当一声，连杆弯了，控制杆卡死在半程。铁门停住，离地面还有一米二。\n\n守门人拔枪。\n\n苏茉的匕首先到，刀尖钉进他枪套的皮带扣里，皮子裂开，枪套歪向一边。守门人手指扣空，踉跄后退，后背撞上闸机，警报器被他压住，声音闷了。\n\n陆深扣上工具箱的锁扣，站起来，从守门人脚边跨过去，弯腰钻过铁门。苏茉拔出匕首，跟上来，左肩的血滴在闸机边缘，冒了一丝白烟——酸雨开始下了。\n\n铁门在身后轰一声落到底，封死。\n\n陆深把工具箱放在地上，打开，从底层翻出一卷绷带，扔给苏茉。她接住，没打开，盯着他。\n\n“你的水泵没修完。”\n\n“齿轮偏了半齿，强行运行三天会卡死。”他把工具箱合上，扛上肩。“三天后，我回来修。”\n\n苏茉撕开绷带，缠上左肩，血从绷带下洇出来，她没低头看。\n\n“守门人认得你的脸。”\n\n“他认得的是通行证。”陆深转身，往酸雨深处走。“下次，我给他看别的。”\n\n工具箱在他肩头晃了一下，里面某个零件磕在铁皮上，发出一声脆响。苏茉没跟上来，她的脚步声停在铁门那头，然后被雨声盖住。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_ensemble_epic_1784569301794"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "philosophical_meditative",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+      "strict_every_ticks": 1,
+      "accepted": false,
+      "char_count": 1015,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": false,
+        "score": 9.0,
+        "blocking_issues": [
+          "时间感错位（此刻同时是十年后）未明确体现，但非硬性要求"
+        ],
+        "issues": [
+          "时间感错位（此刻同时是十年后）未明确体现，但非硬性要求"
+        ],
+        "rewrite_directive": "时间感错位（此刻同时是十年后）未明确体现，但非硬性要求",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "philosophical_meditative",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+          "strict": true,
+          "before": {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报响起来的时候，陆深正蹲在防壁哨站地下三层的配电箱前，手指刚敲完第三下外壳。回音闷，里面有水。\n\n他把螺丝刀插进面板缝隙，没撬。警报声不是城邦的常规巡检——频率太快，三短一长，重复，不停。那是封门预警。\n\n苏茉的声音从楼道尽头传来：“陆深！出口闸门——”\n\n“三分钟。”他接话，螺丝刀终于撬开面板。水从里面淌出来，混着锈末，浇在他膝盖上。配电箱里泡着一只帆布包，苏茉的包。\n\n她冲进来时左肩撞在门框上，右手捂着肋下，指缝间渗出的不是血，是淡黄色的组织液。锈蚀病的早期渗液。\n\n“守门人扣了你的净水器核心。”她喘得厉害，每个字都像从肺里刮出来的，“他说那是违禁技术，要上交议会。”\n\n陆深把帆布包拽出来，甩掉上面的水。包里是那本旧气象中心的日志，封皮已经泡软了，但内页还在。他翻到最后一页——撕掉的那半页边缘，荧光粉末在水渍里发出微弱的蓝光。\n\n“那是证据。”苏茉盯着那抹蓝光，“种子库的坐标——”\n\n“先上去。”\n\n“你听我说完！”她抓住他手腕，指节冰凉，力道却大得不像受伤的人，“守门人不是议会的人，我见过他。上周，在旧47号公路，他和掠夺者站在一起。”\n\n警报声变调了。两分钟。\n\n陆深把日志塞进自己怀里，站起来。配电箱深处，那个从灰烬平原捡回的净水器核心还嵌在接线槽里，AI的指示灯一闪一闪，像在等什么。守门人扣下的是假货，他早就换了。\n\n但他没告诉苏茉。\n\n“走。”他拽她往楼梯口走。\n\n她甩开他的手，转身冲向配电箱，手指扣进接线槽，硬生生把净水器核心拔了出来。电弧打在她手背上，皮肤焦黑了一小块。\n\n“你以为我不知道你换了？”她把核心塞进他手里，外壳烫得能煎肉，“你敲三下外壳的时候，第三下总是比前两下轻。你在听里面有没有水，但你也在听我有没有跟上来。”\n\n警报停了。闸门开始闭合，液压杆摩擦的尖啸从头顶灌下来。\n\n陆深攥紧核心，另一只手扣住苏茉的后颈，几乎是拖着她爬上楼梯。闸门落下的速度比他预想的快——不是液压，是重力坠落，有人在控制室手动加速。\n\n他把她推过闸门缝隙时，她回手抓住了他衣领。\n\n“日志。”她说，“如果你出不来，日志不能跟你一起埋在里面。”\n\n陆深扯开她手指，把日志从怀里抽出来拍在她胸口。闸门擦着他后背砸下来，混凝土碎屑崩了他一脖子。\n\n门封死了。\n\n他站在黑暗里，手里只剩那个烫手的净水器核心。AI的指示灯还在闪，频率和他心跳差不多。\n\n门的另一侧，苏茉在砸门。砸了三下。\n\n第三下比前两下轻。",
+          "style_trace": {
+            "preset_key": "philosophical_meditative",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+            "strict": true,
+            "before": {
+              "style_key": "philosophical_meditative",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦防壁哨站地下三层，闸门内侧，被困",
+                "injuries": "无",
+                "survival_status": "alive"
+              },
+              "char_sumo": {
+                "location": "北壁城邦防壁哨站地下三层，闸门外侧",
+                "injuries": "左肋锈蚀病早期渗液，右手背电弧灼伤",
+                "survival_status": "alive"
+              }
+            },
+            "items": {
+              "旧气象中心日志": {
+                "holder": "char_sumo",
+                "condition": "封皮泡软，内页尚存，最后一页残留荧光粉末",
+                "quantity": 1
+              },
+              "净水器核心_含AI守望者": {
+                "holder": "char_lushen",
+                "condition": "外壳高温，AI指示灯闪烁",
+                "quantity": 1
+              },
+              "净水器核心_假货": {
+                "holder": "守门人",
+                "condition": "被扣下",
+                "quantity": 1
+              }
+            },
+            "knowledge": [
+              "苏茉确认守门人曾出现在旧47号公路，与掠夺者站在一起",
+              "陆深提前替换了净水器核心，守门人扣下的是假货",
+              "闸门坠落是手动加速，有人在控制室操作"
+            ],
+            "time_marker": "封门警报触发后，闸门已封死，陆深被困"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "警报响起来的时候，陆深正蹲在防壁哨站地下三层的配电箱前",
+                    "那是封门预警",
+                    "三分钟",
+                    "她冲进来时左肩撞在门框上，右手捂着肋下，指缝间渗出的不是血，是淡黄色的组织液",
+                    "守门人扣了你的净水器核心",
+                    "他把她推过闸门缝隙",
+                    "闸门擦着他后背砸下来",
+                    "门封死了",
+                    "他站在黑暗里，手里只剩那个烫手的净水器核心"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_lushen.location",
+                    "characters.char_sumo.injuries",
+                    "items.净水器核心_假货.holder",
+                    "time_marker"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文与声明的结束状态完全一致，无任何硬矛盾。源事件要求已全部兑现。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报响起来的时候，陆深正蹲在防壁哨站地下三层的配电箱前，手指刚敲完第三下外壳。回音闷，里面有水。\n\n他把螺丝刀插进面板缝隙，没撬。警报声不是城邦的常规巡检——频率太快，三短一长，重复，不停。那是封门预警。\n\n苏茉的声音从楼道尽头传来：“陆深！出口闸门——”\n\n“三分钟。”他接话，螺丝刀终于撬开面板。水从里面淌出来，混着锈末，浇在他膝盖上。配电箱里泡着一只帆布包，苏茉的包。\n\n她冲进来时左肩撞在门框上，右手捂着肋下，指缝间渗出的不是血，是淡黄色的组织液。锈蚀病的早期渗液。\n\n“守门人扣了你的净水器核心。”她喘得厉害，每个字都像从肺里刮出来的，“他说那是违禁技术，要上交议会。”\n\n陆深把帆布包拽出来，甩掉上面的水。包里是那本旧气象中心的日志，封皮已经泡软了，但内页还在。他翻到最后一页——撕掉的那半页边缘，荧光粉末在水渍里发出微弱的蓝光。\n\n“那是证据。”苏茉盯着那抹蓝光，“种子库的坐标——”\n\n“先上去。”\n\n“你听我说完！”她抓住他手腕，指节冰凉，力道却大得不像受伤的人，“守门人不是议会的人，我见过他。上周，在旧47号公路，他和掠夺者站在一起。”\n\n警报声变调了。两分钟。\n\n陆深把日志塞进自己怀里，站起来。配电箱深处，那个从灰烬平原捡回的净水器核心还嵌在接线槽里，AI的指示灯一闪一闪，像在等什么。守门人扣下的是假货，他早就换了。\n\n但他没告诉苏茉。\n\n“走。”他拽她往楼梯口走。\n\n她甩开他的手，转身冲向配电箱，手指扣进接线槽，硬生生把净水器核心拔了出来。电弧打在她手背上，皮肤焦黑了一小块。\n\n“你以为我不知道你换了？”她把核心塞进他手里，外壳烫得能煎肉，“你敲三下外壳的时候，第三下总是比前两下轻。你在听里面有没有水，但你也在听我有没有跟上来。”\n\n警报停了。闸门开始闭合，液压杆摩擦的尖啸从头顶灌下来。\n\n陆深攥紧核心，另一只手扣住苏茉的后颈，几乎是拖着她爬上楼梯。闸门落下的速度比他预想的快——不是液压，是重力坠落，有人在控制室手动加速。\n\n他把她推过闸门缝隙时，她回手抓住了他衣领。\n\n“日志。”她说，“如果你出不来，日志不能跟你一起埋在里面。”\n\n陆深扯开她手指，把日志从怀里抽出来拍在她胸口。闸门擦着他后背砸下来，混凝土碎屑崩了他一脖子。\n\n门封死了。\n\n他站在黑暗里，手里只剩那个烫手的净水器核心。AI的指示灯还在闪，频率和他心跳差不多。\n\n门的另一侧，苏茉在砸门。砸了三下。\n\n第三下比前两下轻。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报响起来的时候，陆深正蹲在防壁哨站地下三层的配电箱前，手指刚敲完第三下外壳。回音闷，里面有水。\n\n他把螺丝刀插进面板缝隙，没撬。警报声不是城邦的常规巡检——频率太快，三短一长，重复，不停。那是封门预警。\n\n苏茉的声音从楼道尽头传来：“陆深！出口闸门——”\n\n“三分钟。”他接话，螺丝刀终于撬开面板。水从里面淌出来，混着锈末，浇在他膝盖上。配电箱里泡着一只帆布包，苏茉的包。\n\n她冲进来时左肩撞在门框上，右手捂着肋下，指缝间渗出的不是血，是淡黄色的组织液。锈蚀病的早期渗液。\n\n“守门人扣了你的净水器核心。”她喘得厉害，每个字都像从肺里刮出来的，“他说那是违禁技术，要上交议会。”\n\n陆深把帆布包拽出来，甩掉上面的水。包里是那本旧气象中心的日志，封皮已经泡软了，但内页还在。他翻到最后一页——撕掉的那半页边缘，荧光粉末在水渍里发出微弱的蓝光。\n\n“那是证据。”苏茉盯着那抹蓝光，“种子库的坐标——”\n\n“先上去。”\n\n“你听我说完！”她抓住他手腕，指节冰凉，力道却大得不像受伤的人，“守门人不是议会的人，我见过他。上周，在旧47号公路，他和掠夺者站在一起。”\n\n警报声变调了。两分钟。\n\n陆深把日志塞进自己怀里，站起来。配电箱深处，那个从灰烬平原捡回的净水器核心还嵌在接线槽里，AI的指示灯一闪一闪，像在等什么。守门人扣下的是假货，他早就换了。\n\n但他没告诉苏茉。\n\n“走。”他拽她往楼梯口走。\n\n她甩开他的手，转身冲向配电箱，手指扣进接线槽，硬生生把净水器核心拔了出来。电弧打在她手背上，皮肤焦黑了一小块。\n\n“你以为我不知道你换了？”她把核心塞进他手里，外壳烫得能煎肉，“你敲三下外壳的时候，第三下总是比前两下轻。你在听里面有没有水，但你也在听我有没有跟上来。”\n\n警报停了。闸门开始闭合，液压杆摩擦的尖啸从头顶灌下来。\n\n陆深攥紧核心，另一只手扣住苏茉的后颈，几乎是拖着她爬上楼梯。闸门落下的速度比他预想的快——不是液压，是重力坠落，有人在控制室手动加速。\n\n他把她推过闸门缝隙时，她回手抓住了他衣领。\n\n“日志。”她说，“如果你出不来，日志不能跟你一起埋在里面。”\n\n陆深扯开她手指，把日志从怀里抽出来拍在她胸口。闸门擦着他后背砸下来，混凝土碎屑崩了他一脖子。\n\n门封死了。\n\n他站在黑暗里，手里只剩那个烫手的净水器核心。AI的指示灯还在闪，频率和他心跳差不多。\n\n门的另一侧，苏茉在砸门。砸了三下。\n\n第三下比前两下轻。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_philosophical_medi_1784569368687"
+    },
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "rough_grit_realism",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1075,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "对白中粗话仅出现一次，可更密集地体现口语/口音特征以强化风格一致性。"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "rough_grit_realism",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+          "strict": true,
+          "before": {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报响的时候，陆深正在拆水泵的过滤阀。\n\n那是三声短促的汽笛，从防壁哨站的方向传来，穿透铅灰色的雾霾，像锈刀刮骨头。他手指顿了一下，滤网上粘着的黑色淤泥滴到工作台上，发出酸臭。\n\n苏茉撞开门冲进来，左腿拖着一道血痕，裤管从膝盖以下全红了。她手里攥着个帆布包，包上印着北壁城邦的标记，但被撕开了一道口子，露出里面金属的冷光。\n\n“出口要封了。三分钟。”她喘着说，把包扔到陆深面前的桌上，“守门的那帮杂种扣了你的净水器核心，说要重新审查。审查他妈了个逼——他们就是想要这东西。”\n\n陆深站起来，用抹布擦掉手上的油泥。抹布是破的，擦不干净，指甲缝里还是黑的。他看了一眼苏茉的腿，伤口还在往外渗血，混着酸雨灼烧过的焦痕，皮肉翻开，能看见底下粉红色的肌肉组织。\n\n“能走？”\n\n“能。”\n\n“走。”\n\n他抓起帆布包，掂了掂。重量不对。打开一看，里面不是净水器核心，是一块锈迹斑斑的铁板，边缘被切割过，表面刻着半张电路图。他认得那图——是旧气象中心研究日志里撕掉的那一页。\n\n苏茉靠在门框上，脸色发白，汗珠从颧骨滚下来，滴在地上混着血水。\n\n“他们调包了。”她说，声音发紧，“守门的那个光头，我见过他。上个月在旧47号公路，他跟掠夺者站在一起，手里拿的就是咱们城邦的制式步枪。”\n\n陆深没说话。他把铁板塞回包里，拉上拉链，拉链卡住了，扯了两下才拉上。\n\n外面传来液压门闭合的沉闷声响，脚下的水泥地面开始震动。\n\n“走。”他又说了一遍，这次声音更沉。\n\n他扶起苏茉，把她的胳膊搭在自己肩上。她的体重压过来，带着血腥味和汗味。两人走出修理间，走廊里的红色应急灯一闪一闪，照得墙壁上的霉斑像活物一样蠕动。\n\n出口的闸门已经降下一半，钢齿咬合处发出刺耳的摩擦声。\n\n“跑。”陆深说。\n\n他们开始跑。苏茉的腿每踩一步都往外溅血，但她咬着牙没出声。闸门继续下降，离地面只剩不到一米。陆深先把帆布包扔出去，然后推了苏茉一把，她侧身滚过闸门，帆布包砸在地上扬起一片尘。\n\n轮到陆深时，闸门已经降到六十公分。他趴下，手肘和膝盖蹭着粗粝的水泥地面往前爬，能感觉到闸门底部的钢刃刮过后背，撕开工作服的布料，切进皮肤。\n\n他滚到外面，爬起来，后背火辣辣地疼。伸手摸了一把，满手血。\n\n闸门在他身后轰然闭合，锁死。\n\n苏茉瘫坐在地上，撕下自己的袖子按在腿上的伤口，袖口边缘全是磨破的线头。她抬头看陆深，嘴唇干裂，声音沙哑：“包里那东西，到底是什么？”\n\n陆深蹲下来，打开帆布包，拿出那块铁板。应急灯的红光打在铁板表面，电路图的刻痕里嵌着一种荧光粉末，正发出幽幽的绿光。\n\n“证据。”他说。",
+          "style_trace": {
+            "preset_key": "rough_grit_realism",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+            "strict": true,
+            "before": {
+              "style_key": "rough_grit_realism",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦防壁哨站外侧",
+                "injuries": "后背被闸门钢刃割伤，伤口长约三十公分，渗血",
+                "status": "存活"
+              },
+              "char_sumo": {
+                "location": "北壁城邦防壁哨站外侧",
+                "injuries": "左腿被酸雨灼伤兼撕裂伤，皮肉翻开，持续渗血",
+                "status": "存活"
+              }
+            },
+            "items": {
+              "帆布包": {
+                "owner": "char_lushen",
+                "contents": "一块锈迹铁板，表面刻有半张电路图，刻痕含荧光粉末",
+                "condition": "包身撕裂，拉链卡涩"
+              },
+              "净水器核心": {
+                "owner": "未知守门人",
+                "status": "被扣留调包"
+              }
+            },
+            "knowledge": [
+              "苏茉目击守门的光头曾在旧47号公路与掠夺者交易城邦制式武器",
+              "铁板上的电路图是旧气象中心研究日志缺失页的复制或原件",
+              "荧光粉末与loop_1中日志残留粉末一致"
+            ],
+            "time_marker": "警报响起后三分钟内，闸门锁死时"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "出口要封了。三分钟。",
+                    "守门的那帮杂种扣了你的净水器核心",
+                    "他扶起苏茉，把她的胳膊搭在自己肩上",
+                    "他们开始跑",
+                    "闸门在他身后轰然闭合，锁死",
+                    "后背火辣辣地疼。伸手摸了一把，满手血"
+                  ],
+                  "ledger_evidence_paths": [
+                    "time_marker",
+                    "items.净水器核心.status",
+                    "characters.char_sumo.injuries",
+                    "characters.char_lushen.injuries"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，所有动作、伤势、物品持有与声明的结束状态一致，源事件要求已兑现，无新增专名或矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报响的时候，陆深正在拆水泵的过滤阀。\n\n那是三声短促的汽笛，从防壁哨站的方向传来，穿透铅灰色的雾霾，像锈刀刮骨头。他手指顿了一下，滤网上粘着的黑色淤泥滴到工作台上，发出酸臭。\n\n苏茉撞开门冲进来，左腿拖着一道血痕，裤管从膝盖以下全红了。她手里攥着个帆布包，包上印着北壁城邦的标记，但被撕开了一道口子，露出里面金属的冷光。\n\n“出口要封了。三分钟。”她喘着说，把包扔到陆深面前的桌上，“守门的那帮杂种扣了你的净水器核心，说要重新审查。审查他妈了个逼——他们就是想要这东西。”\n\n陆深站起来，用抹布擦掉手上的油泥。抹布是破的，擦不干净，指甲缝里还是黑的。他看了一眼苏茉的腿，伤口还在往外渗血，混着酸雨灼烧过的焦痕，皮肉翻开，能看见底下粉红色的肌肉组织。\n\n“能走？”\n\n“能。”\n\n“走。”\n\n他抓起帆布包，掂了掂。重量不对。打开一看，里面不是净水器核心，是一块锈迹斑斑的铁板，边缘被切割过，表面刻着半张电路图。他认得那图——是旧气象中心研究日志里撕掉的那一页。\n\n苏茉靠在门框上，脸色发白，汗珠从颧骨滚下来，滴在地上混着血水。\n\n“他们调包了。”她说，声音发紧，“守门的那个光头，我见过他。上个月在旧47号公路，他跟掠夺者站在一起，手里拿的就是咱们城邦的制式步枪。”\n\n陆深没说话。他把铁板塞回包里，拉上拉链，拉链卡住了，扯了两下才拉上。\n\n外面传来液压门闭合的沉闷声响，脚下的水泥地面开始震动。\n\n“走。”他又说了一遍，这次声音更沉。\n\n他扶起苏茉，把她的胳膊搭在自己肩上。她的体重压过来，带着血腥味和汗味。两人走出修理间，走廊里的红色应急灯一闪一闪，照得墙壁上的霉斑像活物一样蠕动。\n\n出口的闸门已经降下一半，钢齿咬合处发出刺耳的摩擦声。\n\n“跑。”陆深说。\n\n他们开始跑。苏茉的腿每踩一步都往外溅血，但她咬着牙没出声。闸门继续下降，离地面只剩不到一米。陆深先把帆布包扔出去，然后推了苏茉一把，她侧身滚过闸门，帆布包砸在地上扬起一片尘。\n\n轮到陆深时，闸门已经降到六十公分。他趴下，手肘和膝盖蹭着粗粝的水泥地面往前爬，能感觉到闸门底部的钢刃刮过后背，撕开工作服的布料，切进皮肤。\n\n他滚到外面，爬起来，后背火辣辣地疼。伸手摸了一把，满手血。\n\n闸门在他身后轰然闭合，锁死。\n\n苏茉瘫坐在地上，撕下自己的袖子按在腿上的伤口，袖口边缘全是磨破的线头。她抬头看陆深，嘴唇干裂，声音沙哑：“包里那东西，到底是什么？”\n\n陆深蹲下来，打开帆布包，拿出那块铁板。应急灯的红光打在铁板表面，电路图的刻痕里嵌着一种荧光粉末，正发出幽幽的绿光。\n\n“证据。”他说。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报响的时候，陆深正在拆水泵的过滤阀。\n\n那是三声短促的汽笛，从防壁哨站的方向传来，穿透铅灰色的雾霾，像锈刀刮骨头。他手指顿了一下，滤网上粘着的黑色淤泥滴到工作台上，发出酸臭。\n\n苏茉撞开门冲进来，左腿拖着一道血痕，裤管从膝盖以下全红了。她手里攥着个帆布包，包上印着北壁城邦的标记，但被撕开了一道口子，露出里面金属的冷光。\n\n“出口要封了。三分钟。”她喘着说，把包扔到陆深面前的桌上，“守门的那帮杂种扣了你的净水器核心，说要重新审查。审查他妈了个逼——他们就是想要这东西。”\n\n陆深站起来，用抹布擦掉手上的油泥。抹布是破的，擦不干净，指甲缝里还是黑的。他看了一眼苏茉的腿，伤口还在往外渗血，混着酸雨灼烧过的焦痕，皮肉翻开，能看见底下粉红色的肌肉组织。\n\n“能走？”\n\n“能。”\n\n“走。”\n\n他抓起帆布包，掂了掂。重量不对。打开一看，里面不是净水器核心，是一块锈迹斑斑的铁板，边缘被切割过，表面刻着半张电路图。他认得那图——是旧气象中心研究日志里撕掉的那一页。\n\n苏茉靠在门框上，脸色发白，汗珠从颧骨滚下来，滴在地上混着血水。\n\n“他们调包了。”她说，声音发紧，“守门的那个光头，我见过他。上个月在旧47号公路，他跟掠夺者站在一起，手里拿的就是咱们城邦的制式步枪。”\n\n陆深没说话。他把铁板塞回包里，拉上拉链，拉链卡住了，扯了两下才拉上。\n\n外面传来液压门闭合的沉闷声响，脚下的水泥地面开始震动。\n\n“走。”他又说了一遍，这次声音更沉。\n\n他扶起苏茉，把她的胳膊搭在自己肩上。她的体重压过来，带着血腥味和汗味。两人走出修理间，走廊里的红色应急灯一闪一闪，照得墙壁上的霉斑像活物一样蠕动。\n\n出口的闸门已经降下一半，钢齿咬合处发出刺耳的摩擦声。\n\n“跑。”陆深说。\n\n他们开始跑。苏茉的腿每踩一步都往外溅血，但她咬着牙没出声。闸门继续下降，离地面只剩不到一米。陆深先把帆布包扔出去，然后推了苏茉一把，她侧身滚过闸门，帆布包砸在地上扬起一片尘。\n\n轮到陆深时，闸门已经降到六十公分。他趴下，手肘和膝盖蹭着粗粝的水泥地面往前爬，能感觉到闸门底部的钢刃刮过后背，撕开工作服的布料，切进皮肤。\n\n他滚到外面，爬起来，后背火辣辣地疼。伸手摸了一把，满手血。\n\n闸门在他身后轰然闭合，锁死。\n\n苏茉瘫坐在地上，撕下自己的袖子按在腿上的伤口，袖口边缘全是磨破的线头。她抬头看陆深，嘴唇干裂，声音沙哑：“包里那东西，到底是什么？”\n\n陆深蹲下来，打开帆布包，拿出那块铁板。应急灯的红光打在铁板表面，电路图的刻痕里嵌着一种荧光粉末，正发出幽幽的绿光。\n\n“证据。”他说。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_rough_grit_realism_1784569434182"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "xianxia_cultivation",
+      "style": "xianxia_fast",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58",
+      "strict_every_ticks": 3,
+      "accepted": true,
+      "char_count": 802,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "xianxia_fast",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "active_ending"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "第二重石门开启过程稍长，可进一步压缩以强化节奏"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "xianxia_fast",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58",
+          "strict": true,
+          "before": {
+            "style_key": "xianxia_fast",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "active_ending"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "守关弟子扣住通行令，拇指压在令符的云纹上，指节发白。\n“林师姐，长老有令，今夜任何人不得出山。”\n林雪没看他。她盯着他拇指压住的那道云纹——那是令符的灵引刻痕，压住它，灵力就无法注入，山门禁制打不开。\n她抬手。\n不是去夺令符。指尖点在守关弟子腕间麻筋上，那人整条手臂一麻，五指松开。令符下落，林雪左脚踢起，令符翻上半空，她右手接住，灵力灌入。\n云纹亮起，山门禁制嗡鸣，第一重石门缓缓推开。\n守关弟子捂着手腕后退，背撞上石壁，脸色煞白：“林师姐，你这是——”\n“让开。”\n林雪跨过门槛，赵虎紧跟身后，手按在剑柄上，回头瞪了那弟子一眼。\n第二重石门还没开。林雪将令符嵌入阵眼凹槽，灵力再催，石门上浮现出繁复的阵纹，一层层剥开，像莲花绽放。石门刚开到一半，身后传来破风声。\n三道遁光落在守关殿前，遁光散去，露出三个执法堂弟子，为首那个腰间挂着锁灵链，手里捏着一枚追踪玉简。\n玉简上的灵光正对着林雪的方向跳动。\n“林雪，镇魔灯异动，长老命你即刻回守山殿接受问询。”执法堂弟子踏前一步，锁灵链在他掌心哗啦作响，“你体内那枚玉简——交出来。”\n林雪没回头。石门开到七成，刚好容一人侧身通过。她侧身挤进去，反手拔出赵虎腰间短剑，剑尖抵在阵眼凹槽里的令符上。\n“师妹！”赵虎按住她手腕，“毁了令符，山门就封死了，我们也出不去！”\n“出不去，他们也进不来。”\n林雪手腕一压，剑尖刺穿令符。灵光炸裂，阵纹瞬间逆转，石门轰然闭合，将执法堂弟子的怒吼和锁灵链的破风声一起关在门外。\n赵虎松开手，喘着粗气。\n山门外，雨雾弥漫，下山石阶隐入雾中。林雪把短剑插回赵虎腰间，抬脚踩上第一级石阶。\n石阶尽头，雾里亮起一盏灯笼，红光。\n不是青云宗的灯笼。红光映出一张枯瘦的脸，那人站在山道正中，手里提着一盏人皮灯笼，灯芯是半截指骨，烧得噼啪响。\n“青云宗的小辈？”那人咧嘴，牙齿缝里塞着血丝，“老夫等了三天，总算等到一个活的。”\n林雪拔剑。",
+          "style_trace": {
+            "preset_key": "xianxia_fast",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58",
+            "strict": true,
+            "before": {
+              "style_key": "xianxia_fast",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "active_ending"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "青云宗山门外下山石阶，刚出山门即遇拦截",
+                "status": "拔剑对峙中，体内玉简躁动",
+                "injuries": []
+              },
+              "char_zhaohu": {
+                "location": "青云宗山门外下山石阶，林雪身后",
+                "status": "跟随林雪，手按剑柄警戒",
+                "injuries": []
+              }
+            },
+            "items": {
+              "通行令符": "已毁，被林雪用短剑刺穿阵眼",
+              "追踪玉简": "执法堂弟子持有，正锁定林雪位置",
+              "人皮灯笼": "血煞盟枯瘦男子持有，灯芯为半截指骨"
+            },
+            "knowledge": [
+              "执法堂因镇魔灯异动要扣押林雪体内玉简",
+              "山门外有血煞盟修士提前埋伏"
+            ],
+            "time_marker": "深秋午夜，阴雨暂停，山雾弥漫"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "守关者扣住通行令，主角必须当场夺回并用它打开山门，更强追兵已经逼近。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "孙吉",
+              "林雪",
+              "赵虎"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_zhaohu": "赵虎",
+              "char_sunji": "孙吉"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "守关者扣住通行令，主角必须当场夺回并用它打开山门，更强追兵已经逼近。",
+                  "met": true,
+                  "prose_evidence": [
+                    "指尖点在守关弟子腕间麻筋上，那人整条手臂一麻，五指松开。令符下落，林雪左脚踢起，令符翻上半空，她右手接住，灵力灌入。",
+                    "云纹亮起，山门禁制嗡鸣，第一重石门缓缓推开。",
+                    "林雪将令符嵌入阵眼凹槽，灵力再催，石门上浮现出繁复的阵纹",
+                    "三道遁光落在守关殿前，遁光散去，露出三个执法堂弟子"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.通行令符"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成夺令、开第一重门、开第二重门，追兵随后出现，源事件要求全部兑现。结束状态与正文结尾一致，无内部矛盾、无新增专名、无修订差异。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "守关弟子扣住通行令，拇指压在令符的云纹上，指节发白。\n“林师姐，长老有令，今夜任何人不得出山。”\n林雪没看他。她盯着他拇指压住的那道云纹——那是令符的灵引刻痕，压住它，灵力就无法注入，山门禁制打不开。\n她抬手。\n不是去夺令符。指尖点在守关弟子腕间麻筋上，那人整条手臂一麻，五指松开。令符下落，林雪左脚踢起，令符翻上半空，她右手接住，灵力灌入。\n云纹亮起，山门禁制嗡鸣，第一重石门缓缓推开。\n守关弟子捂着手腕后退，背撞上石壁，脸色煞白：“林师姐，你这是——”\n“让开。”\n林雪跨过门槛，赵虎紧跟身后，手按在剑柄上，回头瞪了那弟子一眼。\n第二重石门还没开。林雪将令符嵌入阵眼凹槽，灵力再催，石门上浮现出繁复的阵纹，一层层剥开，像莲花绽放。石门刚开到一半，身后传来破风声。\n三道遁光落在守关殿前，遁光散去，露出三个执法堂弟子，为首那个腰间挂着锁灵链，手里捏着一枚追踪玉简。\n玉简上的灵光正对着林雪的方向跳动。\n“林雪，镇魔灯异动，长老命你即刻回守山殿接受问询。”执法堂弟子踏前一步，锁灵链在他掌心哗啦作响，“你体内那枚玉简——交出来。”\n林雪没回头。石门开到七成，刚好容一人侧身通过。她侧身挤进去，反手拔出赵虎腰间短剑，剑尖抵在阵眼凹槽里的令符上。\n“师妹！”赵虎按住她手腕，“毁了令符，山门就封死了，我们也出不去！”\n“出不去，他们也进不来。”\n林雪手腕一压，剑尖刺穿令符。灵光炸裂，阵纹瞬间逆转，石门轰然闭合，将执法堂弟子的怒吼和锁灵链的破风声一起关在门外。\n赵虎松开手，喘着粗气。\n山门外，雨雾弥漫，下山石阶隐入雾中。林雪把短剑插回赵虎腰间，抬脚踩上第一级石阶。\n石阶尽头，雾里亮起一盏灯笼，红光。\n不是青云宗的灯笼。红光映出一张枯瘦的脸，那人站在山道正中，手里提着一盏人皮灯笼，灯芯是半截指骨，烧得噼啪响。\n“青云宗的小辈？”那人咧嘴，牙齿缝里塞着血丝，“老夫等了三天，总算等到一个活的。”\n林雪拔剑。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "守关弟子扣住通行令，拇指压在令符的云纹上，指节发白。\n“林师姐，长老有令，今夜任何人不得出山。”\n林雪没看他。她盯着他拇指压住的那道云纹——那是令符的灵引刻痕，压住它，灵力就无法注入，山门禁制打不开。\n她抬手。\n不是去夺令符。指尖点在守关弟子腕间麻筋上，那人整条手臂一麻，五指松开。令符下落，林雪左脚踢起，令符翻上半空，她右手接住，灵力灌入。\n云纹亮起，山门禁制嗡鸣，第一重石门缓缓推开。\n守关弟子捂着手腕后退，背撞上石壁，脸色煞白：“林师姐，你这是——”\n“让开。”\n林雪跨过门槛，赵虎紧跟身后，手按在剑柄上，回头瞪了那弟子一眼。\n第二重石门还没开。林雪将令符嵌入阵眼凹槽，灵力再催，石门上浮现出繁复的阵纹，一层层剥开，像莲花绽放。石门刚开到一半，身后传来破风声。\n三道遁光落在守关殿前，遁光散去，露出三个执法堂弟子，为首那个腰间挂着锁灵链，手里捏着一枚追踪玉简。\n玉简上的灵光正对着林雪的方向跳动。\n“林雪，镇魔灯异动，长老命你即刻回守山殿接受问询。”执法堂弟子踏前一步，锁灵链在他掌心哗啦作响，“你体内那枚玉简——交出来。”\n林雪没回头。石门开到七成，刚好容一人侧身通过。她侧身挤进去，反手拔出赵虎腰间短剑，剑尖抵在阵眼凹槽里的令符上。\n“师妹！”赵虎按住她手腕，“毁了令符，山门就封死了，我们也出不去！”\n“出不去，他们也进不来。”\n林雪手腕一压，剑尖刺穿令符。灵光炸裂，阵纹瞬间逆转，石门轰然闭合，将执法堂弟子的怒吼和锁灵链的破风声一起关在门外。\n赵虎松开手，喘着粗气。\n山门外，雨雾弥漫，下山石阶隐入雾中。林雪把短剑插回赵虎腰间，抬脚踩上第一级石阶。\n石阶尽头，雾里亮起一盏灯笼，红光。\n不是青云宗的灯笼。红光映出一张枯瘦的脸，那人站在山道正中，手里提着一盏人皮灯笼，灯芯是半截指骨，烧得噼啪响。\n“青云宗的小辈？”那人咧嘴，牙齿缝里塞着血丝，“老夫等了三天，总算等到一个活的。”\n林雪拔剑。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_xianxia_fast_1784569594934"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "republic_spy",
+      "style": "noir_cold",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 581,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "noir_cold",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_exclamation",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "纯环境镜头略长：首段'雨打在经楼残瓦上，声音碎而密'为纯环境，虽仅1句但后续无人物动作衔接，可更紧凑。"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "noir_cold",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+          "strict": true,
+          "before": {
+            "style_key": "noir_cold",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "no_exclamation",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "雨打在经楼残瓦上，声音碎而密。\n\n林雪推开地下密室的门，苏墨已经到了。他坐在电台旁，食指轻叩桌面，三短一长，再一短。\n\n她没坐。\n\n“暗号。”她说。\n\n苏墨抬头。茶博士的灰布长衫袖口湿了半截，左手压在信封上。“雨大，迟了。”\n\n“暗号。”\n\n他叩桌面的手指停住。“三号仓库的货，改到礼拜四。”\n\n不对。应该是“礼拜五”。\n\n林雪没动。她看着苏墨的眼睛，右手垂在身侧，指尖贴住旗袍侧缝里的硬物。观音像在墙角，香灰上两行脚印，一行是她的，一行是他的。\n\n“信封。”\n\n苏墨把信封推过桌面。牛皮纸，火漆完好，角落折了一个三角——这是紧急情报的标记。她拿起信封，拇指压过折角。\n\n三角折反了。\n\n她把信封翻过来。背面空白处有一道指甲划痕，极浅，像是无意留下的。但苏墨从不留指甲。他做茶博士，指甲永远剪到肉。\n\n“你的手。”她说。\n\n苏墨摊开右手。食指和中指第一关节有茧，长期握茶壶磨出来的。指甲干净，剪得很短。\n\n左手还压在桌上。\n\n“左手。”\n\n他翻过左手。掌心朝上。\n\n指甲缝里有泥。\n\n苏墨从不在指甲缝里留东西。\n\n林雪把信封放回桌上，退了一步。电台的低鸣声填满密室，像某种昆虫在暗处振翅。雨打在残瓦上，经楼的木梁在风里吱呀一声。\n\n“你不是苏墨。”\n\n那人没说话。压在桌上的左手慢慢收拢，指节发白。\n\n林雪摸到旗袍侧缝里的掌心雷。枪柄被体温捂热。\n\n“他在哪。”",
+          "style_trace": {
+            "preset_key": "noir_cold",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+            "strict": true,
+            "before": {
+              "style_key": "noir_cold",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "no_exclamation",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "静安寺旧经楼地下密室",
+                "status": "拔枪对峙中，确认对方为伪装者",
+                "knowledge_added": [
+                  "接头暗号被篡改",
+                  "来人指甲缝有泥，不符合苏墨习惯",
+                  "信封折角方向错误"
+                ]
+              },
+              "char_sumo": {
+                "location": "未知",
+                "status": "失踪，被冒充"
+              }
+            },
+            "items": {
+              "掌心雷": {
+                "owner": "char_linxue",
+                "status": "已握在手中"
+              },
+              "伪造信封": {
+                "owner": "unknown",
+                "status": "留在密室桌上"
+              }
+            },
+            "knowledge": [
+              "林雪发现接头暗号从'礼拜五'被改为'礼拜四'",
+              "苏墨的接头信号被破解"
+            ],
+            "time_marker": "雨夜，世界时间1"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "雨夜交接出现错误暗号，角色不动声色地检查信封和对方的手。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老五",
+              "苏墨"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏墨",
+              "char_laowu": "老五"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "雨夜交接出现错误暗号，角色不动声色地检查信封和对方的手。",
+                  "met": true,
+                  "prose_evidence": [
+                    "她拿起信封，拇指压过折角。",
+                    "她把信封翻过来。背面空白处有一道指甲划痕",
+                    "你的手。",
+                    "左手。",
+                    "他翻过左手。掌心朝上。",
+                    "指甲缝里有泥。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪发现接头暗号从'礼拜五'被改为'礼拜四'",
+                    "knowledge.苏墨的接头信号被破解"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成暗号核对、信封检查与双手检查，结尾状态与声明一致，无硬矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "雨打在经楼残瓦上，声音碎而密。\n\n林雪推开地下密室的门，苏墨已经到了。他坐在电台旁，食指轻叩桌面，三短一长，再一短。\n\n她没坐。\n\n“暗号。”她说。\n\n苏墨抬头。茶博士的灰布长衫袖口湿了半截，左手压在信封上。“雨大，迟了。”\n\n“暗号。”\n\n他叩桌面的手指停住。“三号仓库的货，改到礼拜四。”\n\n不对。应该是“礼拜五”。\n\n林雪没动。她看着苏墨的眼睛，右手垂在身侧，指尖贴住旗袍侧缝里的硬物。观音像在墙角，香灰上两行脚印，一行是她的，一行是他的。\n\n“信封。”\n\n苏墨把信封推过桌面。牛皮纸，火漆完好，角落折了一个三角——这是紧急情报的标记。她拿起信封，拇指压过折角。\n\n三角折反了。\n\n她把信封翻过来。背面空白处有一道指甲划痕，极浅，像是无意留下的。但苏墨从不留指甲。他做茶博士，指甲永远剪到肉。\n\n“你的手。”她说。\n\n苏墨摊开右手。食指和中指第一关节有茧，长期握茶壶磨出来的。指甲干净，剪得很短。\n\n左手还压在桌上。\n\n“左手。”\n\n他翻过左手。掌心朝上。\n\n指甲缝里有泥。\n\n苏墨从不在指甲缝里留东西。\n\n林雪把信封放回桌上，退了一步。电台的低鸣声填满密室，像某种昆虫在暗处振翅。雨打在残瓦上，经楼的木梁在风里吱呀一声。\n\n“你不是苏墨。”\n\n那人没说话。压在桌上的左手慢慢收拢，指节发白。\n\n林雪摸到旗袍侧缝里的掌心雷。枪柄被体温捂热。\n\n“他在哪。”"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "雨打在经楼残瓦上，声音碎而密。\n\n林雪推开地下密室的门，苏墨已经到了。他坐在电台旁，食指轻叩桌面，三短一长，再一短。\n\n她没坐。\n\n“暗号。”她说。\n\n苏墨抬头。茶博士的灰布长衫袖口湿了半截，左手压在信封上。“雨大，迟了。”\n\n“暗号。”\n\n他叩桌面的手指停住。“三号仓库的货，改到礼拜四。”\n\n不对。应该是“礼拜五”。\n\n林雪没动。她看着苏墨的眼睛，右手垂在身侧，指尖贴住旗袍侧缝里的硬物。观音像在墙角，香灰上两行脚印，一行是她的，一行是他的。\n\n“信封。”\n\n苏墨把信封推过桌面。牛皮纸，火漆完好，角落折了一个三角——这是紧急情报的标记。她拿起信封，拇指压过折角。\n\n三角折反了。\n\n她把信封翻过来。背面空白处有一道指甲划痕，极浅，像是无意留下的。但苏墨从不留指甲。他做茶博士，指甲永远剪到肉。\n\n“你的手。”她说。\n\n苏墨摊开右手。食指和中指第一关节有茧，长期握茶壶磨出来的。指甲干净，剪得很短。\n\n左手还压在桌上。\n\n“左手。”\n\n他翻过左手。掌心朝上。\n\n指甲缝里有泥。\n\n苏墨从不在指甲缝里留东西。\n\n林雪把信封放回桌上，退了一步。电台的低鸣声填满密室，像某种昆虫在暗处振翅。雨打在残瓦上，经楼的木梁在风里吱呀一声。\n\n“你不是苏墨。”\n\n那人没说话。压在桌上的左手慢慢收拢，指节发白。\n\n林雪摸到旗袍侧缝里的掌心雷。枪柄被体温捂热。\n\n“他在哪。”",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_noir_cold_1784569768143"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "gourmet_culinary",
+      "style": "warm_healing",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+      "strict_every_ticks": 2,
+      "accepted": true,
+      "char_count": 1451,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "warm_healing",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "warm_safety",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "关系温度变化可更明确点明，但已通过动作和对话充分暗示"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "warm_healing",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+          "strict": true,
+          "before": {
+            "style_key": "warm_healing",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "warm_safety",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "林沧推开刃心的木门，门轴发出一声干涩的吱呀。店里没开灯，只有灶台上一盏小瓦数的灯泡亮着，光晕罩住苏怡的背影。她正弯着腰，用抹布擦灶台边缘干涸的酱渍，动作很轻，像怕惊动什么。\n\n他没出声，走到水池边拧开水龙头，冲掉手指上沾的银杏叶碎屑。水声让苏怡的手顿了一下，但她没回头。\n\n“你来了。”她说，抹布继续在瓷砖上画圈。\n\n林沧拉开抽屉，取出父亲留下的那把柳刃，刀刃在灯光下泛出一层薄薄的青。他习惯性地用拇指试了试刀锋，然后从砧板旁的竹篮里拣出一根白萝卜，开始切。刀落砧板的声音很密，萝卜片薄得透光，一片叠一片倒向刀身。\n\n苏怡终于转过身，手里端着个搪瓷碗，碗沿磕掉了一小块瓷，露出底下铁锈色的底。碗里盛着味噌汤，已经不冒热气了。\n\n“中午煮的，你尝尝。”她把碗搁在灶台边，碗底磕在瓷砖上，声音比平时脆。\n\n林沧放下刀，端起碗。汤面浮着一层薄油，豆腐丁沉在碗底，葱花已经泡得发黄。他喝了一口，盐味偏重，味噌的发酵香还在，但温度确实凉了。\n\n“姜放少了。”他说。\n\n苏怡愣了一下，然后从鼻子里哼出一声笑：“你爸以前也这么说。”\n\n她把碗拿回去，转身开火，把汤倒进小锅里重新加热。林沧看着她从调料架上取下姜块，用刀背拍散，切成细末，撒进锅里。姜的辛辣被热气蒸起来，混进味噌的酱香里。\n\n灶台角落有个裂了缝的小瓷碟，里面盛着几块腌萝卜。林沧拿起来，裂缝从碟沿一直延伸到碟心，酱油从缝隙里渗出来，在灶台上洇出一小片深色的印子。他找了条干净的抹布，把碟子底擦干，又从柜子里翻出一卷糯米纸，撕下一小片，沾水贴在裂缝内侧，用手指按平。\n\n苏怡把重新热好的汤倒回碗里，推到他面前。这次碗底垫了块干抹布。\n\n“拍卖的事，”她开口，语速比平时慢，“潮汐商会找我的时候，我不知道你会来。”\n\n林沧端起碗，喝了一口。姜味这次够了，辣味从舌根往上窜，把秋雨的潮气逼出去一点。\n\n“火候到了，话自然少。”他说。\n\n苏怡没接话，只是从围裙口袋里摸出个小纸包，打开，里面是几片晒干的陈皮。她掰了一小片，丢进他碗里。\n\n“你喉咙哑了。”她说。\n\n林沧低头看着那片陈皮在汤面上慢慢舒展，边缘吸饱了汤汁，颜色从暗褐变成深棕。他用筷子夹起来，嚼了嚼，苦味之后是柑橘的甜，很淡，但停在舌根上不散。\n\n他把补好的碟子推过去，裂缝处糯米纸已经干了，变成一层透明的膜，把两片瓷片拉在一起。\n\n“还能用。”他说。\n\n苏怡接过去，拇指摸了摸那道补痕，然后把碟子放回灶台角落，重新摆正。\n\n“明天我去铁板荒原，”她突然说，眼睛盯着灶火，“刀工会的人也在找那份残卷。你最好别跟来。”\n\n林沧把碗里的汤喝完，碗底只剩几粒豆腐丁和没化开的姜末。他站起来，把碗放进水池，拧开水龙头冲了冲。\n\n“你刀尖在抖。”他说，没回头。\n\n苏怡低头看自己的手，指尖确实在微微发颤。她攥紧抹布，指节泛白。\n\n林沧从刀架上抽出那把柳刃，用干布擦净刀身的水渍，放回抽屉里，关好。抽屉合上的声音很轻，像刀锋入鞘。\n\n“陈皮还有吗。”他问。\n\n苏怡把小纸包递过去，他接的时候，指尖碰到她的手背，凉得厉害。\n\n他没说什么，只是把纸包揣进外套内袋，扣好扣子。\n\n灶台上的小锅还在咕嘟，锅里只剩一层底汤，味噌的焦香开始变浓。苏怡伸手关掉火，锅里的气泡慢慢平下去，最后只剩一圈深色的酱痕。\n\n“下次煮汤，”林沧走到门口，拉开木门，秋雨的气味涌进来，混着银杏叶腐烂的甜，“姜要拍散，不要切。”\n\n苏怡没应声，但嘴角动了一下。\n\n门在他身后合上，灶台上的灯泡晃了晃，光晕在墙上荡出一个很浅的弧度，然后稳住。",
+          "style_trace": {
+            "preset_key": "warm_healing",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+            "strict": true,
+            "before": {
+              "style_key": "warm_healing",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "warm_safety",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lincang": {
+                "location": "味觉町刃心店内→离开",
+                "injuries": [],
+                "status": "将陈皮纸包揣入外套内袋"
+              },
+              "char_suyi": {
+                "location": "味觉町刃心店内",
+                "injuries": [],
+                "status": "手指微颤，情绪因与林沧的互动而缓和"
+              }
+            },
+            "items": {
+              "柳刃刀": {
+                "holder": "char_lincang",
+                "status": "已擦净放回刃心店抽屉"
+              },
+              "陈皮纸包": {
+                "holder": "char_lincang",
+                "status": "已交付"
+              },
+              "修补的瓷碟": {
+                "holder": "char_suyi",
+                "status": "裂缝用糯米纸补好，留在灶台角落"
+              }
+            },
+            "knowledge": [
+              "苏怡被潮汐商会雇佣为拍卖味觉鉴定师时不知林沧会参与",
+              "苏怡次日将前往铁板荒原，刀工会也在追寻残卷",
+              "林沧通过修补碗碟和分享食物传递了和解信号"
+            ],
+            "time_marker": "深秋傍晚，雨未停"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "灶台边碗裂了、汤快凉了，两个人借修补和分享食物化开一场小误会。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "林沧",
+              "老邢",
+              "苏怡"
+            ],
+            "entity_names": {
+              "char_lincang": "林沧",
+              "char_suyi": "苏怡",
+              "char_laoxing": "老邢"
+            },
+            "tracking_character_id": "char_lincang",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "灶台边碗裂了、汤快凉了，两个人借修补和分享食物化开一场小误会。",
+                  "met": true,
+                  "prose_evidence": [
+                    "碗沿磕掉了一小块瓷，露出底下铁锈色的底",
+                    "已经不冒热气了",
+                    "林沧拿起来，裂缝从碟沿一直延伸到碟心，酱油从缝隙里渗出来",
+                    "撕下一小片，沾水贴在裂缝内侧，用手指按平",
+                    "苏怡把重新热好的汤倒回碗里，推到他面前",
+                    "她把碗拿回去，转身开火，把汤倒进小锅里重新加热",
+                    "姜的辛辣被热气蒸起来，混进味噌的酱香里",
+                    "苏怡没接话，只是从围裙口袋里摸出个小纸包，打开，里面是几片晒干的陈皮。她掰了一小片，丢进他碗里",
+                    "他把补好的碟子推过去，裂缝处糯米纸已经干了，变成一层透明的膜，把两片瓷片拉在一起",
+                    "苏怡接过去，拇指摸了摸那道补痕，然后把碟子放回灶台角落，重新摆正"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.修补的瓷碟.status",
+                    "items.修补的瓷碟.holder",
+                    "characters.char_suyi.status",
+                    "characters.char_lincang.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文完整兑现了源事件要求的碗裂、汤凉、修补瓷碟和分享食物化开误会等所有要素，结束状态与声明一致，无内部矛盾、无新增未授权实体、无前态冲突。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_lincang"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "林沧推开刃心的木门，门轴发出一声干涩的吱呀。店里没开灯，只有灶台上一盏小瓦数的灯泡亮着，光晕罩住苏怡的背影。她正弯着腰，用抹布擦灶台边缘干涸的酱渍，动作很轻，像怕惊动什么。\n\n他没出声，走到水池边拧开水龙头，冲掉手指上沾的银杏叶碎屑。水声让苏怡的手顿了一下，但她没回头。\n\n“你来了。”她说，抹布继续在瓷砖上画圈。\n\n林沧拉开抽屉，取出父亲留下的那把柳刃，刀刃在灯光下泛出一层薄薄的青。他习惯性地用拇指试了试刀锋，然后从砧板旁的竹篮里拣出一根白萝卜，开始切。刀落砧板的声音很密，萝卜片薄得透光，一片叠一片倒向刀身。\n\n苏怡终于转过身，手里端着个搪瓷碗，碗沿磕掉了一小块瓷，露出底下铁锈色的底。碗里盛着味噌汤，已经不冒热气了。\n\n“中午煮的，你尝尝。”她把碗搁在灶台边，碗底磕在瓷砖上，声音比平时脆。\n\n林沧放下刀，端起碗。汤面浮着一层薄油，豆腐丁沉在碗底，葱花已经泡得发黄。他喝了一口，盐味偏重，味噌的发酵香还在，但温度确实凉了。\n\n“姜放少了。”他说。\n\n苏怡愣了一下，然后从鼻子里哼出一声笑：“你爸以前也这么说。”\n\n她把碗拿回去，转身开火，把汤倒进小锅里重新加热。林沧看着她从调料架上取下姜块，用刀背拍散，切成细末，撒进锅里。姜的辛辣被热气蒸起来，混进味噌的酱香里。\n\n灶台角落有个裂了缝的小瓷碟，里面盛着几块腌萝卜。林沧拿起来，裂缝从碟沿一直延伸到碟心，酱油从缝隙里渗出来，在灶台上洇出一小片深色的印子。他找了条干净的抹布，把碟子底擦干，又从柜子里翻出一卷糯米纸，撕下一小片，沾水贴在裂缝内侧，用手指按平。\n\n苏怡把重新热好的汤倒回碗里，推到他面前。这次碗底垫了块干抹布。\n\n“拍卖的事，”她开口，语速比平时慢，“潮汐商会找我的时候，我不知道你会来。”\n\n林沧端起碗，喝了一口。姜味这次够了，辣味从舌根往上窜，把秋雨的潮气逼出去一点。\n\n“火候到了，话自然少。”他说。\n\n苏怡没接话，只是从围裙口袋里摸出个小纸包，打开，里面是几片晒干的陈皮。她掰了一小片，丢进他碗里。\n\n“你喉咙哑了。”她说。\n\n林沧低头看着那片陈皮在汤面上慢慢舒展，边缘吸饱了汤汁，颜色从暗褐变成深棕。他用筷子夹起来，嚼了嚼，苦味之后是柑橘的甜，很淡，但停在舌根上不散。\n\n他把补好的碟子推过去，裂缝处糯米纸已经干了，变成一层透明的膜，把两片瓷片拉在一起。\n\n“还能用。”他说。\n\n苏怡接过去，拇指摸了摸那道补痕，然后把碟子放回灶台角落，重新摆正。\n\n“明天我去铁板荒原，”她突然说，眼睛盯着灶火，“刀工会的人也在找那份残卷。你最好别跟来。”\n\n林沧把碗里的汤喝完，碗底只剩几粒豆腐丁和没化开的姜末。他站起来，把碗放进水池，拧开水龙头冲了冲。\n\n“你刀尖在抖。”他说，没回头。\n\n苏怡低头看自己的手，指尖确实在微微发颤。她攥紧抹布，指节泛白。\n\n林沧从刀架上抽出那把柳刃，用干布擦净刀身的水渍，放回抽屉里，关好。抽屉合上的声音很轻，像刀锋入鞘。\n\n“陈皮还有吗。”他问。\n\n苏怡把小纸包递过去，他接的时候，指尖碰到她的手背，凉得厉害。\n\n他没说什么，只是把纸包揣进外套内袋，扣好扣子。\n\n灶台上的小锅还在咕嘟，锅里只剩一层底汤，味噌的焦香开始变浓。苏怡伸手关掉火，锅里的气泡慢慢平下去，最后只剩一圈深色的酱痕。\n\n“下次煮汤，”林沧走到门口，拉开木门，秋雨的气味涌进来，混着银杏叶腐烂的甜，“姜要拍散，不要切。”\n\n苏怡没应声，但嘴角动了一下。\n\n门在他身后合上，灶台上的灯泡晃了晃，光晕在墙上荡出一个很浅的弧度，然后稳住。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "林沧推开刃心的木门，门轴发出一声干涩的吱呀。店里没开灯，只有灶台上一盏小瓦数的灯泡亮着，光晕罩住苏怡的背影。她正弯着腰，用抹布擦灶台边缘干涸的酱渍，动作很轻，像怕惊动什么。\n\n他没出声，走到水池边拧开水龙头，冲掉手指上沾的银杏叶碎屑。水声让苏怡的手顿了一下，但她没回头。\n\n“你来了。”她说，抹布继续在瓷砖上画圈。\n\n林沧拉开抽屉，取出父亲留下的那把柳刃，刀刃在灯光下泛出一层薄薄的青。他习惯性地用拇指试了试刀锋，然后从砧板旁的竹篮里拣出一根白萝卜，开始切。刀落砧板的声音很密，萝卜片薄得透光，一片叠一片倒向刀身。\n\n苏怡终于转过身，手里端着个搪瓷碗，碗沿磕掉了一小块瓷，露出底下铁锈色的底。碗里盛着味噌汤，已经不冒热气了。\n\n“中午煮的，你尝尝。”她把碗搁在灶台边，碗底磕在瓷砖上，声音比平时脆。\n\n林沧放下刀，端起碗。汤面浮着一层薄油，豆腐丁沉在碗底，葱花已经泡得发黄。他喝了一口，盐味偏重，味噌的发酵香还在，但温度确实凉了。\n\n“姜放少了。”他说。\n\n苏怡愣了一下，然后从鼻子里哼出一声笑：“你爸以前也这么说。”\n\n她把碗拿回去，转身开火，把汤倒进小锅里重新加热。林沧看着她从调料架上取下姜块，用刀背拍散，切成细末，撒进锅里。姜的辛辣被热气蒸起来，混进味噌的酱香里。\n\n灶台角落有个裂了缝的小瓷碟，里面盛着几块腌萝卜。林沧拿起来，裂缝从碟沿一直延伸到碟心，酱油从缝隙里渗出来，在灶台上洇出一小片深色的印子。他找了条干净的抹布，把碟子底擦干，又从柜子里翻出一卷糯米纸，撕下一小片，沾水贴在裂缝内侧，用手指按平。\n\n苏怡把重新热好的汤倒回碗里，推到他面前。这次碗底垫了块干抹布。\n\n“拍卖的事，”她开口，语速比平时慢，“潮汐商会找我的时候，我不知道你会来。”\n\n林沧端起碗，喝了一口。姜味这次够了，辣味从舌根往上窜，把秋雨的潮气逼出去一点。\n\n“火候到了，话自然少。”他说。\n\n苏怡没接话，只是从围裙口袋里摸出个小纸包，打开，里面是几片晒干的陈皮。她掰了一小片，丢进他碗里。\n\n“你喉咙哑了。”她说。\n\n林沧低头看着那片陈皮在汤面上慢慢舒展，边缘吸饱了汤汁，颜色从暗褐变成深棕。他用筷子夹起来，嚼了嚼，苦味之后是柑橘的甜，很淡，但停在舌根上不散。\n\n他把补好的碟子推过去，裂缝处糯米纸已经干了，变成一层透明的膜，把两片瓷片拉在一起。\n\n“还能用。”他说。\n\n苏怡接过去，拇指摸了摸那道补痕，然后把碟子放回灶台角落，重新摆正。\n\n“明天我去铁板荒原，”她突然说，眼睛盯着灶火，“刀工会的人也在找那份残卷。你最好别跟来。”\n\n林沧把碗里的汤喝完，碗底只剩几粒豆腐丁和没化开的姜末。他站起来，把碗放进水池，拧开水龙头冲了冲。\n\n“你刀尖在抖。”他说，没回头。\n\n苏怡低头看自己的手，指尖确实在微微发颤。她攥紧抹布，指节泛白。\n\n林沧从刀架上抽出那把柳刃，用干布擦净刀身的水渍，放回抽屉里，关好。抽屉合上的声音很轻，像刀锋入鞘。\n\n“陈皮还有吗。”他问。\n\n苏怡把小纸包递过去，他接的时候，指尖碰到她的手背，凉得厉害。\n\n他没说什么，只是把纸包揣进外套内袋，扣好扣子。\n\n灶台上的小锅还在咕嘟，锅里只剩一层底汤，味噌的焦香开始变浓。苏怡伸手关掉火，锅里的气泡慢慢平下去，最后只剩一圈深色的酱痕。\n\n“下次煮汤，”林沧走到门口，拉开木门，秋雨的气味涌进来，混着银杏叶腐烂的甜，“姜要拍散，不要切。”\n\n苏怡没应声，但嘴角动了一下。\n\n门在他身后合上，灶台上的灯泡晃了晃，光晕在墙上荡出一个很浅的弧度，然后稳住。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_warm_healing_1784569912337"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "history_military",
+      "style": "ensemble_epic",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 820,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "收尾留白指向黄盖的未确认处境，但‘他还没看透’落在周瑜内心，未完全指向另一人物的动向空白；可微调末句以强化黄盖动向的悬置感。"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "ensemble_epic",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+          "strict": true,
+          "before": {
+            "style_key": "ensemble_epic",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "周瑜把第三封军报扣在案上，手指压着竹简的边缘，没说话。\n\n案上的油灯跳了一下。夏口行营的这间军帐不大，四壁挂着江防水图，桐油的气味混着墨臭。帐外有兵士跑过的脚步声，橐橐橐，由近及远，被江风吞掉了。\n\n第一封来自江北细作，说曹军水寨昨夜有船移动，数目不详，方向不明。第二封是陆口港市转来的，说曹军正在上游伐木编筏，准备开春后水陆并进。第三封——\n\n第三封夹着一枚铜扳指。\n\n周瑜认得那扳指。黄盖的。内侧刻着一个“盖”字，字口被火药烧过，发黑。他拿起扳指，在指间转了一圈，冰凉的铜皮贴着指腹。军报上说，黄盖在陆口与曹军细作接头时暴露，已被押往北岸，生死不明。\n\n“都督。”帐外传来亲兵的声音，“陆口第二拨信使到了。”\n\n“让他进来。”\n\n信使是个二十出头的什长，脸上还带着江泥，单膝跪地时甲片哗啦一响。“禀都督，黄老将军今晨已回陆口营寨，身被三创，但无性命之忧。老将军说——”他顿了顿，咽了口唾沫，“说曹军细作网已盯上港市，请都督速决。”\n\n周瑜把扳指搁回案上。“他有没有说，这扳指怎么到了细作手里？”\n\n“老将军说，是他自己摘下来的。”\n\n帐里静了一息。\n\n“自己摘的。”周瑜重复了一遍，语调平得像在念粮草清单。\n\n第三封军报还在案上摊着，竹简上的墨迹被灯油洇开一小块。那封军报来自江陵方向，署名是程普的副将，说黄盖已叛，带着江东水师的布防图投了曹营。\n\n三封军报，三个说法。黄盖的扳指夹在最不可能的那一封里。\n\n周瑜把三封军报并排摆开，从左到右看了一遍，又从右到左看了一遍。然后他把那枚扳指收进袖中，站起来，走到挂江防水图的木架前。手指点在陆口的位置，往下划，划到赤壁江段，停住。\n\n“传令。”他说，“明日卯时，升帐议事。所有水师校尉以上，不得缺席。”\n\n亲兵应声退下。\n\n帐帘落下时带进一阵冷风，把案上的灯吹灭了。周瑜没去点，站在黑暗里，袖中的扳指硌着手腕。黄盖自己摘的。这老将做事从不解释，但每件事都有道理。\n\n只是这道理，他还没看透。",
+          "style_trace": {
+            "preset_key": "ensemble_epic",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+            "strict": true,
+            "before": {
+              "style_key": "ensemble_epic",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_zhouyu": {
+                "location": "夏口行营军帐",
+                "injuries": [],
+                "status": "收到三封矛盾军报，对黄盖的处境存疑但未下定论",
+                "knowledge_added": [
+                  "三封军报对黄盖的叙述互相矛盾",
+                  "黄盖的扳指夹在指控他叛变的军报中",
+                  "黄盖自称主动摘下扳指",
+                  "陆口港市已被曹军细作网盯上"
+                ]
+              },
+              "char_huanggai": {
+                "location": "陆口营寨",
+                "injuries": [
+                  "身被三创，无性命之忧"
+                ],
+                "status": "已返回陆口，派人传信请周瑜速决",
+                "knowledge_added": []
+              }
+            },
+            "items": {
+              "黄盖的铜扳指": {
+                "owner": "char_zhouyu",
+                "quantity": 1,
+                "condition": "内侧刻有“盖”字，字口被火药烧黑",
+                "location": "周瑜袖中"
+              },
+              "三封军报": {
+                "owner": "char_zhouyu",
+                "quantity": 3,
+                "condition": "完整，其中一封墨迹被灯油洇开",
+                "location": "周瑜案上"
+              }
+            },
+            "knowledge": [
+              "曹军细作网已渗透陆口港市",
+              "黄盖在陆口与曹军细作接头时暴露",
+              "程普副将指控黄盖叛变投曹",
+              "黄盖主动摘下扳指，原因不明"
+            ],
+            "time_marker": "建安十三年冬，收到军报当晚"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "当前角色收到三方互相矛盾的战报，另一位主角的信物夹在其中。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "周瑜",
+              "蒋干",
+              "黄盖"
+            ],
+            "entity_names": {
+              "char_zhouyu": "周瑜",
+              "char_huanggai": "黄盖",
+              "char_jianggan": "蒋干"
+            },
+            "tracking_character_id": "char_zhouyu",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "当前角色收到三方互相矛盾的战报，另一位主角的信物夹在其中。",
+                  "met": true,
+                  "prose_evidence": [
+                    "第一封来自江北细作，说曹军水寨昨夜有船移动，数目不详，方向不明。",
+                    "第二封是陆口港市转来的，说曹军正在上游伐木编筏，准备开春后水陆并进。",
+                    "第三封夹着一枚铜扳指。",
+                    "那封军报来自江陵方向，署名是程普的副将，说黄盖已叛，带着江东水师的布防图投了曹营。",
+                    "三封军报，三个说法。黄盖的扳指夹在最不可能的那一封里。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.三封军报.quantity",
+                    "items.黄盖的铜扳指.owner",
+                    "knowledge.三封军报对黄盖的叙述互相矛盾",
+                    "knowledge.黄盖的扳指夹在指控他叛变的军报中"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文与声明的结束状态完全一致，无任何硬矛盾。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_zhouyu"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "周瑜把第三封军报扣在案上，手指压着竹简的边缘，没说话。\n\n案上的油灯跳了一下。夏口行营的这间军帐不大，四壁挂着江防水图，桐油的气味混着墨臭。帐外有兵士跑过的脚步声，橐橐橐，由近及远，被江风吞掉了。\n\n第一封来自江北细作，说曹军水寨昨夜有船移动，数目不详，方向不明。第二封是陆口港市转来的，说曹军正在上游伐木编筏，准备开春后水陆并进。第三封——\n\n第三封夹着一枚铜扳指。\n\n周瑜认得那扳指。黄盖的。内侧刻着一个“盖”字，字口被火药烧过，发黑。他拿起扳指，在指间转了一圈，冰凉的铜皮贴着指腹。军报上说，黄盖在陆口与曹军细作接头时暴露，已被押往北岸，生死不明。\n\n“都督。”帐外传来亲兵的声音，“陆口第二拨信使到了。”\n\n“让他进来。”\n\n信使是个二十出头的什长，脸上还带着江泥，单膝跪地时甲片哗啦一响。“禀都督，黄老将军今晨已回陆口营寨，身被三创，但无性命之忧。老将军说——”他顿了顿，咽了口唾沫，“说曹军细作网已盯上港市，请都督速决。”\n\n周瑜把扳指搁回案上。“他有没有说，这扳指怎么到了细作手里？”\n\n“老将军说，是他自己摘下来的。”\n\n帐里静了一息。\n\n“自己摘的。”周瑜重复了一遍，语调平得像在念粮草清单。\n\n第三封军报还在案上摊着，竹简上的墨迹被灯油洇开一小块。那封军报来自江陵方向，署名是程普的副将，说黄盖已叛，带着江东水师的布防图投了曹营。\n\n三封军报，三个说法。黄盖的扳指夹在最不可能的那一封里。\n\n周瑜把三封军报并排摆开，从左到右看了一遍，又从右到左看了一遍。然后他把那枚扳指收进袖中，站起来，走到挂江防水图的木架前。手指点在陆口的位置，往下划，划到赤壁江段，停住。\n\n“传令。”他说，“明日卯时，升帐议事。所有水师校尉以上，不得缺席。”\n\n亲兵应声退下。\n\n帐帘落下时带进一阵冷风，把案上的灯吹灭了。周瑜没去点，站在黑暗里，袖中的扳指硌着手腕。黄盖自己摘的。这老将做事从不解释，但每件事都有道理。\n\n只是这道理，他还没看透。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "周瑜把第三封军报扣在案上，手指压着竹简的边缘，没说话。\n\n案上的油灯跳了一下。夏口行营的这间军帐不大，四壁挂着江防水图，桐油的气味混着墨臭。帐外有兵士跑过的脚步声，橐橐橐，由近及远，被江风吞掉了。\n\n第一封来自江北细作，说曹军水寨昨夜有船移动，数目不详，方向不明。第二封是陆口港市转来的，说曹军正在上游伐木编筏，准备开春后水陆并进。第三封——\n\n第三封夹着一枚铜扳指。\n\n周瑜认得那扳指。黄盖的。内侧刻着一个“盖”字，字口被火药烧过，发黑。他拿起扳指，在指间转了一圈，冰凉的铜皮贴着指腹。军报上说，黄盖在陆口与曹军细作接头时暴露，已被押往北岸，生死不明。\n\n“都督。”帐外传来亲兵的声音，“陆口第二拨信使到了。”\n\n“让他进来。”\n\n信使是个二十出头的什长，脸上还带着江泥，单膝跪地时甲片哗啦一响。“禀都督，黄老将军今晨已回陆口营寨，身被三创，但无性命之忧。老将军说——”他顿了顿，咽了口唾沫，“说曹军细作网已盯上港市，请都督速决。”\n\n周瑜把扳指搁回案上。“他有没有说，这扳指怎么到了细作手里？”\n\n“老将军说，是他自己摘下来的。”\n\n帐里静了一息。\n\n“自己摘的。”周瑜重复了一遍，语调平得像在念粮草清单。\n\n第三封军报还在案上摊着，竹简上的墨迹被灯油洇开一小块。那封军报来自江陵方向，署名是程普的副将，说黄盖已叛，带着江东水师的布防图投了曹营。\n\n三封军报，三个说法。黄盖的扳指夹在最不可能的那一封里。\n\n周瑜把三封军报并排摆开，从左到右看了一遍，又从右到左看了一遍。然后他把那枚扳指收进袖中，站起来，走到挂江防水图的木架前。手指点在陆口的位置，往下划，划到赤壁江段，停住。\n\n“传令。”他说，“明日卯时，升帐议事。所有水师校尉以上，不得缺席。”\n\n亲兵应声退下。\n\n帐帘落下时带进一阵冷风，把案上的灯吹灭了。周瑜没去点，站在黑暗里，袖中的扳指硌着手腕。黄盖自己摘的。这老将做事从不解释，但每件事都有道理。\n\n只是这道理，他还没看透。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_ensemble_epic_1784570082887"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "scifi_soft_lit",
+      "style": "philosophical_meditative",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 890,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "地图名字位移的哲学意味可再强化一个视点人物的具体反应（如指腹摩挲笔迹的触感）"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "philosophical_meditative",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+          "strict": true,
+          "before": {
+            "style_key": "philosophical_meditative",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "林雪在诊所门口站了三分钟。玻璃幕墙上的倒影完整，左眼在左，右眼在右，没有错位。她推门进去。\n\n前台递给她今日的删除排期表。她没看名单，先看角落的时间戳。昨天。还是昨天。\n\n她翻过手腕。腕表显示10月24日。排期表上印着10月23日。她昨天见过这张表，连第三行客户姓名拼错的位置都一样——\"陈\"字少了一横。\n\n“日期错了。”她把表推回去。\n\n前台低头看了一眼，又抬头看她，像她说了什么不该说的话。“表没问题，林医生。”\n\n林雪收回手。指尖碰到制服口袋里的记忆晶体——空的，待写入状态。她习惯在上班路上捏着它，体温把它焐到比掌心热半度。今天它凉的。\n\n她走进自己的删除室。墙面镜映出操作台、椅子、她的背影。镜中电子钟显示23日。她没看镜子，坐下，展开排期表。\n\n第三行。\"陈\"字少一横。\n\n她站起来，走到镜前。钟还在昨天。她伸手，指尖触到镜面。冰凉。不是玻璃的温度，是某种拒绝的温度。\n\n她把手掌整个贴上去。镜中她的手腕上，腕表显示24日。但镜中钟是23日。两个时间困在同一面镜子里，隔着一层银。\n\n她收回手。掌印留在镜面上，慢慢消退，像被什么东西从另一侧舔掉。\n\n排期表还摊在桌上。她走回去，拿起笔，在第三行\"陈\"字旁边补了一横。\n\n墨水渗进纸张。那个字完整了。\n\n她抬眼。镜中钟跳了一下，变成24日。\n\n她没有松一口气。她盯着那个被自己修正的字，笔还握在手里，指节发白。\n\n地图摊在操作台旁边的隔板上，是新安克雷奇的街区图，她用红笔圈过三个记忆回收亭的位置。她上周画的圈。\n\n现在圈还在，但她的名字——写在图例栏旁边，用来标记负责区域——移到了另一条街。\n\n她记得写在第7区。现在它在第9区。\n\n她弯腰看。名字是她的笔迹，墨水颜色一样，没有涂改痕迹。但位置往东移了一格，正好一格，像棋盘上的棋子被谁推了一步。\n\n她直起腰。镜中她的脸完整，左眼在左，右眼在右。\n\n腕表显示10月24日。镜中钟显示10月24日。地图上她的名字在第9区。\n\n她伸手，把地图折起来，塞进抽屉最底层。抽屉关上时卡了一下，她用力推到底。\n\n金属碰撞声在删除室里回荡，比应有的响度大，像房间在替她记住这个声音。",
+          "style_trace": {
+            "preset_key": "philosophical_meditative",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+            "strict": true,
+            "before": {
+              "style_key": "philosophical_meditative",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_linxue": {
+                "location": "记忆删除诊所删除室",
+                "injuries": [],
+                "alive": true
+              },
+              "char_sumo": {
+                "location": "未知",
+                "injuries": [],
+                "alive": true
+              }
+            },
+            "items": {
+              "记忆晶体(空)": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "status": "待写入"
+              },
+              "新安克雷奇街区图": {
+                "holder": "char_linxue",
+                "quantity": 1,
+                "status": "林雪名字位置从第7区移至第9区，地图被折起放入抽屉底层"
+              }
+            },
+            "knowledge": [
+              "林雪发现排期表日期停在昨天，镜中时钟也停在昨天",
+              "林雪修正排期表上的错字后，镜中时钟跳回今天",
+              "林雪发现地图上自己的名字每天移动一格，已从第7区移至第9区"
+            ],
+            "time_marker": "记忆清算纪元，深秋，10月24日"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "角色发现地图上自己的名字每天移动一格，镜中的时钟却始终停在昨天。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "林雪",
+              "老王",
+              "苏陌"
+            ],
+            "entity_names": {
+              "char_linxue": "林雪",
+              "char_sumo": "苏陌",
+              "char_laowang": "老王"
+            },
+            "tracking_character_id": "char_linxue",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "角色发现地图上自己的名字每天移动一格，镜中的时钟却始终停在昨天。",
+                  "met": true,
+                  "prose_evidence": [
+                    "现在圈还在，但她的名字——写在图例栏旁边，用来标记负责区域——移到了另一条街。",
+                    "她记得写在第7区。现在它在第9区。",
+                    "但位置往东移了一格，正好一格，像棋盘上的棋子被谁推了一步。",
+                    "镜中电子钟显示23日。",
+                    "钟还在昨天。",
+                    "镜中钟跳了一下，变成24日。"
+                  ],
+                  "ledger_evidence_paths": [
+                    "knowledge.林雪发现地图上自己的名字每天移动一格，已从第7区移至第9区",
+                    "knowledge.林雪发现排期表日期停在昨天，镜中时钟也停在昨天"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文逐句核对，无硬矛盾。源事件要求已兑现：林雪发现地图名字移动一格（第7区至第9区），镜中时钟停在昨天（23日）并在修正错字后跳至24日。结束状态与声明一致。无新增专名或实体冲突。修订稿与原文相同，无事实变更。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_linxue"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "林雪在诊所门口站了三分钟。玻璃幕墙上的倒影完整，左眼在左，右眼在右，没有错位。她推门进去。\n\n前台递给她今日的删除排期表。她没看名单，先看角落的时间戳。昨天。还是昨天。\n\n她翻过手腕。腕表显示10月24日。排期表上印着10月23日。她昨天见过这张表，连第三行客户姓名拼错的位置都一样——\"陈\"字少了一横。\n\n“日期错了。”她把表推回去。\n\n前台低头看了一眼，又抬头看她，像她说了什么不该说的话。“表没问题，林医生。”\n\n林雪收回手。指尖碰到制服口袋里的记忆晶体——空的，待写入状态。她习惯在上班路上捏着它，体温把它焐到比掌心热半度。今天它凉的。\n\n她走进自己的删除室。墙面镜映出操作台、椅子、她的背影。镜中电子钟显示23日。她没看镜子，坐下，展开排期表。\n\n第三行。\"陈\"字少一横。\n\n她站起来，走到镜前。钟还在昨天。她伸手，指尖触到镜面。冰凉。不是玻璃的温度，是某种拒绝的温度。\n\n她把手掌整个贴上去。镜中她的手腕上，腕表显示24日。但镜中钟是23日。两个时间困在同一面镜子里，隔着一层银。\n\n她收回手。掌印留在镜面上，慢慢消退，像被什么东西从另一侧舔掉。\n\n排期表还摊在桌上。她走回去，拿起笔，在第三行\"陈\"字旁边补了一横。\n\n墨水渗进纸张。那个字完整了。\n\n她抬眼。镜中钟跳了一下，变成24日。\n\n她没有松一口气。她盯着那个被自己修正的字，笔还握在手里，指节发白。\n\n地图摊在操作台旁边的隔板上，是新安克雷奇的街区图，她用红笔圈过三个记忆回收亭的位置。她上周画的圈。\n\n现在圈还在，但她的名字——写在图例栏旁边，用来标记负责区域——移到了另一条街。\n\n她记得写在第7区。现在它在第9区。\n\n她弯腰看。名字是她的笔迹，墨水颜色一样，没有涂改痕迹。但位置往东移了一格，正好一格，像棋盘上的棋子被谁推了一步。\n\n她直起腰。镜中她的脸完整，左眼在左，右眼在右。\n\n腕表显示10月24日。镜中钟显示10月24日。地图上她的名字在第9区。\n\n她伸手，把地图折起来，塞进抽屉最底层。抽屉关上时卡了一下，她用力推到底。\n\n金属碰撞声在删除室里回荡，比应有的响度大，像房间在替她记住这个声音。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "林雪在诊所门口站了三分钟。玻璃幕墙上的倒影完整，左眼在左，右眼在右，没有错位。她推门进去。\n\n前台递给她今日的删除排期表。她没看名单，先看角落的时间戳。昨天。还是昨天。\n\n她翻过手腕。腕表显示10月24日。排期表上印着10月23日。她昨天见过这张表，连第三行客户姓名拼错的位置都一样——\"陈\"字少了一横。\n\n“日期错了。”她把表推回去。\n\n前台低头看了一眼，又抬头看她，像她说了什么不该说的话。“表没问题，林医生。”\n\n林雪收回手。指尖碰到制服口袋里的记忆晶体——空的，待写入状态。她习惯在上班路上捏着它，体温把它焐到比掌心热半度。今天它凉的。\n\n她走进自己的删除室。墙面镜映出操作台、椅子、她的背影。镜中电子钟显示23日。她没看镜子，坐下，展开排期表。\n\n第三行。\"陈\"字少一横。\n\n她站起来，走到镜前。钟还在昨天。她伸手，指尖触到镜面。冰凉。不是玻璃的温度，是某种拒绝的温度。\n\n她把手掌整个贴上去。镜中她的手腕上，腕表显示24日。但镜中钟是23日。两个时间困在同一面镜子里，隔着一层银。\n\n她收回手。掌印留在镜面上，慢慢消退，像被什么东西从另一侧舔掉。\n\n排期表还摊在桌上。她走回去，拿起笔，在第三行\"陈\"字旁边补了一横。\n\n墨水渗进纸张。那个字完整了。\n\n她抬眼。镜中钟跳了一下，变成24日。\n\n她没有松一口气。她盯着那个被自己修正的字，笔还握在手里，指节发白。\n\n地图摊在操作台旁边的隔板上，是新安克雷奇的街区图，她用红笔圈过三个记忆回收亭的位置。她上周画的圈。\n\n现在圈还在，但她的名字——写在图例栏旁边，用来标记负责区域——移到了另一条街。\n\n她记得写在第7区。现在它在第9区。\n\n她弯腰看。名字是她的笔迹，墨水颜色一样，没有涂改痕迹。但位置往东移了一格，正好一格，像棋盘上的棋子被谁推了一步。\n\n她直起腰。镜中她的脸完整，左眼在左，右眼在右。\n\n腕表显示10月24日。镜中钟显示10月24日。地图上她的名字在第9区。\n\n她伸手，把地图折起来，塞进抽屉最底层。抽屉关上时卡了一下，她用力推到底。\n\n金属碰撞声在删除室里回荡，比应有的响度大，像房间在替她记住这个声音。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_philosophical_medi_1784570323173"
+    },
+    {
+      "scenario": "compatible",
+      "theme": "apocalypse_wasteland",
+      "style": "rough_grit_realism",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 1118,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "对白中粗话/口语可再强化一档，目前偏克制"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "rough_grit_realism",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+          "strict": true,
+          "before": {
+            "style_key": "rough_grit_realism",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "绳子断的时候，声音像湿布撕开。\n\n陆深站在泥沟边上，右肩抵着补给车的后挡板，肩膀上的棉衬垫已经磨穿了，露出里头发黄的棉絮，被汗浸成深灰色。绳子断的那一头弹回来，抽在他旁边一个民兵的脸上，皮肉翻开，那人没叫，只是捂着脸蹲下去，血从指缝里渗出来，滴在泥地上，立刻被雨水冲淡。\n\n酸雨又开始下了，细密的，打在脸上不疼，但痒，带着一股铁锈和硫磺混在一起的怪味。泥沟里的水涨到小腿肚，补给车的左后轮整个陷进去，车斗歪向一边，上面盖的帆布兜满了雨水，鼓得像孕妇的肚子。\n\n“再找根绳子。”陆深说，声音被雨声压得很薄。\n\n没人动。\n\n沟里还有七个人，肩膀上都勒着绳子，磨破的麻绳嵌进肉里，血和雨水混在一起往下淌。其中一个年纪大的，头发花白，嘴唇发紫，整个人靠在车斗上，胸脯剧烈起伏，像拉破风箱。他看着陆深，眼神不是愤怒，是空的。\n\n“没绳子了。”苏茉从车头绕过来，靴子踩进泥里，拔出来的时候带出一声黏腻的响。她脸上全是雨水，额前的头发贴在眉骨上，手里攥着断绳的另一头，断口处参差不齐，麻丝散开，像炸开的血管。“最后两根，都断了。”\n\n陆深没看她，盯着车斗里的东西。帆布下面鼓出的形状，是净水器滤芯，一共十二箱，从旧工业区废墟里翻出来的，够城邦用一个月。他伸手敲了敲车斗挡板，三下，指关节叩在锈蚀的铁皮上，声音闷，里头有东西松了，哐当哐当响。\n\n“把滤芯卸下来。”他说。\n\n“卸下来？”苏茉的声音拔高了，“卸下来怎么运？人手扛？从这里到城邦还有四公里，下雨，天黑，路上全是辐射尘，你让谁扛？”\n\n陆深转过身，左膝盖咔嚓响了一声，他皱了下眉，没停。他走到那个蹲在地上的民兵跟前，弯腰，把对方捂脸的手掰开。伤口从颧骨拉到鼻翼，不深，但血一直流，混着雨水糊了半张脸。他从自己裤兜里掏出一块布，不干净，上面有机油渍，按在那人脸上。\n\n“按住。”\n\n民兵接过布，点了点头。\n\n陆深直起腰，看向苏茉。“卸下来，分人扛。车不要了。”\n\n“车不要了？”苏茉往前走了一步，手指攥着断绳，指节发白，“这车是上个月才修好的，你修的，你忘了？现在你说不要了？”\n\n“车斗底板裂了。”陆深又敲了一下挡板，“刚才那一下，裂到焊口。拖出来也走不到城邦。”\n\n苏茉盯着他，嘴唇抿成一条线，雨水从她下巴滴下来，滴在胸口那枚民兵队徽上，锈迹又深了一层。她没再说话，把断绳摔在地上，转身朝车斗走去，开始解帆布的绑绳。\n\n陆深跟上去。\n\n帆布掀开，滤芯箱子上印着旧时代的标记，褪了色，边角被老鼠啃过。他搬起第一箱，重量压下来，肩膀上的旧伤立刻开始跳着疼，钝的，像有人在骨头上敲钉子。他没吭声，把箱子扛上肩，朝城邦的方向迈出第一步。\n\n靴子陷进泥里，拔出来，再陷进去。\n\n身后，其他人开始卸货。",
+          "style_trace": {
+            "preset_key": "rough_grit_realism",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+            "strict": true,
+            "before": {
+              "style_key": "rough_grit_realism",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "北壁城邦外围泥沟，距离城邦约四公里",
+                "injuries": "左膝盖旧伤，肩膀旧伤因搬运滤芯复发",
+                "status": "alive"
+              },
+              "char_sumo": {
+                "location": "同上",
+                "injuries": "无新伤",
+                "status": "alive"
+              }
+            },
+            "items": {
+              "净水器滤芯": {
+                "quantity": "12箱",
+                "owner": "北壁城邦",
+                "status": "从补给车上卸下，正在人力搬运中"
+              },
+              "补给车": {
+                "owner": "北壁城邦",
+                "status": "车斗底板裂开，左后轮陷在泥沟中，已被弃置"
+              },
+              "断绳": {
+                "quantity": "2根",
+                "owner": "北壁城邦民兵",
+                "status": "已断裂，无法使用"
+              }
+            },
+            "knowledge": [],
+            "time_marker": "酸雨之秋，黄昏，酸雨间歇性降下"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_compatible_1",
+                "description": "补给车陷进泥沟，饥饿的人们必须用磨破的绳索和受伤的肩膀把它拖出。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "老鬼",
+              "苏茉",
+              "陆深"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏茉",
+              "char_laogui": "老鬼"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_compatible_1",
+                  "requirement": "补给车陷进泥沟，饥饿的人们必须用磨破的绳索和受伤的肩膀把它拖出。",
+                  "met": true,
+                  "prose_evidence": [
+                    "沟里还有七个人，肩膀上都勒着绳子，磨破的麻绳嵌进肉里，血和雨水混在一起往下淌。",
+                    "绳子断的那一头弹回来，抽在他旁边一个民兵的脸上，皮肉翻开",
+                    "补给车的左后轮整个陷进去，车斗歪向一边"
+                  ],
+                  "ledger_evidence_paths": [
+                    "items.补给车.status",
+                    "items.断绳.status"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文与声明的结束状态一致，无硬矛盾。源事件要求的状态（补给车陷进泥沟、人们用磨破的绳索和受伤的肩膀拖车）在正文中均已发生，required_end_states为空，自动满足。所有物品状态、人物伤势和位置均与declared_state吻合，无内部冲突或修订改变。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_compatible_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "绳子断的时候，声音像湿布撕开。\n\n陆深站在泥沟边上，右肩抵着补给车的后挡板，肩膀上的棉衬垫已经磨穿了，露出里头发黄的棉絮，被汗浸成深灰色。绳子断的那一头弹回来，抽在他旁边一个民兵的脸上，皮肉翻开，那人没叫，只是捂着脸蹲下去，血从指缝里渗出来，滴在泥地上，立刻被雨水冲淡。\n\n酸雨又开始下了，细密的，打在脸上不疼，但痒，带着一股铁锈和硫磺混在一起的怪味。泥沟里的水涨到小腿肚，补给车的左后轮整个陷进去，车斗歪向一边，上面盖的帆布兜满了雨水，鼓得像孕妇的肚子。\n\n“再找根绳子。”陆深说，声音被雨声压得很薄。\n\n没人动。\n\n沟里还有七个人，肩膀上都勒着绳子，磨破的麻绳嵌进肉里，血和雨水混在一起往下淌。其中一个年纪大的，头发花白，嘴唇发紫，整个人靠在车斗上，胸脯剧烈起伏，像拉破风箱。他看着陆深，眼神不是愤怒，是空的。\n\n“没绳子了。”苏茉从车头绕过来，靴子踩进泥里，拔出来的时候带出一声黏腻的响。她脸上全是雨水，额前的头发贴在眉骨上，手里攥着断绳的另一头，断口处参差不齐，麻丝散开，像炸开的血管。“最后两根，都断了。”\n\n陆深没看她，盯着车斗里的东西。帆布下面鼓出的形状，是净水器滤芯，一共十二箱，从旧工业区废墟里翻出来的，够城邦用一个月。他伸手敲了敲车斗挡板，三下，指关节叩在锈蚀的铁皮上，声音闷，里头有东西松了，哐当哐当响。\n\n“把滤芯卸下来。”他说。\n\n“卸下来？”苏茉的声音拔高了，“卸下来怎么运？人手扛？从这里到城邦还有四公里，下雨，天黑，路上全是辐射尘，你让谁扛？”\n\n陆深转过身，左膝盖咔嚓响了一声，他皱了下眉，没停。他走到那个蹲在地上的民兵跟前，弯腰，把对方捂脸的手掰开。伤口从颧骨拉到鼻翼，不深，但血一直流，混着雨水糊了半张脸。他从自己裤兜里掏出一块布，不干净，上面有机油渍，按在那人脸上。\n\n“按住。”\n\n民兵接过布，点了点头。\n\n陆深直起腰，看向苏茉。“卸下来，分人扛。车不要了。”\n\n“车不要了？”苏茉往前走了一步，手指攥着断绳，指节发白，“这车是上个月才修好的，你修的，你忘了？现在你说不要了？”\n\n“车斗底板裂了。”陆深又敲了一下挡板，“刚才那一下，裂到焊口。拖出来也走不到城邦。”\n\n苏茉盯着他，嘴唇抿成一条线，雨水从她下巴滴下来，滴在胸口那枚民兵队徽上，锈迹又深了一层。她没再说话，把断绳摔在地上，转身朝车斗走去，开始解帆布的绑绳。\n\n陆深跟上去。\n\n帆布掀开，滤芯箱子上印着旧时代的标记，褪了色，边角被老鼠啃过。他搬起第一箱，重量压下来，肩膀上的旧伤立刻开始跳着疼，钝的，像有人在骨头上敲钉子。他没吭声，把箱子扛上肩，朝城邦的方向迈出第一步。\n\n靴子陷进泥里，拔出来，再陷进去。\n\n身后，其他人开始卸货。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "绳子断的时候，声音像湿布撕开。\n\n陆深站在泥沟边上，右肩抵着补给车的后挡板，肩膀上的棉衬垫已经磨穿了，露出里头发黄的棉絮，被汗浸成深灰色。绳子断的那一头弹回来，抽在他旁边一个民兵的脸上，皮肉翻开，那人没叫，只是捂着脸蹲下去，血从指缝里渗出来，滴在泥地上，立刻被雨水冲淡。\n\n酸雨又开始下了，细密的，打在脸上不疼，但痒，带着一股铁锈和硫磺混在一起的怪味。泥沟里的水涨到小腿肚，补给车的左后轮整个陷进去，车斗歪向一边，上面盖的帆布兜满了雨水，鼓得像孕妇的肚子。\n\n“再找根绳子。”陆深说，声音被雨声压得很薄。\n\n没人动。\n\n沟里还有七个人，肩膀上都勒着绳子，磨破的麻绳嵌进肉里，血和雨水混在一起往下淌。其中一个年纪大的，头发花白，嘴唇发紫，整个人靠在车斗上，胸脯剧烈起伏，像拉破风箱。他看着陆深，眼神不是愤怒，是空的。\n\n“没绳子了。”苏茉从车头绕过来，靴子踩进泥里，拔出来的时候带出一声黏腻的响。她脸上全是雨水，额前的头发贴在眉骨上，手里攥着断绳的另一头，断口处参差不齐，麻丝散开，像炸开的血管。“最后两根，都断了。”\n\n陆深没看她，盯着车斗里的东西。帆布下面鼓出的形状，是净水器滤芯，一共十二箱，从旧工业区废墟里翻出来的，够城邦用一个月。他伸手敲了敲车斗挡板，三下，指关节叩在锈蚀的铁皮上，声音闷，里头有东西松了，哐当哐当响。\n\n“把滤芯卸下来。”他说。\n\n“卸下来？”苏茉的声音拔高了，“卸下来怎么运？人手扛？从这里到城邦还有四公里，下雨，天黑，路上全是辐射尘，你让谁扛？”\n\n陆深转过身，左膝盖咔嚓响了一声，他皱了下眉，没停。他走到那个蹲在地上的民兵跟前，弯腰，把对方捂脸的手掰开。伤口从颧骨拉到鼻翼，不深，但血一直流，混着雨水糊了半张脸。他从自己裤兜里掏出一块布，不干净，上面有机油渍，按在那人脸上。\n\n“按住。”\n\n民兵接过布，点了点头。\n\n陆深直起腰，看向苏茉。“卸下来，分人扛。车不要了。”\n\n“车不要了？”苏茉往前走了一步，手指攥着断绳，指节发白，“这车是上个月才修好的，你修的，你忘了？现在你说不要了？”\n\n“车斗底板裂了。”陆深又敲了一下挡板，“刚才那一下，裂到焊口。拖出来也走不到城邦。”\n\n苏茉盯着他，嘴唇抿成一条线，雨水从她下巴滴下来，滴在胸口那枚民兵队徽上，锈迹又深了一层。她没再说话，把断绳摔在地上，转身朝车斗走去，开始解帆布的绑绳。\n\n陆深跟上去。\n\n帆布掀开，滤芯箱子上印着旧时代的标记，褪了色，边角被老鼠啃过。他搬起第一箱，重量压下来，肩膀上的旧伤立刻开始跳着疼，钝的，像有人在骨头上敲钉子。他没吭声，把箱子扛上肩，朝城邦的方向迈出第一步。\n\n靴子陷进泥里，拔出来，再陷进去。\n\n身后，其他人开始卸货。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_comp_rough_grit_realism_1784570376242"
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "passed": 9,
+    "by_scenario": {
+      "compatible": {
+        "total": 6,
+        "passed": 6
+      },
+      "pressure": {
+        "total": 6,
+        "passed": 3
+      }
+    }
+  }
+}

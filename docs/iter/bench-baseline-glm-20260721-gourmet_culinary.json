@@ -1,0 +1,121 @@
+{
+  "label": "baseline-glm-20260721-gourmet_culinary",
+  "novel_id": "bench_baseline-glm-20260721-gourmet_culinary_1784572925",
+  "ticks": 3,
+  "completed_ticks": 3,
+  "bootstrap_sec": 118.35,
+  "tick_durations_sec": [
+    35.18,
+    0.02,
+    0.02
+  ],
+  "total_tokens": 8425,
+  "by_agent_cumulative": {
+    "world_simulator": 965,
+    "narrator": 4704,
+    "narrative_state_verifier": 2756
+  },
+  "by_priority": {
+    "medium": 965,
+    "critical": 7460
+  },
+  "call_count": 3,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 8425,
+      "duration_sec": 35.18,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 965,
+        "narrator": 4704,
+        "narrative_state_verifier": 2756
+      },
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_nat_1_0_226aae",
+        "evt_nat_1_1_a6648e",
+        "evt_nat_1_2_2c945d"
+      ],
+      "narrator_produced": false
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {},
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_stale_2_f58aa0"
+      ],
+      "narrator_produced": false
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {},
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_stale_3_b1cad7"
+      ],
+      "narrator_produced": false
+    }
+  ],
+  "narratives": [],
+  "open_loop_snapshots": [
+    {
+      "tick": 1,
+      "open": 4,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.5
+    },
+    {
+      "tick": 2,
+      "open": 4,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.5
+    },
+    {
+      "tick": 3,
+      "open": 4,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.5
+    }
+  ],
+  "novelty_records": [],
+  "total_prompt_tokens": 6575,
+  "total_completion_tokens": 1850,
+  "total_cached_tokens": 1024,
+  "cache_hit_rate": 0.1557,
+  "by_agent_prompt": {
+    "world_simulator": 599,
+    "narrator": 3728,
+    "narrative_state_verifier": 2248
+  },
+  "by_agent_cached": {
+    "world_simulator": 0,
+    "narrator": 1024,
+    "narrative_state_verifier": 0
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "label": "candidate-measurement-glm-20260721-republic_spy",
+  "novel_id": "bench_candidate-measurement-glm-20260721-republic_spy_1784573650",
+  "ticks": 3,
+  "completed_ticks": 3,
+  "bootstrap_sec": 113.42,
+  "tick_durations_sec": [
+    6.82,
+    0.02,
+    0.02
+  ],
+  "total_tokens": 991,
+  "by_agent_cumulative": {
+    "world_simulator": 991
+  },
+  "by_priority": {
+    "medium": 991
+  },
+  "call_count": 1,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 991,
+      "cumulative_tokens": 991,
+      "duration_sec": 6.82,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 991
+      },
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_nat_1_0_809659",
+        "evt_nat_1_1_af95de",
+        "evt_nat_1_2_816461"
+      ],
+      "narrator_produced": false,
+      "open_loop_count": 4,
+      "guardian_conflicts": null,
+      "contradiction_count": 0,
+      "narrator_skip_reason": "事件总价值 4 < 5,距上次叙述 1 tick,跳过。",
+      "critic_evaluated": false,
+      "critic_action": "",
+      "critic_skip_reason": "",
+      "critic_surviving_codes": []
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 0,
+      "cumulative_tokens": 991,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {},
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_stale_2_4898ad"
+      ],
+      "narrator_produced": false,
+      "open_loop_count": 4,
+      "guardian_conflicts": null,
+      "contradiction_count": 0,
+      "narrator_skip_reason": "事件总价值 1 < 5,距上次叙述 2 tick,跳过。",
+      "critic_evaluated": false,
+      "critic_action": "",
+      "critic_skip_reason": "",
+      "critic_surviving_codes": []
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 0,
+      "cumulative_tokens": 991,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {},
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_stale_3_cd43be"
+      ],
+      "narrator_produced": false,
+      "open_loop_count": 4,
+      "guardian_conflicts": null,
+      "contradiction_count": 0,
+      "narrator_skip_reason": "事件总价值 1 < 5,距上次叙述 3 tick,跳过。",
+      "critic_evaluated": false,
+      "critic_action": "",
+      "critic_skip_reason": "",
+      "critic_surviving_codes": []
+    }
+  ],
+  "narratives": [],
+  "open_loop_snapshots": [
+    {
+      "tick": 1,
+      "open": 4,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.5
+    },
+    {
+      "tick": 2,
+      "open": 4,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.5
+    },
+    {
+      "tick": 3,
+      "open": 4,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 8.5
+    }
+  ],
+  "novelty_records": [],
+  "total_prompt_tokens": 617,
+  "total_completion_tokens": 374,
+  "total_cached_tokens": 0,
+  "cache_hit_rate": 0.0,
+  "by_agent_prompt": {
+    "world_simulator": 617
+  },
+  "by_agent_cached": {
+    "world_simulator": 0
+  }
+}

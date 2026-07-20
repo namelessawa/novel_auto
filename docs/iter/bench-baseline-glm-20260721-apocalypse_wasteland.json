@@ -1,0 +1,125 @@
+{
+  "label": "baseline-glm-20260721-apocalypse_wasteland",
+  "novel_id": "bench_baseline-glm-20260721-apocalypse_wasteland_1784573111",
+  "ticks": 3,
+  "completed_ticks": 3,
+  "bootstrap_sec": 117.2,
+  "tick_durations_sec": [
+    88.32,
+    0.02,
+    0.02
+  ],
+  "total_tokens": 20950,
+  "by_agent_cumulative": {
+    "world_simulator": 974,
+    "narrator": 4835,
+    "narrative_state_verifier": 8893,
+    "narrative_state_repair": 6248
+  },
+  "by_priority": {
+    "medium": 974,
+    "critical": 19976
+  },
+  "call_count": 7,
+  "per_tick": [
+    {
+      "tick": 1,
+      "tick_total_tokens": 20950,
+      "duration_sec": 88.32,
+      "narrator_chars": 0,
+      "agents": {
+        "world_simulator": 974,
+        "narrator": 4835,
+        "narrative_state_verifier": 8893,
+        "narrative_state_repair": 6248
+      },
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_nat_1_0_0aa503",
+        "evt_nat_1_1_79015f",
+        "evt_nat_1_2_971335"
+      ],
+      "narrator_produced": false
+    },
+    {
+      "tick": 2,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {},
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_stale_2_e9e7b5"
+      ],
+      "narrator_produced": false
+    },
+    {
+      "tick": 3,
+      "tick_total_tokens": 0,
+      "duration_sec": 0.02,
+      "narrator_chars": 0,
+      "agents": {},
+      "agents_called": [
+        "world_simulator",
+        "narrator",
+        "kg_sync(+0e/+9r/~11e)"
+      ],
+      "events_generated": [
+        "evt_stale_3_34cf96"
+      ],
+      "narrator_produced": false
+    }
+  ],
+  "narratives": [],
+  "open_loop_snapshots": [
+    {
+      "tick": 1,
+      "open": 5,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 2,
+      "open": 5,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    },
+    {
+      "tick": 3,
+      "open": 5,
+      "closed": 0,
+      "closed_source": "tick_state.loops_closed_total",
+      "stale_open": 0,
+      "avg_urgency": 7.0
+    }
+  ],
+  "novelty_records": [],
+  "total_prompt_tokens": 15648,
+  "total_completion_tokens": 5302,
+  "total_cached_tokens": 3072,
+  "cache_hit_rate": 0.1963,
+  "by_agent_prompt": {
+    "world_simulator": 605,
+    "narrator": 3755,
+    "narrative_state_verifier": 7122,
+    "narrative_state_repair": 4166
+  },
+  "by_agent_cached": {
+    "world_simulator": 0,
+    "narrator": 1024,
+    "narrative_state_verifier": 2048,
+    "narrative_state_repair": 0
+  }
+}
