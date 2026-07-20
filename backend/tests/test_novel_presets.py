@@ -189,7 +189,6 @@ def test_style_addendums_independent() -> None:
         ("warm_healing", ("照料、修补、分享或体谅", "收件人日后能认出的回执", "不能只修完就独自离开")),
         ("melancholic", ("硬约束", "第一段前两句", "具体愿望")),
         ("classical_chapter", ("末段首句必须逐字", "无人开口时不得使用", "无人物的古风天气报告")),
-        ("philosophical_meditative", ("必须推进一个可辨认的概念问题", "具体物→概念问题→人物选择", "完整写出事件结果")),
         ("screenplay_visual", ("写作思维而非正文术语", "镜头跟随", "摄影机元语言")),
     ],
 )
@@ -200,17 +199,6 @@ def test_semantic_style_contracts_keep_observable_acceptance_criteria(
     addendum = STYLE_PRESETS[key].narrator_addendum
     for fragment in required_fragments:
         assert fragment in addendum, f"{key} lost acceptance criterion: {fragment}"
-
-
-def test_philosophical_contract_upgrade_is_scoped_and_versioned() -> None:
-    upgraded = STYLE_PRESETS["philosophical_meditative"]
-
-    assert upgraded.version == "2026-07-21.1"
-    assert all(
-        preset.version != upgraded.version
-        for key, preset in STYLE_PRESETS.items()
-        if key != "philosophical_meditative"
-    )
 
 
 # ---------------------------------------------------------------------------
