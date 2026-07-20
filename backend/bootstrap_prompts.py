@@ -386,6 +386,33 @@ async def bootstrap_world(
     并注入 PROMPT_WORLD 强制世界设定与标题语义一致 (修"被遗忘的神明与最后的
     魔法少女" 跑出现实村庄的脱节问题)。
     """
+    # Cast 参数是纯输入契约，必须在创建状态或调用任何 LLM 之前校验。
+    # 否则 partial 配置会先完成昂贵的 WorldState 请求，最后才 fail-loud，
+    # 既破坏 bench 的可复现性，也让单元测试意外依赖真实 provider。
+    set_count = sum(
+        x is not None for x in (cast_a_count, cast_b_count, cast_c_count)
+    )
+    if set_count == 0:
+        # iter#136 REVERT: wide range 在跨 seed pairwise 中优于固定 cast=3。
+        cast_breakdown = "6-10 个起始角色"
+        cast_tiers = (
+            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
+            "2-3 个 C 级 (NPC)"
+        )
+    elif set_count == 3:
+        total = cast_a_count + cast_b_count + cast_c_count
+        cast_breakdown = f"恰好 {total} 个起始角色 (固定)"
+        cast_tiers = (
+            f"恰好 {cast_a_count} 个 A 级 (主角候选, 深度建模) / "
+            f"恰好 {cast_b_count} 个 B 级 (重要配角) / "
+            f"恰好 {cast_c_count} 个 C 级 (NPC)"
+        )
+    else:
+        raise ValueError(
+            f"cast 三个参数必须 all-or-nothing (--cast-a/b/c-count). "
+            f"目前 {set_count}/3 设, 防止部分设悄悄混 default."
+        )
+
     logger.info("Bootstrapping novel '%s' (data_dir=%s)", novel_id, data_dir)
     ts = TickState(data_dir=data_dir)
     # 早早写入标题, 即便后续 LLM 阶段炸了也不丢
@@ -445,36 +472,6 @@ async def bootstrap_world(
     #     cast=3 = 1A+2B+0C 节省 -36.4% cost 但 prose dynamics 退化.
     #   * 1-2/3 设 → 拒绝 (ValueError). 部分设容易让用户以为只指定 A 数,
     #     却被 b/c 默认值悄悄加成, 破坏 bench 复现性. all-or-nothing.
-    set_count = sum(
-        x is not None for x in (cast_a_count, cast_b_count, cast_c_count)
-    )
-    if set_count == 0:
-        # iter#136 REVERT: iter#128 cast=3 默认在 mimo pairwise 跨 3-seed
-        # 平均 33% win vs wide 63% (seed1=20% / seed2=50% / seed3=30%).
-        # det 指标 (distinct +2.6%, drift 0) 与 mimo 反向 — det 没 catch
-        # 真正的 prose dynamics 退化 (cast=3 = 1A+2B+0C 无 NPC, character
-        # interaction 多元性受限). 回到 wide range 保 quality.
-        # 用户仍可 --cast-a-count / --cast-b-count / --cast-c-count 显式 opt-in
-        # cast=3 cost-first 模式 (-36.4% vs Phase 2 baseline, trade prose quality).
-        cast_breakdown = "6-10 个起始角色"
-        cast_tiers = (
-            "3 个 A 级 (主角候选, 深度建模) / 3-4 个 B 级 (重要配角) / "
-            "2-3 个 C 级 (NPC)"
-        )
-    elif set_count == 3:
-        total = cast_a_count + cast_b_count + cast_c_count
-        cast_breakdown = f"恰好 {total} 个起始角色 (固定)"
-        cast_tiers = (
-            f"恰好 {cast_a_count} 个 A 级 (主角候选, 深度建模) / "
-            f"恰好 {cast_b_count} 个 B 级 (重要配角) / "
-            f"恰好 {cast_c_count} 个 C 级 (NPC)"
-        )
-    else:
-        raise ValueError(
-            f"cast 三个参数必须 all-or-nothing (--cast-a/b/c-count). "
-            f"目前 {set_count}/3 设, 防止部分设悄悄混 default."
-        )
-
     chars_resp = await _llm_json(
         system_prompt="你是一个角色设计师。严格按要求输出 JSON。",
         user_prompt=PROMPT_CHARACTERS.format(
