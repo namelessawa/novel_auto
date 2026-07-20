@@ -24,6 +24,12 @@ def test_response_total_tokens_uses_typed_llm_response_fields() -> None:
     assert classifier._response_total_tokens(response) == 168
 
 
+def test_judge_budget_fails_closed_before_next_call() -> None:
+    assert classifier._budget_allows_call(44_000, 50_000, 5_500) is True
+    assert classifier._budget_allows_call(44_501, 50_000, 5_500) is False
+    assert classifier._budget_allows_call(999_999, 0, 5_500) is True
+
+
 def test_anonymous_prompt_hides_registry_keys_and_labels() -> None:
     from novel_presets import get_style_preset, list_style_keys
 

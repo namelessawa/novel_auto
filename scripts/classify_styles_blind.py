@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "backend"), str(ROOT / "scripts")]
 
 PROMPT_VERSION = "blind-style-v1"
+DEFAULT_JUDGE_BUDGET = 50_000
+JUDGE_CALL_RESERVE = 5_500
 
 
 def _response_total_tokens(response) -> int:
@@ -39,6 +41,11 @@ def _response_total_tokens(response) -> int:
     if isinstance(usage, dict):
         return int(usage.get("total_tokens", 0) or 0)
     return int(getattr(usage, "total_tokens", 0) or 0)
+
+
+def _budget_allows_call(spent: int, budget: int, reserve: int) -> bool:
+    """Fail closed before another judge call can silently exceed its budget."""
+    return budget <= 0 or spent + reserve <= budget
 
 
 def _git_sha() -> str:
@@ -207,13 +214,17 @@ def _summarise(results: list[dict], style_keys: list[str]) -> dict:
 
 def _render_markdown(report: dict) -> str:
     summary = report.get("summary") or {}
+    execution = report.get("execution") or {}
     lines = [
         "# Blind style classification\n",
         f"- Git: `{report.get('metadata', {}).get('git_sha')}`",
         f"- Model: `{report.get('metadata', {}).get('provider', {}).get('model')}`",
         f"- Samples: `{summary.get('valid_samples')}/{summary.get('total_samples')}` valid",
         f"- Top-1: `{summary.get('top1_accuracy')}`",
-        f"- Top-3: `{summary.get('top3_accuracy')}`\n",
+        f"- Top-3: `{summary.get('top3_accuracy')}`",
+        f"- Execution: `{execution.get('status', 'UNKNOWN')}`",
+        f"- Judge tokens: `{execution.get('actual_judge_tokens', 'unknown')}` / "
+        f"`{execution.get('configured_judge_budget_tokens', 'unknown')}`\n",
         "## Samples\n",
         "| scenario | theme | expected | top-1 | top-3 | hit |",
         "| --- | --- | --- | --- | --- | --- |",
@@ -290,9 +301,14 @@ async def _run(args, report: dict, output: Path) -> dict:
     if args.max_samples:
         samples = samples[:args.max_samples]
     completed = {row.get("sample_id") for row in report.get("results", [])}
+    budget_exhausted = False
     for index, sample in enumerate(samples, 1):
         if sample["sample_id"] in completed:
             continue
+        spent = sum(int(row.get("judge_tokens", 0) or 0) for row in report.get("results", []))
+        if not _budget_allows_call(spent, args.judge_budget, JUDGE_CALL_RESERVE):
+            budget_exhausted = True
+            break
         try:
             judgment, tokens = await _judge_sample(
                 sample["text"], all_style_keys, sample["text_sha256"]
@@ -308,6 +324,7 @@ async def _run(args, report: dict, output: Path) -> dict:
             }
             result["judge_tokens"] = 0
         report.setdefault("results", []).append(result)
+        completed.add(sample["sample_id"])
         report["summary"] = _summarise(report["results"], all_style_keys)
         _atomic_json(output, report)
         print(
@@ -317,6 +334,24 @@ async def _run(args, report: dict, output: Path) -> dict:
         )
     report.setdefault("metadata", {})["finished_at"] = int(time.time())
     report["summary"] = _summarise(report.get("results", []), all_style_keys)
+    target_ids = {sample["sample_id"] for sample in samples}
+    completed_targets = target_ids & {
+        row.get("sample_id") for row in report.get("results", [])
+    }
+    report["execution"] = {
+        "status": "BUDGET_EXHAUSTED" if budget_exhausted else (
+            "COMPLETE" if completed_targets == target_ids else "INCOMPLETE"
+        ),
+        "configured_judge_budget_tokens": args.judge_budget,
+        "per_call_reserve_tokens": JUDGE_CALL_RESERVE,
+        "actual_judge_tokens": sum(
+            int(row.get("judge_tokens", 0) or 0)
+            for row in report.get("results", [])
+        ),
+        "target_samples": len(target_ids),
+        "completed_samples": len(completed_targets),
+        "remaining_samples": len(target_ids - completed_targets),
+    }
     _atomic_json(output, report)
     output.with_suffix(".md").write_text(_render_markdown(report), encoding="utf-8")
     return report
@@ -328,6 +363,12 @@ def main() -> None:
     parser.add_argument("--provider-file", default="coding.txt")
     parser.add_argument("--sample-styles", default="all")
     parser.add_argument("--max-samples", type=int, default=0)
+    parser.add_argument(
+        "--judge-budget",
+        type=int,
+        default=int(os.getenv("JUDGE_BUDGET_PER_BENCH", DEFAULT_JUDGE_BUDGET)),
+        help="hard judge-token budget; 0 disables the cap (default: 50000)",
+    )
     parser.add_argument("--out", default="docs/iter/blind-style-classification.json")
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
@@ -343,6 +384,9 @@ def main() -> None:
     output = (ROOT / args.out).resolve()
     if args.resume and output.exists():
         report = json.loads(output.read_text(encoding="utf-8"))
+        report.setdefault("metadata", {})["configured_judge_budget_tokens"] = (
+            args.judge_budget
+        )
     else:
         contracts = {
             key: get_style_preset(key).prompt_hash for key in list_style_keys()
@@ -360,6 +404,7 @@ def main() -> None:
                 "style_schema_version": STYLE_PRESET_SCHEMA_VERSION,
                 "candidate_prompt_hashes": contracts,
                 "target_identity_sent_to_judge": False,
+                "configured_judge_budget_tokens": args.judge_budget,
             },
             "results": [],
         }
@@ -367,7 +412,8 @@ def main() -> None:
     summary = final["summary"]
     print(
         f"[DONE] top1={summary['top1_accuracy']} top3={summary['top3_accuracy']} "
-        f"valid={summary['valid_samples']}/{summary['total_samples']} out={output}"
+        f"valid={summary['valid_samples']}/{summary['total_samples']} "
+        f"status={final['execution']['status']} out={output}"
     )
 
 
