@@ -1,0 +1,815 @@
+{
+  "accepted_at": "2026-07-14T21:40:36.983110+08:00",
+  "status": "accepted",
+  "validation_owner": "Codex (direct manual review; no sub-agent)",
+  "provider": {
+    "source": "coding.txt",
+    "model": "deepseek-v4-pro",
+    "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "api_key_present": true
+  },
+  "base_novel_id": "styleval_base_20260714_210537",
+  "method": {
+    "same_tick0_for_all_styles": true,
+    "real_llm": true,
+    "mock_llm": false,
+    "narrator_critic_enabled": false,
+    "selection": "final full regression, with revision3 replacements only for somber/warm_healing/classical_chapter/screenplay_visual"
+  },
+  "source_reports": [
+    "style-validation-final-20260714_212823.json",
+    "style-validation-revision3-20260714_213654.json"
+  ],
+  "styles_expected": [
+    "literary",
+    "xianxia_fast",
+    "colloquial_web",
+    "hot_blooded",
+    "somber",
+    "lyrical_poetic",
+    "noir_cold",
+    "black_humor",
+    "warm_healing",
+    "melancholic",
+    "first_person_immersive",
+    "ensemble_epic",
+    "classical_chapter",
+    "philosophical_meditative",
+    "screenplay_visual",
+    "rough_grit_realism"
+  ],
+  "summary": {
+    "expected": 16,
+    "generated": 16,
+    "manual_style_passed": 16,
+    "errors": 0,
+    "total_chars": 11020,
+    "total_tokens": 74928,
+    "det_trigger_counts": {
+      "E1": 0,
+      "D6": 0,
+      "D1": 0,
+      "C6": 0,
+      "E7": 0,
+      "B4": 0
+    }
+  },
+  "repetition": {
+    "narration_count": 16,
+    "distinct": {
+      "char_2": 0.8601,
+      "char_3": 0.9682,
+      "char_4": 0.9918,
+      "word_2": 0.998,
+      "word_3": 0.9996,
+      "word_4": 1.0
+    },
+    "overlap_consecutive": {
+      "char_2": 0.0637,
+      "char_3": 0.0151,
+      "char_4": 0.0042,
+      "word_2": 0.0,
+      "word_3": 0.0,
+      "word_4": 0.0
+    },
+    "notes": []
+  },
+  "diversity": {
+    "narration_count": 16,
+    "ttr": {
+      "char": 0.4354,
+      "word": 0.9945,
+      "mattr_100": 0.7348
+    },
+    "sentence_rhythm": {
+      "mean_length": 23.36,
+      "mean_length_std": 13.29
+    }
+  },
+  "results": [
+    {
+      "index": 1,
+      "style_key": "literary",
+      "style_label": "描写细致 (文学性, 默认)",
+      "style_description": "具象意象 + 内心薄笔, 节奏舒缓但每段必有实物. 适合文学读者.",
+      "novel_id": "stylefinal_20260714_212823_literary",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 22.18,
+          "narrator_chars": 558,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_d43ed0",
+            "evt_nat_1_1_a3d0e5",
+            "evt_nat_1_2_efce26"
+          ]
+        }
+      ],
+      "narrative": "嘶嘶声先从街角传来。\n\n蒸汽管道接口处喷出一股白汽，灼热的，撞上雾霾后迅速凝成水滴，砸在石板路上，每一滴都带着淡黄色。苏默把领口往上拉了拉，皮革的边角硌着下巴，上面有昨天缝上去的一块补丁，针脚歪歪扭扭。他绕过那团白汽，靴底踩过湿滑的石板，煤灰黏在鞋帮上，越积越厚。\n\n东侧的铁丝网在风中震颤。\n\n细碎的金属哀鸣从网眼里挤出来，几片锈蚀的铁屑被吹落，掉在他肩膀上。他停下，用两根手指拈起一片，拇指蹭了蹭——锈粉沾在指腹上，像干涸的血。防线的哨站就在前面三十步，窗户里没有灯光。\n\n码头边的腥臭味这时候才跟上来。\n\n黑水在翻涌，油污浮成一层彩色的膜，死鱼白肚朝天，卡在码头木桩的缝隙里。苏默往那边看了一眼，喉结滚了一下，没停。他的目标是哨站，不是码头。\n\n口袋里那块铜板硌着大腿。\n\n不是他的。名字是她的，阵亡日期写在三天后。磨损的痕迹是真的，他在档案室用放大镜看过——铜锈的纹路至少十年。但他昨天才见过她，活生生的，手指夹着烟，烟灰弹在他桌上的茶杯里。\n\n哨站的门虚掩着。\n\n他用指尖推开，铰链没响，但铁锈从门轴里掉下来，洒在门槛上。屋里黑，只有窗外透进来的灰黄色光，照出桌上的一盏油灯，灯罩裂了，灯油凝固成白色的膏状。\n\n他走进去，门在身后自己合上，金属哀鸣又响起来，这次更近，像是在他脊椎骨上刮过去。\n\n他没回头。",
+      "narrative_tick": 1,
+      "tokens": 4369,
+      "prompt_tokens": 3411,
+      "completion_tokens": 958,
+      "call_count": 2,
+      "cache_hit_rate": 0.3002,
+      "duration_sec": 22.21,
+      "narrative_chars_actual": 558,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 2,
+      "style_key": "xianxia_fast",
+      "style_label": "爽文快节奏 (网文动作向)",
+      "style_description": "动作密集 + 即时反馈 + 战力等级化. 节奏快, 章节钩子强, 段末必留悬念.",
+      "novel_id": "stylefinal_20260714_212823_xianxia_fast",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 8.68,
+          "narrator_chars": 0,
+          "narrator_produced_text": false,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_a673e0",
+            "evt_nat_1_1_576dfb",
+            "evt_nat_1_2_ced9c3"
+          ]
+        },
+        {
+          "tick": 2,
+          "duration_sec": 21.95,
+          "narrator_chars": 497,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_2_0_af3c6d",
+            "evt_nat_2_1_079f23",
+            "evt_nat_2_2_a049c1"
+          ]
+        }
+      ],
+      "narrative": "铁壳蠊虫爬过石板缝时，苏雅已经蹲在那滩虹彩薄膜旁边。\n\n油膜扩散的速度比她预想的快——三息之内，边缘已经舔到了她靴底。她没退。右手从腰间抽出铜签，在油膜上点了一下。签尖变色，先是蓝，再是绿，最后停在一种暗沉的赭红上。\n\n“硫磷混剂。”她把铜签在靴帮上擦干净，站起来。“有人往管道里投了反应剂。”\n\n话音刚落，身后那截裸露的蒸汽管道又滴下一滴深褐液体。嘶嘶声比之前更响，石板被蚀出一个米粒大的坑。\n\n苏雅转身，左手已经扯开腰间的工具袋。她抽出一截铜丝网，裹住漏液管口，右手拇指扣住封口夹，咔嚓一声锁死。液体还在渗出，但被铜网兜住，聚成一颗颤动的褐色珠子，暂时不再往下滴。\n\n铁丝网缺口处灌进来的冷风陡然变急。暗红色尘旋刚散，风里夹带的声音就跟着撞上来——不是锅炉轰鸣，是齿轮咬合声，频率太密，节奏太快，像有人在给蒸汽机强制增压。\n\n码头方向。\n\n苏雅把工具袋拍回腰间，铜签插进袖口暗袋。她转身朝码头跑，靴底踩碎了三只铁壳蠊虫的甲壳，碎渣粘在石板上，被虹彩油膜裹住，慢慢不挣扎了。\n\n跑出五步，她听见身后那截管道发出闷响。\n\n不是爆炸。是封口夹被顶开的声音。\n\n她没回头，手已经摸向袖口第二根铜签。",
+      "narrative_tick": 2,
+      "tokens": 5763,
+      "prompt_tokens": 4448,
+      "completion_tokens": 1315,
+      "call_count": 3,
+      "cache_hit_rate": 0.4604,
+      "duration_sec": 30.66,
+      "narrative_chars_actual": 497,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 3,
+      "style_key": "colloquial_web",
+      "style_label": "大白话网文 (口语轻读)",
+      "style_description": "用现代口语, 段落短, 信息密度高. 适合手机端碎片阅读.",
+      "novel_id": "stylefinal_20260714_212823_colloquial_web",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 23.16,
+          "narrator_chars": 633,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_0bebb7",
+            "evt_nat_1_1_094efe",
+            "evt_nat_1_2_35e4f3"
+          ]
+        }
+      ],
+      "narrative": "铁锈水从管道接口渗出来，滴在石板路上，嘶嘶地冒白烟。\n\n何安蹲在齿轮喉第三街的拐角，背贴着墙，等那摊锈水把石板腐蚀出一个小坑。烟不大，但味道冲，像烧糊的醋。他把围巾往上拽了拽，遮住口鼻。\n\n围巾三天没洗，滤不了多少毒，但聊胜于无。\n\n东边传来一声闷响。不是爆炸，是金属在喊。何安转头，正好看见锈蚀防线那边一块装甲板从哨塔上脱开，慢悠悠地翻了个身，砸进泥沼里。泥浆溅起来三米高，落下时带着碎铁渣，叮叮当当打在附近的废料堆上。\n\n没人叫喊。哨塔上大概没人。\n\n或者有人，但懒得喊。\n\n他站起来，膝盖咔嗒响了一声。二十六岁，关节已经跟四十岁似的。灰烬平原那几年的账，身体替他记着。他绕过那摊还在冒烟的锈水，往码头方向走。\n\n浮渣码头的水面今天漂着一层油，厚得能看见倒影。雾霾天本来没什么光，但油膜自己泛出一层虹彩，绿的紫的黄的，像死水里开了一朵看不见的花。一条死鱼翻着白肚被浪推上岸，鱼眼已经没了，眼眶里塞满煤灰。\n\n何安在码头边上站了一会儿。\n\n他不是来看鱼的。\n\n他在等一个人。\n\n接头时间是正午，但齿轮喉的雾霾里没有正午，只有灰黄色的天从早灰到晚。他掏出怀表看了一眼——表盘上全是划痕，分针卡在七和八之间，秒针早就不走了。他把表塞回兜里，往水里吐了口唾沫。\n\n唾沫在油膜上滚了一圈，沉不下去。\n\n“迟到。”他说。\n\n声音不大，被码头边蒸汽管道的排气声盖住了。白汽从管道裂口喷出来，混着铁锈味，热烘烘地扑在他后背上。\n\n他没回头。\n\n后背湿了一片，不知道是蒸汽还是汗。",
+      "narrative_tick": 1,
+      "tokens": 4450,
+      "prompt_tokens": 3403,
+      "completion_tokens": 1047,
+      "call_count": 2,
+      "cache_hit_rate": 0.3009,
+      "duration_sec": 23.19,
+      "narrative_chars_actual": 633,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 4,
+      "style_key": "hot_blooded",
+      "style_label": "燃血热血 (高能高燃)",
+      "style_description": "情绪外放, 关键节拍上情感和动作齐爆. 适合热血少年向题材.",
+      "novel_id": "stylefinal_20260714_212823_hot_blooded",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 26.73,
+          "narrator_chars": 845,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_158ca7",
+            "evt_nat_1_1_628e52",
+            "evt_nat_1_2_22932f"
+          ]
+        }
+      ],
+      "narrative": "蒸汽从接口喷出来的时候，何安正蹲在码头边，手伸进污水里捞一枚铜齿轮。白汽灼过他的后颈，皮肤立刻泛起一片红。他没缩手。齿轮卡在石板缝里，指尖刚碰到边缘，水面突然炸开一串气泡，硫磺味呛得他喉咙发紧。\n\n油污在气泡破裂处散开，虹彩映在他脸上，像一层薄薄的毒漆。\n\n何安咬住牙，整个手掌压进污水里，摸到齿轮，攥住。拔出来。铜面上裹着一层黑泥，齿轮的齿缺了三颗，但轴心还能转。他把齿轮在裤子上蹭了两下，塞进怀里。\n\n防线外那声闷响就是这时候传来的。\n\n不是爆炸，比爆炸更沉，像地底有什么东西被硬生生掰断了。扭曲的回响拖了整整十秒，石板路在脚下震动，码头边的铁皮棚屋发出嘎吱声，一块锈穿的铁板从屋顶脱落，砸在离他三步远的地方，溅起的碎石打在他小腿上。\n\n何安站起来，转身看向防线方向。雾霾里什么都看不见，只有灰黄色的天和飘落的煤灰。但脚下的震动没停，越来越密，像有东西在往这边爬。\n\n“何安！”身后有人喊他，是码头仓库的守夜老头，声音在发抖。“快进来！防线要——”\n\n“要什么？”何安没回头，盯着防线外那片看不见的深处。“要塌？要破？还是要我们跪着等死？”\n\n他把手伸进怀里，摸到那枚破损的铜齿轮。三颗断齿硌着掌心。\n\n震动又来了，这次更近。蒸汽管道接口再次嘶鸣，白汽喷得比刚才更猛，铁锈色水滴溅在他脸上，混着汗水流进嘴角。\n\n何安吐掉嘴里的铁锈味，从怀里掏出齿轮，握紧。\n\n“七天。”他说，声音压得很低，但每个字都像钉子钉在石板上。“卷宗上写的是七天。我不管它写没写完，我不管它会不会消失——七天就是七天！”\n\n他猛地转身，朝防线方向迈出一步，鞋底踩碎了一片油污凝结的硬壳。\n\n“齿轮喉要熔毁？那就让它熔！但我何安不会蹲在铅室里等字迹消失！”\n\n守夜老头已经缩回了仓库，铁门哐啷一声关上。何安没看那边。他攥着齿轮，朝防线走去，每一步都踩在震动的节拍上。呼吸粗重，心跳和脚下的震动混在一起，分不清哪个更快。\n\n灰烬平原深处又传来一声闷响，比刚才更近。\n\n何安加快脚步，齿轮在掌心里硌出了血印。他没松手。",
+      "narrative_tick": 1,
+      "tokens": 4769,
+      "prompt_tokens": 3542,
+      "completion_tokens": 1227,
+      "call_count": 2,
+      "cache_hit_rate": 0.2891,
+      "duration_sec": 26.75,
+      "narrative_chars_actual": 845,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 1,
+      "style_key": "somber",
+      "style_label": "沉郁严肃 (严肃文学)",
+      "novel_id": "stylerev3_20260714_213654_somber",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 27.31,
+          "narrator_chars": 820,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_48c510",
+            "evt_nat_1_1_70999c",
+            "evt_nat_1_2_4bfcbd"
+          ]
+        }
+      ],
+      "narrative": "齿轮喉的蒸汽管道在凌晨时分开始嗡鸣，那种声音不是从某一段管壁传出来的，而是整条街区地下的铸铁管网一起震颤，像有什么东西困在管道深处，正用低频的喉音反复碾磨同一段频率。苏默站在巷口，脚底能感觉到石板路面传来的微颤，细煤灰从屋檐边缘簌簌往下掉，落在她肩头，落在已经覆了一层黑色绒状物的地面上，没发出任何声音。\n\n她抬头看巷子尽头那处泄压阀，阀口正嘶嘶地往外喷白汽，蒸汽团在雾霾里膨胀得很快，然后被风撕成絮状，贴着铁皮墙壁滑过去。哨塔上有人换岗，旧铁梯被靴底踩得嘎吱嘎吱响，每一声都拖得很长，像梯子本身也在犹豫要不要承这个重量。她数着脚步声，七级，那个哨兵在第七级踏板上停了一下，然后继续往上走，她不知道他为什么停，也没打算知道。\n\n浮渣码头那边传来汽笛，低沉的回响贴着水面滚过来，穿过整片锈蚀防线的铁皮棚屋，到她耳朵里时已经糊得只剩一层余震。她看见驳船正在靠岸，船头的油灯在雾里晃成一个模糊的橙色光斑，水面上的油膜被船头推开，裂成一片片彩虹色的纹路，又在船尾合拢。她把手揣进外套口袋里，指尖碰到一颗扣子，扣子已经松了，线头翘起来，她来回捻着那根线头，捻到线头被指尖的煤灰染黑，也没把它扯断。\n\n她还没想好今天要不要去档案馆。魏庄说那份卷宗最后一段文字正在消失，一个字一个字地没，像有人在另一头用橡皮擦掉铅笔字。她昨天亲眼看见的时候，最后一个字还剩半边，是个\"熔\"字的火字旁，右边已经没了。她站在铅室里盯着那半个字看了很久，久到魏庄以为她没在呼吸，伸手在她面前晃了一下。她没告诉他，她看见那半个字的时候，脑子里闪过的是齿轮喉地下的管道图，那些铸铁管网的走向她闭着眼都能画出来，因为她父亲在管道维修队干了十七年，死的时候手里还攥着一把管钳。\n\n雾气略微转薄了一点，但细煤灰的沉降反而加剧了，空气里有一股铁锈和焦炭混在一起的味道。她松开那颗扣子，把手从口袋里抽出来，转身往巷子深处走。铁梯上那个哨兵已经进了哨塔，木板门关上的声音很闷，像合上一本厚书。",
+      "narrative_tick": 1,
+      "tokens": 4695,
+      "call_count": 2,
+      "cache_hit_rate": 0.2845,
+      "duration_sec": 27.33,
+      "narrative_chars_actual": 820,
+      "accepted_source_report": "style-validation-revision3-20260714_213654.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 6,
+      "style_key": "lyrical_poetic",
+      "style_label": "抒情诗化 (诗意散文)",
+      "style_description": "句子有节奏/韵律, 重感官与隐喻. 接近散文诗的小说.",
+      "novel_id": "stylefinal_20260714_212823_lyrical_poetic",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 22.72,
+          "narrator_chars": 511,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_08faec",
+            "evt_nat_1_1_7e590a",
+            "evt_nat_1_2_c9b2bd"
+          ]
+        }
+      ],
+      "narrative": "路灯开始咳嗽。\n\n灯罩里的煤气嘶嘶地喘，光一缩一缩，像被谁掐住了喉咙。光晕只够照出三块石板，再往外就是灰黄色的墙。雾里有铁锈味，还有一丝硫磺，刺得鼻腔发酸。\n\n她站在光晕边缘，竖起大衣领子。\n\n东边传来金属的呻吟。那座废弃哨塔的铁皮屋顶在积灰下弯了腰，铆钉一颗接一颗崩开，砸在碎石上，声音闷哑，像敲空罐头盒。她没回头，只是把手插进口袋，指尖碰到那块铜板。\n\n冰凉的。\n\n上面刻着她的名字，磨损的笔画里嵌着煤灰，摸上去像结痂的疤。她不知道这块铜板是谁钉上去的，只知道上面写的日期是三天后。\n\n汽笛声从码头方向传来，低沉，拖得很长。黑水河在雾里看不见，但能听见气泡浮起又破裂的声音，黏腻的，像泥浆在锅里滚。油污的涟漪正一圈圈扩散，碰到岸壁，又弹回来。\n\n她把铜板翻了个面。\n\n背面有一行新划痕，指甲盖那么浅，歪歪扭扭的，像是用小刀刚刻上去的。她凑近路灯，光闪了三下，才看清那行字——\n\n“铅室里的卷宗在消失。”\n\n铜板在手里转了半圈，冰凉的边缘卡进虎口。她没有收进口袋，只是攥着，指节发白。\n\n哨塔又崩了一颗铆钉。\n\n路灯喘了最后一口，灭了。雾霾吞掉光晕，吞掉石板，吞掉她。只剩下硫磺味，和远处汽笛拖长的尾音，在河面上沉下去。",
+      "narrative_tick": 1,
+      "tokens": 4453,
+      "prompt_tokens": 3506,
+      "completion_tokens": 947,
+      "call_count": 2,
+      "cache_hit_rate": 0.2921,
+      "duration_sec": 22.75,
+      "narrative_chars_actual": 511,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 7,
+      "style_key": "noir_cold",
+      "style_label": "冷峻冷酷 (黑色硬派)",
+      "style_description": "克制叙述, 拒绝感伤, 物件 > 心理. 适合悬疑/犯罪/谍战调性.",
+      "novel_id": "stylefinal_20260714_212823_noir_cold",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 25.64,
+          "narrator_chars": 769,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_6c4687",
+            "evt_nat_1_1_1c7f30",
+            "evt_nat_1_2_1a5042"
+          ]
+        }
+      ],
+      "narrative": "魏庄把最后一块铅板压上卷宗，锁扣咬合的声音在铅室里闷得发钝。\n\n手套上沾着铅灰，他在裤腿上蹭了两下，蹭不掉。灰渗进布料纹路里，像嵌进去的。他盯着手套看了两秒，不蹭了。\n\n铅室外头，档案架的影子从毛玻璃上压过来，歪的。他记得进来之前那排架子是直的。不是架子歪，是灯在晃。灯在晃是因为鼓风机又停了，天花板上的管路在往下滴水，滴在铁皮通风管上，一下一下，节奏和脉搏错开。\n\n他把烟从嘴上摘下来，没点。档案馆里不许点烟，这条规矩是他自己定的。\n\n卷宗上那行正在消失的字还剩一半。\"齿轮喉核心熔毁\"六个字里，\"熔毁\"已经淡得像水渍，\"齿轮喉\"还硬着，笔画嵌进纸纤维里，摸上去有凹痕。七天。\n\n他把烟夹回耳朵上，推开铅室的门。\n\n走廊里煤油灯烧得不太好，火苗缩成豆大，玻璃罩子熏得半黑。苏雅靠在走廊尽头的墙上，胳膊交叉，靴尖点着地面。她看见他出来，下巴抬了抬。\n\n\"字还在吗。\"\n\n\"还在。\"魏庄走过去，把卷宗递给她。\"一半。\"\n\n苏雅翻开，拇指按在\"熔毁\"两个字原来的位置。纸面上只剩一层灰白色的痕迹，像被橡皮擦过，又像被什么东西舔掉了。她手指按上去，纸是凉的，没有湿，没有粉末。\n\n\"这不是墨。\"她说。\n\n魏庄没接话。\n\n她把卷宗合上，塞回他手里。\"哨站那边我找到一块铜板。\"\n\n\"什么铜板。\"\n\n\"刻着我名字的。阵亡日期写了三天后。\"她说话的时候手指在胳膊上敲了两下，节奏均匀，像在数秒。\"磨损得有十年了。\"\n\n魏庄把卷宗夹在腋下，从耳朵上摘下烟，叼在嘴里，还是没点。\"你信。\"\n\n\"我不信。\"苏雅说。\"但铜板是真的。\"\n\n鼓风机重新启动，走廊里的灯猛地亮了一个色号，又暗下去。管路里的水不滴了，改成了嘶嘶的蒸汽声，从焊缝里挤出来，带着铁锈和硫磺的味道。\n\n苏雅转身往走廊那头走，靴跟磕在铁板上，声音短，不带回音。魏庄跟上去，烟叼在嘴里，没点。",
+      "narrative_tick": 1,
+      "tokens": 4704,
+      "prompt_tokens": 3519,
+      "completion_tokens": 1185,
+      "call_count": 2,
+      "cache_hit_rate": 0.291,
+      "duration_sec": 25.67,
+      "narrative_chars_actual": 769,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 8,
+      "style_key": "black_humor",
+      "style_label": "黑色幽默 (荒诞讽刺)",
+      "style_description": "用讽刺与不协调制造笑点, 但底色是悲. 适合社会讽刺/反英雄题材.",
+      "novel_id": "stylefinal_20260714_212823_black_humor",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 25.98,
+          "narrator_chars": 784,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_454b8a",
+            "evt_nat_1_1_aa9f34",
+            "evt_nat_1_2_bcc198"
+          ]
+        }
+      ],
+      "narrative": "告示牌上的浆糊已经干了，征兵令翘起的一角在铁框上刮出细响。苏默把袖口拉过手腕，用布料垫着指尖把那角按回去，煤灰在纸面上留下半个拇指印，刚好盖住“光荣服役”的“光”字。\n\n他退后一步，念了一遍正文。年龄放宽到十六岁，体重下限减了八斤，报名处从市政厅搬到了东码头三号仓库——那里上个月还在囤救济粮。\n\n“十六岁。”他嘴唇动了动，没出声，手指在裤缝上蹭掉煤灰。\n\n风把雾撕开一道口子，码头方向露出来。水位退得比上周更狠，沉船的肋骨从水面下翻出来，桅杆斜插着，上面挂的油污在灰黄色光线里泛着紫绿。船壳上有人用白漆刷过一行字，现在只剩“不——弃——船”三个字还能辨认，其余的被锈吃掉了。\n\n汽笛响起来。三长，一短，然后被风扯成碎音。\n\n苏默转头往声音的方向看，脖子转到一半停住了——东边第三根路灯柱上贴着一张铅印通知，纸还白着，没沾多少灰。他走过去，站在灯柱前，两手插在工装裤口袋里，身子微微前倾。\n\n通知抬头是蒸汽动力署的印戳，下面是表格，表格里列着十二种配给煤的型号，每种后面跟着对应的职业类别和月度配额。他的视线从“一级司炉工——每月四十二斤”往下滑，滑到“码头装卸——每月九斤”，再滑到最底下一行字，字号比其他行小一半：“非在册居民需于本月十五日前完成居住登记，逾期未登记者暂停配给煤供应。”\n\n今天是十四号。\n\n他把手从口袋里抽出来，在通知边缘摸了一下。纸是新的，油墨还没完全干透，指尖沾上一点黑色。他盯着那点墨看了两秒，然后把手重新插回口袋，转身往东走。\n\n走了十步，又折回来，从口袋里掏出一截铅笔头，在通知空白处写下自己的名字和住址。字很小，挤在表格线和纸边之间，最后一个字被煤灰蹭花了。\n\n他写完，把铅笔头塞回口袋，拍了拍手上的灰。\n\n一个没有登记在册的人，理论上不存在，配给煤当然不会短缺。只是冬天要来了，而巷子口的废料堆已经被人翻过三遍，连碎煤渣都捡不到了。",
+      "narrative_tick": 1,
+      "tokens": 4720,
+      "prompt_tokens": 3630,
+      "completion_tokens": 1090,
+      "call_count": 2,
+      "cache_hit_rate": 0.2821,
+      "duration_sec": 26.01,
+      "narrative_chars_actual": 784,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 2,
+      "style_key": "warm_healing",
+      "style_label": "治愈温馨 (慢生活)",
+      "novel_id": "stylerev3_20260714_213654_warm_healing",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 28.08,
+          "narrator_chars": 871,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_81014c",
+            "evt_nat_1_1_bab1a2",
+            "evt_nat_1_2_2756f9"
+          ]
+        }
+      ],
+      "narrative": "苏雅把那根松动的螺栓拧紧，蒸汽嘶嘶声小了下去。她从工具袋里翻出一截麻线，在接口处缠了三圈，打了一个方结。白色的蒸汽缩成细线，最后只剩一两滴水珠沿着管壁滑下来，滴在石板缝里长出的灰绿色苔藓上。\n\n她直起腰，用手背蹭掉额头上沾的煤灰。灰黄色的雾霾里，空气还是涩的，铁锈味混着远处码头飘来的硫磺气，但她站的位置至少不再喷白雾了。\n\n防线外侧的铁丝网上，那块破布还在拍。啪，啪，啪，节奏单调，像谁在敲一扇永远不会开的门。苏雅走过去，从栅栏缝隙里把布扯出来——是半截工装裤腿，布料已经硬了，被煤灰染得看不出原来的颜色。她翻过来，内侧缝着一个小口袋，口袋里有根针，针尖别着一小截棕色的线。\n\n她把针取下来，线绕在食指上试了试，还没脆。\n\n哨站里老李的袖口上周裂了，提过两次，说干活时灌风。苏雅把破布叠好塞进工具袋，针别在袋口，线单独绕好。\n\n码头的方向又传来水泡破裂的闷响，硫磺味浓了一瞬，然后被风吹薄。她没有往那边看。\n\n回到哨站，老李蹲在门边修一盏煤油灯，灯罩拆下来搁在膝盖上，手指捏着棉芯往外抽。苏雅把工具袋放在他旁边的木箱上，掏出那根针和线。“袖口，给我。”\n\n老李抬起头，眼皮上沾着煤灰，眨了眨。“你哪来的线？”\n\n“铁丝网上捡的。”\n\n他把右臂伸过来，袖子裂口从手腕开到小臂中段。苏雅蹲下来，针穿过第一层布，拉紧，线绷直的时候发出很轻的摩擦声。针脚不密，但每一针都吃住了两边的布。\n\n老李没说话，用左手把灯罩装回去，棉芯调好了，擦火柴。火苗跳起来，橘黄色的光铺在他膝盖上，也落在苏雅手指间那根棕色的线上。\n\n她缝完最后一针，把线咬断，针还给老李。“留着，下次自己缝。”\n\n老李接过针，别在自己衣领内侧。他举了举煤油灯，光照到工具袋上那截破布。“那个留着干嘛？”\n\n苏雅站起来，拍了拍膝盖上的灰。“布太硬，做不了补丁。但口袋还能用。”\n\n她没说完，转身去拿自己的水壶。壶里还剩半壶凉茶，她倒进老李的搪瓷杯里，杯子推到煤油灯旁边。\n\n“喝吧，我去换岗。”\n\n老李端起杯子，手掌圈住杯身，热气升起来，混着煤油灯的光，在灰黄色的雾气里晕开一小圈暖光。",
+      "narrative_tick": 1,
+      "tokens": 5024,
+      "call_count": 2,
+      "cache_hit_rate": 0.2716,
+      "duration_sec": 28.1,
+      "narrative_chars_actual": 871,
+      "accepted_source_report": "style-validation-revision3-20260714_213654.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 10,
+      "style_key": "melancholic",
+      "style_label": "致郁忧伤 (悲怆基调)",
+      "style_description": "整体压抑底色, 美但不温, 用细节积累悲. 适合悲剧 / 文学悲伤系.",
+      "novel_id": "stylefinal_20260714_212823_melancholic",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 21.46,
+          "narrator_chars": 640,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_ac8679",
+            "evt_nat_1_1_685a68",
+            "evt_nat_1_2_4a50c2"
+          ]
+        }
+      ],
+      "narrative": "苏雅把帽檐往下压了压，雨水顺着帽檐的裂缝渗进来，滴在她左眼皮上。她没擦。\n\n锈蚀防线的铁栅栏就在前面三十步，黄绿色烟雾从铆钉松动的地方丝丝缕缕地冒出来，被酸雨浇散，又聚拢。她盯着那烟雾看了三秒，脑子里闪过的是那块铜板——阵亡日期写的是三天后，磨损的痕迹却像十年。她没跟任何人提过这件事。\n\n栅栏门半开着，锁链垂在地上，已经锈透了。她侧身挤过去，肩胛骨擦过铁栏杆，布料发出轻微的嘶嘶声。酸雨把军装上的煤灰泡成黑浆，顺着袖口往下淌。她甩了甩手，黑浆溅在石板地上，很快被新的雨水冲淡。\n\n浮渣码头的汽笛又响了，低沉，拖得很长，像谁压着嗓子在喊。她脚步没停，靴底踩在煤灰泥浆里，拔出来的时候带着黏腻的声响。\n\n齿轮喉的穹顶在她身后，金属的嘶嘶腐蚀声一直没断过。她听过那声音无数次，从没觉得有什么不同。但今天她知道，七天之后那声音会停。不是因为修好了，是因为熔毁。\n\n魏庄在铅室里找到的卷宗，最后一段正在消失。她想起他说这话时的表情——不是恐惧，是那种整理卷宗三十年才会有的平静，像在归档一件迟早要归档的东西。\n\n她停下脚步，站在码头边。水面上的油膜被雨点击碎，碎成无数片，又慢慢聚合，映出灰黄色的天空和远处烟囱的倒影。她看着那油膜，把手伸进兜里。\n\n兜里是那块铜板。\n\n她没拿出来。手指在铜板上摩挲了一下，刻痕很深，她的名字——苏雅——每一笔都刻得工整，不像是仓促间完成的。三天后。她摩挲着那三个字，然后把铜板推回兜底，抽出手，继续往前走。\n\n汽笛声停了，只剩下酸雨打在油膜上的细碎声响。",
+      "narrative_tick": 1,
+      "tokens": 4557,
+      "prompt_tokens": 3560,
+      "completion_tokens": 997,
+      "call_count": 2,
+      "cache_hit_rate": 0.2876,
+      "duration_sec": 21.49,
+      "narrative_chars_actual": 640,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 11,
+      "style_key": "first_person_immersive",
+      "style_label": "第一人称沉浸 ('我' 视角)",
+      "style_description": "用 '我' 写, 限制信息边界, 即时感受 > 全知描写. 沉浸感强.",
+      "novel_id": "stylefinal_20260714_212823_first_person_immersive",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 20.2,
+          "narrator_chars": 463,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_974885",
+            "evt_nat_1_1_80c952",
+            "evt_nat_1_2_5782ee"
+          ]
+        }
+      ],
+      "narrative": "蒸汽从街角管道的接口嘶出来的时候，我正把围巾往上拉了半寸。不是怕冷，是煤灰。细密的灰粒子混在雾里，像有人在空气里撒了一把碾碎的骨炭。蒸汽撞上冷空气，凝成泥点，啪嗒啪嗒砸在我脚边的石板上，灰黑色的，溅到靴面上就擦不掉。\n\n我没停。码头在前方不到两百步的地方，隔着三层灰黄色的雾，看不清，但听得见。驳船靠岸的声音比汽笛先到——船体刮擦朽木，那种嘎吱声不是金属摩擦，是木头被压碎，纤维一根根断裂，混着铆钉松脱的尖响。我听过太多次，每次牙根都会发酸，这次也一样。\n\n北风是从平原那头压过来的，来得突然。地上的灰烬先是被卷起来，打着旋，像有人从废墟里拽出一截破布，在空中拧了一下，又扔回去。一个小型的灰旋风，在断墙之间游荡了两三秒，散了。\n\n风里有臭氧味。\n\n不是雷雨前那种干净的电离气息，是烧焦的，像是有人用高压电弧切割过金属，味道还没散干净。我停了一步，抬头看天。雾霾太厚，看不见什么，但臭氧味混着煤灰，吸进肺里发涩。\n\n码头那边有人在喊，声音被风撕成碎片，只听见几个字：\"……靠岸……卸货……\"\n\n我把围巾又往上拽了一点，继续走。",
+      "narrative_tick": 1,
+      "tokens": 4313,
+      "prompt_tokens": 3433,
+      "completion_tokens": 880,
+      "call_count": 2,
+      "cache_hit_rate": 0.2983,
+      "duration_sec": 20.23,
+      "narrative_chars_actual": 463,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 12,
+      "style_key": "ensemble_epic",
+      "style_label": "群像史诗 (多 POV)",
+      "style_description": "多视角切换, 每段聚焦不同角色, 命运交织. 适合群像 / 史诗 / 群英类.",
+      "novel_id": "stylefinal_20260714_212823_ensemble_epic",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 22.88,
+          "narrator_chars": 612,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_0b6b00",
+            "evt_nat_1_1_0e6eaa",
+            "evt_nat_1_2_d6e17f"
+          ]
+        }
+      ],
+      "narrative": "蒸汽钟敲响整点的时候，何安正在浮渣码头的三号栈桥下掏死鱼鳃。\n\n七声。钟声从齿轮喉的方向碾过来，在雾霾里被拉长成含混的轰鸣，像一头巨兽在水底咳嗽。管道上的煤灰簌簌往下掉，落进他后颈，和汗混成泥浆。他没抬头，手指继续在鱼鳃里摸索。鳃盖上的黏液滑腻腻的，扯开时发出湿抹布拧干的声音。\n\n第三片鳃里卡着东西。\n\n不是石子。他抠出来，举到眼前——一枚铜扣，拇指大小，边缘刻着一圈齿轮纹。蒸汽钟的余震还在水面上荡，油污被震碎成千万片虹彩，又重新聚拢。死鱼翻着白肚从铜扣旁边漂过去，眼珠蒙着一层灰白的翳。\n\n何安把铜扣在裤腿上蹭了蹭。齿轮纹下面还有字，小得几乎看不清。他偏过头，借着码头煤气灯昏黄的光去认——\n\n苏雅。\n\n他手指顿了一下。\n\n铜扣背面是日期，刻得很深，像用錾子一下一下凿进去的：蒸汽历三百一十七年，霜月，十日。\n\n三天后。\n\n他把铜扣攥在掌心里，站起来。栈桥的铁架在头顶吱嘎作响，远处灰烬平原上刮起一阵干燥的风，细碎的煤灰贴着地面滚过来，在水面形成短暂的微型尘暴。死鱼被风推着转了半圈，继续往下游漂。\n\n他想起苏雅上周在锈蚀防线换防时，把备用弹匣落在哨站了。她从来不落东西。\n\n何安把铜扣揣进怀里，弯腰拎起那串死鱼。鱼尾拖在栈桥的铁板上，划出一道湿痕。他得去一趟档案馆。魏庄那家伙成天埋在卷宗堆里，大概能认出这铜扣上的纹路是哪家工坊的。\n\n蒸汽钟的余音彻底散了。码头上只剩煤气灯咝咝的燃烧声，和远处平原上风卷煤灰的低啸。",
+      "narrative_tick": 1,
+      "tokens": 4482,
+      "prompt_tokens": 3407,
+      "completion_tokens": 1075,
+      "call_count": 2,
+      "cache_hit_rate": 0.3006,
+      "duration_sec": 22.91,
+      "narrative_chars_actual": 612,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 3,
+      "style_key": "classical_chapter",
+      "style_label": "章回体古典 (传统笔法)",
+      "novel_id": "stylerev3_20260714_213654_classical_chapter",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 24.21,
+          "narrator_chars": 477,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_974f5a",
+            "evt_nat_1_1_aee41b",
+            "evt_nat_1_2_798ee0"
+          ]
+        }
+      ],
+      "narrative": "却说那浮渣码头，煤灰积了寸许厚，踩上去沙沙作响，如踏碎骨。苏雅立在栈桥尽头，裹紧肩上那件油渍浸透的工装外套，目光穿过灰黄色的雾霾，望向水面。\n\n但见水面上漂着一层油膜，在煤气灯惨淡的光晕下泛着暗沉虹彩，红一圈，紫一圈，旋即被细碎的煤灰覆住，又破开。远处汽笛低鸣，不知是哪艘锈船在靠岸，声音闷得像是从铁棺材里传出来的。\n\n她蹲下身，从靴筒里抽出匕首，刀尖探入脚边那一小滩铁锈色的水洼。原来这水是从锈蚀防线的铁墙上淌下来的——暗红色的露水顺着铆钉往下爬，在墙根汇成一片，稠得像冷却的血。她盯着刀尖上挑起的水珠，眉头微皱。\n\n墙上的凝结水不该是这种颜色。\n\n她站起身，将匕首在裤腿上蹭了两下，插回靴筒。栈桥那头，一盏煤气灯忽明忽暗，灯罩里积了半盏灰，火光每跳一下，玻璃罩上就映出她侧脸的轮廓——颧骨高，眼窝深，嘴唇抿成一条细线。\n\n她转身往齿轮喉的方向走，皮靴踩在煤灰上，沙沙声一路跟着。\n\n正是此时，栈桥下的水面突然翻起一阵浊浪，油膜被撕开，一股锈水涌上来，溅在她靴面上。水花落处，浮出一个铜制的物件，拳头大小，在浪里转了两圈，磕在栈桥木桩上，叮的一声脆响。",
+      "narrative_tick": 1,
+      "tokens": 4698,
+      "call_count": 2,
+      "cache_hit_rate": 0.2738,
+      "duration_sec": 24.23,
+      "narrative_chars_actual": 477,
+      "accepted_source_report": "style-validation-revision3-20260714_213654.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 14,
+      "style_key": "philosophical_meditative",
+      "style_label": "哲思冥想 (博尔赫斯式)",
+      "style_description": "外象事件少, 时间感破碎, 角色行动是哲学命题的载体. 适合实验/哲思文学.",
+      "novel_id": "stylefinal_20260714_212823_philosophical_meditative",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 32.0,
+          "narrator_chars": 1210,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_dfe1c8",
+            "evt_nat_1_1_43077e",
+            "evt_nat_1_2_8cdc9f"
+          ]
+        }
+      ],
+      "narrative": "何安蹲在码头边的铁栈桥上，看油膜在水面展开。\n\n不是随便看看。他在等人，等一个据说能搞到铜管接头的人。接头关系到下一台冷凝器的组装，冷凝器关系到账，账关系到冬天。但他蹲了四十分钟，那人没来。\n\n水面上的虹彩在动。不是被风吹的——风今天很小，灰霾沉得像湿毛毯。是水底有东西在冒泡，一串一串，从铁栈桥下面某个看不见的裂缝里挤出来，带着一股甜腻的腐味。气泡浮到油膜底下，撑出一个鼓包，然后破了。油膜合拢，虹彩变了形状。\n\n他盯着那个重复的过程。撑开，破裂，合拢。撑开，破裂，合拢。\n\n他在想一件事。不是铜管接头的事。\n\n半个月前他在灰烬平原捡到一台自动机，埋在煤灰里，只露出半截手臂。他以为是报废的蒸汽机，拖出来才发现不是。那东西没有锅炉，没有活塞，心脏的位置是一个密封的玻璃罐，里面缠着铜丝，铜丝之间跳着一种他没见过的东西——不是蒸汽，不是齿轮咬合，而是一道稳定的、无声的蓝光。\n\n他当时蹲在那台自动机旁边，蹲了很久。久到膝盖发僵，久到灰烬平原的热风把他后背吹得发干。\n\n然后那东西动了。\n\n手臂抬起来，关节发出干涩的摩擦声，手指张开，又合拢，像在确认自己还能动。然后胸腔里传出一个声音，不是汽笛，不是钟鸣，是机械音，但节奏像人在说话。它说了一句话。\n\n何安没听清。不是音量的问题，是那句话本身不对劲。每个字他都认识，但拼在一起就不对。像有人把一句话拆成零件，再按错误的图纸装回去。\n\n他把自动机扛回了住处，锁在地下室。之后每晚都下去，打开灯，坐在那东西对面，等它再开口。\n\n它没再说过。\n\n水面又冒出一串气泡，这次的更大，破裂时发出黏腻的声响。何安站起来，膝盖咔嗒一响。他低头看自己的手，指甲缝里嵌着煤灰，怎么洗都洗不掉的那层灰。\n\n他忽然想起那句话。不是听清了，是突然觉得——那句话缺的那个零件，可能不是某个字，而是某个时间。\n\n如果那台自动机不是在对他说话呢？如果那句话是十年前说的，只是现在才送到他耳朵里？\n\n铁栈桥另一端有人走过来，靴子踩在锈铁板上，节奏很慢。何安没回头。他还在看油膜，看虹彩从一个形状变成另一个形状，像某种他读不懂的字母。\n\n来人停在五步外。\n\n“你是何安？”\n\n他把手从口袋里抽出来，转身。\n\n“接头带了？”\n\n那人没回答。何安看见他手里攥着一样东西，不是铜管，是一块布，布角露出金属的光泽。\n\n“有人让我把这个给你。”那人说。\n\n何安接过布包，打开。\n\n里面是一块铜板。巴掌大，边缘有磨损，磨损的痕迹是旧的，但铜板上的字是新的。\n\n上面刻着一个名字。\n\n他认识。\n\n“哪里来的？”他问。\n\n那人已经走了。铁栈桥上空荡荡的，只有油膜还在冒泡，破裂，合拢。\n\n何安把铜板翻过来。背面刻着一行字，刻痕很浅，像是仓促间划上去的。\n\n他读了一遍。\n\n然后蹲下来，把铜板放在膝盖上，看着水面。虹彩在动，气泡在破，远处有低沉的雷鸣，也可能是蒸汽机在试车。他没再读第二遍。\n\n他只是把铜板握在手里，握了很久。",
+      "narrative_tick": 1,
+      "tokens": 4927,
+      "prompt_tokens": 3487,
+      "completion_tokens": 1440,
+      "call_count": 2,
+      "cache_hit_rate": 0.2937,
+      "duration_sec": 32.03,
+      "narrative_chars_actual": 1210,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 4,
+      "style_key": "screenplay_visual",
+      "style_label": "戏剧化镜头 (剧本笔法)",
+      "novel_id": "stylerev3_20260714_213654_screenplay_visual",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 21.87,
+          "narrator_chars": 476,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_62f16e",
+            "evt_nat_1_1_453436",
+            "evt_nat_1_2_8c9d27"
+          ]
+        }
+      ],
+      "narrative": "告示牌上的纸边在风里掀了一下，又贴回去，煤灰粘得太厚。\n\n一只手伸过来，指甲缝里嵌着黑泥，把告示从中间撕开。撕的人是个女人，头发用旧电线扎在脑后，袖口磨得露出里头的铁灰色衬布。她把撕下的半张纸团了团，塞进腰间的帆布袋，转身往巷子里走。\n\n巷口的铁皮屋檐在滴水，水珠落地时发出嘶嘶声，沥青路面被蚀出一个个浅坑。她踩过水洼，靴底带起一串湿煤灰，印在石阶上像某种标记。\n\n巷子尽头是防线外墙，锈迹从铆钉孔往外蔓延，像铁在流血。一颗水珠正从锈斑边缘滑下来，滑过的地方颜色变深，铁皮塌下去一小块。她停下，伸手去接那颗水珠，指尖离铁皮还有一寸时缩了回来。\n\n汽笛声从河面方向压过来，低沉，拖得长，尾声里夹着火星爆裂的噼啪声。她转头，从两栋楼之间的缝隙看出去，看见驳船的烟囱正喷出一团暗红色的火星，在灰黄色的雾霾里亮了一下就灭了。船身锈得看不出原来的颜色，吃水线以下爬满黑色的水藻，靠岸时撞在码头木桩上，发出闷响。\n\n她收回视线，从帆布袋里掏出那团撕下来的告示，展开。纸已经被酸雨蚀掉大半，剩下一行字还能辨认：\"——后关闭。\"她的手停在半空，指节捏紧，纸边割进虎口。",
+      "narrative_tick": 1,
+      "tokens": 4394,
+      "call_count": 2,
+      "cache_hit_rate": 0.291,
+      "duration_sec": 21.89,
+      "narrative_chars_actual": 476,
+      "accepted_source_report": "style-validation-revision3-20260714_213654.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    },
+    {
+      "index": 16,
+      "style_key": "rough_grit_realism",
+      "style_label": "粗粝写实 (反美化)",
+      "style_description": "肉身重量感强, 拒绝优雅. 物体破损/气味/汗水/疲倦都正面写. 适合底层 / 战争 / 末世粗砺题材.",
+      "novel_id": "stylefinal_20260714_212823_rough_grit_realism",
+      "status": "generated",
+      "ticks": [
+        {
+          "tick": 1,
+          "duration_sec": 26.89,
+          "narrator_chars": 854,
+          "narrator_produced_text": true,
+          "agents_called": [
+            "world_simulator",
+            "narrator",
+            "kg_sync(+0e/+7r/~11e)"
+          ],
+          "events_generated": [
+            "evt_nat_1_0_f3c1b0",
+            "evt_nat_1_1_23435a",
+            "evt_nat_1_2_cd9079"
+          ]
+        }
+      ],
+      "narrative": "售货机死掉的时候，齿轮咬合的声音像在嚼自己的舌头。\n\n咔咔咔三声，然后一股黑烟从出货口喷出来，裹着没烧干净的煤油味。玻璃罩上积的灰太厚了，厚到看不清里面还剩什么——两罐豆子，或者一包发霉的烟，反正现在都拿不出来了。\n\n何安踹了一脚机器侧面。铁皮凹进去一个鞋印，什么东西在内部断掉了，哗啦一声塌下去。\n\n“别踹了。”老周蹲在街对面，背靠着墙，手指夹着一根没点着的烟。“踹开也是空的。”\n\n何安没理他。他蹲下来，把手伸进出货口，摸到一堆碎玻璃碴和黏糊糊的糖浆残留。手指被划了一道，血和糖浆混在一起，他甩了甩手，在裤子上擦干净。\n\n雾比刚才更浓了。煤灰落在肩膀上，落在头发里，落在睫毛上，眨眼的时候能感觉到细小的颗粒在眼皮底下磨。能见度不到二十米，街对面的建筑只剩下一个灰蒙蒙的轮廓，像泡在浑水里。\n\n东边传来铁丝网倒塌的声音。\n\n不是一下子的坍塌，是先有呻吟——铁锈摩擦铁锈，那种让人牙酸的高频震颤——然后才是倾倒。扬起的铁锈粉尘混进雾里，空气里的铁锈味又重了一层，呛得何安咳了两声。\n\n“防线东段。”老周把没点着的烟从嘴里拿下来，塞回胸前口袋里。“上个月就有人说那一段锈透了。”\n\n“上个月没人修？”\n\n“修什么修。熔炉那边连新铁丝都轧不出来，拿什么修。”\n\n何安站起来，膝盖嘎嘣响了一声。三十岁不到，关节已经开始有毛病了。潮湿，煤灰，常年弯腰翻垃圾堆，膝盖比年纪老得快。\n\n码头方向的水面翻起一串气泡。\n\n气泡破裂的声音隔着半条街都听得见，啵啵啵，像泥浆在沸。然后硫磺味就过来了，不是慢慢飘过来的，是直接灌进鼻腔，臭鸡蛋混着阴沟淤泥的底味。一条鱼翻着白肚浮上来，在油污的水面上漂着，鳞片脱落了大半，露出底下灰白色的腐肉。\n\n何安看着那条鱼。\n\n“走吧。”老周站起来，拍了拍屁股上的灰。“今天捡不到什么了。”\n\n何安没动。他盯着那条死鱼，又看了一眼倒掉的铁丝网，最后把视线落在售货机凹进去的鞋印上。\n\n“走吧。”老周又说了一遍。\n\n他这才转身，把划破的手指含在嘴里，血腥味和煤灰味混在一起，舌头上一股铁锈的涩。",
+      "narrative_tick": 1,
+      "tokens": 4610,
+      "prompt_tokens": 3444,
+      "completion_tokens": 1166,
+      "call_count": 2,
+      "cache_hit_rate": 0.2973,
+      "duration_sec": 26.92,
+      "narrative_chars_actual": 854,
+      "accepted_source_report": "style-validation-final-20260714_212823.json",
+      "manual_style_verdict": "pass",
+      "det_metrics": {
+        "E1": false,
+        "D6": false,
+        "D1": false,
+        "C6": false,
+        "E7": false,
+        "B4": false
+      }
+    }
+  ]
+}

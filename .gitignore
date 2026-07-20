@@ -49,9 +49,13 @@ bash.exe.stackdump
 *.md
 !/README.md
 !/CHANGELOG.md
-!/structure.md
 !deploy/**/README.md
 !docs/**/*.md
+
+# Repository-local agent notes / generated structure inventory.
+# Keep local copies, but never add them back to the repository.
+/CLAUDE.md
+/structure.md
 
 # Phase 5+ matrix bench per-cell 产物 (~200 文件, 个别 cell 可重跑复现).
 # 必须在 !docs/**/*.md 之后, last-match-wins 才能盖过上面的全 un-ignore.

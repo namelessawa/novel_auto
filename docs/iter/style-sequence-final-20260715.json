@@ -1,0 +1,236 @@
+{
+  "metadata": {
+    "started_at": 1784117476,
+    "git_sha": "2b5731abf4caf9b3a5df99bde0db39ffcc399010",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "model": "deepseek-v4-pro",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "mode": "pressure",
+    "ticks": 4,
+    "no_judge": false,
+    "max_revisions": 1,
+    "shared_bootstrap": true,
+    "last_run_mode": "both",
+    "base_dirs": {
+      "apocalypse_wasteland": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\styleval_base_apocalypse_wasteland_1784117476"
+    }
+  },
+  "results": [
+    {
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "style": "literary",
+      "preset_version": "2026-07-15.5",
+      "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+      "strict_every_ticks": 1,
+      "accepted": true,
+      "char_count": 914,
+      "anchor_count": 4,
+      "revision_count": 0,
+      "det_report": {
+        "requires_rewrite": false,
+        "per_tick": [
+          {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          }
+        ]
+      },
+      "post_rewrite_det_report": {},
+      "semantic_judge": {
+        "pass": true,
+        "score": 9.0,
+        "blocking_issues": [],
+        "issues": [
+          "内心白描略超两句（“那种声音陆深太熟悉了”可视为经验判断，但接近内心独白边缘）"
+        ],
+        "rewrite_directive": "",
+        "state_conflicts": []
+      },
+      "production_style_traces": [
+        {
+          "preset_key": "literary",
+          "preset_version": "2026-07-15.5",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+          "strict": true,
+          "before": {
+            "style_key": "literary",
+            "strict": true,
+            "checked_rules": [
+              "no_meta_leak",
+              "character_presence"
+            ],
+            "passed": true,
+            "requires_rewrite": false,
+            "findings": []
+          },
+          "rewrite_attempted": false,
+          "rewrite_adopted": false
+        }
+      ],
+      "tick_outputs": [
+        {
+          "tick": 1,
+          "should_narrate": true,
+          "skip_reason": "",
+          "generation_attempts": 1,
+          "text": "警报是从集装箱深处传来的，先是一声尖锐的电子蜂鸣，接着是金属闸门开始闭合的摩擦声——那种声音陆深太熟悉了，轴承缺油，轨道变形，每下降一寸都像在碾碎骨头。\n\n他蹲在废铁市集第三层的一间铁皮棚屋里，手里正捏着一根从旧净水器上拆下来的反渗透膜管。管壁已经发黄，末端有裂纹，但密封圈还能用。棚屋的铁门被什么东西从外面撞了一下，门框上的锈渣簌簌往下掉。\n\n“陆深！”苏墨的声音从门外传来，隔着铁皮有些发闷，但语速比平时更快，“闸门控制器被锈蚀之子的人扣了，他们说这是圣殿的财产。”\n\n陆深把膜管插进怀里，站起来时膝盖骨发出一声脆响。他拉开门，苏墨靠在门框上，左肩的工装布撕开一道口子，血从里面渗出来，已经凝固成深褐色。她手里攥着一把六角扳手，指节发白。\n\n“三分钟。”苏墨说，用扳手朝走廊尽头指了一下。闸门已经降下三分之一，门框的锈迹在震动中剥落，露出下面暗红色的铁芯。走廊另一头，三个穿着焊接护具的人正朝这边走来，领头的手里拎着一串钥匙，钥匙圈上挂着一个铜质的齿轮挂件——那是净水神殿的标记。\n\n“膜管给我。”苏墨把手伸过来，掌心朝上，指尖还沾着机油。\n\n陆深没动。“你的肩膀。”\n\n“脱臼，不是骨折。”她活动了一下左臂，关节发出轻微的咔嗒声，眉头没皱一下，“膜管给我，我引开他们。你从通风管道走，管道尽头是旧国道七号，往东两公里有个排水涵洞。”\n\n“然后呢。”\n\n“然后你欠我一次。”苏墨把扳手换到左手，右手从腰间摸出一把信号枪，枪管已经磨得发亮，“渡鸦港的账，连本带利。”\n\n闸门又降下十公分，金属刮擦声刺进耳膜。走廊那头的人加快了脚步，钥匙碰撞声越来越近。\n\n陆深从怀里掏出膜管，管壁还带着体温。他把它放在苏墨手心，手指在她掌心停了一秒。膜管的密封圈脱落下来，滚到地上，停在苏墨靴尖前面。\n\n“密封圈老化了。”他说。\n\n“我知道。”苏墨弯腰捡起密封圈，塞进胸前的口袋，扣上袋盖，扣子按下去时发出咔嗒一声。然后她抬起信号枪，对准走廊尽头，拇指拨开保险。\n\n“走。”\n\n陆深转身钻进通风管道，铁皮管道的内壁结了一层锈壳，手肘蹭上去发出沙沙声。他听到身后传来信号枪发射的闷响，然后是苏墨的脚步声，朝相反方向跑去。\n\n闸门在身后轰然落地。",
+          "style_trace": {
+            "preset_key": "literary",
+            "preset_version": "2026-07-15.5",
+            "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+            "strict": true,
+            "before": {
+              "style_key": "literary",
+              "strict": true,
+              "checked_rules": [
+                "no_meta_leak",
+                "character_presence"
+              ],
+              "passed": true,
+              "requires_rewrite": false,
+              "findings": []
+            },
+            "rewrite_attempted": false,
+            "rewrite_adopted": false
+          },
+          "continuity_state": {
+            "characters": {
+              "char_lushen": {
+                "location": "旧国道七号公路方向，通风管道内",
+                "injuries": [],
+                "status": "携带着反渗透膜管（缺少密封圈），正从通风管道撤离"
+              },
+              "char_sumo": {
+                "location": "渡鸦港废铁市集第三层走廊",
+                "injuries": [
+                  "左肩脱臼",
+                  "左肩撕裂伤"
+                ],
+                "status": "持有信号枪和六角扳手，正引开锈蚀之子追兵，口袋中携带密封圈"
+              }
+            },
+            "items": {
+              "反渗透膜管": {
+                "holder": "char_lushen",
+                "quantity": 1,
+                "condition": "管壁发黄，末端有裂纹，密封圈脱落"
+              },
+              "密封圈": {
+                "holder": "char_sumo",
+                "quantity": 1,
+                "condition": "老化，已脱落"
+              },
+              "信号枪": {
+                "holder": "char_sumo",
+                "quantity": 1,
+                "condition": "已发射一发"
+              },
+              "六角扳手": {
+                "holder": "char_sumo",
+                "quantity": 1,
+                "condition": "正常"
+              }
+            },
+            "knowledge": [
+              "陆深得知旧国道七号往东两公里有排水涵洞",
+              "苏墨认出膜管，并知道其用途",
+              "锈蚀之子将膜管视为圣殿财产"
+            ],
+            "time_marker": "闸门封锁后，陆深进入通风管道"
+          },
+          "continuity_guard_trace": {
+            "attempted": true,
+            "repair_attempted": false,
+            "required_events": [
+              {
+                "id": "style_validation_pressure_1",
+                "description": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                "required_end_states": []
+              }
+            ],
+            "known_entities": [
+              "苏墨",
+              "陆深",
+              "黑岩"
+            ],
+            "entity_names": {
+              "char_lushen": "陆深",
+              "char_sumo": "苏墨",
+              "char_heiyan": "黑岩"
+            },
+            "tracking_character_id": "char_lushen",
+            "before": {
+              "safe": true,
+              "reported_safe": true,
+              "event_checks": [
+                {
+                  "event_id": "style_validation_pressure_1",
+                  "requirement": "警报响起，唯一出口将在三分钟后封死；同伴受伤，关键物件被守门者扣住，主角必须立即选择、行动并承受可见后果。",
+                  "met": true,
+                  "prose_evidence": [
+                    "警报是从集装箱深处传来的，先是一声尖锐的电子蜂鸣，接着是金属闸门开始闭合的摩擦声",
+                    "闸门已经降下三分之一",
+                    "闸门又降下十公分",
+                    "闸门在身后轰然落地",
+                    "左肩的工装布撕开一道口子，血从里面渗出来，已经凝固成深褐色",
+                    "闸门控制器被锈蚀之子的人扣了，他们说这是圣殿的财产",
+                    "陆深从怀里掏出膜管，管壁还带着体温。他把它放在苏墨手心",
+                    "陆深转身钻进通风管道",
+                    "苏墨抬起信号枪，对准走廊尽头，拇指拨开保险。'走。'",
+                    "他听到身后传来信号枪发射的闷响，然后是苏墨的脚步声，朝相反方向跑去"
+                  ],
+                  "ledger_evidence_paths": [
+                    "characters.char_lushen.location",
+                    "characters.char_sumo.location",
+                    "characters.char_sumo.injuries",
+                    "items.反渗透膜管.holder",
+                    "items.密封圈.holder",
+                    "time_marker"
+                  ]
+                }
+              ],
+              "event_fulfillment_conflicts": [],
+              "entity_grounding_conflicts": [],
+              "prior_state_conflicts": [],
+              "internal_conflicts": [],
+              "ledger_conflicts": [],
+              "fact_changes_from_original": [],
+              "reason": "正文按顺序完成源事件要求：警报与闸门闭合建立紧迫感，苏墨受伤且闸门控制器被扣，陆深将膜管交给苏墨后从通风管道撤离，苏墨发射信号枪引开追兵，闸门最终落地。结束状态与正文最后实际状态一致，无内部矛盾、无新增未授权专名、无修订改动。"
+            }
+          },
+          "events_consumed": [
+            "style_validation_pressure_1"
+          ],
+          "viewpoint_characters": [
+            "char_lushen"
+          ]
+        }
+      ],
+      "missing_sequence_ticks": [],
+      "missing_continuity_state_ticks": [],
+      "segments": [
+        "警报是从集装箱深处传来的，先是一声尖锐的电子蜂鸣，接着是金属闸门开始闭合的摩擦声——那种声音陆深太熟悉了，轴承缺油，轨道变形，每下降一寸都像在碾碎骨头。\n\n他蹲在废铁市集第三层的一间铁皮棚屋里，手里正捏着一根从旧净水器上拆下来的反渗透膜管。管壁已经发黄，末端有裂纹，但密封圈还能用。棚屋的铁门被什么东西从外面撞了一下，门框上的锈渣簌簌往下掉。\n\n“陆深！”苏墨的声音从门外传来，隔着铁皮有些发闷，但语速比平时更快，“闸门控制器被锈蚀之子的人扣了，他们说这是圣殿的财产。”\n\n陆深把膜管插进怀里，站起来时膝盖骨发出一声脆响。他拉开门，苏墨靠在门框上，左肩的工装布撕开一道口子，血从里面渗出来，已经凝固成深褐色。她手里攥着一把六角扳手，指节发白。\n\n“三分钟。”苏墨说，用扳手朝走廊尽头指了一下。闸门已经降下三分之一，门框的锈迹在震动中剥落，露出下面暗红色的铁芯。走廊另一头，三个穿着焊接护具的人正朝这边走来，领头的手里拎着一串钥匙，钥匙圈上挂着一个铜质的齿轮挂件——那是净水神殿的标记。\n\n“膜管给我。”苏墨把手伸过来，掌心朝上，指尖还沾着机油。\n\n陆深没动。“你的肩膀。”\n\n“脱臼，不是骨折。”她活动了一下左臂，关节发出轻微的咔嗒声，眉头没皱一下，“膜管给我，我引开他们。你从通风管道走，管道尽头是旧国道七号，往东两公里有个排水涵洞。”\n\n“然后呢。”\n\n“然后你欠我一次。”苏墨把扳手换到左手，右手从腰间摸出一把信号枪，枪管已经磨得发亮，“渡鸦港的账，连本带利。”\n\n闸门又降下十公分，金属刮擦声刺进耳膜。走廊那头的人加快了脚步，钥匙碰撞声越来越近。\n\n陆深从怀里掏出膜管，管壁还带着体温。他把它放在苏墨手心，手指在她掌心停了一秒。膜管的密封圈脱落下来，滚到地上，停在苏墨靴尖前面。\n\n“密封圈老化了。”他说。\n\n“我知道。”苏墨弯腰捡起密封圈，塞进胸前的口袋，扣上袋盖，扣子按下去时发出咔嗒一声。然后她抬起信号枪，对准走廊尽头，拇指拨开保险。\n\n“走。”\n\n陆深转身钻进通风管道，铁皮管道的内壁结了一层锈壳，手肘蹭上去发出沙沙声。他听到身后传来信号枪发射的闷响，然后是苏墨的脚步声，朝相反方向跑去。\n\n闸门在身后轰然落地。"
+      ],
+      "raw_text": "",
+      "section_editor_trace": {},
+      "rewrite_verifier_trace": {},
+      "rewrite_attempt_count": 0,
+      "rewrite_attempt_traces": [],
+      "initial_text": "",
+      "text": "警报是从集装箱深处传来的，先是一声尖锐的电子蜂鸣，接着是金属闸门开始闭合的摩擦声——那种声音陆深太熟悉了，轴承缺油，轨道变形，每下降一寸都像在碾碎骨头。\n\n他蹲在废铁市集第三层的一间铁皮棚屋里，手里正捏着一根从旧净水器上拆下来的反渗透膜管。管壁已经发黄，末端有裂纹，但密封圈还能用。棚屋的铁门被什么东西从外面撞了一下，门框上的锈渣簌簌往下掉。\n\n“陆深！”苏墨的声音从门外传来，隔着铁皮有些发闷，但语速比平时更快，“闸门控制器被锈蚀之子的人扣了，他们说这是圣殿的财产。”\n\n陆深把膜管插进怀里，站起来时膝盖骨发出一声脆响。他拉开门，苏墨靠在门框上，左肩的工装布撕开一道口子，血从里面渗出来，已经凝固成深褐色。她手里攥着一把六角扳手，指节发白。\n\n“三分钟。”苏墨说，用扳手朝走廊尽头指了一下。闸门已经降下三分之一，门框的锈迹在震动中剥落，露出下面暗红色的铁芯。走廊另一头，三个穿着焊接护具的人正朝这边走来，领头的手里拎着一串钥匙，钥匙圈上挂着一个铜质的齿轮挂件——那是净水神殿的标记。\n\n“膜管给我。”苏墨把手伸过来，掌心朝上，指尖还沾着机油。\n\n陆深没动。“你的肩膀。”\n\n“脱臼，不是骨折。”她活动了一下左臂，关节发出轻微的咔嗒声，眉头没皱一下，“膜管给我，我引开他们。你从通风管道走，管道尽头是旧国道七号，往东两公里有个排水涵洞。”\n\n“然后呢。”\n\n“然后你欠我一次。”苏墨把扳手换到左手，右手从腰间摸出一把信号枪，枪管已经磨得发亮，“渡鸦港的账，连本带利。”\n\n闸门又降下十公分，金属刮擦声刺进耳膜。走廊那头的人加快了脚步，钥匙碰撞声越来越近。\n\n陆深从怀里掏出膜管，管壁还带着体温。他把它放在苏墨手心，手指在她掌心停了一秒。膜管的密封圈脱落下来，滚到地上，停在苏墨靴尖前面。\n\n“密封圈老化了。”他说。\n\n“我知道。”苏墨弯腰捡起密封圈，塞进胸前的口袋，扣上袋盖，扣子按下去时发出咔嗒一声。然后她抬起信号枪，对准走廊尽头，拇指拨开保险。\n\n“走。”\n\n陆深转身钻进通风管道，铁皮管道的内壁结了一层锈壳，手肘蹭上去发出沙沙声。他听到身后传来信号枪发射的闷响，然后是苏墨的脚步声，朝相反方向跑去。\n\n闸门在身后轰然落地。",
+      "data_dir": "E:\\pythonproject\\novel_auto\\backend\\data\\users\\bench\\novels\\sv_pres_literary_1784117655759"
+    }
+  ]
+}

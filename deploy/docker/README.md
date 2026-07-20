@@ -217,10 +217,28 @@ curl https://api.novel.your-domain.com/api/health
 
 ### 升级
 
+本地代码已经是最新版本时,在项目根执行一键更新脚本:
+
+```powershell
+.\update-docker.bat
+```
+
+默认只重建后端,不会改变现有 Cloudflare Tunnel 状态;需要同步整个 Compose
+栈时使用 `.\update-docker.bat --all`。脚本会等待后端健康检查通过,且不会删除
+`data/`、拉取 Git 更新或清理旧镜像。
+
+仅检查 Docker Desktop、必需配置和 Compose 语法而不修改容器:
+
+```powershell
+.\update-docker.bat --check
+```
+
+需要同时拉取代码时,先更新仓库再运行脚本:
+
 ```powershell
 cd E:\pythonproject\novel_auto
 git pull
-docker compose -f deploy/docker/docker-compose.yml --env-file .env up -d --build
+.\update-docker.bat
 ```
 
 镜像层缓存会让 rebuild 只重做改动层,通常 1~3 分钟。
