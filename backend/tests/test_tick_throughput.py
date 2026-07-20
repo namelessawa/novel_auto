@@ -134,6 +134,8 @@ async def test_phase7_readonly_agents_runs_all_three_when_cadence_match(
     assert "consistency_guardian" in agents_called
     assert "novelty_critic" in agents_called
     assert "character_arc_tracker" in agents_called
+    assert orch.last_consistency_guardian_output is not None
+    assert orch.last_consistency_guardian_output.scan_summary == "stub"
 
 
 @pytest.mark.asyncio

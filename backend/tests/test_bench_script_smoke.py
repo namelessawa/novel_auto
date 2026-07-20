@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -103,6 +104,32 @@ def test_per_tick_schema_includes_agents_called() -> None:
     assert "agents_called" in rec and isinstance(rec["agents_called"], list)
     assert "events_generated" in rec and isinstance(rec["events_generated"], list)
     assert "narrator_produced" in rec and isinstance(rec["narrator_produced"], bool)
+
+
+def test_narrator_observability_distinguishes_evaluated_from_skipped() -> None:
+    bench = _import_bench_module()
+    observed = bench._narrator_observability(SimpleNamespace(
+        skip_reason="",
+        critique_trace={
+            "surviving_triggers": [
+                {"code": "D2"}, {"code": "D2"}, {"code": "A1"},
+            ]
+        },
+        critique_action="REVISE",
+        critique_skip_reason="",
+    ))
+    skipped = bench._narrator_observability(SimpleNamespace(
+        skip_reason="Narrator 正文状态矛盾未通过修复复验",
+        critique_trace={},
+        critique_action="",
+        critique_skip_reason="importance_gate",
+    ))
+
+    assert observed["critic_evaluated"] is True
+    assert observed["critic_surviving_codes"] == ["A1", "D2"]
+    assert skipped["critic_evaluated"] is False
+    assert skipped["critic_skip_reason"] == "importance_gate"
+    assert "状态矛盾" in skipped["narrator_skip_reason"]
 
 
 def test_analyzer_d4_uses_agents_called(tmp_path) -> None:

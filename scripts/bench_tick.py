@@ -124,6 +124,37 @@ def _write_checkpoint(rep: dict, label: str) -> None:
     os.replace(tmp, target)
 
 
+def _narrator_observability(narrator_out) -> dict:
+    """Extract critic/state-guard observability without copying narrative text."""
+    if narrator_out is None:
+        return {
+            "narrator_skip_reason": "",
+            "critic_evaluated": False,
+            "critic_action": "",
+            "critic_skip_reason": "",
+            "critic_surviving_codes": [],
+        }
+    trace = getattr(narrator_out, "critique_trace", None) or {}
+    surviving = sorted({
+        str(item.get("code"))
+        for item in trace.get("surviving_triggers", []) or []
+        if isinstance(item, dict) and item.get("code")
+    })
+    return {
+        "narrator_skip_reason": str(
+            getattr(narrator_out, "skip_reason", "") or ""
+        ),
+        "critic_evaluated": bool(trace),
+        "critic_action": str(
+            getattr(narrator_out, "critique_action", "") or ""
+        ),
+        "critic_skip_reason": str(
+            getattr(narrator_out, "critique_skip_reason", "") or ""
+        ),
+        "critic_surviving_codes": surviving,
+    }
+
+
 async def _bench(args) -> dict:
     # v2.38 (iter#52) — bench user_id 固定 "bench" (≠ 任何真实用户 id 格式),
     # 隔离 cost-quality-loop bench 数据与生产数据.
@@ -164,6 +195,7 @@ async def _bench(args) -> dict:
     open_loop_snapshots: list[dict] = []  # foreshadowing 曲线原料
     # NoveltyCritic 每次真实触发后采集结构化输出，供 novelty_decay_curve 使用。
     novelty_records: list[dict] = []
+    guardian_contradictions_total = 0
     longrange_sample_every = max(1, getattr(args, "longrange_every", 5))
     # Phase 5+ J: 长程 bench 用 — 每 N tick 把当前 bench JSON 落盘, 让 ARK
     # 撞顶 / OOM / 手动 kill 时不丢前 N-1 tick 的进度. 默认 0 = 不 checkpoint.
@@ -182,10 +214,25 @@ async def _bench(args) -> dict:
             if after[k] - before.get(k, 0) > 0
         }
         tick_total = tracker.snapshot.total_tokens - before_total
+        narrator_observation = _narrator_observability(
+            rt.orchestrator.last_narrator_output
+        )
+        try:
+            open_loop_count = len(rt.tick_state.get_open_loops())
+        except Exception:  # pragma: no cover - benchmark observability is non-fatal
+            open_loop_count = None
+        guardian_conflicts = None
+        if "consistency_guardian" in summary.agents_called:
+            guardian_out = rt.orchestrator.last_consistency_guardian_output
+            guardian_conflicts = len(
+                list(getattr(guardian_out, "conflicts", None) or [])
+            )
+            guardian_contradictions_total += guardian_conflicts
         tick_records.append(
             {
                 "tick": summary.tick,
                 "tick_total_tokens": tick_total,
+                "cumulative_tokens": tracker.snapshot.total_tokens,
                 "duration_sec": round(dt, 2),
                 "narrator_chars": summary.narrator_output_chars,
                 "agents": delta,
@@ -195,6 +242,10 @@ async def _bench(args) -> dict:
                 "agents_called": list(summary.agents_called),
                 "events_generated": list(summary.events_generated),
                 "narrator_produced": bool(summary.narrator_produced_text),
+                "open_loop_count": open_loop_count,
+                "guardian_conflicts": guardian_conflicts,
+                "contradiction_count": guardian_contradictions_total,
+                **narrator_observation,
             }
         )
         tick_durations.append(dt)

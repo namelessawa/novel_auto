@@ -103,6 +103,35 @@ def analyze(report: dict) -> dict:
     buckets = _bucketize_tick_records(per_tick)
     bucket_ids = sorted(buckets.keys())
 
+    # 新 schema 直接记录 cumulative_tokens；老 bench 至少有 tick_total_tokens，
+    # 可无损重建本次 run 内的累计曲线。两者都没有时才保持 unknown。
+    cumulative_by_tick: dict[int, int] = {}
+    running_tokens = 0
+    for rec in sorted(
+        per_tick, key=lambda item: item.get("tick") or item.get("tick_num") or 0
+    ):
+        tick = rec.get("tick") or rec.get("tick_num")
+        if not isinstance(tick, int):
+            continue
+        explicit = rec.get("cumulative_tokens")
+        if not isinstance(explicit, (int, float)):
+            explicit = rec.get("tokens_used") or rec.get("tokens")
+        if isinstance(explicit, (int, float)):
+            running_tokens = int(explicit)
+            cumulative_by_tick[tick] = running_tokens
+            continue
+        delta = rec.get("tick_total_tokens")
+        if isinstance(delta, (int, float)):
+            running_tokens += int(delta)
+            cumulative_by_tick[tick] = running_tokens
+
+    loop_snapshots_by_bucket: dict[int, list[int]] = {}
+    for snapshot in report.get("open_loop_snapshots") or []:
+        tick = snapshot.get("tick") if isinstance(snapshot, dict) else None
+        count = snapshot.get("open") if isinstance(snapshot, dict) else None
+        if isinstance(tick, int) and isinstance(count, int):
+            loop_snapshots_by_bucket.setdefault(_bucket_index(tick), []).append(count)
+
     per_bucket: list[dict] = []
     for bid in bucket_ids:
         recs = buckets[bid]
@@ -115,14 +144,22 @@ def analyze(report: dict) -> dict:
                 durs.append(float(d))
         # tokens — total cumulative for this tick (delta from previous tick is
         # harder; use cumulative and diff at bucket level).
-        toks: list[int] = []
-        for r in recs:
-            t = r.get("cumulative_tokens") or r.get("tokens_used") or r.get("tokens")
-            if isinstance(t, (int, float)):
-                toks.append(int(t))
-        clean = [
-            1
+        toks = [
+            cumulative_by_tick[tick]
             for r in recs
+            for tick in [r.get("tick") or r.get("tick_num")]
+            if isinstance(tick, int) and tick in cumulative_by_tick
+        ]
+        critic_observed: list[dict] = []
+        for r in recs:
+            if r.get("critic_evaluated") is True:
+                critic_observed.append(r)
+            elif "critic_evaluated" not in r and (
+                "critic_surviving_codes" in r or "surviving_codes" in r
+            ):
+                critic_observed.append(r)
+        clean = [
+            1 for r in critic_observed
             if not (r.get("critic_surviving_codes") or r.get("surviving_codes"))
         ]
         open_loop_counts = [
@@ -130,6 +167,8 @@ def analyze(report: dict) -> dict:
             for r in recs
             if isinstance(r.get("open_loop_count"), int)
         ]
+        if not open_loop_counts:
+            open_loop_counts = loop_snapshots_by_bucket.get(bid, [])
         # bench_tick.py per_tick records leave agents_called=[] in current
         # schema, so "MemoryCompressor" in agents_called is a perma-FP. The
         # honest signal is in `by_agent_tokens` per-tick (when present) or
@@ -171,8 +210,10 @@ def analyze(report: dict) -> dict:
                     round(narrate_rate, 3) if narrate_rate is not None else None
                 ),
                 "clean_rate_pct": (
-                    round(100.0 * len(clean) / len(recs), 1) if recs else 0
+                    round(100.0 * len(clean) / len(critic_observed), 1)
+                    if critic_observed else None
                 ),
+                "critic_evaluated_ticks": len(critic_observed),
                 "open_loop_avg": (
                     round(_avg(open_loop_counts), 1) if open_loop_counts else None
                 ),
@@ -194,6 +235,11 @@ def analyze(report: dict) -> dict:
                 "contradictions_last": (
                     contradictions[-1] if contradictions else None
                 ),
+                "compression_expected": any(
+                    (r.get("tick") or r.get("tick_num"))
+                    == (bid + 1) * _BUCKET_SIZE
+                    for r in recs
+                ),
             }
         )
 
@@ -212,6 +258,11 @@ def analyze(report: dict) -> dict:
                     )
 
         for b in per_bucket[1:]:
+            if (
+                first["clean_rate_pct"] is None
+                or b["clean_rate_pct"] is None
+            ):
+                continue
             drop = first["clean_rate_pct"] - b["clean_rate_pct"]
             if drop > _DRIFT_THRESHOLDS["clean_rate_drop_pp"]:
                 findings.append(
@@ -257,7 +308,7 @@ def analyze(report: dict) -> dict:
     if has_new_schema:
         threshold = _DRIFT_THRESHOLDS["memory_compress_min_per_bucket"]
         for b in per_bucket:
-            if b["memcompress_hits"] < threshold:
+            if b["compression_expected"] and b["memcompress_hits"] < threshold:
                 findings.append(
                     f"[D4-bucket] memory_compressor silent in bucket "
                     f"{b['bucket']}: {b['memcompress_hits']} hits "
@@ -347,6 +398,10 @@ def analyze(report: dict) -> dict:
     if d8_avg_dur_max > 0:
         quota_buckets = []
         for b in per_bucket:
+            # D8 是 50-Tick bucket 级信号。短冒烟中几个合法低价值 silent
+            # tick 同样会呈现“低时延 + 0% narrate”，不能在周期未结束时当 quota wall。
+            if not b.get("compression_expected"):
+                continue
             dur = b.get("avg_dur_sec")
             if dur is None or dur >= d8_avg_dur_max:
                 continue

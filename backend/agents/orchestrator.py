@@ -317,6 +317,9 @@ class Orchestrator:
         self._last_arc_tracker_output: CharacterArcTrackerOutput | None = None
         # 最近一次 NoveltyCritic 结构化输出，供 bench/诊断采集真实长程曲线。
         self._last_novelty_critic_output: object | None = None
+        # 仅供 benchmark / reader observability 读取最近一次 Guardian 扫描结果。
+        # 不参与调度决策；每次真实扫描前清空，避免把旧结果误算到新 tick。
+        self._last_consistency_guardian_output: object | None = None
 
         # v2.6 事实账本 — 阶段 5 自动 ingest, 阶段 6 前注入冲突警告
         self._fact_ledger = fact_ledger or FactLedger(tick_state.data_dir)
@@ -419,6 +422,11 @@ class Orchestrator:
     def last_novelty_critic_output(self) -> object | None:
         """最近一次 NoveltyCritic 输出；只读，不参与调度决策。"""
         return self._last_novelty_critic_output
+
+    @property
+    def last_consistency_guardian_output(self) -> object | None:
+        """最近一次 ConsistencyGuardian 输出；只读，不参与调度决策。"""
+        return self._last_consistency_guardian_output
 
     def pause(self) -> None:
         self._paused = True
@@ -1981,6 +1989,7 @@ class Orchestrator:
     async def _run_consistency_guardian(
         self, tick: int, agents_called: list[str]
     ) -> None:
+        self._last_consistency_guardian_output = None
         try:
             guardian_out = await self._consistency_guardian.scan(
                 world_state=self._tick_state.world_state,
@@ -1988,6 +1997,7 @@ class Orchestrator:
                 recent_events=self._last_tick_events,
                 recent_chapter_text=self._recent_chapter_summaries[-10:],
             )
+            self._last_consistency_guardian_output = guardian_out
             try:
                 self._ingest_guardian_conflicts(guardian_out, tick=tick)
             except Exception as e:
