@@ -530,10 +530,12 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
                 r"(?:还有|另加|另外).{0,24}"
                 r"(?:扳手|背包|净水片|滤芯|药|徽章|武器|工具)"
             )
+            handoff_cost = re.compile(
+                r"(?:把|将).{0,8}(?:战术刀|刀|武器|工具|背包|药)"
+                r".{0,8}(?:交|递|留下|扣下|抵押|给)"
+            )
             if not any(pattern.search(combined) for pattern in (
-                cost_marker,
-                non_map_item_cost,
-                additional_item,
+                cost_marker, non_map_item_cost, additional_item, handoff_cost,
             )):
                 return "证据只覆盖既定地图付款，没有独立的新损失、义务、限制或风险"
 
@@ -597,6 +599,30 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
                 for entity_id, name in entity_names.items():
                     if name and name in quote:
                         actor_ids.add(entity_id)
+            # 两人场景中常先用代词写伤员过门，再明名写 tracking 角色紧跟。
+            # 仅在“唯一另一角色 + tracking 明名 + 跟在该代词后面”同时成立时推断，
+            # 避免把普通的“她进门、林雪仍在外面”误判为两人完成。
+            tracking_name = entity_names.get(tracking_character_id, "")
+            other_ids = [
+                entity_id for entity_id in entity_names
+                if entity_id != tracking_character_id
+            ]
+            pronoun_crossed = re.search(
+                r"(?:她|他).{0,28}(?:进入|越过|穿过|跨过|钻过|挤进|走进|进到)",
+                quote,
+            )
+            tracking_followed = (
+                tracking_name
+                and re.search(
+                    rf"{re.escape(tracking_name)}.{{0,12}}(?:跟在|跟着)"
+                    rf".{{0,8}}(?:她|他)(?:后面|身后).{{0,24}}"
+                    rf"(?:擦过门|门底|门框|钻|挤|跨|越|穿)",
+                    quote,
+                )
+            )
+            if len(other_ids) == 1 and pronoun_crossed and tracking_followed:
+                actor_ids.add(other_ids[0])
+                actor_ids.add(tracking_character_id)
 
         if len(actor_ids) < 2:
             return "复合终态没有逐字证明两名参与者都越过边界"
@@ -609,8 +635,16 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
         item = re.compile(r"(?:图|图纸|地图|防水纸|水文|钛合金板|板子)")
         damage = re.compile(r"(?:损|坏|破|蚀|糊|洞|烂|湿|洇|模糊|泛白)")
         direct_rain = re.compile(r"(?:雨|酸雨|雨水|水滴|滴水|第[一二三四五六七八九十]+滴水)")
+        alternative_cause = re.compile(
+            r"(?:火星|火焰|着火|烧|灼|污水|油污|血水|酸液)"
+        )
         for quote in prose_evidence:
-            if item.search(quote) and damage.search(quote) and direct_rain.search(quote):
+            if (
+                item.search(quote)
+                and damage.search(quote)
+                and direct_rain.search(quote)
+                and not alternative_cause.search(quote)
+            ):
                 return True
 
         # 真实输出常用“钛合金板/板子”承接上一句的水文地图，并在下一条
@@ -624,6 +658,7 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
             item.search(combined_evidence)
             and damage.search(combined_evidence)
             and rain_contact.search(combined_evidence)
+            and not alternative_cause.search(combined_evidence)
         ):
             return True
 
@@ -639,6 +674,8 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
         for index, sentence in enumerate(sentences):
             if not (item.search(sentence) and damage.search(sentence)):
                 continue
+            if alternative_cause.search(sentence):
+                continue
             # 中文叙事也会先写“地图湿了”，紧接着补一句“雨越下越大”。
             # 只放宽到前后各两句，避免把远处无关天气误接为因果。
             context = "".join(
@@ -646,6 +683,23 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
             )
             if rain_started.search(context):
                 return True
+        # 最后兜底仍要求同一段正文同时包含地图损坏与明确降雨/雨水接触；
+        # 解决动作句把二者隔开三句以上的场景，不接受只有污水的负例。
+        if (
+            item.search(narrative_text)
+            and damage.search(narrative_text)
+            and not any(
+                item.search(sentence)
+                and damage.search(sentence)
+                and alternative_cause.search(sentence)
+                for sentence in sentences
+            )
+            and (
+                rain_started.search(narrative_text)
+                or rain_contact.search(narrative_text)
+            )
+        ):
+            return True
         return False
 
     @staticmethod
@@ -752,9 +806,26 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
         actionable: list = []
         for finding in findings:
             if isinstance(finding, dict):
+                finding_type = str(finding.get("type", "") or "")
                 declared = finding.get("declared_location")
                 actual = finding.get("actual_location")
                 if declared and declared == actual:
+                    continue
+                declared_owner = finding.get("declared_owner")
+                actual_owner = finding.get("actual_owner")
+                if (
+                    finding_type == "item_owner_mismatch"
+                    and declared_owner
+                    and declared_owner == actual_owner
+                ):
+                    continue
+                if (
+                    finding_type == "item_location_mismatch"
+                    and isinstance(declared, str)
+                    and isinstance(actual, str)
+                    and min(len(declared), len(actual)) >= 4
+                    and (declared in actual or actual in declared)
+                ):
                     continue
                 note = " ".join(
                     str(finding.get(key, "") or "")
