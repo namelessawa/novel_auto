@@ -1,0 +1,1068 @@
+{
+  "metadata": {
+    "started_at": 1784577690,
+    "git_sha": "a0ec5c964dc668285ee0798ded4de6c0ddffc61a",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "model": "glm-5.2",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "input": "E:\\pythonproject\\novel_auto\\docs\\iter\\style-baseline-glm-20260721.json",
+    "input_sha256": "11372315c49946bafd8ca68372d27eec45d6d6248d716e629f1232b3ed54f5b2",
+    "prompt_version": "blind-style-v1",
+    "token_measurement_valid": false,
+    "token_measurement_note": "usage fields were read incorrectly in this trial; zero values are invalid",
+    "style_schema_version": "2026-07-15.5",
+    "candidate_prompt_hashes": {
+      "black_humor": "498233bf72c7fe8dd37c961a12b263903fc1480f6b01ea45433815c6798dff2b",
+      "classical_chapter": "fd8d389a091ba4f9835971bde1e918242b5ecc3f2ff2b4c3a226d28b7258515d",
+      "colloquial_web": "5b5b025aa9627077d481df75148b0028180e35be230d574ba3289d49a3671e07",
+      "ensemble_epic": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "first_person_immersive": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+      "hot_blooded": "564b1b87c264c5a9f4ff404269e5869ad7971dd1f55f15212d7d3f3fe2a6e09a",
+      "literary": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+      "lyrical_poetic": "d3c1dfb9d4ea9d08c5c1f20fc5191685dd02ae413134090484e8e866b5b7d0c2",
+      "melancholic": "eaf91393ec594ed99f4fdd7170e12b30dccf3c2ac87ec5e99e3bb312491c6c64",
+      "noir_cold": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+      "philosophical_meditative": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+      "rough_grit_realism": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+      "screenplay_visual": "46665d8e8d55aff4b9390738fe9b3867dc5028f709e33be8468ac954fb7f558c",
+      "somber": "45db147b32aa31efa779ca166c25d13594fbcac9dd7f81e7d9376fcd4572bdb1",
+      "warm_healing": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+      "xianxia_fast": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58"
+    },
+    "target_identity_sent_to_judge": false,
+    "finished_at": 1784577842
+  },
+  "results": [
+    {
+      "sample_id": "pressure:apocalypse_wasteland:xianxia_fast:0",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "xianxia_fast",
+      "char_count": 836,
+      "text_sha256": "8f0f26ad2eec1b0f0613db66598edfd2ccbaf8cea274d98bd93febce1d2d47f5",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C12",
+            "style": "noir_cold",
+            "confidence": 0.92,
+            "evidence": [
+              "对白短且一句话一个意图：'走。' '三分钟封门。' '巡逻队会追出来。'",
+              "心理活动转化成动作：'陆深没回答。他盯着防壁外三十米处'，不写内心独白",
+              "信息克制，读者比角色多知0.5步：结尾掠夺者车队出现，但陆深尚未确认其意图",
+              "拒绝感伤化，不用情绪直报词：写'血从裤管渗出来'而非'她痛苦万分'"
+            ]
+          },
+          {
+            "candidate_id": "C08",
+            "style": "xianxia_fast",
+            "confidence": 0.85,
+            "evidence": [
+              "前80字亮出具体阻碍：警报响、闸门三分钟封门、铅盒被扣",
+              "角色立刻出手：陆深三步追上，扣肩胛骨、抽铅盒、敲腕关节",
+              "同一场内兑现可用收益：铅盒夺回并塞进苏茉手里",
+              "最后两句让新威胁撞上来：掠夺者车队从尘雾驶出，车顶重机枪，车队开始加速"
+            ]
+          },
+          {
+            "candidate_id": "C01",
+            "style": "rough_grit_realism",
+            "confidence": 0.78,
+            "evidence": [
+              "肉身重量感强：'左腿跪在地上' '血从裤管渗出来，和地上的金属粉尘混成泥'",
+              "物件破损正面写：'外壳凹了一块，但锁扣完好' '锈蚀的钢板从防壁上剥落'",
+              "角色累、疼、承受负担：苏茉左腿不能承重，用右腿跳着挪；陆深半拖半扛",
+              "对白带口语但节制：'走。' '那些枪，就是我侦察时看到的。'"
+            ]
+          }
+        ],
+        "observed_features": [
+          "短对白推进，每句一个意图",
+          "心理活动转化为外部动作，无内心独白",
+          "信息克制，读者略先于角色感知威胁",
+          "动作密集且即时反馈，阻碍→出手→兑现→新威胁四拍清晰",
+          "肉身负担与物件破损正面描写",
+          "拒绝感伤化，情绪由动作承载",
+          "段落短，动作镜头切换快",
+          "结尾以新威胁撞入，不留静态画面"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:noir_cold:1",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "noir_cold",
+      "char_count": 940,
+      "text_sha256": "69f40ad3dd7b57fe145fc77b5adbc3bf51b1b3fae0da7daf1e89c12783685499",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C12",
+            "style": "noir_cold",
+            "confidence": 0.88,
+            "evidence": [
+              "对白短，一句话一个意图：'守门人扣下了你的工具箱。' '工具箱还我。' '扣押物，等明天审查。'",
+              "心理活动转化成动作：陆深没接话，走到拐角看了一眼；守门人盯着烟看了三秒，伸手接了",
+              "信息克制，读者比角色多知0.5步：读者知道封门倒计时，角色在倒计时中行动",
+              "纯环境镜头≤2句：警报声描写后立刻切入人物动作"
+            ]
+          },
+          {
+            "candidate_id": "C13",
+            "style": "literary",
+            "confidence": 0.79,
+            "evidence": [
+              "每段有具体物：水泵残骸、水泥台、绑腿布渗血、荧光粉末、铁栅栏、铁皮工具箱磨出铜色、烟纸发黄",
+              "情绪由身体动作和物件反应承载：苏茉攥着日志，陆深敲外壳听闷响，守门人按电击棍",
+              "对白节制，引号外配动作beat：'工具箱里有什么。'她问——前文陆深已蹲下撕裤腿",
+              "内心不超过两句：全文无直接内心独白，只有动作推进"
+            ]
+          },
+          {
+            "candidate_id": "C15",
+            "style": "rough_grit_realism",
+            "confidence": 0.71,
+            "evidence": [
+              "肉身重量感强：小腿划开口子肌肉层露出，血染黑帆布，酸雨打在脸上冷得像针",
+              "物件残破真实：水泵残骸、铁栅栏锈断两根、工具箱四角磨出铜色、烟纸发黄没霉",
+              "角色疼角色累：苏茉咬着牙左腿使不上力，陆深架住她腋下贴着墙根移动",
+              "拒绝美化：伤口正面写五厘米长肌肉层露出来，不浪漫化"
+            ]
+          }
+        ],
+        "observed_features": [
+          "短对白推进，每句一个意图",
+          "心理完全外化为动作和微表情",
+          "信息克制，读者比角色多知倒计时",
+          "每段有具体破损物或肉身细节",
+          "无感叹号、无情绪直报、无内心独白",
+          "物件磨损描写密集（铜色、锈铁、发黄烟纸）",
+          "身体负担正面写（伤口肌肉层、酸雨刺痛、瘸腿移动）",
+          "对白配动作beat，引号外紧跟物理动作"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:warm_healing:2",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "warm_healing",
+      "char_count": 1262,
+      "text_sha256": "8259d1d7bd626bc75a9fb8905adf23c8f4f50d6f9ad8b02eafa4a439ab744c0a",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C04",
+            "style": "rough_grit_realism",
+            "confidence": 0.85,
+            "evidence": [
+              "血顺着脚踝往下淌，已经在水泥地上积了硬币大的一小滩",
+              "伤口不深，但口子长，从脚踝拉到小腿肚，边缘翻着，沾了铁锈和灰",
+              "汗巾上渗出一小片暗红",
+              "外面的风裹着酸雨味儿，打在脸上又湿又刺"
+            ]
+          },
+          {
+            "candidate_id": "C13",
+            "style": "noir_cold",
+            "confidence": 0.78,
+            "evidence": [
+              "她没吭声，只拿枪托敲了敲门框",
+              "苏茉嘶了一声，手指攥紧枪托",
+              "守门人是个四十出头的男人，制服袖口磨得发白，脸上没表情",
+              "对白短，一句话一个意图：'三分钟。' '饼干换箱子。' '不够。'"
+            ]
+          },
+          {
+            "candidate_id": "C06",
+            "style": "literary",
+            "confidence": 0.72,
+            "evidence": [
+              "红色警示灯，一闪一闪的，把墙上的锈迹照成暗褐色",
+              "一个绿漆剥落的铁皮箱子，提手用铜丝缠过",
+              "净水器核心还在，裹在一块旧帆布里，表面沾着荧光粉末，在昏暗里微微发亮",
+              "情绪由身体动作和物件反应承载：苏茉嘶了一声，手指攥紧枪托"
+            ]
+          }
+        ],
+        "observed_features": [
+          "正面描写伤口、血迹、锈迹、酸雨等粗砺细节",
+          "对白简短克制，无感叹号，无情绪直报",
+          "心理活动通过动作微反应呈现（手停、攥紧枪托）",
+          "每段有具体物（汗巾、工具箱、净水片、荧光粉末）",
+          "情绪落到动作和物件，不直抒内心",
+          "拒绝感伤化，无抒情段落",
+          "物件残破真实（绿漆剥落、铜丝缠提手、袖口磨白）"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:ensemble_epic:3",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "ensemble_epic",
+      "char_count": 1213,
+      "text_sha256": "08d0ee1e3d0954c4bfb089b451c5bb437f275c2de4120e9b9367f2ed45048d38",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C04",
+            "style": "rough_grit_realism",
+            "confidence": 0.92,
+            "evidence": [
+              "锈水顺着腕骨往下淌",
+              "靴底在混凝土碎渣上打滑，右肩撞上墙角的废铁管，整根管子嗡地震颤",
+              "血从里面渗出来，不多，但颜色发暗，混着铁锈的橘红色",
+              "酸雨开始下了"
+            ]
+          },
+          {
+            "candidate_id": "C03",
+            "style": "xianxia_fast",
+            "confidence": 0.85,
+            "evidence": [
+              "前80字亮出具体阻碍：只剩三分钟封门",
+              "角色立刻出手：敲泵体判断齿轮偏半齿",
+              "同一场内兑现可用收益：扳手砸弯连杆，铁门停住",
+              "最后两句让新威胁撞上来：守门人认得你的脸，下次我给他看别的"
+            ]
+          },
+          {
+            "candidate_id": "C06",
+            "style": "noir_cold",
+            "confidence": 0.78,
+            "evidence": [
+              "拒绝感伤化，不用突然、心跳加速类直报情绪",
+              "心理活动转化成动作：手指碰到他胸口时顿了一下，像在确认心跳还在",
+              "对白短，一句话一个意图：箱子留下。你，可以走。",
+              "每段视点角色至少1个micro-action：在裤腿上蹭掉锈水、掂了掂分量、蹲下捡齿轮"
+            ]
+          }
+        ],
+        "observed_features": [
+          "肉身重量感强：汗、血、锈水、酸雨、伤口混铁锈色",
+          "物件残破真实：废铁管、混凝土碎渣、磕碰缺口的净水片、被撬开的工具箱",
+          "角色累、疼、受伤：苏茉左肩渗血，陆深手指卡在滤芯里",
+          "动作密集且即时反馈：敲泵体→判断齿轮→扳手砸连杆→铁门停住→匕首钉皮带扣",
+          "段末留悬念钩子：下次我给他看别的",
+          "对白短克制，带口语节奏：皮外伤、箱子留下、你，可以走",
+          "心理用动作承载：手指顿一下确认心跳、掂扳手分量",
+          "拒绝抒情和感叹号，无内心独白"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:philosophical_meditative:4",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "philosophical_meditative",
+      "char_count": 1015,
+      "text_sha256": "d1d6cb89d20b587e683af295adaa5943e33c7ea33138d101255ce88d4391394f",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C14",
+            "style": "noir_cold",
+            "confidence": 0.92,
+            "evidence": [
+              "对白短，一句话一个意图：'三分钟。' '走。' '日志。'",
+              "心理活动转化成动作：'他攥紧核心，另一只手扣住苏茉的后颈'，不直报情绪",
+              "信息克制，读者比角色多知0.5步：'守门人扣下的是假货，他早就换了。但他没告诉苏茉。'",
+              "拒绝感伤化，无感叹号，无'突然''心跳加速'类直报"
+            ]
+          },
+          {
+            "candidate_id": "C05",
+            "style": "rough_grit_realism",
+            "confidence": 0.85,
+            "evidence": [
+              "肉身重量感强：'组织液' '皮肤焦黑了一小块' '外壳烫得能煎肉' '混凝土碎屑崩了他一脖子'",
+              "物件残破真实：'回音闷，里面有水' '锈末' '封皮已经泡软了' '电弧打在她手背上'",
+              "角色疼、角色累：'她喘得厉害，每个字都像从肺里刮出来的' '几乎是拖着她爬上楼梯'",
+              "拒绝美化：渗液、焦黑、烫伤、碎屑都正面写，不浪漫化伤痛"
+            ]
+          },
+          {
+            "candidate_id": "C03",
+            "style": "melancholic",
+            "confidence": 0.78,
+            "evidence": [
+              "整体压抑底色：闸门封死、黑暗、被困，不靠惨剧堆量",
+              "细节积累悲：'第三下比前两下轻' 呼应开头敲三下外壳，积累失去感",
+              "美感存在但不带温度：'荧光粉末在水渍里发出微弱的蓝光' 'AI的指示灯一闪一闪，像在等什么'",
+              "角色克制：陆深没告诉苏茉换了核心，苏茉知道但不说破，最后砸门三下渐轻"
+            ]
+          }
+        ],
+        "observed_features": [
+          "短对白承载意图推进",
+          "心理转化为身体动作和物件操作",
+          "信息差叙事（读者知角色不知/角色间互不知）",
+          "肉身负担正面描写（渗液、焦黑、烫伤、碎屑）",
+          "破损物件作为真实感锚点（泡水配电箱、锈末、泡软封皮）",
+          "压抑氛围通过细节积累而非事件堆叠",
+          "人物持续在场且每段有具体动作",
+          "克制内心愿望落在具体物件上（日志、核心）"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:rough_grit_realism:5",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "rough_grit_realism",
+      "char_count": 1075,
+      "text_sha256": "c5c3c21e9385885d774a959c88687776e10de645b9e87782ec4947283f4dad6b",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C03",
+            "style": "rough_grit_realism",
+            "confidence": 0.92,
+            "evidence": [
+              "滤网上粘着的黑色淤泥滴到工作台上，发出酸臭",
+              "抹布是破的，擦不干净，指甲缝里还是黑的",
+              "伤口还在往外渗血，混着酸雨灼烧过的焦痕，皮肉翻开，能看见底下粉红色的肌肉组织",
+              "汗珠从颧骨滚下来，滴在地上混着血水"
+            ]
+          },
+          {
+            "candidate_id": "C16",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "他手指顿了一下",
+              "陆深站起来，用抹布擦掉手上的油泥",
+              "陆深没说话。他把铁板塞回包里，拉上拉链，拉链卡住了，扯了两下才拉上",
+              "对白短：'能走？''能。''走。''跑。'"
+            ]
+          },
+          {
+            "candidate_id": "C02",
+            "style": "xianxia_fast",
+            "confidence": 0.78,
+            "evidence": [
+              "前80字亮出具体阻碍：警报响，出口要封，三分钟",
+              "角色立刻出手：抓起帆布包，扶起苏茉，开始跑",
+              "同一场内兑现可用收益：铁板被认出是证据，帆布包扔出闸门",
+              "段末新威胁撞上来：闸门降到六十公分，钢刃切进皮肤，后背火辣辣地疼"
+            ]
+          }
+        ],
+        "observed_features": [
+          "肉身破损与负担正面描写：伤口、血、汗、酸臭、油泥、破抹布、磨破的线头",
+          "对白极短且带粗话：审查他妈了个逼",
+          "动作密集且即时反馈：抓起包、扶人、跑、爬、滚出闸门",
+          "无内心独白，心理通过动作呈现：手指顿了一下、没说话、拉链卡住扯了两下",
+          "段末悬念与近威胁：闸门下降、钢刃切进皮肤、铁板发出荧光",
+          "物件残破真实：破抹布、锈迹斑斑的铁板、撕破的帆布包、磨破的袖口"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "compatible:xianxia_cultivation:xianxia_fast:6",
+      "scenario": "compatible",
+      "theme": "xianxia_cultivation",
+      "expected_style": "xianxia_fast",
+      "char_count": 802,
+      "text_sha256": "aa78e8c08836b7fdc720ca9154f4c0d28464e6682bb40136eca3595c1b71490d",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C10",
+            "style": "xianxia_fast",
+            "confidence": 0.92,
+            "evidence": [
+              "前80字亮出具体阻碍：守关弟子扣住通行令，拇指压在令符云纹上",
+              "角色立刻出手：林雪指尖点在守关弟子腕间麻筋上，令符下落，左脚踢起，右手接住",
+              "同一场内兑现可用收益：灵力灌入，云纹亮起，第一重石门推开",
+              "新威胁当场撞上来：三道遁光落在守关殿前，执法堂弟子要求交出玉简"
+            ]
+          },
+          {
+            "candidate_id": "C05",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "拒绝感伤化，无'突然''心跳加速'等直报情绪",
+              "心理活动转化成动作：林雪盯着拇指压住的云纹，指节发白；守关弟子捂着手腕后退，脸色煞白",
+              "对白短，一句话一个意图：'让开''出不去，他们也进不来'",
+              "信息克制：读者知道执法堂追来，林雪毁令符封门，不解释内心挣扎"
+            ]
+          },
+          {
+            "candidate_id": "C03",
+            "style": "hot_blooded",
+            "confidence": 0.78,
+            "evidence": [
+              "开场压缩过场，立刻选择最值得燃的出手：林雪夺令符开山门",
+              "至少两级升级动作：受阻（守关弟子扣令符）→出手夺令符开第一重门→执法堂追来→毁令符封门→人皮灯笼拦路",
+              "角色说出口的誓言/挑战：'让开''出不去，他们也进不来'",
+              "结尾以拔剑迎敌收束，不停在凝视、回忆等静态画面"
+            ]
+          }
+        ],
+        "observed_features": [
+          "动作密集且连续升级",
+          "阻碍→出手→兑现→新威胁的节拍清晰",
+          "对白短而功能性强",
+          "无内心独白和情绪直报",
+          "心理通过动作和物件反应承载",
+          "结尾以人物拔剑迎向新威胁收束",
+          "短句推进，视觉细节优先",
+          "无感伤化描写"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "compatible:republic_spy:noir_cold:7",
+      "scenario": "compatible",
+      "theme": "republic_spy",
+      "expected_style": "noir_cold",
+      "char_count": 581,
+      "text_sha256": "0b2ace9aee54df14afa737a3869aad8e85794f02cb0e9720bb08e4b4905a50a1",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C09",
+            "style": "noir_cold",
+            "confidence": 0.92,
+            "evidence": [
+              "对白短，一句话一个意图：'暗号。' '信封。' '你的手。' '左手。' '他在哪。'",
+              "心理活动转化成动作：'指尖贴住旗袍侧缝里的硬物' '拇指压过折角' '退了一步'",
+              "信息克制，读者比角色多知0.5步：三角折反、指甲划痕、指甲缝有泥，逐步揭示",
+              "拒绝感伤化，不用'突然''心跳加速'等直报情绪"
+            ]
+          },
+          {
+            "candidate_id": "C08",
+            "style": "literary",
+            "confidence": 0.78,
+            "evidence": [
+              "每段有摄像机拍得到的具体物：残瓦、电台、信封、观音像、香灰、掌心雷",
+              "情绪由身体动作和物件反应承载：'食指轻叩桌面' '指尖贴住旗袍侧缝' '指节发白'",
+              "内心白描节制，贴着目标走：无大段心理独白",
+              "对白节制，引号外配动作beat：'暗号。'后接'苏墨抬头'"
+            ]
+          },
+          {
+            "candidate_id": "C14",
+            "style": "first_person_immersive",
+            "confidence": 0.65,
+            "evidence": [
+              "用第三人称有限视点，但严格限制信息边界：只写林雪所见所感，不写苏墨内心",
+              "把'心想''觉得'等距离化词砍掉，直接写感受：'不对。应该是'礼拜五'。'",
+              "不全知，不切镜头：始终跟随林雪的观察和判断",
+              "第二个人称代词指当下对话对象：'你不是苏墨。'"
+            ]
+          }
+        ],
+        "observed_features": [
+          "短对白推进，每句一个意图",
+          "心理活动外化为具体动作和物件观察",
+          "信息逐步揭示，读者略先于角色察觉异常",
+          "具体物密集（信封、火漆、折角、指甲、泥、掌心雷）",
+          "拒绝情绪直报和感叹号",
+          "有限第三人称视点，不侵入他人内心",
+          "段落短，节奏紧凑"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "compatible:gourmet_culinary:warm_healing:8",
+      "scenario": "compatible",
+      "theme": "gourmet_culinary",
+      "expected_style": "warm_healing",
+      "char_count": 1451,
+      "text_sha256": "14868dda5cde0a27c0501f290943d56184eb406ba1c247d9ee122357cdedc134",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C01",
+            "style": "warm_healing",
+            "confidence": 0.92,
+            "evidence": [
+              "照料行动贯穿全文：苏怡热汤、林沧补碟、苏怡加陈皮、林沧问陈皮",
+              "关系温度变化：从苏怡背对到转身、哼笑、递陈皮、林沧补碟推回",
+              "轻声对白：'你来了''姜放少了''你喉咙哑了''还能用'",
+              "食物承载温暖：味噌汤、陈皮、腌萝卜、姜末"
+            ]
+          },
+          {
+            "candidate_id": "C09",
+            "style": "literary",
+            "confidence": 0.78,
+            "evidence": [
+              "每段有具体物：灯泡、抹布、柳刃、白萝卜片、搪瓷碗磕掉瓷、味噌汤浮油、裂缝瓷碟、糯米纸、陈皮舒展",
+              "情绪由动作和物件承载：苏怡'攥紧抹布，指节泛白'代替直报紧张",
+              "内心薄笔：无大段心理独白，只有'动作很轻，像怕惊动什么'一句白描",
+              "对白节制且配动作beat：'你来了。'后接'抹布继续在瓷砖上画圈'"
+            ]
+          },
+          {
+            "candidate_id": "C05",
+            "style": "noir_cold",
+            "confidence": 0.71,
+            "evidence": [
+              "拒绝感伤化：无'突然''心跳加速'等直报情绪词",
+              "心理活动转化成动作：苏怡'从鼻子里哼出一声笑''嘴角动了一下'",
+              "信息克制：读者比角色多知0.5步——林沧知道拍卖和潮汐商会，苏怡不知他已知道",
+              "对白短且一句话一个意图：'姜放少了''火候到了，话自然少''你刀尖在抖'"
+            ]
+          }
+        ],
+        "observed_features": [
+          "照料/修补/分享行动构成叙事主干",
+          "破损物件（磕瓷碗、裂缝碟）被修补或接纳",
+          "食物（味噌汤、陈皮、腌萝卜）承载人际温度",
+          "对白短而克制，配具体动作beat",
+          "情绪通过动作和物件反应呈现，不直报",
+          "死亡/冲突压成远景（父亲已故仅通过遗物和一句话提及）",
+          "结尾落在小小缓解而非灾难钩子",
+          "每段有具体可感的实物（灯泡、刀刃、汤面浮油、糯米纸）"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "compatible:history_military:ensemble_epic:9",
+      "scenario": "compatible",
+      "theme": "history_military",
+      "expected_style": "ensemble_epic",
+      "char_count": 820,
+      "text_sha256": "07aaf596eb41d03c5a6ac8cbd7557c5feb0c18676e9f74b672657eeef0405662",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C03",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "周瑜把第三封军报扣在案上，手指压着竹简的边缘，没说话——心理活动转化成动作，无直报情绪",
+              "帐里静了一息——信息克制，不写内心独白",
+              "语调平得像在念粮草清单——拒绝感伤化，不用感叹号",
+              "对白短：'让他进来。''传令。''自己摘的。'——一句话一个意图"
+            ]
+          },
+          {
+            "candidate_id": "C08",
+            "style": "literary",
+            "confidence": 0.72,
+            "evidence": [
+              "案上的油灯跳了一下——具体物，有动作质感",
+              "桐油的气味混着墨臭——感官细节，摄像机拍得到",
+              "冰凉的铜皮贴着指腹——温度/质感承载情绪，不直报",
+              "袖中的扳指硌着手腕——情绪由物件反应承载"
+            ]
+          },
+          {
+            "candidate_id": "C13",
+            "style": "melancholic",
+            "confidence": 0.68,
+            "evidence": [
+              "首段前两句点出视点人物：'周瑜把第三封军报扣在案上'",
+              "每段都有周瑜的动作：扣军报、转扳指、并排摆开、手指点地图、站在黑暗里",
+              "整体压抑底色：灯吹灭、站在黑暗里、扳指硌着手腕",
+              "细节积累悲：放凉的茶式物件——扳指被火药烧过发黑、墨迹被灯油洇开"
+            ]
+          }
+        ],
+        "observed_features": [
+          "心理活动转化为动作，无直报情绪",
+          "对白短，一句话一个意图",
+          "每段有视点角色具体动作",
+          "具体物承载情绪（扳指、油灯、墨迹）",
+          "感官细节正面写（桐油味、冰凉铜皮、橐橐脚步声）",
+          "整体压抑克制，不感伤化",
+          "内心白描仅一句，贴着目标走",
+          "信息克制，读者与角色同步推测"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "compatible:scifi_soft_lit:philosophical_meditative:10",
+      "scenario": "compatible",
+      "theme": "scifi_soft_lit",
+      "expected_style": "philosophical_meditative",
+      "char_count": 890,
+      "text_sha256": "d1e38aeddeaca1c2483b9fcde0d0f7f4cbd4e17c9ba3415ff3daba009d3abfc1",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C11",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "拒绝感伤化，心理活动转化成动作：'她没有松一口气。她盯着那个被自己修正的字，笔还握在手里，指节发白。'",
+              "信息克制，对白短：'日期错了。' '表没问题，林医生。' 一句话一个意图",
+              "每段视点角色至少1个micro-action：'她推门进去' '她翻过手腕' '她收回手' '她弯腰看'",
+              "不用感叹号和情绪直报，全文无感叹号，情绪通过动作承载"
+            ]
+          },
+          {
+            "candidate_id": "C16",
+            "style": "literary",
+            "confidence": 0.78,
+            "evidence": [
+              "每段至少一个具体物：'玻璃幕墙上的倒影' '记忆晶体' '镜面' '地图' '红笔圈'",
+              "情绪由身体动作和物件反应承载：'指尖碰到制服口袋里的记忆晶体——空的' '指节发白' '掌印留在镜面上，慢慢消退'",
+              "内心白描节制：'她习惯在上班路上捏着它' 仅1-2句，贴着目标走",
+              "对白配动作beat：'她把表推回去' 配 '日期错了'"
+            ]
+          },
+          {
+            "candidate_id": "C03",
+            "style": "melancholic",
+            "confidence": 0.72,
+            "evidence": [
+              "整体压抑底色，用细节积累悲：'昨天。还是昨天。' '它凉的' '被什么东西从另一侧舔掉'",
+              "首段前两句出现视点角色：'林雪在诊所门口站了三分钟。'",
+              "每段有人物动作：'她推门进去' '她翻过手腕' '她站起来' '她直起腰'",
+              "克制内心写无法得到的具体愿望：'她盯着那个被自己修正的字，笔还握在手里，指节发白'——对时间错位的无力修正"
+            ]
+          }
+        ],
+        "observed_features": [
+          "短对白配动作beat，信息克制不直报情绪",
+          "每段有具体物承载情绪，物件细节密集",
+          "压抑氛围通过重复细节积累，不靠惨剧堆量",
+          "视点人物持续在场，每段有具体动作",
+          "拒绝感伤化，心理转化为身体反应",
+          "时间错位作为核心张力，用镜面、日期、地图位置等具象物呈现"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    },
+    {
+      "sample_id": "compatible:apocalypse_wasteland:rough_grit_realism:11",
+      "scenario": "compatible",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "rough_grit_realism",
+      "char_count": 1118,
+      "text_sha256": "b80d6ecee12e4c675b8881fd13fdf238ee37102013f41dcdbd891dc27fe1e1ec",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C04",
+            "style": "rough_grit_realism",
+            "confidence": 0.92,
+            "evidence": [
+              "绳子断的声音像湿布撕开，皮肉翻开，血从指缝渗出来滴在泥地上",
+              "肩膀上的棉衬垫磨穿，露出黄棉絮被汗浸成深灰色",
+              "麻绳嵌进肉里，血和雨水混在一起往下淌",
+              "靴子踩进泥里拔出来带出黏腻的响"
+            ]
+          },
+          {
+            "candidate_id": "C03",
+            "style": "noir_cold",
+            "confidence": 0.78,
+            "evidence": [
+              "心理活动转化成动作：陆深皱眉、膝盖咔嚓响但没停、没吭声扛箱",
+              "不用'突然''心跳加速'等直报情绪，情绪由动作承载",
+              "对白短，一句话一个意图：'再找根绳子''按住''车不要了'",
+              "每段有视点角色动作或对白，纯环境描写不超过两句"
+            ]
+          },
+          {
+            "candidate_id": "C15",
+            "style": "literary",
+            "confidence": 0.65,
+            "evidence": [
+              "每段有摄像机拍得到的具体物：棉衬垫磨穿露黄棉絮、断绳麻丝散开像炸开的血管、帆布兜雨水鼓得像孕妇肚子、滤芯箱子边角被老鼠啃过",
+              "情绪由身体动作和物件反应承载：苏茉指节发白攥断绳、民兵捂脸蹲下血从指缝渗",
+              "对白节制，引号外配动作beat：'再找根绳子'后接'没人动'",
+              "内心白描不超过两句：陆深盯着车斗里的东西，判断底板裂了"
+            ]
+          }
+        ],
+        "observed_features": [
+          "肉身负担正面描写：磨穿的衬垫、嵌进肉的麻绳、旧伤跳疼、靴子陷泥",
+          "破损物细节：断绳参差麻丝、车斗底板裂、滤芯箱子被老鼠啃",
+          "感官密度高：湿布撕开声、铁锈硫磺味、黏腻拔靴响、指关节叩锈铁皮闷声",
+          "对白短且带口语节奏，每句一个意图",
+          "情绪完全由动作和物件承载，无内心独白或直报情绪",
+          "每段有视点角色具体动作，环境描写紧贴人物感知",
+          "物件大于心理：净水器滤芯、断绳、帆布、民兵队徽锈迹",
+          "拒绝感伤化：不写民兵疼痛叫喊，不写苏茉内心挣扎，只用动作和物态推进"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 0
+    }
+  ],
+  "summary": {
+    "total_samples": 12,
+    "valid_samples": 12,
+    "top1_hits": 6,
+    "top3_hits": 7,
+    "top1_accuracy": 0.5,
+    "top3_accuracy": 0.5833,
+    "by_scenario": {
+      "pressure": {
+        "total": 6,
+        "top1": 2,
+        "top3": 3
+      },
+      "compatible": {
+        "total": 6,
+        "top1": 4,
+        "top3": 4
+      }
+    },
+    "confusion_matrix": {
+      "black_humor": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "classical_chapter": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "colloquial_web": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "ensemble_epic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 1,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 1,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "first_person_immersive": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "hot_blooded": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "literary": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "lyrical_poetic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "melancholic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "noir_cold": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 2,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "philosophical_meditative": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 2,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "rough_grit_realism": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 2,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "screenplay_visual": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "somber": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "warm_healing": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 1,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 1,
+        "xianxia_fast": 0
+      },
+      "xianxia_fast": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 1,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 1
+      }
+    },
+    "top_confusions": [
+      {
+        "expected": "philosophical_meditative",
+        "predicted": "noir_cold",
+        "count": 2
+      },
+      {
+        "expected": "ensemble_epic",
+        "predicted": "noir_cold",
+        "count": 1
+      },
+      {
+        "expected": "ensemble_epic",
+        "predicted": "rough_grit_realism",
+        "count": 1
+      },
+      {
+        "expected": "warm_healing",
+        "predicted": "rough_grit_realism",
+        "count": 1
+      },
+      {
+        "expected": "xianxia_fast",
+        "predicted": "noir_cold",
+        "count": 1
+      }
+    ]
+  }
+}

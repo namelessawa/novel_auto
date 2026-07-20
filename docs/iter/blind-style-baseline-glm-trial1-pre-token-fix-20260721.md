@@ -1,0 +1,33 @@
+# Blind style classification
+
+- Git: `a0ec5c964dc668285ee0798ded4de6c0ddffc61a`
+- Model: `glm-5.2`
+- Samples: `12/12` valid
+- Top-1: `0.5`
+- Top-3: `0.5833`
+- Token measurement: `INVALID`（本 trial 的 usage 字段读取错误；零值不可使用）
+
+## Samples
+
+| scenario | theme | expected | top-1 | top-3 | hit |
+| --- | --- | --- | --- | --- | --- |
+| pressure | apocalypse_wasteland | xianxia_fast | noir_cold | noir_cold, xianxia_fast, rough_grit_realism | TOP3 |
+| pressure | apocalypse_wasteland | noir_cold | noir_cold | noir_cold, literary, rough_grit_realism | TOP1 |
+| pressure | apocalypse_wasteland | warm_healing | rough_grit_realism | rough_grit_realism, noir_cold, literary | MISS |
+| pressure | apocalypse_wasteland | ensemble_epic | rough_grit_realism | rough_grit_realism, xianxia_fast, noir_cold | MISS |
+| pressure | apocalypse_wasteland | philosophical_meditative | noir_cold | noir_cold, rough_grit_realism, melancholic | MISS |
+| pressure | apocalypse_wasteland | rough_grit_realism | rough_grit_realism | rough_grit_realism, noir_cold, xianxia_fast | TOP1 |
+| compatible | xianxia_cultivation | xianxia_fast | xianxia_fast | xianxia_fast, noir_cold, hot_blooded | TOP1 |
+| compatible | republic_spy | noir_cold | noir_cold | noir_cold, literary, first_person_immersive | TOP1 |
+| compatible | gourmet_culinary | warm_healing | warm_healing | warm_healing, literary, noir_cold | TOP1 |
+| compatible | history_military | ensemble_epic | noir_cold | noir_cold, literary, melancholic | MISS |
+| compatible | scifi_soft_lit | philosophical_meditative | noir_cold | noir_cold, literary, melancholic | MISS |
+| compatible | apocalypse_wasteland | rough_grit_realism | rough_grit_realism | rough_grit_realism, noir_cold, literary | TOP1 |
+
+## Top confusions
+
+- `philosophical_meditative` → `noir_cold`: 2
+- `ensemble_epic` → `noir_cold`: 1
+- `ensemble_epic` → `rough_grit_realism`: 1
+- `warm_healing` → `rough_grit_realism`: 1
+- `xianxia_fast` → `noir_cold`: 1
