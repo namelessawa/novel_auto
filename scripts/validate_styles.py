@@ -171,6 +171,93 @@ def _atomic_json(path: Path, payload: dict) -> None:
     os.replace(tmp, path)
 
 
+def _usage_snapshot() -> dict[str, Any]:
+    """Copy the global token tracker; never retain its mutable snapshot."""
+    from nf_core.token_budget import get_global_tracker
+
+    snap = get_global_tracker().snapshot
+    return {
+        "prompt_tokens": int(snap.total_prompt_tokens),
+        "completion_tokens": int(snap.total_completion_tokens),
+        "cached_tokens": int(snap.total_cached_tokens),
+        "call_count": int(snap.call_count),
+        "by_agent": dict(snap.by_agent),
+    }
+
+
+def _usage_delta(before: dict, after: dict, duration_sec: float) -> dict:
+    agents = set(before.get("by_agent", {})) | set(after.get("by_agent", {}))
+    by_agent = {
+        agent: max(
+            0,
+            int(after.get("by_agent", {}).get(agent, 0))
+            - int(before.get("by_agent", {}).get(agent, 0)),
+        )
+        for agent in sorted(agents)
+    }
+    by_agent = {agent: tokens for agent, tokens in by_agent.items() if tokens}
+    calls = max(0, int(after.get("call_count", 0)) - int(before.get("call_count", 0)))
+    prompt = max(
+        0, int(after.get("prompt_tokens", 0)) - int(before.get("prompt_tokens", 0))
+    )
+    completion = max(
+        0,
+        int(after.get("completion_tokens", 0))
+        - int(before.get("completion_tokens", 0)),
+    )
+    total = prompt + completion
+    attributed = sum(by_agent.values())
+    return {
+        "duration_sec": round(max(0.0, duration_sec), 3),
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "total_tokens": total,
+        "cached_tokens": max(
+            0,
+            int(after.get("cached_tokens", 0))
+            - int(before.get("cached_tokens", 0)),
+        ),
+        "call_count": calls,
+        "usage_status": "MISSING" if calls and not (prompt + completion) else (
+            "REPORTED" if calls else "NOT_APPLICABLE"
+        ),
+        "by_agent": by_agent,
+        "unattributed_tokens": max(0, total - attributed),
+    }
+
+
+def _aggregate_cost(blocks: list[dict]) -> dict:
+    by_agent: dict[str, int] = {}
+    for block in blocks:
+        for agent, tokens in (block.get("by_agent", {}) or {}).items():
+            by_agent[agent] = by_agent.get(agent, 0) + int(tokens or 0)
+    calls = sum(int(block.get("call_count", 0) or 0) for block in blocks)
+    prompt = sum(int(block.get("prompt_tokens", 0) or 0) for block in blocks)
+    completion = sum(
+        int(block.get("completion_tokens", 0) or 0) for block in blocks
+    )
+    total_tokens = prompt + completion
+    missing = sum(block.get("usage_status") == "MISSING" for block in blocks)
+    return {
+        "duration_sec": round(
+            sum(float(block.get("duration_sec", 0.0) or 0.0) for block in blocks), 3
+        ),
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "total_tokens": total_tokens,
+        "cached_tokens": sum(
+            int(block.get("cached_tokens", 0) or 0) for block in blocks
+        ),
+        "call_count": calls,
+        "usage_status": "PARTIAL" if missing else (
+            "REPORTED" if calls else "NOT_APPLICABLE"
+        ),
+        "by_agent": dict(sorted(by_agent.items())),
+        "unattributed_tokens": max(0, total_tokens - sum(by_agent.values())),
+        "missing_usage_blocks": missing,
+    }
+
+
 def _render_markdown(report: dict) -> str:
     rows = []
     for item in report.get("results", []):
@@ -180,11 +267,17 @@ def _render_markdown(report: dict) -> str:
             f"{item.get('revision_count', 0)} |"
         )
     passed = sum(bool(r.get("accepted")) for r in report.get("results", []))
+    cost = (report.get("cost") or {}).get("total") or {}
     return (
         "# Style validation\n\n"
         f"- Git: `{report['metadata']['git_sha']}`\n"
         f"- Model: `{report['metadata']['provider']['model']}`\n"
         f"- Passed: **{passed}/{len(report.get('results', []))}**\n\n"
+        f"- Cost coverage: `{(report.get('cost') or {}).get('samples_with_cost', 0)}` / "
+        f"`{len(report.get('results', []))}` samples\n"
+        f"- Tokens: `{cost.get('total_tokens', 'unknown')}` "
+        f"(`{cost.get('usage_status', 'UNKNOWN')}`)\n"
+        f"- Measured wall time: `{cost.get('duration_sec', 'unknown')}s`\n\n"
         "| Scenario | Theme | Style | Verdict | Chars | Revisions |\n"
         "|---|---|---|---:|---:|---:|\n" + "\n".join(rows) + "\n"
     )
@@ -750,6 +843,9 @@ async def _run(args, report: dict, out_path: Path) -> dict:
         else {(r["scenario"], r["style"]) for r in report.get("results", [])}
     )
     base_dirs = report.setdefault("metadata", {}).setdefault("base_dirs", {})
+    cost_root = report.setdefault("cost", {})
+    cost_root["measurement_version"] = "token-tracker-v1"
+    bootstrap_cost = cost_root.setdefault("bootstrap_by_theme", {})
     stamp = int(report["metadata"]["started_at"])
     run_done = 0
     for scenario, theme_key, style_key in scenarios:
@@ -763,11 +859,16 @@ async def _run(args, report: dict, out_path: Path) -> dict:
             base_dir = Path(novel_manager.get_novel_data_dir("bench", base_id))
             base_dir.mkdir(parents=True, exist_ok=True)
             theme = get_theme_seed(theme_key)
+            usage_before = _usage_snapshot()
+            started = time.perf_counter()
             await bootstrap_world(
                 novel_id=base_id, data_dir=str(base_dir), seed=theme.seed,
                 positioning="由后续 style preset 决定", references="无",
                 title=f"{theme.label}风格验证",
                 cast_a_count=1, cast_b_count=1, cast_c_count=1,
+            )
+            bootstrap_cost[base_key] = _usage_delta(
+                usage_before, _usage_snapshot(), time.perf_counter() - started
             )
             base_dirs[base_key] = str(base_dir)
             _atomic_json(out_path, report)
@@ -777,11 +878,16 @@ async def _run(args, report: dict, out_path: Path) -> dict:
             f"sv_{scenario[:4]}_{style_key[:18]}_{int(time.time() * 1000)}"
         )
         work_dir = Path(novel_manager.get_novel_data_dir("bench", work_id))
+        usage_before = _usage_snapshot()
+        started = time.perf_counter()
         result = await _generate_one(
             base_dir=base_dir, work_dir=work_dir, style_key=style_key,
             theme_key=theme_key, scenario=scenario, ticks=args.ticks,
             no_judge=args.no_judge, max_revisions=args.max_revisions,
             sequence=args.sequence, section_edit=args.section_edit,
+        )
+        result["cost"] = _usage_delta(
+            usage_before, _usage_snapshot(), time.perf_counter() - started
         )
         if args.force:
             report["results"] = [
@@ -816,6 +922,16 @@ async def _run(args, report: dict, out_path: Path) -> dict:
         "passed": sum(bool(r.get("accepted")) for r in report.get("results", [])),
         "by_scenario": by_scenario,
     }
+    cost_blocks = list(bootstrap_cost.values()) + [
+        row["cost"] for row in report.get("results", []) if row.get("cost")
+    ]
+    cost_root["samples_with_cost"] = sum(
+        bool(row.get("cost")) for row in report.get("results", [])
+    )
+    cost_root["samples_without_cost"] = sum(
+        not bool(row.get("cost")) for row in report.get("results", [])
+    )
+    cost_root["total"] = _aggregate_cost(cost_blocks)
     _atomic_json(out_path, report)
     out_path.with_suffix(".md").write_text(_render_markdown(report), encoding="utf-8")
     return report
@@ -852,6 +968,9 @@ def main() -> None:
         parser.error("--ticks must be >= 1")
 
     provider = _configure_provider((ROOT / args.provider_file).resolve())
+    from nf_core.token_budget import TokenBudgetTracker, set_global_tracker
+
+    set_global_tracker(TokenBudgetTracker())
     if args.resume:
         out_path = (ROOT / args.resume).resolve()
         report = json.loads(out_path.read_text(encoding="utf-8"))
