@@ -2,14 +2,14 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 10-14 ACCEPTED; ITERATION 15 NEXT`
+- Status: `ITERATIONS 10-15 COMPLETE; STOPPED BEFORE ITERATION 16`
 - Starting HEAD: `7f8f7e3141a3ffaf0106d8867a4bc271ef1c8220`
 - Production behavior changes accepted: typed Narrator continuity schema with
   fail-safe legacy fallback (Iteration 13 only)
 - Real LLM calls in Phase 8: 0
-- Current gate: failure taxonomy and calibration metrics (no acceptance change)
-- Still blocked: StateGuard behavior candidate, CanonicalFact consumption and any
-  production-default change.
+- Current gate: `BLOCK_BEHAVIOR_CANDIDATE`
+- Blocked: StateGuard behavior candidate, CanonicalFact consumption, real-model Gate
+  B2 and any production-default change.
 
 ## Audit findings
 
@@ -81,6 +81,28 @@ Updated: 2026-07-21
 - All 36 Phase 7 rejects remain ambiguous because full rejected prose is absent.
 - Cost: 0 provider calls, 0 real-model tokens.
 - Tests: 5 new; full backend 1290 passed.
+
+## Iteration 15 result
+
+- Candidate: `6882f8c`
+- Decision: `ACCEPT_MEASUREMENT`; behavior gate blocked.
+- Decisive signal coverage: 20/34, all expected accepts; hard-error recall is
+  unavailable rather than coerced.
+- Deterministic gate FPR on signal-backed expected accepts: 20%; verifier FPR: 5%;
+  combined FPR: 0%.
+- Repair: 4/40 adopted (10%); fact preservation 32/40 (80%).
+- Blockers: only 34 decisive labels, zero signal-backed labeled rejects, zero human
+  reviews and zero typed-decision candidate coverage.
+- Cost: 0 provider calls, 0 real-model tokens.
+- Tests: 4 new; full backend 1294 passed.
+
+## Stop decision
+
+- Six effective iterations (10-15) are complete.
+- Iteration 16 is not authorized by the calibration evidence, so no StateGuard
+  behavior candidate was attempted.
+- Iteration 17 is transitively blocked; CanonicalFact remains audit-only and is not
+  injected into StateGuard or Narrator.
 
 ## Safety
 
