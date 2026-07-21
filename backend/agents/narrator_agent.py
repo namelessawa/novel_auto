@@ -690,6 +690,11 @@ class NarratorAgent:
             tick_events,
             continuity_catalogs=continuity_catalogs,
         )
+        # Phase 9: retain the complete pre-editor Narrator payload in the Guard
+        # trace.  The trace remains current-Tick-only and is not added to prompts.
+        original_narrator_draft = parsed.narrative_text
+        original_declared_state = parsed.continuity_state
+        original_declared_audit = parsed.continuity_state_audit
         preset = self._resolve_style_preset(
             style_preset_key, style_preset_snapshot
         )
@@ -719,6 +724,17 @@ class NarratorAgent:
                 parsed.critique_skip_reason = "critic_disabled"
             elif len(parsed.narrative_text) < _critic_min_narrative_len():
                 parsed.critique_skip_reason = "length_gate"
+        critic_input_capture = {
+            "draft_text": parsed.narrative_text,
+            "recent_openings": list(self._recent_openings),
+            "scene_focus": parsed.scene_focus,
+            "viewpoint_character_id": (
+                parsed.viewpoint_characters[0]
+                if parsed.viewpoint_characters
+                else ""
+            ),
+            "exempt_words": list(self._exempt_words),
+        }
         if critic_eligible:
             importance = _tick_importance_score(tick_events)
             gate_importance = _critic_importance_min()
@@ -795,6 +811,40 @@ class NarratorAgent:
                 },
                 tracking_character_id=tracking_character_id,
                 tick=tick,
+                previous_typed_state=(
+                    (continuity_state_audit or {}).get("typed_state") or {}
+                ),
+                original_narrator_draft=original_narrator_draft,
+                original_declared_typed_state=(
+                    original_declared_state
+                    if original_declared_audit.get("source_schema") == "typed_v1"
+                    else {}
+                ),
+                original_declared_raw_state=(
+                    original_declared_audit.get("raw_payload")
+                    or original_declared_state
+                ),
+                critic_input=critic_input_capture,
+                critic_output=parsed.critique_trace,
+                critic_skip_reason=parsed.critique_skip_reason,
+                location_context=[
+                    {
+                        "location_id": location.id,
+                        "name": location.name,
+                        "type": location.type,
+                        "present_character_ids": list(
+                            location.present_characters
+                        ),
+                    }
+                    for location in (world_state.locations if world_state else [])
+                ],
+                knowledge_boundaries=[
+                    {
+                        "character_id": state.character_id,
+                        "known_facts": list(state.known_facts),
+                    }
+                    for state in char_states
+                ],
             )
             if guard_out.safe:
                 guarded_state = parsed.continuity_state

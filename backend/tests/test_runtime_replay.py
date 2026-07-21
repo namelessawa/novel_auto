@@ -61,6 +61,16 @@ def test_full_runtime_mock_replay_exercises_production_path(tmp_path) -> None:
     assert (tmp_path / "accepted" / "ticks.db").is_file()
     assert report["telemetry"]["action_resolver_calls"] == 1
     assert report["telemetry"]["call_count"] == 6
+    assert report["schema_version"] == "runtime-replay-v2"
+    trace = tick["guard_trace"]
+    assert trace["schema_version"] == "state-guard-trace-v1"
+    assert trace["fixture_id"] == "map_gate_full_runtime_tick_1"
+    assert trace["original_draft"]
+    assert trace["verifier_rounds"][0]["raw_output"]["safe"] is True
+    assert trace["canonical_facts_before"] == []
+    assert trace["canonical_facts_after_candidate"] == tick[
+        "canonical_facts_after"
+    ]
 
 
 def _rejected_fixture() -> ReplayFixture:

@@ -77,6 +77,11 @@ class CritiqueOutput:
                     "rationale": r.rationale,
                     "triggers_before": r.triggers_before,
                     "triggers_after": r.triggers_after,
+                    # Phase 9 trace capture: keep the complete, current-Tick prose
+                    # around every Critic mutation.  This is not written to the
+                    # lightweight critic_log.jsonl projection.
+                    "text_before": r.text_before,
+                    "text_after": r.text_after,
                 }
                 for r in self.rounds
             ],

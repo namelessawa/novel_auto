@@ -1,10 +1,13 @@
-"""Deterministic full-runtime Tick replay for Phase 8.
+"""Deterministic full-runtime Tick replay for Phase 8/9.
 
 Iteration 10 implements the zero-cost ``mock`` mode.  Iteration 11 adds an explicit
 ``recorded`` fixture mode, stable evidence hashing and completed-checkpoint reuse.
 The harness uses the real ``TickRuntime`` assembly and ``Orchestrator.run_tick``
 path; only the LLM transport is replaced by fixture responses routed by production
 ``agent_id``.
+
+Phase 9 binds the complete, versioned Guard decision trace to CanonicalFact
+before/after snapshots.  It still does not call a provider in mock/recorded mode.
 """
 
 from __future__ import annotations
@@ -550,7 +553,7 @@ async def run_replay_async(
         events_by_tick.setdefault(max(1, int(event.tick)), []).append(event)
 
     report: dict[str, Any] = {
-        "schema_version": "runtime-replay-v1",
+        "schema_version": "runtime-replay-v2",
         "fixture_version": fixture.fixture_version,
         "fixture_id": fixture.fixture_id,
         "fixture_sha256": fixture_sha256,
@@ -601,6 +604,18 @@ async def run_replay_async(
                     summary.narrator_produced_text and narrative_path.is_file()
                 )
                 facts_after_tick = _fact_payloads(runtime.canonical_fact_store)
+                if guard_trace:
+                    # StateGuard runs before accepted narrative projection.  Bind
+                    # the resulting snapshots here, after the real Orchestrator
+                    # has completed projection and persistence.
+                    guard_trace = json.loads(json.dumps(
+                        guard_trace, ensure_ascii=False
+                    ))
+                    guard_trace["fixture_id"] = fixture.fixture_id
+                    guard_trace["canonical_facts_before"] = facts_before
+                    guard_trace["canonical_facts_after_candidate"] = (
+                        facts_after_tick
+                    )
                 continuity_audit = (
                     runtime.tick_state.get_narrative_continuity_audit()
                 )

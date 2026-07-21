@@ -18,6 +18,12 @@ from dataclasses import dataclass, field
 from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak
+from narrative.state_guard_trace import (
+    TRACE_SCHEMA_VERSION,
+    build_trace_id,
+    finalise_trace,
+    flatten_required_end_states,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -47,6 +53,17 @@ class NarrativeStateGuard:
         entity_names: dict[str, str] | None = None,
         tracking_character_id: str = "",
         tick: int = 0,
+        fixture_id: str | None = None,
+        previous_typed_state: dict | None = None,
+        original_narrator_draft: str = "",
+        original_declared_typed_state: dict | None = None,
+        original_declared_raw_state: dict | None = None,
+        critic_input: dict | None = None,
+        critic_output: dict | None = None,
+        critic_skip_reason: str = "",
+        location_context: list[dict] | None = None,
+        knowledge_boundaries: list[dict] | None = None,
+        canonical_facts_before: list[dict] | None = None,
     ) -> NarrativeStateGuardOutput:
         required_events = required_events or []
         known_entities = sorted({
@@ -62,14 +79,71 @@ class NarrativeStateGuard:
             for term in known_entities
             if term.strip() and term.strip() in narrative_text
         })
+        original_draft = original_narrator_draft or narrative_text
+        verifier_rounds: list[dict] = []
+        repair_rounds: list[dict] = []
+        deterministic_checks: list[dict] = []
         trace: dict = {
+            "schema_version": TRACE_SCHEMA_VERSION,
+            "trace_id": build_trace_id(
+                tick=tick,
+                original_draft=original_draft,
+                declared_state=declared_state,
+            ),
+            "fixture_id": fixture_id,
+            "tick": tick,
+            "previous_typed_state": previous_typed_state or {},
+            "previous_legacy_state": previous_state,
+            "canonical_facts_before": canonical_facts_before or [],
+            "required_events": required_events,
+            "required_end_states": flatten_required_end_states(required_events),
+            "location_context": location_context or [],
+            "knowledge_boundaries": knowledge_boundaries or [],
+            "original_draft": original_draft,
+            "guard_input_draft": narrative_text,
+            "original_declared_typed_state": (
+                original_declared_typed_state or {}
+            ),
+            "original_declared_raw_state": original_declared_raw_state or {},
+            "original_declared_legacy_state": declared_state,
+            "critic_input": critic_input or {},
+            "critic_output": critic_output or {},
+            "critic_skip_reason": critic_skip_reason,
+            "verifier_rounds": verifier_rounds,
+            "repair_rounds": repair_rounds,
+            "deterministic_checks": deterministic_checks,
+            "canonical_facts_after_candidate": [],
             "attempted": True,
             "repair_attempted": False,
-            "required_events": required_events,
             "known_entities": known_entities,
             "entity_names": entity_names,
             "tracking_character_id": tracking_character_id,
         }
+
+        def result(
+            *,
+            text: str,
+            state: dict,
+            safe: bool,
+            adopted: bool = False,
+            rejection_category: str | None = None,
+            typed_state: dict | None = None,
+        ) -> NarrativeStateGuardOutput:
+            return NarrativeStateGuardOutput(
+                narrative_text=text,
+                continuity_state=state,
+                safe=safe,
+                adopted=adopted,
+                trace=finalise_trace(
+                    trace,
+                    final_text=text,
+                    final_legacy_state=state,
+                    final_typed_state=typed_state,
+                    accepted=safe,
+                    rejection_category=rejection_category,
+                ),
+            )
+
         first = await self._verify(
             previous_state=previous_state,
             narrative_text=narrative_text,
@@ -80,14 +154,16 @@ class NarrativeStateGuard:
             entity_names=entity_names,
             tracking_character_id=tracking_character_id,
             tick=tick,
+            trace_rounds=verifier_rounds,
+            deterministic_trace=deterministic_checks,
         )
         trace["before"] = first
         if first.get("safe", False):
-            return NarrativeStateGuardOutput(
-                narrative_text=narrative_text,
-                continuity_state=declared_state,
+            return result(
+                text=narrative_text,
+                state=declared_state,
                 safe=True,
-                trace=trace,
+                typed_state=original_declared_typed_state,
             )
 
         trace["repair_attempted"] = True
@@ -100,6 +176,7 @@ class NarrativeStateGuard:
             known_entities=known_entities,
             style_contract=style_contract,
             tick=tick,
+            trace_rounds=repair_rounds,
         )
         trace["repair_declared"] = repair_payload.get("repairs", [])
         repaired_text, leaked = strip_reasoning_leak(repaired_text)
@@ -122,11 +199,12 @@ class NarrativeStateGuard:
         }
         if not guard_ok:
             trace["reject_reason"] = "deterministic_repair_guard_failed"
-            return NarrativeStateGuardOutput(
-                narrative_text=narrative_text,
-                continuity_state=declared_state,
+            return result(
+                text=narrative_text,
+                state=declared_state,
                 safe=False,
-                trace=trace,
+                rejection_category=trace["reject_reason"],
+                typed_state=original_declared_typed_state,
             )
 
         second = await self._verify(
@@ -139,6 +217,8 @@ class NarrativeStateGuard:
             entity_names=entity_names,
             tracking_character_id=tracking_character_id,
             tick=tick,
+            trace_rounds=verifier_rounds,
+            deterministic_trace=deterministic_checks,
         )
         trace["after"] = second
         if not second.get("safe", False):
@@ -155,6 +235,7 @@ class NarrativeStateGuard:
                 known_entities=known_entities,
                 style_contract=style_contract,
                 tick=tick,
+                trace_rounds=repair_rounds,
             )
             trace["repair_retry_declared"] = retry_payload.get("repairs", [])
             retry_text, retry_leaked = strip_reasoning_leak(retry_text)
@@ -179,11 +260,12 @@ class NarrativeStateGuard:
             }
             if not retry_guard_ok:
                 trace["reject_reason"] = "semantic_repair_verification_failed"
-                return NarrativeStateGuardOutput(
-                    narrative_text=narrative_text,
-                    continuity_state=declared_state,
+                return result(
+                    text=narrative_text,
+                    state=declared_state,
                     safe=False,
-                    trace=trace,
+                    rejection_category=trace["reject_reason"],
+                    typed_state=original_declared_typed_state,
                 )
             third = await self._verify(
                 previous_state=previous_state,
@@ -195,26 +277,28 @@ class NarrativeStateGuard:
                 entity_names=entity_names,
                 tracking_character_id=tracking_character_id,
                 tick=tick,
+                trace_rounds=verifier_rounds,
+                deterministic_trace=deterministic_checks,
             )
             trace["after_retry"] = third
             if not third.get("safe", False):
                 trace["reject_reason"] = "semantic_repair_retry_verification_failed"
-                return NarrativeStateGuardOutput(
-                    narrative_text=narrative_text,
-                    continuity_state=declared_state,
+                return result(
+                    text=narrative_text,
+                    state=declared_state,
                     safe=False,
-                    trace=trace,
+                    rejection_category=trace["reject_reason"],
+                    typed_state=original_declared_typed_state,
                 )
             repaired_text = retry_text
             repaired_state = retry_state
             trace["repair_retry_adopted"] = True
         trace["adopted"] = True
-        return NarrativeStateGuardOutput(
-            narrative_text=repaired_text,
-            continuity_state=repaired_state,
+        return result(
+            text=repaired_text,
+            state=repaired_state,
             safe=True,
             adopted=True,
-            trace=trace,
         )
 
     async def _verify(
@@ -229,7 +313,19 @@ class NarrativeStateGuard:
         entity_names: dict[str, str],
         tracking_character_id: str = "",
         tick: int,
+        trace_rounds: list[dict] | None = None,
+        deterministic_trace: list[dict] | None = None,
     ) -> dict:
+        verifier_input = {
+            "previous_state": previous_state,
+            "narrative_text": narrative_text,
+            "declared_state": declared_state,
+            "original_text": original_text,
+            "required_events": required_events,
+            "known_entities": known_entities,
+            "entity_names": entity_names,
+            "tracking_character_id": tracking_character_id,
+        }
         try:
             resp = await llm_client.chat(
                 system_prompt=(
@@ -299,7 +395,21 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
             payload = parse_llm_json(resp.content)
         except Exception as exc:
             logger.warning("NarrativeStateGuard verifier failed: %s", exc)
-            return {"safe": False, "error": str(exc)[:240]}
+            failed = {"safe": False, "error": str(exc)[:240]}
+            if trace_rounds is not None:
+                trace_rounds.append({
+                    "round": len(trace_rounds) + 1,
+                    "input": verifier_input,
+                    "raw_output": {"error": str(exc)[:240]},
+                    "normalised_output": failed,
+                })
+            if deterministic_trace is not None:
+                deterministic_trace.append({
+                    "round": len(deterministic_trace) + 1,
+                    "checks": [],
+                    "error": "verifier_unavailable",
+                })
+            return failed
 
         keys = (
             "event_fulfillment_conflicts",
@@ -325,35 +435,50 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
             entity_names=entity_names,
             tracking_character_id=tracking_character_id,
         )
+        location_conflicts = self._deterministic_required_location_conflicts(
+            required_events=required_events,
+            declared_state=declared_state,
+        )
+        entity_conflicts = self._deterministic_named_entity_conflicts(
+            narrative_text=narrative_text,
+            known_entities=known_entities,
+            required_events=required_events,
+        )
+        holder_conflicts = self._deterministic_holder_conflicts(
+            previous_state=previous_state,
+            narrative_text=narrative_text,
+            entity_names=entity_names,
+        )
         findings["event_fulfillment_conflicts"].extend(evidence_failures)
-        findings["event_fulfillment_conflicts"].extend(
-            self._deterministic_required_location_conflicts(
-                required_events=required_events,
-                declared_state=declared_state,
-            )
-        )
-        findings["entity_grounding_conflicts"].extend(
-            self._deterministic_named_entity_conflicts(
-                narrative_text=narrative_text,
-                known_entities=known_entities,
-                required_events=required_events,
-            )
-        )
-        findings["prior_state_conflicts"].extend(
-            self._deterministic_holder_conflicts(
-                previous_state=previous_state,
-                narrative_text=narrative_text,
-                entity_names=entity_names,
-            )
-        )
+        findings["event_fulfillment_conflicts"].extend(location_conflicts)
+        findings["entity_grounding_conflicts"].extend(entity_conflicts)
+        findings["prior_state_conflicts"].extend(holder_conflicts)
         safe = not any(findings.values())
-        return {
+        result = {
             "safe": safe,
             "reported_safe": bool(payload.get("safe")),
             "event_checks": event_checks,
             **findings,
             "reason": str(payload.get("reason", "") or "")[:300],
         }
+        if deterministic_trace is not None:
+            deterministic_trace.append({
+                "round": len(deterministic_trace) + 1,
+                "checks": [
+                    {"kind": "required_event_evidence", "findings": evidence_failures},
+                    {"kind": "required_location", "findings": location_conflicts},
+                    {"kind": "named_entity_grounding", "findings": entity_conflicts},
+                    {"kind": "previous_holder", "findings": holder_conflicts},
+                ],
+            })
+        if trace_rounds is not None:
+            trace_rounds.append({
+                "round": len(trace_rounds) + 1,
+                "input": verifier_input,
+                "raw_output": payload,
+                "normalised_output": result,
+            })
+        return result
 
     async def _repair(
         self,
@@ -366,7 +491,17 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
         known_entities: list[str],
         style_contract: str,
         tick: int,
+        trace_rounds: list[dict] | None = None,
     ) -> tuple[str, dict, dict]:
+        repair_input = {
+            "narrative_text": narrative_text,
+            "previous_state": previous_state,
+            "declared_state": declared_state,
+            "findings": findings,
+            "required_events": required_events,
+            "known_entities": known_entities,
+            "style_contract": style_contract,
+        }
         try:
             resp = await llm_client.chat(
                 system_prompt=(
@@ -414,9 +549,21 @@ items.地图.holder、time_marker；knowledge 是列表时可写 knowledge.完�
             payload = parse_llm_json(resp.content)
             text = str(payload.get("narrative_text", "") or "").strip()
             state = payload.get("continuity_state", {})
+            if trace_rounds is not None:
+                trace_rounds.append({
+                    "round": len(trace_rounds) + 1,
+                    "input": repair_input,
+                    "raw_output": payload,
+                })
             return text, dict(state) if isinstance(state, dict) else {}, payload
         except Exception as exc:
             logger.warning("NarrativeStateGuard repair failed: %s", exc)
+            if trace_rounds is not None:
+                trace_rounds.append({
+                    "round": len(trace_rounds) + 1,
+                    "input": repair_input,
+                    "raw_output": {"error": str(exc)[:240]},
+                })
             return "", {}, {"error": str(exc)[:240]}
 
     @staticmethod
