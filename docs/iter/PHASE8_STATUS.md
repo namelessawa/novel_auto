@@ -2,12 +2,12 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 10-13 ACCEPTED; ITERATION 14 NEXT`
+- Status: `ITERATIONS 10-14 ACCEPTED; ITERATION 15 NEXT`
 - Starting HEAD: `7f8f7e3141a3ffaf0106d8867a4bc271ef1c8220`
 - Production behavior changes accepted: typed Narrator continuity schema with
   fail-safe legacy fallback (Iteration 13 only)
 - Real LLM calls in Phase 8: 0
-- Current gate: StateGuard calibration set (at least 40 reviewed cases)
+- Current gate: failure taxonomy and calibration metrics (no acceptance change)
 - Still blocked: StateGuard behavior candidate, CanonicalFact consumption and any
   production-default change.
 
@@ -69,6 +69,18 @@ Updated: 2026-07-21
   characters.
 - Cost: 0 provider calls, 0 real-model tokens.
 - Tests: 10 net new; 60 focused passed; full backend 1285 passed.
+
+## Iteration 14 result
+
+- Candidate: `7b21385`
+- Decision: `ACCEPT_MEASUREMENT`
+- Dataset: 73 cases = 56 Phase 7 + 17 minimal synthetic; 27 provisional accept,
+  7 reject, 39 ambiguous; all 11 required error categories covered.
+- Review provenance: two Codex-assisted rubric passes, 73 agreements, 0 human
+  reviewers. This is explicitly not independent human ground truth.
+- All 36 Phase 7 rejects remain ambiguous because full rejected prose is absent.
+- Cost: 0 provider calls, 0 real-model tokens.
+- Tests: 5 new; full backend 1290 passed.
 
 ## Safety
 
