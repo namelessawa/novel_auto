@@ -259,6 +259,19 @@ def test_replayed_fact_merges_provenance_idempotently(tmp_path) -> None:
     assert merged.known_by == ["hero"]
 
 
+def test_unchanged_fact_at_later_tick_merges_without_false_supersede(tmp_path) -> None:
+    store = CanonicalFactStore(str(tmp_path))
+    initial = _fact("map", "item_condition", "damaged", 3)
+    repeated = _fact("map", "item_condition", "damaged", 9)
+    store.append(initial)
+    merged = store.append(repeated)
+
+    assert store.size == 1
+    assert merged.fact_id == initial.fact_id
+    assert merged.valid_from_tick == 3
+    assert merged.status == "active"
+
+
 def test_out_of_order_update_cannot_replace_newer_current_fact(tmp_path) -> None:
     store = CanonicalFactStore(str(tmp_path))
     store.append(_fact("hero", "character_location", "city", 20))
@@ -297,4 +310,3 @@ def test_same_fact_id_with_different_semantics_is_rejected(tmp_path) -> None:
     collision = first.model_copy(update={"value": "gatekeeper"})
     with pytest.raises(CanonicalFactConflictError):
         store.append(collision)
-

@@ -51,6 +51,18 @@ from memory.memory_store import PriorityMemoryStore, RetrievalQuery
 from memory.summary_tree import SummaryTree
 from memory.tick_state import TickState
 from narrative.branch_manager import BranchManager
+from narrative.canonical_facts import CanonicalFactStore
+from narrative.canonical_projection import (
+    ProjectionResult,
+    append_projection,
+    project_character_epistemics,
+    project_character_transition,
+    project_event,
+    project_guarded_continuity_state,
+    project_open_loop_resolution_record,
+    project_world_transition,
+    state_patch_source_id,
+)
 from narrative.creativity_scorer import CreativityReport, CreativityScorer
 from narrative.fact_ledger import Fact, FactLedger
 from narrative.safety_filter import SafetyFilter
@@ -260,6 +272,7 @@ class Orchestrator:
         story_arc_director: StoryArcDirector | None = None,
         character_arc_tracker: CharacterArcTracker | None = None,
         fact_ledger: FactLedger | None = None,
+        canonical_fact_store: CanonicalFactStore | None = None,
         safety_filter: SafetyFilter | None = None,
         token_budget: TokenBudgetTracker | None = None,
         creativity_scorer: CreativityScorer | None = None,
@@ -328,6 +341,17 @@ class Orchestrator:
         except Exception as e:  # pragma: no cover
             logger.warning("FactLedger.load failed (non-fatal): %s", e)
         self._last_fact_conflicts: list[dict] = []
+
+        # Phase 7: read-only-compatible fact sidecar.  Existing structures stay
+        # authoritative; projection/persistence failures never alter a tick.
+        self._canonical_fact_store = canonical_fact_store or CanonicalFactStore(
+            tick_state.data_dir
+        )
+        if canonical_fact_store is None:
+            try:
+                self._canonical_fact_store.load()
+            except Exception as e:  # pragma: no cover
+                logger.warning("CanonicalFactStore.load failed (non-fatal): %s", e)
 
         # v2.7 安全过滤 — Narrator 落盘前检查 PII / 有害指南
         self._safety_filter = safety_filter or SafetyFilter()
@@ -490,6 +514,7 @@ class Orchestrator:
         events_generated_ids: list[str] = []
         narrator_produced = False
         narrator_chars = 0
+        canonical_projection = ProjectionResult()
 
         # 阶段 1: 推进世界 ------------------------------------------------
         world_state = self._tick_state.world_state
@@ -500,6 +525,19 @@ class Orchestrator:
         )
         agents_called.append("world_simulator")
         self._tick_state.set_world_state(sim_out.new_world_state)
+        try:
+            canonical_projection.extend(
+                project_world_transition(
+                    world_state,
+                    sim_out.new_world_state,
+                    tick=tick,
+                    source_kind="world_state",
+                    source_id=f"world_simulator:{tick}",
+                    source_event_ids=[event.id for event in sim_out.natural_events],
+                )
+            )
+        except Exception as e:  # pragma: no cover
+            logger.warning("Canonical world projection failed (non-fatal): %s", e)
         natural_events = sim_out.natural_events
         events_generated_ids.extend(e.id for e in natural_events)
 
@@ -724,14 +762,72 @@ class Orchestrator:
         self._current_tick_actions = list(resolved_actions)
 
         # 阶段 5: 应用变化 ------------------------------------------------
+        states_before_actions = {
+            state.character_id: state
+            for state in self._tick_state.list_character_states()
+        }
         action_events = self._apply_actions(tick, resolved_actions)
         events_generated_ids.extend(e.id for e in action_events)
         all_events.extend(action_events)
+        states_after_actions = {
+            state.character_id: state
+            for state in self._tick_state.list_character_states()
+        }
+        action_event_ids_by_character: dict[str, list[str]] = {}
+        for event in action_events:
+            if event.participants:
+                action_event_ids_by_character.setdefault(
+                    event.participants[0], []
+                ).append(event.id)
+        for cid, after_state in states_after_actions.items():
+            before_state = states_before_actions.get(cid)
+            if before_state is None:
+                continue
+            try:
+                canonical_projection.extend(
+                    project_character_transition(
+                        before_state,
+                        after_state,
+                        tick=tick,
+                        source_kind="state_transition",
+                        source_id=f"character_actions:{tick}:{cid}",
+                        source_event_ids=action_event_ids_by_character.get(cid, []),
+                    )
+                )
+            except Exception as e:  # pragma: no cover
+                logger.warning(
+                    "Canonical action projection failed for %s (non-fatal): %s",
+                    cid,
+                    e,
+                )
+        for action in resolved_actions:
+            try:
+                canonical_projection.extend(
+                    project_character_epistemics(
+                        action,
+                        tick=tick,
+                        source_event_ids=action_event_ids_by_character.get(
+                            action.character_id, []
+                        ),
+                    )
+                )
+            except Exception as e:  # pragma: no cover
+                logger.warning(
+                    "Canonical epistemic projection failed for %s "
+                    "(non-fatal): %s",
+                    action.character_id,
+                    e,
+                )
 
         # 阶段 5d: 应用 EventInjector 提交的 StatePatch (v2.18 Phase 8)
         # 顺序: 角色意志 (_apply_actions) → 外部权威 (state_patches), 后者覆盖前者
         # — 例如: 角色拿剑成功后, 紧接着被爆炸炸伤。
         if injector_state_patches:
+            world_before_patches = self._tick_state.world_state
+            states_before_patches = {
+                state.character_id: state
+                for state in self._tick_state.list_character_states()
+            }
             try:
                 patch_diag = self._apply_state_patches(
                     tick=tick, patches=injector_state_patches
@@ -745,6 +841,58 @@ class Orchestrator:
                 logger.warning(
                     "Phase 5d _apply_state_patches failed (non-fatal): %s", e
                 )
+            else:
+                patch_source = state_patch_source_id(injector_state_patches)
+                patch_event_ids = sorted(
+                    {
+                        patch.source_event_id
+                        for patch in injector_state_patches
+                        if patch.source_event_id
+                    }
+                )
+                states_after_patches = {
+                    state.character_id: state
+                    for state in self._tick_state.list_character_states()
+                }
+                for cid, after_state in states_after_patches.items():
+                    before_state = states_before_patches.get(cid)
+                    if before_state is None:
+                        continue
+                    try:
+                        canonical_projection.extend(
+                            project_character_transition(
+                                before_state,
+                                after_state,
+                                tick=tick,
+                                source_kind="state_patch",
+                                source_id=patch_source,
+                                source_event_ids=patch_event_ids,
+                            )
+                        )
+                    except Exception as e:  # pragma: no cover
+                        logger.warning(
+                            "Canonical StatePatch projection failed for %s "
+                            "(non-fatal): %s",
+                            cid,
+                            e,
+                        )
+                try:
+                    canonical_projection.extend(
+                        project_world_transition(
+                            world_before_patches,
+                            self._tick_state.world_state,
+                            tick=tick,
+                            source_kind="state_patch",
+                            source_id=patch_source,
+                            source_event_ids=patch_event_ids,
+                        )
+                    )
+                except Exception as e:  # pragma: no cover
+                    logger.warning(
+                        "Canonical world StatePatch projection failed "
+                        "(non-fatal): %s",
+                        e,
+                    )
 
         # 阶段 5a: 记录本 tick 的 CharacterAction 到环形缓冲, 供 v2.5 tracker --
         for action in resolved_actions:
@@ -861,6 +1009,47 @@ class Orchestrator:
             if narrator_out.tick_summary_for_record:
                 self._recent_chapter_summaries.append(narrator_out.tick_summary_for_record)
 
+        # Build the remaining audit-only projections after narrative acceptance.
+        # Appending is deferred until the tick reaches persistence, so a failed
+        # mid-tick cannot leave an in-memory sidecar ahead of TickState.
+        for event in all_events:
+            try:
+                canonical_projection.extend(project_event(event))
+            except Exception as e:  # pragma: no cover
+                logger.warning(
+                    "Canonical event projection failed for %s (non-fatal): %s",
+                    event.id,
+                    e,
+                )
+        if narrator_produced and narrator_out.continuity_state:
+            try:
+                canonical_projection.extend(
+                    project_guarded_continuity_state(
+                        narrator_out.continuity_state,
+                        tick=tick,
+                        consumed_event_ids=narrator_out.events_consumed,
+                    )
+                )
+            except Exception as e:  # pragma: no cover
+                logger.warning(
+                    "Canonical guarded-continuity projection failed "
+                    "(non-fatal): %s",
+                    e,
+                )
+        for record in self._tick_state.list_resolved_loop_records():
+            if int(record.get("tick", -1)) != tick:
+                continue
+            try:
+                canonical_projection.extend(
+                    project_open_loop_resolution_record(record)
+                )
+            except Exception as e:  # pragma: no cover
+                logger.warning(
+                    "Canonical loop-resolution projection failed "
+                    "(non-fatal): %s",
+                    e,
+                )
+
         # 阶段 7: 串行维护 (MemoryCompressor 写 memory_store, 避免与 Narrator
         # 的 touch / mark_protected race) — readonly 部分已并行到阶段 6。
         await self._phase7_sequential_agents(tick, agents_called)
@@ -907,6 +1096,13 @@ class Orchestrator:
             self._fact_ledger.save()
         except Exception as e:  # pragma: no cover
             logger.warning("FactLedger.save failed (non-fatal): %s", e)
+        try:
+            append_projection(self._canonical_fact_store, canonical_projection)
+            self._canonical_fact_store.save()
+        except Exception as e:  # pragma: no cover
+            logger.warning(
+                "CanonicalFact sidecar persist failed (non-fatal): %s", e
+            )
         try:
             self._token_budget.save()
         except Exception as e:  # pragma: no cover

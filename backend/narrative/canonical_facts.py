@@ -300,6 +300,13 @@ class CanonicalFactStore:
             current_id = self._current.get(key)
             if current_id:
                 current = self._facts[current_id]
+                # A full continuity snapshot commonly repeats unchanged state.
+                # Treat that as corroborating provenance, not a new lifecycle
+                # transition with an artificial supersede edge.
+                if current.value == fact.value:
+                    merged = self._merge_provenance(current, fact)
+                    self._facts[current_id] = merged
+                    return merged
                 if fact.valid_from_tick < current.valid_from_tick:
                     raise OutOfOrderFactError(
                         f"{fact.fact_id} at tick {fact.valid_from_tick} cannot "
@@ -380,6 +387,7 @@ class CanonicalFactStore:
                 "source_refs": refs,
                 "known_by": sorted(set([*a.known_by, *b.known_by])),
                 "confidence": max(a.confidence, b.confidence),
+                "reversible": a.reversible and b.reversible,
             }
         )
 
@@ -439,11 +447,9 @@ class CanonicalFactStore:
                 key = fact.semantic_key()
                 previous_id = current.get(key)
                 if previous_id is not None:
-                    previous = facts[previous_id]
-                    if previous.valid_from_tick >= fact.valid_from_tick:
-                        raise CanonicalFactConflictError(
-                            f"multiple current facts for {key!r}"
-                        )
+                    raise CanonicalFactConflictError(
+                        f"multiple current facts for {key!r}"
+                    )
                 current[key] = fact.fact_id
         self._facts = facts
         self._current = current
@@ -463,4 +469,3 @@ __all__ = [
     "build_canonical_fact",
     "canonical_fact_id",
 ]
-

@@ -43,6 +43,7 @@ from memory.memory_store import PriorityMemoryStore
 from memory.summary_tree import SummaryTree
 from memory.tick_state import TickState
 from narrative.branch_manager import BranchManager
+from narrative.canonical_facts import CanonicalFactStore
 from narrative.creativity_scorer import CreativityScorer
 from narrative.fact_ledger import FactLedger
 from narrative.safety_filter import SafetyFilter
@@ -117,6 +118,8 @@ class TickRuntime:
         self.character_arc_tracker = CharacterArcTracker()
         self.fact_ledger = FactLedger(data_dir=self.data_dir)
         self.fact_ledger.load()
+        self.canonical_fact_store = CanonicalFactStore(data_dir=self.data_dir)
+        self.canonical_fact_store.load()
         self.safety_filter = SafetyFilter()
         self.token_budget = TokenBudgetTracker(data_dir=self.data_dir)
         self.token_budget.load()
@@ -145,6 +148,7 @@ class TickRuntime:
             story_arc_director=self.story_arc_director,
             character_arc_tracker=self.character_arc_tracker,
             fact_ledger=self.fact_ledger,
+            canonical_fact_store=self.canonical_fact_store,
             safety_filter=self.safety_filter,
             token_budget=self.token_budget,
             creativity_scorer=self.creativity_scorer,
@@ -185,6 +189,7 @@ class TickRuntime:
             ),
             ("MemoryStore", self.memory_store.save),
             ("FactLedger", self.fact_ledger.save),
+            ("CanonicalFactStore", self.canonical_fact_store.save),
             ("TokenBudgetTracker", self.token_budget.save),
             ("BranchManager", self.branch_manager.save),
             (

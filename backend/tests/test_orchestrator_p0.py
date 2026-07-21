@@ -13,6 +13,7 @@ LLM 响应,验证 7 阶段调度的端到端行为:
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 
 import pytest
@@ -208,6 +209,25 @@ def test_single_tick_produces_summary_and_narrative(tmp_path, mock_llm) -> None:
     alice_state = ts.get_character_state("alice")
     assert "鲍勃今晨出现在都城" in alice_state.known_facts
     assert alice_state.emotional_state == "焦虑"
+
+
+    # Phase 7 sidecar is written only after the tick reaches persistence and
+    # records provenance without changing the legacy TickState path.
+    sidecar_path = tmp_path / "canonical_facts.json"
+    assert sidecar_path.is_file()
+    sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert sidecar["version"] == 1
+    facts = sidecar["facts"]
+    assert any(fact["predicate"] == "event_occurred" for fact in facts)
+    learned = [
+        fact
+        for fact in facts
+        if fact["predicate"].startswith("character_knows:")
+        and fact["subject_id"] == "alice"
+    ]
+    assert learned
+    assert learned[0]["source_event_ids"]
+    assert learned[0]["known_by"] == ["alice"]
 
 
 def test_low_value_events_skip_narration(tmp_path, mock_llm) -> None:
