@@ -2,11 +2,11 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATION 18 ACCEPTED; ITERATION 19 NEXT`
+- Status: `ITERATIONS 18-19 ACCEPTED; ITERATION 20 NEXT`
 - Starting HEAD: `a66eb80c7e413439dddf23eea48180059a4cccd4`
 - Production behavior changes accepted: none
 - Real LLM calls: 0
-- Current gate: 12 complete signal-backed hard-negative fixtures
+- Current gate: complete probable-false-positive fixtures
 - StateGuard behavior candidate: blocked
 - CanonicalFact consumer: blocked and disabled
 
@@ -51,3 +51,18 @@ Updated: 2026-07-21
   explicitly skipped/not required for this short accepted fixture.
 - Tests: 90 focused; full backend `1297 passed, 1 existing warning`.
 - Cost: 0 provider calls, 0 model tokens.
+
+## Iteration 19 result
+
+- Candidate: `23a6189`.
+- Decision: `ACCEPT_MEASUREMENT`.
+- Complete hard-negative suite: 12 expected reject, 12 actual reject, zero hard
+  errors allowed.
+- Each case traversed full TickRuntime/Orchestrator and StateGuard with 3 verifier
+  and 2 full repair rounds; all completeness flags are 12/12.
+- Critic executed in one fixture and retained complete input/output.
+- Major hard-negative categories each have at least three decisive fixtures.
+- Signal-backed decisive accepts/rejects after carrying Phase 8 evidence: 20 / 12.
+- Independent reviews: 0; behavior changes remain blocked.
+- Tests: 40 focused; full backend `1299 passed, 1 existing warning`.
+- Cost: 121 fixture calls, 0 provider calls, model tokens N/A.
