@@ -10,6 +10,7 @@ Updated: 2026-07-21
 - Current gate: `BLOCK_BEHAVIOR_CANDIDATE`
 - Blocked: StateGuard behavior candidate, CanonicalFact consumption, real-model Gate
   B2 and any production-default change.
+- Final report: `docs/iter/verdict-20260721-phase8-runtime-ledger-guard.md`.
 
 ## Audit findings
 
@@ -110,3 +111,11 @@ Updated: 2026-07-21
 - No CanonicalFact consumer is enabled.
 - No production data, migration, remote push, PR or deploy is authorized.
 - No provider configuration or credential is needed for Iterations 10-11.
+
+## Final acceptance
+
+- Backend: `1294 passed, 1 existing warning`.
+- Frontend: `npm run build` passed; Vite transformed 55 modules.
+- Worktree safety: unrelated untracked `scripts/openai_compatible_chat.py` was not
+  read, modified or staged.
+- Final conclusion: `CONDITIONAL PASS`.
