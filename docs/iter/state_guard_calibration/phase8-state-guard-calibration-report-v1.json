@@ -1,0 +1,234 @@
+{
+  "schema_version": "state-guard-calibration-report-v1",
+  "dataset": {
+    "filename": "phase8-state-guard-calibration-v1.json",
+    "dataset_sha256": "573b2d822b8ecc3d4caf2609781d1fa2c26cd3ced46e8b25eba4f8dcc5b43441",
+    "case_count": 73,
+    "decision_counts": {
+      "accept": 27,
+      "reject": 7,
+      "ambiguous": 39
+    },
+    "decisive_case_count": 34,
+    "ambiguous_count": 39,
+    "ambiguous_rate": 0.534247,
+    "human_reviewed_count": 0
+  },
+  "metric_semantics": {
+    "positive_class": "reject",
+    "ambiguous_policy": "excluded_from_quality_confusion",
+    "null_policy": "unsupported denominators remain null"
+  },
+  "quality_metrics": {
+    "verifier_reported_safe": {
+      "positive_class": "reject",
+      "evaluated_cases": 20,
+      "total_decisive_cases": 34,
+      "coverage": 0.588235,
+      "labeled_reject_cases": 0,
+      "labeled_accept_cases": 20,
+      "confusion": {
+        "tp": 0,
+        "fp": 1,
+        "tn": 19,
+        "fn": 0
+      },
+      "metrics": {
+        "precision": 0.0,
+        "recall": null,
+        "false_positive_rate": 0.05,
+        "false_negative_rate": null,
+        "accuracy": 0.95
+      },
+      "undefined_metrics": {
+        "recall": "no labeled rejects with this recorded signal",
+        "false_negative_rate": "no labeled rejects with this recorded signal"
+      }
+    },
+    "deterministic_evidence_gate": {
+      "positive_class": "reject",
+      "evaluated_cases": 20,
+      "total_decisive_cases": 34,
+      "coverage": 0.588235,
+      "labeled_reject_cases": 0,
+      "labeled_accept_cases": 20,
+      "confusion": {
+        "tp": 0,
+        "fp": 4,
+        "tn": 16,
+        "fn": 0
+      },
+      "metrics": {
+        "precision": 0.0,
+        "recall": null,
+        "false_positive_rate": 0.2,
+        "false_negative_rate": null,
+        "accuracy": 0.8
+      },
+      "undefined_metrics": {
+        "recall": "no labeled rejects with this recorded signal",
+        "false_negative_rate": "no labeled rejects with this recorded signal"
+      }
+    },
+    "combined_final_decision": {
+      "positive_class": "reject",
+      "evaluated_cases": 20,
+      "total_decisive_cases": 34,
+      "coverage": 0.588235,
+      "labeled_reject_cases": 0,
+      "labeled_accept_cases": 20,
+      "confusion": {
+        "tp": 0,
+        "fp": 0,
+        "tn": 20,
+        "fn": 0
+      },
+      "metrics": {
+        "precision": null,
+        "recall": null,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": null,
+        "accuracy": 1.0
+      },
+      "undefined_metrics": {
+        "precision": "no predicted rejects in evaluated cases",
+        "recall": "no labeled rejects with this recorded signal",
+        "false_negative_rate": "no labeled rejects with this recorded signal"
+      }
+    },
+    "typed_ledger_candidate": {
+      "status": "unavailable",
+      "evaluated_cases": 0,
+      "total_decisive_cases": 34,
+      "coverage": 0.0,
+      "metrics": {
+        "precision": null,
+        "recall": null,
+        "false_positive_rate": null,
+        "false_negative_rate": null,
+        "accuracy": null
+      },
+      "undefined_metrics": {
+        "all": "Calibration cases contain typed ledger structure examples but no recorded typed-ledger final-decision signal."
+      }
+    }
+  },
+  "operational_reproduction": {
+    "verifier_reported_safe": {
+      "positive_class": "reject",
+      "evaluated_cases": 56,
+      "total_decisive_cases": 56,
+      "coverage": 1.0,
+      "labeled_reject_cases": 36,
+      "labeled_accept_cases": 20,
+      "confusion": {
+        "tp": 5,
+        "fp": 1,
+        "tn": 19,
+        "fn": 31
+      },
+      "metrics": {
+        "precision": 0.833333,
+        "recall": 0.138889,
+        "false_positive_rate": 0.05,
+        "false_negative_rate": 0.861111,
+        "accuracy": 0.428571
+      },
+      "undefined_metrics": {},
+      "ground_truth": false,
+      "warning": "Target is the recorded production outcome; this measures reproduction, not correctness."
+    },
+    "deterministic_evidence_gate": {
+      "positive_class": "reject",
+      "evaluated_cases": 56,
+      "total_decisive_cases": 56,
+      "coverage": 1.0,
+      "labeled_reject_cases": 36,
+      "labeled_accept_cases": 20,
+      "confusion": {
+        "tp": 36,
+        "fp": 4,
+        "tn": 16,
+        "fn": 0
+      },
+      "metrics": {
+        "precision": 0.9,
+        "recall": 1.0,
+        "false_positive_rate": 0.2,
+        "false_negative_rate": 0.0,
+        "accuracy": 0.928571
+      },
+      "undefined_metrics": {},
+      "ground_truth": false,
+      "warning": "Target is the recorded production outcome; this measures reproduction, not correctness."
+    },
+    "combined_final_decision": {
+      "positive_class": "reject",
+      "evaluated_cases": 56,
+      "total_decisive_cases": 56,
+      "coverage": 1.0,
+      "labeled_reject_cases": 36,
+      "labeled_accept_cases": 20,
+      "confusion": {
+        "tp": 36,
+        "fp": 0,
+        "tn": 20,
+        "fn": 0
+      },
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0,
+        "accuracy": 1.0
+      },
+      "undefined_metrics": {},
+      "ground_truth": false,
+      "warning": "Target is the recorded production outcome; this measures reproduction, not correctness."
+    }
+  },
+  "failure_taxonomy": {
+    "phase7_signal_buckets": {
+      "initial_accept": 16,
+      "deterministic_reject_after_verifier_safe": 31,
+      "verifier_and_deterministic_reject": 5,
+      "repair_rescue_after_verifier_safe": 3,
+      "repair_rescue_after_verifier_reject": 1
+    },
+    "provisional_error_type_counts": {
+      "event_endpoint_unfulfilled": 39,
+      "location_mismatch": 2,
+      "item_holder_conflict": 1,
+      "item_condition_conflict": 1,
+      "knowledge_leak": 1,
+      "ledger_missing_field": 2,
+      "ledger_wrong_type": 1,
+      "evidence_extraction_failure": 33,
+      "reasonable_omission": 2,
+      "new_ungrounded_fact": 3,
+      "repair_fact_change": 9
+    },
+    "probable_evidence_false_negative_count": 31,
+    "warning": "The 31 verifier-safe/deterministic-reject cases are probable evidence failures, not confirmed false positives, because rejected drafts are missing."
+  },
+  "repair": {
+    "attempt_count": 40,
+    "success_count": 4,
+    "success_rate": 0.1,
+    "fact_preserved_count": 32,
+    "fact_preservation_rate": 0.8,
+    "fact_change_or_unknown_count": 8
+  },
+  "behavior_gate": {
+    "can_run_iteration16": false,
+    "decision": "BLOCK_BEHAVIOR_CANDIDATE",
+    "reasons": [
+      "only 34 decisive labels; minimum behavior gate is 40",
+      "no labeled reject has recorded verifier/deterministic/combined signals",
+      "no label has independent human review",
+      "typed-ledger candidate decision coverage is zero"
+    ]
+  },
+  "production_acceptance_logic_changed": false,
+  "report_sha256": "b4d6f86a0c1b9c12c14ab5d82903317b4763185afd7fde549606c5c0c636dddc"
+}
