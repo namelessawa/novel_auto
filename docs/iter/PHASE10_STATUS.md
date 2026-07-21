@@ -4,6 +4,7 @@ Updated: 2026-07-21
 
 - Status: `ITERATION 23 INCONCLUSIVE; PHASE10 STOPPED AT REVIEW GATE`
 - Starting HEAD: `8b6b0eb69d5e76838e07a58779d306c3ec4e075f`
+- Final evidence HEAD before verdict: `017bd6643470af20095ddebf6ecb7b510a650c97`
 - Production behavior changes accepted: none
 - CanonicalFact consumer: absent and disabled
 - Real runtime mode: absent
@@ -50,3 +51,14 @@ Updated: 2026-07-21
 - Review Gate: `BLOCK_REAL_REPLAY`.
 - Iterations 24–30: not executed.
 - Production behavior changes: none.
+
+## Final validation
+
+- Focused adjudication suite: `13 passed`.
+- Full backend suite: `1319 passed`, with one existing Starlette/httpx deprecation
+  warning.
+- Frontend: Vite 6.4.1 production build passed; 55 modules transformed.
+- Secret/artifact scan: reviewer artifacts contain no provider URL, API key,
+  Authorization value or blind-key path.
+- Final verdict: `INCONCLUSIVE：审查、真实样本、模型稳定性或预算不足。`
+- Report: `docs/iter/verdict-20260721-phase10-independent-real-guard.md`.
