@@ -20,8 +20,10 @@ PACKET_SCHEMA_VERSION = "state-guard-adjudication-packet-v1"
 KEY_SCHEMA_VERSION = "state-guard-adjudication-key-v1"
 QUESTIONS = [
     "正文是否完成所有必达终态？",
-    "正文是否改变了无来源事实？",
+    "正文是否出现无来源的状态变化？",
     "ledger 是否准确表达正文结尾？",
+    "是否存在角色知识越权？",
+    "Repair 是否改变或删除事实？",
     "应当接受、拒绝还是无法判断？",
 ]
 
@@ -54,6 +56,50 @@ def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
         raise
 
 
+def _compact_state(value: Any) -> Any:
+    """Remove schema noise while retaining review-relevant zero/empty facts."""
+
+    if isinstance(value, list):
+        return [_compact_state(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    compacted: dict[str, Any] = {}
+    drop_when_empty = {
+        "destination_location_id",
+        "carried_by_character_id",
+        "container_item_id",
+        "active_open_loop_ids",
+        "supporting_character_ids",
+    }
+    redundant_ids = {"character_id", "item_id"}
+    for key, item in value.items():
+        if key in redundant_ids:
+            continue
+        if key in drop_when_empty and item in (None, [], {}, ""):
+            continue
+        if item is None:
+            continue
+        compacted[key] = _compact_state(item)
+    return compacted
+
+
+def _blind_repair_attempts(trace: dict[str, Any]) -> list[dict[str, Any]]:
+    attempts: list[dict[str, Any]] = []
+    for round_payload in trace.get("repair_rounds") or []:
+        raw_output = round_payload.get("raw_output") or {}
+        prose = str(raw_output.get("narrative_text") or "")
+        declared = raw_output.get("continuity_state") or {}
+        if prose:
+            attempts.append(
+                {
+                    "round": int(round_payload.get("round") or len(attempts) + 1),
+                    "prose": prose,
+                    "declared_ledger": _compact_state(declared),
+                }
+            )
+    return attempts
+
+
 def _extract_cases(report: dict[str, Any], source_index: int) -> list[dict[str, Any]]:
     extracted: list[dict[str, Any]] = []
     for case_index, case in enumerate(report.get("cases") or []):
@@ -77,20 +123,25 @@ def _extract_cases(report: dict[str, Any], source_index: int) -> list[dict[str, 
                 f"source {source_index} case {fixture_id} lacks an expected decision"
             )
         blind_payload = {
-            "previous_state": (
+            "previous_state": _compact_state(
                 trace.get("previous_typed_state")
                 or trace.get("previous_legacy_state")
                 or {}
             ),
             "required_end_states": trace.get("required_end_states") or [],
             "prose": trace.get("original_draft") or "",
-            "declared_typed_state": (
+            "declared_ledger": _compact_state(
                 trace.get("original_declared_typed_state") or {}
+                or trace.get("original_declared_raw_state") or {}
+                or trace.get("original_declared_legacy_state") or {}
             ),
+            "repair_attempts": _blind_repair_attempts(trace),
             # The captured runtime currently supplies relevant location nodes, not
             # an ontology edge list.  Preserve that limitation instead of inventing
             # topology for the reviewer.
-            "location_relations": trace.get("location_context") or [],
+            "location_relations": _compact_state(
+                trace.get("location_context") or []
+            ),
             "knowledge_boundaries": trace.get("knowledge_boundaries") or [],
             "questions": list(QUESTIONS),
         }
@@ -178,7 +229,8 @@ def build_adjudication_exports(
         "packet_id": "phase9-state-guard-blind-v1",
         "reviewer_instructions": (
             "请仅依据提供的前态、必达终态、正文、声明 ledger、地点和知识边界"
-            "独立裁决；不要索取运行时决定、verifier 结论或隐藏标签。"
+            "以及可见 repair 尝试独立裁决；不要索取运行时决定、verifier "
+            "结论或隐藏标签，也不要评价文风。"
         ),
         "case_count": len(packet_cases),
         "cases": packet_cases,
@@ -195,11 +247,27 @@ def build_adjudication_exports(
     }
     key["key_sha256"] = _stable_hash(key)
     template = {
-        "schema_version": "state-guard-adjudication-review-v1",
+        "schema_version": "state-guard-adjudication-review-v2",
         "packet_id": packet["packet_id"],
         "packet_sha256": packet["packet_sha256"],
+        "packet_hash": packet["packet_sha256"],
         "reviewer_id": "replace-with-opaque-reviewer-id",
-        "reviewer_type": "project_agent",
+        "reviewer_type": "independent_model",
+        "model_family": "",
+        "model_name": "",
+        "provider_name": "",
+        "review_started_at": "",
+        "review_finished_at": "",
+        "prompt_hash": "",
+        "temperature": 0.0,
+        "blind_key_accessed": False,
+        "review_input_files": ["packet.json", "template.json"],
+        "usage": {
+            "provider_calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        },
         "results": template_results,
     }
     return packet, key, template
@@ -211,6 +279,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out-packet", required=True, help="label-blind reviewer JSON")
     parser.add_argument("--out-key", required=True, help="withheld audit key JSON")
     parser.add_argument("--out-template", required=True, help="blank review JSON")
+    parser.add_argument(
+        "--reviewer-dir",
+        action="append",
+        default=[],
+        help="optional isolated reviewer directory; receives packet/template only",
+    )
     return parser
 
 
@@ -222,6 +296,10 @@ def main(argv: list[str] | None = None) -> int:
     _atomic_write(Path(args.out_packet).resolve(), packet)
     _atomic_write(Path(args.out_key).resolve(), key)
     _atomic_write(Path(args.out_template).resolve(), template)
+    for reviewer_dir_value in args.reviewer_dir:
+        reviewer_dir = Path(reviewer_dir_value).resolve()
+        _atomic_write(reviewer_dir / "packet.json", packet)
+        _atomic_write(reviewer_dir / "template.json", template)
     print(
         json.dumps(
             {
