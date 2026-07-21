@@ -1,0 +1,300 @@
+{
+  "fixture_version": "1",
+  "fixture_id": "map_gate_full_runtime_tick_1",
+  "initial_state": {
+    "novel_title": "合成回放：内门",
+    "world_state": {
+      "world_time": 0,
+      "era": "近未来",
+      "current_season": "冬",
+      "weather": "灰雪",
+      "locations": [
+        {
+          "id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_characters": ["alice", "bob"]
+        },
+        {
+          "id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_characters": []
+        }
+      ],
+      "factions": [],
+      "active_global_events": [],
+      "world_rules": []
+    },
+    "character_profiles": [
+      {
+        "id": "alice",
+        "name": "Alice",
+        "role": "主角",
+        "importance_tier": "A",
+        "personality": "谨慎",
+        "speech_style": "短句"
+      },
+      {
+        "id": "bob",
+        "name": "Bob",
+        "role": "伤员",
+        "importance_tier": "B",
+        "personality": "克制",
+        "speech_style": "少言"
+      }
+    ],
+    "character_states": [
+      {
+        "character_id": "alice",
+        "current_location": "city_gate_outer",
+        "inventory": [],
+        "known_facts": ["地图可换取通行"]
+      },
+      {
+        "character_id": "bob",
+        "current_location": "city_gate_outer",
+        "inventory": [],
+        "known_facts": []
+      }
+    ],
+    "continuity_state": {}
+  },
+  "canonical_facts_before": [],
+  "events": [
+    {
+      "id": "evt_map_gate",
+      "tick": 1,
+      "type": "dramatic",
+      "location": "city_gate_outer",
+      "participants": ["alice", "bob"],
+      "visible_to": ["alice", "bob"],
+      "description": "Alice必须收好地图并带Bob越过内门。",
+      "narrative_value": 9,
+      "narrative_value_hint": 9,
+      "consequences": ["本段结束前：地图由 alice 持有"]
+    }
+  ],
+  "responses_by_agent": {
+    "world_simulator": [
+      {
+        "content": {
+          "new_world_state": {
+            "world_time": 1,
+            "era": "近未来",
+            "current_season": "冬",
+            "weather": "灰雪",
+            "locations": [
+              {
+                "id": "city_gate_outer",
+                "name": "城门外侧",
+                "type": "gate",
+                "present_characters": ["alice", "bob"]
+              },
+              {
+                "id": "city_gate_inner",
+                "name": "城门内侧",
+                "type": "gate",
+                "present_characters": []
+              }
+            ],
+            "factions": [],
+            "active_global_events": [],
+            "world_rules": []
+          },
+          "natural_events": [],
+          "delta_summary": "灰雪继续落下。"
+        }
+      }
+    ],
+    "event_injector": [
+      {
+        "content": {
+          "events": [
+            {
+              "id": "evt_blast",
+              "tick": 1,
+              "type": "dramatic",
+              "location": "city_gate_outer",
+              "participants": ["alice", "bob"],
+              "visible_to": ["alice", "bob"],
+              "description": "门外爆炸掀起碎片，Alice手臂受伤。",
+              "narrative_value": 8,
+              "narrative_value_hint": 8,
+              "consequences": []
+            }
+          ],
+          "state_patches": [
+            {
+              "source_agent": "event_injector",
+              "source_event_id": "evt_blast",
+              "target_type": "character",
+              "target_id": "alice",
+              "ops": [
+                {
+                  "field": "status_effects",
+                  "op": "append",
+                  "value": "手臂受伤"
+                }
+              ],
+              "confidence": 1.0,
+              "reason": "爆炸碎片造成可见伤势"
+            }
+          ],
+          "no_events_reason": null
+        }
+      }
+    ],
+    "character_agent:alice": [
+      {
+        "content": {
+          "action_type": "move",
+          "target": "city_gate_inner",
+          "description": "Alice扶住Bob穿过内门。",
+          "dialogue_spoken": "进去。",
+          "dialogue_to_whom": ["bob"],
+          "intent": "带伤员进入安全区域",
+          "internal_monologue": "不能停在门外。",
+          "emotional_shift": "警觉",
+          "completed_goal_ids": [],
+          "new_goals": [],
+          "abandoned_goal_ids": [],
+          "newly_learned": [],
+          "newly_speculated": [],
+          "new_location": "city_gate_inner",
+          "inventory_added": ["map"],
+          "inventory_removed": [],
+          "status_effects_added": [],
+          "status_effects_removed": [],
+          "relationship_deltas": [],
+          "flags": []
+        }
+      }
+    ],
+    "character_agent:bob": [
+      {
+        "content": {
+          "action_type": "move",
+          "target": "city_gate_inner",
+          "description": "Bob借Alice支撑越过内门。",
+          "dialogue_spoken": "别松手。",
+          "dialogue_to_whom": ["alice"],
+          "intent": "离开爆炸区域",
+          "internal_monologue": "再走一步。",
+          "emotional_shift": "忍痛",
+          "completed_goal_ids": [],
+          "new_goals": [],
+          "abandoned_goal_ids": [],
+          "newly_learned": [],
+          "newly_speculated": [],
+          "new_location": "city_gate_inner",
+          "inventory_added": [],
+          "inventory_removed": [],
+          "status_effects_added": [],
+          "status_effects_removed": [],
+          "relationship_deltas": [],
+          "flags": []
+        }
+      }
+    ],
+    "narrator": [
+      {
+        "content": {
+          "narrative_text": "爆炸把灰雪推成一道白墙。Alice用受伤的手臂夹住地图，另一只手架起Bob。两人一起跨过内门，门闩随即落下。她确认地图仍在自己的内袋里，才靠墙停住。",
+          "estimated_length": "short",
+          "viewpoint_characters": ["alice"],
+          "scene_focus": "两人越过内门",
+          "events_consumed": ["evt_map_gate"],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "characters": {
+              "alice": {
+                "location": "city_gate_inner",
+                "injuries": ["手臂受伤"],
+                "status": "alive"
+              },
+              "bob": {
+                "location": "city_gate_inner",
+                "injuries": [],
+                "status": "alive"
+              }
+            },
+            "items": {
+              "map": {
+                "holder": "alice",
+                "condition": "intact"
+              }
+            },
+            "knowledge": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      }
+    ],
+    "narrative_state_verifier": [
+      {
+        "content": {
+          "safe": true,
+          "event_checks": [
+            {
+              "event_id": "evt_map_gate",
+              "requirement": "本段结束前：地图由 alice 持有",
+              "met": true,
+              "prose_evidence": ["她确认地图仍在自己的内袋里"],
+              "ledger_evidence_paths": ["items.map.holder"]
+            }
+          ],
+          "event_fulfillment_conflicts": [],
+          "entity_grounding_conflicts": [],
+          "prior_state_conflicts": [],
+          "internal_conflicts": [],
+          "ledger_conflicts": [],
+          "fact_changes_from_original": [],
+          "reason": "地图持有状态有正文和账本双重证据。"
+        }
+      }
+    ]
+  },
+  "expected_required_end_states": [
+    "本段结束前：地图由 alice 持有"
+  ],
+  "expected_fact_transitions": [
+    {
+      "subject_id": "alice",
+      "predicate": "character_location",
+      "value": {
+        "state": "arrived",
+        "location_id": "city_gate_inner"
+      }
+    },
+    {
+      "subject_id": "bob",
+      "predicate": "character_location",
+      "value": {
+        "state": "arrived",
+        "location_id": "city_gate_inner"
+      }
+    },
+    {
+      "subject_id": "item:map",
+      "predicate": "item_holder",
+      "value": "alice"
+    },
+    {
+      "subject_id": "alice",
+      "predicate": "status_effect:手臂受伤",
+      "value": true
+    }
+  ],
+  "expected_acceptance": "accept",
+  "labels": [
+    "full_runtime",
+    "state_patch",
+    "item_holder",
+    "location_transition",
+    "state_guard_accept"
+  ]
+}

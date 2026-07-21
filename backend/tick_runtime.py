@@ -57,11 +57,27 @@ logger = logging.getLogger(__name__)
 class TickRuntime:
     """单 (user_id, novel_id) → 一组 9 agent + state + db 的装配容器。"""
 
-    def __init__(self, user_id: str, novel_id: str) -> None:
+    def __init__(
+        self,
+        user_id: str,
+        novel_id: str,
+        *,
+        _replay_data_dir: str | None = None,
+    ) -> None:
         self.user_id = user_id
         self.novel_id = novel_id
-        # get_novel_data_dir 内部已做 realpath 沙箱校验
-        self.data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
+        # Offline replay needs an isolated temporary directory while still using the
+        # real TickRuntime assembly.  Keep the override deliberately private and
+        # fail closed for every production/user identity.
+        if _replay_data_dir is not None:
+            if user_id != "__replay__":
+                raise ValueError(
+                    "_replay_data_dir is restricted to the __replay__ identity"
+                )
+            self.data_dir = os.path.realpath(os.path.abspath(_replay_data_dir))
+        else:
+            # get_novel_data_dir 内部已做 realpath 沙箱校验
+            self.data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
         os.makedirs(self.data_dir, exist_ok=True)
 
         # 基础设施
@@ -70,13 +86,14 @@ class TickRuntime:
         # v2.34 — 把 novel_manager 里的最新标题强同步到 TickState, 修正:
         # (a) 老 tick_state.json 没 novel_title 字段; (b) 用户 PUT 改名时
         # 该 runtime 已 close 过, 下一次构造时拿到的是磁盘上旧版。
-        try:
-            novel = novel_manager.get_novel(user_id, novel_id)
-            current_title = (novel.get("title") if novel else "") or ""
-            if current_title and current_title != self.tick_state.novel_title:
-                self.tick_state.set_novel_title(current_title)
-        except Exception as e:
-            logger.warning("seed novel_title from novel_manager failed: %s", e)
+        if _replay_data_dir is None:
+            try:
+                novel = novel_manager.get_novel(user_id, novel_id)
+                current_title = (novel.get("title") if novel else "") or ""
+                if current_title and current_title != self.tick_state.novel_title:
+                    self.tick_state.set_novel_title(current_title)
+            except Exception as e:
+                logger.warning("seed novel_title from novel_manager failed: %s", e)
 
         self.tick_db = TickDB(db_path=os.path.join(self.data_dir, "ticks.db"))
         self.summary_tree = SummaryTree(merge_threshold=10)
