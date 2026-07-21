@@ -1,0 +1,1675 @@
+{
+  "schema_version": "state-guard-typed-candidate-evaluation-v1",
+  "candidate_runtime_integration": false,
+  "candidate_default_enabled": false,
+  "canonical_fact_consumer_enabled": false,
+  "sources": [
+    {
+      "filename": "phase8-state-guard-calibration-v1.json",
+      "sha256": "ab5531ffd19b1a48ab81f230414214bd95ec2f4a02fd63fc5783c594ceea91c3"
+    },
+    {
+      "filename": "phase8-state-guard-calibration-report-v1.json",
+      "sha256": "deb7de18673d4dc3ab4bb22be276f096c6052cc2b273f8ad87111973e0c84918"
+    },
+    {
+      "filename": "phase9-hard-negative-replay-20260721.json",
+      "sha256": "77219f054de8d0608518e368586242315593efac3a4727589ce0bc37f612c44c"
+    },
+    {
+      "filename": "phase9-probable-fp-replay-20260721.json",
+      "sha256": "698f6cf46ec12ab5af469557d8a889d900301f81e6a09a5310b2862c0d8c8e6e"
+    }
+  ],
+  "dataset": {
+    "combined_case_count": 98,
+    "combined_decisive_case_count": 59,
+    "combined_ambiguous_count": 39,
+    "combined_ambiguous_rate": 0.397959,
+    "signal_backed_accepts": 33,
+    "signal_backed_rejects": 12,
+    "typed_evaluation_case_count": 25,
+    "typed_covered_count": 22,
+    "typed_abstain_count": 3,
+    "typed_candidate_coverage": 0.88,
+    "typed_candidate_coverage_wilson_95": [
+      0.700442,
+      0.958332
+    ],
+    "typed_candidate_abstain_rate": 0.12,
+    "typed_candidate_abstain_wilson_95": [
+      0.041668,
+      0.299558
+    ],
+    "hard_negative_error_type_counts": {
+      "event_endpoint_unfulfilled": 4,
+      "item_condition_conflict": 3,
+      "item_holder_conflict": 4,
+      "knowledge_leak": 4,
+      "ledger_missing_field": 5,
+      "ledger_wrong_type": 3,
+      "location_mismatch": 3,
+      "new_ungrounded_fact": 5,
+      "repair_fact_change": 3
+    },
+    "hard_negative_categories_with_at_least_3_cases": [
+      "event_endpoint_unfulfilled",
+      "item_condition_conflict",
+      "item_holder_conflict",
+      "knowledge_leak",
+      "ledger_missing_field",
+      "ledger_wrong_type",
+      "location_mismatch",
+      "new_ungrounded_fact",
+      "repair_fact_change"
+    ]
+  },
+  "baseline_metrics": {
+    "positive_class": "reject",
+    "evaluated_cases": 25,
+    "confusion": {
+      "tp": 12,
+      "fp": 1,
+      "tn": 12,
+      "fn": 0
+    },
+    "metrics": {
+      "precision": 0.923077,
+      "recall": 1.0,
+      "false_positive_rate": 0.076923,
+      "false_negative_rate": 0.0,
+      "accuracy": 0.96
+    },
+    "wilson_95": {
+      "precision": [
+        0.66686,
+        0.98629
+      ],
+      "recall": [
+        0.757506,
+        1.0
+      ],
+      "false_positive_rate": [
+        0.01371,
+        0.33314
+      ],
+      "false_negative_rate": [
+        0.0,
+        0.242494
+      ],
+      "accuracy": [
+        0.804559,
+        0.992904
+      ]
+    }
+  },
+  "typed_candidate_conditional_metrics": {
+    "positive_class": "reject",
+    "evaluated_cases": 22,
+    "confusion": {
+      "tp": 9,
+      "fp": 0,
+      "tn": 13,
+      "fn": 0
+    },
+    "metrics": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "accuracy": 1.0
+    },
+    "wilson_95": {
+      "precision": [
+        0.700855,
+        1.0
+      ],
+      "recall": [
+        0.700855,
+        1.0
+      ],
+      "false_positive_rate": [
+        0.0,
+        0.228095
+      ],
+      "false_negative_rate": [
+        0.0,
+        0.299145
+      ],
+      "accuracy": [
+        0.851345,
+        1.0
+      ]
+    }
+  },
+  "typed_candidate_abstain_aware": {
+    "hard_contradictions_detected": 9,
+    "hard_contradiction_count": 12,
+    "effective_recall_treating_abstain_as_not_detected": 0.75,
+    "wilson_95": [
+      0.467695,
+      0.911058
+    ],
+    "warning": "Conditional confusion excludes abstentions. This effective recall shows the standalone candidate's unresolved hard negatives."
+  },
+  "fallback_preserving_metrics": {
+    "positive_class": "reject",
+    "evaluated_cases": 25,
+    "confusion": {
+      "tp": 12,
+      "fp": 0,
+      "tn": 13,
+      "fn": 0
+    },
+    "metrics": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "accuracy": 1.0
+    },
+    "wilson_95": {
+      "precision": [
+        0.757506,
+        1.0
+      ],
+      "recall": [
+        0.757506,
+        1.0
+      ],
+      "false_positive_rate": [
+        0.0,
+        0.228095
+      ],
+      "false_negative_rate": [
+        0.0,
+        0.242494
+      ],
+      "accuracy": [
+        0.866808,
+        1.0
+      ]
+    }
+  },
+  "repair_fact_change": {
+    "case_count": 3,
+    "candidate_reject_count": 3
+  },
+  "probable_false_positives_reduced": 1,
+  "cases": [
+    {
+      "fixture_id": "phase9-hn-location-outer-fort",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "alice ends at 'city_gate_outer', not 'city_gate_inner'",
+          "prose explicitly contradicts location endpoint: 本段结束前：Alice已进入city_gate_inner",
+          "structured verifier reports unmet endpoint: 本段结束前：Alice已进入city_gate_inner"
+        ],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice已进入city_gate_inner",
+            "status": "conflict",
+            "evidence": [
+              "characters.alice.location_id='city_gate_outer'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice已进入city_gate_inner",
+            "status": "conflict",
+            "evidence": [
+              "内城门仍紧闭"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice已进入city_gate_inner",
+            "status": "conflict",
+            "evidence": []
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-location-watchtower",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch",
+        "ledger_missing_field"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "alice ends at 'gate_watchtower', not 'city_gate_inner'",
+          "prose explicitly contradicts location endpoint: 本段结束前：Alice已进入city_gate_inner",
+          "structured verifier reports unmet endpoint: 本段结束前：Alice已进入city_gate_inner",
+          "ledger_conflicts: gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+        ],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice已进入city_gate_inner",
+            "status": "conflict",
+            "evidence": [
+              "characters.alice.location_id='gate_watchtower'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice已进入city_gate_inner",
+            "status": "conflict",
+            "evidence": [
+              "没有越过",
+              "没有越过内门"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice已进入city_gate_inner",
+            "status": "conflict",
+            "evidence": []
+          },
+          {
+            "kind": "ledger_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-location-action-phrase",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch",
+        "ledger_wrong_type"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "abstain",
+        "hard_conflicts": [],
+        "endpoint_checks": [],
+        "ledger_checks": [],
+        "evidence_checks": [],
+        "used_typed_state": false,
+        "used_canonical_facts": false,
+        "abstain_reason": "declared ledger cannot be typed"
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-holder-reverts",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "map holder ['alice'] does not include ['bob']",
+          "structured verifier reports unmet endpoint: 本段结束前：map由bob持有",
+          "prior_state_conflicts: 正文明确交给Bob，ledger却仍声明Alice持有。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_holder",
+            "requirement": "本段结束前：map由bob持有",
+            "status": "conflict",
+            "evidence": [
+              "items.map.holder_character_ids=['alice']",
+              "required_holders=['bob']"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map由bob持有",
+            "status": "conflict",
+            "evidence": []
+          },
+          {
+            "kind": "prior_state_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-holder-wrong-type",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict",
+        "ledger_wrong_type",
+        "ledger_missing_field"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "abstain",
+        "hard_conflicts": [],
+        "endpoint_checks": [],
+        "ledger_checks": [],
+        "evidence_checks": [],
+        "used_typed_state": false,
+        "used_canonical_facts": false,
+        "abstain_reason": "declared ledger cannot be typed"
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-holder-and-knowledge-missing",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict",
+        "ledger_missing_field",
+        "knowledge_leak"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "map holder [] does not include ['bob']",
+          "structured verifier reports unmet endpoint: 本段结束前：map由bob持有",
+          "prior_state_conflicts: holder遗漏，且Alice说出无合法来源的暗号。",
+          "ledger_conflicts: holder遗漏，且Alice说出无合法来源的暗号。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_holder",
+            "requirement": "本段结束前：map由bob持有",
+            "status": "conflict",
+            "evidence": [
+              "items.map.holder_character_ids=[]",
+              "required_holders=['bob']"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map由bob持有",
+            "status": "conflict",
+            "evidence": []
+          },
+          {
+            "kind": "prior_state_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ]
+          },
+          {
+            "kind": "ledger_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-condition-restored",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_condition_conflict",
+        "new_ungrounded_fact"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "map condition 'intact' is not 'damaged'",
+          "structured verifier reports unmet endpoint: 本段结束前：map仍为damaged",
+          "entity_grounding_conflicts: 没有修复事件，map却从damaged恢复为intact。",
+          "prior_state_conflicts: 没有修复事件，map却从damaged恢复为intact。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_condition",
+            "requirement": "本段结束前：map仍为damaged",
+            "status": "conflict",
+            "evidence": [
+              "items.map.condition='intact'",
+              "required='damaged'"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map仍为damaged",
+            "status": "conflict",
+            "evidence": []
+          },
+          {
+            "kind": "entity_grounding_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ]
+          },
+          {
+            "kind": "prior_state_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-repair-restores-item",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_condition_conflict",
+        "new_ungrounded_fact"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "ledger_conflicts: 初稿状态格式需要复核。",
+          "repair fact change: repair把damaged/0改成intact/1，改变既成事实。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_condition",
+            "requirement": "本段结束前：map仍为damaged且quantity为0",
+            "status": "pass",
+            "evidence": [
+              "items.map.condition='damaged'",
+              "required='damaged'"
+            ]
+          },
+          {
+            "kind": "typed_item_quantity",
+            "requirement": "本段结束前：map仍为damaged且quantity为0",
+            "status": "pass",
+            "evidence": [
+              "items.map.quantity=0",
+              "required=0.0"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map仍为damaged且quantity为0",
+            "status": "pass",
+            "evidence": [
+              "最后一片地图也被酸雨泡烂",
+              "items.map.condition",
+              "items.map.quantity"
+            ]
+          },
+          {
+            "kind": "ledger_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "初稿状态格式需要复核。"
+            ]
+          },
+          {
+            "kind": "repair_fact_change",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ]
+          },
+          {
+            "kind": "repair_fact_change",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-knowledge-leak",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "knowledge_leak",
+        "new_ungrounded_fact",
+        "ledger_wrong_type",
+        "ledger_missing_field"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "abstain",
+        "hard_conflicts": [],
+        "endpoint_checks": [],
+        "ledger_checks": [],
+        "evidence_checks": [],
+        "used_typed_state": false,
+        "used_canonical_facts": false,
+        "abstain_reason": "declared ledger cannot be typed"
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-cost-omitted-secret",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "ledger_missing_field",
+        "knowledge_leak",
+        "new_ungrounded_fact"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "required narrative cost is explicitly absent",
+          "structured verifier reports unmet endpoint: 本段结束前：谈判产生一项正文明写的新代价",
+          "entity_grounding_conflicts: 正文没有新代价，口令知识也没有来源。",
+          "prior_state_conflicts: 正文没有新代价，口令知识也没有来源。",
+          "ledger_conflicts: 正文没有新代价，口令知识也没有来源。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_required_cost",
+            "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+            "status": "conflict",
+            "evidence": [
+              "prose explicitly says no cost"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+            "status": "conflict",
+            "evidence": []
+          },
+          {
+            "kind": "entity_grounding_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "正文没有新代价，口令知识也没有来源。"
+            ]
+          },
+          {
+            "kind": "prior_state_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "正文没有新代价，口令知识也没有来源。"
+            ]
+          },
+          {
+            "kind": "ledger_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "正文没有新代价，口令知识也没有来源。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-repair-deletes-handoff",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_holder_conflict"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "ledger_conflicts: 初稿交付已完成，仅要求复核ledger格式。",
+          "repair fact change: repair删除交付并把holder改回Alice。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_holder",
+            "requirement": "本段结束前：map由bob持有",
+            "status": "pass",
+            "evidence": [
+              "items.map.holder_character_ids=['bob']",
+              "required_holders=['bob']"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map由bob持有",
+            "status": "pass",
+            "evidence": [
+              "Bob接过地图，锁进铁匣",
+              "items.map.holder"
+            ]
+          },
+          {
+            "kind": "ledger_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "初稿交付已完成，仅要求复核ledger格式。"
+            ]
+          },
+          {
+            "kind": "repair_fact_change",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "repair删除交付并把holder改回Alice。"
+            ]
+          },
+          {
+            "kind": "repair_fact_change",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "repair删除交付并把holder改回Alice。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-hn-repair-invents-sister",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_condition_conflict",
+        "knowledge_leak",
+        "new_ungrounded_fact"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "reject",
+        "hard_conflicts": [
+          "ledger_conflicts: 初稿事实完整，仅要求局部格式复核。",
+          "repair fact change: repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+        ],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_active_injury",
+            "requirement": "本段结束前：Alice伤势仍active且map仍damaged",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.injuries=[{'injury_id': 'injury_arm', 'body_part': 'arm', 'severity': 'moderate', 'status': 'active', 'source_event_id': 'evt_map_gate'}]"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice伤势仍active且map仍damaged",
+            "status": "pass",
+            "evidence": [
+              "手臂伤口仍在流血",
+              "破损地图",
+              "characters.alice.injuries",
+              "items.map.condition"
+            ]
+          },
+          {
+            "kind": "ledger_conflicts",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "初稿事实完整，仅要求局部格式复核。"
+            ]
+          },
+          {
+            "kind": "repair_fact_change",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ]
+          },
+          {
+            "kind": "repair_fact_change",
+            "requirement": "",
+            "status": "conflict",
+            "evidence": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "reject",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-group-crossing",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "跨过内门"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice架着Bob跨过内门",
+              "characters.alice.location",
+              "characters.bob.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-injury-omitted",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice守在门内",
+              "没有离开原位",
+              "characters.alice.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-item-omitted",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "城门内侧",
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice站在城门内侧检查脚印",
+              "characters.alice.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-character-lie",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "她仍站在门内",
+              "characters.alice.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-rumor-king",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "仍在门内",
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "两人仍在门内",
+              "characters.alice.location",
+              "characters.bob.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-synonym-fall-inside",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "baseline_decision": "reject",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "跌进门内",
+              "门线留在",
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice和Bob一起跌进门内",
+              "characters.alice.location",
+              "characters.bob.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-support-separated",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "跨过内门"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：两人已进入city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice扶住Bob的肩，两个人一同跨过内门",
+              "characters.alice.location",
+              "characters.bob.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-compound-endpoint",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_holder",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "items.map.holder_character_ids=['alice']",
+              "required_holders=['alice']"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "跨过出口"
+            ]
+          },
+          {
+            "kind": "prose_exit_closed",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "锁死"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "Alice夹紧地图，架着Bob跨过出口",
+              "铁门随即锁死",
+              "items.map.holder",
+              "characters.alice.location",
+              "characters.bob.location",
+              "time_marker"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-injury-omitted-second",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "门内的三盏巡逻灯",
+              "characters.alice.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-item-condition-omitted",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "unknown",
+            "evidence": []
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：两人仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice在旁边望风",
+              "Bob检查门轴",
+              "characters.alice.location",
+              "characters.bob.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-lie-holder-visible",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_holder",
+            "requirement": "本段结束前：map仍由Alice持有",
+            "status": "pass",
+            "evidence": [
+              "items.map.holder_character_ids=['alice']",
+              "required_holders=['alice']"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map仍由Alice持有",
+            "status": "pass",
+            "evidence": [
+              "手却一直压着装地图的内袋",
+              "没有交给任何人",
+              "items.map.holder"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-rumor-unconfirmed",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "门内"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：Alice仍在city_gate_inner",
+            "status": "pass",
+            "evidence": [
+              "Alice仍留在门内",
+              "characters.alice.location"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    },
+    {
+      "fixture_id": "phase9-fp-compound-paraphrase",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "baseline_decision": "accept",
+      "typed_candidate": {
+        "schema_version": "state-guard-typed-candidate-v1",
+        "decision": "accept",
+        "hard_conflicts": [],
+        "endpoint_checks": [
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "characters.alice.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          },
+          {
+            "kind": "typed_location_endpoint",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "characters.bob.location_id='city_gate_inner'",
+              "required='city_gate_inner'"
+            ]
+          }
+        ],
+        "ledger_checks": [
+          {
+            "kind": "typed_item_holder",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "items.map.holder_character_ids=['alice']",
+              "required_holders=['alice']"
+            ]
+          }
+        ],
+        "evidence_checks": [
+          {
+            "kind": "prose_location_evidence",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "滚过门线"
+            ]
+          },
+          {
+            "kind": "prose_exit_closed",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "落栓",
+              "封住"
+            ]
+          },
+          {
+            "kind": "verifier_event_check",
+            "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            "status": "pass",
+            "evidence": [
+              "Alice把地图按回内袋。她拖着Bob滚过门线",
+              "落栓封住了出口",
+              "items.map.holder",
+              "characters.alice.location",
+              "characters.bob.location",
+              "time_marker"
+            ]
+          }
+        ],
+        "used_typed_state": true,
+        "used_canonical_facts": false,
+        "abstain_reason": ""
+      },
+      "fallback_preserving_decision": "accept",
+      "trace_schema_version": "state-guard-trace-v1",
+      "trace_payload_complete": true
+    }
+  ],
+  "behavior_gate": {
+    "sample_gates": {
+      "decisive_cases": {
+        "value": 59,
+        "minimum": 50,
+        "passed": true
+      },
+      "signal_backed_rejects": {
+        "value": 12,
+        "minimum": 12,
+        "passed": true
+      },
+      "signal_backed_accepts": {
+        "value": 33,
+        "minimum": 20,
+        "passed": true
+      },
+      "typed_candidate_coverage": {
+        "value": 0.88,
+        "minimum": 0.7,
+        "passed": true
+      },
+      "hard_negative_categories": {
+        "value": 9,
+        "minimum": 6,
+        "passed": true
+      },
+      "independently_reviewed_decisive_cases": {
+        "value": 0,
+        "minimum": 20,
+        "passed": false
+      }
+    },
+    "quality_gates": {
+      "fallback_hard_contradiction_recall_not_below_baseline": true,
+      "fallback_hard_contradiction_precision_at_least_0_90": true,
+      "fallback_false_positive_rate_not_above_baseline": true,
+      "typed_abstain_rate_at_most_0_30": true,
+      "repair_fact_change_preservation_not_below_baseline": true
+    },
+    "decision": "BLOCK_BEHAVIOR_CANDIDATE",
+    "behavior_change_allowed": false,
+    "reasons": [
+      "independently_reviewed_decisive_cases gate failed: 0 < 20"
+    ],
+    "next_iterations_blocked": [
+      23,
+      24,
+      25
+    ]
+  },
+  "cost": {
+    "fixture_transport_calls": 0,
+    "provider_calls": 0,
+    "model_tokens": null,
+    "judge_tokens": null
+  },
+  "report_sha256": "1c9ed43b18dc2cadcf1c406bd0e82db8f8464daf3809b6bbb1b77209210992d7"
+}
