@@ -98,7 +98,12 @@ def stable_hash(payload: Any) -> str:
 
 
 def file_hash(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    data = path.read_bytes()
+    if path.suffix.casefold() in {".md", ".csv", ".json", ".txt"}:
+        # Git may materialize text as CRLF on Windows.  Review-package integrity is
+        # content based, so normalize line endings before hashing on every platform.
+        data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:

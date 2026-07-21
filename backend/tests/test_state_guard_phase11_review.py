@@ -17,6 +17,7 @@ from scripts.state_guard_review_workflow import (
     build_review_tasks,
     create_task_checkpoint,
     export_human_review_package,
+    file_hash,
     freeze_file,
     import_human_review,
     load_blind_packet,
@@ -450,6 +451,14 @@ def test_human_markdown_csv_and_json_do_not_leak_labels(tmp_path) -> None:
             "phase9-fp-",
         )
     )
+
+
+def test_human_package_text_hash_is_crlf_portable(tmp_path) -> None:
+    path = tmp_path / "instructions.md"
+    path.write_bytes("第一行\n第二行\n".encode("utf-8"))
+    lf_hash = file_hash(path)
+    path.write_bytes("第一行\r\n第二行\r\n".encode("utf-8"))
+    assert file_hash(path) == lf_hash
 
 
 def test_filled_human_csv_import_validates_complete_coverage(tmp_path) -> None:

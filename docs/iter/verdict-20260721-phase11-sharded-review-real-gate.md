@@ -189,7 +189,7 @@ Narrator context or treat a missing sidecar as an error.
 - `scripts/export_state_guard_human_review.py` — Markdown/CSV/JSON package export.
 - `scripts/import_state_guard_human_review.py` — human import and partial merge CLI.
 - `scripts/freeze_state_guard_gold.py` — disagreement export, Gate and immutable gold.
-- `backend/tests/test_state_guard_phase11_review.py` — 23 Phase 11 regression cases.
+- `backend/tests/test_state_guard_phase11_review.py` — 24 Phase 11 regression cases.
 
 ### Review artifacts
 
@@ -295,7 +295,7 @@ npm run build
 Pop-Location
 ```
 
-Observed: Ruff passed; focused tests `36 passed`; backend `1342 passed` with one
+Observed: Ruff passed; focused tests `37 passed`; backend `1343 passed` with one
 existing Starlette/httpx deprecation warning; Vite 6.4.1 production build passed.
 
 ## 12. Final conclusion

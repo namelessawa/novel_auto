@@ -42,8 +42,8 @@ constitute novel-quality improvement.
 ## Validation
 
 - Ruff: all Phase 11 code and tests passed.
-- Focused Phase 10/11 adjudication tests: `36 passed`.
-- Full backend: `1342 passed`, with one existing Starlette/httpx deprecation
+- Focused Phase 10/11 adjudication tests: `37 passed`.
+- Full backend: `1343 passed`, with one existing Starlette/httpx deprecation
   warning.
 - Frontend: Vite 6.4.1 production build passed; 55 modules transformed.
 - Artifact scan: no expected label, fixture ID, provider URL, API key,
