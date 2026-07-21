@@ -2,11 +2,11 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 18-21 ACCEPTED; ITERATION 22 NEXT`
+- Status: `ITERATIONS 18-22 ACCEPTED; BEHAVIOR GATE BLOCKED`
 - Starting HEAD: `a66eb80c7e413439dddf23eea48180059a4cccd4`
 - Production behavior changes accepted: none
 - Real LLM calls: 0
-- Current gate: offline typed candidate coverage and quality
+- Current gate: `BLOCK_BEHAVIOR_CANDIDATE` — independent review 0/20
 - StateGuard behavior candidate: blocked
 - CanonicalFact consumer: blocked and disabled
 
@@ -98,3 +98,23 @@ Updated: 2026-07-21
 - Independent reviews remain 0. No review result or agreement metric was invented.
 - Tests: 7 focused Phase 9 tests passed.
 - Cost: 0 provider calls, model tokens N/A, reviewer tokens N/A.
+
+## Iteration 22 result
+
+- Candidate: `d44d636`.
+- Decision: `ACCEPT_MEASUREMENT`.
+- Offline typed candidate only; production Narrator, StateGuard and Orchestrator do
+  not import it. CanonicalFact is unused.
+- Combined dataset: 98 total, 59 decisive, 39 ambiguous (39.8%); signal-backed
+  decisive accepts/rejects: 33 / 12.
+- Typed coverage: 22/25 = 88%; abstain: 3/25 = 12%.
+- Covered precision/recall/FPR/FNR: 1.0 / 1.0 / 0.0 / 0.0.
+- Standalone abstain-aware hard-error recall: 9/12 = 0.75. Abstentions are three
+  invalid typed-ledger cases and are never implicit accepts.
+- Baseline-preserving fallback metrics: precision/recall 1.0/1.0, FPR/FNR 0/0;
+  no hard negative is accepted and one captured probable false positive is reduced.
+- Repair fact-change cases rejected: 3/3.
+- All sample/coverage/quality gates pass except independent review: 0/20.
+- Behavior gate: `BLOCK_BEHAVIOR_CANDIDATE`; Iterations 23–25 are blocked.
+- Tests: 15 focused Phase 9 tests passed.
+- Cost: 0 provider calls, model/judge tokens N/A.
