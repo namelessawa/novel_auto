@@ -2,7 +2,7 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 18-22 ACCEPTED; BEHAVIOR GATE BLOCKED`
+- Status: `PHASE9 CONDITIONAL PASS; BEHAVIOR GATE BLOCKED`
 - Starting HEAD: `a66eb80c7e413439dddf23eea48180059a4cccd4`
 - Production behavior changes accepted: none
 - Real LLM calls: 0
@@ -118,3 +118,13 @@ Updated: 2026-07-21
 - Behavior gate: `BLOCK_BEHAVIOR_CANDIDATE`; Iterations 23–25 are blocked.
 - Tests: 15 focused Phase 9 tests passed.
 - Cost: 0 provider calls, model/judge tokens N/A.
+
+## Final validation
+
+- Evidence HEAD before verdict: `26c97accaa21a270ec89e0e258f250b63f50fb4a`.
+- Backend: `1309 passed, 1 existing warning`.
+- Frontend: Vite production build passed, 55 modules transformed.
+- Provider/model calls: 0; fixture model tokens N/A.
+- Final conclusion: `CONDITIONAL PASS`.
+- Stop reason: independently reviewed decisive cases remain 0/20; Iterations
+  23–25 remain blocked and were not implemented.
