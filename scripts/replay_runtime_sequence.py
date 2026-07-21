@@ -537,6 +537,9 @@ def _stable_evidence_payload(report: dict[str, Any]) -> dict[str, Any]:
                     "event_ids",
                     "events_generated",
                     "agents_called",
+                    "narrator_should_narrate",
+                    "narrator_skip_reason",
+                    "narrator_consistency_flags",
                     "state_guard_reported_safe",
                     "deterministic_gate_passed",
                     "final_accepted",
@@ -743,6 +746,16 @@ async def run_replay_async(
                         "narrator_produced": any(
                             call["agent_id"] == "narrator" for call in router.calls
                         ),
+                        "narrator_should_narrate": bool(
+                            narrator_out and narrator_out.should_narrate
+                        ),
+                        "narrator_skip_reason": (
+                            narrator_out.skip_reason if narrator_out else ""
+                        ),
+                        "narrator_consistency_flags": list(
+                            narrator_out.consistency_flags
+                            if narrator_out else []
+                        ),
                         "state_guard_reported_safe": bool(
                             initial_guard.get("reported_safe")
                         ),
@@ -938,12 +951,12 @@ async def run_guard_replay_suite_async(
         "actual_rejects": actual_rejects,
         "signal_backed_accepts": sum(
             case.expected_final_decision == "accept"
-            and report["expectations"]["acceptance_passed"]
+            and bool(report["ticks"][-1].get("guard_trace"))
             for case, report in zip(suite.cases, reports)
         ),
         "signal_backed_rejects": sum(
             case.expected_final_decision == "reject"
-            and report["expectations"]["acceptance_passed"]
+            and bool(report["ticks"][-1].get("guard_trace"))
             for case, report in zip(suite.cases, reports)
         ),
         "critic_exercised_cases": sum(

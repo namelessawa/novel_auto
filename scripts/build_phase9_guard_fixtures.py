@@ -98,6 +98,37 @@ def _typed_audit(state: dict) -> dict:
     }
 
 
+def _legacy_view(state: dict) -> dict:
+    characters = {}
+    for character_id, row in (state.get("characters") or {}).items():
+        characters[character_id] = {
+            "location": row.get("location_id"),
+            "injuries": [
+                injury.get("injury_id")
+                for injury in (row.get("injuries") or [])
+                if injury.get("status") == "active"
+            ],
+            "status": row.get("alive_status", "unknown"),
+            "supporting_character_ids": row.get(
+                "supporting_character_ids", []
+            ),
+        }
+    items = {}
+    for item_id, row in (state.get("items") or {}).items():
+        holders = row.get("holder_character_ids") or []
+        items[item_id] = {
+            "holder": holders[0] if len(holders) == 1 else None,
+            "quantity": row.get("quantity"),
+            "condition": row.get("condition", "unknown"),
+        }
+    return {
+        "characters": characters,
+        "items": items,
+        "newly_known_fact_ids": state.get("newly_known_fact_ids", {}),
+        "time_marker": state.get("time_marker", ""),
+    }
+
+
 def _narrator(text: str, state: dict) -> dict:
     return {
         "content": {
@@ -167,6 +198,34 @@ def _repair(text: str, state: dict, message: str) -> dict:
             "narrative_text": text,
             "continuity_state": state,
             "repairs": [message],
+        }
+    }
+
+
+def _safe_verdict(
+    requirement: str,
+    *,
+    evidence: list[str],
+    paths: list[str],
+    reason: str,
+) -> dict:
+    return {
+        "content": {
+            "safe": True,
+            "event_checks": [{
+                "event_id": "evt_map_gate",
+                "requirement": requirement,
+                "met": True,
+                "prose_evidence": evidence,
+                "ledger_evidence_paths": paths,
+            }],
+            "event_fulfillment_conflicts": [],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": reason,
         }
     }
 
@@ -435,6 +494,258 @@ def build_hard_negative_suite() -> dict:
     }
 
 
+def _accept_case(
+    *,
+    case_id: str,
+    title: str,
+    previous: dict,
+    narrative: str,
+    declared: dict,
+    requirement: str,
+    evidence: list[str],
+    paths: list[str],
+    error_types: list[str],
+    reason: str,
+) -> dict:
+    verdict = _safe_verdict(
+        requirement,
+        evidence=evidence,
+        paths=paths,
+        reason=reason,
+    )
+    return {
+        "case_id": case_id,
+        "title": title,
+        "previous_continuity_state": previous,
+        "previous_continuity_audit": _typed_audit(previous),
+        "narrator_response": _narrator(narrative, declared),
+        "critic_responses": {},
+        # Three verifier and two repair payloads make the fixture complete even
+        # when the existing deterministic layer overrides reported_safe and enters
+        # its bounded repair/reverify path (the probable-FP condition under study).
+        "verifier_responses": [deepcopy(verdict) for _ in range(3)],
+        "repair_responses": [
+            _repair(
+                narrative,
+                _legacy_view(declared),
+                "保持已由typed/prose证明的原终态",
+            ),
+            _repair(
+                narrative,
+                _legacy_view(declared),
+                "第二次保持原终态供独立复验",
+            ),
+        ],
+        "required_end_states": [requirement],
+        "expected_final_decision": "accept",
+        "expected_error_types": error_types,
+        "force_critic": False,
+    }
+
+
+def build_probable_fp_suite() -> dict:
+    outside = _typed_state()
+    inside = _typed_state(
+        alice_location="city_gate_inner",
+        bob_location="city_gate_inner",
+    )
+    injured_inside = _typed_state(
+        alice_location="city_gate_inner",
+        bob_location="city_gate_inner",
+        alice_injuries=[{
+            "injury_id": "injury_arm",
+            "body_part": "arm",
+            "severity": "moderate",
+            "status": "active",
+            "source_event_id": "evt_map_gate",
+        }],
+    )
+    cases = [
+        _accept_case(
+            case_id="phase9-fp-group-crossing",
+            title="共同主语覆盖两人移动",
+            previous=outside,
+            narrative="Alice架着Bob跨过内门，铁门在他们身后落下。",
+            declared=inside,
+            requirement="本段结束前：两人已进入city_gate_inner",
+            evidence=["Alice架着Bob跨过内门"],
+            paths=["characters.alice.location", "characters.bob.location"],
+            error_types=["evidence_extraction_failure"],
+            reason="共同动作与typed ledger同时证明两人进入。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-injury-omitted",
+            title="伤势未提及但状态继续保留",
+            previous=injured_inside,
+            narrative="Alice守在门内观察巡逻灯，始终没有离开原位。",
+            declared=injured_inside,
+            requirement="本段结束前：Alice仍在city_gate_inner",
+            evidence=["Alice守在门内", "没有离开原位"],
+            paths=["characters.alice.location"],
+            error_types=["reasonable_omission"],
+            reason="正文没有痊愈事件，ledger保留既有伤势。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-item-omitted",
+            title="物品未重提但holder不变",
+            previous=inside,
+            narrative="Alice站在城门内侧检查脚印，没有触碰或交付地图。",
+            declared=inside,
+            requirement="本段结束前：Alice仍在city_gate_inner",
+            evidence=["Alice站在城门内侧检查脚印"],
+            paths=["characters.alice.location"],
+            error_types=["reasonable_omission"],
+            reason="没有物品变化事件，map继续由Alice持有。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-character-lie",
+            title="角色撒谎不覆盖objective holder",
+            previous=inside,
+            narrative="Alice按住藏着地图的内袋，却对守门人说：‘地图不在我这里。’她仍站在门内。",
+            declared=inside,
+            requirement="本段结束前：Alice仍在city_gate_inner",
+            evidence=["她仍站在门内"],
+            paths=["characters.alice.location"],
+            error_types=["reasonable_omission"],
+            reason="对白是可见谎言，ledger没有把它升级为objective事实。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-rumor-king",
+            title="传闻不升级为客观死亡事实",
+            previous=inside,
+            narrative="Bob说他听说国王已经死了；Alice只把这句话当作未经确认的传闻。两人仍在门内。",
+            declared=inside,
+            requirement="本段结束前：两人仍在city_gate_inner",
+            evidence=["两人仍在门内"],
+            paths=["characters.alice.location", "characters.bob.location"],
+            error_types=["reasonable_omission"],
+            reason="正文明确是传闻，typed ledger没有新增objective death fact。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-synonym-fall-inside",
+            title="同义动作跌进门内",
+            previous=outside,
+            narrative="爆风追上来时，Alice和Bob一起跌进门内，门线留在两人脚后。",
+            declared=inside,
+            requirement="本段结束前：两人已进入city_gate_inner",
+            evidence=["Alice和Bob一起跌进门内"],
+            paths=["characters.alice.location", "characters.bob.location"],
+            error_types=["evidence_extraction_failure"],
+            reason="跌进门内是明确完成，不需要逐字重复‘进入’。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-support-separated",
+            title="supporting relation不污染地点",
+            previous=outside,
+            narrative="Alice扶住Bob的肩，两个人一同跨过内门。",
+            declared={
+                **inside,
+                "characters": {
+                    **inside["characters"],
+                    "bob": {
+                        **inside["characters"]["bob"],
+                        "supporting_character_ids": ["alice"],
+                    },
+                },
+            },
+            requirement="本段结束前：两人已进入city_gate_inner",
+            evidence=["Alice扶住Bob的肩，两个人一同跨过内门"],
+            paths=["characters.alice.location", "characters.bob.location"],
+            error_types=["evidence_extraction_failure"],
+            reason="支撑关系独立存储，两人的location都在门内。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-compound-endpoint",
+            title="复合终态由多处证据联合证明",
+            previous=outside,
+            narrative="Alice夹紧地图，架着Bob跨过出口。铁门随即锁死在他们身后。",
+            declared={**inside, "time_marker": "gate_locked"},
+            requirement="本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            evidence=["Alice夹紧地图，架着Bob跨过出口", "铁门随即锁死"],
+            paths=[
+                "items.map.holder",
+                "characters.alice.location",
+                "characters.bob.location",
+                "time_marker",
+            ],
+            error_types=["evidence_extraction_failure"],
+            reason="复合终态由三处正文证据和四个ledger路径共同证明。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-injury-omitted-second",
+            title="持续伤势无需每段重述",
+            previous=injured_inside,
+            narrative="Alice数完门内的三盏巡逻灯，又回到原来的掩体。",
+            declared=injured_inside,
+            requirement="本段结束前：Alice仍在city_gate_inner",
+            evidence=["门内的三盏巡逻灯"],
+            paths=["characters.alice.location"],
+            error_types=["reasonable_omission"],
+            reason="伤势没有被治愈或改变，完整保留即可。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-item-condition-omitted",
+            title="损坏物品未出现但状态不消失",
+            previous=inside,
+            narrative="Bob检查内门门轴，Alice在旁边望风；本段没有触碰地图。",
+            declared=inside,
+            requirement="本段结束前：两人仍在city_gate_inner",
+            evidence=["Alice在旁边望风", "Bob检查门轴"],
+            paths=["characters.alice.location", "characters.bob.location"],
+            error_types=["reasonable_omission"],
+            reason="未出现物品事件，holder与condition沿用前态。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-lie-holder-visible",
+            title="谎言与可见持有动作并存",
+            previous=inside,
+            narrative="Alice嘴上说没有地图，手却一直压着装地图的内袋；她没有交给任何人。",
+            declared=inside,
+            requirement="本段结束前：map仍由Alice持有",
+            evidence=["手却一直压着装地图的内袋", "没有交给任何人"],
+            paths=["items.map.holder"],
+            error_types=["evidence_extraction_failure"],
+            reason="可见动作和ledger证明holder，对白不能覆盖objective fact。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-rumor-unconfirmed",
+            title="第二个传闻保持非客观",
+            previous=inside,
+            narrative="守门人转述‘北桥已经塌了’，又承认自己没有亲眼看见。Alice仍留在门内。",
+            declared=inside,
+            requirement="本段结束前：Alice仍在city_gate_inner",
+            evidence=["Alice仍留在门内"],
+            paths=["characters.alice.location"],
+            error_types=["reasonable_omission"],
+            reason="未经确认的转述没有进入objective typed state。",
+        ),
+        _accept_case(
+            case_id="phase9-fp-compound-paraphrase",
+            title="连续句完成复合终态",
+            previous=outside,
+            narrative="Alice把地图按回内袋。她拖着Bob滚过门线。下一秒，落栓封住了出口。",
+            declared={**inside, "time_marker": "gate_locked"},
+            requirement="本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死",
+            evidence=["Alice把地图按回内袋。她拖着Bob滚过门线", "落栓封住了出口"],
+            paths=[
+                "items.map.holder",
+                "characters.alice.location",
+                "characters.bob.location",
+                "time_marker",
+            ],
+            error_types=["evidence_extraction_failure"],
+            reason="相邻连续句和typed ledger共同证明全部终态。",
+        ),
+    ]
+    return {
+        "guard_replay_suite_version": "1",
+        "suite_id": "phase9-probable-fp-v1",
+        "base_fixture": "mock_full_runtime_v1.json",
+        "response_provenance": "synthetic",
+        "cases": cases,
+    }
+
+
 def _atomic_write(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_path = tempfile.mkstemp(
@@ -457,23 +768,27 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Build Phase 9 complete synthetic Guard replay fixtures."
     )
-    parser.add_argument("--hard-negative-out", required=True)
+    parser.add_argument("--hard-negative-out")
+    parser.add_argument("--probable-fp-out")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    output = Path(args.hard_negative_out).resolve()
-    suite = build_hard_negative_suite()
-    _atomic_write(output, suite)
-    print(json.dumps({
-        "out": str(output),
-        "cases": len(suite["cases"]),
-        "expected_rejects": sum(
-            case["expected_final_decision"] == "reject"
-            for case in suite["cases"]
-        ),
-    }, ensure_ascii=False))
+    if not args.hard_negative_out and not args.probable_fp_out:
+        raise SystemExit("provide --hard-negative-out and/or --probable-fp-out")
+    outputs = []
+    if args.hard_negative_out:
+        output = Path(args.hard_negative_out).resolve()
+        suite = build_hard_negative_suite()
+        _atomic_write(output, suite)
+        outputs.append({"out": str(output), "cases": len(suite["cases"])})
+    if args.probable_fp_out:
+        output = Path(args.probable_fp_out).resolve()
+        suite = build_probable_fp_suite()
+        _atomic_write(output, suite)
+        outputs.append({"out": str(output), "cases": len(suite["cases"])})
+    print(json.dumps({"outputs": outputs}, ensure_ascii=False))
     return 0
 
 
