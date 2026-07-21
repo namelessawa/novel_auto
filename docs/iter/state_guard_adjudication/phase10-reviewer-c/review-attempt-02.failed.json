@@ -1,0 +1,35 @@
+{
+  "schema_version": "state-guard-adjudication-review-failure-v1",
+  "status": "reviewer_budget_exceeded_pre_checkpoint",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase10-reviewer_arkglm_01",
+  "reviewer_type": "independent_model",
+  "model_family": "zhipu-glm",
+  "model_name": "glm-5.2",
+  "provider_name": "ark-judge",
+  "review_started_at": null,
+  "review_finished_at": null,
+  "prompt_hash": "9ea45679d5d29a5ad5a19fd3c2ae2aa06ee41fb9f2467fe9c99d7c510ec8209a",
+  "temperature": 0.0,
+  "thinking_disabled": true,
+  "blind_key_accessed": false,
+  "review_input_files": [
+    "packet.json"
+  ],
+  "usage": {
+    "provider_calls": 1,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "known_total_token_lower_bound_exclusive": 5400,
+    "estimated_input_tokens": 4477,
+    "max_output_tokens": 900,
+    "conservative_total_token_upper_bound": 11815,
+    "budget_tokens": 5400
+  },
+  "raw_response_sha256": null,
+  "raw_response": null,
+  "validation_error": "Provider-reported usage exceeded the per-reviewer budget.",
+  "evidence_limitation": "This response hit the budget check immediately before budget-failure checkpoint capture was added, so exact usage and raw output are unavailable. It does not count as a completed reviewer."
+}

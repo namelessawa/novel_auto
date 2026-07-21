@@ -1,0 +1,30 @@
+{
+  "schema_version": "state-guard-adjudication-review-failure-v1",
+  "status": "invalid_reviewer_response",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase10-reviewer_dsv4_01",
+  "reviewer_type": "independent_model",
+  "model_family": "deepseek",
+  "model_name": "deepseek-v4-pro",
+  "provider_name": "custom",
+  "review_started_at": "2026-07-21T13:07:08.308363Z",
+  "review_finished_at": "2026-07-21T13:07:42.543987Z",
+  "prompt_hash": "e818ffce5d9b07552b3f513ebb931a85d83277a64aace1429b18773ea5354a6d",
+  "temperature": 0.0,
+  "blind_key_accessed": false,
+  "review_input_files": [
+    "packet.json"
+  ],
+  "usage": {
+    "provider_calls": 1,
+    "input_tokens": 6562,
+    "output_tokens": 1801,
+    "total_tokens": 8363,
+    "estimated_input_tokens": 7079
+  },
+  "raw_response_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "raw_response": "",
+  "validation_error": "reviewer did not return a JSON object",
+  "failure_sha256": "288a4974512c2b755057a12e57f86e6c90e6046e228e3d993572862f57fa83e1"
+}

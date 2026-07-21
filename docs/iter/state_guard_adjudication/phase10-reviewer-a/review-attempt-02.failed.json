@@ -1,0 +1,30 @@
+{
+  "schema_version": "state-guard-adjudication-review-failure-v1",
+  "status": "invalid_reviewer_response",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase10-reviewer_glm_01",
+  "reviewer_type": "independent_model",
+  "model_family": "zhipu-glm",
+  "model_name": "glm-5.2",
+  "provider_name": "coding-compatible",
+  "review_started_at": "2026-07-21T13:03:29.055488Z",
+  "review_finished_at": "2026-07-21T13:04:13.260649Z",
+  "prompt_hash": "e818ffce5d9b07552b3f513ebb931a85d83277a64aace1429b18773ea5354a6d",
+  "temperature": 0.0,
+  "blind_key_accessed": false,
+  "review_input_files": [
+    "packet.json"
+  ],
+  "usage": {
+    "provider_calls": 1,
+    "input_tokens": 5892,
+    "output_tokens": 3500,
+    "total_tokens": 9392,
+    "estimated_input_tokens": 7079
+  },
+  "raw_response_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "raw_response": "",
+  "validation_error": "reviewer did not return a JSON object",
+  "failure_sha256": "61a702a022a304fcef4410d7451b4adf6c3a7a1867f3c5de0de9d4f734f61a72"
+}

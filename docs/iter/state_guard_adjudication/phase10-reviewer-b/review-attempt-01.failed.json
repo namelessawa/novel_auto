@@ -1,0 +1,33 @@
+{
+  "schema_version": "state-guard-adjudication-review-failure-v1",
+  "status": "provider_request_failed_pre_checkpoint",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase10-reviewer_mimo_01",
+  "reviewer_type": "independent_model",
+  "model_family": "xiaomi-mimo",
+  "model_name": "mimo-v2.5-pro",
+  "provider_name": "mimo",
+  "review_started_at": null,
+  "review_finished_at": null,
+  "prompt_hash": "e818ffce5d9b07552b3f513ebb931a85d83277a64aace1429b18773ea5354a6d",
+  "temperature": 0.0,
+  "blind_key_accessed": false,
+  "review_input_files": [
+    "packet.json"
+  ],
+  "usage": {
+    "provider_requests": 1,
+    "model_calls": 0,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "estimated_input_tokens": 7069
+  },
+  "raw_response_sha256": null,
+  "raw_response": null,
+  "error_type": "AuthenticationError",
+  "http_status": 401,
+  "validation_error": "Provider rejected the configured credential before a model response.",
+  "evidence_limitation": "This request occurred immediately before provider-error checkpoint capture was added. No key value was printed or persisted."
+}

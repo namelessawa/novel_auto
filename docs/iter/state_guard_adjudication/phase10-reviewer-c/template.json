@@ -1,0 +1,203 @@
+{
+  "schema_version": "state-guard-adjudication-review-v2",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_sha256": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "replace-with-opaque-reviewer-id",
+  "reviewer_type": "independent_model",
+  "model_family": "",
+  "model_name": "",
+  "provider_name": "",
+  "review_started_at": "",
+  "review_finished_at": "",
+  "prompt_hash": "",
+  "temperature": 0.0,
+  "blind_key_accessed": false,
+  "review_input_files": [
+    "packet.json",
+    "template.json"
+  ],
+  "usage": {
+    "provider_calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+  },
+  "results": [
+    {
+      "case_id": "sg-001-0a056ae0",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-002-0c52a2d9",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-003-1fe252d1",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-004-29fdd7fc",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-005-2d677c0e",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-006-3d9727bd",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-007-5f4dfffc",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-008-6a37a33d",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-009-6ff842ec",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-010-7fe23b9c",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-011-8f74100e",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-012-9011b4c3",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-013-9de35926",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-014-a33dd200",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-015-bce956e4",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-016-c32e1c88",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-017-d069a4c1",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-018-d503d05e",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-019-ddf88718",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-020-e1cf70fa",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-021-e40f93e1",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-022-ebfc1859",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-023-f5f15238",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-024-f9e68432",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-025-fd34880a",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    }
+  ]
+}

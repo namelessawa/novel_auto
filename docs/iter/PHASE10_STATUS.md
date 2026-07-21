@@ -2,7 +2,7 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATION 23 IN PROGRESS`
+- Status: `ITERATION 23 INCONCLUSIVE; PHASE10 STOPPED AT REVIEW GATE`
 - Starting HEAD: `8b6b0eb69d5e76838e07a58779d306c3ec4e075f`
 - Production behavior changes accepted: none
 - CanonicalFact consumer: absent and disabled
@@ -31,3 +31,22 @@ Updated: 2026-07-21
   in review artifacts.
 - Real replay, StateGuard behavior, and CanonicalFact integration remain blocked
   until the independent adjudication Gate passes.
+
+## Iteration 23 result
+
+- Infrastructure candidate: `6170106` plus post-run failure-checkpoint hardening.
+- Decision: `INCONCLUSIVE`.
+- Blind packet: 25 cases, six questions, 13 cases with visible repair attempts;
+  packet hash `2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da`.
+- Isolated reviewer copies contain packet/template only before each call; no blind
+  key was supplied.
+- Provider requests/model responses/valid reviews: 6 / 5 / 0.
+- Exact known model tokens: 26,147. Conservative cumulative upper bound: 62,140
+  against the 60,000 reviewer budget.
+- GLM repeatedly consumed output without valid JSON; MIMO authentication failed;
+  DeepSeek reasoning consumed the bounded output without final content.
+- Independent decisive/accept/reject: 0 / 0 / 0.
+- Agreement and kappa: unavailable.
+- Review Gate: `BLOCK_REAL_REPLAY`.
+- Iterations 24–30: not executed.
+- Production behavior changes: none.

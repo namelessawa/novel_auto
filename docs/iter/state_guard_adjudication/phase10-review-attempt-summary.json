@@ -1,0 +1,73 @@
+{
+  "schema_version": "state-guard-independent-review-attempt-summary-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_budget_tokens": 60000,
+  "provider_requests": 6,
+  "model_responses": 5,
+  "valid_independent_reviews": 0,
+  "attempts": [
+    {
+      "attempt": "coding-glm-expanded-01",
+      "model_family": "zhipu-glm",
+      "model": "glm-5.2",
+      "status": "malformed_json_pre_checkpoint",
+      "actual_tokens": null,
+      "conservative_token_upper_bound": 24178,
+      "artifact": "phase10-reviewer-a/review-attempt-01.failed.json"
+    },
+    {
+      "attempt": "coding-glm-catalog-02",
+      "model_family": "zhipu-glm",
+      "model": "glm-5.2",
+      "status": "empty_final_content",
+      "actual_tokens": 9392,
+      "conservative_token_upper_bound": 9392,
+      "artifact": "phase10-reviewer-a/review-attempt-02.failed.json"
+    },
+    {
+      "attempt": "mimo-catalog-01",
+      "model_family": "xiaomi-mimo",
+      "model": "mimo-v2.5-pro",
+      "status": "authentication_failed_before_model",
+      "actual_tokens": 0,
+      "conservative_token_upper_bound": 0,
+      "artifact": "phase10-reviewer-b/review-attempt-01.failed.json"
+    },
+    {
+      "attempt": "ark-glm-catalog-01",
+      "model_family": "zhipu-glm",
+      "model": "glm-5.2",
+      "status": "empty_final_content",
+      "actual_tokens": 8392,
+      "conservative_token_upper_bound": 8392,
+      "artifact": "phase10-reviewer-c/review-attempt-01.failed.json"
+    },
+    {
+      "attempt": "custom-deepseek-catalog-01",
+      "model_family": "deepseek",
+      "model": "deepseek-v4-pro",
+      "status": "empty_final_content",
+      "actual_tokens": 8363,
+      "conservative_token_upper_bound": 8363,
+      "artifact": "phase10-reviewer-d/review-attempt-01.failed.json"
+    },
+    {
+      "attempt": "ark-glm-compact-no-thinking-02",
+      "model_family": "zhipu-glm",
+      "model": "glm-5.2",
+      "status": "provider_usage_exceeded_per-reviewer_budget_pre-checkpoint",
+      "actual_tokens": null,
+      "known_token_lower_bound_exclusive": 5400,
+      "conservative_token_upper_bound": 11815,
+      "artifact": "phase10-reviewer-c/review-attempt-02.failed.json"
+    }
+  ],
+  "exact_known_model_tokens": 26147,
+  "known_total_token_lower_bound_excluding_unknown_first_call": 31547,
+  "conservative_total_token_upper_bound": 62140,
+  "budget_status": "stopped_due_to_upper_bound_reaching_or_exceeding_budget",
+  "blind_key_supplied_to_reviewers": false,
+  "gate_result": "BLOCK_REAL_REPLAY",
+  "production_behavior_changed": false
+}

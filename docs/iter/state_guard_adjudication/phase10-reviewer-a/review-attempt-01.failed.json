@@ -1,0 +1,32 @@
+{
+  "schema_version": "state-guard-adjudication-review-failure-v1",
+  "status": "invalid_reviewer_response_pre_checkpoint",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase10-reviewer_glm_01",
+  "reviewer_type": "independent_model",
+  "model_family": "zhipu-glm",
+  "model_name": "glm-5.2",
+  "provider_name": "coding-compatible",
+  "review_started_at": null,
+  "review_finished_at": null,
+  "prompt_hash": "e818ffce5d9b07552b3f513ebb931a85d83277a64aace1429b18773ea5354a6d",
+  "temperature": 0.0,
+  "blind_key_accessed": false,
+  "review_input_files": [
+    "packet.json"
+  ],
+  "usage": {
+    "provider_calls": 1,
+    "input_tokens": null,
+    "output_tokens": null,
+    "total_tokens": null,
+    "estimated_input_tokens": 19178,
+    "max_output_tokens": 5000,
+    "conservative_total_token_upper_bound": 24178
+  },
+  "raw_response_sha256": null,
+  "raw_response": null,
+  "validation_error": "Provider returned malformed JSON: expected comma at response character 317.",
+  "evidence_limitation": "This call occurred before failure checkpoint capture was added, so raw response and provider-reported usage are unavailable. It does not count as a completed reviewer."
+}

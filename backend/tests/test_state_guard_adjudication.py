@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -12,7 +13,14 @@ from scripts.import_state_guard_adjudication import (
     build_disagreement_packet,
     cohens_kappa,
 )
-from scripts.run_blind_state_guard_review import build_parser as build_review_parser
+from scripts.run_blind_state_guard_review import (
+    InvalidReviewResponse,
+    _validate_results,
+    build_parser as build_review_parser,
+    compact_packet_for_prompt,
+    render_packet_for_prompt,
+    run_review,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -137,6 +145,97 @@ def test_review_runner_has_no_blind_key_argument() -> None:
     assert "--key" not in option_strings
     assert "--provider-file" in help_text
     assert "--out-review" in help_text
+
+
+def test_compact_review_prompt_preserves_all_case_and_repair_evidence() -> None:
+    packet, _, _ = _exports()
+
+    compact = compact_packet_for_prompt(packet)
+    rendered = render_packet_for_prompt(packet)
+
+    assert compact["case_count"] == packet["case_count"]
+    assert [case["case_id"] for case in compact["cases"]] == [
+        case["case_id"] for case in packet["cases"]
+    ]
+    for source_case, compact_case in zip(packet["cases"], compact["cases"]):
+        assert source_case["prose"] in rendered
+        assert len(compact_case["repair_attempts"]) == len(
+            source_case["repair_attempts"]
+        )
+        for repair in source_case["repair_attempts"]:
+            assert repair["prose"] in rendered
+    assert "expected_final_decision" not in rendered
+    assert "verifier_safe" not in rendered
+
+
+def test_compact_review_response_is_normalized() -> None:
+    results = _validate_results(
+        {"r": [["sg-001", "r", ["knowledge_leak"], 0.9, "角色越权。"]]},
+        ["sg-001"],
+    )
+
+    assert results == [
+        {
+            "case_id": "sg-001",
+            "decision": "reject",
+            "error_types": ["knowledge_leak"],
+            "confidence": 0.9,
+            "rationale": "角色越权。",
+        }
+    ]
+
+
+def test_provider_reported_budget_overrun_retains_failure_checkpoint(
+    tmp_path, monkeypatch
+) -> None:
+    packet, _, _ = _exports()
+    packet_path = tmp_path / "packet.json"
+    provider_path = tmp_path / "provider.txt"
+    _write_json(packet_path, packet)
+    provider_path.write_text(
+        "URL=https://provider.invalid/v1\nKEY=test-only\nMODEL=test-model\n",
+        encoding="utf-8",
+    )
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content='{"r":[]}'))],
+        usage=SimpleNamespace(
+            prompt_tokens=90_000,
+            completion_tokens=10_001,
+            total_tokens=100_001,
+        ),
+    )
+    create = lambda **kwargs: response
+    fake_client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    monkeypatch.setattr(
+        "scripts.run_blind_state_guard_review.OpenAI",
+        lambda **kwargs: fake_client,
+    )
+
+    with pytest.raises(InvalidReviewResponse) as raised:
+        run_review(
+            packet_path=packet_path,
+            provider_file=provider_path,
+            env_prefix=None,
+            env_file=None,
+            model_override=None,
+            reviewer_id="reviewer-budget-test",
+            model_family="test-family",
+            provider_name="test-provider",
+            max_input_tokens=100_000,
+            max_output_tokens=1,
+            budget_tokens=100_000,
+            timeout=1,
+            disable_thinking=True,
+        )
+
+    failure = raised.value.failure_payload
+    assert failure["status"] == "reviewer_budget_exceeded"
+    assert failure["usage"]["total_tokens"] == 100_001
+    assert failure["usage"]["budget_tokens"] == 100_000
+    assert failure["raw_response"] == '{"r":[]}'
+    assert failure["blind_key_accessed"] is False
 
 
 def test_cohens_kappa_known_vectors() -> None:
