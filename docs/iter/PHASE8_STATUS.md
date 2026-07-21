@@ -2,13 +2,13 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATION 10 ACCEPTED; ITERATION 11 NEXT`
+- Status: `ITERATIONS 10-11 ACCEPTED; ITERATION 12 NEXT`
 - Starting HEAD: `7f8f7e3141a3ffaf0106d8867a4bc271ef1c8220`
 - Production behavior changes accepted: none
 - Real LLM calls in Phase 8: 0
-- Current gate: recorded-response replay
-- Blocked until recorded replay passes: typed ledger, calibration, StateGuard
-  behavior candidate and CanonicalFact consumption.
+- Current gate: typed continuity ledger contract
+- Still blocked: StateGuard behavior candidate, CanonicalFact consumption and any
+  production-default change.
 
 ## Audit findings
 
@@ -32,9 +32,22 @@ Updated: 2026-07-21
 - Canonical evidence: 13 additions; reconciliation 15 checked, 0 findings.
 - Tests: 4 new; 34 focused passed; full backend 1258 passed.
 
+## Iteration 11 result
+
+- Candidate: `48e20a9`
+- Decision: `ACCEPT_MEASUREMENT`
+- Recorded full-runtime evidence hash:
+  `616e89687d4d164434f1e399500433cff0a796fd999a2fafc94c8ea49c599fa2`.
+- Phase 7 conversion: 56 unique cases, 56/56 decisions reproduced, 20 accepts,
+  36 rejects; all remain unreviewed.
+- Missing payloads remain explicit: 0/36 rejected drafts and 0/56 full repair
+  bodies are available.
+- Cost: 0 provider calls, 0 real-model tokens.
+- Tests: 5 new; 9 focused passed; full backend 1263 passed.
+
 ## Safety
 
 - No StylePreset, SummaryTree consumer or StateGuard acceptance logic is changing.
 - No CanonicalFact consumer is enabled.
 - No production data, migration, remote push, PR or deploy is authorized.
-- No provider configuration or credential is needed for Iteration 10.
+- No provider configuration or credential is needed for Iterations 10-11.
