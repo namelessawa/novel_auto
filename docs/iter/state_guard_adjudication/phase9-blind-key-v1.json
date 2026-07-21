@@ -1,0 +1,398 @@
+{
+  "schema_version": "state-guard-adjudication-key-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_sha256": "fe80127aa1c46313b92e0d47c9e2fa776612df462bd3fbb89e09bdb6eda33ef5",
+  "withheld_from_reviewers": true,
+  "warning": "Freeze reviewer decisions before opening this audit key.",
+  "source_audit": [
+    {
+      "source_index": 1,
+      "source_filename": "phase9-hard-negative-replay-20260721.json",
+      "source_sha256": "77219f054de8d0608518e368586242315593efac3a4727589ce0bc37f612c44c",
+      "source_schema_version": "state-guard-replay-suite-v1",
+      "source_suite_id": "phase9-hard-negative-v1"
+    },
+    {
+      "source_index": 2,
+      "source_filename": "phase9-probable-fp-replay-20260721.json",
+      "source_sha256": "698f6cf46ec12ab5af469557d8a889d900301f81e6a09a5310b2862c0d8c8e6e",
+      "source_schema_version": "state-guard-replay-suite-v1",
+      "source_suite_id": "phase9-probable-fp-v1"
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "sg-001-015da3e4",
+      "fixture_id": "phase9-fp-item-condition-omitted",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 9,
+      "trace_id": "sgt_83011dd5dd5f734cf67b5529",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "015da3e4b2d689264693b3ffe3090cc9a65aed555d2d0c15afbbc1d63b54fd69"
+    },
+    {
+      "case_id": "sg-002-023d7e26",
+      "fixture_id": "phase9-fp-injury-omitted-second",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 8,
+      "trace_id": "sgt_c8d6569d710b08b96ea413df",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "023d7e26c84b08d2dd1c03db85e494008b71e5fdbdd934e0c8bd646f83b737c2"
+    },
+    {
+      "case_id": "sg-003-15f8bc54",
+      "fixture_id": "phase9-fp-compound-endpoint",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 7,
+      "trace_id": "sgt_b2e9ee8d0a7037c2ff28be3d",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "15f8bc54455c904d648adba33828876fd0c7ad55e2492d982781b07b4e549bc6"
+    },
+    {
+      "case_id": "sg-004-3b981cbe",
+      "fixture_id": "phase9-hn-condition-restored",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_condition_conflict",
+        "new_ungrounded_fact"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 6,
+      "trace_id": "sgt_92757585807eebc581b737f7",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "3b981cbecf1273980125c189a0130ac28aeb2e6b17ab9d98c6a4f43f675ac5ad"
+    },
+    {
+      "case_id": "sg-005-48c90019",
+      "fixture_id": "phase9-hn-holder-and-knowledge-missing",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict",
+        "ledger_missing_field",
+        "knowledge_leak"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 5,
+      "trace_id": "sgt_a08830ada73ffdb18d3e52e7",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "48c90019729b582d20b68a8f4039151f998770d88a676c1c69aa99e4f8eee4e0"
+    },
+    {
+      "case_id": "sg-006-500e7b37",
+      "fixture_id": "phase9-fp-injury-omitted",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 1,
+      "trace_id": "sgt_7d01abfedec4174104e6d672",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "500e7b378a885b01730c4b60083ad54e35e03e9c15b86f90e9da8d27156848f4"
+    },
+    {
+      "case_id": "sg-007-552bc0f4",
+      "fixture_id": "phase9-fp-rumor-king",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 4,
+      "trace_id": "sgt_080e6aa153c80cc948fde873",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "552bc0f42e36691c975826b0ba15124229ea84825ef359ef74a66c26737d2dbb"
+    },
+    {
+      "case_id": "sg-008-56287394",
+      "fixture_id": "phase9-hn-repair-deletes-handoff",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_holder_conflict"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 10,
+      "trace_id": "sgt_e043828998102d443ff60b58",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "56287394ac4f73378d866a7a5944af5d3887135f87172d4d7a41217e9d73b7c2"
+    },
+    {
+      "case_id": "sg-009-5b572248",
+      "fixture_id": "phase9-hn-holder-wrong-type",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict",
+        "ledger_wrong_type",
+        "ledger_missing_field"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 4,
+      "trace_id": "sgt_5491a59a7c3add6b2d0f4547",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "5b5722485e572a4fb323f92be5a32fa54a3fbda99e19e15e1285448708d644ea"
+    },
+    {
+      "case_id": "sg-010-6a29542d",
+      "fixture_id": "phase9-hn-holder-reverts",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 3,
+      "trace_id": "sgt_19e1574f5f996f6e9a03179a",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "6a29542d5e3948f52391743c33917da34e0f880c4c361c5fa1ebf21c86c7a878"
+    },
+    {
+      "case_id": "sg-011-6b9ba7c1",
+      "fixture_id": "phase9-hn-knowledge-leak",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "knowledge_leak",
+        "new_ungrounded_fact",
+        "ledger_wrong_type",
+        "ledger_missing_field"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 8,
+      "trace_id": "sgt_cfed614f3cd850a17998baaf",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "6b9ba7c1a26e5a66d944f3dfb5897ad339fc2fcc43af105ae8949a7ba53b4c45"
+    },
+    {
+      "case_id": "sg-012-6c76750a",
+      "fixture_id": "phase9-fp-rumor-unconfirmed",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 11,
+      "trace_id": "sgt_60eb47a6115b9813f9dc7671",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "6c76750af00288917349eb406307a68d2427c65e0d193c2dd475da4ef414741a"
+    },
+    {
+      "case_id": "sg-013-8411c88c",
+      "fixture_id": "phase9-hn-repair-restores-item",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_condition_conflict",
+        "new_ungrounded_fact"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 7,
+      "trace_id": "sgt_b0af6340301f87b7ea3e9bf1",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "8411c88c4cefecdb5033cdfd56c4a8b54e4331306eb72364d3c9a3162cf2636c"
+    },
+    {
+      "case_id": "sg-014-8643290e",
+      "fixture_id": "phase9-hn-location-watchtower",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch",
+        "ledger_missing_field"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 1,
+      "trace_id": "sgt_d9031a52f0fc92bc2bca4d29",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "8643290e826f0a00e35e87f9468187aefe6fdd6c18c4685b8041d79d7d7b159a"
+    },
+    {
+      "case_id": "sg-015-8845b580",
+      "fixture_id": "phase9-fp-group-crossing",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 0,
+      "trace_id": "sgt_b768b7af46c1351c7140c4ff",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "8845b58046bfa9e8abeb767b700a35e41575643a1a0848d949e340814fff9f9f"
+    },
+    {
+      "case_id": "sg-016-9d64274d",
+      "fixture_id": "phase9-fp-item-omitted",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 2,
+      "trace_id": "sgt_9b01d8d0741bd722c969cb45",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "9d64274d9d0fcd8a92ddaea6d17bd197ab415d54a08e6d6c800f80cf9db880a8"
+    },
+    {
+      "case_id": "sg-017-a0e26828",
+      "fixture_id": "phase9-hn-cost-omitted-secret",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "ledger_missing_field",
+        "knowledge_leak",
+        "new_ungrounded_fact"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 9,
+      "trace_id": "sgt_70f4bb6a0e5be01fa3dbdb25",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "a0e26828d84309760261dc6e23ed250d07832ed04d7b42cd621d211ba3add869"
+    },
+    {
+      "case_id": "sg-018-abc2ae87",
+      "fixture_id": "phase9-fp-character-lie",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "reasonable_omission"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 3,
+      "trace_id": "sgt_6e961901d5ec8824c5c58855",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "abc2ae879f773aec3b68f65d7a51f6d77e4ba0aab0efc42531653d391e34db61"
+    },
+    {
+      "case_id": "sg-019-b155e3c9",
+      "fixture_id": "phase9-hn-location-action-phrase",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch",
+        "ledger_wrong_type"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 2,
+      "trace_id": "sgt_5f14cd9ae9f366ca4cbd4259",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "b155e3c92a0aff9453ce2755709d05ef5defa5e53f855f37444a9f182f65578f"
+    },
+    {
+      "case_id": "sg-020-c4ea54a8",
+      "fixture_id": "phase9-hn-location-outer-fort",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 0,
+      "trace_id": "sgt_ba5226a316d78c575651cef9",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "c4ea54a89ae46172a36d044dd935d99d41fc2ca072f805a9384d1e048ca3264a"
+    },
+    {
+      "case_id": "sg-021-c8802944",
+      "fixture_id": "phase9-hn-repair-invents-sister",
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_condition_conflict",
+        "knowledge_leak",
+        "new_ungrounded_fact"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 1,
+      "source_case_index": 11,
+      "trace_id": "sgt_3a52ba3bbc26f01c6025cfc2",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "c8802944ea6f9f765d9e77c57f684517d91f79f0d12ec187cfcd5a438d4dddd2"
+    },
+    {
+      "case_id": "sg-022-cfcc70f2",
+      "fixture_id": "phase9-fp-synonym-fall-inside",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "recorded_final_decision": "reject",
+      "source_index": 2,
+      "source_case_index": 5,
+      "trace_id": "sgt_92980c93557e69f1647f7667",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "cfcc70f25857fab8a179f7ec061dbe24e11c64de2c1f306213db0c7e8c200131"
+    },
+    {
+      "case_id": "sg-023-d57e906f",
+      "fixture_id": "phase9-fp-support-separated",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 6,
+      "trace_id": "sgt_4f036a06b58b9a663ad7839b",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "d57e906f95cf4ecb6de6f1033ddd3cd64f2924941ea41807865cea17bb3607e2"
+    },
+    {
+      "case_id": "sg-024-dfc27a4c",
+      "fixture_id": "phase9-fp-compound-paraphrase",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 12,
+      "trace_id": "sgt_6e77caacf5cd5a48388e6f2d",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "dfc27a4cf2622625a421672b0a20a97b3c1ff4af463a6e5f1b4b9304d3746b10"
+    },
+    {
+      "case_id": "sg-025-e68907b0",
+      "fixture_id": "phase9-fp-lie-holder-visible",
+      "expected_final_decision": "accept",
+      "expected_error_types": [
+        "evidence_extraction_failure"
+      ],
+      "recorded_final_decision": "accept",
+      "source_index": 2,
+      "source_case_index": 10,
+      "trace_id": "sgt_58ab23429d34d2ff45853a9e",
+      "trace_schema_version": "state-guard-trace-v1",
+      "blind_payload_sha256": "e68907b01a5e891aeb46c6cfd7585f25753b7cfc4d002d8ecdd2ec977a16b833"
+    }
+  ],
+  "key_sha256": "6d5edd9e074ebddf979881303a06151c16cad8f624c51247127dcbbfe490d260"
+}

@@ -1,0 +1,184 @@
+{
+  "schema_version": "state-guard-adjudication-review-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_sha256": "fe80127aa1c46313b92e0d47c9e2fa776612df462bd3fbb89e09bdb6eda33ef5",
+  "reviewer_id": "replace-with-opaque-reviewer-id",
+  "reviewer_type": "project_agent",
+  "results": [
+    {
+      "case_id": "sg-001-015da3e4",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-002-023d7e26",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-003-15f8bc54",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-004-3b981cbe",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-005-48c90019",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-006-500e7b37",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-007-552bc0f4",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-008-56287394",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-009-5b572248",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-010-6a29542d",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-011-6b9ba7c1",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-012-6c76750a",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-013-8411c88c",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-014-8643290e",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-015-8845b580",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-016-9d64274d",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-017-a0e26828",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-018-abc2ae87",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-019-b155e3c9",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-020-c4ea54a8",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-021-c8802944",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-022-cfcc70f2",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-023-d57e906f",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-024-dfc27a4c",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    },
+    {
+      "case_id": "sg-025-e68907b0",
+      "decision": "ambiguous",
+      "error_types": [],
+      "confidence": 0.0,
+      "rationale": ""
+    }
+  ]
+}
