@@ -2,11 +2,11 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 18-20 ACCEPTED; ITERATION 21 NEXT`
+- Status: `ITERATIONS 18-21 ACCEPTED; ITERATION 22 NEXT`
 - Starting HEAD: `a66eb80c7e413439dddf23eea48180059a4cccd4`
 - Production behavior changes accepted: none
 - Real LLM calls: 0
-- Current gate: blind independent adjudication packet
+- Current gate: offline typed candidate coverage and quality
 - StateGuard behavior candidate: blocked
 - CanonicalFact consumer: blocked and disabled
 
@@ -82,3 +82,19 @@ Updated: 2026-07-21
 - Independent reviews remain 0; behavior changes remain blocked.
 - Tests: 14 focused; full backend `1301 passed, 1 existing warning`.
 - Cost: 82 fixture calls, 0 provider calls, model tokens N/A.
+
+## Iteration 21 result
+
+- Candidate: `ebccd3d`.
+- Decision: `ACCEPT_INFRASTRUCTURE`.
+- Exported a neutral, content-hash-shuffled packet for all 25 complete Phase 9
+  cases; fixture IDs, source suites and all decisions remain outside the packet.
+- The withheld key is hash-bound to the packet and the blank result format records
+  reviewer type explicitly.
+- Import validates full case coverage and reports raw agreement, Cohen's kappa,
+  decision disagreements and error-taxonomy disagreements.
+- Only `human` reviews count toward the independent-review gate; model/project
+  reviews are provisional and cannot unlock behavior changes.
+- Independent reviews remain 0. No review result or agreement metric was invented.
+- Tests: 7 focused Phase 9 tests passed.
+- Cost: 0 provider calls, model tokens N/A, reviewer tokens N/A.
