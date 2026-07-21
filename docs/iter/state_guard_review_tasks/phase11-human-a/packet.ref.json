@@ -1,0 +1,3645 @@
+{
+  "schema_version": "state-guard-adjudication-packet-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "reviewer_instructions": "请仅依据提供的前态、必达终态、正文、声明 ledger、地点和知识边界以及可见 repair 尝试独立裁决；不要索取运行时决定、verifier 结论或隐藏标签，也不要评价文风。",
+  "case_count": 25,
+  "cases": [
+    {
+      "case_id": "sg-001-0a056ae0",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice仍在city_gate_inner"
+        }
+      ],
+      "prose": "Alice守在门内观察巡逻灯，始终没有离开原位。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-002-0c52a2d9",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice不得新增无来源的密道知识"
+        }
+      ],
+      "prose": "Alice说密道就在钟楼第三块砖后，但此前没有人向她透露这个位置。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {
+          "alice": "fact_secret_route"
+        }
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice说密道就在钟楼第三块砖后，但此前没有人向她透露这个位置。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {
+              "alice": "fact_secret_route"
+            }
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice说密道就在钟楼第三块砖后，但此前没有人向她透露这个位置。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {
+              "alice": "fact_secret_route"
+            }
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-003-1fe252d1",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice仍在city_gate_inner"
+        }
+      ],
+      "prose": "Alice按住藏着地图的内袋，却对守门人说：‘地图不在我这里。’她仍站在门内。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-004-29fdd7fc",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map由bob持有"
+        }
+      ],
+      "prose": "Bob接过地图，封进自己的铁匣。Alice空着手退开。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Bob接过地图，封进自己的铁匣。Alice空着手退开。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Bob接过地图，封进自己的铁匣。Alice空着手退开。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-005-2d677c0e",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死"
+        }
+      ],
+      "prose": "Alice把地图按回内袋。她拖着Bob滚过门线。下一秒，落栓封住了出口。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "gate_locked",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-006-3d9727bd",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map仍由Alice持有，两人已进入city_gate_inner，出口已锁死"
+        }
+      ],
+      "prose": "Alice夹紧地图，架着Bob跨过出口。铁门随即锁死在他们身后。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "gate_locked",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-007-5f4dfffc",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice仍在city_gate_inner"
+        }
+      ],
+      "prose": "Alice站在城门内侧检查脚印，没有触碰或交付地图。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-008-6a37a33d",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：两人已进入city_gate_inner"
+        }
+      ],
+      "prose": "爆风追上来时，Alice和Bob一起跌进门内，门线留在两人脚后。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "爆风追上来时，Alice和Bob一起跌进门内，门线留在两人脚后。",
+          "declared_ledger": {
+            "characters": {
+              "alice": {
+                "location": "city_gate_inner",
+                "injuries": [],
+                "status": "alive"
+              },
+              "bob": {
+                "location": "city_gate_inner",
+                "injuries": [],
+                "status": "alive"
+              }
+            },
+            "items": {
+              "map": {
+                "holder": "alice",
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {},
+            "time_marker": "tick:1"
+          }
+        },
+        {
+          "round": 2,
+          "prose": "爆风追上来时，Alice和Bob一起跌进门内，门线留在两人脚后。",
+          "declared_ledger": {
+            "characters": {
+              "alice": {
+                "location": "city_gate_inner",
+                "injuries": [],
+                "status": "alive"
+              },
+              "bob": {
+                "location": "city_gate_inner",
+                "injuries": [],
+                "status": "alive"
+              }
+            },
+            "items": {
+              "map": {
+                "holder": "alice",
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {},
+            "time_marker": "tick:1"
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-009-6ff842ec",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：两人已进入city_gate_inner"
+        }
+      ],
+      "prose": "Alice架着Bob跨过内门，铁门在他们身后落下。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-010-7fe23b9c",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：两人仍在city_gate_inner"
+        }
+      ],
+      "prose": "Bob说他听说国王已经死了；Alice只把这句话当作未经确认的传闻。两人仍在门内。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-011-8f74100e",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map仍由Alice持有"
+        }
+      ],
+      "prose": "Alice嘴上说没有地图，手却一直压着装地图的内袋；她没有交给任何人。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-012-9011b4c3",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 0,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map仍为damaged且quantity为0"
+        }
+      ],
+      "prose": "最后一片地图也被酸雨泡烂，Alice确认已经没有可用副本。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 0,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice从口袋取出一张完好地图，数量重新变成一。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice从口袋取出一张完好地图，数量重新变成一。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-013-9de35926",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice仍在city_gate_inner"
+        }
+      ],
+      "prose": "Alice数完门内的三盏巡逻灯，又回到原来的掩体。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-014-a33dd200",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：谈判产生一项正文明写的新代价"
+        }
+      ],
+      "prose": "内门打开，Alice和Bob进入城内。Alice随后无来源地念出值班口令。谈判没有产生任何代价。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "内门打开，Alice和Bob进入城内。Alice随后无来源地念出值班口令。谈判没有产生任何代价。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_inner",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_inner",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "内门打开，Alice和Bob进入城内。Alice随后无来源地念出值班口令。谈判没有产生任何代价。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_inner",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_inner",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-015-bce956e4",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map由bob持有"
+        }
+      ],
+      "prose": "Bob把地图收进铁匣，Alice松开了手。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": "alice",
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Bob把地图收进铁匣，Alice松开了手。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": "alice",
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Bob把地图收进铁匣，Alice松开了手。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": "alice",
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-016-c32e1c88",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice伤势仍active且map仍damaged"
+        }
+      ],
+      "prose": "Alice手臂伤口仍在流血，她把破损地图压在胸前。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice毫发无伤地展开完好地图，想起妹妹Clara留下的密道遗言。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {
+              "alice": [
+                "fact_clara_sister"
+              ]
+            }
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice毫发无伤地展开完好地图，想起妹妹Clara留下的密道遗言。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {
+              "alice": [
+                "fact_clara_sister"
+              ]
+            }
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-017-d069a4c1",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice已进入city_gate_inner"
+        }
+      ],
+      "prose": "Bob架着Alice向门边挪动，两人最终仍停在外侧。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "由Alice架着",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Bob架着Alice向门边挪动，两人最终仍停在外侧。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "由Alice架着",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Bob架着Alice向门边挪动，两人最终仍停在外侧。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "由Alice架着",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-018-d503d05e",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：两人仍在city_gate_inner"
+        }
+      ],
+      "prose": "Bob检查内门门轴，Alice在旁边望风；本段没有触碰地图。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-019-ddf88718",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice已进入city_gate_inner"
+        }
+      ],
+      "prose": "Alice爬上门外守望塔，隔着铁栅看见城内灯火；她没有越过内门。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "gate_watchtower",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice爬上门外守望塔，隔着铁栅看见城内灯火；她没有越过内门。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "gate_watchtower",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice爬上门外守望塔，隔着铁栅看见城内灯火；她没有越过内门。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "gate_watchtower",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-020-e1cf70fa",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice已进入city_gate_inner"
+        }
+      ],
+      "prose": "Alice穿过第一道拒马，在外堡门洞停住；内城门仍紧闭。Bob还在她身后喘息。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice穿过第一道拒马，在外堡门洞停住；内城门仍紧闭。Bob还在她身后喘息。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice穿过第一道拒马，在外堡门洞停住；内城门仍紧闭。Bob还在她身后喘息。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-021-e40f93e1",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：两人已进入city_gate_inner"
+        }
+      ],
+      "prose": "Alice扶住Bob的肩，两个人一同跨过内门。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [
+              "alice"
+            ],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-022-ebfc1859",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：Alice仍在city_gate_inner"
+        }
+      ],
+      "prose": "守门人转述‘北桥已经塌了’，又承认自己没有亲眼看见。Alice仍留在门内。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_inner",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-023-f5f15238",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map由bob持有"
+        }
+      ],
+      "prose": "Bob接过地图，锁进铁匣。Alice摊开空手。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "bob"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice把地图收回自己的内袋，Bob没有拿到它。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice把地图收回自己的内袋，Bob没有拿到它。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-024-f9e68432",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map仍为damaged"
+        }
+      ],
+      "prose": "Alice只是把湿透开裂的地图重新折好，没有进行任何修复。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "intact"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice只是把湿透开裂的地图重新折好，没有进行任何修复。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice只是把湿透开裂的地图重新折好，没有进行任何修复。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    },
+    {
+      "case_id": "sg-025-fd34880a",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map由bob持有"
+        }
+      ],
+      "prose": "Bob收下地图。Alice却无来源地说出了只有守门人才知道的内门暗号。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [],
+            "quantity": 1,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Bob收下地图。Alice却无来源地说出了只有守门人才知道的内门暗号。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Bob收下地图。Alice却无来源地说出了只有守门人才知道的内门暗号。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [],
+                "quantity": 1,
+                "condition": "damaged"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ],
+      "questions": [
+        "正文是否完成所有必达终态？",
+        "正文是否出现无来源的状态变化？",
+        "ledger 是否准确表达正文结尾？",
+        "是否存在角色知识越权？",
+        "Repair 是否改变或删除事实？",
+        "应当接受、拒绝还是无法判断？"
+      ]
+    }
+  ],
+  "packet_sha256": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da"
+}

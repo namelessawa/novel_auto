@@ -1,0 +1,535 @@
+{
+  "schema_version": "state-guard-blind-review-index-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase11-human-a",
+  "reviewer_type": "human",
+  "batch_size": 1,
+  "shuffle_seed": 31,
+  "prompt_hash": "cd7c18d208a12c0b05b39dab0a670d45e3dbfb34e9a33a82a99aadbe1e1188c5",
+  "created_at": "2026-07-21T13:55:12.602138Z",
+  "task_count": 25,
+  "run_status": "pending",
+  "resume_count": 0,
+  "tasks": [
+    {
+      "task_id": "brt-2b88ef9ba377f460",
+      "case_ids": [
+        "sg-013-9de35926"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-2b88ef9ba377f460.json",
+      "input_sha256": "43b7cb53a95549038f4e552761209af6a662b229aaaf3ce550a426eb96de4d05",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-013-9de35926": 0
+      },
+      "case_statuses": {
+        "sg-013-9de35926": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-eaef6f264a5bb165",
+      "case_ids": [
+        "sg-021-e40f93e1"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-eaef6f264a5bb165.json",
+      "input_sha256": "d11b43b820eecdbaf45d83076dcbc4812898d2c23ccd5662cb6b151d23224be6",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-021-e40f93e1": 0
+      },
+      "case_statuses": {
+        "sg-021-e40f93e1": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-58fc86c0348c1738",
+      "case_ids": [
+        "sg-018-d503d05e"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-58fc86c0348c1738.json",
+      "input_sha256": "0523a5b32f87036a535ed39a9e8a3894218d1e59ad39aec3dadfbd84225974f5",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-018-d503d05e": 0
+      },
+      "case_statuses": {
+        "sg-018-d503d05e": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-5a45a7de70fa988f",
+      "case_ids": [
+        "sg-015-bce956e4"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-5a45a7de70fa988f.json",
+      "input_sha256": "a80fe96140096ecf106a562357338214d11ff007eda9f1a8a40203aa001617b6",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-015-bce956e4": 0
+      },
+      "case_statuses": {
+        "sg-015-bce956e4": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-6479813deb52d271",
+      "case_ids": [
+        "sg-019-ddf88718"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-6479813deb52d271.json",
+      "input_sha256": "71ee9b70f3a8f660b6ee7ce3af2c911b4e911878ce2ed7e2131be215e522cd5e",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-019-ddf88718": 0
+      },
+      "case_statuses": {
+        "sg-019-ddf88718": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-43cb13406c8d2532",
+      "case_ids": [
+        "sg-011-8f74100e"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-43cb13406c8d2532.json",
+      "input_sha256": "4dff8464ef6093b8a16383259a1290436a5616a4d789182c7c9069e75eced543",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-011-8f74100e": 0
+      },
+      "case_statuses": {
+        "sg-011-8f74100e": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-d7ac89e2f6475296",
+      "case_ids": [
+        "sg-008-6a37a33d"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-d7ac89e2f6475296.json",
+      "input_sha256": "afda002921acb07621c4d84e06e7438f23763b8f9ea066696ac122447ae7d399",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-008-6a37a33d": 0
+      },
+      "case_statuses": {
+        "sg-008-6a37a33d": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-69f4fe7fa13d310f",
+      "case_ids": [
+        "sg-016-c32e1c88"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-69f4fe7fa13d310f.json",
+      "input_sha256": "90be7ef6b3a867b29d16cadd5cc5cf16fd0eb8f614b77f056668b06dd8f2f500",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-016-c32e1c88": 0
+      },
+      "case_statuses": {
+        "sg-016-c32e1c88": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-3a4047441b7ac52f",
+      "case_ids": [
+        "sg-014-a33dd200"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-3a4047441b7ac52f.json",
+      "input_sha256": "191b5601a08247139b98cdec74f537a5d41602a565e7f2463849ca39a67f1b58",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-014-a33dd200": 0
+      },
+      "case_statuses": {
+        "sg-014-a33dd200": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-dc4956a26fa77fa2",
+      "case_ids": [
+        "sg-001-0a056ae0"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-dc4956a26fa77fa2.json",
+      "input_sha256": "7bf41fe688f0e55f7662672f350acd4bd3a896e28ba14b32b500940cae276ac5",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-001-0a056ae0": 0
+      },
+      "case_statuses": {
+        "sg-001-0a056ae0": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-4a0d057ad4808e94",
+      "case_ids": [
+        "sg-006-3d9727bd"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-4a0d057ad4808e94.json",
+      "input_sha256": "34006b1e564f4ba34f3f6012f65e450e9ee3bfa532f9126f2ee9e2585fb57a3b",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-006-3d9727bd": 0
+      },
+      "case_statuses": {
+        "sg-006-3d9727bd": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-11b12b90d1c8ac2e",
+      "case_ids": [
+        "sg-022-ebfc1859"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-11b12b90d1c8ac2e.json",
+      "input_sha256": "7f396ae982157f209b87dc3e333dfc9e44f69defa402aa36dab4c340a1f92b9b",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-022-ebfc1859": 0
+      },
+      "case_statuses": {
+        "sg-022-ebfc1859": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-a9fd01e855d82e75",
+      "case_ids": [
+        "sg-003-1fe252d1"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-a9fd01e855d82e75.json",
+      "input_sha256": "c4b7a33459677fa7895238f53699d212c593f212c673534c6b4ac205621adc58",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-003-1fe252d1": 0
+      },
+      "case_statuses": {
+        "sg-003-1fe252d1": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-c28e81200888b3e3",
+      "case_ids": [
+        "sg-017-d069a4c1"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-c28e81200888b3e3.json",
+      "input_sha256": "d2e16f49cbbd7d42464d88693558a371374299b0f2827dbc67c4d4c92df06a3f",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-017-d069a4c1": 0
+      },
+      "case_statuses": {
+        "sg-017-d069a4c1": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-73b81143e7e8fe52",
+      "case_ids": [
+        "sg-005-2d677c0e"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-73b81143e7e8fe52.json",
+      "input_sha256": "5cb556d3035f57c549d1e5171b2809b732eab3388cf9e1c70cc16833a921d76e",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-005-2d677c0e": 0
+      },
+      "case_statuses": {
+        "sg-005-2d677c0e": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-a7e57b54618072ff",
+      "case_ids": [
+        "sg-024-f9e68432"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-a7e57b54618072ff.json",
+      "input_sha256": "f1802b42a1f7b4fc8dde691e0e2b88b52be3acc8ca9478f68f9d6c1bfb3bd90c",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-024-f9e68432": 0
+      },
+      "case_statuses": {
+        "sg-024-f9e68432": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-a73aebc2a7841166",
+      "case_ids": [
+        "sg-025-fd34880a"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-a73aebc2a7841166.json",
+      "input_sha256": "57c455a2bff7190983b85da69dcfece03eef77957d08158ebb96cc203fa6b9d9",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-025-fd34880a": 0
+      },
+      "case_statuses": {
+        "sg-025-fd34880a": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-471e18f5d535682d",
+      "case_ids": [
+        "sg-002-0c52a2d9"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-471e18f5d535682d.json",
+      "input_sha256": "da34344224be46c4a16bb0fd34bf195545fe2c31e7e95f68a74f5f13160a5958",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-002-0c52a2d9": 0
+      },
+      "case_statuses": {
+        "sg-002-0c52a2d9": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-68054772650a30cd",
+      "case_ids": [
+        "sg-023-f5f15238"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-68054772650a30cd.json",
+      "input_sha256": "90e0f651c266c3fa6843ddd968d30feb41941e36efc575651a96f93f2c1a234c",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-023-f5f15238": 0
+      },
+      "case_statuses": {
+        "sg-023-f5f15238": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-9856ae39a6948f7b",
+      "case_ids": [
+        "sg-007-5f4dfffc"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-9856ae39a6948f7b.json",
+      "input_sha256": "f5a1bd78a9015a1299b4c28e96a949386cfa5ba1e67317c131c35cf414f3c7f4",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-007-5f4dfffc": 0
+      },
+      "case_statuses": {
+        "sg-007-5f4dfffc": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-e66c1ed2ad9cf52f",
+      "case_ids": [
+        "sg-020-e1cf70fa"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-e66c1ed2ad9cf52f.json",
+      "input_sha256": "18a41d1e1e89a5c2d9dde4a1975e0f2fd4c6296099a2d50db3c5ec59d47377b0",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-020-e1cf70fa": 0
+      },
+      "case_statuses": {
+        "sg-020-e1cf70fa": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-d4d02961ead80a51",
+      "case_ids": [
+        "sg-004-29fdd7fc"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-d4d02961ead80a51.json",
+      "input_sha256": "ed450d8c4a87bc7e70c90d1494e0460b6262b77bae380fe8e1057ecc842ca56f",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-004-29fdd7fc": 0
+      },
+      "case_statuses": {
+        "sg-004-29fdd7fc": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-f154d37ea63f831e",
+      "case_ids": [
+        "sg-012-9011b4c3"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-f154d37ea63f831e.json",
+      "input_sha256": "544a194350d96e3acf4fdd45c5774f3c1a4d206b257b7dcee7564117b0d202c4",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-012-9011b4c3": 0
+      },
+      "case_statuses": {
+        "sg-012-9011b4c3": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-dd7956272f758375",
+      "case_ids": [
+        "sg-010-7fe23b9c"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-dd7956272f758375.json",
+      "input_sha256": "c60441159006ae733b948dd0cf8bd979267c869186a71bfa28673189cbe2f270",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-010-7fe23b9c": 0
+      },
+      "case_statuses": {
+        "sg-010-7fe23b9c": "pending"
+      },
+      "last_error": null
+    },
+    {
+      "task_id": "brt-cb760f3c0f1fcc78",
+      "case_ids": [
+        "sg-009-6ff842ec"
+      ],
+      "status": "pending",
+      "input_path": "tasks/brt-cb760f3c0f1fcc78.json",
+      "input_sha256": "b60072ed96c0bacf5ce0f193f5e357d4d0d3568fd9dd30417d72c30e312a8986",
+      "result_path": null,
+      "result_paths": {},
+      "attempts": 0,
+      "invalid_attempts": 0,
+      "case_attempts": {
+        "sg-009-6ff842ec": 0
+      },
+      "case_statuses": {
+        "sg-009-6ff842ec": "pending"
+      },
+      "last_error": null
+    }
+  ],
+  "budget": {
+    "old_spent_budget_upper_bound": 62140,
+    "new_authorized_budget": 0,
+    "current_run_exact_input_tokens": 0,
+    "current_run_exact_output_tokens": 0,
+    "current_run_exact_usage": 0,
+    "uncertain_usage_upper_bound": 0,
+    "warning_70_percent": false,
+    "stop_opening_new_cases_85_percent": false,
+    "provider_calls_allowed": false
+  },
+  "usage": {
+    "provider_calls": 0,
+    "recorded_calls": 0,
+    "retries": 0,
+    "completed_cases": 0
+  },
+  "definition_sha256": "97fa6e01c2a10636f3a667a0526c1e147f0f06493238cd0010ccc902daafa140",
+  "checkpoint_sha256": "26724fb684de83adaf4c27db9425a1979fee87fd0e5c01ec000d8f8a0f173ddf"
+}

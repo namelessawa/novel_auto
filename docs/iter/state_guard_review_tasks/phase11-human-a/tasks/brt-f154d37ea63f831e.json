@@ -1,0 +1,193 @@
+{
+  "schema_version": "state-guard-blind-review-task-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "task_id": "brt-f154d37ea63f831e",
+  "reviewer_id": "phase11-human-a",
+  "reviewer_type": "human",
+  "case_ids": [
+    "sg-012-9011b4c3"
+  ],
+  "cases": [
+    {
+      "case_id": "sg-012-9011b4c3",
+      "previous_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 0,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "required_end_states": [
+        {
+          "event_id": "evt_map_gate",
+          "requirement": "本段结束前：map仍为damaged且quantity为0"
+        }
+      ],
+      "prose": "最后一片地图也被酸雨泡烂，Alice确认已经没有可用副本。",
+      "declared_ledger": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "alive_status": "alive",
+            "injuries": [],
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "holder_character_ids": [
+              "alice"
+            ],
+            "quantity": 0,
+            "condition": "damaged"
+          }
+        },
+        "newly_known_fact_ids": {}
+      },
+      "repair_attempts": [
+        {
+          "round": 1,
+          "prose": "Alice从口袋取出一张完好地图，数量重新变成一。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        },
+        {
+          "round": 2,
+          "prose": "Alice从口袋取出一张完好地图，数量重新变成一。",
+          "declared_ledger": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "alive_status": "alive",
+                "injuries": [],
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "quantity": 1,
+                "condition": "intact"
+              }
+            },
+            "newly_known_fact_ids": {}
+          }
+        }
+      ],
+      "location_relations": [
+        {
+          "location_id": "city_gate_outer",
+          "name": "城门外侧",
+          "type": "gate",
+          "present_character_ids": []
+        },
+        {
+          "location_id": "city_gate_inner",
+          "name": "城门内侧",
+          "type": "gate",
+          "present_character_ids": [
+            "alice",
+            "bob"
+          ]
+        }
+      ],
+      "knowledge_boundaries": [
+        {
+          "character_id": "alice",
+          "known_facts": [
+            "地图可换取通行"
+          ]
+        },
+        {
+          "character_id": "bob",
+          "known_facts": []
+        }
+      ]
+    }
+  ],
+  "questions": [
+    "正文是否完成所有必达终态？",
+    "正文是否出现无来源的状态变化？",
+    "ledger 是否准确表达正文结尾？",
+    "是否存在角色知识越权？",
+    "Repair 是否改变或删除事实？",
+    "应当接受、拒绝还是无法判断？"
+  ],
+  "prompt_hash": "cd7c18d208a12c0b05b39dab0a670d45e3dbfb34e9a33a82a99aadbe1e1188c5",
+  "created_at": "2026-07-21T13:55:12.602138Z",
+  "task_sha256": "544a194350d96e3acf4fdd45c5774f3c1a4d206b257b7dcee7564117b0d202c4"
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "state-guard-human-review-package-v1",
+  "packet_id": "phase9-state-guard-blind-v1",
+  "packet_hash": "2b28c5c9a11dc04e6971268054bc7296c88a6ff5a1b079105ec7880a09abc4da",
+  "reviewer_id": "phase11-human-a",
+  "reviewer_type": "human",
+  "blind_key_accessed": false,
+  "shuffle_seed": 31,
+  "case_count": 25,
+  "case_ids": [
+    "sg-019-ddf88718",
+    "sg-024-f9e68432",
+    "sg-025-fd34880a",
+    "sg-001-0a056ae0",
+    "sg-014-a33dd200",
+    "sg-006-3d9727bd",
+    "sg-023-f5f15238",
+    "sg-018-d503d05e",
+    "sg-004-29fdd7fc",
+    "sg-015-bce956e4",
+    "sg-007-5f4dfffc",
+    "sg-016-c32e1c88",
+    "sg-011-8f74100e",
+    "sg-005-2d677c0e",
+    "sg-012-9011b4c3",
+    "sg-017-d069a4c1",
+    "sg-022-ebfc1859",
+    "sg-021-e40f93e1",
+    "sg-020-e1cf70fa",
+    "sg-003-1fe252d1",
+    "sg-013-9de35926",
+    "sg-002-0c52a2d9",
+    "sg-008-6a37a33d",
+    "sg-009-6ff842ec",
+    "sg-010-7fe23b9c"
+  ],
+  "immutable_files": {
+    "instructions.md": "a536660f7c6b94703ce8ad62f7972eacdb207072407908e2ee653e1b01df95f6",
+    "cases.md": "9fcf25d2c9bafe1ecf9b54ccd0eeccd397d4ec81b6b543d7ae22e09300bd4d22"
+  },
+  "mutable_review_files": [
+    "review.csv",
+    "review.json"
+  ],
+  "created_at": "2026-07-21T13:55:11.470903Z",
+  "manifest_sha256": "d56d3535b9e1470f7334950857389bceadcc436d099a74092b815547ece1ffaa"
+}
