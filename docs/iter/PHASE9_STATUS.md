@@ -2,11 +2,11 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATION 18 IN PROGRESS`
+- Status: `ITERATION 18 ACCEPTED; ITERATION 19 NEXT`
 - Starting HEAD: `a66eb80c7e413439dddf23eea48180059a4cccd4`
 - Production behavior changes accepted: none
 - Real LLM calls: 0
-- Current gate: complete Guard payload capture
+- Current gate: 12 complete signal-backed hard-negative fixtures
 - StateGuard behavior candidate: blocked
 - CanonicalFact consumer: blocked and disabled
 
@@ -37,3 +37,17 @@ Updated: 2026-07-21
 - No existing Phase 7 trace is relabeled.
 - No provider configuration or credential is required.
 - No production data, migration, remote push, PR or deploy is authorized.
+
+## Iteration 18 result
+
+- Candidate: `4681754`.
+- Decision: `ACCEPT_MEASUREMENT`.
+- Added strict `state-guard-trace-v1` with original draft/ledger, complete verifier
+  and repair rounds, deterministic checks, Critic provenance, location/knowledge
+  context and explicit payload completeness.
+- Full-runtime replay binds CanonicalFact before/after after real Orchestrator
+  persistence; runtime report schema is now `runtime-replay-v2`.
+- Recorded artifact has no missing completeness field; Critic and repair are
+  explicitly skipped/not required for this short accepted fixture.
+- Tests: 90 focused; full backend `1297 passed, 1 existing warning`.
+- Cost: 0 provider calls, 0 model tokens.
