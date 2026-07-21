@@ -62,6 +62,7 @@ class ReplayInitialState(BaseModel):
     character_profiles: list[dict[str, Any]]
     character_states: list[dict[str, Any]]
     continuity_state: dict[str, Any] = Field(default_factory=dict)
+    continuity_audit: dict[str, Any] = Field(default_factory=dict)
 
 
 class ReplayResponse(BaseModel):
@@ -96,6 +97,7 @@ class ReplayFixture(BaseModel):
     labels: list[str] = Field(default_factory=list)
     response_provenance: Literal["synthetic", "sanitized_recorded"] = "synthetic"
     source_artifacts: list[str] = Field(default_factory=list)
+    force_critic: bool = False
 
 
 class ReplayFixtureOverlay(BaseModel):
@@ -106,6 +108,35 @@ class ReplayFixtureOverlay(BaseModel):
     fixture_overlay_version: Literal["1"]
     base_fixture: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{2,120}$")
     merge_patch: dict[str, Any]
+
+
+class GuardReplayCase(BaseModel):
+    """One complete recorded Guard case expanded over a pinned runtime fixture."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{2,80}$")
+    title: str
+    previous_continuity_state: dict[str, Any] = Field(default_factory=dict)
+    previous_continuity_audit: dict[str, Any] = Field(default_factory=dict)
+    narrator_response: ReplayResponse
+    critic_responses: dict[str, list[ReplayResponse]] = Field(default_factory=dict)
+    verifier_responses: list[ReplayResponse] = Field(min_length=1)
+    repair_responses: list[ReplayResponse] = Field(default_factory=list)
+    required_end_states: list[str] = Field(min_length=1)
+    expected_final_decision: Literal["accept", "reject", "ambiguous"]
+    expected_error_types: list[str] = Field(default_factory=list)
+    force_critic: bool = False
+
+
+class GuardReplaySuite(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    guard_replay_suite_version: Literal["1"]
+    suite_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{2,80}$")
+    base_fixture: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{2,120}$")
+    response_provenance: Literal["synthetic", "sanitized_recorded"]
+    cases: list[GuardReplayCase] = Field(min_length=1)
 
 
 class CountingActionResolver(ActionResolver):
@@ -202,12 +233,18 @@ def _patched_chat(router: FixtureLLMRouter):
 
 
 @contextmanager
-def _deterministic_runtime_scope():
+def _deterministic_runtime_scope(*, force_critic: bool = False):
     """Enable the production guard and make runtime-generated IDs repeatable."""
     import agents.orchestrator as orchestrator_module
 
-    env_name = "NARRATOR_STATE_VERIFY_ENABLE"
-    previous_env = os.environ.get(env_name)
+    env_values = {"NARRATOR_STATE_VERIFY_ENABLE": "1"}
+    if force_critic:
+        env_values.update({
+            "CRITIC_MIN_NARRATIVE_LEN": "1",
+            "CRITIC_IMPORTANCE_MIN": "0",
+            "CRITIC_ENABLE_LLM": "1",
+        })
+    previous_env = {name: os.environ.get(name) for name in env_values}
     original_uuid4 = orchestrator_module.uuid.uuid4
     original_collect_affected = (
         orchestrator_module.Orchestrator._collect_affected_characters
@@ -222,7 +259,8 @@ def _deterministic_runtime_scope():
     def sorted_affected(orchestrator, events):
         return sorted(original_collect_affected(orchestrator, events))
 
-    os.environ[env_name] = "1"
+    for name, value in env_values.items():
+        os.environ[name] = value
     orchestrator_module.uuid.uuid4 = next_uuid
     orchestrator_module.Orchestrator._collect_affected_characters = sorted_affected
     try:
@@ -232,10 +270,11 @@ def _deterministic_runtime_scope():
         orchestrator_module.Orchestrator._collect_affected_characters = (
             original_collect_affected
         )
-        if previous_env is None:
-            os.environ.pop(env_name, None)
-        else:
-            os.environ[env_name] = previous_env
+        for name, value in previous_env.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
 
 
 def load_fixture(path: Path) -> ReplayFixture:
@@ -250,6 +289,60 @@ def load_fixture(path: Path) -> ReplayFixture:
         if "fixture_overlay_version" in base_payload:
             raise ValueError("nested replay fixture overlays are not supported")
         payload = _merge_patch(base_payload, overlay.merge_patch)
+    return ReplayFixture.model_validate(payload)
+
+
+def load_guard_replay_suite(path: Path) -> GuardReplaySuite:
+    return GuardReplaySuite.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _fixture_from_guard_case(
+    *,
+    suite: GuardReplaySuite,
+    case: GuardReplayCase,
+    suite_path: Path,
+) -> ReplayFixture:
+    parent = suite_path.resolve().parent
+    base_path = (parent / suite.base_fixture).resolve()
+    if base_path.parent != parent:
+        raise ValueError("guard suite base must remain in the same directory")
+    payload = load_fixture(base_path).model_dump(mode="json")
+    payload["fixture_id"] = case.case_id
+    payload["initial_state"]["continuity_state"] = (
+        case.previous_continuity_state
+    )
+    payload["initial_state"]["continuity_audit"] = (
+        case.previous_continuity_audit
+    )
+    payload["events"][0]["description"] = case.title
+    payload["events"][0]["consequences"] = list(case.required_end_states)
+    responses = payload["responses_by_agent"]
+    responses["narrator"] = [case.narrator_response.model_dump(mode="json")]
+    responses["narrative_state_verifier"] = [
+        item.model_dump(mode="json") for item in case.verifier_responses
+    ]
+    if case.repair_responses:
+        responses["narrative_state_repair"] = [
+            item.model_dump(mode="json") for item in case.repair_responses
+        ]
+    else:
+        responses.pop("narrative_state_repair", None)
+    for agent_id, items in case.critic_responses.items():
+        responses[agent_id] = [item.model_dump(mode="json") for item in items]
+    payload["expected_required_end_states"] = list(case.required_end_states)
+    payload["expected_fact_transitions"] = []
+    payload["expected_acceptance"] = case.expected_final_decision
+    payload["labels"] = [
+        "phase9_guard_suite",
+        *case.expected_error_types,
+    ]
+    payload["response_provenance"] = suite.response_provenance
+    payload["source_artifacts"] = [
+        suite.base_fixture,
+        suite_path.name,
+        case.case_id,
+    ]
+    payload["force_critic"] = case.force_critic
     return ReplayFixture.model_validate(payload)
 
 
@@ -305,7 +398,8 @@ def _seed_replay_directory(
         state.upsert_character_state(CharacterState.model_validate(raw))
     if fixture.initial_state.continuity_state:
         state.set_narrative_continuity_state(
-            fixture.initial_state.continuity_state
+            fixture.initial_state.continuity_state,
+            audit=fixture.initial_state.continuity_audit or None,
         )
     state.save()
 
@@ -543,6 +637,14 @@ async def run_replay_async(
         novel_id=fixture.fixture_id,
         _replay_data_dir=str(work_dir),
     )
+    if fixture.force_critic:
+        # Pytest normally disables Critic to keep legacy unit fixtures small.
+        # A Phase 9 recorded fixture may explicitly opt into the production Critic
+        # component while still routing every response through the fixture router.
+        from agents.narrative_critic import NarrativeCritic
+
+        runtime.narrator._enable_critic = True
+        runtime.narrator._critic = NarrativeCritic()
     resolver = CountingActionResolver()
     runtime.action_resolver = resolver
     runtime.orchestrator._action_resolver = resolver
@@ -584,7 +686,9 @@ async def run_replay_async(
 
     started = time.perf_counter()
     try:
-        with _deterministic_runtime_scope(), _patched_chat(router):
+        with _deterministic_runtime_scope(
+            force_critic=fixture.force_critic
+        ), _patched_chat(router):
             tick_count = max(events_by_tick, default=1)
             for target_tick in range(1, tick_count + 1):
                 for event in events_by_tick.get(target_tick, []):
@@ -703,7 +807,8 @@ async def run_replay_async(
                 call["agent_id"] == "narrator" for call in router.calls
             ),
             "critic_exercised": any(
-                call["agent_id"] == "narrative_critic" for call in router.calls
+                call["agent_id"].startswith("narrative_critic:")
+                for call in router.calls
             ),
             "state_guard_exercised": any(
                 (row.get("guard_trace") or {}).get("attempted")
@@ -762,6 +867,160 @@ def run_replay(
     )
 
 
+async def run_guard_replay_suite_async(
+    suite_path: Path,
+    *,
+    work_dir: Path,
+    max_calls: int = 40,
+    checkpoint_path: Path | None = None,
+    mode: Literal["mock", "recorded"] = "recorded",
+) -> dict[str, Any]:
+    """Run every suite case through the full production runtime component graph."""
+
+    if work_dir.exists() and any(work_dir.iterdir()):
+        raise FileExistsError(f"replay suite work directory is not empty: {work_dir}")
+    work_dir.mkdir(parents=True, exist_ok=True)
+    suite = load_guard_replay_suite(suite_path)
+    reports: list[dict[str, Any]] = []
+    for case in suite.cases:
+        fixture = _fixture_from_guard_case(
+            suite=suite,
+            case=case,
+            suite_path=suite_path,
+        )
+        report = await run_replay_async(
+            fixture,
+            work_dir=work_dir / case.case_id,
+            max_calls=max_calls,
+            mode=mode,
+        )
+        report["expected_error_types"] = list(case.expected_error_types)
+        reports.append(report)
+
+    traces = [
+        row["guard_trace"]
+        for report in reports
+        for row in report["ticks"]
+        if row.get("guard_trace")
+    ]
+    completeness_fields = (
+        "has_original_draft",
+        "has_declared_ledger",
+        "has_verifier_payload",
+        "has_repair_full_text",
+        "has_deterministic_checks",
+        "has_required_end_states",
+        "has_location_context",
+        "has_critic_payload",
+    )
+    completeness = {
+        field: sum(
+            bool((trace.get("payload_completeness") or {}).get(field))
+            for trace in traces
+        )
+        for field in completeness_fields
+    }
+    expected_rejects = sum(
+        case.expected_final_decision == "reject" for case in suite.cases
+    )
+    expected_accepts = sum(
+        case.expected_final_decision == "accept" for case in suite.cases
+    )
+    actual_rejects = sum(
+        not report["ticks"][-1]["final_accepted"] for report in reports
+    )
+    actual_accepts = len(reports) - actual_rejects
+    summary = {
+        "case_count": len(reports),
+        "expected_accepts": expected_accepts,
+        "expected_rejects": expected_rejects,
+        "actual_accepts": actual_accepts,
+        "actual_rejects": actual_rejects,
+        "signal_backed_accepts": sum(
+            case.expected_final_decision == "accept"
+            and report["expectations"]["acceptance_passed"]
+            for case, report in zip(suite.cases, reports)
+        ),
+        "signal_backed_rejects": sum(
+            case.expected_final_decision == "reject"
+            and report["expectations"]["acceptance_passed"]
+            for case, report in zip(suite.cases, reports)
+        ),
+        "critic_exercised_cases": sum(
+            report["execution"]["critic_exercised"] for report in reports
+        ),
+        "all_expectations_passed": all(
+            report["expectations"]["all_passed"] for report in reports
+        ),
+        "complete_trace_count": sum(
+            not (trace.get("payload_completeness") or {}).get("missing_fields")
+            for trace in traces
+        ),
+        "trace_count": len(traces),
+        "completeness_counts": completeness,
+        "provider_calls": 0,
+        "model_tokens": None,
+        "fixture_transport_calls": sum(
+            report["telemetry"]["call_count"] for report in reports
+        ),
+    }
+    stable = {
+        "suite_version": suite.guard_replay_suite_version,
+        "suite_id": suite.suite_id,
+        "suite_sha256": hashlib.sha256(
+            suite_path.read_bytes()
+        ).hexdigest(),
+        "mode": mode,
+        "summary": summary,
+        "cases": [
+            {
+                "fixture_id": report["fixture_id"],
+                "evidence_sha256": report["evidence_sha256"],
+                "expected_error_types": report["expected_error_types"],
+            }
+            for report in reports
+        ],
+    }
+    evidence_sha256 = hashlib.sha256(json.dumps(
+        stable,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")).hexdigest()
+    result = {
+        "schema_version": "state-guard-replay-suite-v1",
+        "suite_version": suite.guard_replay_suite_version,
+        "suite_id": suite.suite_id,
+        "suite_sha256": stable["suite_sha256"],
+        "mode": mode,
+        "response_provenance": suite.response_provenance,
+        "checkpoint_status": "complete",
+        "summary": summary,
+        "cases": reports,
+        "evidence_sha256": evidence_sha256,
+    }
+    if checkpoint_path is not None:
+        _atomic_write_json(checkpoint_path, result)
+    return result
+
+
+def run_guard_replay_suite(
+    suite_path: Path,
+    *,
+    work_dir: Path,
+    max_calls: int = 40,
+    checkpoint_path: Path | None = None,
+    mode: Literal["mock", "recorded"] = "recorded",
+) -> dict[str, Any]:
+    return asyncio.run(run_guard_replay_suite_async(
+        suite_path,
+        work_dir=work_dir,
+        max_calls=max_calls,
+        checkpoint_path=checkpoint_path,
+        mode=mode,
+    ))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("fixture", help="Versioned replay fixture JSON")
@@ -786,8 +1045,31 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.max_calls < 1:
         raise SystemExit("--max-calls must be positive")
+    fixture_path = Path(args.fixture).resolve()
+    fixture_payload = json.loads(fixture_path.read_text(encoding="utf-8"))
+    is_suite = "guard_replay_suite_version" in fixture_payload
+    if is_suite:
+        if args.resume:
+            raise SystemExit("--resume is not yet supported for guard replay suites")
+        report = run_guard_replay_suite(
+            fixture_path,
+            work_dir=Path(args.work_dir).resolve(),
+            max_calls=args.max_calls,
+            checkpoint_path=Path(args.out).resolve(),
+            mode=args.mode,
+        )
+        output = {
+            "out": str(Path(args.out).resolve()),
+            "suite_id": report["suite_id"],
+            "mode": report["mode"],
+            "evidence_sha256": report["evidence_sha256"],
+            **report["summary"],
+        }
+        print(json.dumps(output, ensure_ascii=False))
+        return 0 if report["summary"]["all_expectations_passed"] else 1
+
     report = run_replay(
-        Path(args.fixture).resolve(),
+        fixture_path,
         work_dir=Path(args.work_dir).resolve(),
         max_calls=args.max_calls,
         checkpoint_path=Path(args.out).resolve(),

@@ -1,0 +1,4747 @@
+{
+  "guard_replay_suite_version": "1",
+  "suite_id": "phase9-hard-negative-v1",
+  "base_fixture": "mock_full_runtime_v1.json",
+  "response_provenance": "synthetic",
+  "cases": [
+    {
+      "case_id": "phase9-hn-location-outer-fort",
+      "title": "要求进入城内但只到外堡",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Alice穿过第一道拒马，在外堡门洞停住；内城门仍紧闭。Bob还在她身后喘息。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {
+        "narrative_critic:critique": [
+          {
+            "content": {
+              "triggers": [],
+              "rationale": "无文学层触发，交由 StateGuard 核对终态。",
+              "red_team_critiques": []
+            }
+          }
+        ]
+      },
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文与ledger均停在外侧，未进入city_gate_inner。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "正文与ledger均停在外侧，未进入city_gate_inner。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文与ledger均停在外侧，未进入city_gate_inner。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "正文与ledger均停在外侧，未进入city_gate_inner。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文与ledger均停在外侧，未进入city_gate_inner。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "正文与ledger均停在外侧，未进入city_gate_inner。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice穿过第一道拒马，在外堡门洞停住；内城门仍紧闭。Bob还在她身后喘息。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice穿过第一道拒马，在外堡门洞停住；内城门仍紧闭。Bob还在她身后喘息。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：Alice已进入city_gate_inner"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch"
+      ],
+      "force_critic": true
+    },
+    {
+      "case_id": "phase9-hn-location-watchtower",
+      "title": "守望塔不等于城内终点",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Alice爬上门外守望塔，隔着铁栅看见城内灯火；她没有越过内门。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "gate_watchtower",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "gate_watchtower不在已提供地点目录，也不能证明进入城内。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice爬上门外守望塔，隔着铁栅看见城内灯火；她没有越过内门。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "gate_watchtower",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice爬上门外守望塔，隔着铁栅看见城内灯火；她没有越过内门。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "gate_watchtower",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：Alice已进入city_gate_inner"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch",
+        "ledger_missing_field"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-location-action-phrase",
+      "title": "支撑动作污染地点字段",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Bob架着Alice向门边挪动，两人最终仍停在外侧。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "由Alice架着",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "location_id保存支撑动作且正文未越过门线。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "location_id保存支撑动作且正文未越过门线。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "location_id保存支撑动作且正文未越过门线。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "location_id保存支撑动作且正文未越过门线。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "location_id保存支撑动作且正文未越过门线。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "location_id保存支撑动作且正文未越过门线。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice已进入city_gate_inner",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "location_id保存支撑动作且正文未越过门线。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "location_id保存支撑动作且正文未越过门线。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "location_id保存支撑动作且正文未越过门线。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Bob架着Alice向门边挪动，两人最终仍停在外侧。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "由Alice架着",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Bob架着Alice向门边挪动，两人最终仍停在外侧。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "由Alice架着",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：Alice已进入city_gate_inner"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "location_mismatch",
+        "ledger_wrong_type"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-holder-reverts",
+      "title": "地图交付后holder回退",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Bob接过地图，封进自己的铁匣。Alice空着手退开。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "正文明确交给Bob，ledger却仍声明Alice持有。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "正文明确交给Bob，ledger却仍声明Alice持有。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "正文明确交给Bob，ledger却仍声明Alice持有。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "正文明确交给Bob，ledger却仍声明Alice持有。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Bob接过地图，封进自己的铁匣。Alice空着手退开。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Bob接过地图，封进自己的铁匣。Alice空着手退开。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：map由bob持有"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-holder-wrong-type",
+      "title": "holder列表被错误写成字符串",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Bob把地图收进铁匣，Alice松开了手。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": "alice",
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "holder字段类型错误且无法证明Bob持有。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "holder字段类型错误且无法证明Bob持有。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "holder字段类型错误且无法证明Bob持有。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "holder字段类型错误且无法证明Bob持有。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Bob把地图收进铁匣，Alice松开了手。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": "alice",
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Bob把地图收进铁匣，Alice松开了手。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": "alice",
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：map由bob持有"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict",
+        "ledger_wrong_type",
+        "ledger_missing_field"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-holder-and-knowledge-missing",
+      "title": "物品holder缺失且角色越权知道暗号",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Bob收下地图。Alice却无来源地说出了只有守门人才知道的内门暗号。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "holder遗漏，且Alice说出无合法来源的暗号。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "holder遗漏，且Alice说出无合法来源的暗号。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "holder遗漏，且Alice说出无合法来源的暗号。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "holder遗漏，且Alice说出无合法来源的暗号。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Bob收下地图。Alice却无来源地说出了只有守门人才知道的内门暗号。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Bob收下地图。Alice却无来源地说出了只有守门人才知道的内门暗号。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：map由bob持有"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_holder_conflict",
+        "ledger_missing_field",
+        "knowledge_leak"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-condition-restored",
+      "title": "损坏地图无修复恢复完好",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Alice只是把湿透开裂的地图重新折好，没有进行任何修复。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "intact",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map仍为damaged",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "entity_grounding_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "prior_state_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "没有修复事件，map却从damaged恢复为intact。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map仍为damaged",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "entity_grounding_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "prior_state_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "没有修复事件，map却从damaged恢复为intact。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map仍为damaged",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "entity_grounding_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "prior_state_conflicts": [
+              "没有修复事件，map却从damaged恢复为intact。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [],
+            "reason": "没有修复事件，map却从damaged恢复为intact。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice只是把湿透开裂的地图重新折好，没有进行任何修复。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice只是把湿透开裂的地图重新折好，没有进行任何修复。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：map仍为damaged"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "item_condition_conflict",
+        "new_ungrounded_fact"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-repair-restores-item",
+      "title": "repair凭空恢复已耗尽物品",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 0,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 0,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 0,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "最后一片地图也被酸雨泡烂，Alice确认已经没有可用副本。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 0,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map仍为damaged且quantity为0",
+                "met": true,
+                "prose_evidence": [
+                  "最后一片地图也被酸雨泡烂"
+                ],
+                "ledger_evidence_paths": [
+                  "items.map.condition",
+                  "items.map.quantity"
+                ]
+              }
+            ],
+            "event_fulfillment_conflicts": [],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "初稿状态格式需要复核。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "初稿状态格式需要复核。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map仍为damaged且quantity为0",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "entity_grounding_conflicts": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "prior_state_conflicts": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "reason": "repair把damaged/0改成intact/1，改变既成事实。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map仍为damaged且quantity为0",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "entity_grounding_conflicts": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "prior_state_conflicts": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [
+              "repair把damaged/0改成intact/1，改变既成事实。"
+            ],
+            "reason": "repair把damaged/0改成intact/1，改变既成事实。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice从口袋取出一张完好地图，数量重新变成一。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice从口袋取出一张完好地图，数量重新变成一。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：map仍为damaged且quantity为0"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_condition_conflict",
+        "new_ungrounded_fact"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-knowledge-leak",
+      "title": "角色无来源知道密道",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Alice说密道就在钟楼第三块砖后，但此前没有人向她透露这个位置。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {
+              "alice": "fact_secret_route"
+            },
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice不得新增无来源的密道知识",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "entity_grounding_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "prior_state_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "知识无来源且newly_known_fact_ids类型错误。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice不得新增无来源的密道知识",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "entity_grounding_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "prior_state_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "知识无来源且newly_known_fact_ids类型错误。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice不得新增无来源的密道知识",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "entity_grounding_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "prior_state_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "知识无来源且newly_known_fact_ids类型错误。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "知识无来源且newly_known_fact_ids类型错误。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice说密道就在钟楼第三块砖后，但此前没有人向她透露这个位置。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {
+                "alice": "fact_secret_route"
+              },
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice说密道就在钟楼第三块砖后，但此前没有人向她透露这个位置。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {
+                "alice": "fact_secret_route"
+              },
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：Alice不得新增无来源的密道知识"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "knowledge_leak",
+        "new_ungrounded_fact",
+        "ledger_wrong_type",
+        "ledger_missing_field"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-cost-omitted-secret",
+      "title": "入城完成但必达代价缺失并越权知道口令",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "内门打开，Alice和Bob进入城内。Alice随后无来源地念出值班口令。谈判没有产生任何代价。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_inner",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_inner",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "entity_grounding_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "prior_state_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "正文没有新代价，口令知识也没有来源。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "entity_grounding_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "prior_state_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "正文没有新代价，口令知识也没有来源。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：谈判产生一项正文明写的新代价",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "entity_grounding_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "prior_state_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "正文没有新代价，口令知识也没有来源。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "正文没有新代价，口令知识也没有来源。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "内门打开，Alice和Bob进入城内。Alice随后无来源地念出值班口令。谈判没有产生任何代价。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_inner",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_inner",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "内门打开，Alice和Bob进入城内。Alice随后无来源地念出值班口令。谈判没有产生任何代价。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_inner",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_inner",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：谈判产生一项正文明写的新代价"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "event_endpoint_unfulfilled",
+        "ledger_missing_field",
+        "knowledge_leak",
+        "new_ungrounded_fact"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-repair-deletes-handoff",
+      "title": "repair删除地图交付结果",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Bob接过地图，锁进铁匣。Alice摊开空手。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "bob"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": true,
+                "prose_evidence": [
+                  "Bob接过地图，锁进铁匣"
+                ],
+                "ledger_evidence_paths": [
+                  "items.map.holder"
+                ]
+              }
+            ],
+            "event_fulfillment_conflicts": [],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "初稿交付已完成，仅要求复核ledger格式。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "初稿交付已完成，仅要求复核ledger格式。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "repair删除交付并把holder改回Alice。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "repair删除交付并把holder改回Alice。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [
+              "repair删除交付并把holder改回Alice。"
+            ],
+            "reason": "repair删除交付并把holder改回Alice。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：map由bob持有",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "repair删除交付并把holder改回Alice。"
+            ],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [
+              "repair删除交付并把holder改回Alice。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [
+              "repair删除交付并把holder改回Alice。"
+            ],
+            "reason": "repair删除交付并把holder改回Alice。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice把地图收回自己的内袋，Bob没有拿到它。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice把地图收回自己的内袋，Bob没有拿到它。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "damaged",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：map由bob持有"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_holder_conflict"
+      ],
+      "force_critic": false
+    },
+    {
+      "case_id": "phase9-hn-repair-invents-sister",
+      "title": "repair删除伤势并新增无来源亲属",
+      "previous_continuity_state": {
+        "schema_version": "1",
+        "time_marker": "tick:1",
+        "characters": {
+          "alice": {
+            "character_id": "alice",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [
+              {
+                "injury_id": "injury_arm",
+                "body_part": "arm",
+                "severity": "moderate",
+                "status": "active",
+                "source_event_id": "evt_map_gate"
+              }
+            ],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          },
+          "bob": {
+            "character_id": "bob",
+            "location_id": "city_gate_outer",
+            "movement_status": "arrived",
+            "destination_location_id": null,
+            "alive_status": "alive",
+            "injuries": [],
+            "supporting_character_ids": [],
+            "carried_by_character_id": null,
+            "knowledge_fact_ids": []
+          }
+        },
+        "items": {
+          "map": {
+            "item_id": "map",
+            "holder_character_ids": [
+              "alice"
+            ],
+            "location_id": null,
+            "quantity": 1,
+            "condition": "damaged",
+            "container_item_id": null
+          }
+        },
+        "newly_known_fact_ids": {},
+        "active_open_loop_ids": []
+      },
+      "previous_continuity_audit": {
+        "source_schema": "typed_v1",
+        "typed_state": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [
+                {
+                  "injury_id": "injury_arm",
+                  "body_part": "arm",
+                  "severity": "moderate",
+                  "status": "active",
+                  "source_event_id": "evt_map_gate"
+                }
+              ],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "raw_payload": {
+          "schema_version": "1",
+          "time_marker": "tick:1",
+          "characters": {
+            "alice": {
+              "character_id": "alice",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [
+                {
+                  "injury_id": "injury_arm",
+                  "body_part": "arm",
+                  "severity": "moderate",
+                  "status": "active",
+                  "source_event_id": "evt_map_gate"
+                }
+              ],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            },
+            "bob": {
+              "character_id": "bob",
+              "location_id": "city_gate_outer",
+              "movement_status": "arrived",
+              "destination_location_id": null,
+              "alive_status": "alive",
+              "injuries": [],
+              "supporting_character_ids": [],
+              "carried_by_character_id": null,
+              "knowledge_fact_ids": []
+            }
+          },
+          "items": {
+            "map": {
+              "item_id": "map",
+              "holder_character_ids": [
+                "alice"
+              ],
+              "location_id": null,
+              "quantity": 1,
+              "condition": "damaged",
+              "container_item_id": null
+            }
+          },
+          "newly_known_fact_ids": {},
+          "active_open_loop_ids": []
+        },
+        "issues": [],
+        "authoritative_eligible": true,
+        "references_checked": true
+      },
+      "narrator_response": {
+        "content": {
+          "narrative_text": "Alice手臂伤口仍在流血，她把破损地图压在胸前。",
+          "estimated_length": "short",
+          "viewpoint_characters": [
+            "alice"
+          ],
+          "scene_focus": "Phase 9 StateGuard calibration",
+          "events_consumed": [
+            "evt_map_gate"
+          ],
+          "open_loops_referenced": [],
+          "resolved_open_loops": [],
+          "newly_opened_loops": [],
+          "continuity_state": {
+            "schema_version": "1",
+            "time_marker": "tick:1",
+            "characters": {
+              "alice": {
+                "character_id": "alice",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [
+                  {
+                    "injury_id": "injury_arm",
+                    "body_part": "arm",
+                    "severity": "moderate",
+                    "status": "active",
+                    "source_event_id": "evt_map_gate"
+                  }
+                ],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              },
+              "bob": {
+                "character_id": "bob",
+                "location_id": "city_gate_outer",
+                "movement_status": "arrived",
+                "destination_location_id": null,
+                "alive_status": "alive",
+                "injuries": [],
+                "supporting_character_ids": [],
+                "carried_by_character_id": null,
+                "knowledge_fact_ids": []
+              }
+            },
+            "items": {
+              "map": {
+                "item_id": "map",
+                "holder_character_ids": [
+                  "alice"
+                ],
+                "location_id": null,
+                "quantity": 1,
+                "condition": "damaged",
+                "container_item_id": null
+              }
+            },
+            "newly_known_fact_ids": {},
+            "active_open_loop_ids": []
+          },
+          "style_diagnostics": {},
+          "consistency_flags": []
+        }
+      },
+      "critic_responses": {},
+      "verifier_responses": [
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice伤势仍active且map仍damaged",
+                "met": true,
+                "prose_evidence": [
+                  "手臂伤口仍在流血",
+                  "破损地图"
+                ],
+                "ledger_evidence_paths": [
+                  "characters.alice.injuries",
+                  "items.map.condition"
+                ]
+              }
+            ],
+            "event_fulfillment_conflicts": [],
+            "entity_grounding_conflicts": [],
+            "prior_state_conflicts": [],
+            "internal_conflicts": [],
+            "ledger_conflicts": [
+              "初稿事实完整，仅要求局部格式复核。"
+            ],
+            "fact_changes_from_original": [],
+            "reason": "初稿事实完整，仅要求局部格式复核。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice伤势仍active且map仍damaged",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "entity_grounding_conflicts": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "prior_state_conflicts": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "reason": "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+          }
+        },
+        {
+          "content": {
+            "safe": false,
+            "event_checks": [
+              {
+                "event_id": "evt_map_gate",
+                "requirement": "本段结束前：Alice伤势仍active且map仍damaged",
+                "met": false,
+                "prose_evidence": [],
+                "ledger_evidence_paths": []
+              }
+            ],
+            "event_fulfillment_conflicts": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "entity_grounding_conflicts": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "prior_state_conflicts": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "internal_conflicts": [],
+            "ledger_conflicts": [],
+            "fact_changes_from_original": [
+              "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+            ],
+            "reason": "repair令伤势消失、地图复原并新增从未建立的妹妹Clara。"
+          }
+        }
+      ],
+      "repair_responses": [
+        {
+          "content": {
+            "narrative_text": "Alice毫发无伤地展开完好地图，想起妹妹Clara留下的密道遗言。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {
+                "alice": [
+                  "fact_clara_sister"
+                ]
+              },
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "保留完整修订候选供复验"
+            ]
+          }
+        },
+        {
+          "content": {
+            "narrative_text": "Alice毫发无伤地展开完好地图，想起妹妹Clara留下的密道遗言。",
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_outer",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {
+                "alice": [
+                  "fact_clara_sister"
+                ]
+              },
+              "active_open_loop_ids": []
+            },
+            "repairs": [
+              "第二次完整修订候选仍供独立复验"
+            ]
+          }
+        }
+      ],
+      "required_end_states": [
+        "本段结束前：Alice伤势仍active且map仍damaged"
+      ],
+      "expected_final_decision": "reject",
+      "expected_error_types": [
+        "repair_fact_change",
+        "item_condition_conflict",
+        "knowledge_leak",
+        "new_ungrounded_fact"
+      ],
+      "force_critic": false
+    }
+  ]
+}
