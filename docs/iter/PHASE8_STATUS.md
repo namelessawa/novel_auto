@@ -2,11 +2,11 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 10-11 ACCEPTED; ITERATION 12 NEXT`
+- Status: `ITERATIONS 10-12 ACCEPTED; ITERATION 13 NEXT`
 - Starting HEAD: `7f8f7e3141a3ffaf0106d8867a4bc271ef1c8220`
 - Production behavior changes accepted: none
 - Real LLM calls in Phase 8: 0
-- Current gate: typed continuity ledger contract
+- Current gate: typed ledger generation and raw-audit persistence
 - Still blocked: StateGuard behavior candidate, CanonicalFact consumption and any
   production-default change.
 
@@ -44,6 +44,16 @@ Updated: 2026-07-21
   bodies are available.
 - Cost: 0 provider calls, 0 real-model tokens.
 - Tests: 5 new; 9 focused passed; full backend 1263 passed.
+
+## Iteration 12 result
+
+- Candidate: `3aeafb5`
+- Decision: `ACCEPT_INFRASTRUCTURE`
+- Added strict TypedContinuityState v1, reference validation and a
+  non-authoritative legacy fallback with retained raw audit payload.
+- Production consumers activated: none.
+- Real LLM cost: 0 calls, 0 tokens.
+- Tests: 12 new; 33 focused passed; full backend 1275 passed.
 
 ## Safety
 
