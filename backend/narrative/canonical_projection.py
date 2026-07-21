@@ -27,6 +27,7 @@ from narrative.canonical_facts import (
     FactSourceRef,
     build_canonical_fact,
 )
+from narrative.typed_continuity import continuity_legacy_view
 
 
 def _digest(value: str) -> str:
@@ -273,6 +274,7 @@ def project_guarded_continuity_state(
     *,
     tick: int,
     consumed_event_ids: Iterable[str] = (),
+    continuity_audit: dict | None = None,
 ) -> ProjectionResult:
     """Project only the documented characters/items/knowledge schema.
 
@@ -282,6 +284,12 @@ def project_guarded_continuity_state(
     """
 
     result = ProjectionResult()
+    continuity_state = continuity_legacy_view(
+        continuity_state, audit=continuity_audit
+    )
+    if not continuity_state:
+        result.skipped.append("continuity_state_not_authoritative")
+        return result
     event_ids = sorted(set(consumed_event_ids))
     refs = _source_refs(
         kind="guarded_narrative",

@@ -104,6 +104,7 @@ class TickState:
         # Narrator 正文中的局部状态不一定进入 WorldState（如“地图湿透”、
         # “药片已用完”）。持久化一份小账本，为下段续写提供硬边界。
         self._narrative_continuity_state: dict = {}
+        self._narrative_continuity_audit: dict = {}
 
         # iter#139 Phase 4-E — 运行时 sideline: char_id → ticks_remaining.
         # Showrunner 推荐 sideline 时入字段, 每 tick orchestrator 递减,
@@ -371,7 +372,12 @@ class TickState:
             ],
         }
 
-    def set_narrative_continuity_state(self, state: dict) -> None:
+    def set_narrative_continuity_state(
+        self,
+        state: dict,
+        *,
+        audit: dict | None = None,
+    ) -> None:
         """替换 Narrator 在最近正文结尾声明的完整状态账本。"""
         if not isinstance(state, dict) or not state:
             return
@@ -380,7 +386,25 @@ class TickState:
             if len(encoded) > 16_000:
                 logger.warning("Narrative continuity state too large; ignored")
                 return
-            self._narrative_continuity_state = json.loads(encoded)
+            copied_state = json.loads(encoded)
+            raw_audit = audit if isinstance(audit, dict) and audit else {
+                "source_schema": (
+                    "typed_v1"
+                    if copied_state.get("schema_version") == "1"
+                    else "legacy"
+                ),
+                "typed_state": {},
+                "raw_payload": copied_state,
+                "issues": [],
+                "authoritative_eligible": False,
+                "references_checked": False,
+            }
+            encoded_audit = json.dumps(raw_audit, ensure_ascii=False)
+            if len(encoded_audit) > 48_000:
+                logger.warning("Narrative continuity audit too large; ignored")
+                return
+            self._narrative_continuity_state = copied_state
+            self._narrative_continuity_audit = json.loads(encoded_audit)
         except (TypeError, ValueError, json.JSONDecodeError):
             logger.warning("Invalid narrative continuity state; ignored")
 
@@ -388,6 +412,12 @@ class TickState:
         """返回隔离副本，避免调用方绕过 save 契约就地修改。"""
         return json.loads(json.dumps(
             self._narrative_continuity_state, ensure_ascii=False
+        ))
+
+    def get_narrative_continuity_audit(self) -> dict:
+        """Return an isolated copy of schema provenance and retained raw output."""
+        return json.loads(json.dumps(
+            self._narrative_continuity_audit, ensure_ascii=False
         ))
 
     def get_open_loops(
@@ -686,6 +716,7 @@ class TickState:
             "resolved_loop_records": list(self._resolved_loop_records),
             "reader_known_facts": list(self._reader_known_facts),
             "narrative_continuity_state": self._narrative_continuity_state,
+            "narrative_continuity_audit": self._narrative_continuity_audit,
             # iter#139 Phase 4-E — sideline TTL map.
             "sidelined_characters": dict(self._sidelined_characters),
             "style_anchors": [a.model_dump(mode="json") for a in self._style_anchors],
@@ -783,6 +814,27 @@ class TickState:
             self._narrative_continuity_state = (
                 dict(raw_continuity) if isinstance(raw_continuity, dict) else {}
             )
+            raw_continuity_audit = payload.get(
+                "narrative_continuity_audit", {}
+            ) or {}
+            if isinstance(raw_continuity_audit, dict) and raw_continuity_audit:
+                self._narrative_continuity_audit = dict(raw_continuity_audit)
+            elif self._narrative_continuity_state:
+                self._narrative_continuity_audit = {
+                    "source_schema": (
+                        "typed_v1"
+                        if self._narrative_continuity_state.get("schema_version")
+                        == "1"
+                        else "legacy"
+                    ),
+                    "typed_state": {},
+                    "raw_payload": self._narrative_continuity_state,
+                    "issues": [],
+                    "authoritative_eligible": False,
+                    "references_checked": False,
+                }
+            else:
+                self._narrative_continuity_audit = {}
             # iter#139 Phase 4-E + iter#151 review HIGH-1: 防御 list/wrong
             # type payload (e.g. ["char_a"] 是 list, .items() 会抛
             # AttributeError). 非 dict 视作 {}.

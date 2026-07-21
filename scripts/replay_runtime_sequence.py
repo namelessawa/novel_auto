@@ -95,6 +95,16 @@ class ReplayFixture(BaseModel):
     source_artifacts: list[str] = Field(default_factory=list)
 
 
+class ReplayFixtureOverlay(BaseModel):
+    """Small RFC 7396-style patch over a versioned fixture in the same folder."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    fixture_overlay_version: Literal["1"]
+    base_fixture: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{2,120}$")
+    merge_patch: dict[str, Any]
+
+
 class CountingActionResolver(ActionResolver):
     """Production resolver with one measurement-only invocation counter."""
 
@@ -196,6 +206,9 @@ def _deterministic_runtime_scope():
     env_name = "NARRATOR_STATE_VERIFY_ENABLE"
     previous_env = os.environ.get(env_name)
     original_uuid4 = orchestrator_module.uuid.uuid4
+    original_collect_affected = (
+        orchestrator_module.Orchestrator._collect_affected_characters
+    )
     counter = 0
 
     def next_uuid() -> uuid.UUID:
@@ -203,12 +216,19 @@ def _deterministic_runtime_scope():
         counter += 1
         return uuid.UUID(int=counter)
 
+    def sorted_affected(orchestrator, events):
+        return sorted(original_collect_affected(orchestrator, events))
+
     os.environ[env_name] = "1"
     orchestrator_module.uuid.uuid4 = next_uuid
+    orchestrator_module.Orchestrator._collect_affected_characters = sorted_affected
     try:
         yield
     finally:
         orchestrator_module.uuid.uuid4 = original_uuid4
+        orchestrator_module.Orchestrator._collect_affected_characters = (
+            original_collect_affected
+        )
         if previous_env is None:
             os.environ.pop(env_name, None)
         else:
@@ -217,7 +237,29 @@ def _deterministic_runtime_scope():
 
 def load_fixture(path: Path) -> ReplayFixture:
     payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict) and "fixture_overlay_version" in payload:
+        overlay = ReplayFixtureOverlay.model_validate(payload)
+        parent = path.resolve().parent
+        base_path = (parent / overlay.base_fixture).resolve()
+        if base_path.parent != parent:
+            raise ValueError("replay overlay base must remain in the same directory")
+        base_payload = json.loads(base_path.read_text(encoding="utf-8"))
+        if "fixture_overlay_version" in base_payload:
+            raise ValueError("nested replay fixture overlays are not supported")
+        payload = _merge_patch(base_payload, overlay.merge_patch)
     return ReplayFixture.model_validate(payload)
+
+
+def _merge_patch(target: Any, patch: Any) -> Any:
+    if not isinstance(patch, dict):
+        return patch
+    result = dict(target) if isinstance(target, dict) else {}
+    for key, value in patch.items():
+        if value is None:
+            result.pop(key, None)
+        else:
+            result[key] = _merge_patch(result.get(key), value)
+    return result
 
 
 def _fixture_sha256(fixture: ReplayFixture) -> str:
@@ -406,8 +448,14 @@ def _stable_evidence_payload(report: dict[str, Any]) -> dict[str, Any]:
                     "fact_diff",
                     "reconciliation_summary",
                     "failure_category",
+                    "continuity_state_schema",
+                    "typed_ledger_valid",
+                    "typed_authoritative_eligible",
+                    "continuity_issue_codes",
+                    "continuity_raw_audit_retained",
                     "guard_trace",
                 )
+                if key in row
             }
             for row in report["ticks"]
         ],
@@ -553,6 +601,9 @@ async def run_replay_async(
                     summary.narrator_produced_text and narrative_path.is_file()
                 )
                 facts_after_tick = _fact_payloads(runtime.canonical_fact_store)
+                continuity_audit = (
+                    runtime.tick_state.get_narrative_continuity_audit()
+                )
                 reconciliation = reconcile_all(
                     runtime.canonical_fact_store,
                     character_states=runtime.tick_state.list_character_states(),
@@ -593,6 +644,24 @@ async def run_replay_async(
                         },
                         "failure_category": _classify_failure(
                             guard_trace, accepted
+                        ),
+                        "continuity_state_schema": str(
+                            continuity_audit.get("source_schema") or ""
+                        ),
+                        "typed_ledger_valid": bool(
+                            continuity_audit.get("source_schema") == "typed_v1"
+                            and not continuity_audit.get("issues")
+                        ),
+                        "typed_authoritative_eligible": bool(
+                            continuity_audit.get("authoritative_eligible")
+                        ),
+                        "continuity_issue_codes": [
+                            str(issue.get("code") or "")
+                            for issue in (continuity_audit.get("issues") or [])
+                            if isinstance(issue, dict)
+                        ],
+                        "continuity_raw_audit_retained": (
+                            "raw_payload" in continuity_audit
                         ),
                         "guard_trace": guard_trace,
                     }

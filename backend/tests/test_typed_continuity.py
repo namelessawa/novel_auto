@@ -5,8 +5,10 @@ import json
 import pytest
 from pydantic import ValidationError
 
+from memory.tick_state import TickState
 from narrative.typed_continuity import (
     TypedContinuityState,
+    continuity_legacy_view,
     normalise_continuity_state,
 )
 
@@ -246,3 +248,60 @@ def test_location_movement_states_are_not_equivalent() -> None:
     first = TypedContinuityState.model_validate(departing)
     second = TypedContinuityState.model_validate(arrived)
     assert first.characters["char_hero"] != second.characters["char_hero"]
+
+
+def test_legacy_view_omits_in_transit_location_and_unknown_values() -> None:
+    payload = _valid_payload()
+    payload["characters"]["char_hero"].update(
+        {
+            "movement_status": "in_transit",
+            "destination_location_id": "city_interior",
+            "alive_status": "unknown",
+        }
+    )
+    payload["items"]["item_map"].update(
+        {
+            "holder_character_ids": ["char_hero", "char_linxue"],
+            "condition": "unknown",
+        }
+    )
+
+    view = continuity_legacy_view(payload)
+
+    assert "location" not in view["characters"]["char_hero"]
+    assert "alive_status" not in view["characters"]["char_hero"]
+    assert view["characters"]["char_hero"]["destination_location_id"] == (
+        "city_interior"
+    )
+    assert "holder" not in view["items"]["item_map"]
+    assert view["items"]["item_map"]["holder_character_ids"] == [
+        "char_hero",
+        "char_linxue",
+    ]
+    assert "condition" not in view["items"]["item_map"]
+
+
+def test_legacy_view_does_not_reinterpret_legacy_payload() -> None:
+    legacy = {"characters": {"char_hero": {"location": "由林雪架着"}}}
+
+    assert continuity_legacy_view(legacy) == legacy
+
+
+def test_tick_state_persists_typed_state_and_raw_audit(tmp_path) -> None:
+    normalized = normalise_continuity_state(_valid_payload(), **CATALOGS)
+    state = TickState(str(tmp_path))
+    state.set_narrative_continuity_state(
+        normalized.typed_state.model_dump(mode="json"),
+        audit=normalized.model_dump(mode="json"),
+    )
+    state.save()
+
+    restored = TickState(str(tmp_path))
+    assert restored.load() is True
+    assert restored.get_narrative_continuity_state()["schema_version"] == "1"
+    audit = restored.get_narrative_continuity_audit()
+    assert audit["source_schema"] == "typed_v1"
+    assert audit["authoritative_eligible"] is True
+    assert audit["raw_payload"] == _valid_payload()
+    audit["raw_payload"].clear()
+    assert restored.get_narrative_continuity_audit()["raw_payload"]

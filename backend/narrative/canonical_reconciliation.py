@@ -8,6 +8,7 @@ from typing import Any, Iterable
 from memory_system.models import CharacterState
 from narrative.canonical_facts import CanonicalFact, CanonicalFactStore
 from narrative.fact_ledger import Fact
+from narrative.typed_continuity import continuity_legacy_view
 
 
 @dataclass(frozen=True)
@@ -364,6 +365,7 @@ def reconcile_continuity_state(
     """Compare only fields present in continuity; omission is never healing."""
 
     report = ReconciliationReport()
+    continuity_state = continuity_legacy_view(continuity_state)
     characters = continuity_state.get("characters", {})
     if isinstance(characters, dict):
         for cid, state in characters.items():
@@ -462,4 +464,3 @@ __all__ = [
     "reconcile_knowledge_graph",
     "reconcile_tick_state",
 ]
-

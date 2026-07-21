@@ -1,0 +1,95 @@
+{
+  "fixture_overlay_version": "1",
+  "base_fixture": "mock_full_runtime_v1.json",
+  "merge_patch": {
+    "fixture_id": "map_gate_full_runtime_typed_tick_1",
+    "response_provenance": "sanitized_recorded",
+    "source_artifacts": [
+      "mock_full_runtime_v1.json",
+      "typed_continuity_overlay_v1.json"
+    ],
+    "labels": [
+      "full_runtime",
+      "typed_continuity_v1",
+      "raw_audit",
+      "compatibility_projection"
+    ],
+    "responses_by_agent": {
+      "narrator": [
+        {
+          "content": {
+            "narrative_text": "爆炸把外门的铁皮掀起半尺，Alice先跨过门槛，反手扶住Bob的肩。Bob咬紧牙跟进来，靴底在门内石面拖出一道血痕。她确认地图仍在自己的内袋里，随后按下内门锁扣。",
+            "estimated_length": "short",
+            "viewpoint_characters": [
+              "alice"
+            ],
+            "scene_focus": "Alice带Bob穿过内门并保住地图",
+            "events_consumed": [
+              "evt_map_gate"
+            ],
+            "open_loops_referenced": [],
+            "resolved_open_loops": [],
+            "newly_opened_loops": [],
+            "continuity_state": {
+              "schema_version": "1",
+              "time_marker": "tick:1",
+              "characters": {
+                "alice": {
+                  "character_id": "alice",
+                  "location_id": "city_gate_inner",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [
+                    {
+                      "injury_id": "injury_arm",
+                      "body_part": "arm",
+                      "severity": "minor",
+                      "status": "active",
+                      "source_event_id": "evt_map_gate"
+                    }
+                  ],
+                  "supporting_character_ids": [],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                },
+                "bob": {
+                  "character_id": "bob",
+                  "location_id": "city_gate_inner",
+                  "movement_status": "arrived",
+                  "destination_location_id": null,
+                  "alive_status": "alive",
+                  "injuries": [],
+                  "supporting_character_ids": [
+                    "alice"
+                  ],
+                  "carried_by_character_id": null,
+                  "knowledge_fact_ids": []
+                }
+              },
+              "items": {
+                "map": {
+                  "item_id": "map",
+                  "holder_character_ids": [
+                    "alice"
+                  ],
+                  "location_id": null,
+                  "quantity": 1,
+                  "condition": "intact",
+                  "container_item_id": null
+                }
+              },
+              "newly_known_fact_ids": {},
+              "active_open_loop_ids": []
+            },
+            "style_diagnostics": {
+              "avg_sentence_length": 22,
+              "rhetoric_density": "low"
+            },
+            "consistency_flags": []
+          }
+        }
+      ]
+    }
+  }
+}

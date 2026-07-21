@@ -204,6 +204,58 @@ def test_guarded_continuity_projects_schema_and_never_heals_by_omission(tmp_path
     assert location.valid_from_tick == 4  # unchanged tick 5 only merges evidence
 
 
+def test_non_authoritative_typed_continuity_projects_no_facts() -> None:
+    result = project_guarded_continuity_state(
+        {
+            "schema_version": "1",
+            "characters": {
+                "hero": {
+                    "character_id": "hero",
+                    "location_id": "invented_location",
+                    "movement_status": "arrived",
+                }
+            },
+            "items": {},
+        },
+        tick=6,
+        continuity_audit={
+            "source_schema": "typed_v1",
+            "authoritative_eligible": False,
+            "issues": [{"code": "unknown_location_id"}],
+        },
+    )
+
+    assert result.facts == []
+    assert result.skipped == ["continuity_state_not_authoritative"]
+
+
+def test_in_transit_typed_location_is_not_projected_as_arrived() -> None:
+    result = project_guarded_continuity_state(
+        {
+            "schema_version": "1",
+            "characters": {
+                "hero": {
+                    "character_id": "hero",
+                    "location_id": "outer_gate",
+                    "movement_status": "in_transit",
+                    "destination_location_id": "city_interior",
+                }
+            },
+            "items": {},
+        },
+        tick=6,
+        continuity_audit={
+            "source_schema": "typed_v1",
+            "authoritative_eligible": True,
+            "issues": [],
+        },
+    )
+
+    assert not any(
+        fact.predicate == "character_location" for fact in result.facts
+    )
+
+
 def test_open_loop_resolution_retains_event_evidence() -> None:
     loop = OpenLoop(
         id="loop_map",

@@ -961,7 +961,8 @@ class Orchestrator:
                 self._prose_tail = final_text[-1500:]
                 if narrator_out.continuity_state:
                     self._tick_state.set_narrative_continuity_state(
-                        narrator_out.continuity_state
+                        narrator_out.continuity_state,
+                        audit=narrator_out.continuity_state_audit,
                     )
                 # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
                 try:
@@ -1028,6 +1029,9 @@ class Orchestrator:
                         narrator_out.continuity_state,
                         tick=tick,
                         consumed_event_ids=narrator_out.events_consumed,
+                        continuity_audit=(
+                            narrator_out.continuity_state_audit
+                        ),
                     )
                 )
             except Exception as e:  # pragma: no cover
@@ -2007,6 +2011,9 @@ class Orchestrator:
             reader_knowledge=self._tick_state.get_reader_knowledge(),
             continuity_state=(
                 self._tick_state.get_narrative_continuity_state()
+            ),
+            continuity_state_audit=(
+                self._tick_state.get_narrative_continuity_audit()
             ),
         )
 

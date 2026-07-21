@@ -583,7 +583,10 @@ async def _generate_one(
                 if not ts.has_open_loop(loop.id):
                     ts.add_open_loop(loop)
             if out.continuity_state:
-                ts.set_narrative_continuity_state(out.continuity_state)
+                ts.set_narrative_continuity_state(
+                    out.continuity_state,
+                    audit=out.continuity_state_audit,
+                )
         tick_outputs.append({
             "tick": tick,
             "should_narrate": bool(out.should_narrate),

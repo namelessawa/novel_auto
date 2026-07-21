@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ FIXTURE = (
     / "runtime_replay"
     / "mock_full_runtime_v1.json"
 )
+TYPED_FIXTURE = FIXTURE.with_name("typed_continuity_overlay_v1.json")
 
 
 def test_full_runtime_mock_replay_exercises_production_path(tmp_path) -> None:
@@ -104,6 +106,10 @@ def _rejected_fixture() -> ReplayFixture:
     return ReplayFixture.model_validate(payload)
 
 
+def _typed_fixture() -> ReplayFixture:
+    return load_fixture(TYPED_FIXTURE)
+
+
 def test_rejected_tick_does_not_project_guarded_narrative_facts(tmp_path) -> None:
     fixture = _rejected_fixture()
     report = asyncio.run(
@@ -132,12 +138,51 @@ def test_rejected_tick_does_not_project_guarded_narrative_facts(tmp_path) -> Non
     assert report["expectations"]["all_passed"] is True
 
 
+def test_typed_ledger_survives_full_runtime_and_projects_compatibly(tmp_path) -> None:
+    report = asyncio.run(
+        run_replay_async(
+            _typed_fixture(),
+            work_dir=tmp_path / "typed",
+            max_calls=10,
+            mode="recorded",
+        )
+    )
+
+    assert report["expectations"]["all_passed"] is True
+    tick = report["ticks"][0]
+    assert tick["final_accepted"] is True
+    assert tick["continuity_state_schema"] == "typed_v1"
+    assert tick["typed_ledger_valid"] is True
+    assert tick["typed_authoritative_eligible"] is True
+    assert tick["continuity_issue_codes"] == []
+    assert tick["continuity_raw_audit_retained"] is True
+    state_payload = json.loads(
+        (tmp_path / "typed" / "tick_state.json").read_text(encoding="utf-8")
+    )
+    assert state_payload["narrative_continuity_state"]["schema_version"] == "1"
+    assert state_payload["narrative_continuity_audit"]["raw_payload"][
+        "schema_version"
+    ] == "1"
+    active = {
+        (fact["subject_id"], fact["predicate"]): fact["value"]
+        for fact in tick["canonical_facts_after"]
+        if fact["status"] == "active"
+    }
+    assert active[("alice", "character_location")]["location_id"] == (
+        "city_gate_inner"
+    )
+    assert active[("item:map", "item_holder")] == "alice"
+
+
 def test_mock_replay_fact_and_call_evidence_is_repeatable(tmp_path) -> None:
     first = run_replay(FIXTURE, work_dir=tmp_path / "first", max_calls=10)
     second = run_replay(FIXTURE, work_dir=tmp_path / "second", max_calls=10)
 
     assert first["fixture_sha256"] == second["fixture_sha256"]
     assert first["ticks"][0]["fact_diff"] == second["ticks"][0]["fact_diff"]
+    assert first["ticks"][0]["events_generated"] == (
+        second["ticks"][0]["events_generated"]
+    )
     assert first["expectations"] == second["expectations"]
     assert first["evidence_sha256"] == second["evidence_sha256"]
     assert [

@@ -35,6 +35,10 @@ from nf_core.env_helpers import env_bool, env_bool_tri
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from nf_core.reasoning_filter import strip_reasoning_leak as _strip_reasoning_leak
+from narrative.typed_continuity import (
+    continuity_legacy_view,
+    normalise_continuity_state as normalise_typed_continuity_state,
+)
 from quality_metrics.style_contract import style_contract_report
 
 # Phase 5+: style preset 由 env 控制 — bootstrap / matrix bench 在 spawn 子进程
@@ -67,6 +71,9 @@ class NarratorOutput:
     # 正文结束时的叙事层状态（非 WorldState），用于约束下一段中的
     # 伤势、物品归属/数量/损坏与角色知识。
     continuity_state: dict = field(default_factory=dict)
+    # Phase 8: normalization provenance + retained raw payload. Existing consumers
+    # continue to use continuity_state (or its conservative legacy view).
+    continuity_state_audit: dict = field(default_factory=dict)
     continuity_guard_trace: dict = field(default_factory=dict)
     style_diagnostics: dict = field(default_factory=dict)
     consistency_flags: list[str] = field(default_factory=list)
@@ -126,9 +133,8 @@ payoff_requirements（至少包含“证据”“人物选择”“可见后果�
 
 # 跨段状态账本
 
-* 用 continuity_state 输出“本段正文结束时”的完整状态，不是变化摘要。
-  至少核对 characters（地点/伤势/存亡）、items（持有者/数量/状况）、
-  knowledge（只记本段新增的重要已知信息）和 time_marker。
+* continuity_state 输出完整 typed v1 状态；地点与移动分开，支撑/搬运不得写进地点。
+* ID 只能从本次允许列表选择；不确定时用 null、unknown 或空列表，禁止猜测。
 * 上一段账本是当前状态。保留仍然有效的旧条目；只有正文明写交付、
   使用、损坏、移动、受伤或得知事件时才能更新。已交付/用完/损坏的
   物品不得恢复；变化必须在 narrative_text 中看得见。
@@ -160,7 +166,7 @@ payoff_requirements（至少包含“证据”“人物选择”“可见后果�
   "open_loops_referenced": [],
   "resolved_open_loops": [],
   "newly_opened_loops": [],
-  "continuity_state": {"characters": {}, "items": {}, "knowledge": [], "time_marker": ""},
+  "continuity_state": {"schema_version": "1", "time_marker": "", "characters": {}, "items": {}, "newly_known_fact_ids": {}, "active_open_loop_ids": []},
   "style_diagnostics": {"avg_sentence_length": 18, "rhetoric_density": "low"},
   "consistency_flags": []
 }
@@ -192,7 +198,9 @@ _NARRATOR_TEMPERATURE_DEFAULT = 0.65
 
 def _compact_continuity_value(value, *, depth: int = 0):
     """限制模型返回的状态账本体积，避免未受控 JSON 污染后续 prompt。"""
-    if depth >= 4:
+    # TypedContinuityState nests injury records at depth 4; retain their typed
+    # fields while keeping the existing per-container and per-string caps.
+    if depth >= 6:
         return str(value)[:240]
     if isinstance(value, dict):
         compact: dict[str, object] = {}
@@ -220,6 +228,88 @@ def _normalise_continuity_state(value) -> dict:
         return {}
     compact = _compact_continuity_value(value)
     return compact if isinstance(compact, dict) else {}
+
+
+def _continuity_reference_catalogs(
+    *,
+    tick_events: list[Event],
+    char_states: list[CharacterState],
+    char_profiles: dict[str, CharacterProfile],
+    world_state: WorldState | None,
+    open_loops: list[OpenLoop],
+    previous_state: dict,
+) -> dict[str, set[str]]:
+    """Build ID catalogs only from context already available to Narrator."""
+    character_ids = set(char_profiles)
+    character_ids.update(state.character_id for state in char_states)
+    location_ids = {
+        location.id for location in (world_state.locations if world_state else [])
+    }
+    item_ids = {
+        str(item).strip()
+        for state in char_states
+        for item in state.inventory
+        if str(item).strip()
+    }
+    fact_ids: set[str] = set()
+    event_ids = {event.id for event in tick_events}
+    open_loop_ids = {loop.id for loop in open_loops}
+
+    if isinstance(previous_state, dict):
+        raw_items = previous_state.get("items") or {}
+        if isinstance(raw_items, dict):
+            item_ids.update(str(item_id).strip() for item_id in raw_items if str(item_id).strip())
+        raw_characters = previous_state.get("characters") or {}
+        if isinstance(raw_characters, dict):
+            for raw_character in raw_characters.values():
+                if not isinstance(raw_character, dict):
+                    continue
+                fact_ids.update(
+                    str(fact_id).strip()
+                    for fact_id in (raw_character.get("knowledge_fact_ids") or [])
+                    if str(fact_id).strip()
+                )
+                for injury in raw_character.get("injuries") or []:
+                    if isinstance(injury, dict) and injury.get("source_event_id"):
+                        event_ids.add(str(injury["source_event_id"]).strip())
+        raw_known = previous_state.get("newly_known_fact_ids") or {}
+        if isinstance(raw_known, dict):
+            for raw_fact_ids in raw_known.values():
+                if isinstance(raw_fact_ids, list):
+                    fact_ids.update(
+                        str(fact_id).strip()
+                        for fact_id in raw_fact_ids
+                        if str(fact_id).strip()
+                    )
+        open_loop_ids.update(
+            str(loop_id).strip()
+            for loop_id in (previous_state.get("active_open_loop_ids") or [])
+            if str(loop_id).strip()
+        )
+    return {
+        "valid_character_ids": character_ids,
+        "valid_location_ids": location_ids,
+        "valid_item_ids": item_ids,
+        "valid_fact_ids": fact_ids,
+        "valid_open_loop_ids": open_loop_ids,
+        "valid_event_ids": event_ids,
+    }
+
+
+def _normalise_generated_continuity(
+    value,
+    *,
+    catalogs: dict[str, set[str]] | None,
+) -> tuple[dict, dict]:
+    compact = _normalise_continuity_state(value)
+    result = normalise_typed_continuity_state(compact, **(catalogs or {}))
+    if result.source_schema == "typed_v1":
+        state = result.typed_state.model_dump(mode="json")
+    elif result.source_schema == "legacy":
+        state = compact
+    else:
+        state = {}
+    return state, result.model_dump(mode="json")
 
 
 def _continuity_guard_enabled() -> bool:
@@ -483,6 +573,7 @@ class NarratorAgent:
         style_preset_snapshot: dict | None = None,
         reader_knowledge: dict | None = None,
         continuity_state: dict | None = None,
+        continuity_state_audit: dict | None = None,
     ) -> NarratorOutput:
         """主入口。无事件或事件价值过低时返回 should_narrate=False。
 
@@ -544,6 +635,14 @@ class NarratorAgent:
         # cache (~5x 折扣 on input tokens). 语感锚移到 user 头部, 模型读到的
         # 字面信息完全等价。
         system_prompt = self._build_system_prompt()
+        continuity_catalogs = _continuity_reference_catalogs(
+            tick_events=tick_events,
+            char_states=char_states,
+            char_profiles=char_profiles or {},
+            world_state=world_state,
+            open_loops=open_loops,
+            previous_state=continuity_state or {},
+        )
         user_prompt = self._build_user_prompt(
             tick=tick,
             world_time=world_time,
@@ -563,6 +662,7 @@ class NarratorAgent:
             style_preset_snapshot=style_preset_snapshot,
             reader_knowledge=reader_knowledge or {},
             continuity_state=continuity_state or {},
+            continuity_catalogs=continuity_catalogs,
         )
 
         try:
@@ -583,7 +683,13 @@ class NarratorAgent:
                 tick_summary_for_record=self._compose_tick_summary(tick, tick_events),
             )
 
-        parsed = self._parse_output(resp.content, estimated_length, tick, tick_events)
+        parsed = self._parse_output(
+            resp.content,
+            estimated_length,
+            tick,
+            tick_events,
+            continuity_catalogs=continuity_catalogs,
+        )
         preset = self._resolve_style_preset(
             style_preset_key, style_preset_snapshot
         )
@@ -667,8 +773,14 @@ class NarratorAgent:
                 ][:3]
             guard_out = await NarrativeStateGuard().guard(
                 narrative_text=parsed.narrative_text,
-                previous_state=continuity_state or {},
-                declared_state=parsed.continuity_state,
+                previous_state=continuity_legacy_view(
+                    continuity_state or {},
+                    audit=continuity_state_audit,
+                ),
+                declared_state=continuity_legacy_view(
+                    parsed.continuity_state,
+                    audit=parsed.continuity_state_audit,
+                ),
                 required_events=required_events,
                 style_contract=(preset.narrator_addendum if preset else ""),
                 protected_terms=[
@@ -685,12 +797,29 @@ class NarratorAgent:
                 tick=tick,
             )
             if guard_out.safe:
+                guarded_state = parsed.continuity_state
+                guarded_audit = parsed.continuity_state_audit
+                guarded_flags = list(parsed.consistency_flags)
+                if guard_out.adopted:
+                    guarded_state, guarded_audit = (
+                        _normalise_generated_continuity(
+                            guard_out.continuity_state,
+                            catalogs=continuity_catalogs,
+                        )
+                    )
+                    guarded_audit["pre_repair"] = (
+                        parsed.continuity_state_audit
+                    )
+                    guarded_audit["guard_repair_adopted"] = True
+                    guarded_flags.append(
+                        "continuity_state_guard_repair_legacy"
+                    )
                 parsed = replace(
                     parsed,
                     narrative_text=guard_out.narrative_text,
-                    continuity_state=_normalise_continuity_state(
-                        guard_out.continuity_state
-                    ),
+                    continuity_state=guarded_state,
+                    continuity_state_audit=guarded_audit,
+                    consistency_flags=guarded_flags,
                     continuity_guard_trace=guard_out.trace,
                 )
             else:
@@ -869,6 +998,7 @@ class NarratorAgent:
             resolved_open_loops=draft.resolved_open_loops,
             newly_opened_loops=draft.newly_opened_loops,
             continuity_state=draft.continuity_state,
+            continuity_state_audit=draft.continuity_state_audit,
             continuity_guard_trace=draft.continuity_guard_trace,
             style_diagnostics=draft.style_diagnostics,
             consistency_flags=new_flags,
@@ -1206,12 +1336,14 @@ class NarratorAgent:
         style_preset_snapshot: dict | None = None,
         reader_knowledge: dict | None = None,
         continuity_state: dict | None = None,
+        continuity_catalogs: dict[str, set[str]] | None = None,
     ) -> str:
         tick_actions = tick_actions or []
         char_profiles = char_profiles or {}
         style_anchors = style_anchors or []
         reader_knowledge = reader_knowledge or {}
         continuity_state = continuity_state or {}
+        continuity_catalogs = continuity_catalogs or {}
         # Phase 5+: 顺序 = preset addendum (本作怎么写) → style_anchors (语感示例)
         # 两个都拼在 # 连载进度 之前. preset 另在最终写作指令前复核一次, 防止
         # 长素材 prompt 稀释头部风格契约; 未绑定 preset 时仍 bit-identical.
@@ -1327,6 +1459,19 @@ class NarratorAgent:
             if continuity_state
             else ""
         )
+        typed_ledger_block = (
+            "# Typed continuity_state v1（结构约束，不是文学要求）\n\n"
+            f"允许的 character_id：{sorted(continuity_catalogs.get('valid_character_ids', set()))}\n"
+            f"允许的 location_id：{sorted(continuity_catalogs.get('valid_location_ids', set()))}\n"
+            f"允许的 item_id：{sorted(continuity_catalogs.get('valid_item_ids', set()))}\n"
+            f"允许的 fact_id：{sorted(continuity_catalogs.get('valid_fact_ids', set()))}\n"
+            f"允许的 open_loop_id：{sorted(continuity_catalogs.get('valid_open_loop_ids', set()))}\n"
+            f"允许的 source_event_id：{sorted(continuity_catalogs.get('valid_event_ids', set()))}\n"
+            "movement_status 只能是 stationary/departing/in_transit/arrived/unknown；"
+            "location_id 只放 ID，扶持/背负另填 supporting_character_ids / "
+            "carried_by_character_id。无法可靠表达的旧自然语言值"
+            "不要猜测，改用 null/unknown/空列表。\n\n"
+        )
         committed_events = [
             event for event in tick_events
             if self._effective_value(event) >= _NARRATE_SKIP_THRESHOLD
@@ -1362,7 +1507,7 @@ class NarratorAgent:
 {title_line}世界时间 {world_time} (第 {tick} 段素材)
 
 {tail_block}
-{continuity_block}{narrative_state_block}{reader_block}{scene_mode_block}
+{continuity_block}{narrative_state_block}{typed_ledger_block}{reader_block}{scene_mode_block}
 # 场景
 
 {scene_block}
@@ -1389,6 +1534,8 @@ class NarratorAgent:
         estimated_length: str,
         tick: int,
         tick_events: list[Event],
+        *,
+        continuity_catalogs: dict[str, set[str]] | None = None,
     ) -> NarratorOutput:
         try:
             payload = parse_llm_json(raw)
@@ -1545,11 +1692,20 @@ class NarratorAgent:
                     }
                 )
 
-        continuity_state = _normalise_continuity_state(
-            payload.get("continuity_state", {})
+        raw_continuity_state = payload.get("continuity_state", {})
+        continuity_state, continuity_audit = _normalise_generated_continuity(
+            raw_continuity_state,
+            catalogs=continuity_catalogs,
         )
         if not continuity_state:
             extra_flags.append("continuity_state_missing")
+        source_schema = continuity_audit.get("source_schema")
+        if raw_continuity_state and source_schema == "legacy":
+            extra_flags.append("continuity_state_legacy_fallback")
+        elif source_schema == "invalid":
+            extra_flags.append("continuity_state_typed_invalid")
+        elif continuity_audit.get("issues"):
+            extra_flags.append("continuity_state_reference_invalid")
 
         return NarratorOutput(
             should_narrate=True,
@@ -1562,6 +1718,7 @@ class NarratorAgent:
             resolved_open_loops=resolved_loops,
             newly_opened_loops=new_loops,
             continuity_state=continuity_state,
+            continuity_state_audit=continuity_audit,
             style_diagnostics=dict(payload.get("style_diagnostics", {}) or {}),
             consistency_flags=list(payload.get("consistency_flags", []) or [])
             + extra_flags,

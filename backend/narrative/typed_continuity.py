@@ -776,6 +776,97 @@ def normalise_continuity_state(
     )
 
 
+def continuity_legacy_view(
+    value: Any,
+    *,
+    audit: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return the conservative field shape understood by pre-v1 consumers.
+
+    A legacy dictionary is copied without semantic changes.  A typed state exposes
+    only facts the old consumers can represent safely: in-transit locations,
+    unknown enum values, multi-holder ambiguity and fact IDs without propositions
+    are not converted into old authoritative-looking fields.
+    """
+
+    if (
+        isinstance(audit, dict)
+        and audit.get("source_schema") == "typed_v1"
+        and not audit.get("authoritative_eligible")
+    ):
+        return {}
+    if isinstance(value, TypedContinuityState):
+        state = value
+    elif isinstance(value, dict) and value.get("schema_version") == "1":
+        try:
+            state = TypedContinuityState.model_validate(value)
+        except ValidationError:
+            return {}
+    elif isinstance(value, dict):
+        copied = _json_safe_copy(value)
+        return copied if isinstance(copied, dict) else {}
+    else:
+        return {}
+
+    characters: dict[str, dict[str, Any]] = {}
+    for cid, character in state.characters.items():
+        row: dict[str, Any] = {
+            "movement_status": character.movement_status,
+            "supporting_character_ids": list(
+                character.supporting_character_ids
+            ),
+        }
+        if (
+            character.location_id is not None
+            and character.movement_status in {"stationary", "arrived"}
+        ):
+            row["location"] = character.location_id
+        if character.destination_location_id is not None:
+            row["destination_location_id"] = character.destination_location_id
+        if character.alive_status != "unknown":
+            row["alive_status"] = character.alive_status
+        active_injuries = [
+            injury.injury_id
+            for injury in character.injuries
+            if injury.status in {"active", "worsening", "treated"}
+        ]
+        if active_injuries:
+            row["injuries"] = active_injuries
+        if character.carried_by_character_id is not None:
+            row["carried_by_character_id"] = character.carried_by_character_id
+        if character.knowledge_fact_ids:
+            row["knowledge_fact_ids"] = list(character.knowledge_fact_ids)
+        characters[cid] = row
+
+    items: dict[str, dict[str, Any]] = {}
+    for item_id, item in state.items.items():
+        row: dict[str, Any] = {}
+        if len(item.holder_character_ids) == 1:
+            row["holder"] = item.holder_character_ids[0]
+        elif len(item.holder_character_ids) > 1:
+            row["holder_character_ids"] = list(item.holder_character_ids)
+        if item.location_id is not None:
+            row["location"] = item.location_id
+        if item.quantity is not None:
+            row["quantity"] = item.quantity
+        if item.condition != "unknown":
+            row["condition"] = item.condition
+        if item.container_item_id is not None:
+            row["container_item_id"] = item.container_item_id
+        items[item_id] = row
+
+    return {
+        "characters": characters,
+        "items": items,
+        "newly_known_fact_ids": {
+            cid: list(fact_ids)
+            for cid, fact_ids in state.newly_known_fact_ids.items()
+        },
+        "active_open_loop_ids": list(state.active_open_loop_ids),
+        "time_marker": state.time_marker,
+    }
+
+
 __all__ = [
     "AliveStatus",
     "CharacterContinuity",
@@ -788,6 +879,7 @@ __all__ = [
     "ItemContinuity",
     "MovementStatus",
     "TypedContinuityState",
+    "continuity_legacy_view",
     "normalise_continuity_state",
     "validate_continuity_references",
 ]
