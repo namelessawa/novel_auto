@@ -4,10 +4,10 @@
 
 ## 当前阶段
 
-- 状态：`IN PROGRESS — audit complete, Iteration 07 design`
+- 状态：`PAUSED AT COST GATE — Iteration 08 accepted, Gate B authorization needed`
 - 行为基线：`6477f61b3ade9f3e984f66f457521976106edac9`
 - 起始 HEAD：`8cb645be1f9713c085e5ef722ae91c55b75eed77`
-- 当前结论：尚无质量提升结论；目前只有审计与 Gate A 基线证据。
+- 当前结论：CanonicalFact 基础、旁路投影和只读对账有效；尚无真实生成质量提升结论。
 
 ## 已完成
 
@@ -17,27 +17,28 @@
 - 记录事实数据流、权威/派生边界、来源断点和三项优先假设，见 `PHASE7_PLAN.md`。
 - 基线 Gate A：后端 `1224 passed, 1 warning`；前端 build PASS。
 - 保留既有 4-Tick `6/12`、盲测 Top-1 `50%` / Top-3 `58.33%` 作为对照；没有将其重跑或描述成新结果。
+- Iteration 07：稳定 fact ID/source/validity/known_by/status sidecar，15 个最小反例通过。
+- Iteration 08：生产持久化边界的旁路投影与四视图只读对账；全后端 `1253 passed`，前端 PASS。
+- `glm-5.2` quota probe 成功；未读取或输出 `coding.txt` 内容/凭据。
 
 ## 当前迭代
 
 ```text
-Iteration: 07
-Observation: 多个事实视图没有共享稳定 ID、来源、有效期与 known_by；StateGuard 只能用语言/JSON path 猜测。
-Root-cause hypothesis: 缺少位于确定性状态转换与各派生视图之间的 append-only 统一事实投影层。
-Single primary change: 新增只读 CanonicalFact sidecar 模型、状态机、稳定身份与单元测试；不接入 Prompt/Guard。
-Files to change: backend/narrative/ 新模块；backend/tests/ 新回归测试；本迭代记录。
-Expected improvement: 10 个最小事实链案例可确定性区分 active/superseded/historical/rumor/belief 和来源缺失。
-Possible regressions: 旧数据加载失败、稳定 ID 碰撞、错误 supersede、序列化不可逆、误把 rumor 当 objective。
-Validation: 新测试、FactLedger/TickState 相关测试、全后端；此轮不运行真实模型。
-Rollback condition: 改变生产生成、要求 migration、旧状态不可读、无来源事实被默认为权威、测试回归。
+Iteration: 08 complete
+Observation: Sidecar 需要从实际 accepted state diff 旁路生成，并与旧视图对账。
+Root-cause hypothesis: 延迟到持久化边界的 typed projection 可以补来源而不污染生成。
+Single primary change: Event/World/Character/StatePatch/guarded continuity/OpenLoop 投影 + read-only reconciliation CLI。
+Validation: 64 focused passed；1253 full passed；frontend build PASS；glm quota probe healthy。
+Decision: ACCEPT as infrastructure/measurement only; quality remains INCONCLUSIVE.
+Next: obtain cost authorization, then rerun identical 4-Tick pressure baseline before any StateGuard consumer change.
 ```
 
 ## Gate 状态
 
 | Gate | 状态 | 证据/阻塞 |
 | --- | --- | --- |
-| A | baseline PASS | 1224 tests；frontend build PASS |
-| B | 未开始 | 先完成 sidecar、投影、对账和零行为影响验证 |
+| A | candidate PASS | 1253 tests；frontend build PASS |
+| B | 费用门暂停 | 历史 3-style 运行 2,213 秒；预计 13–22 万 Token，需授权 |
 | C | 禁止进入 | Gate B 尚未稳定通过 |
 | D | 禁止进入 | Gate C 尚未通过，且未准备改生产默认 |
 | E | 默认不运行 | 未获费用许可，也不满足前置 Gate |
@@ -49,3 +50,9 @@ Rollback condition: 改变生产生成、要求 migration、旧状态不可读�
 - `scripts/openai_compatible_chat.py` 是任务开始前出现的未跟踪文件，本任务不读取、不修改、不提交。
 - 未 push、未创建 PR、未部署、未修改生产数据。
 
+## 下一步费用估算
+
+- 最小同序列基线：`literary,first_person_immersive,ensemble_epic` × 4 Tick，约 13–22 万 Token，历史约 37 分钟。
+- Phase 7 指定 7 风格完整 Gate B：约 28 个生成 Tick，单次约 28–42 万 Token。
+- 接受标准要求两次独立同向运行：约 55–85 万 Token，另加盲分类 judge，墙钟约 75–110 分钟。
+- 未获得明确确认前不启动上述调用，也不会提前接入 StateGuard 或 ContextBundle。
