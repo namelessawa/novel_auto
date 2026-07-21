@@ -1,0 +1,724 @@
+{
+  "metadata": {
+    "started_at": 1784606586,
+    "git_sha": "2017dcebb1da8849a36493430d042e98ac827618",
+    "provider": {
+      "provider": "custom",
+      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "model": "glm-5.2",
+      "credential_present": true,
+      "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"
+    },
+    "input": "E:\\pythonproject\\novel_auto\\docs\\iter\\phase7-gateb-sidecar-run2-glm-20260721.json",
+    "input_sha256": "58a6a8ecee0e102e5b596956b651b7d355ccc37e2ffcf5927742d1483c50b9a7",
+    "prompt_version": "blind-style-v1",
+    "style_schema_version": "2026-07-15.5",
+    "candidate_prompt_hashes": {
+      "black_humor": "498233bf72c7fe8dd37c961a12b263903fc1480f6b01ea45433815c6798dff2b",
+      "classical_chapter": "fd8d389a091ba4f9835971bde1e918242b5ecc3f2ff2b4c3a226d28b7258515d",
+      "colloquial_web": "5b5b025aa9627077d481df75148b0028180e35be230d574ba3289d49a3671e07",
+      "ensemble_epic": "b1b1a508d3a37fe92046443443892c1a3b775d63980a0cdf0f9e6ae4a26a983a",
+      "first_person_immersive": "954703528c5baa234229f19041c8a88103ae9746fe1b49da52411d2837fe5dc3",
+      "hot_blooded": "564b1b87c264c5a9f4ff404269e5869ad7971dd1f55f15212d7d3f3fe2a6e09a",
+      "literary": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379",
+      "lyrical_poetic": "d3c1dfb9d4ea9d08c5c1f20fc5191685dd02ae413134090484e8e866b5b7d0c2",
+      "melancholic": "eaf91393ec594ed99f4fdd7170e12b30dccf3c2ac87ec5e99e3bb312491c6c64",
+      "noir_cold": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3",
+      "philosophical_meditative": "e812c3b931c445212cda8807a2c8459bdea2d4816117471404ea6c23997755ee",
+      "rough_grit_realism": "e1e171dfa597585bcec075256b883a5ef4edfbdbd43b6c0d847ecda5f6add8af",
+      "screenplay_visual": "46665d8e8d55aff4b9390738fe9b3867dc5028f709e33be8468ac954fb7f558c",
+      "somber": "45db147b32aa31efa779ca166c25d13594fbcac9dd7f81e7d9376fcd4572bdb1",
+      "warm_healing": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6",
+      "xianxia_fast": "ca78f2ed91f5b540258788f25e0f6a97dcc945ed6787adbe8ac88e7a2a301c58"
+    },
+    "target_identity_sent_to_judge": false,
+    "configured_judge_budget_tokens": 50000,
+    "finished_at": 1784606669
+  },
+  "results": [
+    {
+      "sample_id": "pressure:apocalypse_wasteland:first_person_immersive:1",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "first_person_immersive",
+      "char_count": 755,
+      "text_sha256": "8003215b01d79d02ea0a69cd8b6ab0bf0d6e93b7a4eb755c1873df7d3fdfdba5",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C12",
+            "style": "rough_grit_realism",
+            "confidence": 0.92,
+            "evidence": [
+              "铁锈碎片扎进掌心",
+              "在裤子上蹭掉血",
+              "膝盖肿得像塞了颗手雷",
+              "铁锈割进指腹，温热的液体顺着手指往下流"
+            ]
+          },
+          {
+            "candidate_id": "C07",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "对白短：'别停。' '松开我。' '闭嘴。' '地图。'",
+              "无感叹号",
+              "心理活动转化成动作：'我咬住牙' '我盯着井盖'",
+              "信息克制：不解释塌方原因、辐射尘背景"
+            ]
+          },
+          {
+            "candidate_id": "C01",
+            "style": "xianxia_fast",
+            "confidence": 0.78,
+            "evidence": [
+              "前80字亮出阻碍：井盖正在闭合，光斑在缩小",
+              "角色立刻出手：蹬梯级、抓梯级、扣腰带",
+              "同一场内兑现收益：苏莫滚出去、我挤出去",
+              "段末新威胁：远处传来坍塌声，灰烬升起"
+            ]
+          }
+        ],
+        "observed_features": [
+          "肉身破损与疼痛正面描写",
+          "对白极短且无感叹号",
+          "心理通过动作外化",
+          "动作密集且每段有即时反馈",
+          "段末留新威胁",
+          "第一人称有限视点",
+          "物件残破（锈蚀梯级、断裂、撕破的工作服）",
+          "信息克制不解释背景"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 4402
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:ensemble_epic:2",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "ensemble_epic",
+      "char_count": 1555,
+      "text_sha256": "dac4b5100b93ee2887407d7b139e5b40387af95660f63e4f9fc5ad057cdc4171",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C06",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "对白短，一句话一个意图：'地图。' '地图换入城。' '撬棍弯了。' '弯了也能撬东西。'",
+              "拒绝感伤化，心理活动转化成动作：'苏莫盯着守门人的眼睛看了三秒'，不写内心挣扎",
+              "信息克制，读者比角色多知0.5步：哨兵看见地图但苏莫不知情，读者先知道",
+              "不用感叹号，全文无感叹号"
+            ]
+          },
+          {
+            "candidate_id": "C13",
+            "style": "rough_grit_realism",
+            "confidence": 0.78,
+            "evidence": [
+              "肉身重量感强：'通风井的铁锈味呛进肺里'，'热气喷在他后颈上'，'后背擦过断裂的铆钉，防化服撕开一道口子'",
+              "正面写破损物：'撬棍弯出一个弧度'，'铁板带着锈渣飞出去'，'门轴锈死'，'轮胎瘪了两条'",
+              "角色累、角色疼：'林雪脚步一瘸一拐'，'一手按着腰间的绷带'，'绷带渗血'",
+              "物件残破才真实：'车斗里积了半尺厚的灰'，'铁皮墙上焊着铁栏杆'"
+            ]
+          },
+          {
+            "candidate_id": "C14",
+            "style": "literary",
+            "confidence": 0.72,
+            "evidence": [
+              "每段有具体物：铁锈味、铆钉、撬棍、井盖、防化服、地图、半履带车、探照灯、猎枪、干草、锈钥匙",
+              "情绪由身体动作和物件反应承载：'苏莫仰面躺了五秒，然后翻身检查林雪的伤口'，不直报情绪",
+              "对白节制，引号外配动作beat：'林雪。'他压低声音。没回应。'林雪！'她在他背上动了一下",
+              "内心白描贴着目标走：'地图还在。' 仅一句内心判断"
+            ]
+          }
+        ],
+        "observed_features": [
+          "短对白、一句话一个意图",
+          "无感叹号",
+          "心理活动转化为动作或物件反应",
+          "信息克制、读者略先于角色",
+          "肉身负担正面描写：铁锈味、防化服撕裂、绷带渗血、瘸拐",
+          "破损物件密集：弯撬棍、锈门轴、瘪轮胎、积灰车斗",
+          "每段有具体可感知的实物",
+          "情绪不直报、由动作和物件承载"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 5239
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:warm_healing:3",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "warm_healing",
+      "char_count": 629,
+      "text_sha256": "06ae1b2dea16bae3b3b999a787e26cec0a2efe5630e6bf674c96c193001cdef4",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C11",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "拒绝感伤化：林雪指甲缝渗血、苏莫递布条，情绪全由动作承载，无直报心理",
+              "信息克制：读者比角色多知0.5步——井盖压下的倒计时、铁管弯折的渐进，不解释只呈现",
+              "对白短，一句话一个意图：'够你爬十秒''别停''你收着。下次别塞靴子里'",
+              "每段有micro-action：颠伤员、拔铁管、推脚踝、递伤员、扣井口、拖上来、掏地图、递布条、缠布条、咬线头"
+            ]
+          },
+          {
+            "candidate_id": "C16",
+            "style": "rough_grit_realism",
+            "confidence": 0.78,
+            "evidence": [
+              "肉身重量感强：伤员颠在肩上、膝盖肿得撑成球、指甲缝嵌锈片、手心全是汗滑了两次",
+              "破损物正面写：锈蚀梯子、铁管弯成U形、梯子掉漆皮、井盖咬掉半截梯子、地图磨出毛边",
+              "拒绝优雅：辐射尘的酸味、铁锈的雪、旧帆布布条洗得发白但干净",
+              "角色累、疼：苏莫左腿拖在后面、林雪手指扣井口嵌锈片、指甲缝渗血"
+            ]
+          },
+          {
+            "candidate_id": "C02",
+            "style": "literary",
+            "confidence": 0.72,
+            "evidence": [
+              "每段有具体物：锈蚀梯子、铁管、井盖、漆皮、头盔、地图、布条、帆布",
+              "情绪由身体动作和物件反应承载：铁管弯了但井盖停住、梯子掉漆皮像铁锈的雪、指甲缝嵌锈片",
+              "内心白描节制：全文无直报心理，只有'她没催苏莫'一处贴近内心的克制叙述",
+              "对白节制，引号外配动作beat：'够你爬十秒'后接苏莫挤过去攀梯；'别停'后接苏莫翻上去回身伸手"
+            ]
+          }
+        ],
+        "observed_features": [
+          "动作承载情绪，无直报心理或感叹号",
+          "对白短且每句配具体动作beat",
+          "肉身负担与破损物正面描写（锈、血、汗、弯折、磨毛）",
+          "信息渐进克制，读者同步感知物理进程",
+          "具体物密集（铁管、梯子、井盖、地图、布条）",
+          "无内心独白，无抒情段落",
+          "节奏紧凑但非热血爆发式，偏冷峻克制"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 4582
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:philosophical_meditative:4",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "philosophical_meditative",
+      "char_count": 779,
+      "text_sha256": "e7ef6f9eae80b3166c84f56602ed0a5771337a65c26f6788e0ac415383cb0260",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C01",
+            "style": "rough_grit_realism",
+            "confidence": 0.85,
+            "evidence": [
+              "通风井的锈蚀梯子在她掌心里碎成片——破损物正面描写",
+              "指甲缝里嵌进铁锈和干涸的血——不美化伤痛，直接写肉身负担",
+              "膝盖撞上井壁，蹭掉一块皮——疼痛正面写",
+              "辐射尘落在她脸上，细密得像第二层皮肤——汗水/疲倦/肉身重量感"
+            ]
+          },
+          {
+            "candidate_id": "C02",
+            "style": "first_person_immersive",
+            "confidence": 0.78,
+            "evidence": [
+              "全篇用第三人称'她'而非'我'，但视点严格限制在林雪——她没往下看、她不知道自己在对谁说",
+              "不写他人内心：背上的人'已经昏过去'，只写体温、呼吸等外部可感信息",
+              "即时感受优先：疼痛被肾上腺素压成远处的一个点、辐射尘落在脸上细密得像第二层皮肤",
+              "信息边界清晰：井盖闭合时间、地图卷筒材质都从林雪的认知出发"
+            ]
+          },
+          {
+            "candidate_id": "C06",
+            "style": "noir_cold",
+            "confidence": 0.72,
+            "evidence": [
+              "拒绝感伤化：不写'突然''心跳加速'等直报情绪",
+              "心理活动转化成动作：她猛地弓腰用后颈顶住他的下巴、她把压扁的卷筒举到眼前",
+              "对白极短：'别死''地图还在'，一句话一个意图",
+              "信息克制：读者知道井盖闭合时间，比角色多知0.5步"
+            ]
+          }
+        ],
+        "observed_features": [
+          "破损物与肉身负担正面描写",
+          "第三人称有限视点，不写他人内心",
+          "即时感官细节密集",
+          "对白极短且克制",
+          "无感叹号与情绪直报",
+          "心理活动转化为身体动作",
+          "信息克制，读者略多于角色",
+          "结尾落在具体物（压扁的卷筒）和动作上"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 4462
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:noir_cold:5",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "noir_cold",
+      "char_count": 3114,
+      "text_sha256": "2ca18a64a4b02ac08031691cf18e209b328a2d38868853d86dbfe10b31a6e6d3",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C07",
+            "style": "rough_grit_realism",
+            "confidence": 0.92,
+            "evidence": [
+              "右肩抵着锈穿的舱壁",
+              "裤管从膝盖往下被血浸透，在铁板上蹭出一道暗红的拖痕",
+              "外壳锈得看不出原色",
+              "铁锈擦过她的喉结"
+            ]
+          },
+          {
+            "candidate_id": "C10",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "林雪盯着腕上的旧式计时器——不写'她感到紧张'",
+              "她咬掉拉环，往舷梯下方扔去——动作代替心理",
+              "林雪摸了摸脖子，指尖沾上黏稠的温热——micro-action",
+              "苏莫嘴角动了动，没说出话——克制反应"
+            ]
+          },
+          {
+            "candidate_id": "C02",
+            "style": "xianxia_fast",
+            "confidence": 0.78,
+            "evidence": [
+              "前80字亮出阻碍：出口封死的倒计时信号",
+              "角色立刻出手：林雪从腰间拔出铁棍",
+              "同一场内兑现收益：防水袋到手",
+              "段末新威胁撞上来：第三个人拔枪"
+            ]
+          }
+        ],
+        "observed_features": [
+          "密集的肉身负担与破损物描写（血浸透裤管、锈穿舱壁、扭伤承重、辐射尘沾伤口）",
+          "动作驱动叙事，心理完全外化（无内心独白，情绪通过动作和生理反应呈现）",
+          "对白极短且功能性强（'走''起来''死不了'），无感叹号",
+          "连续的动作兑现链（烟雾弹→砸倒→夺地图→匕首钉手臂→推入通道→坠吊架→挤闸门）",
+          "段末持续留新威胁（枪声、井道塌缩、地图被雨水洇开、苏莫失血加重）",
+          "拒绝美化伤痛（左踝扭伤反复承重、伤口沾辐射尘如碎玻璃、血沫从嘴角溢出）"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 6283
+    },
+    {
+      "sample_id": "pressure:apocalypse_wasteland:rough_grit_realism:6",
+      "scenario": "pressure",
+      "theme": "apocalypse_wasteland",
+      "expected_style": "rough_grit_realism",
+      "char_count": 2250,
+      "text_sha256": "a683c764acd5b9b0b78b206e29abe6678f35dcdd3a9d4533bdf9013876ee511c",
+      "judgment": {
+        "valid": true,
+        "top3": [
+          {
+            "candidate_id": "C12",
+            "style": "rough_grit_realism",
+            "confidence": 0.92,
+            "evidence": [
+              "铁锈片簌簌往下掉，铁锈就嵌进肉里一点",
+              "手套磨穿了，掌心直接攥着锈铁",
+              "断腿拖在后面，在铁板上刮出一道血印",
+              "肋骨的位置被刮掉一块皮，血从衣服里渗出来"
+            ]
+          },
+          {
+            "candidate_id": "C13",
+            "style": "noir_cold",
+            "confidence": 0.85,
+            "evidence": [
+              "林雪的手套磨穿了，掌心直接攥着锈铁——心理活动转化成动作",
+              "她没管，拽起苏莫的胳膊架回肩上——拒绝感伤化",
+              "对白短，一句话一个意图：'别哼。''抓紧。''过去。''跳。'",
+              "全文无感叹号，无'突然''心跳加速'类直报情绪"
+            ]
+          },
+          {
+            "candidate_id": "C15",
+            "style": "xianxia_fast",
+            "confidence": 0.78,
+            "evidence": [
+              "前80字亮出具体阻碍：通风井的锈梯吃不住两个人的重量，第三级横档就弯了",
+              "角色立刻出手：她松开一只手，从腰间拔出撬棍，往上捅",
+              "同一场内兑现可用收益：撬棍卡住，缝隙停在十五公分，苏莫挤过去",
+              "最后两句让新威胁撞上来：守卫要求交出地图和钥匙"
+            ]
+          }
+        ],
+        "observed_features": [
+          "肉身破损与物件残破正面描写密集",
+          "对白极短且无感叹号，情绪通过动作承载",
+          "信息克制，不直报心理状态",
+          "动作链紧凑，阻碍→出手→兑现→新威胁循环清晰",
+          "拒绝美化伤痛，汗、血、铁锈、伤口直接呈现",
+          "段落以动作收尾，无静态感伤画面"
+        ],
+        "error": ""
+      },
+      "judge_tokens": 5461
+    }
+  ],
+  "summary": {
+    "total_samples": 6,
+    "valid_samples": 6,
+    "top1_hits": 1,
+    "top3_hits": 2,
+    "top1_accuracy": 0.1667,
+    "top3_accuracy": 0.3333,
+    "by_scenario": {
+      "pressure": {
+        "total": 6,
+        "top1": 1,
+        "top3": 2
+      }
+    },
+    "confusion_matrix": {
+      "black_humor": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "classical_chapter": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "colloquial_web": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "ensemble_epic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 1,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "first_person_immersive": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 1,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "hot_blooded": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "literary": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "lyrical_poetic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "melancholic": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "noir_cold": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 1,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "philosophical_meditative": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 1,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "rough_grit_realism": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 1,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "screenplay_visual": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "somber": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "warm_healing": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 1,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      },
+      "xianxia_fast": {
+        "black_humor": 0,
+        "classical_chapter": 0,
+        "colloquial_web": 0,
+        "ensemble_epic": 0,
+        "first_person_immersive": 0,
+        "hot_blooded": 0,
+        "literary": 0,
+        "lyrical_poetic": 0,
+        "melancholic": 0,
+        "noir_cold": 0,
+        "philosophical_meditative": 0,
+        "rough_grit_realism": 0,
+        "screenplay_visual": 0,
+        "somber": 0,
+        "warm_healing": 0,
+        "xianxia_fast": 0
+      }
+    },
+    "top_confusions": [
+      {
+        "expected": "ensemble_epic",
+        "predicted": "noir_cold",
+        "count": 1
+      },
+      {
+        "expected": "first_person_immersive",
+        "predicted": "rough_grit_realism",
+        "count": 1
+      },
+      {
+        "expected": "noir_cold",
+        "predicted": "rough_grit_realism",
+        "count": 1
+      },
+      {
+        "expected": "philosophical_meditative",
+        "predicted": "rough_grit_realism",
+        "count": 1
+      },
+      {
+        "expected": "warm_healing",
+        "predicted": "noir_cold",
+        "count": 1
+      }
+    ]
+  },
+  "execution": {
+    "status": "COMPLETE",
+    "configured_judge_budget_tokens": 50000,
+    "per_call_reserve_tokens": 5500,
+    "actual_judge_tokens": 30429,
+    "target_samples": 6,
+    "completed_samples": 6,
+    "remaining_samples": 0
+  }
+}

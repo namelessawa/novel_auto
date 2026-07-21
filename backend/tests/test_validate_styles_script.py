@@ -2,10 +2,19 @@ from __future__ import annotations
 
 from scripts.validate_styles import (
     _aggregate_cost,
+    _execution_profile,
     _is_transient_generation_failure,
     _normalise_semantic_judge,
     _usage_delta,
 )
+
+
+def test_execution_profile_does_not_claim_orchestrator_or_sidecar_coverage() -> None:
+    assert _execution_profile() == {
+        "execution_path": "narrator_direct",
+        "orchestrator_exercised": False,
+        "canonical_fact_sidecar_exercised": False,
+    }
 
 
 def test_semantic_judge_cannot_pass_with_explicit_hard_gap() -> None:

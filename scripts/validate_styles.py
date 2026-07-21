@@ -272,6 +272,11 @@ def _render_markdown(report: dict) -> str:
         "# Style validation\n\n"
         f"- Git: `{report['metadata']['git_sha']}`\n"
         f"- Model: `{report['metadata']['provider']['model']}`\n"
+        f"- Execution path: `{report['metadata'].get('execution_path', 'unknown')}`\n"
+        f"- Orchestrator exercised: "
+        f"`{report['metadata'].get('orchestrator_exercised', 'unknown')}`\n"
+        f"- CanonicalFact sidecar exercised: "
+        f"`{report['metadata'].get('canonical_fact_sidecar_exercised', 'unknown')}`\n"
         f"- Passed: **{passed}/{len(report.get('results', []))}**\n\n"
         f"- Cost coverage: `{(report.get('cost') or {}).get('samples_with_cost', 0)}` / "
         f"`{len(report.get('results', []))}` samples\n"
@@ -434,6 +439,15 @@ def _is_transient_generation_failure(narrative_text: str, skip_reason: str) -> b
         marker in skip_reason
         for marker in ("LLM 不可用", "Connection error", "Timeout")
     )
+
+
+def _execution_profile() -> dict[str, object]:
+    """Describe the runtime path exercised by this benchmark."""
+    return {
+        "execution_path": "narrator_direct",
+        "orchestrator_exercised": False,
+        "canonical_fact_sidecar_exercised": False,
+    }
 
 
 async def _targeted_rewrite(preset, text: str, directive: str, *, tick: int) -> str:
@@ -986,10 +1000,12 @@ def main() -> None:
                 "provider": provider, "mode": args.mode, "ticks": args.ticks,
                 "no_judge": args.no_judge, "max_revisions": args.max_revisions,
                 "shared_bootstrap": True,
+                **_execution_profile(),
             },
             "results": [],
         }
         _atomic_json(out_path, report)
+    report.setdefault("metadata", {}).update(_execution_profile())
     final = asyncio.run(_run(args, report, out_path))
     print(
         f"[DONE] {final['summary']['passed']}/{final['summary']['total']} passed; "
