@@ -2,11 +2,12 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 10-12 ACCEPTED; ITERATION 13 NEXT`
+- Status: `ITERATIONS 10-13 ACCEPTED; ITERATION 14 NEXT`
 - Starting HEAD: `7f8f7e3141a3ffaf0106d8867a4bc271ef1c8220`
-- Production behavior changes accepted: none
+- Production behavior changes accepted: typed Narrator continuity schema with
+  fail-safe legacy fallback (Iteration 13 only)
 - Real LLM calls in Phase 8: 0
-- Current gate: typed ledger generation and raw-audit persistence
+- Current gate: StateGuard calibration set (at least 40 reviewed cases)
 - Still blocked: StateGuard behavior candidate, CanonicalFact consumption and any
   production-default change.
 
@@ -54,6 +55,20 @@ Updated: 2026-07-21
 - Production consumers activated: none.
 - Real LLM cost: 0 calls, 0 tokens.
 - Tests: 12 new; 33 focused passed; full backend 1275 passed.
+
+## Iteration 13 result
+
+- Candidate: `078ad1b`
+- Decision: `ACCEPT_BEHAVIOR` for schema/persistence only; no StateGuard threshold or
+  acceptance-rule change.
+- Recorded typed full-runtime: 1/1 valid, accepted and authoritative-eligible; raw
+  audit retained; stable evidence hash across two processes.
+- Real-model typed validity: not measured; the 1/1 recorded result is not a quality
+  or provider-generalization claim.
+- System prompt delta: +33 characters (+1.2%); minimal dynamic typed block: 419
+  characters.
+- Cost: 0 provider calls, 0 real-model tokens.
+- Tests: 10 net new; 60 focused passed; full backend 1285 passed.
 
 ## Safety
 
