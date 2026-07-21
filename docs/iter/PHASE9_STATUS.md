@@ -2,11 +2,11 @@
 
 Updated: 2026-07-21
 
-- Status: `ITERATIONS 18-19 ACCEPTED; ITERATION 20 NEXT`
+- Status: `ITERATIONS 18-20 ACCEPTED; ITERATION 21 NEXT`
 - Starting HEAD: `a66eb80c7e413439dddf23eea48180059a4cccd4`
 - Production behavior changes accepted: none
 - Real LLM calls: 0
-- Current gate: complete probable-false-positive fixtures
+- Current gate: blind independent adjudication packet
 - StateGuard behavior candidate: blocked
 - CanonicalFact consumer: blocked and disabled
 
@@ -66,3 +66,19 @@ Updated: 2026-07-21
 - Independent reviews: 0; behavior changes remain blocked.
 - Tests: 40 focused; full backend `1299 passed, 1 existing warning`.
 - Cost: 121 fixture calls, 0 provider calls, model tokens N/A.
+
+## Iteration 20 result
+
+- Candidate: `730b151`.
+- Decision: `ACCEPT_MEASUREMENT`.
+- Complete expected-accept suite: 13 signal-backed cases, 12 baseline accepts and
+  one fully captured deterministic false reject (`跌进门内`).
+- Combined planned dataset: 98 total, 59 decisive, 39 ambiguous (39.8%).
+- Signal-backed decisive accepts/rejects: 33 / 12.
+- Evidence-extraction and reasonable-omission categories each have at least three
+  decisive fixtures.
+- All completeness flags are 13/13; the false reject includes 3 verifier and 2 full
+  repair rounds.
+- Independent reviews remain 0; behavior changes remain blocked.
+- Tests: 14 focused; full backend `1301 passed, 1 existing warning`.
+- Cost: 82 fixture calls, 0 provider calls, model tokens N/A.
