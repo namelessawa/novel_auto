@@ -1,8 +1,10 @@
 """Deterministic full-runtime Tick replay for Phase 8.
 
-Iteration 10 implements the zero-cost ``mock`` mode.  The harness uses the real
-``TickRuntime`` assembly and ``Orchestrator.run_tick`` path; only the LLM transport
-is replaced by fixture responses routed by production ``agent_id``.
+Iteration 10 implements the zero-cost ``mock`` mode.  Iteration 11 adds an explicit
+``recorded`` fixture mode, stable evidence hashing and completed-checkpoint reuse.
+The harness uses the real ``TickRuntime`` assembly and ``Orchestrator.run_tick``
+path; only the LLM transport is replaced by fixture responses routed by production
+``agent_id``.
 """
 
 from __future__ import annotations
@@ -89,6 +91,8 @@ class ReplayFixture(BaseModel):
     expected_fact_transitions: list[ExpectedFactTransition] = Field(default_factory=list)
     expected_acceptance: Literal["accept", "reject", "ambiguous"]
     labels: list[str] = Field(default_factory=list)
+    response_provenance: Literal["synthetic", "sanitized_recorded"] = "synthetic"
+    source_artifacts: list[str] = Field(default_factory=list)
 
 
 class CountingActionResolver(ActionResolver):
@@ -214,6 +218,12 @@ def _deterministic_runtime_scope():
 def load_fixture(path: Path) -> ReplayFixture:
     payload = json.loads(path.read_text(encoding="utf-8"))
     return ReplayFixture.model_validate(payload)
+
+
+def _fixture_sha256(fixture: ReplayFixture) -> str:
+    return hashlib.sha256(
+        fixture.model_dump_json(exclude_none=False).encode("utf-8")
+    ).hexdigest()
 
 
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -369,13 +379,112 @@ def _expectations(
     }
 
 
+def _stable_evidence_payload(report: dict[str, Any]) -> dict[str, Any]:
+    """Select deterministic evidence and exclude paths, latency and timestamps."""
+    return {
+        "schema_version": report["schema_version"],
+        "fixture_version": report["fixture_version"],
+        "fixture_id": report["fixture_id"],
+        "fixture_sha256": report["fixture_sha256"],
+        "mode": report["mode"],
+        "response_provenance": report["response_provenance"],
+        "execution": report["execution"],
+        "labels": report["labels"],
+        "ticks": [
+            {
+                key: row[key]
+                for key in (
+                    "tick",
+                    "event_ids",
+                    "events_generated",
+                    "agents_called",
+                    "state_guard_reported_safe",
+                    "deterministic_gate_passed",
+                    "final_accepted",
+                    "repair_attempted",
+                    "repair_adopted",
+                    "fact_diff",
+                    "reconciliation_summary",
+                    "failure_category",
+                    "guard_trace",
+                )
+            }
+            for row in report["ticks"]
+        ],
+        "expectations": report["expectations"],
+        "calls": [
+            {
+                key: call[key]
+                for key in (
+                    "agent_id",
+                    "tick",
+                    "priority",
+                    "prompt_sha256",
+                    "response_sha256",
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "cached_tokens",
+                )
+            }
+            for call in report["llm_calls"]
+        ],
+        "unused_fixture_responses": report["unused_fixture_responses"],
+    }
+
+
+def _evidence_sha256(report: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        _stable_evidence_payload(report),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _load_completed_checkpoint(
+    path: Path,
+    *,
+    fixture_sha256: str,
+    mode: Literal["mock", "recorded"],
+) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if payload.get("checkpoint_status") != "complete":
+        raise ValueError(f"replay checkpoint is not complete: {path}")
+    if payload.get("fixture_sha256") != fixture_sha256:
+        raise ValueError("replay checkpoint fixture hash does not match")
+    if payload.get("mode") != mode:
+        raise ValueError("replay checkpoint mode does not match")
+    expected_hash = payload.get("evidence_sha256")
+    if not expected_hash or _evidence_sha256(payload) != expected_hash:
+        raise ValueError("replay checkpoint evidence hash does not match")
+    result = json.loads(json.dumps(payload, ensure_ascii=False))
+    result["resume"] = {
+        "checkpoint_reused": True,
+        "provider_calls_this_run": 0,
+        "scope": "completed_checkpoint_only",
+    }
+    return result
+
+
 async def run_replay_async(
     fixture: ReplayFixture,
     *,
     work_dir: Path,
     max_calls: int = 40,
     checkpoint_path: Path | None = None,
+    mode: Literal["mock", "recorded"] = "mock",
+    resume: bool = False,
 ) -> dict[str, Any]:
+    fixture_sha256 = _fixture_sha256(fixture)
+    if resume:
+        if checkpoint_path is None or not checkpoint_path.is_file():
+            raise FileNotFoundError("--resume requires an existing checkpoint file")
+        return _load_completed_checkpoint(
+            checkpoint_path,
+            fixture_sha256=fixture_sha256,
+            mode=mode,
+        )
     _seed_replay_directory(work_dir, fixture)
     router = FixtureLLMRouter(fixture.responses_by_agent, max_calls=max_calls)
     runtime = TickRuntime(
@@ -396,10 +505,11 @@ async def run_replay_async(
         "schema_version": "runtime-replay-v1",
         "fixture_version": fixture.fixture_version,
         "fixture_id": fixture.fixture_id,
-        "fixture_sha256": hashlib.sha256(
-            fixture.model_dump_json(exclude_none=False).encode("utf-8")
-        ).hexdigest(),
-        "mode": "mock",
+        "fixture_sha256": fixture_sha256,
+        "mode": mode,
+        "response_provenance": fixture.response_provenance,
+        "source_artifacts": fixture.source_artifacts,
+        "checkpoint_status": "in_progress",
         "execution": {
             "execution_path": "full_runtime",
             "tick_runtime_exercised": True,
@@ -414,6 +524,11 @@ async def run_replay_async(
         },
         "labels": fixture.labels,
         "ticks": [],
+        "resume": {
+            "checkpoint_reused": False,
+            "provider_calls_this_run": 0,
+            "scope": "completed_checkpoint_only",
+        },
     }
 
     started = time.perf_counter()
@@ -534,6 +649,8 @@ async def run_replay_async(
         "canonical_facts": str((work_dir / "canonical_facts.json").resolve()),
         "ticks_db": str((work_dir / "ticks.db").resolve()),
     }
+    report["checkpoint_status"] = "complete"
+    report["evidence_sha256"] = _evidence_sha256(report)
     if checkpoint_path is not None:
         _atomic_write_json(checkpoint_path, report)
     return report
@@ -545,6 +662,8 @@ def run_replay(
     work_dir: Path,
     max_calls: int = 40,
     checkpoint_path: Path | None = None,
+    mode: Literal["mock", "recorded"] = "mock",
+    resume: bool = False,
 ) -> dict[str, Any]:
     fixture = load_fixture(fixture_path)
     return asyncio.run(
@@ -553,6 +672,8 @@ def run_replay(
             work_dir=work_dir,
             max_calls=max_calls,
             checkpoint_path=checkpoint_path,
+            mode=mode,
+            resume=resume,
         )
     )
 
@@ -562,13 +683,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("fixture", help="Versioned replay fixture JSON")
     parser.add_argument(
         "--mode",
-        choices=("mock",),
+        choices=("mock", "recorded"),
         default="mock",
-        help="Iteration 10 supports deterministic mock only",
+        help="Fixture transport provenance; neither mode calls a provider",
     )
     parser.add_argument("--work-dir", required=True, help="New empty replay directory")
     parser.add_argument("--out", required=True, help="Replay report/checkpoint JSON")
     parser.add_argument("--max-calls", type=int, default=40)
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reuse and validate an already-complete --out checkpoint",
+    )
     return parser
 
 
@@ -581,12 +707,17 @@ def main(argv: list[str] | None = None) -> int:
         work_dir=Path(args.work_dir).resolve(),
         max_calls=args.max_calls,
         checkpoint_path=Path(args.out).resolve(),
+        mode=args.mode,
+        resume=args.resume,
     )
     print(
         json.dumps(
             {
                 "out": str(Path(args.out).resolve()),
                 "fixture_id": report["fixture_id"],
+                "mode": report["mode"],
+                "checkpoint_reused": report["resume"]["checkpoint_reused"],
+                "evidence_sha256": report["evidence_sha256"],
                 "ticks": len(report["ticks"]),
                 "accepted": sum(row["final_accepted"] for row in report["ticks"]),
                 "calls": report["telemetry"]["call_count"],

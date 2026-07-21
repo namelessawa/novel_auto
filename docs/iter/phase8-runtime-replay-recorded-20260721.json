@@ -1,0 +1,1168 @@
+{
+  "schema_version": "runtime-replay-v1",
+  "fixture_version": "1",
+  "fixture_id": "map_gate_full_runtime_tick_1",
+  "fixture_sha256": "6c37708383e9a893573bb3eace397a81297b8090a6528b28ffdc8244ac2f3ada",
+  "mode": "recorded",
+  "response_provenance": "synthetic",
+  "source_artifacts": [],
+  "checkpoint_status": "complete",
+  "execution": {
+    "execution_path": "full_runtime",
+    "tick_runtime_exercised": true,
+    "orchestrator_exercised": true,
+    "action_resolver_exercised": true,
+    "narrator_exercised": true,
+    "critic_exercised": false,
+    "state_guard_exercised": true,
+    "persistence_exercised": true,
+    "canonical_fact_sidecar_exercised": true,
+    "canonical_reconciliation_exercised": true
+  },
+  "labels": [
+    "full_runtime",
+    "state_patch",
+    "item_holder",
+    "location_transition",
+    "state_guard_accept"
+  ],
+  "ticks": [
+    {
+      "tick": 1,
+      "event_ids": [
+        "evt_map_gate"
+      ],
+      "events_generated": [
+        "evt_blast",
+        "evt_map_gate",
+        "evt_act_1_alice_000000",
+        "evt_act_1_bob_000000"
+      ],
+      "agents_called": [
+        "world_simulator",
+        "event_injector",
+        "character_agents×2",
+        "state_patches(applied=1,rejected=0)",
+        "narrator",
+        "kg_sync(+0e/+2r/~4e)"
+      ],
+      "narrator_produced": true,
+      "state_guard_reported_safe": true,
+      "deterministic_gate_passed": true,
+      "final_accepted": true,
+      "repair_attempted": false,
+      "repair_adopted": false,
+      "canonical_facts_before": [],
+      "canonical_facts_after": [
+        {
+          "fact_id": "fact_0e23a401e46b7d9db77a5a97",
+          "subject_id": "world",
+          "predicate": "world_time",
+          "value": 1,
+          "source_event_ids": [],
+          "source_narrative_ticks": [],
+          "source_refs": [
+            {
+              "kind": "world_state",
+              "source_id": "world_simulator:1",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_294a461bd9e32fa4ac22e7ff",
+          "subject_id": "alice",
+          "predicate": "status_effect:手臂受伤",
+          "value": true,
+          "source_event_ids": [
+            "evt_blast"
+          ],
+          "source_narrative_ticks": [],
+          "source_refs": [
+            {
+              "kind": "state_patch",
+              "source_id": "patch_7facb7a6c07969265d75",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_2e53610e464787670f73a295",
+          "subject_id": "alice",
+          "predicate": "injury:手臂受伤",
+          "value": true,
+          "source_event_ids": [
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_3ddb2f41162a8abada779814",
+          "subject_id": "bob",
+          "predicate": "character_location",
+          "value": {
+            "state": "arrived",
+            "location_id": "city_gate_inner"
+          },
+          "source_event_ids": [
+            "evt_act_1_bob_000000",
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            },
+            {
+              "kind": "state_transition",
+              "source_id": "character_actions:1:bob",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_6bef63fb69de46f8c24194e6",
+          "subject_id": "alice",
+          "predicate": "character_location",
+          "value": {
+            "state": "arrived",
+            "location_id": "city_gate_inner"
+          },
+          "source_event_ids": [
+            "evt_act_1_alice_000000",
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            },
+            {
+              "kind": "state_transition",
+              "source_id": "character_actions:1:alice",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_89226823db6ed456e80062f9",
+          "subject_id": "evt_map_gate",
+          "predicate": "event_occurred",
+          "value": {
+            "type": "dramatic",
+            "location": "city_gate_outer",
+            "participants": [
+              "alice",
+              "bob"
+            ],
+            "description": "Alice必须收好地图并带Bob越过内门。"
+          },
+          "source_event_ids": [
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [],
+          "source_refs": [],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [
+            "alice",
+            "bob"
+          ],
+          "confidence": 1.0,
+          "reversible": false,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "historical"
+        },
+        {
+          "fact_id": "fact_aa5b869d667271d645a871fd",
+          "subject_id": "item:map",
+          "predicate": "item_condition",
+          "value": "intact",
+          "source_event_ids": [
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_ba6721c268b4caf70a438fe6",
+          "subject_id": "evt_act_1_alice_000000",
+          "predicate": "event_occurred",
+          "value": {
+            "type": "character_action",
+            "location": "city_gate_inner",
+            "participants": [
+              "alice",
+              "city_gate_inner",
+              "bob"
+            ],
+            "description": "Alice扶住Bob穿过内门。"
+          },
+          "source_event_ids": [
+            "evt_act_1_alice_000000"
+          ],
+          "source_narrative_ticks": [],
+          "source_refs": [],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [
+            "alice",
+            "bob",
+            "city_gate_inner"
+          ],
+          "confidence": 1.0,
+          "reversible": false,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "historical"
+        },
+        {
+          "fact_id": "fact_c60521323b1307949a0d5b53",
+          "subject_id": "bob",
+          "predicate": "alive_status",
+          "value": "alive",
+          "source_event_ids": [
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_c847503cd49f908c7f6e8e91",
+          "subject_id": "evt_blast",
+          "predicate": "event_occurred",
+          "value": {
+            "type": "dramatic",
+            "location": "city_gate_outer",
+            "participants": [
+              "alice",
+              "bob"
+            ],
+            "description": "门外爆炸掀起碎片，Alice手臂受伤。"
+          },
+          "source_event_ids": [
+            "evt_blast"
+          ],
+          "source_narrative_ticks": [],
+          "source_refs": [],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [
+            "alice",
+            "bob"
+          ],
+          "confidence": 1.0,
+          "reversible": false,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "historical"
+        },
+        {
+          "fact_id": "fact_e740abc781dcbda354176e29",
+          "subject_id": "item:map",
+          "predicate": "item_holder",
+          "value": "alice",
+          "source_event_ids": [
+            "evt_act_1_alice_000000",
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            },
+            {
+              "kind": "state_transition",
+              "source_id": "character_actions:1:alice",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        },
+        {
+          "fact_id": "fact_ec279bec3bb242a5a82ee436",
+          "subject_id": "evt_act_1_bob_000000",
+          "predicate": "event_occurred",
+          "value": {
+            "type": "character_action",
+            "location": "city_gate_inner",
+            "participants": [
+              "bob",
+              "city_gate_inner",
+              "alice"
+            ],
+            "description": "Bob借Alice支撑越过内门。"
+          },
+          "source_event_ids": [
+            "evt_act_1_bob_000000"
+          ],
+          "source_narrative_ticks": [],
+          "source_refs": [],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [
+            "alice",
+            "bob",
+            "city_gate_inner"
+          ],
+          "confidence": 1.0,
+          "reversible": false,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "historical"
+        },
+        {
+          "fact_id": "fact_f895dfa5fa5216fde57722b1",
+          "subject_id": "alice",
+          "predicate": "alive_status",
+          "value": "alive",
+          "source_event_ids": [
+            "evt_map_gate"
+          ],
+          "source_narrative_ticks": [
+            1
+          ],
+          "source_refs": [
+            {
+              "kind": "guarded_narrative",
+              "source_id": "narrative:1",
+              "tick": 1,
+              "path": ""
+            }
+          ],
+          "valid_from_tick": 1,
+          "valid_until_tick": null,
+          "known_by": [],
+          "confidence": 1.0,
+          "reversible": true,
+          "supersedes_fact_id": null,
+          "superseded_by_fact_id": null,
+          "status": "active"
+        }
+      ],
+      "fact_diff": [
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_0e23a401e46b7d9db77a5a97",
+            "subject_id": "world",
+            "predicate": "world_time",
+            "value": 1,
+            "source_event_ids": [],
+            "source_narrative_ticks": [],
+            "source_refs": [
+              {
+                "kind": "world_state",
+                "source_id": "world_simulator:1",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_294a461bd9e32fa4ac22e7ff",
+            "subject_id": "alice",
+            "predicate": "status_effect:手臂受伤",
+            "value": true,
+            "source_event_ids": [
+              "evt_blast"
+            ],
+            "source_narrative_ticks": [],
+            "source_refs": [
+              {
+                "kind": "state_patch",
+                "source_id": "patch_7facb7a6c07969265d75",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_2e53610e464787670f73a295",
+            "subject_id": "alice",
+            "predicate": "injury:手臂受伤",
+            "value": true,
+            "source_event_ids": [
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_3ddb2f41162a8abada779814",
+            "subject_id": "bob",
+            "predicate": "character_location",
+            "value": {
+              "state": "arrived",
+              "location_id": "city_gate_inner"
+            },
+            "source_event_ids": [
+              "evt_act_1_bob_000000",
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              },
+              {
+                "kind": "state_transition",
+                "source_id": "character_actions:1:bob",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_6bef63fb69de46f8c24194e6",
+            "subject_id": "alice",
+            "predicate": "character_location",
+            "value": {
+              "state": "arrived",
+              "location_id": "city_gate_inner"
+            },
+            "source_event_ids": [
+              "evt_act_1_alice_000000",
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              },
+              {
+                "kind": "state_transition",
+                "source_id": "character_actions:1:alice",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_89226823db6ed456e80062f9",
+            "subject_id": "evt_map_gate",
+            "predicate": "event_occurred",
+            "value": {
+              "type": "dramatic",
+              "location": "city_gate_outer",
+              "participants": [
+                "alice",
+                "bob"
+              ],
+              "description": "Alice必须收好地图并带Bob越过内门。"
+            },
+            "source_event_ids": [
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [],
+            "source_refs": [],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [
+              "alice",
+              "bob"
+            ],
+            "confidence": 1.0,
+            "reversible": false,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "historical"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_aa5b869d667271d645a871fd",
+            "subject_id": "item:map",
+            "predicate": "item_condition",
+            "value": "intact",
+            "source_event_ids": [
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_ba6721c268b4caf70a438fe6",
+            "subject_id": "evt_act_1_alice_000000",
+            "predicate": "event_occurred",
+            "value": {
+              "type": "character_action",
+              "location": "city_gate_inner",
+              "participants": [
+                "alice",
+                "city_gate_inner",
+                "bob"
+              ],
+              "description": "Alice扶住Bob穿过内门。"
+            },
+            "source_event_ids": [
+              "evt_act_1_alice_000000"
+            ],
+            "source_narrative_ticks": [],
+            "source_refs": [],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [
+              "alice",
+              "bob",
+              "city_gate_inner"
+            ],
+            "confidence": 1.0,
+            "reversible": false,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "historical"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_c60521323b1307949a0d5b53",
+            "subject_id": "bob",
+            "predicate": "alive_status",
+            "value": "alive",
+            "source_event_ids": [
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_c847503cd49f908c7f6e8e91",
+            "subject_id": "evt_blast",
+            "predicate": "event_occurred",
+            "value": {
+              "type": "dramatic",
+              "location": "city_gate_outer",
+              "participants": [
+                "alice",
+                "bob"
+              ],
+              "description": "门外爆炸掀起碎片，Alice手臂受伤。"
+            },
+            "source_event_ids": [
+              "evt_blast"
+            ],
+            "source_narrative_ticks": [],
+            "source_refs": [],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [
+              "alice",
+              "bob"
+            ],
+            "confidence": 1.0,
+            "reversible": false,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "historical"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_e740abc781dcbda354176e29",
+            "subject_id": "item:map",
+            "predicate": "item_holder",
+            "value": "alice",
+            "source_event_ids": [
+              "evt_act_1_alice_000000",
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              },
+              {
+                "kind": "state_transition",
+                "source_id": "character_actions:1:alice",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_ec279bec3bb242a5a82ee436",
+            "subject_id": "evt_act_1_bob_000000",
+            "predicate": "event_occurred",
+            "value": {
+              "type": "character_action",
+              "location": "city_gate_inner",
+              "participants": [
+                "bob",
+                "city_gate_inner",
+                "alice"
+              ],
+              "description": "Bob借Alice支撑越过内门。"
+            },
+            "source_event_ids": [
+              "evt_act_1_bob_000000"
+            ],
+            "source_narrative_ticks": [],
+            "source_refs": [],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [
+              "alice",
+              "bob",
+              "city_gate_inner"
+            ],
+            "confidence": 1.0,
+            "reversible": false,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "historical"
+          }
+        },
+        {
+          "change": "added",
+          "fact": {
+            "fact_id": "fact_f895dfa5fa5216fde57722b1",
+            "subject_id": "alice",
+            "predicate": "alive_status",
+            "value": "alive",
+            "source_event_ids": [
+              "evt_map_gate"
+            ],
+            "source_narrative_ticks": [
+              1
+            ],
+            "source_refs": [
+              {
+                "kind": "guarded_narrative",
+                "source_id": "narrative:1",
+                "tick": 1,
+                "path": ""
+              }
+            ],
+            "valid_from_tick": 1,
+            "valid_until_tick": null,
+            "known_by": [],
+            "confidence": 1.0,
+            "reversible": true,
+            "supersedes_fact_id": null,
+            "superseded_by_fact_id": null,
+            "status": "active"
+          }
+        }
+      ],
+      "reconciliation_findings": [],
+      "reconciliation_summary": {
+        "checked": 15,
+        "matched": 15,
+        "skipped": 3,
+        "issue_count": 0,
+        "hard_conflict_count": 0,
+        "coverage_gap_count": 0,
+        "by_view": {},
+        "issues": [],
+        "coverage_gaps": []
+      },
+      "token_usage": {
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "total_cached_tokens": 0,
+        "by_agent": {
+          "world_simulator": 0,
+          "event_injector": 0,
+          "character_agent:alice": 0,
+          "character_agent:bob": 0,
+          "narrator": 0,
+          "narrative_state_verifier": 0
+        },
+        "by_agent_cached": {
+          "world_simulator": 0,
+          "event_injector": 0,
+          "character_agent:alice": 0,
+          "character_agent:bob": 0,
+          "narrator": 0,
+          "narrative_state_verifier": 0
+        },
+        "by_agent_prompt": {
+          "world_simulator": 0,
+          "event_injector": 0,
+          "character_agent:alice": 0,
+          "character_agent:bob": 0,
+          "narrator": 0,
+          "narrative_state_verifier": 0
+        },
+        "by_priority": {
+          "medium": 0,
+          "critical": 0
+        },
+        "call_count": 6,
+        "last_tick": 1
+      },
+      "latency": {
+        "tick_total_sec": 0.049831
+      },
+      "failure_category": "",
+      "guard_trace": {
+        "attempted": true,
+        "repair_attempted": false,
+        "required_events": [
+          {
+            "id": "evt_map_gate",
+            "description": "Alice必须收好地图并带Bob越过内门。",
+            "required_end_states": [
+              "本段结束前：地图由 alice 持有"
+            ]
+          }
+        ],
+        "known_entities": [
+          "Alice",
+          "Bob"
+        ],
+        "entity_names": {
+          "alice": "Alice",
+          "bob": "Bob"
+        },
+        "tracking_character_id": "",
+        "before": {
+          "safe": true,
+          "reported_safe": true,
+          "event_checks": [
+            {
+              "event_id": "evt_map_gate",
+              "requirement": "本段结束前：地图由 alice 持有",
+              "met": true,
+              "prose_evidence": [
+                "她确认地图仍在自己的内袋里"
+              ],
+              "ledger_evidence_paths": [
+                "items.map.holder"
+              ]
+            }
+          ],
+          "event_fulfillment_conflicts": [],
+          "entity_grounding_conflicts": [],
+          "prior_state_conflicts": [],
+          "internal_conflicts": [],
+          "ledger_conflicts": [],
+          "fact_changes_from_original": [],
+          "reason": "地图持有状态有正文和账本双重证据。"
+        }
+      }
+    }
+  ],
+  "resume": {
+    "checkpoint_reused": false,
+    "provider_calls_this_run": 0,
+    "scope": "completed_checkpoint_only"
+  },
+  "expectations": {
+    "expected_acceptance": "accept",
+    "actual_acceptance": "accept",
+    "acceptance_passed": true,
+    "fact_checks": [
+      {
+        "subject_id": "alice",
+        "predicate": "character_location",
+        "expected": {
+          "state": "arrived",
+          "location_id": "city_gate_inner"
+        },
+        "actual": {
+          "state": "arrived",
+          "location_id": "city_gate_inner"
+        },
+        "passed": true
+      },
+      {
+        "subject_id": "bob",
+        "predicate": "character_location",
+        "expected": {
+          "state": "arrived",
+          "location_id": "city_gate_inner"
+        },
+        "actual": {
+          "state": "arrived",
+          "location_id": "city_gate_inner"
+        },
+        "passed": true
+      },
+      {
+        "subject_id": "item:map",
+        "predicate": "item_holder",
+        "expected": "alice",
+        "actual": "alice",
+        "passed": true
+      },
+      {
+        "subject_id": "alice",
+        "predicate": "status_effect:手臂受伤",
+        "expected": true,
+        "actual": true,
+        "passed": true
+      }
+    ],
+    "expected_required_end_states": [
+      "本段结束前：地图由 alice 持有"
+    ],
+    "actual_required_end_states": [
+      "本段结束前：地图由 alice 持有"
+    ],
+    "required_end_states_passed": true,
+    "all_passed": true
+  },
+  "llm_calls": [
+    {
+      "agent_id": "world_simulator",
+      "tick": -1,
+      "priority": "medium",
+      "duration_sec": 2.9e-05,
+      "prompt_sha256": "6a083fa8401aabea568fcd86efbfd7ab75cc456390c654aa76ca4d53b78fadc3",
+      "response_sha256": "5fb3e612ee793545e1dfaae2ae14d24c1d28f38be8174022b358c737fedadf14",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0
+    },
+    {
+      "agent_id": "event_injector",
+      "tick": -1,
+      "priority": "medium",
+      "duration_sec": 1.7e-05,
+      "prompt_sha256": "603542ebc8b629d2f568849e0c5d42893a136753599d3aa7ef2ddfb4fa4646af",
+      "response_sha256": "0f6480dd77de7311918115fd87d602395b8e3a9d56d1698960f7ed9062ce299a",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0
+    },
+    {
+      "agent_id": "character_agent:alice",
+      "tick": -1,
+      "priority": "critical",
+      "duration_sec": 1.5e-05,
+      "prompt_sha256": "f84ade8357785b708584b160f3816772b3ca6419cc65ca85a885d728861d34a3",
+      "response_sha256": "030e6e5b455a5d8294c8210fb1566286887d6993f8df3718c37dbd351c95f992",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0
+    },
+    {
+      "agent_id": "character_agent:bob",
+      "tick": -1,
+      "priority": "medium",
+      "duration_sec": 1.3e-05,
+      "prompt_sha256": "2eda7f719227dc6a56d31e2f4f1e0c673dd5eb044449739884ae127b129f71e7",
+      "response_sha256": "add6b0c60a23217639d24b3a15fefd08a96f7296b78b12db45dd9552720104ed",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0
+    },
+    {
+      "agent_id": "narrator",
+      "tick": 1,
+      "priority": "critical",
+      "duration_sec": 2.2e-05,
+      "prompt_sha256": "017be0ae16954eac24decafabc60a7d801d092b637e51be8785d4ebc557ebdc4",
+      "response_sha256": "3c102fccf90e6b7c254d25e266b9d4c5e3fccb176b3bcb5dc5a3a0a7773ee835",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0
+    },
+    {
+      "agent_id": "narrative_state_verifier",
+      "tick": 1,
+      "priority": "critical",
+      "duration_sec": 1.2e-05,
+      "prompt_sha256": "c1790a3a1cdfafc2b5650b50648e937ed20ed49c2ac203237fecdea211ef78b5",
+      "response_sha256": "b2b4ff70225f6a5dc9d0ef07fc81fae07e219f9eb4c9bf3ca5784a2d6aca4dd9",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "cached_tokens": 0
+    }
+  ],
+  "unused_fixture_responses": {},
+  "telemetry": {
+    "duration_sec": 0.115054,
+    "call_count": 6,
+    "token_usage": {
+      "total_prompt_tokens": 0,
+      "total_completion_tokens": 0,
+      "total_cached_tokens": 0,
+      "by_agent": {
+        "world_simulator": 0,
+        "event_injector": 0,
+        "character_agent:alice": 0,
+        "character_agent:bob": 0,
+        "narrator": 0,
+        "narrative_state_verifier": 0
+      },
+      "by_agent_cached": {
+        "world_simulator": 0,
+        "event_injector": 0,
+        "character_agent:alice": 0,
+        "character_agent:bob": 0,
+        "narrator": 0,
+        "narrative_state_verifier": 0
+      },
+      "by_agent_prompt": {
+        "world_simulator": 0,
+        "event_injector": 0,
+        "character_agent:alice": 0,
+        "character_agent:bob": 0,
+        "narrator": 0,
+        "narrative_state_verifier": 0
+      },
+      "by_priority": {
+        "medium": 0,
+        "critical": 0
+      },
+      "call_count": 6,
+      "last_tick": 1
+    },
+    "action_resolver_calls": 1
+  },
+  "artifact_paths": {
+    "work_dir": "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\novel_auto_phase8_recorded_1b7a05d78297498e9baad541c50e74a3",
+    "tick_state": "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\novel_auto_phase8_recorded_1b7a05d78297498e9baad541c50e74a3\\tick_state.json",
+    "canonical_facts": "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\novel_auto_phase8_recorded_1b7a05d78297498e9baad541c50e74a3\\canonical_facts.json",
+    "ticks_db": "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\novel_auto_phase8_recorded_1b7a05d78297498e9baad541c50e74a3\\ticks.db"
+  },
+  "evidence_sha256": "616e89687d4d164434f1e399500433cff0a796fd999a2fafc94c8ea49c599fa2"
+}

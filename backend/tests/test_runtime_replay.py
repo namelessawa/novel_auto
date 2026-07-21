@@ -139,6 +139,7 @@ def test_mock_replay_fact_and_call_evidence_is_repeatable(tmp_path) -> None:
     assert first["fixture_sha256"] == second["fixture_sha256"]
     assert first["ticks"][0]["fact_diff"] == second["ticks"][0]["fact_diff"]
     assert first["expectations"] == second["expectations"]
+    assert first["evidence_sha256"] == second["evidence_sha256"]
     assert [
         (call["agent_id"], call["prompt_sha256"], call["response_sha256"])
         for call in first["llm_calls"]
@@ -146,6 +147,63 @@ def test_mock_replay_fact_and_call_evidence_is_repeatable(tmp_path) -> None:
         (call["agent_id"], call["prompt_sha256"], call["response_sha256"])
         for call in second["llm_calls"]
     ]
+
+
+def test_recorded_replay_has_stable_evidence_and_reuses_complete_checkpoint(
+    tmp_path,
+) -> None:
+    checkpoint = tmp_path / "recorded.json"
+    first = run_replay(
+        FIXTURE,
+        work_dir=tmp_path / "first-recorded",
+        max_calls=10,
+        checkpoint_path=checkpoint,
+        mode="recorded",
+    )
+    second = run_replay(
+        FIXTURE,
+        work_dir=tmp_path / "second-recorded",
+        max_calls=10,
+        mode="recorded",
+    )
+    resumed = run_replay(
+        FIXTURE,
+        work_dir=tmp_path / "unused-on-resume",
+        max_calls=10,
+        checkpoint_path=checkpoint,
+        mode="recorded",
+        resume=True,
+    )
+
+    assert first["mode"] == second["mode"] == resumed["mode"] == "recorded"
+    assert first["response_provenance"] == "synthetic"
+    assert first["evidence_sha256"] == second["evidence_sha256"]
+    assert resumed["evidence_sha256"] == first["evidence_sha256"]
+    assert resumed["resume"] == {
+        "checkpoint_reused": True,
+        "provider_calls_this_run": 0,
+        "scope": "completed_checkpoint_only",
+    }
+    assert not (tmp_path / "unused-on-resume").exists()
+
+
+def test_replay_resume_rejects_mode_mismatch(tmp_path) -> None:
+    checkpoint = tmp_path / "recorded.json"
+    run_replay(
+        FIXTURE,
+        work_dir=tmp_path / "recorded",
+        checkpoint_path=checkpoint,
+        mode="recorded",
+    )
+
+    with pytest.raises(ValueError, match="mode does not match"):
+        run_replay(
+            FIXTURE,
+            work_dir=tmp_path / "unused",
+            checkpoint_path=checkpoint,
+            mode="mock",
+            resume=True,
+        )
 
 
 def test_replay_directory_override_is_restricted_to_replay_identity(tmp_path) -> None:
