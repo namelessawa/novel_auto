@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
@@ -96,6 +97,7 @@ class LLMConfigUpdateRequest(BaseModel):
 
 class NovelCreateRequest(BaseModel):
     title: str = "未命名小说"
+    generation_mode: Literal["author", "simulation"] = "author"
 
 
 class NovelUpdateRequest(BaseModel):
@@ -118,6 +120,17 @@ async def create_novel(
     current_user: User = Depends(get_current_user),
 ):
     entry = novel_manager.create_novel(current_user.id, req.title)
+    # Establish the author-domain authorities immediately.  A later bootstrap
+    # may enrich only these untouched placeholders from its TickState output.
+    from story.migrations import ensure_story_domain
+    from story.models import GenerationModeConfig
+    from story.persistence import GenerationModeStore
+
+    data_dir = novel_manager.get_novel_data_dir(current_user.id, entry["id"])
+    ensure_story_domain(data_dir, title=req.title)
+    mode_store = GenerationModeStore(data_dir)
+    if req.generation_mode != mode_store.load().mode:
+        mode_store.save(GenerationModeConfig(mode=req.generation_mode))
     bootstrap_task_id = ""
     if auto_bootstrap:
         try:
@@ -132,12 +145,47 @@ async def create_novel(
                 entry["id"],
                 e,
             )
-    return {**entry, "bootstrap_task_id": bootstrap_task_id}
+    return {
+        **entry,
+        "bootstrap_task_id": bootstrap_task_id,
+        "generation_mode": req.generation_mode,
+    }
 
 
 async def _spawn_bootstrap_section_task(
     *, user_id: str, novel_id: str, novel_title: str
 ) -> str:
+    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
+    from story.persistence import GenerationModeStore
+
+    if GenerationModeStore(data_dir).load().mode == "author":
+        from api.story_routes import _make_author_executor
+        from sections.section_store import get_section_store
+        from story.models import SectionGoal
+        from tasks.task_manager import TaskConflict, get_task_manager
+
+        goal = SectionGoal(
+            objective="建立主角、核心冲突与世界规则，并以一个可追踪的选择结束本节。"
+        )
+        store = get_section_store(novel_id, data_dir=data_dir)
+        chapter, section = store.next_position()
+        try:
+            task = await get_task_manager().create_task(
+                user_id=user_id,
+                novel_id=novel_id,
+                novel_title=novel_title,
+                kind="author_section_generation",
+                executor=_make_author_executor(goal),
+                target_words=goal.desired_length,
+                min_words=200,
+                max_ticks=2,
+                chapter=chapter,
+                section_no=section,
+            )
+        except TaskConflict:
+            return ""
+        return task.id
+
     from agents.section_closer import SectionCloser
     from api.section_routes import _make_section_executor
     from sections.section_store import get_section_store
@@ -145,7 +193,6 @@ async def _spawn_bootstrap_section_task(
     from tick_runtime import get_runtime
 
     get_runtime(user_id, novel_id)
-    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
     store = get_section_store(novel_id, data_dir=data_dir)
     next_chapter, next_section = store.next_position()
 
@@ -209,8 +256,24 @@ async def update_novel(
 async def delete_novel(
     novel_id: str, current_user: User = Depends(get_current_user)
 ):
-    if novel_id == _active_by_user.get(current_user.id):
+    from tick_runtime import drop_cache, get_active_novel_id
+
+    if novel_id in {
+        _active_by_user.get(current_user.id),
+        get_active_novel_id(current_user.id),
+    }:
         raise HTTPException(status_code=400, detail="不能删除当前活跃的小说")
+    try:
+        existing = novel_manager.get_novel(current_user.id, novel_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if existing is None:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    # Release runtime/SQLite handles before removing the directory (Windows).
+    from story.runtime import drop_author_runtime
+
+    drop_author_runtime(current_user.id, novel_id)
+    await run_in_threadpool(drop_cache, current_user.id, novel_id)
     try:
         ok = novel_manager.delete_novel(current_user.id, novel_id)
     except ValueError as e:
@@ -245,32 +308,53 @@ async def switch_novel(
                 logger.exception("save_state before active novel realign failed")
             _pipelines.pop(old_key, None)
 
-    # tick runtime 切换 — 失败 503, 不污染 legacy。
-    # v2.37 — 走 switch_active_novel: legacy 侧 _active_by_user 的更新在
-    # tick_runtime._registry_lock 内完成, 并发 switch 不再交错出
-    # tick=B / legacy=A 的两 map 分歧。
-    try:
-        from tick_runtime import switch_active_novel
-
-        def _sync_legacy_active() -> None:
-            _active_by_user[current_user.id] = novel_id
-
-        switch_active_novel(current_user.id, novel_id, _sync_legacy_active)
-    except Exception as e:
-        logger.error("switch_active_novel(%s, %s) failed: %s", current_user.id, novel_id, e)
-        raise HTTPException(
-            status_code=503,
-            detail=f"tick runtime 切换失败: {e}; legacy pipeline 未切换",
-        )
-
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
-    pipeline = GenerationPipeline(data_dir=data_dir)
-    # load_state 读 JSON 文件, 放线程池避免大状态文件阻塞 event loop
-    await run_in_threadpool(pipeline.load_state)
-    _pipelines[(current_user.id, novel_id)] = pipeline
+    from story.migrations import ensure_story_domain
+    from story.persistence import GenerationModeStore
+
+    ensure_story_domain(data_dir, title=str(target.get("title") or ""))
+    mode = GenerationModeStore(data_dir).load().mode
+    if mode == "simulation":
+        # Only an explicitly selected experimental novel constructs TickRuntime.
+        try:
+            from tick_runtime import switch_active_novel
+
+            def _sync_legacy_active() -> None:
+                _active_by_user[current_user.id] = novel_id
+
+            switch_active_novel(current_user.id, novel_id, _sync_legacy_active)
+        except Exception as e:
+            logger.error(
+                "switch_active_novel(%s, %s) failed: %s",
+                current_user.id,
+                novel_id,
+                e,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=f"tick runtime 切换失败: {e}; active novel 未切换",
+            )
+        pipeline = GenerationPipeline(data_dir=data_dir)
+        await run_in_threadpool(pipeline.load_state)
+        _pipelines[(current_user.id, novel_id)] = pipeline
+    else:
+        # Author mode updates only the lightweight active pointer and explicitly
+        # deactivates any prior simulation runtime without constructing a new one.
+        from tick_runtime import drop_cache, get_active_novel_id as get_tick_active
+
+        tick_active = get_tick_active(current_user.id)
+        if tick_active:
+            await run_in_threadpool(drop_cache, current_user.id, tick_active)
+        _active_by_user[current_user.id] = novel_id
+        _pipelines.pop((current_user.id, novel_id), None)
 
     novel_manager.touch_last_accessed(current_user.id, novel_id)
-    return {"status": "ok", "active_id": novel_id, "title": target["title"]}
+    return {
+        "status": "ok",
+        "active_id": novel_id,
+        "title": target["title"],
+        "generation_mode": mode,
+    }
 
 
 # -- LLM Config Routes ------------------------------------------------------

@@ -71,18 +71,35 @@ def _resolve_runtime(*, _user_dep=None):
     导入阶段不触发 tick_runtime / auth 的解析, 打破循环。
     """
     from auth import get_current_user  # noqa: F401 — Depends 注入时使用
-    from tick_runtime import get_runtime
-
     # 这个分支永远不会直接被调; 真正生效的是 _make_resolver 返回的函数
     raise RuntimeError("_resolve_runtime should not be called directly")
 
 
 def _make_resolver():
     from auth import User, get_current_user
-    from tick_runtime import TickRuntime, get_runtime
+    from tick_runtime import TickRuntime, get_active_runtime
 
     def _resolve(user: User = Depends(get_current_user)) -> TickRuntime:
-        return get_runtime(user.id)
+        runtime = get_active_runtime(user.id)
+        if runtime is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "SIMULATION_MODE_REQUIRED",
+                    "message": "Tick 属于高级实验功能，请先将当前作品切换为世界模拟模式",
+                },
+            )
+        from story.persistence import GenerationModeStore
+
+        if GenerationModeStore(runtime.data_dir).load().mode != "simulation":
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "SIMULATION_MODE_REQUIRED",
+                    "message": "当前作品处于作者模式，未装配 Tick Agent",
+                },
+            )
+        return runtime
 
     return _resolve
 

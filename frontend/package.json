@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test:author": "node --test tests/author-ui.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

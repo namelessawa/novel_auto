@@ -1,15 +1,17 @@
 # 无限小说生成系统（Infinite Novel Generator）
 
-一个以世界模拟为核心的多智能体长篇小说生成系统。后端使用 FastAPI，前端使用 React/Vite；角色、世界、事件和记忆先持续演化，Narrator 再从事件流中选择值得讲述的内容。
+一个以“长期记忆、主题稳定、背景一致”为目标的长篇小说生成系统。后端使用 FastAPI，前端使用 React/Vite。默认作者模式以 `StoryBible` 和 `CanonicalState` 为双重权威，由单一 Writer 围绕明确的章节目标生成候选稿，再经确定性 Validator 与可恢复事务提交；原有多 Agent 世界模拟保留为显式开启的实验模式。
 
-> 设计原则：**故事是模拟的副产品，Narrator 负责选择性讲述。**
+> 权威顺序：**StoryBible（不可越界的创作契约）→ CanonicalState（唯一当前事实）→ StoryThread / Memory（叙事导航与检索）→ 正文。**
 >
 > 发布基线为 **v2.49**。当前主分支在此基础上加入了长篇状态复验、风格契约、跨段编辑与风格验证工具，详见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 核心能力
 
-- 多智能体 Tick 调度：世界演化、事件注入、角色决策、行动冲突解析、叙事、节奏控制、记忆压缩和一致性检查协同运行。
-- 长篇连续性：原子化状态持久化、事实账本、开放伏笔、知识图谱、分层摘要及叙事状态复验。
+- 作者模式主链：固定槽位上下文、单 Writer、确定性校验、至多一次定向修复与事务式落盘。
+- 长篇连续性：创作圣经、唯一规范状态、类型化长期记忆、开放故事线、读者/角色知识边界与修订号并发控制。
+- 可恢复持久化：临时文件 + `fsync` + 原子替换、last-good 备份、损坏隔离和提交日志重放。
+- 可选世界模拟：九 Agent / 七阶段 Tick 仅在作品显式切换到 `simulation` 后延迟加载，其候选正文与状态变化仍经过同一个 Validator/Canonical 事务网关。
 - 叙事质量控制：风格 preset、风格契约、确定性质量指标、LLM critic、段落接缝诊断和章节编辑。
 - 多模型接入：内置 23 个 OpenAI 兼容 provider，也支持 one-api、Azure OpenAI、Ollama 等自定义端点。
 - 阅读与多媒体：Narrative 分页、视点标记、全文搜索，以及分段、图片、TTS、字幕和视频生成链路。
@@ -18,45 +20,31 @@
 ## 架构概览
 
 ```mermaid
-flowchart TD
-    O["Orchestrator<br/>7 阶段 Tick 调度"] --> W["WorldSimulator"]
-    O --> E["EventInjector"]
-    O --> C["CharacterAgent × N"]
-    W --> S["Event Stream"]
-    E --> S
-    C --> R["ActionResolver"]
-    R --> S
-    S --> N["Narrator + NarrativeStateGuard"]
-    N --> SC["SectionCloser / SectionEditor"]
-    O --> SR["Showrunner"]
-    O --> MC["MemoryCompressor"]
-    O --> CG["ConsistencyGuardian"]
-    O --> NC["NoveltyCritic"]
-    N --> P["TickState / SQLite / Narratives / Knowledge Graph"]
-    SC --> P
+flowchart LR
+    B["StoryBible\n最高创作权威"] --> C["固定 10 槽 ContextBuilder"]
+    S["CanonicalState\n唯一当前事实"] --> C
+    T["StoryThread + 类型化 Memory"] --> C
+    G["章节目标"] --> C
+    C --> W["Writer × 1"]
+    W --> V["Deterministic Validator"]
+    V -->|"可修复"| R["定向修复 × 1"]
+    R --> V
+    V -->|"通过"| J["Journaled Commit"]
+    J --> O["正文 + CanonicalState + Threads + Memory"]
+    X["实验性 Simulation"] -. "候选输出" .-> V
 ```
 
-| 组件 | 运行频率 | 作用 |
-| --- | --- | --- |
-| Orchestrator | 每 Tick | 协调阶段、收集诊断、同步知识图谱并持久化 |
-| WorldSimulator | 每 Tick | 推进时间、环境和社会状态 |
-| EventInjector | 每 3–5 Tick | 注入内生、外生或戏剧事件 |
-| CharacterAgent × N | 每 Tick | 基于角色已知事实、目标和关系做决策 |
-| ActionResolver | 每 Tick | 用确定性规则解决行动冲突并生成状态转移 |
-| Narrator | 每 Tick | 选择材料并生成正文；低价值事件可保持沉默 |
-| Showrunner | 每 5 Tick | 管理节奏、角色弧线和开放伏笔 |
-| NoveltyCritic | 每 20 Tick | 检测重复表达和模式退化 |
-| ConsistencyGuardian | 每 30 Tick | 扫描事实、时间线和角色一致性问题 |
-| MemoryCompressor | 每 50 Tick | 执行 L0 → L1 → L2 → L3 分层压缩 |
-| SectionCloser / Editor | 节边界 | 判定切节、消除跨段接缝并复验事实 |
+`ContextBuilder` 使用十个独立预算槽位：StoryBible、CanonicalState、章节目标、活动故事线、读者知识、角色知识、前文尾部、近期摘要、相关长期记忆和风格契约。上下文清单只记录计数、引用 ID 与截断信息，不泄露 prompt 或候选正文。
 
-核心数据默认写入 `backend/data/novels/{novel_id}/`：
+作者模式核心数据写入作品自己的数据目录：
 
-- `tick_state.json`：世界、角色、伏笔、风格契约等当前状态。
-- `ticks.db`：SQLite WAL 事件与 Tick 日志。
-- `summary_tree.json`：分层摘要与长期记忆。
-- `knowledge_graph.json`：实体与关系图。
-- `narratives/`：逐 Tick 正文及视点 sidecar。
+- `story_bible.json`：主题、设定规则、禁区、主冲突和风格契约。
+- `canonical_state.json`：角色、物品、关系、知识边界、当前场景等唯一规范事实。
+- `story_threads.json` / `memory_records.json`：故事线生命周期与有证据的类型化记忆。
+- `generation_transactions/`：候选、校验报告和目标快照组成的恢复日志。
+- `context_manifest.json` / `generation_mode.json`：上下文审计元数据与作品模式。
+
+旧 `tick_state.json`、`fact_ledger.json`、`memory_store.json`、`summary_tree.json` 会被只读迁移；原文件保留，L3 传说只作为不确定历史记忆，不会直接升级为规范事实。完整设计见 [作者模式架构说明](./docs/author-mode-architecture.md)。
 
 ## 快速开始
 
@@ -104,14 +92,17 @@ npm run dev
 - 健康检查：http://127.0.0.1:8762/api/health
 - OpenAPI：http://127.0.0.1:8762/docs
 
-### 3. 冷启动世界并推进 Tick
+### 3. 在默认作者模式生成一节
 
 ```powershell
-python -m backend.bootstrap_prompts --novel-id mountain --seed "一个被遗忘的山城正在缓慢苏醒"
-Invoke-RestMethod -Method Post http://127.0.0.1:8762/api/tick/run
+# 创建作品后，在 Web 的“章节创作”填写目标并生成；也可调用：
+Invoke-RestMethod -Method Post `
+  -Uri http://127.0.0.1:8762/api/novels/{novel_id}/sections/generate `
+  -ContentType application/json `
+  -Body '{"objective":"主角首次发现城中时间异常的可验证证据"}'
 ```
 
-Narrator 在事件总价值不足时会主动沉默，这是预期行为。需要推进剧情时可通过前端或 `inject-event` API 注入事件。
+九 Agent Tick 世界模拟不再随作品加载自动启动。需要实验性模拟时，请在作品设置中显式切换模式，再调用 Tick API。
 
 ## LLM 配置
 
@@ -130,13 +121,20 @@ Narrator 在事件总价值不足时会主动沉默，这是预期行为。需�
 | Endpoint | 用途 |
 | --- | --- |
 | `GET /api/health` | 服务健康检查 |
+| `GET/PUT /api/novels/{id}/story-bible` | 读取或按修订号更新最高创作契约 |
+| `GET /api/novels/{id}/canonical-state` | 读取唯一当前事实源 |
+| `GET /api/novels/{id}/story-threads` | 读取故事线生命周期与证据 |
+| `GET/PUT /api/novels/{id}/generation-mode` | 读取或显式切换 author/simulation |
+| `POST /api/novels/{id}/sections/generate` | 按章节目标异步生成、校验并提交 |
+| `GET /api/novels/{id}/sections/{task_or_section_id}/status` | 查询任务、事务与正式章节状态 |
+| `GET /api/novels/{id}/context-manifest` | 查看不含正文/prompt 的上下文审计清单 |
 | `GET /api/tick/status` | 当前 Tick 运行状态 |
 | `POST /api/tick/run` | 推进一个 Tick |
 | `POST /api/tick/inject-event` | 注入外部事件 |
 | `GET /api/tick/narratives` | 分页读取正文与视点信息 |
 | `GET /api/tick/narratives/search` | 跨正文全文搜索 |
 | `GET /api/tick/critic-log` | 查看 critic 决策轨迹 |
-| `POST /api/section/generate` | 生成并收束一个节 |
+| `POST /api/section/generate` | 仅 simulation/遗留章节管线可用 |
 | `GET /api/presets` | 获取题材与风格 preset |
 
 以运行时 `/docs` 中的 OpenAPI 定义为准。
@@ -155,7 +153,14 @@ python -m pytest backend/tests/ --cov=backend --cov-report=term-missing
 
 # 前端生产构建
 Set-Location frontend
+npm run test:author
 npm run build
+```
+
+真实 OpenAI 兼容 provider 的作者链路冒烟（凭据只从环境变量读取）：
+
+```powershell
+python scripts/smoke_author_mode.py --desired-length 500
 ```
 
 风格与长程叙事验证：
@@ -209,6 +214,7 @@ docker compose -f deploy/docker/docker-compose.yml --env-file .env up -d --build
 | 路径 | 内容 |
 | --- | --- |
 | `backend/agents/` | 多智能体实现 |
+| `backend/story/` | 默认作者模式的权威模型、上下文、校验、事务、迁移和模拟网关 |
 | `backend/nf_core/` | LLM、冲突解析、prompt 与多媒体核心 |
 | `backend/api/` | FastAPI 路由 |
 | `backend/memory/`、`memory_system/` | Tick 状态与数据契约 |

@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 TaskKind = Literal[
     "section_generation",
+    "author_section_generation",
     "bootstrap_section",
     "bootstrap_world",
     "multimodal_generation",  # v2.33 — 分段 + 图 + TTS + 视频
@@ -56,6 +57,12 @@ class Task(BaseModel):
     section_no: int | None = None
     result_title: str = ""
     result_word_count: int = 0
+    transaction_id: str = ""
+    story_bible_revision: int = 0
+    canonical_state_revision: int = 0
+    validation_report: dict = Field(default_factory=dict)
+    repair_performed: bool = False
+    committed: bool = False
     created_at: str = ""
     started_at: str = ""
     completed_at: str = ""

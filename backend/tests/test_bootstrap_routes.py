@@ -212,7 +212,15 @@ async def test_bootstrap_world_chains_first_section_task(
     )
     from tasks.task_manager import get_task_manager
 
-    mock_llm.set_responses(["首节"] * 5)
+    mock_llm.set_responses(
+        [
+            {
+                "narrative_text": "主角确认身份，并为同伴承担牺牲。" * 20,
+                "section_summary": "主角以牺牲回应身份冲突。",
+                "title": "选择",
+            }
+        ]
+    )
 
     user = _fake_user("u_chain")
     novel = novel_manager.create_novel(user.id, "测试链式")
@@ -231,8 +239,8 @@ async def test_bootstrap_world_chains_first_section_task(
     mgr = get_task_manager()
     tasks = mgr.list_for_user_and_novel(user.id, nid)
     kinds = sorted(t.kind for t in tasks)
-    assert kinds == ["bootstrap_section", "bootstrap_world"], (
-        f"应当链式触发 bootstrap_section, 实际 kinds={kinds}"
+    assert kinds == ["author_section_generation", "bootstrap_world"], (
+        f"应当链式触发默认 author section, 实际 kinds={kinds}"
     )
 
     bw = next(t for t in tasks if t.kind == "bootstrap_world")

@@ -12,6 +12,7 @@ export default function TopBar({
   onSwitchNovel,
   onCreateNovel,
   tickStatus,
+  generationMode = 'author',
   onOpenConfig,
   onOpenProfile,
   onOpenSecurity,
@@ -145,7 +146,7 @@ export default function TopBar({
         )}
       </div>
 
-      {/* Tick clock pill */}
+      {/* 作者模式不装配 TickRuntime；仅 simulation 显示实验 tick 时钟。 */}
       <div className="dc-tickclock">
         <div className="dc-tickclock-dot">
           {running ? (
@@ -157,8 +158,12 @@ export default function TopBar({
             <span className="dc-tickclock-dot-idle" />
           )}
         </div>
-        <span className="dc-tickclock-kicker">TICK</span>
-        <span className="dc-tickclock-num">{formatTick(currentTick)}</span>
+        <span className="dc-tickclock-kicker">
+          {generationMode === 'simulation' ? 'SIMULATION · TICK' : 'AUTHOR MODE'}
+        </span>
+        <span className="dc-tickclock-num">
+          {generationMode === 'simulation' ? formatTick(currentTick) : 'READY'}
+        </span>
       </div>
 
       <div className="dc-topbar-right">

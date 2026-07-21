@@ -25,10 +25,16 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 # ---------------------------------------------------------------------------
 def _resolve_runtime():
     from auth import User, get_current_user
-    from tick_runtime import TickRuntime, get_runtime
+    from tick_runtime import TickRuntime, get_active_runtime
 
     def _resolve(user: User = Depends(get_current_user)) -> TickRuntime:
-        return get_runtime(user.id)
+        runtime = get_active_runtime(user.id)
+        if runtime is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Agent 诊断仅在显式世界模拟模式下可用",
+            )
+        return runtime
 
     return _resolve
 

@@ -65,6 +65,23 @@ async def generate_section_task(
         raise HTTPException(status_code=404, detail=f"novel {novel_id!r} 不存在")
     novel_title = (novel.get("title") or "").strip()
 
+    data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
+    from story.migrations import ensure_story_domain
+    from story.persistence import GenerationModeStore
+
+    ensure_story_domain(data_dir, title=novel_title)
+    if GenerationModeStore(data_dir).load().mode != "simulation":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "AUTHOR_SECTION_ENDPOINT_REQUIRED",
+                "message": (
+                    "当前为作者模式，请使用 /api/novels/{novel_id}/sections/generate "
+                    "并提供本节目标"
+                ),
+            },
+        )
+
     try:
         get_runtime(current_user.id, novel_id)
     except Exception as e:
@@ -77,7 +94,6 @@ async def generate_section_task(
             detail="后端运行时初始化失败, 请稍后重试或联系管理员",
         ) from e
 
-    data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
     store = get_section_store(novel_id, data_dir=data_dir)
     next_chapter, next_section = store.next_position()
 

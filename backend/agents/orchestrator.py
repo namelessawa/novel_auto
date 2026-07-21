@@ -939,7 +939,6 @@ class Orchestrator:
             else:
                 narrator_produced = True
                 narrator_chars = len(narrator_out.narrative_text)
-                self._tick_state.mark_narration(tick)
                 final_text = (
                     safety_result.sanitized_text or narrator_out.narrative_text
                 )
@@ -951,29 +950,45 @@ class Orchestrator:
                     else ""
                 )
                 try:
-                    await self._narrative_writer(
-                        tick, final_text, viewpoint_character_id=vp_id,
+                    published = await self._narrative_writer(
+                        tick,
+                        final_text,
+                        viewpoint_character_id=vp_id,
+                        state_projection=canonical_projection,
                     )
                 except TypeError:
-                    # 老 writer signature (tick, text) — fallback, sidecar 不写.
-                    await self._narrative_writer(tick, final_text)
-                # v2.37 — 刷新前文结尾, 下一段叙述从这里接续
-                self._prose_tail = final_text[-1500:]
-                if narrator_out.continuity_state:
-                    self._tick_state.set_narrative_continuity_state(
-                        narrator_out.continuity_state,
-                        audit=narrator_out.continuity_state_audit,
+                    # 兼容只支持 viewpoint 的 default writer，再回落到老二参 stub。
+                    try:
+                        published = await self._narrative_writer(
+                            tick, final_text, viewpoint_character_id=vp_id,
+                        )
+                    except TypeError:
+                        published = await self._narrative_writer(tick, final_text)
+                if published is False:
+                    narrator_produced = False
+                    logger.warning(
+                        "simulation narrative rejected by unified validator at tick %d",
+                        tick,
                     )
-                # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
-                try:
-                    self._creativity_scorer.ingest_paragraph(
-                        final_text, tick=tick
-                    )
-                    self._last_creativity_report = (
-                        self._creativity_scorer.report()
-                    )
-                except Exception as e:  # pragma: no cover
-                    logger.debug("CreativityScorer ingest failed: %s", e)
+                else:
+                    self._tick_state.mark_narration(tick)
+                    # v2.37 — 刷新前文结尾, 下一段叙述从这里接续
+                    self._prose_tail = final_text[-1500:]
+                    if narrator_out.continuity_state:
+                        self._tick_state.set_narrative_continuity_state(
+                            narrator_out.continuity_state,
+                            audit=narrator_out.continuity_state_audit,
+                        )
+                    # v2.8 创造力评分: ingest 段落, 缓存最新 report 供下 tick 注入
+                    try:
+                        self._creativity_scorer.ingest_paragraph(
+                            final_text, tick=tick
+                        )
+                        self._last_creativity_report = (
+                            self._creativity_scorer.report()
+                        )
+                    except Exception as e:  # pragma: no cover
+                        logger.debug("CreativityScorer ingest failed: %s", e)
         if narrator_out.should_narrate and narrator_produced:
             # 累积摘要 - 给 Narrator 下一轮 recent_chapter_summaries 用
             self._recent_chapter_summaries.append(

@@ -104,12 +104,20 @@ async def test_create_novel_default_skips_bootstrap_task_v225(
 async def test_create_novel_with_auto_bootstrap_true_still_spawns_task(
     isolate_runtime_and_stores, mock_llm
 ):
-    """显式 ?auto_bootstrap=true 仍走 v2.24 路径 — 保留供测试 / 节级管线对照实验。"""
+    """显式 ?auto_bootstrap=true 默认走 author section，不装配 Tick Agent。"""
     from api.routes import NovelCreateRequest, create_novel
     from tasks.task_manager import get_task_manager
 
     user = _fake_user("u_auto")
-    mock_llm.set_responses(["首节" for _ in range(5)])
+    mock_llm.set_responses(
+        [
+            {
+                "narrative_text": "主角确认身份，并为同伴承担牺牲。" * 20,
+                "section_summary": "主角以牺牲回应身份冲突。",
+                "title": "选择",
+            }
+        ]
+    )
     resp = await create_novel(
         NovelCreateRequest(title="测试小说 B"),
         auto_bootstrap=True,
@@ -120,7 +128,7 @@ async def test_create_novel_with_auto_bootstrap_true_still_spawns_task(
 
     mgr = get_task_manager()
     snap = mgr.get(resp["bootstrap_task_id"])
-    assert snap.kind == "bootstrap_section"
+    assert snap.kind == "author_section_generation"
     assert snap.novel_id == resp["id"]
 
 
@@ -138,7 +146,7 @@ async def test_bootstrap_failure_does_not_break_novel_creation(
 
     user = _fake_user("u_fail")
     resp = await create_novel(
-        NovelCreateRequest(title="测试小说 C"),
+        NovelCreateRequest(title="测试小说 C", generation_mode="simulation"),
         auto_bootstrap=True,
         current_user=user,
     )

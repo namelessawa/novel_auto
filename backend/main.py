@@ -24,6 +24,7 @@ from api.routes import router
 from api.tick_routes import router as tick_router
 from api.agent_routes import router as agent_router
 from api.section_routes import router as section_router
+from api.story_routes import router as story_router
 from api.bootstrap_routes import router as bootstrap_router
 from api.llm_routes import router as llm_router
 from api.image_routes import router as image_router
@@ -167,6 +168,7 @@ app.include_router(router)
 app.include_router(tick_router)
 app.include_router(agent_router)
 app.include_router(section_router)
+app.include_router(story_router)
 app.include_router(bootstrap_router)
 app.include_router(tasks_router)
 

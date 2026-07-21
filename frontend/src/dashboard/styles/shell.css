@@ -342,6 +342,20 @@
   flex-direction: column;
   gap: 1px;
 }
+.dc-sb-nav-group {
+  position: relative;
+  z-index: 2;
+  padding: 8px 10px 5px;
+  font: 600 9px/1 'JetBrains Mono', monospace;
+  letter-spacing: 0.16em;
+  color: var(--text4);
+  text-transform: uppercase;
+}
+.dc-sb-nav-group.is-advanced {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
 .dc-sb-nav-indicator {
   position: absolute;
   left: 0;

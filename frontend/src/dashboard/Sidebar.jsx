@@ -1,15 +1,19 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 // v2.47 — Dashboard 左侧栏: 我的小说 + 视图 nav (滑动 indicator) + 后台任务.
 
 export const NAV_ITEMS = [
-  { key: 'overview',   label: '总览' },
-  { key: 'tick',       label: 'Tick 控制' },
-  { key: 'agent',      label: 'Agent 上下文' },
-  { key: 'chapter',    label: '章节与多模态' },
-  { key: 'multimodal', label: '多模态生成' },
-  { key: 'kg',         label: '知识图谱' },
-  { key: 'config',     label: '配置' },
+  { key: 'author',      label: '章节创作', group: 'author' },
+  { key: 'bible',       label: '创作圣经', group: 'author' },
+  { key: 'state',       label: '当前故事状态', group: 'author' },
+  { key: 'threads',     label: '故事线', group: 'author' },
+  { key: 'chapter',     label: '正文与多模态', group: 'author' },
+  { key: 'overview',    label: '运行概览', group: 'advanced' },
+  { key: 'tick',        label: 'Tick 调度 · 实验', group: 'advanced' },
+  { key: 'agent',       label: 'Agent 上下文 · 诊断', group: 'advanced' },
+  { key: 'kg',          label: '知识图谱 · 派生', group: 'advanced' },
+  { key: 'multimodal',  label: '多模态生成', group: 'advanced' },
+  { key: 'config',      label: '系统配置', group: 'advanced' },
 ]
 
 export default function Sidebar({
@@ -29,7 +33,7 @@ export default function Sidebar({
   const itemRefs = useRef({})
   const [indicator, setIndicator] = useState({ top: 0, height: 0 })
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const el = itemRefs.current[view]
     if (el && navRef.current) {
       const parentRect = navRef.current.getBoundingClientRect()
@@ -95,34 +99,37 @@ export default function Sidebar({
 
       {/* —— 视图 —— */}
       <div className="dc-sb-section">
-        <span className="dc-sb-kicker" style={{ padding: '0 8px' }}>
-          视图
-        </span>
         <div className="dc-sb-nav" ref={navRef}>
           <div
             className="dc-sb-nav-indicator"
             style={{ top: indicator.top, height: indicator.height }}
           />
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.map((item, index) => {
             const active = view === item.key
             return (
-              <button
-                key={item.key}
-                type="button"
-                ref={(el) => {
-                  itemRefs.current[item.key] = el
-                }}
-                className={`dc-sb-nav-item ${active ? 'is-active' : ''}`}
-                onClick={() => onView?.(item.key)}
-                aria-current={active ? 'page' : undefined}
-              >
-                <span className="dc-sb-nav-label">{item.label}</span>
-                {item.hot && (
-                  <span className={`dc-sb-nav-hot ${active ? 'is-accent' : ''}`}>
-                    {item.hot}
+              <React.Fragment key={item.key}>
+                {(index === 0 || NAV_ITEMS[index - 1].group !== item.group) && (
+                  <span className={`dc-sb-nav-group is-${item.group}`}>
+                    {item.group === 'author' ? '写作工作区' : '高级 · 实验与诊断'}
                   </span>
                 )}
-              </button>
+                <button
+                  type="button"
+                  ref={(el) => {
+                    itemRefs.current[item.key] = el
+                  }}
+                  className={`dc-sb-nav-item ${active ? 'is-active' : ''}`}
+                  onClick={() => onView?.(item.key)}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <span className="dc-sb-nav-label">{item.label}</span>
+                  {item.hot && (
+                    <span className={`dc-sb-nav-hot ${active ? 'is-accent' : ''}`}>
+                      {item.hot}
+                    </span>
+                  )}
+                </button>
+              </React.Fragment>
             )
           })}
         </div>
@@ -144,7 +151,11 @@ export default function Sidebar({
           {(tasks || []).slice(0, 3).map((t) => {
             const pct = computePct(t)
             return (
-              <div key={t.task_id || t.id} className="dc-sb-task" onClick={() => onView?.('tick')}>
+              <div
+                key={t.task_id || t.id}
+                className="dc-sb-task"
+                onClick={() => onView?.(t.kind === 'author_section_generation' ? 'author' : 'tick')}
+              >
                 <div className="dc-sb-task-row1">
                   <span className="dc-sb-task-name">
                     <span className="dc-sb-task-caret">›</span>

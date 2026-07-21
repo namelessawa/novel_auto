@@ -4,10 +4,14 @@
 
 逐轮实验、评测数据与回滚理由不再重复堆叠在根 Changelog；请查阅 [docs/iter/ITERATION_LOG.md](./docs/iter/ITERATION_LOG.md) 和 [docs/iter/INDEX.md](./docs/iter/INDEX.md)。历史全文仍可从 Git 历史获取。
 
-## [Unreleased] — 2026-07-20
+## [Unreleased] — 2026-07-22
 
 ### Added
 
+- 新增默认作者模式：`StoryBible` 作为最高创作契约，`CanonicalState` 作为唯一当前事实，结合类型化长期记忆与故事线生命周期构建固定十槽上下文。
+- 新增单 Writer → 确定性 Validator → 至多一次定向修复 → journaled commit 主链，并提供故障恢复、损坏隔离、last-good 备份和修订号冲突保护。
+- 新增作者模式 REST API、编辑工作台、创作圣经/规范状态/故事线视图、上下文清单，以及旧 Tick/事实账本/记忆/摘要数据的幂等只读迁移。
+- 新增 `scripts/smoke_author_mode.py`，用于以环境变量凭据验证真实 OpenAI 兼容 provider 的多节生成与重启恢复。
 - 新增长篇 `NarrativeStateGuard`：在叙事落盘前检查事实、角色、位置、关系、物品和开放伏笔等状态变化。
 - 新增风格契约快照、版本和 prompt hash，使长程生成可以持续验证 preset 是否发生漂移。
 - 新增 `SectionEditor` 与确定性接缝指标，在节合并时去除事件重放、突兀跳切和段首重复，并对编辑稿再次执行事实复验。
@@ -17,6 +21,9 @@
 
 ### Changed
 
+- 作品默认不再实例化九 Agent Tick runtime；世界模拟改为显式开启、延迟加载的实验模式，其产出仍必须通过统一 Validator 与 CanonicalState 事务网关。
+- 知识图谱在作者模式中降级为只读派生视图；旧章节生成、Tick 与 Agent API 不得隐式拉起模拟 runtime。
+- 前端默认导航改为章节创作、创作圣经、规范状态和故事线，Tick、Agent 与知识图谱移入高级/实验入口。
 - Narrator 增加稳定 prefix、风格严格 Tick、生成温度上限和长程上下文处理。
 - 章节生成接入风格契约与角色声纹，风格 preset 支持运行时切换和锚点重生成。
 - README 重组为架构、快速开始、配置、验证、Docker 更新和安全入口。

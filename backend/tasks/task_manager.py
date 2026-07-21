@@ -47,6 +47,10 @@ class ProgressUpdater:
         self._manager = manager
         self._task_id = task_id
 
+    @property
+    def task_id(self) -> str:
+        return self._task_id
+
     def set(
         self,
         *,
@@ -260,6 +264,16 @@ class TaskManager:
             update["chapter"] = int(result["chapter"])
         if "section_no" in result and result["section_no"] is not None:
             update["section_no"] = int(result["section_no"])
+        for key in (
+            "transaction_id",
+            "story_bible_revision",
+            "canonical_state_revision",
+            "validation_report",
+            "repair_performed",
+            "committed",
+        ):
+            if key in result:
+                update[key] = result[key]
         rec.snapshot = rec.snapshot.model_copy(update=update)
         rec.update_event.set()
 

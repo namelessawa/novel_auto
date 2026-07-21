@@ -87,7 +87,8 @@ function layoutNodes(nodes) {
   return positions
 }
 
-export default function KGView() {
+export default function KGView({ generationMode = 'author' }) {
+  const isDerived = generationMode !== 'simulation'
   const [graph, setGraph] = useState({ nodes: [], edges: [] })
   const [detail, setDetail] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
@@ -232,8 +233,10 @@ export default function KGView() {
     <div className="dc-view-switch dc-kg-root">
       <div className="dc-sec-head">
         <span className="dc-sec-num">§ KG</span>
-        <h2 className="dc-sec-title">知识图谱</h2>
-        <span className="dc-sec-sub">tick 末尾纯 Python 同步</span>
+        <h2 className="dc-sec-title">知识图谱 · 派生诊断视图</h2>
+        <span className="dc-sec-sub">
+          {isDerived ? '只读；CanonicalState 是唯一事实源' : '实验模拟模式 · tick 末同步'}
+        </span>
         <span className="dc-sec-meta">
           {graph.nodes.length} ENT · {graph.edges.length} REL
         </span>
@@ -359,16 +362,18 @@ export default function KGView() {
                 <p className="dc-kg-detail-desc">{detail.description}</p>
               )}
               {/* v2.48 — § 删除实体 */}
-              <button
-                type="button"
-                className="dc-kg-detail-delete"
-                onClick={() =>
-                  handleDeleteEntity(detail.id, detail.label || detail.name)
-                }
-                disabled={busy}
-              >
-                删除实体
-              </button>
+              {!isDerived && (
+                <button
+                  type="button"
+                  className="dc-kg-detail-delete"
+                  onClick={() =>
+                    handleDeleteEntity(detail.id, detail.label || detail.name)
+                  }
+                  disabled={busy}
+                >
+                  删除实体
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -413,7 +418,7 @@ export default function KGView() {
               ))}
               {topEntities.length === 0 && (
                 <div style={{ padding: 16, font: "400 12px/1.5 'Inter', sans-serif", color: 'var(--text3)' }}>
-                  KG 尚未建立 — tick 推进后由 KG Sync 同步.
+                  KG 尚未建立 — 它会从权威状态派生，不作为第二套事实源。
                 </div>
               )}
             </div>
@@ -431,15 +436,17 @@ export default function KGView() {
                     <span className="dc-kg-rel-s">{s?.label || s?.name || e.source}</span>
                     <span className="dc-kg-rel-p">{e.label || e.relation || e.type || 'rel'}</span>
                     <span className="dc-kg-rel-o">{o?.label || o?.name || e.target}</span>
-                    <button
-                      type="button"
-                      className="dc-kg-rel-delete"
-                      onClick={() => handleDeleteRelation(e.source, e.target)}
-                      disabled={busy}
-                      title="删除这条关系"
-                    >
-                      ×
-                    </button>
+                    {!isDerived && (
+                      <button
+                        type="button"
+                        className="dc-kg-rel-delete"
+                        onClick={() => handleDeleteRelation(e.source, e.target)}
+                        disabled={busy}
+                        title="删除这条关系"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -449,7 +456,7 @@ export default function KGView() {
       </div>
 
       {/* v2.48 — § CRUD: 添加实体 + 添加关系 表单 */}
-      <div className="dc-kg-crud">
+      {!isDerived && <div className="dc-kg-crud">
         <form className="dc-kg-crud-card" onSubmit={handleAddEntity}>
           <span className="dc-kg-side-kicker">添加实体</span>
           <div className="dc-kg-crud-row">
@@ -530,7 +537,7 @@ export default function KGView() {
             onChange={(e) => setRelationForm({ ...relationForm, label: e.target.value })}
           />
         </form>
-      </div>
+      </div>}
     </div>
   )
 }

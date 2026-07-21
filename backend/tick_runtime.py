@@ -50,6 +50,7 @@ from narrative.safety_filter import SafetyFilter
 from nf_core.action_resolver import ActionResolver
 from nf_core.token_budget import TokenBudgetTracker
 from persistence.tick_db import TickDB
+from story.simulation_gateway import SimulationNarrativeGateway
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +145,15 @@ class TickRuntime:
         self.branch_manager = BranchManager(root_data_dir=self.data_dir)
         self.branch_manager.load()
 
+        # TickState is experimental working memory.  Official prose and facts
+        # cross the shared StoryValidator/CanonicalState transaction boundary.
+        self.simulation_gateway = SimulationNarrativeGateway(
+            user_id=user_id,
+            novel_id=novel_id,
+            data_dir=self.data_dir,
+            title=self.tick_state.novel_title or novel_id,
+        )
+
         # CharacterAgent 实例
         self.character_agents: dict[str, CharacterAgent] = {}
         self._rebuild_character_agents()
@@ -161,6 +171,7 @@ class TickRuntime:
             novelty_critic=self.novelty_critic,
             tick_db=self.tick_db,
             main_tracking_character_id=os.environ.get("MAIN_TRACKING_CHARACTER_ID"),
+            narrative_text_writer=self.simulation_gateway,
             memory_store=self.memory_store,
             story_arc_director=self.story_arc_director,
             character_arc_tracker=self.character_arc_tracker,

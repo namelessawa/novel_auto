@@ -28,6 +28,7 @@ import logging
 import os
 import threading
 from datetime import datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -35,10 +36,11 @@ logger = logging.getLogger(__name__)
 
 
 class TickSection(BaseModel):
-    """tick 驱动节落盘契约。"""
+    """统一节落盘契约；旧 tick 字段保留为 simulation 兼容元数据。"""
 
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
+    id: str = ""
     chapter: int = Field(ge=1)
     section: int = Field(ge=1)
     title: str = ""
@@ -50,6 +52,12 @@ class TickSection(BaseModel):
     silent_tick_count: int = 0
     closure_supplement: str = ""
     editor_trace: dict = Field(default_factory=dict)
+    generation_mode: Literal["author", "simulation"] = "simulation"
+    transaction_id: str = ""
+    story_bible_revision: int = 0
+    canonical_state_revision: int = 0
+    validation_report: dict[str, Any] = Field(default_factory=dict)
+    section_goal: dict[str, Any] = Field(default_factory=dict)
     created_at: str = ""
 
     @staticmethod
@@ -116,25 +124,44 @@ class SectionStore:
                 os.fsync(f.fileno())
             self._chapter, self._section = section.chapter, section.section
 
+    def append_idempotent(self, section: TickSection) -> bool:
+        """Append once by stable section/transaction id; return True when written."""
+        with self._lock:
+            if section.id or section.transaction_id:
+                for existing in self._list_all_unlocked():
+                    if section.id and existing.id == section.id:
+                        return False
+                    if (
+                        section.transaction_id
+                        and existing.transaction_id == section.transaction_id
+                    ):
+                        return False
+            self._ensure_dir()
+            if not self._is_strictly_after(section.chapter, section.section):
+                raise ValueError(
+                    f"section ({section.chapter}, {section.section}) 必须严格大于 "
+                    f"已存在最大位置 ({self._chapter}, {self._section})"
+                )
+            line = section.model_dump_json() + "\n"
+            with open(self._path, "a", encoding="utf-8") as f:
+                f.write(line)
+                f.flush()
+                os.fsync(f.fileno())
+            self._chapter, self._section = section.chapter, section.section
+            return True
+
     def list_all(self) -> list[TickSection]:
         """读全部节 — 按写入顺序, 等价于按 (chapter, section) 升序。"""
         if not os.path.isfile(self._path):
             return []
-        out: list[TickSection] = []
         with self._lock:
-            with open(self._path, encoding="utf-8") as f:
-                for ln, raw in enumerate(f, start=1):
-                    raw = raw.strip()
-                    if not raw:
-                        continue
-                    try:
-                        payload = json.loads(raw)
-                        out.append(TickSection.model_validate(payload))
-                    except Exception as e:
-                        logger.warning(
-                            "tick_sections.jsonl 第 %d 行解析失败 (跳过): %s", ln, e
-                        )
-        return out
+            return self._list_all_unlocked()
+
+    def get_by_id(self, section_id: str) -> TickSection | None:
+        for item in self.list_all():
+            if item.id == section_id or item.transaction_id == section_id:
+                return item
+        return None
 
     def get_last(self) -> TickSection | None:
         items = self.list_all()
@@ -153,6 +180,24 @@ class SectionStore:
 
     def _ensure_dir(self) -> None:
         os.makedirs(self._data_dir, exist_ok=True)
+
+    def _list_all_unlocked(self) -> list[TickSection]:
+        if not os.path.isfile(self._path):
+            return []
+        out: list[TickSection] = []
+        with open(self._path, encoding="utf-8") as f:
+            for ln, raw in enumerate(f, start=1):
+                raw = raw.strip()
+                if not raw:
+                    continue
+                try:
+                    payload = json.loads(raw)
+                    out.append(TickSection.model_validate(payload))
+                except Exception as e:
+                    logger.warning(
+                        "tick_sections.jsonl 第 %d 行解析失败 (跳过): %s", ln, e
+                    )
+        return out
 
     def _scan_last_position(self) -> tuple[int, int]:
         """启动时扫一遍 JSONL, 取最大 (chapter, section)。
@@ -190,7 +235,7 @@ class SectionStore:
 # ---- per-novel 单例 ---------------------------------------------------------
 
 
-_stores: dict[str, SectionStore] = {}
+_stores: dict[tuple[str, str], SectionStore] = {}
 _stores_lock = threading.Lock()
 
 
@@ -201,13 +246,18 @@ def get_section_store(novel_id: str, data_dir: str | None = None) -> SectionStor
     硬依赖 tick_runtime 的折中。实际续写路径会传入 TickRuntime.data_dir。
     """
     with _stores_lock:
-        if novel_id not in _stores:
-            if data_dir is None:
-                raise ValueError(
-                    f"section store for {novel_id!r} 未注册, 首次调用必须传 data_dir"
-                )
-            _stores[novel_id] = SectionStore(data_dir=data_dir)
-        return _stores[novel_id]
+        if data_dir is None:
+            matches = [store for (nid, _), store in _stores.items() if nid == novel_id]
+            if len(matches) == 1:
+                return matches[0]
+            raise ValueError(
+                f"section store for {novel_id!r} 未唯一注册, 请显式传 data_dir"
+            )
+        real_dir = os.path.realpath(os.path.abspath(data_dir))
+        key = (novel_id, real_dir)
+        if key not in _stores:
+            _stores[key] = SectionStore(data_dir=real_dir)
+        return _stores[key]
 
 
 def _clear_for_tests() -> None:

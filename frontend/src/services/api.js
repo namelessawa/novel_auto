@@ -96,10 +96,16 @@ async function assertOk(res) {
     return res.json()
   }
   let detail = `HTTP ${res.status}`
+  let code = ''
+  let details = {}
   try {
     const body = await res.json()
     if (body && typeof body.detail === 'string') {
       detail = body.detail
+    } else if (body?.detail && typeof body.detail === 'object') {
+      detail = body.detail.message || detail
+      code = body.detail.code || ''
+      details = body.detail.details || {}
     } else if (body && Array.isArray(body.detail)) {
       detail = body.detail
         .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
@@ -108,7 +114,11 @@ async function assertOk(res) {
   } catch {
     /* keep default */
   }
-  throw new Error(detail)
+  const error = new Error(detail)
+  error.code = code
+  error.details = details
+  error.status = res.status
+  throw error
 }
 
 // ---------------------------------------------------------------------------
@@ -651,10 +661,10 @@ export async function fetchNovels() {
   return assertOk(res)
 }
 
-export async function createNovel(title = '未命名小说') {
+export async function createNovel(title = '未命名小说', generationMode = 'author') {
   const res = await authedFetch('/api/novels', {
     method: 'POST',
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, generation_mode: generationMode }),
   })
   return assertOk(res)
 }
@@ -678,6 +688,79 @@ export async function switchNovel(novelId) {
   const res = await authedFetch(
     `/api/novels/${encodeURIComponent(novelId)}/switch`,
     { method: 'POST' },
+  )
+  return assertOk(res)
+}
+
+// ---------------------------------------------------------------------------
+// Author-mode authorities and transactional section generation
+// ---------------------------------------------------------------------------
+
+export async function fetchStoryBible(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/story-bible`,
+  )
+  return assertOk(res)
+}
+
+export async function saveStoryBible(novelId, payload) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/story-bible`,
+    { method: 'PUT', body: JSON.stringify(payload) },
+  )
+  return assertOk(res)
+}
+
+export async function fetchCanonicalState(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/canonical-state`,
+  )
+  return assertOk(res)
+}
+
+export async function fetchStoryThreads(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/story-threads`,
+  )
+  return assertOk(res)
+}
+
+export async function fetchGenerationMode(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/generation-mode`,
+  )
+  return assertOk(res)
+}
+
+export async function updateGenerationMode(novelId, expectedRevision, mode) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/generation-mode`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ expected_revision: expectedRevision, mode }),
+    },
+  )
+  return assertOk(res)
+}
+
+export async function generateAuthorSection(novelId, goal) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/sections/generate`,
+    { method: 'POST', body: JSON.stringify(goal) },
+  )
+  return assertOk(res)
+}
+
+export async function fetchAuthorSectionStatus(novelId, taskOrSectionId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/sections/${encodeURIComponent(taskOrSectionId)}/status`,
+  )
+  return assertOk(res)
+}
+
+export async function fetchContextManifest(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/context-manifest`,
   )
   return assertOk(res)
 }

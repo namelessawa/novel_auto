@@ -229,6 +229,16 @@ def _make_bootstrap_world_executor(
             logger.exception("bootstrap_world failed for novel '%s'", novel_id)
             raise
 
+        # Bootstrap still writes the proven legacy TickState shape.  Immediately
+        # project it once into the new authorities, but only while they remain
+        # untouched placeholders; user-confirmed StoryBible data always wins.
+        from story.migrations import enrich_unconfirmed_domain_from_legacy
+
+        enrich_unconfirmed_domain_from_legacy(
+            data_dir,
+            title=title,
+        )
+
         # bootstrap 直写盘 — 让 runtime 重读 (close + 重建)
         _reload_runtime(user_id, novel_id)
 
@@ -263,9 +273,17 @@ def _reload_runtime(user_id: str, novel_id: str) -> None:
     """v2.36 — 用 reload_cache: drop 缓存 + 若 active 则重建, 强制重读 bootstrap
     刚写的盘。reload_cache 不会用 stale in-memory state 覆盖新盘 (历史教训:
     bootstrap → drop+save → 整个世界设定丢失)。"""
-    from tick_runtime import reload_cache
+    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
+    from story.persistence import GenerationModeStore
 
-    reload_cache(user_id, novel_id)
+    if GenerationModeStore(data_dir).load().mode == "simulation":
+        from tick_runtime import reload_cache
+
+        reload_cache(user_id, novel_id)
+    else:
+        from story.runtime import drop_author_runtime
+
+        drop_author_runtime(user_id, novel_id)
 
 
 # ---- 重生成 style_anchors --------------------------------------------------
@@ -414,13 +432,49 @@ async def switch_style_preset_endpoint(
 
 
 async def _spawn_chained_first_section(user_id: str, novel_id: str) -> str:
-    from agents.section_closer import SectionCloser
-    from api.section_routes import _make_section_executor
     from sections.section_store import get_section_store
 
+    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
+    from story.persistence import GenerationModeStore
+
+    if GenerationModeStore(data_dir).load().mode == "author":
+        from api.story_routes import _make_author_executor
+        from story.models import SectionGoal
+        from story.persistence import StoryBibleStore
+
+        bible = StoryBibleStore(data_dir).load()
+        objective = (
+            bible.main_conflicts[0]
+            if bible.main_conflicts
+            else "建立主角、核心冲突与世界规则，并以一个可追踪的选择结束本节。"
+        )
+        goal = SectionGoal(objective=objective, desired_length=1800)
+        novel = novel_manager.get_novel(user_id, novel_id)
+        novel_title = (novel.get("title") if novel else "") or ""
+        store = get_section_store(novel_id, data_dir=data_dir)
+        next_chapter, next_section = store.next_position()
+        try:
+            snap = await get_task_manager().create_task(
+                user_id=user_id,
+                novel_id=novel_id,
+                novel_title=novel_title,
+                kind="author_section_generation",
+                executor=_make_author_executor(goal),
+                target_words=goal.desired_length,
+                min_words=200,
+                max_ticks=2,
+                chapter=next_chapter,
+                section_no=next_section,
+            )
+            return snap.id
+        except TaskConflict as e:
+            logger.warning("chained author section task conflict for '%s': %s", novel_id, e)
+            return ""
+
+    from agents.section_closer import SectionCloser
+    from api.section_routes import _make_section_executor
     novel = novel_manager.get_novel(user_id, novel_id)
     novel_title = (novel.get("title") if novel else "") or ""
-    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
     store = get_section_store(novel_id, data_dir=data_dir)
     next_chapter, next_section = store.next_position()
 

@@ -16,6 +16,7 @@ from __future__ import annotations
 import sys
 import types
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
@@ -102,6 +103,12 @@ def _install_tick_runtime_stub(monkeypatch, *, succeed: bool):
 
     mod.switch_active_novel = switch_active_novel
     monkeypatch.setitem(sys.modules, "tick_runtime", mod)
+    # This suite exercises the explicit experimental simulation switch.  The
+    # product default is now author mode and intentionally does not touch TickRuntime.
+    monkeypatch.setattr(
+        "story.persistence.GenerationModeStore.load",
+        lambda self: SimpleNamespace(mode="simulation"),
+    )
     return mod
 
 

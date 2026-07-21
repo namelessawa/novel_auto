@@ -17,6 +17,7 @@ export default function NewNovelModal({ onClose, onCreated }) {
   const [style, setStyle] = useState('')
   const [positioning, setPositioning] = useState('')
   const [references, setReferences] = useState('')
+  const [generationMode, setGenerationMode] = useState('author')
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -81,7 +82,7 @@ export default function NewNovelModal({ onClose, onCreated }) {
     }
     setBusy(true)
     try {
-      const res = await createNovel(title.trim())
+      const res = await createNovel(title.trim(), generationMode)
       const id = res?.id || res?.novel_id || novelId.trim() || null
       if (id) {
         try {
@@ -102,8 +103,13 @@ export default function NewNovelModal({ onClose, onCreated }) {
           /* bootstrap 失败不阻塞 — 用户可在 overview 重新触发冷启动 */
         }
       }
-      showToast('已创建作品 — 正在冷启动世界 + 首节', 'success')
-      onCreated?.(id || title.trim())
+      showToast(
+        generationMode === 'author'
+          ? '已创建作者模式作品 — 正在建立创作权威 + 首节'
+          : '已创建实验模拟作品 — 正在冷启动世界 + 首节',
+        'success',
+      )
+      onCreated?.(id || title.trim(), generationMode)
       onClose?.()
     } catch (err) {
       showToast(err.message || '创建失败', 'error')
@@ -161,6 +167,34 @@ export default function NewNovelModal({ onClose, onCreated }) {
             onChange={(e) => setNovelId(e.target.value)}
             style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13 }}
           />
+        </div>
+
+        <div className="dc-modal-row">
+          <span className="dc-modal-row-label">生成模式</span>
+          <div className="dc-au-new-mode" role="radiogroup" aria-label="生成模式">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={generationMode === 'author'}
+              className={generationMode === 'author' ? 'is-active' : ''}
+              onClick={() => setGenerationMode('author')}
+            >
+              <span>DEFAULT</span>
+              <strong>作者模式</strong>
+              <p>StoryBible + 本节目标 + 单 Writer，默认选择。</p>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={generationMode === 'simulation'}
+              className={generationMode === 'simulation' ? 'is-active is-experimental' : 'is-experimental'}
+              onClick={() => setGenerationMode('simulation')}
+            >
+              <span>EXPERIMENTAL</span>
+              <strong>世界模拟</strong>
+              <p>启用 9 Agent + Tick 实验运行时，可稍后切换。</p>
+            </button>
+          </div>
         </div>
 
         {/* v2.48 — Phase 5+ preset matrix. presets 失败时不渲染下拉, fallback 到 seed only. */}
@@ -310,7 +344,9 @@ export default function NewNovelModal({ onClose, onCreated }) {
               color: 'var(--text3)',
             }}
           >
-            将以当前 LLM 提供方冷启动世界 + 自动入队首节 · bootstrap_world
+            {generationMode === 'author'
+              ? '默认只装配作者模式运行时 · 自动建立创作圣经与首节事务'
+              : '将装配实验性世界模拟运行时 · 自动推进首节'}
           </span>
         </div>
 
@@ -325,7 +361,7 @@ export default function NewNovelModal({ onClose, onCreated }) {
             disabled={busy}
           >
             <span>+</span>
-            创建并冷启动
+            创建并开始创作
           </button>
         </div>
       </div>

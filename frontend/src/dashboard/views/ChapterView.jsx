@@ -61,12 +61,16 @@ export default function ChapterView({
     async function load() {
       const tickStart = sel.start_tick ?? sel.tick_start ?? 0
       const tickEnd = sel.end_tick ?? sel.tick_end ?? 0
-      try {
-        const r = await fetchTickNarratives({ startTick: tickStart, endTick: tickEnd, limit: 1 })
-        const last = (r?.narratives || []).slice(-1)[0] || null
-        if (!cancelled) setSelPreview(last)
-      } catch {
-        if (!cancelled) setSelPreview(null)
+      if (sel.content) {
+        setSelPreview({ text: sel.content, tick: null })
+      } else {
+        try {
+          const r = await fetchTickNarratives({ startTick: tickStart, endTick: tickEnd, limit: 1 })
+          const last = (r?.narratives || []).slice(-1)[0] || null
+          if (!cancelled) setSelPreview(last)
+        } catch {
+          if (!cancelled) setSelPreview(null)
+        }
       }
       const chapter = sel.chapter ?? 1
       const section = sel.section ?? sel.index ?? sel.id ?? 1
@@ -177,7 +181,9 @@ export default function ChapterView({
                       {s.title || s.heading || `第 ${sec} 节`}
                     </span>
                     <span className="dc-ch-list-meta">
-                      tick {s.start_tick ?? '—'}–{s.end_tick ?? '—'} ·{' '}
+                      {s.generation_mode === 'author'
+                        ? `state R${s.canonical_state_revision || '—'}`
+                        : `tick ${s.start_tick ?? '—'}–${s.end_tick ?? '—'}`} ·{' '}
                       {(s.word_count || s.words || 0).toLocaleString()} 字
                     </span>
                   </div>
@@ -196,7 +202,7 @@ export default function ChapterView({
             })}
             {sections.length === 0 && (
               <div style={{ font: "400 12px/1.6 'Inter', sans-serif", color: 'var(--text3)' }}>
-                作品尚未切节 — 节级管线运行后会出现.
+                尚无正式章节 — 在“章节创作”填写本节目标后生成。
               </div>
             )}
           </div>
@@ -212,18 +218,24 @@ export default function ChapterView({
                     {sel.title || sel.heading || `第 ${sel.section ?? sel.index ?? 1} 节`}
                   </span>
                   <span className="dc-ch-preview-range">
-                    tick {sel.start_tick ?? '—'}–{sel.end_tick ?? '—'}
+                    {sel.generation_mode === 'author'
+                      ? `canonical state · R${sel.canonical_state_revision || '—'}`
+                      : `tick ${sel.start_tick ?? '—'}–${sel.end_tick ?? '—'}`}
                   </span>
                 </div>
                 <span className="dc-ch-list-status">{labelStatus(sel.status || 'idle')}</span>
               </div>
               <p className="dc-ch-preview-body">
-                {selPreview?.text || '（暂无正文 — 推进到该节区间后会自动出现）'}
+                {sel.content || selPreview?.text || '（暂无正文）'}
               </p>
               <div className="dc-ch-preview-foot">
                 <span>章节 · {sel.chapter ?? 1}</span>
                 <span className="dc-ch-preview-foot-sep">·</span>
-                <span>tick · {selPreview?.tick ?? sel.start_tick ?? '—'}</span>
+                <span>
+                  {sel.generation_mode === 'author'
+                    ? `section · ${sel.id || '—'}`
+                    : `tick · ${selPreview?.tick ?? sel.start_tick ?? '—'}`}
+                </span>
                 <span className="dc-ch-preview-cta">阅读全文 →</span>
               </div>
             </div>
@@ -297,6 +309,7 @@ function labelStatus(s) {
   if (!s) return 'idle'
   const m = String(s).toLowerCase()
   if (m === 'completed' || m === 'done' || m === 'ok') return '已完成'
+  if (m === 'committed') return '已提交'
   if (m === 'running') return '生成中'
   if (m === 'failed' || m === 'error') return '失败'
   if (m === 'queued' || m === 'pending') return '排队'

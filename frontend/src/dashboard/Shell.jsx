@@ -11,6 +11,10 @@ import AgentView from './views/AgentView'
 import ChapterView from './views/ChapterView'
 import KGView from './views/KGView'
 import ConfigView from './views/ConfigView'
+import AuthorStudioView from './views/AuthorStudioView'
+import StoryBibleView from './views/StoryBibleView'
+import CanonicalStateView from './views/CanonicalStateView'
+import StoryThreadsView from './views/StoryThreadsView'
 // v2.48 — 多模态 authoring 直接挂载 legacy MultimodalView (996 行 SSE/blob/race-safe).
 // 重写风险大, 直接复用; 视觉用 global.css 的 .card/.btn 类, 暂与 dashboard chrome 风格略有差异.
 import MultimodalView from '../views/MultimodalView'
@@ -22,6 +26,7 @@ import { useAuth } from '../auth/AuthContext'
 import SettingsModal from '../auth/SettingsModal'
 import {
   createSectionTask,
+  fetchGenerationMode,
   fetchNovels,
   fetchStats,
   fetchTickStatus,
@@ -45,7 +50,7 @@ export default function DashboardShell() {
 
 function DashboardShellInner() {
   const { hasToken } = useAuth()
-  const [view, setView] = useState('overview')
+  const [view, setView] = useState('author')
 
   // —— Domain data ——
   const [novels, setNovels] = useState([])
@@ -53,6 +58,7 @@ function DashboardShellInner() {
   const [stats, setStats] = useState(null)
   const [tickStatus, setTickStatus] = useState(null)
   const [tasks, setTasks] = useState([])
+  const [generationMode, setGenerationMode] = useState(null)
 
   // —— Overlays / modals ——
   const [readerOpen, setReaderOpen] = useState(false)
@@ -92,15 +98,32 @@ function DashboardShellInner() {
     }
   }, [hasToken])
 
-  const refreshTickStatus = useCallback(async () => {
-    if (!hasToken) return
+  const refreshTickStatus = useCallback(async (force = false) => {
+    if (!hasToken || (!force && generationMode?.mode !== 'simulation')) return
     try {
       const data = await fetchTickStatus()
       setTickStatus(data)
     } catch {
       /* */
     }
-  }, [hasToken])
+  }, [hasToken, generationMode?.mode])
+
+  const refreshGenerationMode = useCallback(async (novelId = activeNovelId) => {
+    if (!hasToken || !novelId) {
+      setGenerationMode(null)
+      return null
+    }
+    try {
+      const data = await fetchGenerationMode(novelId)
+      setGenerationMode(data)
+      if (data?.mode !== 'simulation') setTickStatus(null)
+      return data
+    } catch {
+      setGenerationMode({ mode: 'author', revision: 0 })
+      setTickStatus(null)
+      return null
+    }
+  }, [hasToken, activeNovelId])
 
   const refreshTasks = useCallback(async () => {
     if (!hasToken) return
@@ -112,33 +135,45 @@ function DashboardShellInner() {
     }
   }, [hasToken, activeNovelId])
 
-  // 初次 + visibility 回到前台时拉一次. tick clock 单独轮询.
+  // 默认作者模式只加载创作域；simulation 明确启用后才触碰 TickRuntime API.
   useEffect(() => {
     if (!hasToken) return undefined
     refreshStats()
     refreshNovels()
-    refreshTickStatus()
     refreshTasks()
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
         refreshStats()
         refreshNovels()
-        refreshTickStatus()
+        refreshGenerationMode()
+        if (generationMode?.mode === 'simulation') refreshTickStatus()
         refreshTasks()
       }
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [hasToken, refreshStats, refreshNovels, refreshTickStatus, refreshTasks])
+  }, [
+    hasToken,
+    refreshStats,
+    refreshNovels,
+    refreshTickStatus,
+    refreshTasks,
+    refreshGenerationMode,
+    generationMode?.mode,
+  ])
+
+  useEffect(() => {
+    refreshGenerationMode(activeNovelId)
+  }, [activeNovelId, refreshGenerationMode])
 
   // Tick clock poll — 3s 一次, 只更新 status (轻量).
   useEffect(() => {
-    if (!hasToken) return undefined
+    if (!hasToken || generationMode?.mode !== 'simulation') return undefined
     const t = setInterval(() => {
       if (document.visibilityState === 'visible') refreshTickStatus()
     }, 3000)
     return () => clearInterval(t)
-  }, [hasToken, refreshTickStatus])
+  }, [hasToken, refreshTickStatus, generationMode?.mode])
 
   // —— Actions ——
   async function handleSwitchNovel(id) {
@@ -146,8 +181,9 @@ function DashboardShellInner() {
     try {
       await switchNovel(id)
       setActiveNovelId(id)
+      setGenerationMode(null)
+      setTickStatus(null)
       refreshStats()
-      refreshTickStatus()
       refreshTasks()
     } catch (err) {
       showToast('切换作品失败: ' + err.message, 'error')
@@ -182,6 +218,11 @@ function DashboardShellInner() {
       return
     }
     if (continuing) return
+    if (generationMode?.mode !== 'simulation') {
+      setView('author')
+      showToast('请在章节创作中填写本节目标后生成', 'success')
+      return
+    }
     const requestedId = activeNovelId
     setContinuing(true)
     try {
@@ -208,6 +249,7 @@ function DashboardShellInner() {
         onSwitchNovel={handleSwitchNovel}
         onCreateNovel={() => setNewNovelOpen(true)}
         tickStatus={tickStatus}
+        generationMode={generationMode?.mode || 'author'}
         onOpenConfig={() => setView('config')}
         onOpenProfile={() => setSettingsOpen(true)}
         onOpenSecurity={() => setSettingsOpen(true)}
@@ -225,6 +267,20 @@ function DashboardShellInner() {
         />
 
         <main className="dc-main">
+          {view === 'author' && (
+            <AuthorStudioView
+              novel={activeNovel}
+              onOpenSimulation={() => setView('tick')}
+              onModeChange={(nextMode) => {
+                setGenerationMode(nextMode)
+                if (nextMode?.mode === 'simulation') refreshTickStatus(true)
+                else setTickStatus(null)
+              }}
+            />
+          )}
+          {view === 'bible' && <StoryBibleView novel={activeNovel} />}
+          {view === 'state' && <CanonicalStateView novel={activeNovel} />}
+          {view === 'threads' && <StoryThreadsView novel={activeNovel} />}
           {view === 'overview' && (
             <OverviewView
               novel={activeNovel}
@@ -270,7 +326,7 @@ function DashboardShellInner() {
               <MultimodalView novel={activeNovel} />
             </div>
           )}
-          {view === 'kg' && <KGView />}
+          {view === 'kg' && <KGView generationMode={generationMode?.mode} />}
           {view === 'config' && <ConfigView />}
         </main>
       </div>
@@ -288,9 +344,13 @@ function DashboardShellInner() {
       {newNovelOpen && (
         <NewNovelModal
           onClose={() => setNewNovelOpen(false)}
-          onCreated={(id) => {
+          onCreated={(id, createdMode = 'author') => {
             refreshNovels()
-            if (id) setActiveNovelId(id)
+            if (id) {
+              setActiveNovelId(id)
+              setGenerationMode({ mode: createdMode, revision: 1 })
+              setView(createdMode === 'simulation' ? 'tick' : 'author')
+            }
           }}
         />
       )}
