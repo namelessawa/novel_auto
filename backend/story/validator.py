@@ -825,13 +825,11 @@ def report_as_repair_prompt(report: ValidationReport, candidate: WriterCandidate
         {
             "original_narrative": candidate.narrative_text,
             "violations": violations,
-            "must_preserve": {
-                "section_summary": candidate.section_summary,
-                "original_state_delta_for_revalidation": [
-                    item.model_dump(mode="json") for item in candidate.state_delta
-                ],
-            },
-            "instruction": "只修正明确违规的最小范围，并返回完整 WriterCandidate JSON。",
+            **report.repair_context,
+            "instruction": (
+                "只修正明确违规的最小范围；不得新增事实；"
+                "只返回包含修复后完整 narrative_text 的 JSON 补丁。"
+            ),
         },
         ensure_ascii=False,
         indent=2,

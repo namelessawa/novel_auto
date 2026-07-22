@@ -25,17 +25,20 @@ sequenceDiagram
     participant UI as Author Studio
     participant CB as ContextBuilder
     participant W as Writer
-    participant V as Validator
+    participant NV as NarrativeContractValidator
+    participant SV as StoryValidator
     participant TX as Transaction Journal
     participant C as Canonical Stores
     UI->>CB: SectionGoal
-    CB->>W: 10 个固定预算槽
-    W->>V: 正文 + StateDelta + Thread/Memory
+    CB->>W: 11 个固定预算槽（含 NarrativeContract）
+    W->>NV: 正文
+    W->>SV: StateDelta + Thread/Memory
     alt 可修复且首次失败
-        V->>W: 仅包含违规与修复提示的定向请求
-        W->>V: 修复后的正文补丁
+        SV->>W: 两层违规组成的最小定向请求
+        W->>NV: 修复后的正文补丁
+        NV->>SV: 两层校验全部重跑
     end
-    V->>TX: 写入 validated/committing 目标与基线快照
+    SV->>TX: 两层均通过后写入 validated/committing 快照
     TX->>TX: 重新读取并核对 StoryBible revision
     TX->>C: 幂等提交正文、CanonicalState、Threads、Memory
     C->>TX: 标记 committed
@@ -45,20 +48,21 @@ sequenceDiagram
 
 正式写入前会在 StoryBible 文件锁内重新读取 revision。若与事务记录不一致，事务进入 `stale_context` 并写入 `STORY_BIBLE_REVISION_STALE`；正文、CanonicalState、Threads 和 Memory 均不提交。恢复 `validated/committing` journal 时执行同一检查，已经发生的目标快照写入只有在仍精确等于该事务目标时才会回滚到基线，避免覆盖后续合法 revision。
 
-十个上下文槽有独立字符预算：
+十一个上下文槽有独立字符预算：
 
 1. `story_bible`（受保护，不因总预算丢失）
 2. `canonical_state`
-3. `section_goal`
-4. `active_story_threads`
-5. `reader_knowledge`
-6. `character_knowledge`
-7. `previous_prose_tail`（保留尾部）
-8. `recent_section_summaries`
-9. `relevant_long_term_memories`
-10. `style_contract`
+3. `narrative_contract`（受保护；服务端证据模式不进入 Writer/API）
+4. `section_goal`
+5. `active_story_threads`
+6. `reader_knowledge`
+7. `character_knowledge`
+8. `previous_prose_tail`（保留尾部）
+9. `recent_section_summaries`
+10. `relevant_long_term_memories`
+11. `style_contract`
 
-除槽位预算外，ContextBuilder 还执行 `MAX_CONTEXT_CHARS=24000` 和 `MAX_CONTEXT_TOKEN_ESTIMATE=12000` 全局硬预算。StoryBible、CanonicalState 和 SectionGoal 必须保留；可选槽按确定顺序收缩。不可变规则先去重，规则总数、单条长度、其他 Bible 列表项数和自由文本长度均有确定上限；规则绝不借助 LLM 摘要或静默截断，无法安全收缩时拒绝生成。
+除槽位预算外，ContextBuilder 还执行 `MAX_CONTEXT_CHARS=24000` 和 `MAX_CONTEXT_TOKEN_ESTIMATE=12000` 全局硬预算。StoryBible、CanonicalState、NarrativeContract 和 SectionGoal 必须保留；可选槽按确定顺序收缩。不可变规则先去重，规则总数、单条长度、其他 Bible 列表项数和自由文本长度均有确定上限；规则绝不借助 LLM 摘要或静默截断，无法安全收缩时拒绝生成。
 
 `context_manifest.json` 只记录各槽字符数、token 估算、全局上限、占用率、拒绝原因、是否截断、引用 ID、选择/省略数量和重复率；API 不返回 prompt、候选正文或事务目标快照。
 
@@ -66,6 +70,8 @@ sequenceDiagram
 
 Validator 在任何权威写入前检查：
 
+- `NarrativeContractValidator` 先检查正文实体白名单、必要事实/事件、最终状态、时间/因果、禁止新增和统一非空白字符长度；
+- `StoryValidator` 再检查候选 StateDelta 和 StoryThread 是否有正文证据且能安全进入权威状态；任一层失败都不得 stage；
 - StoryBible 越界、禁区和主题偏离；
 - 不存在的角色、死亡角色复活及世界规则中的禁止复活；
 - StateDelta evidence 非空且可在正文定位，路径与目标类型兼容；每条 operation 独立判定，违规项不会混入 `validated_delta`；
@@ -104,8 +110,10 @@ Validator 在任何权威写入前检查：
 - `GET /api/novels/{novel_id}/story-threads`
 - `GET/PUT /api/novels/{novel_id}/generation-mode`
 - `POST /api/novels/{novel_id}/sections/generate`
+- `POST /api/novels/{novel_id}/sections/contract-preview`
 - `GET /api/novels/{novel_id}/sections/{task_or_section_id}/status`
 - `GET /api/novels/{novel_id}/context-manifest`
+- `GET /api/novels/{novel_id}/long-run/status`
 
 模式切换失败会回滚原 `generation_mode.json` 并清除不完整 runtime。作者模式中的 Tick、Agent 及旧 `/api/section/generate` 不会隐式创建模拟器，而是返回模式错误。删除作品前同时释放作者与模拟 runtime，避免 Windows 文件句柄阻止删除。
 

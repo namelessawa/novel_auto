@@ -8,6 +8,8 @@
 
 ### Added
 
+- 新增确定性 `NarrativeContract` 与独立正文校验层，覆盖允许实体、必要事实/事件/最终状态、时间与因果、禁止新增、关系保护和统一中文长度边界；Writer 风格明确服从事实契约。
+- 新增可恢复长程验证 runner/analyzer/comparator、五份真实风格原文不可变回归、Repair 前后候选历史、独立 repair token 统计，以及 Author Studio 契约预览和分层验证诊断。
 - 新增 author 权威链加固：bootstrap 前逐字持久化 seed 与字段 provenance、StateDelta 逐操作证据/类型闸、StoryBible stale-context 提交与恢复保护、故事线有限合并、Context 全局硬预算，以及 11 项前端真实交互测试。
 - 新增 `scripts/smoke_author_mode_recorded.py`，以零 Provider 调用录制验证 seed、旧事务拦截、缺证据 delta、runtime 重建和长期记忆复用的十步链路。
 - 新增默认作者模式：`StoryBible` 作为最高创作契约，`CanonicalState` 作为唯一当前事实，结合类型化长期记忆与故事线生命周期构建固定十槽上下文。

@@ -32,9 +32,15 @@ class WriterProtocol(Protocol):
 
 
 class AuthorWriter:
-    SYSTEM_PROMPT = """你是长篇小说 Writer。你收到十个按优先级隔离的上下文槽位。
+    SYSTEM_PROMPT = """你是长篇小说 Writer。你收到十一个按优先级隔离的上下文槽位。
+NarrativeContract 是本节人物、事实、事件链、时间压力和固定结局的正文硬契约；
 StoryBible 是主题与世界规则的最高权威；CanonicalState 是当前事实的唯一权威；
-历史记忆只能提供背景，不能覆盖二者。请围绕 SectionGoal 写一节连续正文。
+历史记忆只能提供背景，不能覆盖前三者。请围绕 SectionGoal 写一节连续正文。
+
+权威顺序必须遵守：NarrativeContract > StoryBible / CanonicalState > StyleContract。
+风格要求若不能在现有事件链内完成，则允许少满足一项风格特征，不允许新增事实。
+不得靠新增打斗、亲属、陪同者、数字、日期、伤势或幕后责任人满足风格；不得为了
+含蓄、悬念或格式而省略 NarrativeContract 的必要事件和最终状态。
 
 只返回一个 JSON 对象，字段严格为：
 narrative_text, title, section_summary, state_delta, threads_opened,
@@ -57,9 +63,10 @@ state_delta 的每项必须包含 op、path、value、evidence、confidence；pa
 CanonicalState。不得提出 StoryBible 修改。故事线 resolved 必须附正文中可定位的
 resolution_evidence。正文之外不要输出解释、Markdown 或思考过程。"""
 
-    REPAIR_SYSTEM_PROMPT = """你是小说一致性修复器。输入只含原正文、明确违规项、
-必须保持的事实和最小修正范围。最多执行这一次修复。不要扩写新支线，不要修改
-无关事实，不要修改 StoryBible。返回一个 JSON 补丁，必须含
+    REPAIR_SYSTEM_PROMPT = """你是小说一致性修复器。输入只含原正文、固定事实、
+缺失事件、错误最终状态、新增事实、长度问题和最低风格要求。最多执行这一次修复。
+只做最小修正；不新增人物、数字、日期、亲属、伤势或支线；必须落实缺失结局；
+不改变已正确完成的事件；风格优先级低于事实；不要修改 StoryBible。返回一个 JSON 补丁，必须含
 {"narrative_text":"修复后的完整正文"}。不得返回或重写 state_delta、故事线、
 title、section_summary、memory_records、consistency_notes、critique 或解释字段；
 系统会自动保留已经通过校验的结构化变化并剔除高风险变化。"""

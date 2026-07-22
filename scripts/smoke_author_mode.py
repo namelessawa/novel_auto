@@ -29,6 +29,7 @@ def _require_env(name: str) -> str:
 
 async def _run(data_dir: Path, desired_length: int) -> dict:
     from nf_core.llm_client import set_user_llm_config
+    from story.context_builder import SLOT_ORDER
     from story.models import CanonicalState, SectionGoal, StoryBibleUpdate
     from story.service import AuthorGenerationService, GenerationRejected
 
@@ -160,7 +161,11 @@ async def _run(data_dir: Path, desired_length: int) -> dict:
         raise AssertionError("StoryBible drifted during generation")
     if final_state.revision != 5:
         raise AssertionError(f"expected CanonicalState revision 5, got {final_state.revision}")
-    if any(len(item.editor_trace.get("context_manifest", {}).get("slots", [])) != 10 for item in sections):
+    if any(
+        len(item.editor_trace.get("context_manifest", {}).get("slots", []))
+        != len(SLOT_ORDER)
+        for item in sections
+    ):
         raise AssertionError("context manifest slot count changed")
     return {
         "ok": True,

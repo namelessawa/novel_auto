@@ -16,6 +16,7 @@ from auth import get_current_user
 from auth.models import User
 from sections.section_store import TickSection, _clear_for_tests
 from story.models import GenerationTransaction, ValidationReport, ValidationViolation
+from story.narrative_contract import NarrativeValidationReport
 from story.persistence import GenerationTransactionStore
 from story.runtime import clear_author_runtimes
 from story.service import GenerationRejected
@@ -273,3 +274,89 @@ def test_validation_failure_is_queryable_and_has_no_section(
     assert status["transaction"]["phase"] == "rejected"
     assert status["transaction"]["validation_report"]["violations"][0]["code"] == "IMMUTABLE_RULE_REVIVAL"
     assert status["section"] is None
+
+
+def test_contract_preview_is_semantic_and_does_not_expose_validator_patterns(
+    isolated_api,
+) -> None:
+    novel = novel_manager.create_novel("alice", "契约预览")
+    client = _client("alice")
+    bible_path = f"/api/novels/{novel['id']}/story-bible"
+    revision = client.get(bible_path).json()["story_bible"]["revision"]
+    saved = client.put(
+        bible_path,
+        json={
+            "expected_revision": revision,
+            "premise": "两名维护者必须在灯塔完成旧信交接。",
+            "theme": "责任与选择",
+            "setting_summary": "没有超自然力量的旧港灯塔。",
+        },
+    )
+    assert saved.status_code == 200, saved.text
+
+    preview = client.post(
+        f"/api/novels/{novel['id']}/sections/contract-preview",
+        json={
+            "objective": "沈砚把旧信交给林秋",
+            "desired_length": 400,
+            "narrative_constraints": {
+                "required_events": [
+                    {
+                        "id": "handover",
+                        "actor": "沈砚",
+                        "action": "交信",
+                        "target": "林秋",
+                        "evidence_patterns": ["秘密服务端模式"],
+                    }
+                ]
+            },
+        },
+    )
+    assert preview.status_code == 200, preview.text
+    contract = preview.json()["narrative_contract"]
+    assert contract["required_events"][0]["id"] == "handover"
+    assert contract["style_priority"] == "subordinate_to_facts"
+    assert "evidence_patterns" not in preview.text
+    assert "秘密服务端模式" not in preview.text
+    assert "prompt" not in preview.text.lower()
+
+
+def test_long_run_status_aggregates_transactions_without_prose(isolated_api) -> None:
+    novel = novel_manager.create_novel("alice", "长程状态")
+    data_dir = novel_manager.get_novel_data_dir("alice", novel["id"])
+    GenerationTransactionStore(data_dir).save(
+        GenerationTransaction(
+            id="run_section_0001",
+            user_id="alice",
+            novel_id=novel["id"],
+            section_id="ch0001_s0001",
+            phase="committed",
+            story_bible_revision=1,
+            canonical_state_revision=1,
+            target_canonical_revision=2,
+            writer_calls=2,
+            repair_performed=True,
+            committed=True,
+            narrative_validation_report=NarrativeValidationReport(
+                accepted=True,
+                contract_coverage=1.0,
+            ),
+            validation_report=ValidationReport(accepted=True),
+            usage={"prompt_tokens": 7, "completion_tokens": 5, "total_tokens": 12},
+            recovery_count=1,
+        )
+    )
+
+    response = _client("alice").get(
+        f"/api/novels/{novel['id']}/long-run/status"
+    )
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["run_id"] == "run_section_0001"
+    assert payload["completed_sections"] == 1
+    assert payload["contract_pass_rate"] == 1.0
+    assert payload["repair_rate"] == 1.0
+    assert payload["hard_reject_count"] == 0
+    assert payload["total_tokens"] == 12
+    assert payload["restart_recovery_count"] == 1
+    assert "narrative_text" not in response.text

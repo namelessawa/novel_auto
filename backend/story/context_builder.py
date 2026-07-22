@@ -16,11 +16,16 @@ from story.models import (
     StoryBible,
     StoryThread,
 )
+from story.narrative_contract import (
+    NarrativeContract,
+    narrative_contract_prompt_payload,
+)
 
 
 SLOT_ORDER = (
     "story_bible",
     "canonical_state",
+    "narrative_contract",
     "section_goal",
     "active_story_threads",
     "reader_knowledge",
@@ -35,6 +40,7 @@ SLOT_ORDER = (
 DEFAULT_SLOT_BUDGETS = {
     "story_bible": 5200,
     "canonical_state": 5000,
+    "narrative_contract": 6000,
     "section_goal": 1800,
     "active_story_threads": 2800,
     "reader_knowledge": 1800,
@@ -140,6 +146,7 @@ class ContextBuilder:
         previous_prose_tail: str,
         recent_summaries: list[dict[str, Any] | str],
         long_term_memories: list[MemoryRecord],
+        narrative_contract: NarrativeContract | None = None,
     ) -> ContextPackage:
         relevant_ids = set(section_goal.involved_characters)
         if section_goal.viewpoint_character_id:
@@ -188,7 +195,19 @@ class ContextBuilder:
         raw_slots = {
             "story_bible": bible_text,
             "canonical_state": _json(canonical_snapshot),
-            "section_goal": _json(section_goal.model_dump(mode="json")),
+            "narrative_contract": (
+                _json(narrative_contract_prompt_payload(narrative_contract))
+                if narrative_contract
+                else _json({})
+            ),
+            "section_goal": _json(
+                {
+                    **section_goal.model_dump(
+                        mode="json", exclude={"narrative_constraints"}
+                    ),
+                    "narrative_constraints": "see protected narrative_contract slot",
+                }
+            ),
             "active_story_threads": _json(active_threads),
             "reader_knowledge": _json(canonical_state.reader_knowledge),
             "character_knowledge": _json(character_knowledge),
@@ -222,7 +241,12 @@ class ContextBuilder:
             self.max_context_chars,
             self.max_context_token_estimate * 2,
         )
-        mandatory = {"story_bible", "canonical_state", "section_goal"}
+        mandatory = {
+            "story_bible",
+            "canonical_state",
+            "narrative_contract",
+            "section_goal",
+        }
         mandatory_prompt = self._render_prompt(
             {name: slots[name] if name in mandatory else "" for name in SLOT_ORDER}
         )
@@ -234,7 +258,8 @@ class ContextBuilder:
                 canonical_revision=canonical_state.revision,
                 total_chars=len(mandatory_prompt),
                 reason=(
-                    "StoryBible、CanonicalState 与 SectionGoal 的必要上下文超过全局硬上限，"
+                    "StoryBible、CanonicalState、NarrativeContract 与 SectionGoal "
+                    "的必要上下文超过全局硬上限，"
                     "请缩小权威数据后重试。"
                 ),
             )
@@ -270,7 +295,7 @@ class ContextBuilder:
                 story_bible_revision=story_bible.revision,
                 canonical_revision=canonical_state.revision,
                 total_chars=len(prompt),
-                reason="上下文无法在保留三项权威槽位的前提下收缩到全局硬上限。",
+                reason="上下文无法在保留四项权威槽位的前提下收缩到全局硬上限。",
             )
 
         manifests: list[ContextSlotManifest] = []

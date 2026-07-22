@@ -81,6 +81,11 @@ async def test_simulation_candidate_uses_shared_validator_and_commits_projection
     assert section is not None
     assert section.generation_mode == "simulation"
     assert section.validation_report["accepted"] is True
+    transaction = gateway.service.transactions.load("simulation_tick_00000003")
+    assert transaction.narrative_validation_report is not None
+    assert transaction.narrative_validation_report.accepted is True
+    assert transaction.narrative_contract is not None
+    assert transaction.narrative_contract.required_events == []
     assert (tmp_path / "narratives" / "tick_000003.txt").is_file()
 
 

@@ -8,7 +8,7 @@
 
 ## 核心能力
 
-- 作者模式主链：固定槽位上下文、单 Writer、确定性校验、至多一次定向修复与事务式落盘。
+- 作者模式主链：正文 `NarrativeContract`、固定槽位上下文、单 Writer、正文/权威状态分层校验、至多一次定向修复与事务式落盘。
 - 长篇连续性：创作圣经、唯一规范状态、类型化长期记忆、开放故事线、读者/角色知识边界与修订号并发控制。
 - 可恢复持久化：临时文件 + `fsync` + 原子替换、last-good 备份、损坏隔离和提交日志重放。
 - 可选世界模拟：九 Agent / 七阶段 Tick 仅在作品显式切换到 `simulation` 后延迟加载，其候选正文与状态变化仍经过同一个 Validator/Canonical 事务网关。
@@ -21,20 +21,22 @@
 
 ```mermaid
 flowchart LR
-    B["StoryBible\n最高创作权威"] --> C["固定 10 槽 ContextBuilder"]
+    B["StoryBible\n最高创作权威"] --> C["固定 11 槽 ContextBuilder"]
     S["CanonicalState\n唯一当前事实"] --> C
+    N["NarrativeContract\n本节事实/事件/结局"] --> C
     T["StoryThread + 类型化 Memory"] --> C
     G["章节目标"] --> C
     C --> W["Writer × 1"]
-    W --> V["Deterministic Validator"]
-    V -->|"可修复"| R["定向修复 × 1"]
+    W --> V["NarrativeContractValidator\n正文契约"]
+    V --> SV["StoryValidator\n权威状态"]
+    SV -->|"可修复"| R["定向修复 × 1"]
     R --> V
-    V -->|"通过"| J["Journaled Commit"]
+    SV -->|"两层均通过"| J["Journaled Commit"]
     J --> O["正文 + CanonicalState + Threads + Memory"]
     X["实验性 Simulation"] -. "候选输出" .-> V
 ```
 
-`ContextBuilder` 使用十个独立预算槽位：StoryBible、CanonicalState、章节目标、活动故事线、读者知识、角色知识、前文尾部、近期摘要、相关长期记忆和风格契约，并受 24,000 字符 / 12,000 估算 token 的全局硬预算约束。不可变规则不会被静默截断；上下文清单只记录计数、全局占用、拒绝原因、引用 ID 与截断信息，不泄露 prompt 或候选正文。
+`ContextBuilder` 使用十一个独立预算槽位：StoryBible、CanonicalState、NarrativeContract、章节目标、活动故事线、读者知识、角色知识、前文尾部、近期摘要、相关长期记忆和风格契约，并受 24,000 字符 / 12,000 估算 token 的全局硬预算约束。NarrativeContract 由 StoryBible、CanonicalState、SectionGoal、目标 StoryThread 和结构化用户约束确定性构建；不可变规则不会被静默截断。上下文清单只记录计数、全局占用、拒绝原因、引用 ID 与截断信息，不泄露 prompt 或候选正文。
 
 作者模式核心数据写入作品自己的数据目录：
 
@@ -126,8 +128,10 @@ Invoke-RestMethod -Method Post `
 | `GET /api/novels/{id}/story-threads` | 读取故事线生命周期与证据 |
 | `GET/PUT /api/novels/{id}/generation-mode` | 读取或显式切换 author/simulation |
 | `POST /api/novels/{id}/sections/generate` | 按章节目标异步生成、校验并提交 |
+| `POST /api/novels/{id}/sections/contract-preview` | 查看不含正则/Prompt 的本节简化正文契约 |
 | `GET /api/novels/{id}/sections/{task_or_section_id}/status` | 查询任务、事务与正式章节状态 |
 | `GET /api/novels/{id}/context-manifest` | 查看不含正文/prompt 的上下文审计清单 |
+| `GET /api/novels/{id}/long-run/status` | 查看契约通过、Repair、revision、token 与恢复聚合状态 |
 | `GET /api/tick/status` | 当前 Tick 运行状态 |
 | `POST /api/tick/run` | 推进一个 Tick |
 | `POST /api/tick/inject-event` | 注入外部事件 |
@@ -175,6 +179,9 @@ python scripts/smoke_author_mode_recorded.py
 
 ```powershell
 python scripts/validate_styles.py --help
+python scripts/run_author_longrange.py --help
+python scripts/analyze_author_longrange.py --help
+python scripts/compare_author_longrange.py --help
 python scripts/analyze_longrange_drift.py --help
 python scripts/compare_bench.py --help
 ```

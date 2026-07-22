@@ -469,6 +469,19 @@ class GenerationTransactionStore:
                 pending.append(tx)
         return pending
 
+    def list_all(self) -> list[GenerationTransaction]:
+        if not os.path.isdir(self.root):
+            return []
+        transactions: list[GenerationTransaction] = []
+        for name in sorted(os.listdir(self.root)):
+            if not name.endswith(".json") or name.endswith(".bak"):
+                continue
+            try:
+                transactions.append(self.load(name[:-5]))
+            except (KeyError, PersistenceError, ValueError):
+                continue
+        return transactions
+
 
 __all__ = [
     "AtomicModelStore",

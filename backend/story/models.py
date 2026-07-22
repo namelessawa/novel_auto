@@ -7,6 +7,12 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from story.narrative_contract import (
+    NarrativeContract,
+    NarrativeContractInput,
+    NarrativeValidationReport,
+)
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -256,6 +262,9 @@ class SectionGoal(StoryModel):
     involved_characters: list[str] = Field(default_factory=list)
     target_threads: list[str] = Field(default_factory=list)
     desired_length: int = Field(default=1800, ge=200, le=10000)
+    narrative_constraints: NarrativeContractInput = Field(
+        default_factory=NarrativeContractInput
+    )
 
 
 StateOperationKind = Literal["set", "add", "append", "remove", "transfer"]
@@ -318,6 +327,7 @@ class ValidationReport(StoryModel):
     repairable: bool = True
     validated_delta: list[StateDeltaOperation] = Field(default_factory=list)
     thread_changes: list[ThreadChange] = Field(default_factory=list)
+    repair_context: dict[str, Any] = Field(default_factory=dict)
 
 
 class ContextSlotManifest(StoryModel):
@@ -374,7 +384,15 @@ class GenerationTransaction(StoryModel):
     repair_performed: bool = False
     committed: bool = False
     candidate: WriterCandidate | None = None
+    candidate_history: list[WriterCandidate] = Field(default_factory=list)
+    narrative_contract: NarrativeContract | None = None
+    narrative_validation_report: NarrativeValidationReport | None = None
+    narrative_validation_history: list[NarrativeValidationReport] = Field(
+        default_factory=list
+    )
     validation_report: ValidationReport | None = None
+    validation_history: list[ValidationReport] = Field(default_factory=list)
+    style_validation_report: dict[str, Any] = Field(default_factory=dict)
     context_manifest: ContextManifest | None = None
     base_canonical_state: dict[str, Any] = Field(default_factory=dict)
     base_story_threads: dict[str, Any] = Field(default_factory=dict)
@@ -384,6 +402,7 @@ class GenerationTransaction(StoryModel):
     target_memory_repository: dict[str, Any] = Field(default_factory=dict)
     section_record: dict[str, Any] = Field(default_factory=dict)
     usage: dict[str, int] = Field(default_factory=dict)
+    recovery_count: int = Field(default=0, ge=0)
     error_code: str = ""
     error: str = ""
     created_at: str = Field(default_factory=utc_now)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,6 +19,10 @@ from story.models import (
     GenerationTransaction,
     SectionGoal,
     StoryBibleUpdate,
+)
+from story.narrative_contract import (
+    NarrativeContractInput,
+    narrative_contract_prompt_payload,
 )
 from story.persistence import (
     CanonicalStateStore,
@@ -49,6 +54,9 @@ class SectionGenerateRequest(BaseModel):
     involved_characters: list[str] = Field(default_factory=list, max_length=30)
     target_threads: list[str] = Field(default_factory=list, max_length=30)
     desired_length: int = Field(default=1800, ge=200, le=10000)
+    narrative_constraints: NarrativeContractInput = Field(
+        default_factory=NarrativeContractInput
+    )
 
 
 def _api_error(status: int, code: str, message: str, **details: Any) -> None:
@@ -75,6 +83,7 @@ def _public_transaction(transaction: GenerationTransaction) -> dict[str, Any]:
         mode="json",
         exclude={
             "candidate",
+            "candidate_history",
             "base_canonical_state",
             "base_story_threads",
             "base_memory_repository",
@@ -84,6 +93,15 @@ def _public_transaction(transaction: GenerationTransaction) -> dict[str, Any]:
             "section_record",
         },
     )
+    if transaction.narrative_contract:
+        payload["narrative_contract"] = {
+            **narrative_contract_prompt_payload(transaction.narrative_contract),
+            "section_id": transaction.narrative_contract.section_id,
+            "story_bible_revision": transaction.narrative_contract.story_bible_revision,
+            "canonical_state_revision": (
+                transaction.narrative_contract.canonical_state_revision
+            ),
+        }
     return payload
 
 
@@ -251,6 +269,28 @@ async def generate_author_section(
     return task.model_dump(mode="json")
 
 
+@router.post("/sections/contract-preview")
+async def preview_author_section_contract(
+    novel_id: str,
+    request: SectionGenerateRequest,
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
+    mode = GenerationModeStore(data_dir).load()
+    if mode.mode != "author":
+        _api_error(409, "MODE_MISMATCH", "正文契约预览只适用于作者模式")
+    runtime = get_author_runtime(current_user.id, novel_id)
+    contract = runtime.service.preview_contract(SectionGoal(**request.model_dump()))
+    return {
+        "narrative_contract": {
+            **narrative_contract_prompt_payload(contract),
+            "section_id": contract.section_id,
+            "story_bible_revision": contract.story_bible_revision,
+            "canonical_state_revision": contract.canonical_state_revision,
+        }
+    }
+
+
 @router.get("/sections/{task_or_section_id}/status")
 async def get_author_section_status(
     novel_id: str,
@@ -295,6 +335,67 @@ async def get_context_manifest(
     return manifest.model_dump(mode="json")
 
 
+@router.get("/long-run/status")
+async def get_author_long_run_status(
+    novel_id: str, current_user: User = Depends(get_current_user)
+) -> dict:
+    """Small advanced-diagnostics aggregate; never exposes prose or prompts."""
+    data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
+    transactions = GenerationTransactionStore(data_dir).list_all()
+    contract_reports = [
+        item.narrative_validation_report
+        for item in transactions
+        if item.narrative_validation_report is not None
+    ]
+    generated = [item for item in transactions if item.phase != "prepared"]
+    committed = [item for item in transactions if item.committed]
+    repair_count = sum(item.repair_performed for item in generated)
+    hard_rejects = sum(item.phase == "rejected" for item in transactions)
+    latencies: list[float] = []
+    for item in transactions:
+        try:
+            start = datetime.fromisoformat(item.created_at)
+            end = datetime.fromisoformat(item.updated_at)
+            latencies.append(max(0.0, (end - start).total_seconds()))
+        except ValueError:
+            continue
+    token_total = sum(int(item.usage.get("total_tokens", 0)) for item in transactions)
+    state_conflicts = sum(
+        1
+        for item in transactions
+        for violation in (item.validation_report.violations if item.validation_report else [])
+        if violation.severity == "high"
+    )
+    thread_repository = StoryThreadStore(data_dir).load()
+    open_threads = sum(
+        item.status not in {"resolved", "abandoned"}
+        for item in thread_repository.threads.values()
+    )
+    return {
+        "run_id": transactions[-1].id if transactions else "",
+        "completed_sections": len(committed),
+        "contract_pass_rate": round(
+            sum(item.accepted for item in contract_reports) / len(contract_reports), 4
+        )
+        if contract_reports
+        else 0.0,
+        "repair_rate": round(repair_count / len(generated), 4) if generated else 0.0,
+        "hard_reject_count": hard_rejects,
+        "canonical_revision": CanonicalStateStore(data_dir).load().revision,
+        "total_tokens": token_total,
+        "average_latency_seconds": round(sum(latencies) / len(latencies), 3)
+        if latencies
+        else 0.0,
+        "restart_recovery_count": sum(item.recovery_count for item in transactions),
+        "stale_transaction_count": sum(
+            item.phase == "stale_context" for item in transactions
+        ),
+        "state_conflict_count": state_conflicts,
+        "threads_open": open_threads,
+        "transaction_count": len(transactions),
+    }
+
+
 def _make_author_executor(goal: SectionGoal):
     async def _executor(
         updater: ProgressUpdater,
@@ -312,12 +413,23 @@ def _make_author_executor(goal: SectionGoal):
                 "STORY_BIBLE_REVISION_STALE: " + exc.transaction.error
             ) from exc
         except GenerationRejected as exc:
-            codes = [
+            narrative_codes = [
+                item.code
+                for item in (
+                    exc.transaction.narrative_validation_report.violations
+                    if exc.transaction.narrative_validation_report
+                    else []
+                )
+            ]
+            authority_codes = [
                 item.code
                 for item in (exc.transaction.validation_report.violations if exc.transaction.validation_report else [])
             ]
-            updater.set(last_message="一致性验证未通过，未提交任何正文或状态")
-            raise RuntimeError("一致性验证未通过: " + ", ".join(codes)) from exc
+            updater.set(last_message="正文或权威状态契约未通过，未提交任何数据")
+            raise RuntimeError(
+                "契约验证未通过: "
+                + ", ".join(narrative_codes + authority_codes)
+            ) from exc
         updater.set(tick_count=2, last_message="验证通过，正文与权威状态已原子提交")
         section = runtime.service.sections.get_by_id(transaction.section_id)
         return {
@@ -333,6 +445,17 @@ def _make_author_executor(goal: SectionGoal):
                 if transaction.validation_report
                 else {}
             ),
+            "narrative_contract": (
+                narrative_contract_prompt_payload(transaction.narrative_contract)
+                if transaction.narrative_contract
+                else {}
+            ),
+            "narrative_validation_report": (
+                transaction.narrative_validation_report.model_dump(mode="json")
+                if transaction.narrative_validation_report
+                else {}
+            ),
+            "style_validation_report": transaction.style_validation_report,
             "repair_performed": transaction.repair_performed,
             "committed": transaction.committed,
         }

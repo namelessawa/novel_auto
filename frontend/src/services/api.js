@@ -751,6 +751,14 @@ export async function generateAuthorSection(novelId, goal) {
   return assertOk(res)
 }
 
+export async function previewAuthorNarrativeContract(novelId, goal) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/sections/contract-preview`,
+    { method: 'POST', body: JSON.stringify(goal) },
+  )
+  return assertOk(res)
+}
+
 export async function fetchAuthorSectionStatus(novelId, taskOrSectionId) {
   const res = await authedFetch(
     `/api/novels/${encodeURIComponent(novelId)}/sections/${encodeURIComponent(taskOrSectionId)}/status`,
@@ -761,6 +769,13 @@ export async function fetchAuthorSectionStatus(novelId, taskOrSectionId) {
 export async function fetchContextManifest(novelId) {
   const res = await authedFetch(
     `/api/novels/${encodeURIComponent(novelId)}/context-manifest`,
+  )
+  return assertOk(res)
+}
+
+export async function fetchAuthorLongRunStatus(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/long-run/status`,
   )
   return assertOk(res)
 }

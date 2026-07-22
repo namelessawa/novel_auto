@@ -22,9 +22,17 @@ from story.models import (
     StoryBible,
     StoryThreadRepository,
     ValidationReport,
+    ValidationViolation,
     WriterCandidate,
     utc_now,
 )
+from story.narrative_contract import (
+    NarrativeContract,
+    NarrativeContractBuilder,
+    NarrativeValidationReport,
+    narrative_contract_prompt_payload,
+)
+from story.narrative_validator import NarrativeContractValidator
 from story.persistence import (
     CanonicalStateStore,
     ContextManifestStore,
@@ -42,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 class GenerationRejected(RuntimeError):
     def __init__(self, transaction: GenerationTransaction) -> None:
-        super().__init__("candidate rejected by StoryValidator")
+        super().__init__("candidate rejected by NarrativeContract/StoryValidator")
         self.transaction = transaction
 
 
@@ -63,6 +71,7 @@ class PreparedGeneration:
     threads: StoryThreadRepository
     memories: MemoryRepositoryState
     goal: SectionGoal
+    narrative_contract: NarrativeContract
     context: ContextPackage
     transaction: GenerationTransaction
 
@@ -79,6 +88,8 @@ class AuthorGenerationService:
         title: str = "",
         writer: WriterProtocol | None = None,
         validator: StoryValidator | None = None,
+        narrative_validator: NarrativeContractValidator | None = None,
+        contract_builder: NarrativeContractBuilder | None = None,
         context_builder: ContextBuilder | None = None,
     ) -> None:
         self.user_id = user_id
@@ -94,6 +105,8 @@ class AuthorGenerationService:
         self.sections = get_section_store(novel_id, data_dir=self.data_dir)
         self.writer = writer or AuthorWriter()
         self.validator = validator or StoryValidator()
+        self.narrative_validator = narrative_validator or NarrativeContractValidator()
+        self.contract_builder = contract_builder or NarrativeContractBuilder()
         self.context_builder = context_builder or ContextBuilder()
         self._generation_lock = asyncio.Lock()
         self.recover()
@@ -124,17 +137,44 @@ class AuthorGenerationService:
             try:
                 generated = await self.generate(prepared)
                 transaction = self._record_generated(transaction, generated)
-                report = self.validate(prepared, generated.candidate)
                 candidate = generated.candidate
+                narrative_report = self.validate_narrative(prepared, candidate)
+                report = self.validate(prepared, candidate)
+                narrative_history = [narrative_report]
+                validation_history = [report]
+                transaction = transaction.model_copy(
+                    update={
+                        "narrative_validation_report": narrative_report,
+                        "narrative_validation_history": narrative_history,
+                        "validation_report": report,
+                        "validation_history": validation_history,
+                        "style_validation_report": self._style_report(
+                            prepared, candidate, narrative_report
+                        ),
+                        "updated_at": utc_now(),
+                    }
+                )
+                self.transactions.save(transaction)
 
                 # Medium findings are eligible for the same one targeted repair;
                 # no Critic loop is created and writer_calls can never exceed two.
-                if report.violations and report.repairable:
-                    repaired = await self.repair(candidate, report)
+                if (
+                    (narrative_report.violations or report.violations)
+                    and narrative_report.repairable
+                    and report.repairable
+                ):
+                    repair_report = self._repair_report(
+                        prepared, narrative_report, report
+                    )
+                    repaired = await self.repair(candidate, repair_report)
                     candidate = repaired.candidate
                     transaction = transaction.model_copy(
                         update={
                             "candidate": candidate,
+                            "candidate_history": [
+                                *transaction.candidate_history,
+                                candidate,
+                            ],
                             "writer_calls": 2,
                             "repair_performed": True,
                             "usage": self._merge_usage(transaction.usage, repaired.usage),
@@ -142,21 +182,41 @@ class AuthorGenerationService:
                         }
                     )
                     self.transactions.save(transaction)
+                    narrative_report = self.validate_narrative(prepared, candidate)
                     report = self.validate(prepared, candidate)
+                    narrative_history.append(narrative_report)
+                    validation_history.append(report)
 
-                if not report.accepted:
+                if not narrative_report.accepted or not report.accepted:
                     rejected = transaction.model_copy(
                         update={
                             "phase": "rejected",
                             "candidate": candidate,
+                            "narrative_validation_report": narrative_report,
+                            "narrative_validation_history": narrative_history,
                             "validation_report": report,
-                            "error": "高置信一致性冲突在一次修复后仍存在",
+                            "validation_history": validation_history,
+                            "style_validation_report": self._style_report(
+                                prepared, candidate, narrative_report
+                            ),
+                            "error": "正文或权威状态契约在一次修复后仍未通过",
                             "updated_at": utc_now(),
                         }
                     )
                     self.transactions.save(rejected)
                     raise GenerationRejected(rejected)
 
+                transaction = transaction.model_copy(
+                    update={
+                        "narrative_validation_report": narrative_report,
+                        "narrative_validation_history": narrative_history,
+                        "validation_report": report,
+                        "validation_history": validation_history,
+                        "style_validation_report": self._style_report(
+                            prepared, candidate, narrative_report
+                        ),
+                    }
+                )
                 staged = self._stage(prepared, transaction, candidate, report)
                 self.commit(staged)
                 novel_manager.touch_last_accessed(self.user_id, self.novel_id)
@@ -213,7 +273,11 @@ class AuthorGenerationService:
                     f"transaction {request_id} already exists in phase {existing.phase}"
                 )
 
-            prepared = self.prepare(goal, request_id=request_id)
+            prepared = self.prepare(
+                goal,
+                request_id=request_id,
+                require_default_objective_event=(generation_mode == "author"),
+            )
             transaction = prepared.transaction.model_copy(
                 update={
                     "phase": "generated",
@@ -223,17 +287,24 @@ class AuthorGenerationService:
                 }
             )
             self.transactions.save(transaction)
+            narrative_report = self.validate_narrative(prepared, candidate)
             report = self.validate(
                 prepared,
                 candidate,
                 source_mode=generation_mode,
             )
-            if not report.accepted:
+            if not narrative_report.accepted or not report.accepted:
                 rejected = transaction.model_copy(
                     update={
                         "phase": "rejected",
+                        "narrative_validation_report": narrative_report,
+                        "narrative_validation_history": [narrative_report],
                         "validation_report": report,
-                        "error": "外部候选未通过统一一致性校验",
+                        "validation_history": [report],
+                        "style_validation_report": self._style_report(
+                            prepared, candidate, narrative_report
+                        ),
+                        "error": "外部候选未通过正文或权威状态契约校验",
                         "updated_at": utc_now(),
                     }
                 )
@@ -241,7 +312,17 @@ class AuthorGenerationService:
 
             staged = self._stage(
                 prepared,
-                transaction,
+                transaction.model_copy(
+                    update={
+                        "narrative_validation_report": narrative_report,
+                        "narrative_validation_history": [narrative_report],
+                        "validation_report": report,
+                        "validation_history": [report],
+                        "style_validation_report": self._style_report(
+                            prepared, candidate, narrative_report
+                        ),
+                    }
+                ),
                 candidate,
                 report,
                 generation_mode=generation_mode,
@@ -250,7 +331,13 @@ class AuthorGenerationService:
             novel_manager.touch_last_accessed(self.user_id, self.novel_id)
             return self.transactions.load(staged.id)
 
-    def prepare(self, goal: SectionGoal, *, request_id: str) -> PreparedGeneration:
+    def prepare(
+        self,
+        goal: SectionGoal,
+        *,
+        request_id: str,
+        require_default_objective_event: bool = True,
+    ) -> PreparedGeneration:
         bible = self.bibles.load()
         publish_errors = bible.publish_errors()
         if publish_errors:
@@ -280,12 +367,20 @@ class AuthorGenerationService:
             set(prepared_goal.target_threads),
             limit=12,
         )
+        narrative_contract = self.contract_builder.build(
+            story_bible=bible,
+            canonical_state=state,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
+            require_default_objective_event=require_default_objective_event,
+        )
         try:
             context = self.context_builder.build(
                 novel_id=self.novel_id,
                 section_id=section_id,
                 story_bible=bible,
                 canonical_state=state,
+                narrative_contract=narrative_contract,
                 section_goal=prepared_goal,
                 story_threads=list(threads.threads.values()),
                 previous_prose_tail=previous_tail,
@@ -304,6 +399,7 @@ class AuthorGenerationService:
             story_bible_revision=bible.revision,
             canonical_state_revision=state.revision,
             target_canonical_revision=state.revision + 1,
+            narrative_contract=narrative_contract,
             context_manifest=context.manifest,
         )
         self.transactions.save(transaction)
@@ -313,8 +409,27 @@ class AuthorGenerationService:
             threads=threads,
             memories=memories,
             goal=prepared_goal,
+            narrative_contract=narrative_contract,
             context=context,
             transaction=transaction,
+        )
+
+    def preview_contract(self, goal: SectionGoal) -> NarrativeContract:
+        """Read-only contract preview; does not create a transaction or manifest."""
+        bible = self.bibles.load()
+        publish_errors = bible.publish_errors()
+        if publish_errors:
+            raise ValueError("StoryBible 尚不可用于生成: " + "；".join(publish_errors))
+        state = self.states.load()
+        threads = self.threads.load()
+        chapter, section = self.sections.next_position()
+        section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
+        prepared_goal = goal.model_copy(update={"section_id": section_id})
+        return self.contract_builder.build(
+            story_bible=bible,
+            canonical_state=state,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
         )
 
     async def generate(self, prepared: PreparedGeneration) -> WriterResult:
@@ -336,12 +451,134 @@ class AuthorGenerationService:
             source_mode=source_mode,
         )
 
+    def validate_narrative(
+        self,
+        prepared: PreparedGeneration,
+        candidate: WriterCandidate,
+    ) -> NarrativeValidationReport:
+        return self.narrative_validator.validate(
+            prepared.narrative_contract, candidate.narrative_text
+        )
+
     async def repair(
         self,
         candidate: WriterCandidate,
         report: ValidationReport,
     ) -> WriterResult:
         return await self.writer.repair(candidate, report)
+
+    def _repair_report(
+        self,
+        prepared: PreparedGeneration,
+        narrative_report: NarrativeValidationReport,
+        state_report: ValidationReport,
+    ) -> ValidationReport:
+        narrative_violations = [
+            ValidationViolation(**item.model_dump(mode="python"))
+            for item in narrative_report.violations
+        ]
+        all_violations = narrative_violations + list(state_report.violations)
+        severity = max(
+            (item.severity for item in all_violations),
+            key={"low": 0, "medium": 1, "high": 2}.get,
+            default="low",
+        )
+        prompt_contract = narrative_contract_prompt_payload(
+            prepared.narrative_contract
+        )
+        failed_end_states = [
+            item.model_dump(mode="json")
+            for item in narrative_report.end_state_results
+            if not item.reached
+        ]
+        return ValidationReport(
+            accepted=False,
+            severity=severity,
+            violations=all_violations,
+            repairable=(
+                narrative_report.repairable and state_report.repairable
+            ),
+            validated_delta=state_report.validated_delta,
+            thread_changes=state_report.thread_changes,
+            repair_context={
+                "fixed_facts": prompt_contract["required_facts"],
+                "missing_required_events": [
+                    item
+                    for item in prompt_contract["required_events"]
+                    if item["id"] in narrative_report.missing_required_events
+                ],
+                "wrong_end_states": failed_end_states,
+                "unsupported_additions": [
+                    {
+                        "code": item.code,
+                        "evidence": item.evidence,
+                        "message": item.message,
+                    }
+                    for item in narrative_report.violations
+                    if item.code.startswith("UNSUPPORTED_")
+                    or item.code
+                    in {
+                        "NARRATIVE_CHARACTER_ADDED",
+                        "NARRATIVE_RELATION_ADDED",
+                        "NARRATIVE_ORGANIZATION_ADDED",
+                    }
+                ],
+                "time_constraints": prompt_contract["time_constraints"],
+                "length_constraint": prompt_contract["length_constraint"],
+                "minimum_style_requirement": {
+                    "key": prepared.bible.style_contract.get("key", ""),
+                    "final_checklist": prepared.bible.style_contract.get(
+                        "final_checklist", ""
+                    ),
+                },
+                "hard_rules": [
+                    "只做最小修正，不新增人物、数字、日期、亲属、伤势或支线",
+                    "必须落实缺失结局，不改变已正确完成的事件",
+                    "风格优先级低于事实；无法兼得时少满足风格特征",
+                ],
+            },
+        )
+
+    @staticmethod
+    def _style_report(
+        prepared: PreparedGeneration,
+        candidate: WriterCandidate,
+        narrative_report: NarrativeValidationReport,
+    ) -> dict:
+        snapshot = prepared.bible.style_contract or {}
+        style_key = str(snapshot.get("key") or "")
+        if not style_key:
+            return {
+                "evaluated": False,
+                "reason": "StoryBible has no StylePreset key",
+                "eligible_for_overall_acceptance": narrative_report.accepted,
+            }
+        try:
+            from novel_presets.style_presets import get_style_preset
+            from quality_metrics.style_contract import style_contract_report
+
+            preset = get_style_preset(style_key)
+            rules = tuple(snapshot.get("det_rules") or preset.det_rules)
+            payload = style_contract_report(
+                style_key,
+                candidate.narrative_text,
+                rules,
+                strict=True,
+            ).to_dict()
+            payload.update(
+                {
+                    "evaluated": True,
+                    "evaluated_after_narrative": True,
+                    "eligible_for_overall_acceptance": narrative_report.accepted,
+                }
+            )
+            return payload
+        except Exception as exc:
+            return {
+                "evaluated": False,
+                "reason": type(exc).__name__,
+                "eligible_for_overall_acceptance": narrative_report.accepted,
+            }
 
     def commit(self, transaction: GenerationTransaction) -> None:
         self._commit_staged(transaction)
@@ -351,6 +588,12 @@ class AuthorGenerationService:
         for transaction in self.transactions.list_pending():
             try:
                 self._commit_staged(transaction)
+                committed = self.transactions.load(transaction.id)
+                self.transactions.save(
+                    committed.model_copy(
+                        update={"recovery_count": committed.recovery_count + 1}
+                    )
+                )
                 recovered.append(transaction.id)
             except Exception as exc:
                 logger.error("author transaction recovery failed %s: %s", transaction.id, exc)
@@ -365,6 +608,7 @@ class AuthorGenerationService:
             update={
                 "phase": "generated",
                 "candidate": result.candidate,
+                "candidate_history": [result.candidate],
                 "writer_calls": 1,
                 "usage": result.usage,
                 "updated_at": utc_now(),
@@ -381,6 +625,15 @@ class AuthorGenerationService:
         *,
         generation_mode: str = "author",
     ) -> GenerationTransaction:
+        narrative_report = self.validate_narrative(prepared, candidate)
+        authority_report = self.validate(
+            prepared,
+            candidate,
+            source_mode=generation_mode,
+        )
+        if not narrative_report.accepted or not authority_report.accepted:
+            raise ValueError("cannot stage a failed narrative or authority contract")
+        report = authority_report
         target_state = self.validator.apply_delta(prepared.state, report.validated_delta)
         target_threads = self.validator.apply_thread_changes(
             prepared.threads,
@@ -435,7 +688,12 @@ class AuthorGenerationService:
             update={
                 "phase": "validated",
                 "candidate": candidate,
+                "narrative_contract": prepared.narrative_contract,
+                "narrative_validation_report": narrative_report,
                 "validation_report": report,
+                "style_validation_report": self._style_report(
+                    prepared, candidate, narrative_report
+                ),
                 "base_canonical_state": prepared.state.model_dump(mode="json"),
                 "base_story_threads": prepared.threads.model_dump(mode="json"),
                 "base_memory_repository": prepared.memories.model_dump(mode="json"),
@@ -603,10 +861,14 @@ class AuthorGenerationService:
 
     @staticmethod
     def _merge_usage(left: dict[str, int], right: dict[str, int]) -> dict[str, int]:
-        return {
+        merged = {
             key: int(left.get(key, 0)) + int(right.get(key, 0))
             for key in set(left) | set(right)
         }
+        merged["repair_tokens"] = int(left.get("repair_tokens", 0)) + int(
+            right.get("total_tokens", 0)
+        )
+        return merged
 
 
 __all__ = [

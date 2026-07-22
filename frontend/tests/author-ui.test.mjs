@@ -158,6 +158,27 @@ function authorApi(overrides = {}) {
       rejected_reason: '',
       slots: [{ name: 'story_bible', char_count: 1200, token_estimate: 600, truncated: false }],
     }),
+    previewAuthorNarrativeContract: async () => ({
+      narrative_contract: {
+        required_events: [{ id: 'open', action: '打开旧信', description: '沈砚打开旧信' }],
+        required_end_state: [{ id: 'truth', path: '/items/letter/holder', expected: '调查员' }],
+        forbidden_additions: ['未授权的亲属关系'],
+        time_constraints: [{ id: 'dawn', description: '必须在天亮前交信' }],
+        allowed_entities: { characters: [{ id: 'shen_yan', name: '沈砚' }] },
+        length_constraint: { min_chars: 900, max_chars: 1200 },
+      },
+    }),
+    fetchAuthorLongRunStatus: async () => ({
+      run_id: 'run-1',
+      completed_sections: 3,
+      contract_pass_rate: 1,
+      repair_rate: 0.25,
+      hard_reject_count: 0,
+      canonical_revision: 4,
+      total_tokens: 1234,
+      average_latency_seconds: 2.5,
+      restart_recovery_count: 1,
+    }),
     ...overrides,
   }
 }
@@ -296,6 +317,31 @@ test('author goal submission polls transaction and displays global manifest budg
   renderer.unmount()
 })
 
+test('author studio previews a folded narrative contract before generation', async () => {
+  let previewPayload
+  const api = authorApi({
+    previewAuthorNarrativeContract: async (_novelId, payload) => {
+      previewPayload = payload
+      return authorApi().previewAuthorNarrativeContract()
+    },
+  })
+  const renderer = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+    novel: { id: 'n1' }, api, notify() {},
+  })
+  assert.doesNotMatch(snapshotText(renderer), /沈砚打开旧信/)
+  await click(findButton(renderer, '查看本节正文契约'))
+  const text = nodeText(renderer.toJSON())
+  assert.equal(previewPayload.objective, storyBible.main_conflicts[0])
+  assert.match(text, /必须发生/)
+  assert.match(text, /沈砚打开旧信/)
+  assert.match(text, /最终必须达到/)
+  assert.match(text, /不得新增/)
+  assert.match(text, /天亮前交信/)
+  assert.match(text, /900—1200 字/)
+  assert.doesNotMatch(text, /system prompt|user prompt|思考过程/i)
+  renderer.unmount()
+})
+
 test('author studio surfaces validator rejection details', async () => {
   const api = authorApi({
     fetchAuthorSectionStatus: async () => ({
@@ -320,10 +366,79 @@ test('author studio surfaces validator rejection details', async () => {
     novel: { id: 'n1' }, api, notify() {},
   })
   await click(findButton(renderer, '生成并验证下一节'))
-  const text = snapshotText(renderer)
+  const text = nodeText(renderer.toJSON())
   assert.match(text, /校验未通过/)
   assert.match(text, /DELTA_EVIDENCE_MISSING/)
   assert.match(text, /状态变化缺少可定位正文证据/)
+  renderer.unmount()
+})
+
+test('author validation separates narrative state and style and shows repair result', async () => {
+  const api = authorApi({
+    fetchAuthorSectionStatus: async () => ({
+      task: { id: 'task-1', status: 'failed' },
+      transaction: {
+        id: 'tx-1',
+        phase: 'rejected',
+        repair_performed: true,
+        narrative_validation_history: [
+          { accepted: false, violations: [] },
+          { accepted: false, violations: [] },
+        ],
+        narrative_validation_report: {
+          accepted: false,
+          severity: 'high',
+          contract_coverage: 0.75,
+          missing_required_events: ['evt_handover'],
+          violations: [{ code: 'END_STATE_NOT_REACHED', message: '信没有实际交付' }],
+        },
+        validation_report: { accepted: true, severity: 'low', violations: [] },
+        style_validation_report: {
+          evaluated: true,
+          passed: true,
+          findings: [],
+        },
+      },
+    }),
+  })
+  const renderer = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+    novel: { id: 'n1' }, api, notify() {},
+  })
+  await click(findButton(renderer, '生成并验证下一节'))
+  const text = nodeText(renderer.toJSON())
+  assert.match(text, /正文契约/)
+  assert.match(text, /权威状态/)
+  assert.match(text, /风格检查/)
+  assert.match(text, /evt_handover/)
+  assert.match(text, /END_STATE_NOT_REACHED/)
+  assert.match(text, /修复前 未通过 → 修复后 未通过/)
+  renderer.unmount()
+})
+
+test('author diagnostics show budget warning and long-run status', async () => {
+  const api = authorApi({
+    fetchContextManifest: async () => ({
+      total_chars: 21600,
+      max_context_chars: 24000,
+      total_token_estimate: 10800,
+      max_context_token_estimate: 12000,
+      budget_utilization: 0.9,
+      rejected_reason: '',
+      slots: [{ name: 'narrative_contract', char_count: 3000, token_estimate: 1500, truncated: false }],
+    }),
+  })
+  const renderer = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+    novel: { id: 'n1' }, api, notify() {},
+  })
+  await click(findButton(renderer, '生成并验证下一节'))
+  await click(findButton(renderer, '查看脱敏 Context Manifest'))
+  const text = nodeText(renderer.toJSON())
+  assert.match(text, /Context 已使用 90%/)
+  assert.match(text, /LONG-RUN STATUS/)
+  assert.match(text, /已完成章节/)
+  assert.match(text, /合同通过率/)
+  assert.match(text, /重启恢复/)
+  assert.match(text, /run-1/)
   renderer.unmount()
 })
 

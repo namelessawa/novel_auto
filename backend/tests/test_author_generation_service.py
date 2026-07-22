@@ -135,6 +135,7 @@ async def test_author_service_repairs_once_then_commits(tmp_path: Path) -> None:
     assert writer.generate_calls == 1
     assert writer.repair_calls == 1
     assert tx.usage["total_tokens"] == 200
+    assert tx.usage["repair_tokens"] == 50
 
 
 @pytest.mark.asyncio

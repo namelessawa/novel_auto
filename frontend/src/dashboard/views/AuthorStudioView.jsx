@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   fetchAuthorSectionStatus,
+  fetchAuthorLongRunStatus,
   fetchCanonicalState,
   fetchContextManifest,
   fetchGenerationMode,
@@ -8,12 +9,14 @@ import {
   fetchStoryThreads,
   generateAuthorSection,
   listTickSections,
+  previewAuthorNarrativeContract,
   updateGenerationMode,
 } from '../../services/api'
 import { showToast } from '../../utils/toast'
 
 const DEFAULT_API = {
   fetchAuthorSectionStatus,
+  fetchAuthorLongRunStatus,
   fetchCanonicalState,
   fetchContextManifest,
   fetchGenerationMode,
@@ -21,6 +24,7 @@ const DEFAULT_API = {
   fetchStoryThreads,
   generateAuthorSection,
   listTickSections,
+  previewAuthorNarrativeContract,
   updateGenerationMode,
 }
 
@@ -37,6 +41,10 @@ export default function AuthorStudioView({
   const [mode, setMode] = useState(null)
   const [sections, setSections] = useState([])
   const [manifest, setManifest] = useState(null)
+  const [longRunStatus, setLongRunStatus] = useState(null)
+  const [contractPreview, setContractPreview] = useState(null)
+  const [contractOpen, setContractOpen] = useState(false)
+  const [previewBusy, setPreviewBusy] = useState(false)
   const [debugOpen, setDebugOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modeBusy, setModeBusy] = useState(false)
@@ -57,18 +65,22 @@ export default function AuthorStudioView({
     setLoading(true)
     setError('')
     try {
-      const [bibleData, stateData, threadData, modeData, sectionData] = await Promise.all([
+      const [bibleData, stateData, threadData, modeData, sectionData, longRunData] = await Promise.all([
         api.fetchStoryBible(novel.id),
         api.fetchCanonicalState(novel.id),
         api.fetchStoryThreads(novel.id),
         api.fetchGenerationMode(novel.id),
         api.listTickSections(novel.id),
+        api.fetchAuthorLongRunStatus
+          ? api.fetchAuthorLongRunStatus(novel.id).catch(() => null)
+          : Promise.resolve(null),
       ])
       setBible(bibleData.story_bible)
       setCanonical(stateData.canonical_state)
       setThreads(threadData.threads || {})
       setMode(modeData)
       setSections(sectionData.sections || [])
+      if (longRunData) setLongRunStatus(longRunData)
       setGoal((current) => ({
         ...current,
         objective: current.objective || bibleData.story_bible?.main_conflicts?.[0] || '',
@@ -84,8 +96,22 @@ export default function AuthorStudioView({
     setTaskId('')
     setGeneration(null)
     setManifest(null)
+    setContractPreview(null)
+    setContractOpen(false)
     load()
   }, [load])
+
+  useEffect(() => {
+    setContractPreview(null)
+    setContractOpen(false)
+  }, [
+    goal.objective,
+    goal.viewpoint_character_id,
+    goal.location_id,
+    goal.involved_characters,
+    goal.target_threads,
+    goal.desired_length,
+  ])
 
   useEffect(() => {
     if (!taskId || !novel?.id) return undefined
@@ -138,8 +164,18 @@ export default function AuthorStudioView({
     (thread) => !['resolved', 'abandoned'].includes(thread.status),
   )
   const lastSection = sections[sections.length - 1] || null
-  const report = generation?.transaction?.validation_report
+  const authorityReport = generation?.transaction?.validation_report
     || generation?.task?.validation_report
+    || null
+  const narrativeReport = generation?.transaction?.narrative_validation_report
+    || generation?.task?.narrative_validation_report
+    || null
+  const styleReport = generation?.transaction?.style_validation_report
+    || generation?.task?.style_validation_report
+    || null
+  const activeContract = contractPreview
+    || generation?.transaction?.narrative_contract
+    || generation?.task?.narrative_contract
     || null
   const taskStatus = generation?.task?.status || (taskId ? 'queued' : 'idle')
   const generating = ['queued', 'running'].includes(taskStatus)
@@ -176,19 +212,34 @@ export default function AuthorStudioView({
     setError('')
     setGeneration(null)
     try {
-      const task = await api.generateAuthorSection(novel.id, {
-        objective: goal.objective.trim(),
-        viewpoint_character_id: goal.viewpoint_character_id,
-        location_id: goal.location_id,
-        involved_characters: splitIds(goal.involved_characters),
-        target_threads: splitIds(goal.target_threads),
-        desired_length: Number(goal.desired_length) || 1800,
-      })
+      const task = await api.generateAuthorSection(novel.id, goalPayload(goal))
       setTaskId(task.id)
       setGeneration({ task, transaction: null, section: null })
       notify('章节事务已入队', 'success')
     } catch (err) {
       setError(err.message || '章节生成失败')
+    }
+  }
+
+  async function previewContract() {
+    if (!goal.objective.trim()) {
+      setError('请先写明本节目标。')
+      return
+    }
+    if (!api.previewAuthorNarrativeContract) {
+      setError('当前 API 不支持正文契约预览。')
+      return
+    }
+    setPreviewBusy(true)
+    setError('')
+    try {
+      const data = await api.previewAuthorNarrativeContract(novel.id, goalPayload(goal))
+      setContractPreview(data.narrative_contract)
+      setContractOpen(true)
+    } catch (err) {
+      setError(err.message || '正文契约预览失败')
+    } finally {
+      setPreviewBusy(false)
     }
   }
 
@@ -201,7 +252,7 @@ export default function AuthorStudioView({
         <div>
           <span className="dc-au-eyebrow">AUTHOR STUDIO · 单 Writer 章节事务</span>
           <h1>章节创作</h1>
-          <p>固定上下文 → Writer 候选 → 一致性校验 → 最多一次修复 → 原子提交。</p>
+          <p>固定上下文与正文契约 → Writer 候选 → 正文/状态双校验 → 最多一次修复 → 原子提交。</p>
         </div>
         <div className="dc-au-revision-pair">
           <div><span>BIBLE</span><strong>R{bible?.revision || '—'}</strong></div>
@@ -302,6 +353,17 @@ export default function AuthorStudioView({
                 />
               </label>
             </div>
+            <div className="dc-au-contract-preview">
+              <button
+                type="button"
+                onClick={contractPreview ? () => setContractOpen((value) => !value) : previewContract}
+                disabled={previewBusy || generating || !bible || !canonical}
+              >
+                <span>{previewBusy ? '正在构建正文契约…' : contractOpen ? '收起本节正文契约' : '查看本节正文契约'}</span>
+                <em>默认折叠 · 不显示 Prompt 或模型分析</em>
+              </button>
+              {contractOpen && activeContract && <ContractPreview contract={activeContract} />}
+            </div>
             <button
               type="button"
               className="dc-au-generate"
@@ -322,7 +384,15 @@ export default function AuthorStudioView({
                 创作圣经在生成期间发生了变化。本次候选基于旧版本，未提交，请重新生成。
               </div>
             )}
-            {report && <ValidationPanel report={report} repaired={generation?.transaction?.repair_performed || generation?.task?.repair_performed} />}
+            {(narrativeReport || authorityReport || styleReport) && (
+              <ValidationPanel
+                narrativeReport={narrativeReport}
+                authorityReport={authorityReport}
+                styleReport={styleReport}
+                narrativeHistory={generation?.transaction?.narrative_validation_history || []}
+                repaired={generation?.transaction?.repair_performed || generation?.task?.repair_performed}
+              />
+            )}
             {!generation && (
               <div className="dc-au-transaction-empty">
                 <span>尚未启动</span>
@@ -362,6 +432,11 @@ export default function AuthorStudioView({
             {manifest?.rejected_reason && (
               <p className="dc-au-notice is-error">{manifest.rejected_reason}</p>
             )}
+            {(manifest?.budget_utilization || 0) >= 0.85 && !manifest?.rejected_reason && (
+              <p className="dc-au-notice is-warning" data-warning="context-budget">
+                Context 已使用 {Math.round(manifest.budget_utilization * 100)}%，不可变规则不会被静默截断。
+              </p>
+            )}
             {(manifest?.slots || []).map((slot, index) => (
               <div key={slot.name}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
@@ -371,6 +446,7 @@ export default function AuthorStudioView({
               </div>
             ))}
             {!manifest?.slots?.length && <p>完成一次章节生成后会出现 context manifest。</p>}
+            {longRunStatus && <LongRunStatus status={longRunStatus} />}
           </div>
         )}
       </section>
@@ -385,9 +461,9 @@ function TransactionTimeline({ generation }) {
   return (
     <ol className="dc-au-timeline">
       {[
-        ['固定上下文', 'StoryBible + CanonicalState'],
+        ['固定上下文', 'StoryBible + CanonicalState + NarrativeContract'],
         ['Writer 候选', '不直接写盘'],
-        ['统一校验', '事实、知识、主题、故事线'],
+        ['分层校验', '正文契约 → 权威状态 → 风格观察'],
         ['原子提交', '正文 + 状态 + 记忆'],
       ].map(([title, detail], index) => (
         <li className={phaseIndex >= index ? 'is-done' : ''} key={title}>
@@ -399,20 +475,111 @@ function TransactionTimeline({ generation }) {
   )
 }
 
-function ValidationPanel({ report, repaired }) {
+function ContractPreview({ contract }) {
+  const groups = [
+    ['必须发生', (contract.required_events || []).map((item) => item.description || `${item.actor || ''} ${item.action || ''} ${item.target || ''}`)],
+    ['最终必须达到', (contract.required_end_state || []).map((item) => item.description || `${item.path} = ${String(item.expected)}`)],
+    ['不得新增', contract.forbidden_additions || []],
+    ['时间限制', (contract.time_constraints || []).map((item) => item.description || item.deadline)],
+    ['允许人物', (contract.allowed_entities?.characters || []).map((item) => item.name || item.id)],
+  ]
   return (
-    <div className={`dc-au-validation ${report.accepted ? 'is-ok' : 'is-fail'}`}>
+    <div className="dc-au-contract-grid" data-testid="narrative-contract-preview">
+      {groups.map(([label, values]) => (
+        <div key={label}>
+          <strong>{label}</strong>
+          {values.length
+            ? <ul>{values.map((value, index) => <li key={`${label}-${index}`}>{value}</li>)}</ul>
+            : <p>本节没有额外条目</p>}
+        </div>
+      ))}
       <div>
-        <strong>{report.accepted ? '校验通过' : '校验未通过'}</strong>
-        <span>{repaired ? '已执行一次定向修复' : '未执行修复'} · {report.severity}</span>
+        <strong>目标字数</strong>
+        <p>{contract.length_constraint?.min_chars || '—'}—{contract.length_constraint?.max_chars || '—'} 字</p>
       </div>
-      {(report.violations || []).map((violation) => (
-        <p key={`${violation.code}-${violation.path}`}>
+    </div>
+  )
+}
+
+function ValidationPanel({
+  narrativeReport,
+  authorityReport,
+  styleReport,
+  narrativeHistory,
+  repaired,
+}) {
+  const accepted = Boolean(narrativeReport?.accepted && authorityReport?.accepted)
+  return (
+    <div className={`dc-au-validation ${accepted ? 'is-ok' : 'is-fail'}`}>
+      <div>
+        <strong>{accepted ? '两类硬契约通过' : '契约校验未通过'}</strong>
+        <span>{repaired ? '已执行一次定向修复' : '未执行修复'}</span>
+      </div>
+      {repaired && narrativeHistory.length >= 2 && (
+        <p className="dc-au-repair-result" data-testid="repair-result">
+          正文契约：修复前 {narrativeHistory[0].accepted ? '通过' : '未通过'} → 修复后 {narrativeHistory.at(-1).accepted ? '通过' : '未通过'}
+        </p>
+      )}
+      <ValidationGroup title="正文契约" report={narrativeReport} />
+      <ValidationGroup title="权威状态" report={authorityReport} />
+      <ValidationGroup title="风格检查" report={styleReport} observational />
+    </div>
+  )
+}
+
+function ValidationGroup({ title, report, observational = false }) {
+  if (!report) return null
+  const passed = report.passed ?? report.accepted
+  return (
+    <section className="dc-au-validation-group" data-validation-layer={title}>
+      <header>
+        <strong>{title}</strong>
+        <span>{observational ? '事实通过后观察' : passed ? 'PASS' : 'BLOCKED'}</span>
+      </header>
+      {typeof report.contract_coverage === 'number' && (
+        <p>契约覆盖率 {Math.round(report.contract_coverage * 100)}%</p>
+      )}
+      {(report.missing_required_events || []).map((eventId) => (
+        <p key={`missing-${eventId}`}><code>缺失事件</code>{eventId}</p>
+      ))}
+      {(report.violations || report.findings || []).map((violation, index) => (
+        <p key={`${violation.code}-${violation.path || index}`}>
           <code>{violation.code}</code>{violation.message}
         </p>
       ))}
-    </div>
+    </section>
   )
+}
+
+function LongRunStatus({ status }) {
+  const metrics = [
+    ['当前运行', status.run_id || '—'],
+    ['已完成章节', status.completed_sections || 0],
+    ['合同通过率', `${Math.round((status.contract_pass_rate || 0) * 100)}%`],
+    ['Repair 率', `${Math.round((status.repair_rate || 0) * 100)}%`],
+    ['硬拒绝', status.hard_reject_count || 0],
+    ['Canonical', `R${status.canonical_revision || 0}`],
+    ['Token', status.total_tokens || 0],
+    ['平均耗时', `${status.average_latency_seconds || 0}s`],
+    ['重启恢复', status.restart_recovery_count || 0],
+  ]
+  return (
+    <section className="dc-au-longrun" data-testid="author-longrun-status">
+      <h3>LONG-RUN STATUS</h3>
+      <div>{metrics.map(([label, value]) => <p key={label}><span>{label}</span><strong>{value}</strong></p>)}</div>
+    </section>
+  )
+}
+
+function goalPayload(goal) {
+  return {
+    objective: goal.objective.trim(),
+    viewpoint_character_id: goal.viewpoint_character_id,
+    location_id: goal.location_id,
+    involved_characters: splitIds(goal.involved_characters),
+    target_threads: splitIds(goal.target_threads),
+    desired_length: Number(goal.desired_length) || 1800,
+  }
 }
 
 function splitIds(value) {

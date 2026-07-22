@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from story.models import SectionGoal, StateDeltaOperation, WriterCandidate
+from story.narrative_contract import LengthConstraint, NarrativeContractInput
 from story.service import AuthorGenerationService, StaleStoryBibleError
 
 
@@ -56,6 +57,12 @@ class SimulationNarrativeGateway:
                         [viewpoint_character_id] if viewpoint_character_id else []
                     ),
                     desired_length=max(200, min(10000, len(text))),
+                    narrative_constraints=NarrativeContractInput(
+                        length_constraint=LengthConstraint(
+                            min_chars=1,
+                            max_chars=10000,
+                        )
+                    ),
                 ),
                 candidate,
                 request_id=f"simulation_tick_{tick:08d}",
