@@ -3,6 +3,10 @@
 > 787 件 artifact. 本 index 按用途分类, 给新读者一个清晰起点.
 > 最新更新: 2026-06-25 (Phase 6-B/C iter A-V batch).
 
+## 2026-07-22 验收
+
+* [Event Completion Repair](event-completion-repair-20260722.md) — 24/24 离线通过；真实小矩阵 9/15，结论 `EVENT_REPAIR_FAIL`，后续阶段未运行。
+
 ## 起步阅读顺序
 
 1. [STATUS.md](STATUS.md) — rolling 状态板, 一眼看当前进展

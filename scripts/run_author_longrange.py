@@ -368,6 +368,26 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         "required_end_state_coverage": (
             narrative.required_end_state_coverage if narrative else 0.0
         ),
+        "event_completion": [
+            {
+                "event_id": item.event_id,
+                "status": item.status,
+                "actor_matched": item.actor_matched,
+                "target_matched": item.target_matched,
+                "action_matched": item.action_matched,
+                "violation_code": item.violation_code,
+            }
+            for item in (narrative.event_results if narrative else [])
+        ],
+        "required_events_completed": sum(
+            item.status == "completed"
+            for item in (narrative.event_results if narrative else [])
+        ),
+        "required_events_total": len(narrative.event_results) if narrative else 0,
+        "end_states_reached": sum(
+            item.reached for item in (narrative.end_state_results if narrative else [])
+        ),
+        "end_states_total": len(narrative.end_state_results) if narrative else 0,
         "unsupported_entity_count": sum(
             item.code.startswith("NARRATIVE_")
             for item in (narrative.violations if narrative else [])
@@ -379,6 +399,13 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         ),
         "canonical_revision": service.states.load().revision,
         "validated_delta_count": len(authority.validated_delta) if authority else 0,
+        "dropped_delta_count": authority.dropped_delta_count if authority else 0,
+        "dropped_thread_change_count": (
+            authority.dropped_thread_change_count if authority else 0
+        ),
+        "proposal_drop_codes": [
+            item.code for item in (authority.proposal_drops if authority else [])
+        ],
         "rejected_delta_count": len(candidate.state_delta) - len(authority.validated_delta)
         if candidate and authority
         else 0,
@@ -429,6 +456,21 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         "retry_count": 0,
         "writer_calls": transaction.writer_calls,
         "repair_performed": transaction.repair_performed,
+        "repair_plan_counts": {
+            "missing_events": len(transaction.repair_plan.missing_events),
+            "incomplete_events": len(transaction.repair_plan.incomplete_events),
+            "wrong_actor_events": len(transaction.repair_plan.wrong_actor_events),
+            "wrong_target_events": len(transaction.repair_plan.wrong_target_events),
+            "wrong_end_states": len(transaction.repair_plan.wrong_end_states),
+            "unsupported_additions": len(transaction.repair_plan.unsupported_additions),
+        }
+        if transaction.repair_plan
+        else {},
+        "repair_ignored_fields": list(transaction.repair_ignored_fields),
+        "repair_enforced_removals": list(transaction.repair_enforced_removals),
+        "repair_enforced_removal_count": len(
+            transaction.repair_enforced_removals
+        ),
         "repair_success": bool(
             transaction.repair_performed
             and narrative
@@ -617,6 +659,9 @@ async def run_sequence(
     resume: bool,
     provider: str = "recorded",
     model: str = "recorded",
+    runtime_rebuild_every: int | None = None,
+    inject_failure: str = "",
+    stop_on_gate_failure: bool = False,
 ) -> dict[str, Any]:
     from sections.section_store import _clear_for_tests
     from story.service import GenerationRejected
@@ -631,7 +676,13 @@ async def run_sequence(
         "seed": seed,
         "provider": provider,
         "model": model,
+        "inject_failure": inject_failure,
     }
+    rebuild_every = (
+        checkpoint_every
+        if runtime_rebuild_every is None
+        else max(0, runtime_rebuild_every)
+    )
     if resume and report_path.is_file():
         report = json.loads(report_path.read_text(encoding="utf-8"))
         actual_identity = {
@@ -648,6 +699,8 @@ async def run_sequence(
                 "max_total_tokens": limits.max_total_tokens,
                 "max_cost": limits.max_cost,
                 "checkpoint_every": checkpoint_every,
+                "runtime_rebuild_every": rebuild_every,
+                "stop_on_gate_failure": stop_on_gate_failure,
             }
         )
         report["summary"]["stop_reason"] = ""
@@ -672,6 +725,9 @@ async def run_sequence(
                 "max_total_tokens": limits.max_total_tokens,
                 "max_cost": limits.max_cost,
                 "checkpoint_every": checkpoint_every,
+                "runtime_rebuild_every": rebuild_every,
+                "inject_failure": inject_failure,
+                "stop_on_gate_failure": stop_on_gate_failure,
                 "provider": provider,
                 "model": model,
             },
@@ -706,6 +762,18 @@ async def run_sequence(
     if existing_sections:
         previous_text = existing_sections[-1].content
     start_index = len(report["sections"]) + 1
+    injection_kind = ""
+    injection_section = 1
+    if inject_failure:
+        raw_kind, _, raw_section = inject_failure.partition(":")
+        injection_kind = raw_kind.strip().lower()
+        if injection_kind not in {"", "provider_error", "runtime_rebuild"}:
+            raise ValueError(
+                "--inject-failure supports provider_error[:section] or "
+                "runtime_rebuild[:section]"
+            )
+        if raw_section:
+            injection_section = max(1, int(raw_section))
 
     for index in range(start_index, limits.max_sections + 1):
         total_tokens = int(report["summary"]["total_tokens"])
@@ -720,6 +788,13 @@ async def run_sequence(
         started = time.perf_counter()
         request_id, prior_failures = _request_id(index, report["failures"])
         try:
+            if injection_kind == "provider_error" and index == injection_section:
+                already_injected = any(
+                    item.get("injected_failure") == inject_failure
+                    for item in report["failures"]
+                )
+                if not already_injected:
+                    raise RuntimeError("injected provider failure")
             transaction = await service.run(goal, request_id=request_id)
         except GenerationRejected as exc:
             transaction = exc.transaction
@@ -727,6 +802,11 @@ async def run_sequence(
             failure = {
                 "section": index,
                 "attempt": prior_failures + 1,
+                "injected_failure": (
+                    inject_failure
+                    if injection_kind == "provider_error" and index == injection_section
+                    else ""
+                ),
                 **_safe_error(exc),
             }
             report["failures"].append(failure)
@@ -769,13 +849,24 @@ async def run_sequence(
                     previous_text,
                 )
         _checkpoint(report, output_dir, checkpoint_every)
+        if stop_on_gate_failure and (
+            not transaction.committed
+            or not metrics["narrative_contract_pass"]
+            or metrics["state_conflict_count"]
+        ):
+            report["summary"]["stop_reason"] = "gate_failure"
+            break
         if limits.max_total_tokens and report["summary"]["total_tokens"] >= limits.max_total_tokens:
             report["summary"]["stop_reason"] = "max_total_tokens"
             break
         if limits.max_cost and report["summary"]["estimated_cost"] >= limits.max_cost:
             report["summary"]["stop_reason"] = "max_cost"
             break
-        if index % max(1, checkpoint_every) == 0 and index < limits.max_sections:
+        injected_rebuild = (
+            injection_kind == "runtime_rebuild" and index == injection_section
+        )
+        scheduled_rebuild = bool(rebuild_every and index % rebuild_every == 0)
+        if (injected_rebuild or scheduled_rebuild) and index < limits.max_sections:
             del service
             _clear_for_tests()
             writer = RecordedLongRangeWriter() if mode == "recorded" else None
@@ -846,6 +937,18 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--mode", choices=("recorded", "real"), default="recorded")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--checkpoint-every", type=int, default=5)
+    parser.add_argument(
+        "--runtime-rebuild-every",
+        type=int,
+        default=0,
+        help="rebuild the runtime every N attempts; 0 follows checkpoint cadence",
+    )
+    parser.add_argument(
+        "--inject-failure",
+        default="",
+        help="provider_error[:section] or runtime_rebuild[:section]",
+    )
+    parser.add_argument("--stop-on-gate-failure", action="store_true")
     parser.add_argument("--max-sections", type=int, default=20)
     parser.add_argument("--max-total-tokens", type=int, default=0)
     parser.add_argument("--max-cost", type=float, default=0.0)
@@ -887,6 +990,11 @@ def main() -> int:
             resume=args.resume,
             provider=provider_metadata["provider"],
             model=provider_metadata["model"],
+            runtime_rebuild_every=(
+                None if args.runtime_rebuild_every <= 0 else args.runtime_rebuild_every
+            ),
+            inject_failure=args.inject_failure,
+            stop_on_gate_failure=args.stop_on_gate_failure,
         )
     )
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))

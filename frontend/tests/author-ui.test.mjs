@@ -167,6 +167,9 @@ function authorApi(overrides = {}) {
         allowed_entities: { characters: [{ id: 'shen_yan', name: '沈砚' }] },
         length_constraint: { min_chars: 900, max_chars: 1200 },
       },
+      event_execution_plan: {
+        ordered_events: [{ id: 'open', order: 1, actor: 'shen_yan', action: '打开旧信', description: '沈砚打开旧信' }],
+      },
     }),
     fetchAuthorLongRunStatus: async () => ({
       run_id: 'run-1',
@@ -333,6 +336,8 @@ test('author studio previews a folded narrative contract before generation', asy
   const text = nodeText(renderer.toJSON())
   assert.equal(previewPayload.objective, storyBible.main_conflicts[0])
   assert.match(text, /必须发生/)
+  assert.match(text, /执行顺序/)
+  assert.match(text, /1\. 沈砚打开旧信/)
   assert.match(text, /沈砚打开旧信/)
   assert.match(text, /最终必须达到/)
   assert.match(text, /不得新增/)
@@ -390,9 +395,33 @@ test('author validation separates narrative state and style and shows repair res
           severity: 'high',
           contract_coverage: 0.75,
           missing_required_events: ['evt_handover'],
+          event_results: [{ event_id: 'evt_handover', status: 'started', evidence: '沈砚准备交信' }],
+          end_state_results: [{ id: 'holder', path: '/items/letter/holder', expected: 'lin_qiu', reached: false, violation_code: 'END_STATE_NOT_REACHED' }],
           violations: [{ code: 'END_STATE_NOT_REACHED', message: '信没有实际交付' }],
         },
-        validation_report: { accepted: true, severity: 'low', violations: [] },
+        validation_report: {
+          accepted: true,
+          severity: 'medium',
+          violations: [{ code: 'THREAD_ADVANCE_UNKNOWN', message: '故事线提案已移除' }],
+          dropped_delta_count: 1,
+          dropped_thread_change_count: 1,
+        },
+        event_execution_plan: {
+          ordered_events: [{ id: 'evt_handover', order: 1, description: '沈砚完成交信' }],
+        },
+        repair_plan: {
+          missing_events: [],
+          incomplete_events: [{ event_id: 'evt_handover' }],
+          wrong_actor_events: [],
+          wrong_target_events: [],
+          wrong_end_states: [{ state_id: 'holder' }],
+          unsupported_additions: [],
+          must_preserve_spans: [],
+          must_preserve_facts: [],
+        },
+        repair_enforced_removals: [
+          { code: 'UNSUPPORTED_INJURY_ADDED', evidence: '无依据动作' },
+        ],
         style_validation_report: {
           evaluated: true,
           passed: true,
@@ -407,7 +436,14 @@ test('author validation separates narrative state and style and shows repair res
   await click(findButton(renderer, '生成并验证下一节'))
   const text = nodeText(renderer.toJSON())
   assert.match(text, /正文契约/)
-  assert.match(text, /权威状态/)
+  assert.match(text, /事件完成状态/)
+  assert.match(text, /started/)
+  assert.match(text, /最终状态/)
+  assert.match(text, /状态变更/)
+  assert.match(text, /故事线提案/)
+  assert.match(text, /RepairPlan 摘要/)
+  assert.match(text, /deterministic cleanup1 unsupported clause/)
+  assert.match(text, /DROPPED1/)
   assert.match(text, /风格检查/)
   assert.match(text, /evt_handover/)
   assert.match(text, /END_STATE_NOT_REACHED/)

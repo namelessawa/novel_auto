@@ -12,6 +12,10 @@ from dataclasses import dataclass
 import novel_manager
 from sections.section_store import TickSection, get_section_store
 from story.context_builder import ContextBudgetExceeded, ContextBuilder, ContextPackage
+from story.event_execution import (
+    EventExecutionPlan,
+    EventExecutionPlanBuilder,
+)
 from story.migrations import ensure_story_domain
 from story.models import (
     CanonicalState,
@@ -22,7 +26,6 @@ from story.models import (
     StoryBible,
     StoryThreadRepository,
     ValidationReport,
-    ValidationViolation,
     WriterCandidate,
     utc_now,
 )
@@ -30,7 +33,6 @@ from story.narrative_contract import (
     NarrativeContract,
     NarrativeContractBuilder,
     NarrativeValidationReport,
-    narrative_contract_prompt_payload,
 )
 from story.narrative_validator import NarrativeContractValidator
 from story.persistence import (
@@ -41,6 +43,12 @@ from story.persistence import (
     RevisionConflict,
     StoryBibleStore,
     StoryThreadStore,
+)
+from story.repair_plan import (
+    DeterministicRepairEnforcer,
+    RepairPlan,
+    RepairPlanBuilder,
+    RepairRegressionValidator,
 )
 from story.validator import StoryValidator
 from story.writer import AuthorWriter, WriterProtocol, WriterResult
@@ -72,6 +80,7 @@ class PreparedGeneration:
     memories: MemoryRepositoryState
     goal: SectionGoal
     narrative_contract: NarrativeContract
+    event_execution_plan: EventExecutionPlan
     context: ContextPackage
     transaction: GenerationTransaction
 
@@ -90,6 +99,8 @@ class AuthorGenerationService:
         validator: StoryValidator | None = None,
         narrative_validator: NarrativeContractValidator | None = None,
         contract_builder: NarrativeContractBuilder | None = None,
+        event_plan_builder: EventExecutionPlanBuilder | None = None,
+        repair_plan_builder: RepairPlanBuilder | None = None,
         context_builder: ContextBuilder | None = None,
     ) -> None:
         self.user_id = user_id
@@ -107,6 +118,10 @@ class AuthorGenerationService:
         self.validator = validator or StoryValidator()
         self.narrative_validator = narrative_validator or NarrativeContractValidator()
         self.contract_builder = contract_builder or NarrativeContractBuilder()
+        self.event_plan_builder = event_plan_builder or EventExecutionPlanBuilder()
+        self.repair_plan_builder = repair_plan_builder or RepairPlanBuilder()
+        self.repair_regression_validator = RepairRegressionValidator()
+        self.repair_enforcer = DeterministicRepairEnforcer()
         self.context_builder = context_builder or ContextBuilder()
         self._generation_lock = asyncio.Lock()
         self.recover()
@@ -139,9 +154,10 @@ class AuthorGenerationService:
                 transaction = self._record_generated(transaction, generated)
                 candidate = generated.candidate
                 narrative_report = self.validate_narrative(prepared, candidate)
-                report = self.validate(prepared, candidate)
+                strict_report = self.validate(prepared, candidate)
+                report = strict_report
                 narrative_history = [narrative_report]
-                validation_history = [report]
+                validation_history = [strict_report]
                 transaction = transaction.model_copy(
                     update={
                         "narrative_validation_report": narrative_report,
@@ -156,18 +172,33 @@ class AuthorGenerationService:
                 )
                 self.transactions.save(transaction)
 
-                # Medium findings are eligible for the same one targeted repair;
-                # no Critic loop is created and writer_calls can never exceed two.
+                # Repair has prose authority only and is triggered only by prose
+                # contract findings. Invalid optional delta/thread proposals are
+                # deterministically dropped instead of asking the model to rewrite them.
                 if (
-                    (narrative_report.violations or report.violations)
+                    narrative_report.violations
                     and narrative_report.repairable
-                    and report.repairable
                 ):
-                    repair_report = self._repair_report(
-                        prepared, narrative_report, report
+                    repair_plan = self._repair_plan(
+                        prepared,
+                        transaction,
+                        candidate,
+                        narrative_report,
+                        strict_report,
                     )
-                    repaired = await self.repair(candidate, repair_report)
-                    candidate = repaired.candidate
+                    transaction = transaction.model_copy(
+                        update={"repair_plan": repair_plan, "updated_at": utc_now()}
+                    )
+                    self.transactions.save(transaction)
+                    original_candidate = candidate
+                    repaired = await self.repair(candidate, repair_plan)
+                    # Enforce prose-only authority at the service boundary too;
+                    # custom/recorded WriterProtocol implementations cannot bypass it.
+                    candidate = original_candidate.model_copy(
+                        update={
+                            "narrative_text": repaired.candidate.narrative_text,
+                        }
+                    )
                     transaction = transaction.model_copy(
                         update={
                             "candidate": candidate,
@@ -177,15 +208,76 @@ class AuthorGenerationService:
                             ],
                             "writer_calls": 2,
                             "repair_performed": True,
+                            "repair_ignored_fields": repaired.ignored_fields,
                             "usage": self._merge_usage(transaction.usage, repaired.usage),
                             "updated_at": utc_now(),
                         }
                     )
                     self.transactions.save(transaction)
                     narrative_report = self.validate_narrative(prepared, candidate)
-                    report = self.validate(prepared, candidate)
+                    enforced_removals: list[dict[str, str]] = []
+                    # One model Repair call is the hard cap.  If it replaces one
+                    # unsupported addition with another, remove only the exact
+                    # validator-proven clause, then revalidate.  This bounded
+                    # deterministic pass has no authority over any other code.
+                    for _ in range(8):
+                        cleaned_text, removals = self.repair_enforcer.enforce(
+                            report=narrative_report,
+                            narrative_text=candidate.narrative_text,
+                        )
+                        if not removals:
+                            break
+                        enforced_removals.extend(removals)
+                        candidate = candidate.model_copy(
+                            update={"narrative_text": cleaned_text}
+                        )
+                        narrative_report = self.validate_narrative(prepared, candidate)
+                    if enforced_removals:
+                        transaction = transaction.model_copy(
+                            update={
+                                "candidate": candidate,
+                                "candidate_history": [
+                                    *transaction.candidate_history,
+                                    candidate,
+                                ],
+                                "repair_enforced_removals": enforced_removals,
+                                "updated_at": utc_now(),
+                            }
+                        )
+                        self.transactions.save(transaction)
+                    regressions = self.repair_regression_validator.validate(
+                        plan=repair_plan,
+                        final_report=narrative_report,
+                        repaired_text=candidate.narrative_text,
+                    )
+                    if regressions:
+                        narrative_report = narrative_report.model_copy(
+                            update={
+                                "accepted": False,
+                                "severity": "high",
+                                "violations": [
+                                    *narrative_report.violations,
+                                    *regressions,
+                                ],
+                            }
+                        )
+                    report = self.validate(
+                        prepared,
+                        candidate,
+                        drop_unsupported_proposals=True,
+                    )
                     narrative_history.append(narrative_report)
                     validation_history.append(report)
+                else:
+                    report = self.validate(
+                        prepared,
+                        candidate,
+                        drop_unsupported_proposals=True,
+                    )
+                    if report.model_dump(mode="json") != strict_report.model_dump(
+                        mode="json"
+                    ):
+                        validation_history.append(report)
 
                 if not narrative_report.accepted or not report.accepted:
                     rejected = transaction.model_copy(
@@ -374,6 +466,13 @@ class AuthorGenerationService:
             story_threads=list(threads.threads.values()),
             require_default_objective_event=require_default_objective_event,
         )
+        event_execution_plan = self.event_plan_builder.build(
+            contract=narrative_contract,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
+            canonical_state=state,
+            style_contract=bible.style_contract,
+        )
         try:
             context = self.context_builder.build(
                 novel_id=self.novel_id,
@@ -381,6 +480,7 @@ class AuthorGenerationService:
                 story_bible=bible,
                 canonical_state=state,
                 narrative_contract=narrative_contract,
+                event_execution_plan=event_execution_plan,
                 section_goal=prepared_goal,
                 story_threads=list(threads.threads.values()),
                 previous_prose_tail=previous_tail,
@@ -400,6 +500,7 @@ class AuthorGenerationService:
             canonical_state_revision=state.revision,
             target_canonical_revision=state.revision + 1,
             narrative_contract=narrative_contract,
+            event_execution_plan=event_execution_plan,
             context_manifest=context.manifest,
         )
         self.transactions.save(transaction)
@@ -410,6 +511,7 @@ class AuthorGenerationService:
             memories=memories,
             goal=prepared_goal,
             narrative_contract=narrative_contract,
+            event_execution_plan=event_execution_plan,
             context=context,
             transaction=transaction,
         )
@@ -432,6 +534,27 @@ class AuthorGenerationService:
             story_threads=list(threads.threads.values()),
         )
 
+    def preview_event_execution_plan(self, goal: SectionGoal) -> EventExecutionPlan:
+        bible = self.bibles.load()
+        state = self.states.load()
+        threads = self.threads.load()
+        chapter, section = self.sections.next_position()
+        section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
+        prepared_goal = goal.model_copy(update={"section_id": section_id})
+        contract = self.contract_builder.build(
+            story_bible=bible,
+            canonical_state=state,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
+        )
+        return self.event_plan_builder.build(
+            contract=contract,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
+            canonical_state=state,
+            style_contract=bible.style_contract,
+        )
+
     async def generate(self, prepared: PreparedGeneration) -> WriterResult:
         return await self.writer.generate(prepared.context, prepared.goal)
 
@@ -441,6 +564,7 @@ class AuthorGenerationService:
         candidate: WriterCandidate,
         *,
         source_mode: str = "author",
+        drop_unsupported_proposals: bool = False,
     ) -> ValidationReport:
         return self.validator.validate(
             bible=prepared.bible,
@@ -449,6 +573,7 @@ class AuthorGenerationService:
             goal=prepared.goal,
             candidate=candidate,
             source_mode=source_mode,
+            drop_unsupported_proposals=drop_unsupported_proposals,
         )
 
     def validate_narrative(
@@ -457,86 +582,35 @@ class AuthorGenerationService:
         candidate: WriterCandidate,
     ) -> NarrativeValidationReport:
         return self.narrative_validator.validate(
-            prepared.narrative_contract, candidate.narrative_text
+            prepared.narrative_contract,
+            candidate.narrative_text,
+            event_execution_plan=prepared.event_execution_plan,
+            event_evidence=candidate.event_evidence,
+            end_state_evidence=candidate.end_state_evidence,
         )
 
     async def repair(
         self,
         candidate: WriterCandidate,
-        report: ValidationReport,
+        plan: RepairPlan,
     ) -> WriterResult:
-        return await self.writer.repair(candidate, report)
+        return await self.writer.repair(candidate, plan)
 
-    def _repair_report(
+    def _repair_plan(
         self,
         prepared: PreparedGeneration,
+        transaction: GenerationTransaction,
+        candidate: WriterCandidate,
         narrative_report: NarrativeValidationReport,
         state_report: ValidationReport,
-    ) -> ValidationReport:
-        narrative_violations = [
-            ValidationViolation(**item.model_dump(mode="python"))
-            for item in narrative_report.violations
-        ]
-        all_violations = narrative_violations + list(state_report.violations)
-        severity = max(
-            (item.severity for item in all_violations),
-            key={"low": 0, "medium": 1, "high": 2}.get,
-            default="low",
-        )
-        prompt_contract = narrative_contract_prompt_payload(
-            prepared.narrative_contract
-        )
-        failed_end_states = [
-            item.model_dump(mode="json")
-            for item in narrative_report.end_state_results
-            if not item.reached
-        ]
-        return ValidationReport(
-            accepted=False,
-            severity=severity,
-            violations=all_violations,
-            repairable=(
-                narrative_report.repairable and state_report.repairable
-            ),
-            validated_delta=state_report.validated_delta,
-            thread_changes=state_report.thread_changes,
-            repair_context={
-                "fixed_facts": prompt_contract["required_facts"],
-                "missing_required_events": [
-                    item
-                    for item in prompt_contract["required_events"]
-                    if item["id"] in narrative_report.missing_required_events
-                ],
-                "wrong_end_states": failed_end_states,
-                "unsupported_additions": [
-                    {
-                        "code": item.code,
-                        "evidence": item.evidence,
-                        "message": item.message,
-                    }
-                    for item in narrative_report.violations
-                    if item.code.startswith("UNSUPPORTED_")
-                    or item.code
-                    in {
-                        "NARRATIVE_CHARACTER_ADDED",
-                        "NARRATIVE_RELATION_ADDED",
-                        "NARRATIVE_ORGANIZATION_ADDED",
-                    }
-                ],
-                "time_constraints": prompt_contract["time_constraints"],
-                "length_constraint": prompt_contract["length_constraint"],
-                "minimum_style_requirement": {
-                    "key": prepared.bible.style_contract.get("key", ""),
-                    "final_checklist": prepared.bible.style_contract.get(
-                        "final_checklist", ""
-                    ),
-                },
-                "hard_rules": [
-                    "只做最小修正，不新增人物、数字、日期、亲属、伤势或支线",
-                    "必须落实缺失结局，不改变已正确完成的事件",
-                    "风格优先级低于事实；无法兼得时少满足风格特征",
-                ],
-            },
+    ) -> RepairPlan:
+        return self.repair_plan_builder.build(
+            transaction_id=transaction.id,
+            contract=prepared.narrative_contract,
+            event_plan=prepared.event_execution_plan,
+            narrative_report=narrative_report,
+            state_report=state_report,
+            narrative_text=candidate.narrative_text,
         )
 
     @staticmethod
@@ -630,10 +704,12 @@ class AuthorGenerationService:
             prepared,
             candidate,
             source_mode=generation_mode,
+            drop_unsupported_proposals=True,
         )
         if not narrative_report.accepted or not authority_report.accepted:
             raise ValueError("cannot stage a failed narrative or authority contract")
         report = authority_report
+        candidate = self._candidate_with_validated_proposals(candidate, report)
         target_state = self.validator.apply_delta(prepared.state, report.validated_delta)
         target_threads = self.validator.apply_thread_changes(
             prepared.threads,
@@ -705,6 +781,31 @@ class AuthorGenerationService:
             }
         )
         return self.transactions.save(staged)
+
+    @staticmethod
+    def _candidate_with_validated_proposals(
+        candidate: WriterCandidate,
+        report: ValidationReport,
+    ) -> WriterCandidate:
+        """Keep prose, but retain only server-revalidated authority proposals."""
+        opened = []
+        advanced = []
+        resolved = []
+        for change in report.thread_changes:
+            if change.action == "opened":
+                opened.append(change.thread)
+            elif change.action == "advanced":
+                advanced.append(change.thread)
+            else:
+                resolved.append(change.thread)
+        return candidate.model_copy(
+            update={
+                "state_delta": list(report.validated_delta),
+                "threads_opened": opened,
+                "threads_advanced": advanced,
+                "threads_resolved": resolved,
+            }
+        )
 
     def _commit_staged(self, transaction: GenerationTransaction) -> None:
         if not (

@@ -7,11 +7,13 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from story.event_execution import EventExecutionPlan
 from story.narrative_contract import (
     NarrativeContract,
     NarrativeContractInput,
     NarrativeValidationReport,
 )
+from story.repair_plan import RepairPlan
 
 
 def utc_now() -> str:
@@ -283,9 +285,21 @@ class ThreadChange(StoryModel):
     thread: StoryThread
 
 
+class EventEvidenceHint(StoryModel):
+    event_id: str = Field(min_length=1)
+    evidence: str = Field(min_length=1)
+
+
+class EndStateEvidenceHint(StoryModel):
+    state_id: str = Field(min_length=1)
+    evidence: str = Field(min_length=1)
+
+
 class WriterCandidate(StoryModel):
     narrative_text: str = Field(min_length=1)
     section_summary: str = Field(min_length=1)
+    event_evidence: list[EventEvidenceHint] = Field(default_factory=list)
+    end_state_evidence: list[EndStateEvidenceHint] = Field(default_factory=list)
     state_delta: list[StateDeltaOperation] = Field(default_factory=list)
     threads_opened: list[StoryThread] = Field(default_factory=list)
     threads_advanced: list[StoryThread] = Field(default_factory=list)
@@ -296,6 +310,8 @@ class WriterCandidate(StoryModel):
 
     @field_validator(
         "state_delta",
+        "event_evidence",
+        "end_state_evidence",
         "threads_opened",
         "threads_advanced",
         "threads_resolved",
@@ -327,6 +343,9 @@ class ValidationReport(StoryModel):
     repairable: bool = True
     validated_delta: list[StateDeltaOperation] = Field(default_factory=list)
     thread_changes: list[ThreadChange] = Field(default_factory=list)
+    proposal_drops: list[ValidationViolation] = Field(default_factory=list)
+    dropped_delta_count: int = Field(default=0, ge=0)
+    dropped_thread_change_count: int = Field(default=0, ge=0)
     repair_context: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -386,6 +405,10 @@ class GenerationTransaction(StoryModel):
     candidate: WriterCandidate | None = None
     candidate_history: list[WriterCandidate] = Field(default_factory=list)
     narrative_contract: NarrativeContract | None = None
+    event_execution_plan: EventExecutionPlan | None = None
+    repair_plan: RepairPlan | None = None
+    repair_ignored_fields: list[str] = Field(default_factory=list)
+    repair_enforced_removals: list[dict[str, str]] = Field(default_factory=list)
     narrative_validation_report: NarrativeValidationReport | None = None
     narrative_validation_history: list[NarrativeValidationReport] = Field(
         default_factory=list

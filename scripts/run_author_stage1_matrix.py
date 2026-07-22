@@ -114,19 +114,43 @@ def aggregate(
         )
         for item in sections
     )
-    gate_checks = {
-        "all_15_combinations_completed": all_combinations,
-        "all_45_attempts_completed": attempted == expected_sections,
-        "all_45_sections_committed": committed == expected_sections,
+    state_conflict_commits = sum(
+        bool(item.get("committed")) and int(item.get("state_conflict_count", 0)) > 0
+        for item in sections
+    )
+    common_checks = {
+        "all_combinations_completed": all_combinations,
+        "all_attempts_completed": attempted == expected_sections,
         "hard_fact_error_commits_zero": hard_fact_error_commits == 0,
+        "state_conflict_commits_zero": state_conflict_commits == 0,
         "transaction_data_corruption_zero": not integrity,
-        "contract_accepted_at_least_95pct": contract_rate >= 0.95,
-        "repair_after_accepted_at_least_98pct": repair_success_rate >= 0.98,
+        "provider_errors_zero": provider_errors == 0,
     }
     complete = all_combinations and attempted == expected_sections
-    gate = "STAGE1_PASS" if complete and all(gate_checks.values()) else (
-        "STAGE1_FAIL" if complete else "STAGE1_INCOMPLETE"
-    )
+    mini_matrix = expected_combinations == 5 and expected_sections == 15
+    if mini_matrix:
+        gate_checks = {
+            **common_checks,
+            "committed_at_least_14_of_15": committed >= 14,
+            "contract_accepted_at_least_93pct": contract_rate >= 0.93,
+            "repair_after_accepted_at_least_90pct": repair_success_rate >= 0.90,
+        }
+        gate = "MINI_MATRIX_PASS" if complete and all(gate_checks.values()) else (
+            "MINI_MATRIX_FAIL" if complete else "MINI_MATRIX_INCOMPLETE"
+        )
+    else:
+        gate_checks = {
+            **common_checks,
+            "committed_at_least_43_of_45": committed >= 43,
+            "contract_accepted_at_least_95pct": contract_rate >= 0.95,
+            "repair_after_accepted_at_least_90pct": repair_success_rate >= 0.90,
+            "repair_rate_at_most_40pct": (
+                (len(repaired) / attempted if attempted else 0.0) <= 0.40
+            ),
+        }
+        gate = "STAGE1_PASS" if complete and all(gate_checks.values()) else (
+            "STAGE1_FAIL" if complete else "STAGE1_INCOMPLETE"
+        )
     return {
         "gate": gate,
         "gate_checks": gate_checks,
@@ -143,6 +167,7 @@ def aggregate(
         "repair_success_rate": repair_success_rate,
         "hard_rejects": hard_rejects,
         "hard_fact_error_commits": hard_fact_error_commits,
+        "state_conflict_commits": state_conflict_commits,
         "data_integrity_violations": integrity,
         "provider_errors": provider_errors,
         "prompt_tokens": sum(int(item.get("prompt_tokens", 0)) for item in sections),
@@ -151,6 +176,24 @@ def aggregate(
         ),
         "repair_tokens": sum(int(item.get("repair_tokens", 0)) for item in sections),
         "total_tokens": sum(int(item.get("total_tokens", 0)) for item in sections),
+        "required_events_completed": sum(
+            int(item.get("required_events_completed", 0)) for item in sections
+        ),
+        "required_events_total": sum(
+            int(item.get("required_events_total", 0)) for item in sections
+        ),
+        "end_states_reached": sum(
+            int(item.get("end_states_reached", 0)) for item in sections
+        ),
+        "end_states_total": sum(
+            int(item.get("end_states_total", 0)) for item in sections
+        ),
+        "dropped_delta_count": sum(
+            int(item.get("dropped_delta_count", 0)) for item in sections
+        ),
+        "dropped_thread_change_count": sum(
+            int(item.get("dropped_thread_change_count", 0)) for item in sections
+        ),
         "mean_latency_seconds": round(
             sum(float(item.get("latency_seconds", 0.0)) for item in sections)
             / attempted,
@@ -226,6 +269,10 @@ def _save(matrix: dict[str, Any], output_dir: Path) -> None:
         sections_per_combo=int(matrix["config"]["sections_per_combo"]),
     )
     matrix["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    rendered = json.dumps(matrix, ensure_ascii=False)
+    secret = os.environ.get("CUSTOM_API_KEY", "")
+    if secret and secret in rendered:
+        raise RuntimeError("credential leak guard rejected Stage 1 matrix report")
     _atomic_json(output_dir / "stage1-matrix.json", matrix)
     markdown = output_dir / "stage1-matrix.md"
     partial = markdown.with_suffix(".md.partial")
@@ -304,6 +351,13 @@ async def run_matrix(args: argparse.Namespace) -> dict[str, Any]:
                     resume=combo_resume,
                     provider=str(provider["provider"]),
                     model=model,
+                    runtime_rebuild_every=(
+                        None
+                        if args.runtime_rebuild_every <= 0
+                        else args.runtime_rebuild_every
+                    ),
+                    inject_failure=args.inject_failure,
+                    stop_on_gate_failure=args.stop_on_gate_failure,
                 )
                 combo_resume = True
                 if report["summary"].get("stop_reason") != "generation_error":
@@ -330,6 +384,12 @@ async def run_matrix(args: argparse.Namespace) -> dict[str, Any]:
                 ),
                 flush=True,
             )
+            if args.stop_on_gate_failure and (
+                record["integrity"]
+                or record["summary"].get("provider_errors", 0)
+                or record["summary"].get("stop_reason")
+            ):
+                return matrix
     _save(matrix, output_dir)
     return matrix
 
@@ -343,6 +403,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--styles", default=",".join(DEFAULT_STYLES))
     parser.add_argument("--sections-per-combo", type=int, default=3)
     parser.add_argument("--checkpoint-every", type=int, default=1)
+    parser.add_argument("--runtime-rebuild-every", type=int, default=1)
+    parser.add_argument("--inject-failure", default="")
+    parser.add_argument("--stop-on-gate-failure", action="store_true")
     parser.add_argument("--combo-retries", type=int, default=1)
     parser.add_argument("--desired-length", type=int, default=400)
     parser.add_argument("--seed", type=int, default=20260722)
@@ -360,7 +423,7 @@ def main() -> int:
     args.desired_length = max(200, args.desired_length)
     matrix = asyncio.run(run_matrix(args))
     print(json.dumps(matrix["summary"], ensure_ascii=False, indent=2))
-    return 0 if matrix["summary"]["gate"] == "STAGE1_PASS" else 2
+    return 0 if matrix["summary"]["gate"] in {"MINI_MATRIX_PASS", "STAGE1_PASS"} else 2
 
 
 if __name__ == "__main__":

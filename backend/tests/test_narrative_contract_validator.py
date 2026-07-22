@@ -266,7 +266,7 @@ _REAL_SAMPLE_HASHES = {
                 "UNSUPPORTED_ORGANIZATION_ADDED",
                 "FORBIDDEN_OUTCOME_MENTIONED",
                 "REQUIRED_EVENT_MISSING",
-                "END_STATE_NOT_REACHED",
+                "END_STATE_WRONG_HOLDER",
                 "NARRATIVE_TOO_SHORT",
             },
         ),

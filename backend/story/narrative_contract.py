@@ -16,6 +16,16 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 Severity = Literal["low", "medium", "high"]
+EventCompletionState = Literal[
+    "missing",
+    "mentioned",
+    "started",
+    "attempted",
+    "completed",
+    "contradicted",
+    "wrong_actor",
+    "wrong_target",
+]
 
 
 class NarrativeModel(BaseModel):
@@ -204,12 +214,24 @@ class EndStateResult(NarrativeModel):
     violation_code: str = ""
 
 
+class EventCompletionResult(NarrativeModel):
+    event_id: str
+    status: EventCompletionState = "missing"
+    evidence: str = ""
+    actor_matched: bool = False
+    target_matched: bool = False
+    action_matched: bool = False
+    evidence_hint_matched: bool = False
+    violation_code: str = ""
+
+
 class NarrativeValidationReport(NarrativeModel):
     accepted: bool = False
     severity: Severity = "low"
     violations: list[NarrativeViolation] = Field(default_factory=list)
     missing_required_events: list[str] = Field(default_factory=list)
     unsupported_additions: list[str] = Field(default_factory=list)
+    event_results: list[EventCompletionResult] = Field(default_factory=list)
     end_state_results: list[EndStateResult] = Field(default_factory=list)
     contract_coverage: float = Field(default=0.0, ge=0.0, le=1.0)
     required_fact_coverage: float = Field(default=1.0, ge=0.0, le=1.0)
@@ -518,6 +540,7 @@ class NarrativeContractBuilder:
 __all__ = [
     "AllowedEntities",
     "EndStateResult",
+    "EventCompletionResult",
     "EntityReference",
     "ForbiddenAddition",
     "ForbiddenOutcome",

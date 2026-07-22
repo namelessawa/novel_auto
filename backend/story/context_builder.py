@@ -7,6 +7,10 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
+from story.event_execution import (
+    EventExecutionPlan,
+    event_execution_plan_prompt_payload,
+)
 from story.models import (
     CanonicalState,
     ContextManifest,
@@ -40,7 +44,7 @@ SLOT_ORDER = (
 DEFAULT_SLOT_BUDGETS = {
     "story_bible": 5200,
     "canonical_state": 5000,
-    "narrative_contract": 6000,
+    "narrative_contract": 9000,
     "section_goal": 1800,
     "active_story_threads": 2800,
     "reader_knowledge": 1800,
@@ -147,6 +151,7 @@ class ContextBuilder:
         recent_summaries: list[dict[str, Any] | str],
         long_term_memories: list[MemoryRecord],
         narrative_contract: NarrativeContract | None = None,
+        event_execution_plan: EventExecutionPlan | None = None,
     ) -> ContextPackage:
         relevant_ids = set(section_goal.involved_characters)
         if section_goal.viewpoint_character_id:
@@ -196,7 +201,18 @@ class ContextBuilder:
             "story_bible": bible_text,
             "canonical_state": _json(canonical_snapshot),
             "narrative_contract": (
-                _json(narrative_contract_prompt_payload(narrative_contract))
+                _json(
+                    {
+                        "narrative_contract": narrative_contract_prompt_payload(
+                            narrative_contract
+                        ),
+                        "event_execution_plan": (
+                            event_execution_plan_prompt_payload(event_execution_plan)
+                            if event_execution_plan
+                            else {}
+                        ),
+                    }
+                )
                 if narrative_contract
                 else _json({})
             ),

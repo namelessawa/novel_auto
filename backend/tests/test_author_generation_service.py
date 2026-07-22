@@ -243,7 +243,9 @@ async def test_repair_must_revalidate_delta_against_repaired_prose(tmp_path: Pat
         value="暴雨",
         evidence="旧城骤然落下暴雨",
     )
-    original = _valid_candidate().model_copy(update={"state_delta": [operation]})
+    original = _valid_candidate("旧王复活，身份与牺牲失去意义。" * 12).model_copy(
+        update={"state_delta": [operation]}
+    )
     repaired = original.model_copy(
         update={
             "narrative_text": "旧城骤然落下暴雨，主角仍为身份与牺牲承担代价。" * 10
@@ -259,7 +261,9 @@ async def test_repair_must_revalidate_delta_against_repaired_prose(tmp_path: Pat
 
 
 @pytest.mark.asyncio
-async def test_repair_cannot_preserve_unnarrated_state_change(tmp_path: Path) -> None:
+async def test_unnarrated_state_change_is_dropped_without_prose_repair(
+    tmp_path: Path,
+) -> None:
     operation = StateDeltaOperation(
         op="set",
         path="/world/weather",
@@ -268,10 +272,12 @@ async def test_repair_cannot_preserve_unnarrated_state_change(tmp_path: Path) ->
     )
     candidate = _valid_candidate().model_copy(update={"state_delta": [operation]})
     service = _service(tmp_path, FakeWriter(candidate, candidate))
-    with pytest.raises(GenerationRejected):
-        await service.run(_goal(), request_id="unnarrated_after_repair")
+    transaction = await service.run(_goal(), request_id="unnarrated_after_repair")
+    assert transaction.committed is True
+    assert transaction.repair_performed is False
+    assert transaction.validation_report.dropped_delta_count == 1
     assert "weather" not in service.states.load().world
-    assert service.sections.count() == 0
+    assert service.sections.count() == 1
 
 
 @pytest.mark.asyncio

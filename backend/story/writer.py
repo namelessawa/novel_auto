@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 from story.context_builder import ContextPackage
-from story.models import SectionGoal, ValidationReport, WriterCandidate
-from story.validator import report_as_repair_prompt
+from story.models import SectionGoal, WriterCandidate
+from story.repair_plan import RepairPlan, repair_plan_prompt_payload
 
 
 class WriterOutputError(RuntimeError):
@@ -21,13 +21,14 @@ class WriterOutputError(RuntimeError):
 class WriterResult:
     candidate: WriterCandidate
     usage: dict[str, int]
+    ignored_fields: list[str] = field(default_factory=list)
 
 
 class WriterProtocol(Protocol):
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult: ...
 
     async def repair(
-        self, candidate: WriterCandidate, report: ValidationReport
+        self, candidate: WriterCandidate, plan: RepairPlan
     ) -> WriterResult: ...
 
 
@@ -42,12 +43,18 @@ StoryBible 是主题与世界规则的最高权威；CanonicalState 是当前事
 不得靠新增打斗、亲属、陪同者、数字、日期、伤势或幕后责任人满足风格；不得为了
 含蓄、悬念或格式而省略 NarrativeContract 的必要事件和最终状态。
 
+必须严格按 narrative_contract 槽位中的 EventExecutionPlan.order 顺序实际完成事件。
+“准备、打算、走向、想要、即将、如果、也许、原本可以”均不算完成；最后一段必须
+明确落实人物动作、物品接收者以及所有 required_end_states。
+
 只返回一个 JSON 对象，字段严格为：
-narrative_text, title, section_summary, state_delta, threads_opened,
+narrative_text, title, section_summary, event_evidence, end_state_evidence,
+state_delta, threads_opened,
 threads_advanced, threads_resolved, memory_records, consistency_notes。
 
 最小合法形态是：
 {"narrative_text":"连续正文","title":"小标题","section_summary":"事实摘要",
+"event_evidence":[],"end_state_evidence":[],
 "state_delta":[],"threads_opened":[],"threads_advanced":[],"threads_resolved":[],
 "memory_records":[],"consistency_notes":[]}
 没有确定变化时保持数组为空，不要用 null。state_delta 项形如
@@ -65,8 +72,10 @@ resolution_evidence。正文之外不要输出解释、Markdown 或思考过程�
 
     REPAIR_SYSTEM_PROMPT = """你是小说一致性修复器。输入只含原正文、固定事实、
 缺失事件、错误最终状态、新增事实、长度问题和最低风格要求。最多执行这一次修复。
-只做最小修正；不新增人物、数字、日期、亲属、伤势或支线；必须落实缺失结局；
-不改变已正确完成的事件；风格优先级低于事实；不要修改 StoryBible。返回一个 JSON 补丁，必须含
+只做最小修正；按 RepairPlan 补齐指定事件和终态；不新增人物、数字、日期、亲属、伤势或支线；必须落实缺失结局；
+不改变已正确完成的事件；风格优先级低于事实；不要修改 StoryBible。
+硬性执行顺序：先逐字删除 unsupported_additions 中列出的 evidence；再为每个待修事件写入 minimum_completion_evidence 所要求的明确完成句；最后让最后一项持有、打开、接收或位置陈述与 wrong_end_states 完全一致。即使你认为原文已经暗示完成，也必须执行这些明示修改，不得原样返回。
+返回一个 JSON 补丁，必须含
 {"narrative_text":"修复后的完整正文"}。不得返回或重写 state_delta、故事线、
 title、section_summary、memory_records、consistency_notes、critique 或解释字段；
 系统会自动保留已经通过校验的结构化变化并剔除高风险变化。"""
@@ -98,19 +107,25 @@ title、section_summary、memory_records、consistency_notes、critique 或解�
         )
 
     async def repair(
-        self, candidate: WriterCandidate, report: ValidationReport
+        self, candidate: WriterCandidate, plan: RepairPlan
     ) -> WriterResult:
         response = await llm_client.chat(
             system_prompt=self.REPAIR_SYSTEM_PROMPT,
-            user_prompt=report_as_repair_prompt(report, candidate),
-            temperature=0.2,
+            user_prompt=json.dumps(
+                repair_plan_prompt_payload(plan, candidate.narrative_text),
+                ensure_ascii=False,
+                indent=2,
+            ),
+            temperature=0.0,
             max_tokens=8192,
             agent_id="author_writer_repair",
             priority="critical",
         )
+        ignored_fields = self._repair_ignored_fields(response.content)
         return WriterResult(
-            candidate=self._parse_repair(response.content, candidate, report),
+            candidate=self._parse_repair(response.content, candidate, plan),
             usage=self._usage(response),
+            ignored_fields=ignored_fields,
         )
 
     @staticmethod
@@ -129,7 +144,7 @@ title、section_summary、memory_records、consistency_notes、critique 或解�
     def _parse_repair(
         content: str,
         original: WriterCandidate,
-        report: ValidationReport,
+        report: object | None = None,
     ) -> WriterCandidate:
         try:
             payload = parse_llm_json((content or "").strip())
@@ -149,6 +164,16 @@ title、section_summary、memory_records、consistency_notes、critique 或解�
         candidate_payload = original.model_dump(mode="python")
         candidate_payload["narrative_text"] = narrative
         return WriterCandidate.model_validate(candidate_payload)
+
+    @staticmethod
+    def _repair_ignored_fields(content: str) -> list[str]:
+        try:
+            payload = parse_llm_json((content or "").strip())
+        except json.JSONDecodeError:
+            return []
+        if not isinstance(payload, dict):
+            return []
+        return sorted(set(payload) - {"narrative_text"})
 
     @staticmethod
     def _usage(response) -> dict[str, int]:

@@ -57,7 +57,7 @@ def test_stage1_aggregate_requires_and_accepts_complete_45_section_matrix() -> N
     assert all(summary["gate_checks"].values())
 
 
-def test_stage1_aggregate_fails_completed_matrix_with_one_reject() -> None:
+def test_stage1_aggregate_allows_one_reject_within_43_of_45_gate() -> None:
     matrix = deepcopy(_matrix())
     failed = matrix["combinations"][0]
     failed["sections"][0]["committed"] = False
@@ -67,10 +67,42 @@ def test_stage1_aggregate_fails_completed_matrix_with_one_reject() -> None:
 
     summary = aggregate(matrix, expected_combinations=15, sections_per_combo=3)
 
-    assert summary["gate"] == "STAGE1_FAIL"
+    assert summary["gate"] == "STAGE1_PASS"
     assert summary["committed"] == 44
     assert summary["hard_rejects"] == 1
-    assert summary["gate_checks"]["all_45_sections_committed"] is False
+    assert summary["gate_checks"]["committed_at_least_43_of_45"] is True
+
+
+def test_stage1_aggregate_fails_below_43_commits() -> None:
+    matrix = deepcopy(_matrix())
+    for combination, section in ((0, 0), (1, 1), (2, 2)):
+        failed = matrix["combinations"][combination]
+        failed["sections"][section]["committed"] = False
+        failed["sections"][section]["narrative_contract_pass"] = False
+        failed["summary"]["committed"] = 2
+        failed["summary"]["hard_rejects"] = 1
+
+    summary = aggregate(matrix, expected_combinations=15, sections_per_combo=3)
+
+    assert summary["gate"] == "STAGE1_FAIL"
+    assert summary["committed"] == 42
+    assert summary["gate_checks"]["committed_at_least_43_of_45"] is False
+
+
+def test_mini_matrix_aggregate_uses_14_of_15_gate() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:5]
+    failed = matrix["combinations"][0]
+    failed["sections"][0]["committed"] = False
+    failed["sections"][0]["narrative_contract_pass"] = False
+    failed["summary"]["committed"] = 2
+    failed["summary"]["hard_rejects"] = 1
+
+    summary = aggregate(matrix, expected_combinations=5, sections_per_combo=3)
+
+    assert summary["gate"] == "MINI_MATRIX_PASS"
+    assert summary["committed"] == 14
+    assert summary["contract_pass_rate"] == 0.9333
 
 
 def test_real_resume_uses_new_request_id_after_provider_failure() -> None:

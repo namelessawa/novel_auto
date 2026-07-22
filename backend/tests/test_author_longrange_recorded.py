@@ -195,3 +195,29 @@ async def test_recorded_resume_rejects_identity_change(tmp_path) -> None:
             limits=_limits(4),
             resume=True,
         )
+
+
+@pytest.mark.asyncio
+async def test_recorded_runtime_rebuild_failure_injection_is_checkpointed(
+    tmp_path,
+) -> None:
+    report = await run_sequence(
+        output_dir=tmp_path / "runtime-rebuild",
+        mode="recorded",
+        style="literary",
+        theme="reality_mystery",
+        seed=11,
+        desired_length=300,
+        checkpoint_every=1,
+        runtime_rebuild_every=0,
+        inject_failure="runtime_rebuild:1",
+        stop_on_gate_failure=False,
+        limits=_limits(3),
+        resume=False,
+    )
+
+    assert report["summary"]["committed"] == 3
+    assert report["summary"]["runtime_rebuilds"] == 1
+    assert report["config"]["runtime_rebuild_every"] == 0
+    assert report["config"]["inject_failure"] == "runtime_rebuild:1"
+    assert report["recovery_evidence"]["canonical_revision_contiguous"] is True

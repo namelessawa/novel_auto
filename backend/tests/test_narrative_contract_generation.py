@@ -190,7 +190,7 @@ def test_staging_rechecks_narrative_contract_and_refuses_bypass(tmp_path: Path) 
     assert service.sections.count() == 0
 
 
-def test_staging_rechecks_authority_report_and_refuses_forged_pass(
+def test_staging_rechecks_authority_report_and_drops_forged_delta(
     tmp_path: Path,
 ) -> None:
     candidate = _candidate("沈砚把信交给调查员，调查员接过信。").model_copy(
@@ -208,12 +208,16 @@ def test_staging_rechecks_authority_report_and_refuses_forged_pass(
     service = _service(tmp_path, ContractWriter(candidate, candidate))
     prepared = service.prepare(_goal(), request_id="stage_authority_bypass")
 
-    with pytest.raises(ValueError, match="cannot stage"):
-        service._stage(
-            prepared,
-            prepared.transaction,
-            candidate,
-            ValidationReport(accepted=True),
-        )
+    staged = service._stage(
+        prepared,
+        prepared.transaction,
+        candidate,
+        ValidationReport(accepted=True),
+    )
 
+    assert staged.validation_report.accepted is True
+    assert staged.validation_report.validated_delta == []
+    assert staged.validation_report.dropped_delta_count == 1
+    assert staged.candidate.state_delta == []
+    assert staged.target_canonical_state.get("story_bible") is None
     assert service.sections.count() == 0

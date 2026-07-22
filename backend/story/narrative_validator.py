@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 import re
+from types import SimpleNamespace
 from typing import Iterable
 
+from story.event_execution import (
+    EventCompletionValidator,
+    EventExecutionPlan,
+    EventExecutionPlanBuilder,
+    completion_blocker_status,
+    holder_state_evidence,
+)
 from story.narrative_contract import (
     EndStateResult,
     NarrativeContract,
@@ -120,11 +128,21 @@ def _end_state_fallback_match(contract: NarrativeContract, state, text: str) -> 
             "装进",
             "收好",
         )
-        for sentence in re.split(r"[。！？\n]+", text):
+        sentences = [
+            item.strip() for item in re.split(r"[。！？\n]+", text) if item.strip()
+        ]
+        for index, sentence in enumerate(sentences):
+            prior = "".join(sentences[max(0, index - 2) : index])
+            expected_explicit = any(name in sentence for name in expected_names)
+            expected_coreference = (
+                any(name in prior for name in expected_names)
+                and any(pronoun in sentence for pronoun in ("他", "她", "其", "对方"))
+            )
             if (
-                any(name in sentence for name in expected_names)
+                (expected_explicit or expected_coreference)
                 and any(name in sentence for name in item_names)
                 and any(word in sentence for word in possession)
+                and not completion_blocker_status(sentence)
             ):
                 return sentence[:180]
         return ""
@@ -136,6 +154,7 @@ def _end_state_fallback_match(contract: NarrativeContract, state, text: str) -> 
                 (not actor_names or any(name in sentence for name in actor_names))
                 and terms
                 and sum(term in sentence for term in terms) >= min(2, len(terms))
+                and not completion_blocker_status(sentence)
             ):
                 return sentence[:180]
         return ""
@@ -146,7 +165,8 @@ def _end_state_fallback_match(contract: NarrativeContract, state, text: str) -> 
         "亮起",
     }:
         match = re.search(r"(?:灯|光柱|灯泡).{0,50}(?:重新)?(?:亮起|亮着|点亮)", text)
-        return _evidence(match)
+        evidence = _evidence(match)
+        return "" if completion_blocker_status(evidence) else evidence
     expected = str(state.expected)
     return expected[:180] if expected and expected in text else ""
 
@@ -187,7 +207,13 @@ class NarrativeContractValidator:
     """Check prose before StateDelta is considered for authority."""
 
     def validate(
-        self, contract: NarrativeContract, narrative_text: str
+        self,
+        contract: NarrativeContract,
+        narrative_text: str,
+        *,
+        event_execution_plan: EventExecutionPlan | None = None,
+        event_evidence: list | None = None,
+        end_state_evidence: list | None = None,
     ) -> NarrativeValidationReport:
         text = narrative_text or ""
         violations: list[NarrativeViolation] = []
@@ -199,6 +225,13 @@ class NarrativeContractValidator:
         passed_events = 0
         passed_ends = 0
         passed_times = 0
+        if event_execution_plan is None:
+            event_execution_plan = EventExecutionPlanBuilder().build(
+                contract=contract,
+                section_goal=SimpleNamespace(section_id=contract.section_id),
+                story_threads=[],
+                canonical_state=None,
+            )
 
         def add(
             code: str,
@@ -263,33 +296,24 @@ class NarrativeContractValidator:
                     repair_hint="用最短句补回该事实",
                 )
 
-        for event in contract.required_events:
-            incomplete = _matches(text, event.incomplete_patterns)
-            evidence = _matches(text, event.evidence_patterns)
-            fallback, fallback_evidence = _event_fallback_match(contract, event, text)
-            if evidence or ((event.keywords or not event.evidence_patterns) and fallback):
+        event_results = EventCompletionValidator().validate(
+            contract=contract,
+            plan=event_execution_plan,
+            narrative_text=text,
+            evidence_hints=event_evidence,
+        )
+        contract_events = {item.id: item for item in contract.required_events}
+        for result in event_results:
+            event = contract_events[result.event_id]
+            if result.status == "completed":
                 passed_events += 1
                 continue
             missing_events.append(event.id)
-            if incomplete:
-                code = "REQUIRED_EVENT_INCOMPLETE"
-                message = f"必要事件 {event.id} 只被提及但未完成"
-                found = _evidence(incomplete)
-            else:
-                actor_names = _entity_names(contract, event.actor)
-                target_names = _entity_names(contract, event.target)
-                action_terms = _keywords(event.action)
-                actor_seen = not actor_names or any(item in text for item in actor_names)
-                target_seen = not target_names or any(item in text for item in target_names)
-                action_seen = any(item in text for item in action_terms)
-                if action_seen and not actor_seen:
-                    code = "REQUIRED_EVENT_ACTOR_MISMATCH"
-                elif actor_seen and action_seen and not target_seen:
-                    code = "REQUIRED_EVENT_TARGET_MISMATCH"
-                else:
-                    code = "REQUIRED_EVENT_MISSING"
-                message = f"正文没有完成必要事件 {event.id}"
-                found = fallback_evidence
+            code = result.violation_code or "REQUIRED_EVENT_MISSING"
+            message = (
+                f"必要事件 {event.id} 处于 {result.status}，尚未实际完成"
+            )
+            found = result.evidence
             add(
                 code,
                 message,
@@ -297,7 +321,7 @@ class NarrativeContractValidator:
                 evidence=found,
                 repair_hint="只补写该事件的完成动作，不新增人物或原因",
             )
-            if incomplete:
+            if result.status in {"mentioned", "started", "attempted", "contradicted"}:
                 add(
                     "REQUIRED_EVENT_MISSING",
                     f"必要事件 {event.id} 尚未实际完成",
@@ -306,15 +330,45 @@ class NarrativeContractValidator:
                     repair_hint="把讨论或假设改成已完成的实际动作",
                 )
 
+        end_hints = {
+            str(getattr(item, "state_id", "")): str(getattr(item, "evidence", ""))
+            for item in (end_state_evidence or [])
+        }
         for state in contract.required_end_state:
             evidence = _matches(text, state.evidence_patterns)
-            semantic_evidence = (
-                ""
-                if state.evidence_patterns
-                else _end_state_fallback_match(contract, state, text)
+            # Contract regexes may deliberately bridge a wide prose window.  A
+            # denial or hypothetical in an unrelated earlier sentence must not
+            # poison a later, explicit end-state sentence, so always derive the
+            # sentence-local semantic evidence as an independent authority.
+            semantic_evidence = _end_state_fallback_match(contract, state, text)
+            holder_determined, final_holder, holder_evidence = holder_state_evidence(
+                contract=contract,
+                path=state.path,
+                expected=state.expected,
+                narrative_text=text,
             )
+            expected_names = _entity_names(contract, str(state.expected))
+            holder_matches = final_holder == str(state.expected) or final_holder in expected_names
+            dynamic_wrong = ""
+            if holder_determined:
+                if holder_matches:
+                    semantic_evidence = holder_evidence
+                else:
+                    evidence = None
+                    semantic_evidence = ""
+                    dynamic_wrong = holder_evidence
+            if (
+                evidence
+                and completion_blocker_status(_evidence(evidence))
+                and not semantic_evidence
+            ):
+                evidence = None
             wrong = _matches(text, state.wrong_state_patterns)
             if evidence or semantic_evidence:
+                located = _evidence(evidence) or semantic_evidence
+                hint = end_hints.get(state.id, "").strip()
+                if hint and hint in text and located in hint:
+                    located = hint[:180]
                 passed_ends += 1
                 end_results.append(
                     EndStateResult(
@@ -322,11 +376,11 @@ class NarrativeContractValidator:
                         path=state.path,
                         expected=state.expected,
                         reached=True,
-                        evidence=_evidence(evidence) or semantic_evidence,
+                        evidence=located,
                     )
                 )
                 continue
-            if wrong and state.path.endswith("/holder"):
+            if (wrong or dynamic_wrong) and state.path.endswith("/holder"):
                 code = "END_STATE_WRONG_HOLDER"
             elif wrong and state.path.endswith("/action"):
                 code = "END_STATE_WRONG_ACTOR"
@@ -334,7 +388,7 @@ class NarrativeContractValidator:
                 code = "END_STATE_MISSING"
             else:
                 code = "END_STATE_NOT_REACHED"
-            found = _evidence(wrong)
+            found = dynamic_wrong or _evidence(wrong)
             add(
                 code,
                 f"最终状态 {state.id} 未达到: {state.path} 应为 {state.expected}",
@@ -475,6 +529,7 @@ class NarrativeContractValidator:
             violations=violations,
             missing_required_events=list(dict.fromkeys(missing_events)),
             unsupported_additions=list(dict.fromkeys(unsupported)),
+            event_results=event_results,
             end_state_results=end_results,
             contract_coverage=round(coverage, 4),
             required_fact_coverage=round(fact_cov, 4),

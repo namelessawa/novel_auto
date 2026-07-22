@@ -113,6 +113,7 @@ class StoryValidator:
         goal: SectionGoal,
         candidate: WriterCandidate,
         source_mode: str = "author",
+        drop_unsupported_proposals: bool = False,
     ) -> ValidationReport:
         violations: list[ValidationViolation] = []
         narrative = candidate.narrative_text
@@ -173,8 +174,20 @@ class StoryValidator:
         thread_changes = self._validate_threads(
             candidate, threads, bible, narrative, violations
         )
+        proposal_violation_count = len(violations)
+        proposal_drops = list(violations[:proposal_violation_count])
         self._validate_bible(bible, goal, narrative, candidate, violations)
         self._validate_reader_boundary(state, narrative, violations)
+        if drop_unsupported_proposals and proposal_violation_count:
+            violations = [
+                item.model_copy(
+                    update={
+                        "severity": "medium",
+                        "message": item.message + "；该结构化提案已由服务端移除",
+                    }
+                )
+                for item in violations[:proposal_violation_count]
+            ] + violations[proposal_violation_count:]
         severity = _max_severity(violations)
         accepted = not any(item.severity == "high" for item in violations)
         return ValidationReport(
@@ -184,6 +197,17 @@ class StoryValidator:
             repairable=True,
             validated_delta=validated_delta,
             thread_changes=thread_changes,
+            proposal_drops=(proposal_drops if drop_unsupported_proposals else []),
+            dropped_delta_count=(
+                len(candidate.state_delta) - len(validated_delta)
+                if drop_unsupported_proposals
+                else 0
+            ),
+            dropped_thread_change_count=(
+                len(self._thread_changes(candidate)) - len(thread_changes)
+                if drop_unsupported_proposals
+                else 0
+            ),
         )
 
     def apply_delta(
@@ -463,6 +487,19 @@ class StoryValidator:
                         )
                     )
             self._validate_main_conflict_abandon(thread, bible, violations)
+            evidence = [item.strip() for item in thread.evidence if item.strip()]
+            if not evidence or not any(
+                _contains_evidence(narrative, item) for item in evidence
+            ):
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_OPEN_NO_EVIDENCE",
+                        message=f"新故事线 {thread.id} 缺少可定位的正文开启证据",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                        repair_hint="删除无正文依据的故事线提案",
+                    )
+                )
             opened_ids.add(thread.id)
             if len(violations) == start:
                 valid.append(ThreadChange(action="opened", thread=thread))

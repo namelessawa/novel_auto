@@ -174,9 +174,15 @@ export default function AuthorStudioView({
     || generation?.task?.style_validation_report
     || null
   const activeContract = contractPreview
-    || generation?.transaction?.narrative_contract
-    || generation?.task?.narrative_contract
-    || null
+    ? contractPreview.narrative_contract
+    : generation?.transaction?.narrative_contract
+      || generation?.task?.narrative_contract
+      || null
+  const activeEventPlan = contractPreview
+    ? contractPreview.event_execution_plan
+    : generation?.transaction?.event_execution_plan
+      || generation?.task?.event_execution_plan
+      || null
   const taskStatus = generation?.task?.status || (taskId ? 'queued' : 'idle')
   const generating = ['queued', 'running'].includes(taskStatus)
 
@@ -234,7 +240,10 @@ export default function AuthorStudioView({
     setError('')
     try {
       const data = await api.previewAuthorNarrativeContract(novel.id, goalPayload(goal))
-      setContractPreview(data.narrative_contract)
+      setContractPreview({
+        narrative_contract: data.narrative_contract,
+        event_execution_plan: data.event_execution_plan || null,
+      })
       setContractOpen(true)
     } catch (err) {
       setError(err.message || '正文契约预览失败')
@@ -362,7 +371,9 @@ export default function AuthorStudioView({
                 <span>{previewBusy ? '正在构建正文契约…' : contractOpen ? '收起本节正文契约' : '查看本节正文契约'}</span>
                 <em>默认折叠 · 不显示 Prompt 或模型分析</em>
               </button>
-              {contractOpen && activeContract && <ContractPreview contract={activeContract} />}
+              {contractOpen && activeContract && (
+                <ContractPreview contract={activeContract} eventPlan={activeEventPlan} />
+              )}
             </div>
             <button
               type="button"
@@ -391,6 +402,9 @@ export default function AuthorStudioView({
                 styleReport={styleReport}
                 narrativeHistory={generation?.transaction?.narrative_validation_history || []}
                 repaired={generation?.transaction?.repair_performed || generation?.task?.repair_performed}
+                eventPlan={activeEventPlan}
+                repairPlan={generation?.transaction?.repair_plan || generation?.task?.repair_plan}
+                repairEnforcedRemovals={generation?.transaction?.repair_enforced_removals || generation?.task?.repair_enforced_removals || []}
               />
             )}
             {!generation && (
@@ -475,8 +489,9 @@ function TransactionTimeline({ generation }) {
   )
 }
 
-function ContractPreview({ contract }) {
+function ContractPreview({ contract, eventPlan }) {
   const groups = [
+    ['执行顺序', (eventPlan?.ordered_events || []).map((item) => `${item.order}. ${item.description || `${item.actor || ''} ${item.action || ''} ${item.target || ''}`}`)],
     ['必须发生', (contract.required_events || []).map((item) => item.description || `${item.actor || ''} ${item.action || ''} ${item.target || ''}`)],
     ['最终必须达到', (contract.required_end_state || []).map((item) => item.description || `${item.path} = ${String(item.expected)}`)],
     ['不得新增', contract.forbidden_additions || []],
@@ -507,6 +522,9 @@ function ValidationPanel({
   styleReport,
   narrativeHistory,
   repaired,
+  eventPlan,
+  repairPlan,
+  repairEnforcedRemovals,
 }) {
   const accepted = Boolean(narrativeReport?.accepted && authorityReport?.accepted)
   return (
@@ -520,16 +538,117 @@ function ValidationPanel({
           正文契约：修复前 {narrativeHistory[0].accepted ? '通过' : '未通过'} → 修复后 {narrativeHistory.at(-1).accepted ? '通过' : '未通过'}
         </p>
       )}
-      <ValidationGroup title="正文契约" report={narrativeReport} />
-      <ValidationGroup title="权威状态" report={authorityReport} />
+      <EventCompletionGroup report={narrativeReport} eventPlan={eventPlan} />
+      <EndStateGroup report={narrativeReport} />
+      <ValidationGroup
+        title="正文契约"
+        report={narrativeReport}
+        excludeCodes={['REQUIRED_EVENT_', 'END_STATE_']}
+      />
+      <ValidationGroup
+        title="状态变更"
+        report={authorityReport}
+        excludeCodes={['THREAD_']}
+        proposalKind="delta"
+      />
+      <ValidationGroup
+        title="故事线提案"
+        report={authorityReport}
+        includeCodes={['THREAD_']}
+        proposalKind="thread"
+      />
       <ValidationGroup title="风格检查" report={styleReport} observational />
+      {repairPlan && <RepairPlanSummary plan={repairPlan} enforcedRemovals={repairEnforcedRemovals} />}
     </div>
   )
 }
 
-function ValidationGroup({ title, report, observational = false }) {
+function EventCompletionGroup({ report, eventPlan }) {
+  if (!report?.event_results?.length && !eventPlan?.ordered_events?.length) return null
+  const statuses = new Map((report?.event_results || []).map((item) => [item.event_id, item]))
+  const events = eventPlan?.ordered_events?.length
+    ? eventPlan.ordered_events
+    : (report.event_results || []).map((item, index) => ({ id: item.event_id, order: index + 1 }))
+  return (
+    <section className="dc-au-validation-group" data-validation-layer="event-completion">
+      <header><strong>事件完成状态</strong><span>{report?.accepted ? 'CHECKED' : 'ATTENTION'}</span></header>
+      {events.map((event) => {
+        const result = statuses.get(event.id)
+        return (
+          <p key={event.id} data-event-status={result?.status || 'unchecked'}>
+            <code>{event.order}. {event.id}</code>
+            {result?.status || 'unchecked'}
+            {result?.evidence ? ` · ${result.evidence}` : ''}
+          </p>
+        )
+      })}
+    </section>
+  )
+}
+
+function EndStateGroup({ report }) {
+  const violations = (report?.violations || []).filter((item) => item.code?.startsWith('END_STATE_'))
+  if (!report?.end_state_results?.length && !violations.length) return null
+  return (
+    <section className="dc-au-validation-group" data-validation-layer="end-state">
+      <header><strong>最终状态</strong><span>CHECKED</span></header>
+      {(report.end_state_results || []).map((item) => (
+        <p key={item.id} data-end-state={item.reached ? 'reached' : 'missing'}>
+          <code>{item.id}</code>
+          {item.path} = {String(item.expected)} · {item.reached ? 'reached' : item.violation_code || 'missing'}
+        </p>
+      ))}
+      {violations.map((item, index) => (
+        <p key={`${item.code}-${item.path || index}`}>
+          <code>{item.code}</code>{item.message}
+        </p>
+      ))}
+    </section>
+  )
+}
+
+function RepairPlanSummary({ plan, enforcedRemovals = [] }) {
+  const metrics = [
+    ['missing', plan.missing_events?.length || 0],
+    ['incomplete', plan.incomplete_events?.length || 0],
+    ['wrong actor', plan.wrong_actor_events?.length || 0],
+    ['wrong target', plan.wrong_target_events?.length || 0],
+    ['end state', plan.wrong_end_states?.length || 0],
+    ['unsupported', plan.unsupported_additions?.length || 0],
+  ]
+  return (
+    <section className="dc-au-validation-group" data-validation-layer="repair-plan">
+      <header><strong>RepairPlan 摘要</strong><span>PROSE ONLY</span></header>
+      <p>{metrics.map(([label, value]) => `${label}: ${value}`).join(' · ')}</p>
+      <p><code>preserve</code>{plan.must_preserve_spans?.length || 0} spans / {plan.must_preserve_facts?.length || 0} facts</p>
+      {enforcedRemovals.length > 0 && (
+        <p data-testid="repair-enforced-removals">
+          <code>deterministic cleanup</code>{enforcedRemovals.length} unsupported clause(s) removed; full contract revalidated
+        </p>
+      )}
+    </section>
+  )
+}
+
+function ValidationGroup({
+  title,
+  report,
+  observational = false,
+  includeCodes = [],
+  excludeCodes = [],
+  proposalKind = '',
+}) {
   if (!report) return null
   const passed = report.passed ?? report.accepted
+  const findings = (report.violations || report.findings || []).filter((violation) => {
+    if (includeCodes.length && !includeCodes.some((prefix) => violation.code?.startsWith(prefix))) return false
+    return !excludeCodes.some((prefix) => violation.code?.startsWith(prefix))
+  })
+  const dropCount = proposalKind === 'delta'
+    ? report.dropped_delta_count
+    : proposalKind === 'thread'
+      ? report.dropped_thread_change_count
+      : 0
   return (
     <section className="dc-au-validation-group" data-validation-layer={title}>
       <header>
@@ -539,10 +658,11 @@ function ValidationGroup({ title, report, observational = false }) {
       {typeof report.contract_coverage === 'number' && (
         <p>契约覆盖率 {Math.round(report.contract_coverage * 100)}%</p>
       )}
+      {dropCount > 0 && <p data-proposal-drops={proposalKind}><code>DROPPED</code>{dropCount}</p>}
       {(report.missing_required_events || []).map((eventId) => (
         <p key={`missing-${eventId}`}><code>缺失事件</code>{eventId}</p>
       ))}
-      {(report.violations || report.findings || []).map((violation, index) => (
+      {findings.map((violation, index) => (
         <p key={`${violation.code}-${violation.path || index}`}>
           <code>{violation.code}</code>{violation.message}
         </p>

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 import novel_manager
 from auth import User, get_current_user
 from sections.section_store import get_section_store
+from story.event_execution import event_execution_plan_prompt_payload
 from story.migrations import ensure_story_domain
 from story.models import (
     GenerationModeUpdate,
@@ -281,13 +282,17 @@ async def preview_author_section_contract(
         _api_error(409, "MODE_MISMATCH", "正文契约预览只适用于作者模式")
     runtime = get_author_runtime(current_user.id, novel_id)
     contract = runtime.service.preview_contract(SectionGoal(**request.model_dump()))
+    event_plan = runtime.service.preview_event_execution_plan(
+        SectionGoal(**request.model_dump())
+    )
     return {
         "narrative_contract": {
             **narrative_contract_prompt_payload(contract),
             "section_id": contract.section_id,
             "story_bible_revision": contract.story_bible_revision,
             "canonical_state_revision": contract.canonical_state_revision,
-        }
+        },
+        "event_execution_plan": event_execution_plan_prompt_payload(event_plan),
     }
 
 
@@ -456,6 +461,18 @@ def _make_author_executor(goal: SectionGoal):
                 else {}
             ),
             "style_validation_report": transaction.style_validation_report,
+            "event_execution_plan": (
+                event_execution_plan_prompt_payload(transaction.event_execution_plan)
+                if transaction.event_execution_plan
+                else {}
+            ),
+            "repair_plan": (
+                transaction.repair_plan.model_dump(mode="json")
+                if transaction.repair_plan
+                else {}
+            ),
+            "repair_ignored_fields": transaction.repair_ignored_fields,
+            "repair_enforced_removals": transaction.repair_enforced_removals,
             "repair_performed": transaction.repair_performed,
             "committed": transaction.committed,
         }
