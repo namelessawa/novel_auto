@@ -48,6 +48,14 @@ def _safe_error(exc: Exception) -> dict[str, str]:
     }
 
 
+def _request_id(index: int, failures: list[dict[str, Any]]) -> tuple[str, int]:
+    prior_failures = sum(int(item.get("section", -1)) == index for item in failures)
+    request_id = f"section_{index:04d}"
+    if prior_failures:
+        request_id += f"_retry_{prior_failures:02d}"
+    return request_id, prior_failures
+
+
 def _split_csv(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
@@ -642,6 +650,7 @@ async def run_sequence(
                 "checkpoint_every": checkpoint_every,
             }
         )
+        report["summary"]["stop_reason"] = ""
     else:
         report = {
             "schema_version": 1,
@@ -709,15 +718,25 @@ async def run_sequence(
             break
         goal = _goal(index, desired_length=desired_length)
         started = time.perf_counter()
+        request_id, prior_failures = _request_id(index, report["failures"])
         try:
-            transaction = await service.run(goal, request_id=f"section_{index:04d}")
+            transaction = await service.run(goal, request_id=request_id)
         except GenerationRejected as exc:
             transaction = exc.transaction
         except Exception as exc:
-            failure = {"section": index, **_safe_error(exc)}
+            failure = {
+                "section": index,
+                "attempt": prior_failures + 1,
+                **_safe_error(exc),
+            }
             report["failures"].append(failure)
             report["summary"]["provider_errors"] += int(mode == "real")
-            _atomic_json(output_dir / "failures" / f"section_{index:04d}.json", failure)
+            _atomic_json(
+                output_dir
+                / "failures"
+                / f"section_{index:04d}_attempt_{prior_failures + 1:02d}.json",
+                failure,
+            )
             report["summary"]["stop_reason"] = "generation_error"
             _checkpoint(report, output_dir, checkpoint_every)
             break

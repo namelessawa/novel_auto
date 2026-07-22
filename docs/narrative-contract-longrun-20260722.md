@@ -4,7 +4,7 @@
 
 `LONG_RUN_CONDITIONAL_PASS`
 
-正文契约、双层校验、一次 Repair、事务拒绝、恢复和 20 节零 Provider 回放均通过；GLM-5.2 只完成了单组合的多轮 3 节 pilot，完整 Stage 1（45 节）及 Stage 2—4 未执行，因此不能报告 `LONG_RUN_PASS`。真实 pilot 的门禁结果按实际运行保留为未通过；最终别名修正只获得确定性离线重放证据，没有被提升为真实 Provider 通过证据。
+正文契约、双层校验、一次 Repair、事务拒绝、恢复和 20 节零 Provider 回放均通过；GLM-5.2 完整 Stage 1 矩阵已执行 3×5×3=45 次真实生成，但仅 21 次正式提交，Contract accepted 51.11%，Repair 后 accepted 20.00%，因此 Stage 1 Gate 失败，Stage 2—4 未执行，不能报告 `LONG_RUN_PASS`。完整结果见 `docs/narrative-contract-stage1-20260722.md`。
 
 ## 权威链与实现
 
@@ -20,10 +20,10 @@ NarrativeContract > StoryBible / CanonicalState > StyleContract
 
 - 后端领域与事务：`backend/story/narrative_contract.py`、`narrative_validator.py`、`models.py`、`context_builder.py`、`service.py`、`validator.py`、`writer.py`、`persistence.py`、`simulation_gateway.py`。
 - API：`backend/api/story_routes.py`，新增契约预览、脱敏事务层和长程状态聚合。
-- 后端测试：`narrative_contract_fixtures.py`、`test_narrative_contract.py`、`test_narrative_contract_validator.py`、`test_narrative_contract_generation.py`、`test_author_longrange_recorded.py`，并扩展 `test_author_generation_service.py`、`test_simulation_gateway.py`、`test_story_api.py`。
+- 后端测试：`narrative_contract_fixtures.py`、`test_narrative_contract.py`、`test_narrative_contract_validator.py`、`test_narrative_contract_generation.py`、`test_author_longrange_recorded.py`、`test_author_stage1_matrix.py`，并扩展 `test_author_generation_service.py`、`test_simulation_gateway.py`、`test_story_api.py`。
 - 前端：`frontend/src/dashboard/views/AuthorStudioView.jsx`、`styles/author.css`、`services/api.js`、`frontend/tests/author-ui.test.mjs`。
-- 验证脚本：`scripts/run_author_longrange.py`、`analyze_author_longrange.py`、`compare_author_longrange.py`，并同步 `smoke_author_mode.py` 的 11 槽断言。
-- 文档：`README.md`、`CHANGELOG.md`、`docs/author-mode-architecture.md` 与本报告。
+- 验证脚本：`scripts/run_author_longrange.py`、`run_author_stage1_matrix.py`、`analyze_author_longrange.py`、`compare_author_longrange.py`，并同步 `smoke_author_mode.py` 的 11 槽断言。
+- 文档：`README.md`、`CHANGELOG.md`、`docs/author-mode-architecture.md`、本报告与 `docs/narrative-contract-stage1-20260722.md`。
 
 ## 里程碑记录
 
@@ -36,9 +36,9 @@ NarrativeContract > StoryBible / CanonicalState > StyleContract
 | M4 | 契约预览、正文/权威状态/风格分层、预算与长程状态 | 前端测试与 build；0 token | 是 |
 | M5 | 五份真实正文按 SHA-256 冻结为 fixture | 五份全部准确拦截；0 token | 是 |
 | M6 | 20 节 Recorded Writer、checkpoint、resume、重启恢复、stale recovery、分析/对比 | `STAGE0_PASS`；0 provider token | 是 |
-| M7 | GLM-5.2 单组合 4 轮 × 3 节诊断 pilot | 63,146 total tokens；未达到 Stage 1 gate | 否 |
+| M7 | GLM-5.2 完整 3 主题 × 5 风格 × 3 次连续生成矩阵 | 45 次真实输出；21 次提交；255,628 total tokens；`STAGE1_FAIL` | 否 |
 | M8—M10 | Stage 2/3 与第二轮长程修正 | 未执行；0 token | 否 |
-| M11 | 静态检查、全量测试、前端构建与证据分级 | Ruff passed；后端 1429 passed；前端 14 passed；Vite build passed | 条件通过 |
+| M11 | 静态检查、全量测试、前端构建与证据分级 | Ruff passed；后端 1433 passed；前端 14 passed；Vite build passed | 条件通过 |
 
 ## 五份真实样本回归
 
@@ -57,7 +57,7 @@ NarrativeContract > StoryBible / CanonicalState > StyleContract
 | Stage | 状态 | 实际证据 |
 | --- | --- | --- |
 | Stage 0 | `PASS` | 20/20 committed；contract 100%；Repair 5/5 成功；3 次 runtime rebuild；clean recovery 与 stale rejection 均通过；五份真实样本全部拒绝 |
-| Stage 1 | `NOT_COMPLETED / GATE NOT MET` | 仅 literary × reality_mystery × 3 节 pilot；没有执行 3×5×3=45 节矩阵。四轮诊断真实运行分别提交 0/3、1/3、2/3、2/3 |
+| Stage 1 | `COMPLETED / FAIL` | 15/15 组合、45/45 次真实生成完成；21/45 正式提交；Contract 23/45（51.11%）；Repair 6/30（20.00%）；24 次硬拒绝；0 硬事实错误提交；0 数据损坏 |
 | Stage 2 | `NOT_RUN` | Stage 1 未通过，未启动 120 节 |
 | Stage 3 | `NOT_RUN` | 前置 gate 未通过，未启动 300 节 |
 | Stage 4 | `NOT_RUN` | 前置 gate 未通过，未启动 200—300 节 |
@@ -66,23 +66,23 @@ NarrativeContract > StoryBible / CanonicalState > StyleContract
 
 ## 长程指标
 
-| 指标 | Stage 0（最终） | 最新真实 pilot v4 |
+| 指标 | Stage 0（最终） | 完整 Stage 1 |
 | --- | ---: | ---: |
-| attempted / committed | 20 / 20 | 3 / 2 |
-| contract pass | 100% | 66.67% |
-| Repair rate / success | 25% / 100% | 33.33% / 0%（该次 Repair 仍拒绝） |
-| hard reject / state conflict | 0 / 0 | 1 / 0 |
-| Canonical revision | 1 → 21，连续 | 正式提交后到 3，连续 |
-| max active StoryThread | 0 | 0 |
-| final memory records | 20 | 4 |
-| style contract | Fake Writer 不代表风格；检测为 false | 3/3 检测为 true，但事实失败不能算整体通过 |
-| mean consecutive 4-gram overlap | 0.9117（Fake Writer 故意高度重复） | 0.0263 |
-| token | 0 | 14,555（prompt 11,811；completion 2,744；其中 repair 1,094） |
-| mean latency | 0.1636s | 23.181s |
+| attempted / committed | 20 / 20 | 45 / 21 |
+| contract pass | 100% | 51.11% |
+| Repair rate / success | 25% / 100% | 66.67% / 20.00% |
+| hard reject / state conflict | 0 / 0 | 24 / 13 |
+| Canonical revision | 1 → 21，连续 | 每组合独立；已提交 revision 全部连续，最大到 4 |
+| max active StoryThread | 0 | 2 |
+| final memory records | 20 | 单组合最大 11 |
+| style contract | Fake Writer 不代表风格；检测为 false | 28/45 通过；17 次 drift warning |
+| mean consecutive 4-gram overlap | 0.9117（Fake Writer 故意高度重复） | 0.0373 |
+| token | 0 | 255,628（prompt 191,213；completion 64,415；其中 repair 40,773） |
+| mean latency | 0.1636s | 30.1629s |
 | Provider errors | 0 | 0 |
-| runtime rebuild / recovery | 3；staged recovery 1/1；stale 1/1 | 2 rebuild；无 staged crash 注入 |
+| runtime rebuild / recovery | 3；staged recovery 1/1；stale 1/1 | 30 rebuild；无 staged crash 注入 |
 
-四轮真实诊断合计 12 次尝试、5 次提交、7 次硬拒绝、63,146 tokens（prompt 50,818；completion 12,328；可独立归因的 repair 5,315；v1 在字段加入前未单列 repair token）。未配置价格费率，因此不伪造成本数字。
+完整 Stage 1 于 2026-07-22 18:14:08—18:36:53 执行，45 次尝试、21 次提交、24 次硬拒绝、255,628 tokens。未配置价格费率，因此不伪造成本数字；此前四轮诊断 pilot 不与本次矩阵 token 重复计算。
 
 ## 样本
 
@@ -104,11 +104,11 @@ Repair 前：
 
 - deterministic：模型、Validator、事务、API、前端、runner/analyzer 单测与静态检查。
 - recorded：20 节 Fake/Recorded Writer、五份历史真实原文、v4 失败原文离线回放。
-- real provider：GLM-5.2 四轮 3 节诊断 pilot；最后一轮实际 gate 未通过。
+- real provider：GLM-5.2 完整 Stage 1，15 个组合、45 次真实生成；实际 gate 未通过。
 - human review：未执行。
 - LLM judge：未执行；Writer 没有自评，确定性结果没有被 Judge 覆盖。
 
-已知限制：命名人物检测只覆盖显式引介等保守模式；中文开放域实体识别仍不等价于 NER。完整 Stage 1—4、50/100/200 节记忆召回抽样、两名盲审和独立 Judge 均待后续有明确预算时执行。受此限制，本轮只能是 `LONG_RUN_CONDITIONAL_PASS`。
+已知限制：命名人物检测只覆盖显式引介等保守模式；中文开放域实体识别仍不等价于 NER。Stage 1 已完整执行但未通过；Stage 2—4、50/100/200 节记忆召回抽样、两名盲审和独立 Judge 均未执行。受此限制，本轮只能是 `LONG_RUN_CONDITIONAL_PASS`。
 
 ## 复现
 
