@@ -22,11 +22,11 @@ sys.path.insert(0, str(_SCRIPTS))
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "backend"))
 
-import asyncio
+import asyncio  # noqa: E402
 
-import pytest
+import pytest  # noqa: E402
 
-import probe_quota
+import probe_quota  # noqa: E402
 
 
 def _run_probe_with_mock(mock_chat) -> int:

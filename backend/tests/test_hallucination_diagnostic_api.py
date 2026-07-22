@@ -13,10 +13,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import tick_routes
-from api.tick_routes import router, set_orchestrator_dependencies
+from api.tick_routes import router
 from memory.tick_state import TickState
 from memory_system.models import (
-    AgentRuntimeState,
     CharacterProfile,
     CharacterState,
     WorldState,

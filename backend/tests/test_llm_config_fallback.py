@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import importlib
 
-import pytest
 
 # 注意:不能直接 `import config.settings as settings_mod` — config/__init__.py 把
 # `config.settings` 重导成 Settings 实例 (frozen dataclass), 失去模块属性。

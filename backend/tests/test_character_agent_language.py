@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 
 from agents.character_agent import CharacterAgent
 from memory_system.models import CharacterProfile

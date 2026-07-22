@@ -25,7 +25,7 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-from agents.quality_checks import check_word_repetition
+from agents.quality_checks import check_word_repetition  # noqa: E402
 
 
 def _codes(text: str, threshold: int = 3) -> list[str]:

@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { fetchCanonicalState, fetchStoryThreads } from '../../services/api'
 
-export default function CanonicalStateView({ novel }) {
+const DEFAULT_API = { fetchCanonicalState, fetchStoryThreads }
+
+export default function CanonicalStateView({ novel, api = DEFAULT_API }) {
   const [state, setState] = useState(null)
   const [threads, setThreads] = useState({})
   const [migration, setMigration] = useState(null)
@@ -14,7 +16,7 @@ export default function CanonicalStateView({ novel }) {
     let cancelled = false
     setLoading(true)
     setError('')
-    Promise.all([fetchCanonicalState(novel.id), fetchStoryThreads(novel.id)])
+    Promise.all([api.fetchCanonicalState(novel.id), api.fetchStoryThreads(novel.id)])
       .then(([canonical, storyThreads]) => {
         if (cancelled) return
         setState(canonical.canonical_state)
@@ -30,7 +32,7 @@ export default function CanonicalStateView({ novel }) {
     return () => {
       cancelled = true
     }
-  }, [novel?.id])
+  }, [novel?.id, api])
 
   const characters = useMemo(
     () => filterEntries(state?.characters || {}, query),

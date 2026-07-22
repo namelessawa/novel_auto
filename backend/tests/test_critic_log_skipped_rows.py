@@ -25,10 +25,9 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-import pytest
 
-from agents.orchestrator import _append_critic_log
-from agents.narrator_agent import NarratorOutput
+from agents.orchestrator import _append_critic_log  # noqa: E402
+from agents.narrator_agent import NarratorOutput  # noqa: E402
 
 
 def _read_log(data_dir: str) -> list[dict]:

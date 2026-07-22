@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from narrative.creativity_scorer import (
     CreativityScorer,

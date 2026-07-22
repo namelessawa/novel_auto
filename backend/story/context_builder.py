@@ -45,6 +45,20 @@ DEFAULT_SLOT_BUDGETS = {
     "style_contract": 1800,
 }
 
+MAX_CONTEXT_CHARS = 24000
+MAX_CONTEXT_TOKEN_ESTIMATE = 12000
+MAX_IMMUTABLE_RULES = 80
+MAX_IMMUTABLE_RULE_CHARS = 1000
+MAX_BIBLE_FREE_TEXT_CHARS = 12000
+MAX_BIBLE_LIST_ITEMS = 100
+
+
+class ContextBudgetExceeded(ValueError):
+    def __init__(self, reason: str, manifest: ContextManifest) -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.manifest = manifest
+
 
 @dataclass(frozen=True)
 class ContextPackage:
@@ -58,12 +72,16 @@ def _json(value: Any) -> str:
 
 
 def _head(text: str, budget: int) -> tuple[str, bool]:
+    if budget <= 0:
+        return "", bool(text)
     if len(text) <= budget:
         return text, False
     return text[: max(0, budget - 16)].rstrip() + "\n…[槽位已截断]", True
 
 
 def _tail(text: str, budget: int) -> tuple[str, bool]:
+    if budget <= 0:
+        return "", bool(text)
     if len(text) <= budget:
         return text, False
     return "[仅保留正文结尾]…\n" + text[-max(0, budget - 16) :], True
@@ -90,7 +108,13 @@ def _duplicate_ratio(text: str, previous: str) -> float:
 
 
 class ContextBuilder:
-    def __init__(self, slot_budgets: dict[str, int] | None = None) -> None:
+    def __init__(
+        self,
+        slot_budgets: dict[str, int] | None = None,
+        *,
+        max_context_chars: int = MAX_CONTEXT_CHARS,
+        max_context_token_estimate: int = MAX_CONTEXT_TOKEN_ESTIMATE,
+    ) -> None:
         self.slot_budgets = dict(DEFAULT_SLOT_BUDGETS)
         if slot_budgets:
             unknown = set(slot_budgets) - set(SLOT_ORDER)
@@ -99,6 +123,10 @@ class ContextBuilder:
             self.slot_budgets.update(
                 {name: max(200, int(value)) for name, value in slot_budgets.items()}
             )
+        self.max_context_chars = max(1000, int(max_context_chars))
+        self.max_context_token_estimate = max(
+            500, int(max_context_token_estimate)
+        )
 
     def build(
         self,
@@ -119,6 +147,13 @@ class ContextBuilder:
         relevant_threads = set(section_goal.target_threads)
 
         bible_text = self._story_bible_text(story_bible)
+        self._validate_story_bible_limits(
+            story_bible,
+            bible_text,
+            novel_id=novel_id,
+            section_id=section_id,
+            canonical_revision=canonical_state.revision,
+        )
         canonical_snapshot = self._canonical_snapshot(
             canonical_state,
             relevant_ids=relevant_ids,
@@ -165,6 +200,7 @@ class ContextBuilder:
 
         slots: dict[str, str] = {}
         truncated: dict[str, bool] = {}
+        effective_budgets = dict(self.slot_budgets)
         for name in SLOT_ORDER:
             raw = raw_slots[name]
             if name == "previous_prose_tail":
@@ -181,6 +217,61 @@ class ContextBuilder:
                 rendered, was_truncated = _head(raw, self.slot_budgets[name])
             slots[name] = rendered
             truncated[name] = was_truncated
+
+        hard_char_cap = min(
+            self.max_context_chars,
+            self.max_context_token_estimate * 2,
+        )
+        mandatory = {"story_bible", "canonical_state", "section_goal"}
+        mandatory_prompt = self._render_prompt(
+            {name: slots[name] if name in mandatory else "" for name in SLOT_ORDER}
+        )
+        if len(mandatory_prompt) > hard_char_cap:
+            self._raise_budget(
+                novel_id=novel_id,
+                section_id=section_id,
+                story_bible_revision=story_bible.revision,
+                canonical_revision=canonical_state.revision,
+                total_chars=len(mandatory_prompt),
+                reason=(
+                    "StoryBible、CanonicalState 与 SectionGoal 的必要上下文超过全局硬上限，"
+                    "请缩小权威数据后重试。"
+                ),
+            )
+
+        shrink_order = (
+            "relevant_long_term_memories",
+            "recent_section_summaries",
+            "previous_prose_tail",
+            "active_story_threads",
+            "character_knowledge",
+            "reader_knowledge",
+            "style_contract",
+        )
+        prompt = self._render_prompt(slots)
+        for name in shrink_order:
+            if len(prompt) <= hard_char_cap:
+                break
+            excess = len(prompt) - hard_char_cap
+            current_budget = len(slots[name])
+            next_budget = max(0, current_budget - excess)
+            if name == "previous_prose_tail":
+                rendered, was_truncated = _tail(raw_slots[name], next_budget)
+            else:
+                rendered, was_truncated = _head(raw_slots[name], next_budget)
+            slots[name] = rendered
+            truncated[name] = truncated[name] or was_truncated
+            effective_budgets[name] = next_budget
+            prompt = self._render_prompt(slots)
+        if len(prompt) > hard_char_cap:
+            self._raise_budget(
+                novel_id=novel_id,
+                section_id=section_id,
+                story_bible_revision=story_bible.revision,
+                canonical_revision=canonical_state.revision,
+                total_chars=len(prompt),
+                reason="上下文无法在保留三项权威槽位的前提下收缩到全局硬上限。",
+            )
 
         manifests: list[ContextSlotManifest] = []
         previous_rendered = ""
@@ -204,7 +295,7 @@ class ContextBuilder:
                     name=name,
                     char_count=len(rendered),
                     token_estimate=_token_estimate(rendered),
-                    budget_chars=self.slot_budgets[name],
+                    budget_chars=effective_budgets[name],
                     truncated=truncated[name],
                     reference_ids=references,
                     selected_count=selected_count,
@@ -218,10 +309,6 @@ class ContextBuilder:
             )
             previous_rendered += "\n" + rendered
 
-        prompt = "\n\n".join(
-            f"## {index}. {name}\n{slots[name] or '（空）'}"
-            for index, name in enumerate(SLOT_ORDER, start=1)
-        )
         manifest = ContextManifest(
             novel_id=novel_id,
             section_id=section_id,
@@ -229,9 +316,127 @@ class ContextBuilder:
             canonical_state_revision=canonical_state.revision,
             total_chars=len(prompt),
             total_token_estimate=_token_estimate(prompt),
+            max_context_chars=self.max_context_chars,
+            max_context_token_estimate=self.max_context_token_estimate,
+            budget_utilization=round(len(prompt) / hard_char_cap, 4),
             slots=manifests,
         )
         return ContextPackage(prompt=prompt, slots=slots, manifest=manifest)
+
+    @staticmethod
+    def _render_prompt(slots: dict[str, str]) -> str:
+        return "\n\n".join(
+            f"## {index}. {name}\n{slots[name] or '（空）'}"
+            for index, name in enumerate(SLOT_ORDER, start=1)
+        )
+
+    def _validate_story_bible_limits(
+        self,
+        bible: StoryBible,
+        bible_text: str,
+        *,
+        novel_id: str,
+        section_id: str,
+        canonical_revision: int,
+    ) -> None:
+        rules = list(
+            dict.fromkeys(bible.immutable_world_rules + bible.forbidden_deviations)
+        )
+        reason = ""
+        list_fields = {
+            "reference_preferences": bible.reference_preferences,
+            "immutable_world_rules": bible.immutable_world_rules,
+            "forbidden_deviations": bible.forbidden_deviations,
+            "protagonist_contracts": bible.protagonist_contracts,
+            "main_conflicts": bible.main_conflicts,
+        }
+        oversized_lists = [
+            name for name, values in list_fields.items() if len(values) > MAX_BIBLE_LIST_ITEMS
+        ]
+        free_text_fields = {
+            "title": bible.title,
+            "source_seed": bible.source_seed,
+            "theme_key": bible.theme_key,
+            "positioning": bible.positioning,
+            "premise": bible.premise,
+            "theme": bible.theme,
+            "central_question": bible.central_question,
+            "genre": bible.genre,
+            "setting_summary": bible.setting_summary,
+            "ending_direction": bible.ending_direction,
+        }
+        oversized_text = [
+            name
+            for name, value in free_text_fields.items()
+            if len(value) > MAX_BIBLE_FREE_TEXT_CHARS
+        ]
+        if oversized_lists:
+            reason = (
+                f"StoryBible 列表 {', '.join(oversized_lists)} 超过单字段 "
+                f"{MAX_BIBLE_LIST_ITEMS} 项上限。"
+            )
+        elif oversized_text:
+            reason = (
+                f"StoryBible 自由文本 {', '.join(oversized_text)} 超过单字段 "
+                f"{MAX_BIBLE_FREE_TEXT_CHARS} 字上限。"
+            )
+        elif len(_json(bible.style_contract)) > MAX_BIBLE_FREE_TEXT_CHARS:
+            reason = (
+                f"StoryBible style_contract 超过 {MAX_BIBLE_FREE_TEXT_CHARS} 字上限。"
+            )
+        elif len(rules) > MAX_IMMUTABLE_RULES:
+            reason = f"不可变规则与禁止偏移共 {len(rules)} 条，超过上限 {MAX_IMMUTABLE_RULES}。"
+        else:
+            oversized = [rule for rule in rules if len(rule) > MAX_IMMUTABLE_RULE_CHARS]
+            if oversized:
+                reason = (
+                    "单条不可变规则超过 "
+                    f"{MAX_IMMUTABLE_RULE_CHARS} 字，系统拒绝静默截断。"
+                )
+        protected_len = bible_text.find("\n【可选创作方向】")
+        protected_len = len(bible_text) if protected_len < 0 else protected_len
+        if not reason and protected_len > self.slot_budgets["story_bible"]:
+            reason = (
+                f"StoryBible 受保护规则区为 {protected_len} 字，超过槽位硬上限 "
+                f"{self.slot_budgets['story_bible']}；不可变规则不会被静默截断。"
+            )
+        if reason:
+            self._raise_budget(
+                novel_id=novel_id,
+                section_id=section_id,
+                story_bible_revision=bible.revision,
+                canonical_revision=canonical_revision,
+                total_chars=len(bible_text),
+                reason=reason,
+            )
+
+    def _raise_budget(
+        self,
+        *,
+        novel_id: str,
+        section_id: str,
+        story_bible_revision: int,
+        canonical_revision: int,
+        total_chars: int,
+        reason: str,
+    ) -> None:
+        hard_char_cap = min(
+            self.max_context_chars,
+            self.max_context_token_estimate * 2,
+        )
+        manifest = ContextManifest(
+            novel_id=novel_id,
+            section_id=section_id,
+            story_bible_revision=story_bible_revision,
+            canonical_state_revision=canonical_revision,
+            total_chars=total_chars,
+            total_token_estimate=math.ceil(total_chars / 2),
+            max_context_chars=self.max_context_chars,
+            max_context_token_estimate=self.max_context_token_estimate,
+            budget_utilization=round(total_chars / hard_char_cap, 4),
+            rejected_reason=reason,
+        )
+        raise ContextBudgetExceeded(reason, manifest)
 
     @staticmethod
     def _story_bible_text(bible: StoryBible) -> str:
@@ -243,6 +448,7 @@ class ContextBuilder:
             "protagonist_contracts": bible.protagonist_contracts,
         }
         optional = {
+            "title": bible.title,
             "premise": bible.premise,
             "genre": bible.genre,
             "setting_summary": bible.setting_summary,
@@ -336,7 +542,12 @@ class ContextBuilder:
 
 __all__ = [
     "ContextBuilder",
+    "ContextBudgetExceeded",
     "ContextPackage",
     "DEFAULT_SLOT_BUDGETS",
+    "MAX_CONTEXT_CHARS",
+    "MAX_CONTEXT_TOKEN_ESTIMATE",
+    "MAX_BIBLE_FREE_TEXT_CHARS",
+    "MAX_BIBLE_LIST_ITEMS",
     "SLOT_ORDER",
 ]

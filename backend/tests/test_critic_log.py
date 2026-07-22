@@ -13,9 +13,7 @@ append 到 `{data_dir}/critic_log.jsonl`. 本 test 锁住:
 from __future__ import annotations
 
 import json
-import os
 
-import pytest
 
 from agents.narrator_agent import NarratorOutput
 from agents.orchestrator import _append_critic_log

@@ -8,13 +8,15 @@
 
 ## 权威层级
 
-1. `StoryBible` 是最高创作契约：主题、故事前提、世界不可变规则、禁区、主角契约、主冲突、结局方向和风格契约。
+1. `StoryBible` 是最高创作契约：用户原始 seed、主题 preset key、定位、参考偏好、故事前提、世界不可变规则、禁区、主角契约、主冲突、结局方向和风格契约。每个引导字段记录 `user_input`、`preset_derived`、`llm_inferred` 或 `legacy_inferred` 来源。
 2. `CanonicalState` 是唯一当前可变事实：时间、角色、位置、物品、关系、读者/角色知识、情节位置和最近场景。
 3. `StoryThread` 管理谜团、冲突、承诺、威胁和目标的生命周期；推进或解决必须附带正文证据。
 4. `MemoryRecord` 用于检索历史，不覆盖 CanonicalState。每条记忆都有类型、规范状态、实体、来源引用、证据、重要度和创建修订号。
 5. 知识图谱、旧事实账本、摘要树和模拟状态均为派生或迁移来源，不拥有最终写权。
 
-StoryBible 的 PUT 使用 `expected_revision` 乐观并发控制；保存后标记为用户确认。Writer 的状态增量若指向 StoryBible、违反不可变世界规则或禁区，会被拒绝。
+StoryBible 的 PUT 使用 `expected_revision` 乐观并发控制；保存后标记为用户确认。新 author 作品在启动任何 bootstrap LLM 任务之前同步持久化原始输入，因此 bootstrap 失败不会丢失 seed，重试也不能覆盖已经确认的输入。旧作品只能从旧文件中的显式 seed 字段推断并标记 `legacy_inferred`；迁移器不读取 `bootstrap.env` 猜 seed。
+
+Author 风格只有一个权威来源：`StoryBible.style_contract`。preset key、version、prompt hash、positioning 和 references 一并提升 Bible revision。旧 TickState style preset/anchors 只属于 simulation 运行数据，不能反向覆盖 StoryBible。
 
 ## 生成与提交主链
 
@@ -33,12 +35,15 @@ sequenceDiagram
         V->>W: 仅包含违规与修复提示的定向请求
         W->>V: 修复后的正文补丁
     end
-    V->>TX: 写入 validated/committing 目标快照
+    V->>TX: 写入 validated/committing 目标与基线快照
+    TX->>TX: 重新读取并核对 StoryBible revision
     TX->>C: 幂等提交正文、CanonicalState、Threads、Memory
     C->>TX: 标记 committed
 ```
 
-每次生成默认一次 Writer 调用，校验失败时最多追加一次修复调用。修复模型只能改变正文；状态增量始终采用第一次校验得到的 `validated_delta`，避免修复响应重新注入高风险状态。第二次仍失败则事务进入 `rejected`，不产生正式章节或权威状态变化。
+每次生成默认一次 Writer 调用，校验失败时最多追加一次修复调用。修复模型只能改变正文，结构化 StateDelta 和故事线提案保持原候选不变；修复后使用新正文重新校验每一条原始 StateDelta 的原 evidence，而不是信任第一次报告。第二次仍失败则事务进入 `rejected`，不产生正式章节或权威状态变化。
+
+正式写入前会在 StoryBible 文件锁内重新读取 revision。若与事务记录不一致，事务进入 `stale_context` 并写入 `STORY_BIBLE_REVISION_STALE`；正文、CanonicalState、Threads 和 Memory 均不提交。恢复 `validated/committing` journal 时执行同一检查，已经发生的目标快照写入只有在仍精确等于该事务目标时才会回滚到基线，避免覆盖后续合法 revision。
 
 十个上下文槽有独立字符预算：
 
@@ -53,7 +58,9 @@ sequenceDiagram
 9. `relevant_long_term_memories`
 10. `style_contract`
 
-`context_manifest.json` 只记录各槽字符数、token 估算、预算、是否截断、引用 ID、选择/省略数量和重复率；API 不返回 prompt、候选正文或事务目标快照。
+除槽位预算外，ContextBuilder 还执行 `MAX_CONTEXT_CHARS=24000` 和 `MAX_CONTEXT_TOKEN_ESTIMATE=12000` 全局硬预算。StoryBible、CanonicalState 和 SectionGoal 必须保留；可选槽按确定顺序收缩。不可变规则先去重，规则总数、单条长度、其他 Bible 列表项数和自由文本长度均有确定上限；规则绝不借助 LLM 摘要或静默截断，无法安全收缩时拒绝生成。
+
+`context_manifest.json` 只记录各槽字符数、token 估算、全局上限、占用率、拒绝原因、是否截断、引用 ID、选择/省略数量和重复率；API 不返回 prompt、候选正文或事务目标快照。
 
 ## 确定性校验
 
@@ -61,12 +68,13 @@ Validator 在任何权威写入前检查：
 
 - StoryBible 越界、禁区和主题偏离；
 - 不存在的角色、死亡角色复活及世界规则中的禁止复活；
+- StateDelta evidence 非空且可在正文定位，路径与目标类型兼容；每条 operation 独立判定，违规项不会混入 `validated_delta`；
 - 位置跳跃、物品归属与转移；
 - 角色知识来源、读者已知信息的重复揭示；
-- 故事线证据、重复开启和非法解决；
+- 故事线重复开启、未知/已关闭线程推进、推进证据、解决要求和来源字段覆盖；推进采用有限字段合并，解决后保留原 description、origin refs 和 opened revision；
 - StateDelta 路径和操作合法性。
 
-模拟模式可携带 `simulation_projection:` 类型化来源，作为位置迁移或故事线证据，但仍不能绕过 Bible、身份、路径和其他安全检查。
+模拟模式的类型化投影必须先从正文提取可定位证据；找不到证据的 operation 同样被逐项排除。simulation 只能绕过其可信投影已经表达的位置移动措辞检查，不能绕过 Bible、身份、证据、路径和类型检查。
 
 ## 持久化、恢复与迁移
 

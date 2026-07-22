@@ -15,7 +15,6 @@ character_arc_tracker / showrunner; narrative_critic 已抽出私有 helper)。
 
 from __future__ import annotations
 
-import pytest
 
 from nf_core.json_utils import strip_code_fence
 

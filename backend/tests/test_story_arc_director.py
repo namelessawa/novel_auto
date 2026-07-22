@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from agents.story_arc_director import (
-    EXPECTED_INTENSITY_CURVE,
     FLAT_PACING_THRESHOLD,
     HIGH_PACING_FATIGUE,
     PACING_HISTORY_MAX,

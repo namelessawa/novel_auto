@@ -14,8 +14,6 @@ import pytest
 from quality_metrics.judge import (
     PAIRWISE_VERSION,
     RUBRIC_VERSION,
-    PairwiseResult,
-    RubricResult,
     pairwise_judge,
     rubric_judge,
 )

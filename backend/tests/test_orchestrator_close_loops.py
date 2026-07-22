@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.event_injector import EventInjector
@@ -144,7 +143,7 @@ def test_showrunner_close_loops_actually_drains_pool(
         asyncio.run(orch.run_tick())
 
     # 关键断言: loop_0 / loop_3 已不在池中
-    remaining_ids = {l.id for l in ts.get_open_loops()}
+    remaining_ids = {loop.id for loop in ts.get_open_loops()}
     assert "loop_0" not in remaining_ids, "loop_0 必须被 Showrunner 关闭"
     assert "loop_3" not in remaining_ids, "loop_3 必须被 Showrunner 关闭"
     # 其余 4 个不该动
@@ -175,7 +174,7 @@ def test_showrunner_close_ignores_unknown_ids(
     for _ in range(5):
         asyncio.run(orch.run_tick())
 
-    remaining_ids = {l.id for l in ts.get_open_loops()}
+    remaining_ids = {loop.id for loop in ts.get_open_loops()}
     # loop_1 关闭, 不存在 ID 静默忽略 → 不抛
     assert "loop_1" not in remaining_ids
     assert len(remaining_ids) == 5
@@ -237,4 +236,6 @@ def test_showrunner_assess_raises_pool_unchanged(tmp_path, mock_llm) -> None:
         asyncio.run(orch.run_tick())
     # 关键 invariant: 池子状态不变
     assert len(ts.get_open_loops()) == 6
-    assert {l.id for l in ts.get_open_loops()} == {f"loop_{i}" for i in range(6)}
+    assert {loop.id for loop in ts.get_open_loops()} == {
+        f"loop_{i}" for i in range(6)
+    }

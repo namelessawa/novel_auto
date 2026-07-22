@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 
-import pytest
 
 from narrative.safety_filter import (
     DEFAULT_RULES,

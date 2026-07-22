@@ -40,6 +40,10 @@ import { showToast } from '../utils/toast'
 
 // v2.47 — Dashboard 主 Shell. App.jsx 登录后渲染 <DashboardShell />.
 
+export function shouldFetchTickStatus(mode, force = false) {
+  return Boolean(force || mode === 'simulation')
+}
+
 export default function DashboardShell() {
   return (
     <ThemeProvider>
@@ -99,7 +103,7 @@ function DashboardShellInner() {
   }, [hasToken])
 
   const refreshTickStatus = useCallback(async (force = false) => {
-    if (!hasToken || (!force && generationMode?.mode !== 'simulation')) return
+    if (!hasToken || !shouldFetchTickStatus(generationMode?.mode, force)) return
     try {
       const data = await fetchTickStatus()
       setTickStatus(data)
@@ -146,7 +150,7 @@ function DashboardShellInner() {
         refreshStats()
         refreshNovels()
         refreshGenerationMode()
-        if (generationMode?.mode === 'simulation') refreshTickStatus()
+        if (shouldFetchTickStatus(generationMode?.mode)) refreshTickStatus()
         refreshTasks()
       }
     }

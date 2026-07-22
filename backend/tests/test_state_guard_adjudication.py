@@ -204,7 +204,9 @@ def test_provider_reported_budget_overrun_retains_failure_checkpoint(
             total_tokens=100_001,
         ),
     )
-    create = lambda **kwargs: response
+    def create(**kwargs):
+        return response
+
     fake_client = SimpleNamespace(
         chat=SimpleNamespace(completions=SimpleNamespace(create=create))
     )

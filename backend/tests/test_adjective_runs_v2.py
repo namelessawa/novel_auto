@@ -26,7 +26,7 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-from agents.quality_checks import check_adjective_runs
+from agents.quality_checks import check_adjective_runs  # noqa: E402
 
 
 def _has_d2(text: str) -> bool:

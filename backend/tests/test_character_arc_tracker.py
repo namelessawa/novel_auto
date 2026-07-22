@@ -5,13 +5,10 @@ from __future__ import annotations
 import pytest
 
 from agents.character_arc_tracker import (
-    ARC_STAGE_ORDER,
-    EXPECTED_PROGRESS_PER_STAGE,
     STALLED_TICKS,
     CharacterArcTracker,
 )
 from memory_system.models import (
-    CharacterAction,
     CharacterProfile,
     CharacterState,
 )

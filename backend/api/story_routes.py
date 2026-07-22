@@ -29,7 +29,7 @@ from story.persistence import (
     StoryThreadStore,
 )
 from story.runtime import drop_author_runtime, get_author_runtime
-from story.service import GenerationRejected
+from story.service import GenerationRejected, StaleStoryBibleError
 from tasks.task_manager import (
     ProgressUpdater,
     TaskConflict,
@@ -75,6 +75,9 @@ def _public_transaction(transaction: GenerationTransaction) -> dict[str, Any]:
         mode="json",
         exclude={
             "candidate",
+            "base_canonical_state",
+            "base_story_threads",
+            "base_memory_repository",
             "target_canonical_state",
             "target_story_threads",
             "target_memory_repository",
@@ -303,6 +306,11 @@ def _make_author_executor(goal: SectionGoal):
         updater.set(tick_count=1, last_message="Writer 生成并执行统一一致性校验")
         try:
             transaction = await runtime.service.run(goal, request_id=updater.task_id)
+        except StaleStoryBibleError as exc:
+            updater.set(last_message=exc.transaction.error)
+            raise RuntimeError(
+                "STORY_BIBLE_REVISION_STALE: " + exc.transaction.error
+            ) from exc
         except GenerationRejected as exc:
             codes = [
                 item.code

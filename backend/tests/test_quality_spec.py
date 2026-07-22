@@ -23,7 +23,6 @@ from agents.quality_checks import (
     summarize_triggers,
 )
 from agents.quality_spec import (
-    AI_CLICHE_BLACKLIST,
     HIGH_SEVERITY_CODES,
     RULES_BY_CODE,
     decide_action,

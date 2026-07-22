@@ -12,7 +12,25 @@ import {
 } from '../../services/api'
 import { showToast } from '../../utils/toast'
 
-export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange }) {
+const DEFAULT_API = {
+  fetchAuthorSectionStatus,
+  fetchCanonicalState,
+  fetchContextManifest,
+  fetchGenerationMode,
+  fetchStoryBible,
+  fetchStoryThreads,
+  generateAuthorSection,
+  listTickSections,
+  updateGenerationMode,
+}
+
+export default function AuthorStudioView({
+  novel,
+  onOpenSimulation,
+  onModeChange,
+  api = DEFAULT_API,
+  notify = showToast,
+}) {
   const [bible, setBible] = useState(null)
   const [canonical, setCanonical] = useState(null)
   const [threads, setThreads] = useState({})
@@ -40,11 +58,11 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
     setError('')
     try {
       const [bibleData, stateData, threadData, modeData, sectionData] = await Promise.all([
-        fetchStoryBible(novel.id),
-        fetchCanonicalState(novel.id),
-        fetchStoryThreads(novel.id),
-        fetchGenerationMode(novel.id),
-        listTickSections(novel.id),
+        api.fetchStoryBible(novel.id),
+        api.fetchCanonicalState(novel.id),
+        api.fetchStoryThreads(novel.id),
+        api.fetchGenerationMode(novel.id),
+        api.listTickSections(novel.id),
       ])
       setBible(bibleData.story_bible)
       setCanonical(stateData.canonical_state)
@@ -60,7 +78,7 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
     } finally {
       setLoading(false)
     }
-  }, [novel?.id])
+  }, [novel?.id, api])
 
   useEffect(() => {
     setTaskId('')
@@ -75,22 +93,22 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
     let timer = null
     async function poll() {
       try {
-        const status = await fetchAuthorSectionStatus(novel.id, taskId)
+        const status = await api.fetchAuthorSectionStatus(novel.id, taskId)
         if (cancelled) return
         setGeneration(status)
         const taskStatus = status.task?.status
         const phase = status.transaction?.phase
         const terminal = ['completed', 'failed', 'cancelled'].includes(taskStatus)
-          || ['committed', 'rejected', 'failed'].includes(phase)
+          || ['committed', 'rejected', 'failed', 'stale_context'].includes(phase)
         if (!terminal) {
           timer = window.setTimeout(poll, 900)
           return
         }
         if (phase === 'committed' || status.task?.committed) {
-          showToast('正文与权威状态已提交', 'success')
+          notify('正文与权威状态已提交', 'success')
         }
         const [manifestData] = await Promise.all([
-          fetchContextManifest(novel.id).catch(() => null),
+          api.fetchContextManifest(novel.id).catch(() => null),
           load(),
         ])
         if (!cancelled && manifestData) setManifest(manifestData)
@@ -103,7 +121,7 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
       cancelled = true
       if (timer) window.clearTimeout(timer)
     }
-  }, [taskId, novel?.id, load])
+  }, [taskId, novel?.id, load, api, notify])
 
   const characters = Object.entries(canonical?.characters || {})
   const locations = useMemo(() => {
@@ -135,10 +153,10 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
     setModeBusy(true)
     setError('')
     try {
-      const updated = await updateGenerationMode(novel.id, mode.revision, nextMode)
+      const updated = await api.updateGenerationMode(novel.id, mode.revision, nextMode)
       setMode((current) => ({ ...current, ...updated }))
       onModeChange?.(updated)
-      showToast(nextMode === 'author' ? '已切换为作者模式' : '实验性世界模拟已启用', 'success')
+      notify(nextMode === 'author' ? '已切换为作者模式' : '实验性世界模拟已启用', 'success')
     } catch (err) {
       setError(
         err.code === 'REVISION_CONFLICT'
@@ -158,7 +176,7 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
     setError('')
     setGeneration(null)
     try {
-      const task = await generateAuthorSection(novel.id, {
+      const task = await api.generateAuthorSection(novel.id, {
         objective: goal.objective.trim(),
         viewpoint_character_id: goal.viewpoint_character_id,
         location_id: goal.location_id,
@@ -168,7 +186,7 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
       })
       setTaskId(task.id)
       setGeneration({ task, transaction: null, section: null })
-      showToast('章节事务已入队', 'success')
+      notify('章节事务已入队', 'success')
     } catch (err) {
       setError(err.message || '章节生成失败')
     }
@@ -299,6 +317,11 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
             <div className="dc-au-card-number">02 · TRANSACTION</div>
             <h2>生成事务</h2>
             <TransactionTimeline generation={generation} />
+            {generation?.transaction?.error_code === 'STORY_BIBLE_REVISION_STALE' && (
+              <div className="dc-au-notice is-error" data-error-code="STORY_BIBLE_REVISION_STALE">
+                创作圣经在生成期间发生了变化。本次候选基于旧版本，未提交，请重新生成。
+              </div>
+            )}
             {report && <ValidationPanel report={report} repaired={generation?.transaction?.repair_performed || generation?.task?.repair_performed} />}
             {!generation && (
               <div className="dc-au-transaction-empty">
@@ -328,6 +351,17 @@ export default function AuthorStudioView({ novel, onOpenSimulation, onModeChange
         </button>
         {debugOpen && (
           <div className="dc-au-slot-list">
+            {manifest && (
+              <div className="dc-au-manifest-total">
+                <span>TOTAL</span>
+                <strong>{manifest.total_chars} / {manifest.max_context_chars || '—'} chars</strong>
+                <em>~{manifest.total_token_estimate} / {manifest.max_context_token_estimate || '—'} tokens</em>
+                <i>{Math.round((manifest.budget_utilization || 0) * 100)}%</i>
+              </div>
+            )}
+            {manifest?.rejected_reason && (
+              <p className="dc-au-notice is-error">{manifest.rejected_reason}</p>
+            )}
             {(manifest?.slots || []).map((slot, index) => (
               <div key={slot.name}>
                 <span>{String(index + 1).padStart(2, '0')}</span>

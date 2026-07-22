@@ -12,6 +12,7 @@ from story.models import (
     SectionGoal,
     StateDeltaOperation,
     StoryBible,
+    StoryThread,
     StoryThreadRepository,
     ThreadChange,
     ValidationReport,
@@ -33,6 +34,24 @@ ALLOWED_DELTA_ROOTS = {
     "plot_position",
     "last_scene_state",
     "canonical_facts",
+}
+
+BLOCKING_DELTA_CODES = {
+    "STORY_BIBLE_IMMUTABLE",
+    "DELTA_EVIDENCE_MISSING",
+    "DELTA_NARRATIVE_MISMATCH",
+    "DELTA_PATH_FORBIDDEN",
+    "DELTA_PATH_INVALID",
+    "DELTA_TYPE_INCOMPATIBLE",
+    "CHARACTER_UNKNOWN",
+    "DEAD_CHARACTER_REVIVAL",
+    "LOCATION_UNKNOWN",
+    "LOCATION_JUMP",
+    "ITEM_UNKNOWN",
+    "ITEM_OWNER_CONFLICT",
+    "ITEM_TARGET_UNKNOWN",
+    "ITEM_TRANSFER_UNNARRATED",
+    "KNOWLEDGE_CHARACTER_UNKNOWN",
 }
 
 
@@ -98,8 +117,11 @@ class StoryValidator:
         violations: list[ValidationViolation] = []
         narrative = candidate.narrative_text
         locations = _world_location_ids(state)
+        validated_delta: list[StateDeltaOperation] = []
+        preview = state.model_dump(mode="python")
 
         for operation in candidate.state_delta:
+            start = len(violations)
             parts = _segments(operation.path)
             root = parts[0] if parts else ""
             if root in {"story_bible", "theme", "immutable_world_rules"}:
@@ -129,28 +151,30 @@ class StoryValidator:
                 state=state,
                 locations=locations,
                 violations=violations,
-                trusted_projection=(
-                    source_mode == "simulation"
-                    and operation.evidence.startswith("simulation_projection:")
-                ),
+                trusted_projection=(source_mode == "simulation"),
             )
+            new_codes = {item.code for item in violations[start:]}
+            if new_codes & BLOCKING_DELTA_CODES:
+                continue
+            try:
+                self._apply_one(preview, parts, operation)
+            except (TypeError, ValueError) as exc:
+                violations.append(
+                    self._violation(
+                        "DELTA_TYPE_INCOMPATIBLE",
+                        f"状态操作与目标字段不兼容: {exc}",
+                        "high",
+                        operation,
+                    )
+                )
+                continue
+            validated_delta.append(operation)
 
-        self._validate_threads(candidate, threads, narrative, violations)
+        thread_changes = self._validate_threads(
+            candidate, threads, bible, narrative, violations
+        )
         self._validate_bible(bible, goal, narrative, candidate, violations)
         self._validate_reader_boundary(state, narrative, violations)
-
-        # Only structurally valid operations are exposed as validated_delta.
-        rejected_paths = {
-            item.path
-            for item in violations
-            if item.severity == "high" and item.path
-        }
-        validated_delta = [
-            operation
-            for operation in candidate.state_delta
-            if operation.path not in rejected_paths
-        ]
-        thread_changes = self._thread_changes(candidate)
         severity = _max_severity(violations)
         accepted = not any(item.severity == "high" for item in violations)
         return ValidationReport(
@@ -187,20 +211,41 @@ class StoryValidator:
         updated = copy.deepcopy(repository.model_dump(mode="python"))
         threads = updated["threads"]
         for change in changes:
-            thread = change.thread.model_copy(
-                update={"updated_at_revision": target_revision}
-            )
             if change.action == "opened":
-                thread = thread.model_copy(
+                thread = change.thread.model_copy(
                     update={
                         "status": "open",
                         "opened_at_revision": target_revision,
+                        "updated_at_revision": target_revision,
                     }
                 )
-            elif change.action == "advanced":
-                thread = thread.model_copy(update={"status": "advancing"})
-            elif change.action == "resolved":
-                thread = thread.model_copy(update={"status": "resolved"})
+            else:
+                existing = StoryThread.model_validate(threads[change.thread.id])
+                evidence = list(
+                    dict.fromkeys(existing.evidence + change.thread.evidence)
+                )
+                involved = list(
+                    dict.fromkeys(
+                        existing.involved_characters
+                        + change.thread.involved_characters
+                    )
+                )
+                updates: dict[str, Any] = {
+                    "status": "advancing" if change.action == "advanced" else "resolved",
+                    "evidence": evidence,
+                    "involved_characters": involved,
+                    "updated_at_revision": target_revision,
+                }
+                if "urgency" in change.thread.model_fields_set:
+                    updates["urgency"] = change.thread.urgency
+                if change.action == "resolved":
+                    updates["resolution_evidence"] = list(
+                        dict.fromkeys(
+                            existing.resolution_evidence
+                            + change.thread.resolution_evidence
+                        )
+                    )
+                thread = existing.model_copy(update=updates)
             threads[thread.id] = thread.model_dump(mode="python")
         updated["revision"] = repository.revision + 1
         updated["updated_at"] = utc_now()
@@ -217,9 +262,7 @@ class StoryValidator:
         violations: list[ValidationViolation],
         trusted_projection: bool = False,
     ) -> None:
-        if trusted_projection:
-            pass
-        elif not operation.evidence.strip():
+        if not operation.evidence.strip():
             violations.append(
                 self._violation(
                     "DELTA_EVIDENCE_MISSING",
@@ -239,6 +282,17 @@ class StoryValidator:
                     repair_hint="删除无依据变化或在正文中写明变化过程",
                 )
             )
+
+        if not self._path_shape_is_valid(parts, operation):
+            violations.append(
+                self._violation(
+                    "DELTA_PATH_INVALID",
+                    f"状态路径层级或操作类型无效: {operation.path}",
+                    "high",
+                    operation,
+                )
+            )
+            return
 
         if parts[0] == "characters" and len(parts) >= 2:
             character_id = parts[1]
@@ -306,7 +360,13 @@ class StoryValidator:
 
         if parts[0] == "items" and len(parts) >= 2:
             item_id = parts[1]
-            if item_id not in state.items and operation.op not in {"set", "append"}:
+            creates_item = (
+                item_id not in state.items
+                and operation.op == "set"
+                and len(parts) == 2
+                and isinstance(operation.value, dict)
+            )
+            if item_id not in state.items and not creates_item:
                 violations.append(
                     self._violation(
                         "ITEM_UNKNOWN",
@@ -366,21 +426,86 @@ class StoryValidator:
         self,
         candidate: WriterCandidate,
         current: StoryThreadRepository,
+        bible: StoryBible,
         narrative: str,
         violations: list[ValidationViolation],
-    ) -> None:
+    ) -> list[ThreadChange]:
+        valid: list[ThreadChange] = []
+        opened_ids: set[str] = set()
         for thread in candidate.threads_opened:
+            start = len(violations)
             existing = current.threads.get(thread.id)
-            if existing and existing.status == "resolved":
+            if thread.id in opened_ids or (existing and existing.status not in {"resolved", "abandoned"}):
                 violations.append(
                     ValidationViolation(
-                        code="RESOLVED_THREAD_REOPENED",
-                        message=f"已解决故事线 {thread.id} 不能作为新谜团重开",
+                        code="THREAD_DUPLICATE_OPEN",
+                        message=f"活动故事线 {thread.id} 不能重复开启",
                         severity="high",
                         path=f"/threads/{thread.id}",
                     )
                 )
+            elif existing:
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_ALREADY_CLOSED",
+                        message=f"已关闭故事线 {thread.id} 不能重开",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                    )
+                )
+                if existing.status == "resolved":
+                    violations.append(
+                        ValidationViolation(
+                            code="RESOLVED_THREAD_REOPENED",
+                            message=f"已解决故事线 {thread.id} 不能作为新谜团重开",
+                            severity="high",
+                            path=f"/threads/{thread.id}",
+                        )
+                    )
+            self._validate_main_conflict_abandon(thread, bible, violations)
+            opened_ids.add(thread.id)
+            if len(violations) == start:
+                valid.append(ThreadChange(action="opened", thread=thread))
+
+        for thread in candidate.threads_advanced:
+            start = len(violations)
+            existing = current.threads.get(thread.id)
+            if existing is None:
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_ADVANCE_UNKNOWN",
+                        message=f"不能推进不存在的故事线 {thread.id}",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                    )
+                )
+            elif existing.status in {"resolved", "abandoned"}:
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_ALREADY_CLOSED",
+                        message=f"已关闭故事线 {thread.id} 不能继续推进",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                    )
+                )
+            else:
+                self._validate_thread_immutable_fields(thread, existing, violations)
+            evidence = [item.strip() for item in thread.evidence if item.strip()]
+            if not evidence or not any(_contains_evidence(narrative, item) for item in evidence):
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_ADVANCE_NO_EVIDENCE",
+                        message=f"故事线 {thread.id} 缺少可定位的推进证据",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                    )
+                )
+            self._validate_main_conflict_abandon(thread, bible, violations)
+            if len(violations) == start:
+                valid.append(ThreadChange(action="advanced", thread=thread))
+
         for thread in candidate.threads_resolved:
+            start = len(violations)
             existing = current.threads.get(thread.id)
             if existing is None:
                 violations.append(
@@ -392,6 +517,16 @@ class StoryValidator:
                     )
                 )
                 continue
+            if existing.status in {"resolved", "abandoned"}:
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_ALREADY_CLOSED",
+                        message=f"故事线 {thread.id} 已经关闭",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                    )
+                )
+            self._validate_thread_immutable_fields(thread, existing, violations)
             evidence = [item.strip() for item in thread.resolution_evidence if item.strip()]
             if not evidence or not any(_contains_evidence(narrative, item) for item in evidence):
                 violations.append(
@@ -403,6 +538,97 @@ class StoryValidator:
                         repair_hint="保留为 advancing，或补充明确兑现证据",
                     )
                 )
+            unmet = [
+                requirement
+                for requirement in existing.resolution_requirements
+                if not _contains_evidence(narrative, requirement)
+            ]
+            if unmet:
+                violations.append(
+                    ValidationViolation(
+                        code="THREAD_REQUIREMENTS_UNMET",
+                        message=f"故事线 {thread.id} 尚未满足兑现要求: {'；'.join(unmet)}",
+                        severity="high",
+                        path=f"/threads/{thread.id}",
+                    )
+                )
+            self._validate_main_conflict_abandon(thread, bible, violations)
+            if len(violations) == start:
+                valid.append(ThreadChange(action="resolved", thread=thread))
+        return valid
+
+    @staticmethod
+    def _path_shape_is_valid(
+        parts: list[str], operation: StateDeltaOperation
+    ) -> bool:
+        if not parts:
+            return False
+        root = parts[0]
+        if operation.op == "transfer":
+            return root == "items" and len(parts) in {2, 3}
+        minimum = {
+            "world_time": 1,
+            "world": 2,
+            "characters": 3,
+            "items": 2,
+            "relationships": 2,
+            "character_knowledge": 2,
+            "reader_knowledge": 2,
+            "active_threads": 2,
+            "plot_position": 2,
+            "last_scene_state": 2,
+            "canonical_facts": 2,
+        }.get(root)
+        if minimum is None or len(parts) < minimum:
+            return False
+        if root == "world_time":
+            return len(parts) == 1 and operation.op in {"set", "add"}
+        return True
+
+    @staticmethod
+    def _validate_thread_immutable_fields(
+        proposed: StoryThread,
+        existing: StoryThread,
+        violations: list[ValidationViolation],
+    ) -> None:
+        for field in ("type", "description", "origin_refs", "opened_at_revision", "source"):
+            if field not in proposed.model_fields_set:
+                continue
+            if getattr(proposed, field) == getattr(existing, field):
+                continue
+            violations.append(
+                ValidationViolation(
+                    code="THREAD_FIELD_OVERRIDE_FORBIDDEN",
+                    message=f"故事线 {proposed.id} 的来源字段 {field} 不可由 Writer 覆盖",
+                    severity="high",
+                    path=f"/threads/{proposed.id}",
+                )
+            )
+
+    @staticmethod
+    def _validate_main_conflict_abandon(
+        thread: StoryThread,
+        bible: StoryBible,
+        violations: list[ValidationViolation],
+    ) -> None:
+        if thread.status != "abandoned":
+            return
+        description = thread.description.strip()
+        matches = any(
+            description == conflict.strip()
+            or (description and description in conflict)
+            or (conflict and conflict in description)
+            for conflict in bible.main_conflicts
+        )
+        if matches:
+            violations.append(
+                ValidationViolation(
+                    code="THREAD_MAIN_CONFLICT_ABANDON_FORBIDDEN",
+                    message=f"StoryBible 主冲突对应故事线 {thread.id} 不能由普通输出放弃",
+                    severity="high",
+                    path=f"/threads/{thread.id}",
+                )
+            )
 
     def _validate_bible(
         self,
@@ -534,6 +760,13 @@ class StoryValidator:
             raise ValueError(f"delta parent is not an object: /{'/'.join(parts)}")
         current = parent.get(key)
         if operation.op == "set":
+            if key in parent and not StoryValidator._values_compatible(
+                current, operation.value
+            ):
+                raise TypeError(
+                    f"set cannot replace {type(current).__name__} with "
+                    f"{type(operation.value).__name__}"
+                )
             parent[key] = copy.deepcopy(operation.value)
         elif operation.op == "add":
             if not isinstance(current, (int, float)) or not isinstance(operation.value, (int, float)):
@@ -556,6 +789,24 @@ class StoryValidator:
         else:
             raise ValueError(f"unsupported operation: {operation.op}")
 
+    @staticmethod
+    def _values_compatible(current: Any, proposed: Any) -> bool:
+        """Keep dynamically shaped CanonicalState fields type-stable."""
+
+        if current is None:
+            return True
+        if isinstance(current, bool):
+            return isinstance(proposed, bool)
+        if isinstance(current, (int, float)):
+            return isinstance(proposed, (int, float)) and not isinstance(proposed, bool)
+        if isinstance(current, dict):
+            return isinstance(proposed, dict)
+        if isinstance(current, list):
+            return isinstance(proposed, list)
+        if isinstance(current, str):
+            return isinstance(proposed, str)
+        return isinstance(proposed, type(current))
+
 
 def report_as_repair_prompt(report: ValidationReport, candidate: WriterCandidate) -> str:
     """Minimal repair input: original prose, violations, and preservation facts only."""
@@ -576,8 +827,8 @@ def report_as_repair_prompt(report: ValidationReport, candidate: WriterCandidate
             "violations": violations,
             "must_preserve": {
                 "section_summary": candidate.section_summary,
-                "unrelated_state_delta": [
-                    item.model_dump(mode="json") for item in report.validated_delta
+                "original_state_delta_for_revalidation": [
+                    item.model_dump(mode="json") for item in candidate.state_delta
                 ],
             },
             "instruction": "只修正明确违规的最小范围，并返回完整 WriterCandidate JSON。",

@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
 
-from narrative.fact_ledger import Fact, FactConflict, FactLedger, TimelineEntry
+from narrative.fact_ledger import Fact, FactLedger
 
 
 def _f(

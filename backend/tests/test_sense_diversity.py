@@ -12,9 +12,8 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-import pytest
 
-from quality_metrics.sense_diversity import sense_diversity_report
+from quality_metrics.sense_diversity import sense_diversity_report  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

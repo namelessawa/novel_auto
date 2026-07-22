@@ -16,6 +16,7 @@ from story.service import (
     AuthorGenerationService,
     CommitPendingError,
     GenerationRejected,
+    StaleStoryBibleError,
 )
 from story.writer import WriterResult
 
@@ -212,3 +213,227 @@ async def test_story_bible_is_unchanged_after_generation_commit(tmp_path: Path) 
     assert before.revision == 2
     assert before.theme == "身份与牺牲"
     assert after == before
+
+
+@pytest.mark.asyncio
+async def test_missing_evidence_delta_is_never_committed(tmp_path: Path) -> None:
+    candidate = _valid_candidate().model_copy(
+        update={
+            "state_delta": [
+                StateDeltaOperation(
+                    op="set", path="/world/weather", value="暴雨", evidence=""
+                )
+            ]
+        }
+    )
+    service = _service(tmp_path, FakeWriter(candidate, candidate))
+    tx = await service.run(_goal(), request_id="missing_evidence")
+    assert tx.committed is True
+    assert "weather" not in service.states.load().world
+    assert tx.validation_report is not None
+    assert tx.validation_report.validated_delta == []
+
+
+@pytest.mark.asyncio
+async def test_repair_must_revalidate_delta_against_repaired_prose(tmp_path: Path) -> None:
+    operation = StateDeltaOperation(
+        op="set",
+        path="/world/weather",
+        value="暴雨",
+        evidence="旧城骤然落下暴雨",
+    )
+    original = _valid_candidate().model_copy(update={"state_delta": [operation]})
+    repaired = original.model_copy(
+        update={
+            "narrative_text": "旧城骤然落下暴雨，主角仍为身份与牺牲承担代价。" * 10
+        }
+    )
+    service = _service(tmp_path, FakeWriter(original, repaired))
+    tx = await service.run(_goal(), request_id="revalidate_repair")
+    assert tx.committed is True
+    assert service.states.load().world["weather"] == "暴雨"
+    assert [item.path for item in tx.validation_report.validated_delta] == [
+        "/world/weather"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_repair_cannot_preserve_unnarrated_state_change(tmp_path: Path) -> None:
+    operation = StateDeltaOperation(
+        op="set",
+        path="/world/weather",
+        value="暴雨",
+        evidence="旧城骤然落下暴雨",
+    )
+    candidate = _valid_candidate().model_copy(update={"state_delta": [operation]})
+    service = _service(tmp_path, FakeWriter(candidate, candidate))
+    with pytest.raises(GenerationRejected):
+        await service.run(_goal(), request_id="unnarrated_after_repair")
+    assert "weather" not in service.states.load().world
+    assert service.sections.count() == 0
+
+
+@pytest.mark.asyncio
+async def test_multiple_deltas_only_commit_individually_valid_operations(
+    tmp_path: Path,
+) -> None:
+    candidate = _valid_candidate(
+        "旧城骤然落下暴雨，主角为身份与牺牲承担代价。" * 10
+    ).model_copy(
+        update={
+            "state_delta": [
+                StateDeltaOperation(
+                    op="set",
+                    path="/world/weather",
+                    value="暴雨",
+                    evidence="旧城骤然落下暴雨",
+                ),
+                StateDeltaOperation(
+                    op="set", path="/world/current_season", value="冬", evidence=""
+                ),
+            ]
+        }
+    )
+    service = _service(tmp_path, FakeWriter(candidate, candidate))
+    await service.run(_goal(), request_id="mixed_deltas")
+    state = service.states.load()
+    assert state.world["weather"] == "暴雨"
+    assert "current_season" not in state.world
+
+
+class BibleChangingWriter(FakeWriter):
+    def __init__(self, generated: WriterCandidate):
+        super().__init__(generated)
+        self.service = None
+
+    async def generate(self, context, goal):
+        result = await super().generate(context, goal)
+        bible = self.service.bibles.load()
+        self.service.bibles.update(
+            StoryBibleUpdate(
+                expected_revision=bible.revision,
+                title=bible.title,
+                source_seed=bible.source_seed,
+                theme_key=bible.theme_key,
+                positioning=bible.positioning,
+                reference_preferences=bible.reference_preferences,
+                premise=bible.premise,
+                theme="变化后的主题",
+                setting_summary=bible.setting_summary,
+                immutable_world_rules=bible.immutable_world_rules,
+                style_contract=bible.style_contract,
+            )
+        )
+        return result
+
+
+@pytest.mark.asyncio
+async def test_story_bible_revision_change_blocks_commit(tmp_path: Path) -> None:
+    writer = BibleChangingWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+    writer.service = service
+    with pytest.raises(StaleStoryBibleError) as error:
+        await service.run(_goal(), request_id="stale_bible")
+    assert error.value.transaction.phase == "stale_context"
+    assert error.value.transaction.error_code == "STORY_BIBLE_REVISION_STALE"
+    assert service.states.load().revision == 1
+    assert service.threads.load().revision == 1
+    assert service.memories.load().revision == 1
+    assert service.sections.count() == 0
+
+
+@pytest.mark.asyncio
+async def test_story_bible_change_does_not_partially_commit(tmp_path: Path) -> None:
+    writer = BibleChangingWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+    writer.service = service
+    before = (
+        service.states.load(),
+        service.threads.load(),
+        service.memories.load(),
+    )
+    with pytest.raises(StaleStoryBibleError):
+        await service.run(_goal(), request_id="stale_no_partial")
+    assert service.states.load() == before[0]
+    assert service.threads.load() == before[1]
+    assert service.memories.load() == before[2]
+    assert service.sections.count() == 0
+
+
+class StyleChangingWriter(FakeWriter):
+    def __init__(self, generated: WriterCandidate):
+        super().__init__(generated)
+        self.service = None
+
+    async def generate(self, context, goal):
+        result = await super().generate(context, goal)
+        bible = self.service.bibles.load()
+        self.service.bibles.update_style(
+            expected_revision=bible.revision,
+            style_contract={"key": "literary", "version": "test"},
+            positioning="新风格",
+            references="测试参考",
+        )
+        return result
+
+
+@pytest.mark.asyncio
+async def test_author_style_change_invalidates_inflight_transaction(
+    tmp_path: Path,
+) -> None:
+    writer = StyleChangingWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+    writer.service = service
+    with pytest.raises(StaleStoryBibleError) as error:
+        await service.run(_goal(), request_id="style_stale")
+    assert error.value.transaction.error_code == "STORY_BIBLE_REVISION_STALE"
+    assert service.sections.count() == 0
+
+
+@pytest.mark.asyncio
+async def test_stale_bible_transaction_can_be_safely_retried_with_new_request(
+    tmp_path: Path,
+) -> None:
+    writer = BibleChangingWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+    writer.service = service
+    with pytest.raises(StaleStoryBibleError):
+        await service.run(_goal(), request_id="stale_old")
+    service.writer = FakeWriter(_valid_candidate())
+    fresh = await service.run(_goal(), request_id="stale_fresh")
+    assert fresh.committed is True
+    assert service.sections.count() == 1
+
+
+@pytest.mark.asyncio
+async def test_recover_rejects_staged_transaction_after_bible_change(
+    tmp_path: Path,
+) -> None:
+    service = _service(tmp_path, FakeWriter(_valid_candidate()))
+    prepared = service.prepare(_goal(), request_id="recover_stale")
+    generated = await service.generate(prepared)
+    tx = service._record_generated(prepared.transaction, generated)
+    report = service.validate(prepared, generated.candidate)
+    staged = service._stage(prepared, tx, generated.candidate, report)
+    bible = service.bibles.load()
+    service.bibles.update(
+        StoryBibleUpdate(
+            expected_revision=bible.revision,
+            title=bible.title,
+            premise=bible.premise,
+            theme="重启前改变",
+            setting_summary=bible.setting_summary,
+        )
+    )
+    recovered = AuthorGenerationService(
+        user_id="alice",
+        novel_id="novel",
+        data_dir=str(tmp_path),
+        title="测试小说",
+        writer=FakeWriter(_valid_candidate()),
+    )
+    stale = recovered.transactions.load(staged.id)
+    assert stale.phase == "stale_context"
+    assert stale.error_code == "STORY_BIBLE_REVISION_STALE"
+    assert recovered.states.load().revision == 1
+    assert recovered.sections.count() == 0

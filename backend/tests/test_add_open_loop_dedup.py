@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import logging
 
-import pytest
 
 from memory.tick_state import TickState
-from memory_system.models import OpenLoop, TickLocation, WorldState
+from memory_system.models import OpenLoop
 
 
 def _make_loop(id_: str, desc: str = "原始", urgency: int = 5) -> OpenLoop:

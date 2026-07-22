@@ -5,10 +5,7 @@ from __future__ import annotations
 import pytest
 
 from quality_metrics.longrange import (
-    ForeshadowingCurve,
-    MemoryFidelityReport,
     MemoryProbe,
-    NoveltyDecayCurve,
     NoveltySample,
     OpenLoopSnapshot,
     foreshadowing_curve,

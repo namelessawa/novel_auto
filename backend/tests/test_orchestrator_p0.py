@@ -14,9 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 
-import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.narrator_agent import NarratorAgent
@@ -27,7 +25,6 @@ from memory_system.models import (
     CharacterProfile,
     CharacterState,
     Event,
-    Goal,
     TickLocation,
     WorldState,
 )

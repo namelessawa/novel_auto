@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from story.context_builder import ContextBuilder, SLOT_ORDER
+import pytest
+
+from story.context_builder import ContextBudgetExceeded, ContextBuilder, SLOT_ORDER
 from story.models import (
     CanonicalState,
     MemoryRecord,
@@ -356,3 +358,259 @@ def test_writer_contract_preserves_thread_and_memory_evidence_aliases() -> None:
     assert candidate.threads_advanced[0].evidence == ["潮门打开"]
     assert candidate.memory_records[0].summary == "潮门已打开"
     assert candidate.memory_records[0].evidence == "潮门打开"
+
+
+def test_medium_delta_violation_is_removed_from_validated_delta() -> None:
+    candidate = _candidate(
+        state_delta=[
+            StateDeltaOperation(
+                op="set", path="/world/weather", value="暴雨", evidence=""
+            )
+        ]
+    )
+    report = StoryValidator().validate(
+        bible=_bible(), state=_state(), threads=StoryThreadRepository(), goal=_goal(), candidate=candidate
+    )
+    assert "DELTA_EVIDENCE_MISSING" in {item.code for item in report.violations}
+    assert report.validated_delta == []
+
+
+def test_multiple_deltas_only_validate_individually_valid_operations() -> None:
+    candidate = _candidate(
+        narrative_text="旧港骤然落下暴雨，阿澜仍为身份与牺牲作出选择。",
+        state_delta=[
+            StateDeltaOperation(
+                op="set", path="/world/weather", value="暴雨", evidence="旧港骤然落下暴雨"
+            ),
+            StateDeltaOperation(
+                op="set", path="/world/current_season", value="冬", evidence=""
+            ),
+        ],
+    )
+    report = StoryValidator().validate(
+        bible=_bible(), state=_state(), threads=StoryThreadRepository(), goal=_goal(), candidate=candidate
+    )
+    assert [item.path for item in report.validated_delta] == ["/world/weather"]
+
+
+def test_set_delta_cannot_change_existing_field_type() -> None:
+    candidate = _candidate(
+        state_delta=[
+            StateDeltaOperation(
+                op="set",
+                path="/characters/a/alive",
+                value="yes",
+                evidence="阿澜在旧港握住铜钥匙",
+            )
+        ]
+    )
+    report = StoryValidator().validate(
+        bible=_bible(),
+        state=_state(),
+        threads=StoryThreadRepository(),
+        goal=_goal(),
+        candidate=candidate,
+    )
+    assert report.validated_delta == []
+    assert any(item.code == "DELTA_TYPE_INCOMPATIBLE" for item in report.violations)
+
+
+def test_thread_open_advance_resolve_paths_preserve_authoritative_fields() -> None:
+    existing = StoryThread(
+        id="gate",
+        type="mystery",
+        description="潮门之后是什么",
+        origin_refs=["section-1"],
+        opened_at_revision=2,
+        resolution_requirements=["门后是镜海"],
+        urgency=8,
+    )
+    repository = StoryThreadRepository(threads={"gate": existing})
+    advanced = StoryThread(
+        id="gate",
+        description="潮门之后是什么",
+        evidence=["阿澜在门缝里看见镜海"],
+        urgency=9,
+    )
+    advance_report = StoryValidator().validate(
+        bible=_bible(),
+        state=_state(),
+        threads=repository,
+        goal=_goal(),
+        candidate=_candidate(
+            narrative_text="阿澜在门缝里看见镜海，也明白身份与牺牲的代价。",
+            threads_advanced=[advanced],
+        ),
+    )
+    assert advance_report.accepted is True
+    advanced_repo = StoryValidator().apply_thread_changes(
+        repository, advance_report.thread_changes, target_revision=4
+    )
+    stored = advanced_repo.threads["gate"]
+    assert stored.description == existing.description
+    assert stored.origin_refs == ["section-1"]
+    assert stored.opened_at_revision == 2
+    assert stored.status == "advancing"
+    assert stored.urgency == 9
+
+    resolved = StoryThread(
+        id="gate",
+        description="潮门之后是什么",
+        resolution_evidence=["门后是镜海"],
+    )
+    resolve_report = StoryValidator().validate(
+        bible=_bible(),
+        state=_state(),
+        threads=advanced_repo,
+        goal=_goal(),
+        candidate=_candidate(
+            narrative_text="门后是镜海。阿澜终于以牺牲守住身份。",
+            threads_resolved=[resolved],
+        ),
+    )
+    assert resolve_report.accepted is True
+    resolved_repo = StoryValidator().apply_thread_changes(
+        advanced_repo, resolve_report.thread_changes, target_revision=5
+    )
+    assert resolved_repo.threads["gate"].status == "resolved"
+    assert resolved_repo.threads["gate"].origin_refs == ["section-1"]
+
+
+def test_thread_validation_rejects_unknown_no_evidence_duplicate_and_override() -> None:
+    existing = StoryThread(
+        id="gate",
+        description="潮门之后是什么",
+        origin_refs=["section-1"],
+        opened_at_revision=2,
+    )
+    repository = StoryThreadRepository(threads={"gate": existing})
+    candidate = _candidate(
+        threads_opened=[StoryThread(id="gate", description="潮门之后是什么")],
+        threads_advanced=[
+            StoryThread(id="missing", description="不存在", evidence=["不存在"]),
+            StoryThread(id="gate", description="被覆盖的描述", evidence=[]),
+        ],
+    )
+    report = StoryValidator().validate(
+        bible=_bible(), state=_state(), threads=repository, goal=_goal(), candidate=candidate
+    )
+    codes = {item.code for item in report.violations}
+    assert {
+        "THREAD_DUPLICATE_OPEN",
+        "THREAD_ADVANCE_UNKNOWN",
+        "THREAD_ADVANCE_NO_EVIDENCE",
+        "THREAD_FIELD_OVERRIDE_FORBIDDEN",
+    } <= codes
+    assert report.thread_changes == []
+
+
+def test_context_builder_respects_global_budget() -> None:
+    package = ContextBuilder(
+        max_context_chars=6000,
+        max_context_token_estimate=3000,
+    ).build(
+        novel_id="novel",
+        section_id="budget",
+        story_bible=_bible(),
+        canonical_state=_state(),
+        section_goal=_goal(),
+        story_threads=[],
+        previous_prose_tail="前文" * 3000,
+        recent_summaries=["摘要" * 1000 for _ in range(10)],
+        long_term_memories=[
+            MemoryRecord(id="budget-memory", summary="记忆" * 2000)
+        ],
+    )
+    assert package.manifest.total_chars <= 6000
+    assert package.manifest.total_token_estimate <= 3000
+    assert package.manifest.max_context_chars == 6000
+    assert package.manifest.max_context_token_estimate == 3000
+    assert 0 < package.manifest.budget_utilization <= 1
+    assert package.slots["story_bible"]
+    assert package.slots["canonical_state"]
+    assert package.slots["section_goal"]
+
+
+def test_oversized_story_bible_fails_explicitly() -> None:
+    oversized = _bible().model_copy(
+        update={"immutable_world_rules": ["不可截断" * 400]}
+    )
+    with pytest.raises(ContextBudgetExceeded) as error:
+        ContextBuilder().build(
+            novel_id="novel",
+            section_id="oversized",
+            story_bible=oversized,
+            canonical_state=_state(),
+            section_goal=_goal(),
+            story_threads=[],
+            previous_prose_tail="",
+            recent_summaries=[],
+            long_term_memories=[],
+        )
+    assert "拒绝静默截断" in error.value.reason
+    assert error.value.manifest.rejected_reason == error.value.reason
+
+
+def test_immutable_rules_are_never_silently_dropped() -> None:
+    rules = [f"规则-{index}-必须完整保留" for index in range(20)]
+    bible = _bible().model_copy(update={"immutable_world_rules": rules})
+    package = ContextBuilder().build(
+        novel_id="novel",
+        section_id="rules",
+        story_bible=bible,
+        canonical_state=_state(),
+        section_goal=_goal(),
+        story_threads=[],
+        previous_prose_tail="",
+        recent_summaries=[],
+        long_term_memories=[],
+    )
+    assert all(rule in package.slots["story_bible"] for rule in rules)
+
+
+def test_manifest_reports_global_budget() -> None:
+    package = ContextBuilder(
+        max_context_chars=9000, max_context_token_estimate=4500
+    ).build(
+        novel_id="novel",
+        section_id="manifest-budget",
+        story_bible=_bible(),
+        canonical_state=_state(),
+        section_goal=_goal(),
+        story_threads=[],
+        previous_prose_tail="",
+        recent_summaries=[],
+        long_term_memories=[],
+    )
+    manifest = package.manifest
+    assert manifest.max_context_chars == 9000
+    assert manifest.max_context_token_estimate == 4500
+    assert manifest.rejected_reason == ""
+    assert manifest.budget_utilization == round(manifest.total_chars / 9000, 4)
+
+
+@pytest.mark.parametrize(
+    "bible",
+    [
+        _bible().model_copy(update={"source_seed": "种" * 12001}),
+        _bible().model_copy(
+            update={"main_conflicts": [f"冲突-{index}" for index in range(101)]}
+        ),
+    ],
+)
+def test_story_bible_free_text_and_list_limits_are_explicit(bible) -> None:
+    with pytest.raises(ContextBudgetExceeded) as error:
+        ContextBuilder().build(
+            novel_id="novel",
+            section_id="limits",
+            story_bible=bible,
+            canonical_state=_state(),
+            section_goal=_goal(),
+            story_threads=[],
+            previous_prose_tail="",
+            recent_summaries=[],
+            long_term_memories=[],
+        )
+
+    assert error.value.manifest.rejected_reason
+    assert error.value.manifest.total_chars > 0

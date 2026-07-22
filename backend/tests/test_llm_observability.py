@@ -12,7 +12,6 @@ TokenBudgetTracker 里全是 "unknown / medium / tick=-1", 无法分析成本结
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock
 
 import pytest
 

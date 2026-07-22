@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -137,7 +136,6 @@ def test_analyzer_d4_uses_agents_called(tmp_path) -> None:
     D4 不再报 silent."""
     sys.path.insert(0, str(_REPO_ROOT / "scripts"))
     import importlib
-    import json
     analyzer = importlib.import_module("analyze_longrange_drift")
     # report with memcompress triggered
     rep = {

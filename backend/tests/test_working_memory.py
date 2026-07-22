@@ -1,7 +1,6 @@
 """Tests for the Working Memory module."""
 
 import asyncio
-import pytest
 
 import sys
 import os

@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from quality_metrics.compliance import (
-    ComplianceReport,
     NarrationRecord,
     compliance_report,
 )

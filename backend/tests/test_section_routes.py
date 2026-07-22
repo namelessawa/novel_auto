@@ -7,15 +7,14 @@
 from __future__ import annotations
 
 import asyncio
-import os
 
 import pytest
 
 from agents.narrator_agent import NarratorOutput
 from agents.section_closer import SectionCloser
 from api.section_routes import _count_words, _make_section_executor
-from sections.section_store import SectionStore, TickSection
-from tasks.task_manager import ProgressUpdater, TaskManager
+from sections.section_store import SectionStore
+from tasks.task_manager import TaskManager
 
 
 class _FakeTickSummary:

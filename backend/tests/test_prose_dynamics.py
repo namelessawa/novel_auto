@@ -11,7 +11,6 @@ should remain stable as long as the bench data does (commit 82820a5 onward).
 
 from __future__ import annotations
 
-import pytest
 
 from quality_metrics.prose_dynamics import (
     ProseDynamicsReport,

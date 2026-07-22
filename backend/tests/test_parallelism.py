@@ -12,9 +12,8 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-import pytest
 
-from quality_metrics.parallelism import parallelism_report
+from quality_metrics.parallelism import parallelism_report  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

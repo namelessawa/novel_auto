@@ -38,6 +38,7 @@ def test_legacy_migration_maps_authorities_and_excludes_legend_from_canon(
     _write_json(
         tmp_path / "tick_state.json",
         {
+            "seed": "旧存档明确种子",
             "current_tick": 17,
             "world_state": {
                 "world_time": 42,
@@ -130,6 +131,9 @@ def test_legacy_migration_maps_authorities_and_excludes_legend_from_canon(
 
     assert report.status == "migrated"
     assert bible.theme == "身份与牺牲"
+    assert bible.source_seed == "旧存档明确种子"
+    assert bible.migration.source == "legacy_inferred"
+    assert bible.field_provenance["source_seed"] == "legacy_inferred"
     assert bible.immutable_world_rules == ["死亡不可逆"]
     assert bible.migration.needs_confirmation is True
     assert state.world_time == 42
@@ -140,6 +144,15 @@ def test_legacy_migration_maps_authorities_and_excludes_legend_from_canon(
     assert threads.threads["gate"].urgency == 8
     assert memories.records["legend_l1"].canon_status == "uncertain"
     assert memories.records["mem_first"].importance == 9
+
+
+def test_legacy_seed_remains_inferred(tmp_path: Path) -> None:
+    _write_json(tmp_path / "tick_state.json", {"seed": "旧种子", "world_state": {}})
+    ensure_story_domain(str(tmp_path), title="旧作")
+    bible = StoryBibleStore(str(tmp_path)).load()
+    assert bible.source_seed == "旧种子"
+    assert bible.migration.source == "legacy_inferred"
+    assert bible.field_provenance["source_seed"] == "legacy_inferred"
 
 
 def test_migration_is_idempotent_and_does_not_replace_user_edit(tmp_path: Path) -> None:

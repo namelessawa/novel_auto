@@ -14,9 +14,7 @@ env flag 开启时: 同时写 model_tier_override='haiku'。
 
 from __future__ import annotations
 
-import os
 
-import pytest
 
 from agents.consistency_guardian import GuardianConflict, GuardianOutput
 from agents.orchestrator import Orchestrator
@@ -25,7 +23,6 @@ from memory_system.models import (
     AgentRuntimeState,
     CharacterProfile,
     CharacterState,
-    Event,
     WorldState,
 )
 from nf_core.action_resolver import ActionResolver

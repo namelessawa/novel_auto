@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 from typing import Any
 
 from story.models import SectionGoal, StateDeltaOperation, WriterCandidate
-from story.service import AuthorGenerationService
+from story.service import AuthorGenerationService, StaleStoryBibleError
 
 
 class SimulationNarrativeGateway:
@@ -37,7 +38,8 @@ class SimulationNarrativeGateway:
         viewpoint_character_id: str = "",
         state_projection: Any = None,
     ) -> bool:
-        operations = self._operations(state_projection)
+        state = self.service.states.load()
+        operations = self._operations(state_projection, text, state)
         candidate = WriterCandidate(
             narrative_text=text,
             title=f"模拟记录 · Tick {tick}",
@@ -45,19 +47,22 @@ class SimulationNarrativeGateway:
             state_delta=operations,
             consistency_notes=["candidate_source=simulation", f"tick={tick}"],
         )
-        transaction = await self.service.submit_candidate(
-            SectionGoal(
-                objective=f"将实验模拟 tick {tick} 的已验证结果纳入主叙事",
-                viewpoint_character_id=viewpoint_character_id,
-                involved_characters=(
-                    [viewpoint_character_id] if viewpoint_character_id else []
+        try:
+            transaction = await self.service.submit_candidate(
+                SectionGoal(
+                    objective=f"将实验模拟 tick {tick} 的已验证结果纳入主叙事",
+                    viewpoint_character_id=viewpoint_character_id,
+                    involved_characters=(
+                        [viewpoint_character_id] if viewpoint_character_id else []
+                    ),
+                    desired_length=max(200, min(10000, len(text))),
                 ),
-                desired_length=max(200, min(10000, len(text))),
-            ),
-            candidate,
-            request_id=f"simulation_tick_{tick:08d}",
-            generation_mode="simulation",
-        )
+                candidate,
+                request_id=f"simulation_tick_{tick:08d}",
+                generation_mode="simulation",
+            )
+        except StaleStoryBibleError:
+            return False
         if not transaction.committed:
             return False
         self._publish_legacy_narrative(
@@ -73,11 +78,14 @@ class SimulationNarrativeGateway:
         compact = " ".join(text.split())
         return compact[:220] or "模拟候选无正文摘要"
 
-    def _operations(self, projection: Any) -> list[StateDeltaOperation]:
+    def _operations(
+        self, projection: Any, narrative: str, state
+    ) -> list[StateDeltaOperation]:
         facts = list(getattr(projection, "facts", []) or [])
         operations: list[StateDeltaOperation] = []
         for fact in facts:
-            operation = self._fact_operation(fact)
+            evidence = self._narrative_evidence(fact, narrative, state)
+            operation = self._fact_operation(fact, evidence)
             if operation is not None:
                 operations.append(operation)
         # Last typed fact for a path wins within the same tick.
@@ -85,12 +93,12 @@ class SimulationNarrativeGateway:
         return list(by_path.values())
 
     @staticmethod
-    def _fact_operation(fact: Any) -> StateDeltaOperation | None:
+    def _fact_operation(
+        fact: Any, evidence: str = ""
+    ) -> StateDeltaOperation | None:
         subject = str(getattr(fact, "subject_id", "") or "")
         predicate = str(getattr(fact, "predicate", "") or "")
         value = getattr(fact, "value", None)
-        evidence = f"simulation_projection:{getattr(fact, 'fact_id', predicate)}"
-
         if subject == "world" and predicate == "world_time":
             return StateDeltaOperation(
                 op="set", path="/world_time", value=value, evidence=evidence
@@ -144,6 +152,39 @@ class SimulationNarrativeGateway:
                     evidence=evidence,
                 )
         return None
+
+    @staticmethod
+    def _narrative_evidence(fact: Any, narrative: str, state) -> str:
+        """Return an exact prose span proving the projection, or empty."""
+
+        subject = str(getattr(fact, "subject_id", "") or "")
+        predicate = str(getattr(fact, "predicate", "") or "")
+        value = getattr(fact, "value", None)
+        subject_name = str(state.characters.get(subject, {}).get("name") or subject)
+        required = [subject_name] if subject != "world" and subject_name else []
+        if predicate == "character_location" and isinstance(value, dict):
+            location_id = str(value.get("location_id") or "")
+            location_name = location_id
+            locations = state.world.get("locations", [])
+            iterable = locations.values() if isinstance(locations, dict) else locations
+            for item in iterable:
+                if not isinstance(item, dict):
+                    continue
+                if str(item.get("id") or item.get("name") or "") == location_id:
+                    location_name = str(item.get("name") or location_id)
+                    break
+            if location_name:
+                required.append(location_name)
+        elif predicate == "alive_status":
+            required.append("死亡" if value == "dead" else "活")
+        elif isinstance(value, (str, int, float)):
+            required.append(str(value))
+
+        for sentence in re.split(r"(?<=[。！？!?])", narrative):
+            span = sentence.strip()
+            if span and required and all(token in span for token in required):
+                return span
+        return ""
 
     def _publish_legacy_narrative(
         self,

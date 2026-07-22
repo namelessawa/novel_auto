@@ -38,9 +38,17 @@ class MigrationMetadata(StoryModel):
 class StoryBible(StoryModel):
     """Highest authority for theme, setting rules, and creative promises."""
 
+    # source_seed is an audit field: whitespace and line breaks are user data,
+    # not formatting noise.  List fields are normalised explicitly below.
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
     schema_version: int = Field(default=1, ge=1)
     revision: int = Field(default=1, ge=1)
+    title: str = ""
     source_seed: str = ""
+    theme_key: str = ""
+    positioning: str = ""
+    reference_preferences: list[str] = Field(default_factory=list)
     premise: str = ""
     theme: str = ""
     central_question: str = ""
@@ -52,6 +60,10 @@ class StoryBible(StoryModel):
     main_conflicts: list[str] = Field(default_factory=list)
     ending_direction: str = ""
     style_contract: dict[str, Any] = Field(default_factory=dict)
+    field_provenance: dict[
+        str,
+        Literal["user_input", "preset_derived", "llm_inferred", "legacy_inferred"],
+    ] = Field(default_factory=dict)
     migration: MigrationMetadata = Field(default_factory=MigrationMetadata)
     created_at: str = Field(default_factory=utc_now)
     updated_at: str = Field(default_factory=utc_now)
@@ -61,6 +73,7 @@ class StoryBible(StoryModel):
         "forbidden_deviations",
         "protagonist_contracts",
         "main_conflicts",
+        "reference_preferences",
     )
     @classmethod
     def _normalise_unique_lines(cls, value: list[str]) -> list[str]:
@@ -79,8 +92,14 @@ class StoryBible(StoryModel):
 
 
 class StoryBibleUpdate(StoryModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
     expected_revision: int = Field(ge=1)
+    title: str = ""
     source_seed: str = ""
+    theme_key: str = ""
+    positioning: str = ""
+    reference_preferences: list[str] = Field(default_factory=list)
     premise: str
     theme: str
     central_question: str = ""
@@ -92,6 +111,17 @@ class StoryBibleUpdate(StoryModel):
     main_conflicts: list[str] = Field(default_factory=list)
     ending_direction: str = ""
     style_contract: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator(
+        "immutable_world_rules",
+        "forbidden_deviations",
+        "protagonist_contracts",
+        "main_conflicts",
+        "reference_preferences",
+    )
+    @classmethod
+    def _normalise_unique_lines(cls, value: list[str]) -> list[str]:
+        return list(dict.fromkeys(item.strip() for item in value if item.strip()))
 
     @model_validator(mode="after")
     def _required_contract(self) -> "StoryBibleUpdate":
@@ -310,6 +340,10 @@ class ContextManifest(StoryModel):
     canonical_state_revision: int = Field(ge=1)
     total_chars: int = Field(ge=0)
     total_token_estimate: int = Field(ge=0)
+    max_context_chars: int = Field(default=0, ge=0)
+    max_context_token_estimate: int = Field(default=0, ge=0)
+    budget_utilization: float = Field(default=0.0, ge=0.0)
+    rejected_reason: str = ""
     slots: list[ContextSlotManifest] = Field(default_factory=list)
     created_at: str = Field(default_factory=utc_now)
 
@@ -320,6 +354,7 @@ TransactionPhase = Literal[
     "validated",
     "committing",
     "committed",
+    "stale_context",
     "rejected",
     "failed",
 ]
@@ -341,11 +376,15 @@ class GenerationTransaction(StoryModel):
     candidate: WriterCandidate | None = None
     validation_report: ValidationReport | None = None
     context_manifest: ContextManifest | None = None
+    base_canonical_state: dict[str, Any] = Field(default_factory=dict)
+    base_story_threads: dict[str, Any] = Field(default_factory=dict)
+    base_memory_repository: dict[str, Any] = Field(default_factory=dict)
     target_canonical_state: dict[str, Any] = Field(default_factory=dict)
     target_story_threads: dict[str, Any] = Field(default_factory=dict)
     target_memory_repository: dict[str, Any] = Field(default_factory=dict)
     section_record: dict[str, Any] = Field(default_factory=dict)
     usage: dict[str, int] = Field(default_factory=dict)
+    error_code: str = ""
     error: str = ""
     created_at: str = Field(default_factory=utc_now)
     updated_at: str = Field(default_factory=utc_now)

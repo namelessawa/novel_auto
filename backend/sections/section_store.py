@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import tempfile
 import threading
 from datetime import datetime
 from typing import Any, Literal
@@ -162,6 +163,40 @@ class SectionStore:
             if item.id == section_id or item.transaction_id == section_id:
                 return item
         return None
+
+    def remove_by_transaction_id(self, transaction_id: str) -> bool:
+        """Rollback a not-yet-official journal append during stale recovery."""
+
+        if not transaction_id or not os.path.isfile(self._path):
+            return False
+        with self._lock:
+            items = self._list_all_unlocked()
+            kept = [item for item in items if item.transaction_id != transaction_id]
+            if len(kept) == len(items):
+                return False
+            self._ensure_dir()
+            descriptor, temp_path = tempfile.mkstemp(
+                prefix=".tick_sections.", suffix=".tmp", dir=self._data_dir
+            )
+            try:
+                with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                    for item in kept:
+                        handle.write(item.model_dump_json() + "\n")
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(temp_path, self._path)
+            except Exception:
+                try:
+                    os.unlink(temp_path)
+                except OSError:
+                    pass
+                raise
+            if kept:
+                last = max(kept, key=lambda item: (item.chapter, item.section))
+                self._chapter, self._section = last.chapter, last.section
+            else:
+                self._chapter, self._section = 0, 0
+            return True
 
     def get_last(self) -> TickSection | None:
         items = self.list_all()

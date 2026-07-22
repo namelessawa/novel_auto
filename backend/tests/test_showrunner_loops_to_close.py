@@ -7,11 +7,9 @@ Phase 2 §closed=0 leakage 修复: 跨 130 tick × 3 seed bench 里 close_open_l
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 
-from agents.showrunner import Showrunner, ShowrunnerOutput
+from agents.showrunner import Showrunner
 
 
 # --------------------------------------------------------------------- parse

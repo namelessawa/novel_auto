@@ -9,9 +9,7 @@ from __future__ import annotations
 
 import glob
 import json
-import os
 
-import pytest
 
 from memory.summary_tree import SummaryTree
 from memory.tick_state import STATE_FILENAME, TickState

@@ -23,7 +23,7 @@ _SCRIPTS = _ROOT / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-import importlib
+import importlib  # noqa: E402
 
 analyzer = importlib.import_module("analyze_longrange_drift")
 

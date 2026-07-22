@@ -4,9 +4,7 @@ TickDB 全部接入,验证 cadence 调度与持久化端到端。"""
 from __future__ import annotations
 
 import asyncio
-import os
 
-import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.event_injector import EventInjector

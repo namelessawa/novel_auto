@@ -10,10 +10,7 @@ from __future__ import annotations
 
 from agents.event_injector import EventInjector
 from memory_system.models import (
-    CharacterProfile,
-    CharacterState,
     OpenLoop,
-    TickLocation,
     WorldState,
 )
 

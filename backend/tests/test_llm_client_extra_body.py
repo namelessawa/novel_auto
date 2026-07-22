@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
 
 from nf_core.llm_client import _extract_cached_tokens, _resolve_extra_body
 

@@ -17,11 +17,9 @@ from agents.narrator_agent import NarratorAgent
 from agents.orchestrator import Orchestrator
 from agents.world_simulator import WorldSimulator
 from api.tick_routes import (
-    _container,
     pause_loop,
     resume_loop,
     run_one_tick,
-    set_orchestrator_dependencies,
 )
 from memory.tick_state import TickState
 from memory_system.models import (

@@ -67,22 +67,6 @@ def _safe_legacy_json(
         return {}
 
 
-def _bootstrap_seed(data_dir: str, source_files: list[str]) -> str:
-    path = os.path.join(data_dir, "bootstrap.env")
-    if not os.path.isfile(path):
-        return ""
-    source_files.append("bootstrap.env")
-    try:
-        with open(path, encoding="utf-8") as handle:
-            for raw in handle:
-                key, sep, value = raw.partition("=")
-                if sep and key.strip().upper() in {"SEED", "BOOTSTRAP_SEED"}:
-                    return value.strip().strip('"\'')
-    except OSError:
-        return ""
-    return ""
-
-
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
@@ -190,6 +174,7 @@ def _build_story_bible(
         needs_confirmation=True,
     )
     bible = StoryBible(
+        title=title,
         source_seed=seed,
         premise=premise,
         theme=theme,
@@ -199,6 +184,23 @@ def _build_story_bible(
         protagonist_contracts=protagonist_contracts,
         main_conflicts=list(dict.fromkeys(item for item in main_conflicts if item)),
         style_contract=style_contract,
+        field_provenance={
+            field: "legacy_inferred"
+            for field in (
+                "source_seed",
+                "premise",
+                "theme",
+                "central_question",
+                "setting_summary",
+                "immutable_world_rules",
+                "protagonist_contracts",
+                "main_conflicts",
+                "style_contract",
+            )
+            if seed or field != "source_seed"
+        }
+        if is_legacy
+        else {},
         migration=metadata,
     )
     return bible, metadata.inferred_fields
@@ -458,7 +460,7 @@ def ensure_story_domain(data_dir: str, *, title: str = "") -> MigrationReport:
     summary_tree = _safe_legacy_json(
         data_dir, "summary_tree.json", warnings=warnings, source_files=source_files
     )
-    seed = _bootstrap_seed(data_dir, source_files)
+    seed = str(tick.get("source_seed") or tick.get("seed") or "")
     inferred: list[str] = []
 
     threads = thread_store.load() if thread_store.exists() else _build_threads(tick)
@@ -507,10 +509,7 @@ def enrich_unconfirmed_domain_from_legacy(
     bible = bible_store.load()
     state = state_store.load()
     if not (
-        bible.revision == 1
-        and bible.migration.source == "new"
-        and bible.migration.needs_confirmation
-        and state.revision == 1
+        state.revision == 1
         and state.migration.source == "new"
         and not state.characters
         and not state.canonical_facts
@@ -533,12 +532,57 @@ def enrich_unconfirmed_domain_from_legacy(
     summary_tree = _safe_legacy_json(
         data_dir, "summary_tree.json", warnings=warnings, source_files=source_files
     )
-    seed = _bootstrap_seed(data_dir, source_files)
+    # New author works already persisted the exact seed before this executor.
+    # Legacy TickState may carry an explicit seed field; bootstrap.env is never
+    # parsed because it cannot prove provenance or preserve the original text.
+    seed = str(tick.get("source_seed") or tick.get("seed") or "")
     threads = _build_threads(tick)
     migrated_bible, inferred = _build_story_bible(
         title, tick, seed, source_files
     )
-    bible_store.save(migrated_bible)
+    if bible.migration.source == "user_confirmed":
+        mergeable = set(bible.migration.inferred_fields)
+        updates: dict[str, Any] = {}
+        provenance = dict(bible.field_provenance)
+        for field in (
+            "premise",
+            "theme",
+            "central_question",
+            "genre",
+            "setting_summary",
+            "immutable_world_rules",
+            "forbidden_deviations",
+            "protagonist_contracts",
+            "main_conflicts",
+            "ending_direction",
+        ):
+            if field not in mergeable:
+                continue
+            value = getattr(migrated_bible, field)
+            if value:
+                updates[field] = value
+                provenance[field] = "llm_inferred"
+        bible_store.save(
+            bible.model_copy(
+                update={
+                    **updates,
+                    "revision": bible.revision + 1,
+                    "field_provenance": provenance,
+                    "migration": bible.migration.model_copy(
+                        update={
+                            "source_files": list(
+                                dict.fromkeys(
+                                    bible.migration.source_files + source_files
+                                )
+                            ),
+                            "needs_confirmation": bool(mergeable),
+                        }
+                    ),
+                }
+            )
+        )
+    else:
+        bible_store.save(migrated_bible)
     state_store.save(_build_canonical(tick, ledger, threads, source_files))
     if not thread_store.load().threads:
         thread_store.save(threads)

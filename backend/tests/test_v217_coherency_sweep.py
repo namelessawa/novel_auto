@@ -14,13 +14,11 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
-from unittest.mock import patch
 
 import pytest
 
 import novel_manager
-from memory_system.models import Event, EntityType, TickSummary
+from memory_system.models import EntityType, TickSummary
 from persistence.tick_db import TickDB
 
 

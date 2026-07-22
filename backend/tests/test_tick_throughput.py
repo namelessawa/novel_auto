@@ -23,7 +23,6 @@ from memory.tick_state import TickState
 from memory_system.models import (
     CharacterProfile,
     CharacterState,
-    Event,
     TickLocation,
     WorldState,
 )

@@ -89,12 +89,12 @@ export default function NewNovelModal({ onClose, onCreated }) {
           // Phase 5+: theme + style 跟 seed 一起送, 后端持久化 style_preset_key.
           // also_generate_first_section=true 链式触发首节生成 (HomeView 同款).
           const payload = {
-            seed: seed.trim() || (theme
+            seed: seed.trim() ? seed : (theme
               ? presets.themes.find((t) => t.key === theme)?.seed || `${theme} · ${title.trim()}`
               : title.trim()),
             also_generate_first_section: true,
-            positioning: positioning.trim() || DEFAULT_POSITIONING,
-            references: references.trim() || DEFAULT_REFERENCES,
+            positioning: positioning.trim() ? positioning : DEFAULT_POSITIONING,
+            references: references.trim() ? references : DEFAULT_REFERENCES,
           }
           if (theme) payload.theme = theme
           if (style) payload.style = style

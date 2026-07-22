@@ -6,9 +6,7 @@ CF-Connecting-IP 可被客户端伪造来绕过限流; 仅 auth.trusted_proxy=tr
 
 from __future__ import annotations
 
-import time
 
-import pytest
 from starlette.requests import Request
 
 import auth.dependencies as auth_deps

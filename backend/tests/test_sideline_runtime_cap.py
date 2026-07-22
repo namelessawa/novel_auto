@@ -9,13 +9,12 @@ import asyncio
 import json
 import logging
 
-import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.event_injector import EventInjector
 from agents.narrator_agent import NarratorAgent
 from agents.orchestrator import Orchestrator
-from agents.showrunner import Showrunner, ShowrunnerOutput
+from agents.showrunner import Showrunner
 from agents.world_simulator import WorldSimulator
 from memory.tick_state import TickState
 from memory_system.models import (

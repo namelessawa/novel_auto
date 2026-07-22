@@ -12,9 +12,7 @@
 from __future__ import annotations
 
 import asyncio
-import os
 
-import pytest
 
 from agents.memory_compressor import MemoryCompressor
 from memory.memory_store import PriorityMemoryStore

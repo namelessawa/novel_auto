@@ -4,7 +4,6 @@ from __future__ import annotations
 from nf_core.text_segmenter import (
     HARD_MAX_CHARS,
     MAX_SEGMENT_CHARS,
-    MIN_SEGMENT_CHARS,
     Segment,
     segment_text,
 )

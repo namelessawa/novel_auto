@@ -2,7 +2,7 @@
 
 一个以“长期记忆、主题稳定、背景一致”为目标的长篇小说生成系统。后端使用 FastAPI，前端使用 React/Vite。默认作者模式以 `StoryBible` 和 `CanonicalState` 为双重权威，由单一 Writer 围绕明确的章节目标生成候选稿，再经确定性 Validator 与可恢复事务提交；原有多 Agent 世界模拟保留为显式开启的实验模式。
 
-> 权威顺序：**StoryBible（不可越界的创作契约）→ CanonicalState（唯一当前事实）→ StoryThread / Memory（叙事导航与检索）→ 正文。**
+> 权威顺序：**StoryBible（不可越界的创作契约）→ CanonicalState（唯一当前事实）→ 最终验证通过的 StateDelta → MemoryRepository → 旧迁移数据 / simulation 候选。** StoryThread 是受证据和生命周期约束的叙事导航仓库，不是第二套事实源。
 >
 > 发布基线为 **v2.49**。当前主分支在此基础上加入了长篇状态复验、风格契约、跨段编辑与风格验证工具，详见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -34,11 +34,11 @@ flowchart LR
     X["实验性 Simulation"] -. "候选输出" .-> V
 ```
 
-`ContextBuilder` 使用十个独立预算槽位：StoryBible、CanonicalState、章节目标、活动故事线、读者知识、角色知识、前文尾部、近期摘要、相关长期记忆和风格契约。上下文清单只记录计数、引用 ID 与截断信息，不泄露 prompt 或候选正文。
+`ContextBuilder` 使用十个独立预算槽位：StoryBible、CanonicalState、章节目标、活动故事线、读者知识、角色知识、前文尾部、近期摘要、相关长期记忆和风格契约，并受 24,000 字符 / 12,000 估算 token 的全局硬预算约束。不可变规则不会被静默截断；上下文清单只记录计数、全局占用、拒绝原因、引用 ID 与截断信息，不泄露 prompt 或候选正文。
 
 作者模式核心数据写入作品自己的数据目录：
 
-- `story_bible.json`：主题、设定规则、禁区、主冲突和风格契约。
+- `story_bible.json`：逐字原始 seed、字段来源、theme key、定位/参考、主题、设定规则、禁区、主冲突和 author 唯一风格契约。
 - `canonical_state.json`：角色、物品、关系、知识边界、当前场景等唯一规范事实。
 - `story_threads.json` / `memory_records.json`：故事线生命周期与有证据的类型化记忆。
 - `generation_transactions/`：候选、校验报告和目标快照组成的恢复日志。
@@ -162,6 +162,14 @@ npm run build
 ```powershell
 python scripts/smoke_author_mode.py --desired-length 500
 ```
+
+不调用 Provider 的权威/恢复十步录制式冒烟：
+
+```powershell
+python scripts/smoke_author_mode_recorded.py
+```
+
+录制式 smoke 只证明 seed、StateDelta、revision guard、恢复和长期记忆上下文，不证明文学质量。
 
 风格与长程叙事验证：
 

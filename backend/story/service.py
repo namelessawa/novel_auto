@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 import novel_manager
 from sections.section_store import TickSection, get_section_store
-from story.context_builder import ContextBuilder, ContextPackage
+from story.context_builder import ContextBudgetExceeded, ContextBuilder, ContextPackage
 from story.migrations import ensure_story_domain
 from story.models import (
     CanonicalState,
@@ -48,6 +48,12 @@ class GenerationRejected(RuntimeError):
 
 class CommitPendingError(RuntimeError):
     pass
+
+
+class StaleStoryBibleError(RuntimeError):
+    def __init__(self, transaction: GenerationTransaction) -> None:
+        super().__init__(transaction.error or "StoryBible revision became stale")
+        self.transaction = transaction
 
 
 @dataclass(frozen=True)
@@ -104,6 +110,8 @@ class AuthorGenerationService:
                 existing = self.transactions.load(request_id)
                 if existing.committed or existing.phase == "rejected":
                     return existing
+                if existing.phase == "stale_context":
+                    raise StaleStoryBibleError(existing)
                 if existing.phase in {"validated", "committing"}:
                     self._commit_staged(existing)
                     return self.transactions.load(request_id)
@@ -155,6 +163,8 @@ class AuthorGenerationService:
                 return self.transactions.load(staged.id)
             except GenerationRejected:
                 raise
+            except StaleStoryBibleError:
+                raise
             except Exception as exc:
                 # A committing transaction is intentionally left recoverable.
                 current = self.transactions.load(transaction.id)
@@ -194,6 +204,8 @@ class AuthorGenerationService:
                 existing = self.transactions.load(request_id)
                 if existing.committed or existing.phase == "rejected":
                     return existing
+                if existing.phase == "stale_context":
+                    raise StaleStoryBibleError(existing)
                 if existing.phase in {"validated", "committing"}:
                     self._commit_staged(existing)
                     return self.transactions.load(request_id)
@@ -268,17 +280,21 @@ class AuthorGenerationService:
             set(prepared_goal.target_threads),
             limit=12,
         )
-        context = self.context_builder.build(
-            novel_id=self.novel_id,
-            section_id=section_id,
-            story_bible=bible,
-            canonical_state=state,
-            section_goal=prepared_goal,
-            story_threads=list(threads.threads.values()),
-            previous_prose_tail=previous_tail,
-            recent_summaries=recent_summaries,
-            long_term_memories=long_memories,
-        )
+        try:
+            context = self.context_builder.build(
+                novel_id=self.novel_id,
+                section_id=section_id,
+                story_bible=bible,
+                canonical_state=state,
+                section_goal=prepared_goal,
+                story_threads=list(threads.threads.values()),
+                previous_prose_tail=previous_tail,
+                recent_summaries=recent_summaries,
+                long_term_memories=long_memories,
+            )
+        except ContextBudgetExceeded as exc:
+            self.manifests.save(exc.manifest)
+            raise
         self.manifests.save(context.manifest)
         transaction = GenerationTransaction(
             id=request_id,
@@ -420,6 +436,9 @@ class AuthorGenerationService:
                 "phase": "validated",
                 "candidate": candidate,
                 "validation_report": report,
+                "base_canonical_state": prepared.state.model_dump(mode="json"),
+                "base_story_threads": prepared.threads.model_dump(mode="json"),
+                "base_memory_repository": prepared.memories.model_dump(mode="json"),
                 "target_canonical_state": target_state.model_dump(mode="json"),
                 "target_story_threads": target_threads.model_dump(mode="json"),
                 "target_memory_repository": target_memories.model_dump(mode="json"),
@@ -437,43 +456,107 @@ class AuthorGenerationService:
             and transaction.section_record
         ):
             raise ValueError("transaction has no complete staged snapshot")
-        committing = transaction.model_copy(
-            update={"phase": "committing", "updated_at": utc_now()}
-        )
-        self.transactions.save(committing)
-        target_state = CanonicalState.model_validate(committing.target_canonical_state)
-        target_threads = StoryThreadRepository.model_validate(
-            committing.target_story_threads
-        )
-        target_memories = MemoryRepositoryState.model_validate(
-            committing.target_memory_repository
-        )
-        section = TickSection.model_validate(committing.section_record)
+        # Hold the same per-file lock used by StoryBible PUT for the complete
+        # commit window.  This closes the check-then-write race in-process.
+        with self.bibles.lock:
+            current_bible = self.bibles.load()
+            if current_bible.revision != transaction.story_bible_revision:
+                stale = self._mark_stale_and_rollback(
+                    transaction, current_bible.revision
+                )
+                raise StaleStoryBibleError(stale)
 
-        self._save_revision_target(
-            self.states,
-            target_state,
-            base_revision=committing.canonical_state_revision,
+            committing = transaction.model_copy(
+                update={"phase": "committing", "updated_at": utc_now()}
+            )
+            self.transactions.save(committing)
+            target_state = CanonicalState.model_validate(committing.target_canonical_state)
+            target_threads = StoryThreadRepository.model_validate(
+                committing.target_story_threads
+            )
+            target_memories = MemoryRepositoryState.model_validate(
+                committing.target_memory_repository
+            )
+            section = TickSection.model_validate(committing.section_record)
+
+            self._save_revision_target(
+                self.states,
+                target_state,
+                base_revision=committing.canonical_state_revision,
+            )
+            self._save_revision_target(
+                self.threads,
+                target_threads,
+                base_revision=target_threads.revision - 1,
+            )
+            self._save_revision_target(
+                self.memories,
+                target_memories,
+                base_revision=target_memories.revision - 1,
+            )
+            self.sections.append_idempotent(section)
+            committed = committing.model_copy(
+                update={
+                    "phase": "committed",
+                    "committed": True,
+                    "updated_at": utc_now(),
+                }
+            )
+            self.transactions.save(committed)
+
+    def _mark_stale_and_rollback(
+        self, transaction: GenerationTransaction, actual_revision: int
+    ) -> GenerationTransaction:
+        rollback_errors: list[str] = []
+        try:
+            self.sections.remove_by_transaction_id(transaction.id)
+        except Exception as exc:
+            rollback_errors.append(f"section rollback: {exc}")
+        for label, store, base_payload, target_payload in (
+            (
+                "canonical",
+                self.states,
+                transaction.base_canonical_state,
+                transaction.target_canonical_state,
+            ),
+            (
+                "threads",
+                self.threads,
+                transaction.base_story_threads,
+                transaction.target_story_threads,
+            ),
+            (
+                "memory",
+                self.memories,
+                transaction.base_memory_repository,
+                transaction.target_memory_repository,
+            ),
+        ):
+            if not base_payload or not target_payload:
+                continue
+            current = store.load()
+            current_payload = current.model_dump(mode="json")
+            if current_payload == base_payload:
+                continue
+            if current_payload != target_payload:
+                rollback_errors.append(f"{label} revision moved beyond transaction")
+                continue
+            store.save(current.__class__.model_validate(base_payload))
+        error = (
+            "创作圣经在生成期间发生了变化。本次候选基于旧版本，未提交，请重新生成。"
         )
-        self._save_revision_target(
-            self.threads,
-            target_threads,
-            base_revision=target_threads.revision - 1,
-        )
-        self._save_revision_target(
-            self.memories,
-            target_memories,
-            base_revision=target_memories.revision - 1,
-        )
-        self.sections.append_idempotent(section)
-        committed = committing.model_copy(
+        if rollback_errors:
+            error += " 回滚检查: " + "；".join(rollback_errors)
+        stale = transaction.model_copy(
             update={
-                "phase": "committed",
-                "committed": True,
+                "phase": "stale_context",
+                "committed": False,
+                "error_code": "STORY_BIBLE_REVISION_STALE",
+                "error": error,
                 "updated_at": utc_now(),
             }
         )
-        self.transactions.save(committed)
+        return self.transactions.save(stale)
 
     @staticmethod
     def _save_revision_target(store, target, *, base_revision: int) -> None:
@@ -531,4 +614,5 @@ __all__ = [
     "CommitPendingError",
     "GenerationRejected",
     "PreparedGeneration",
+    "StaleStoryBibleError",
 ]

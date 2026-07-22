@@ -136,22 +136,11 @@ title縲《ection_summary縲［emory_records縲…onsistency_notes縲…ritique 謌冶ｧ｣驥
         if not isinstance(narrative, str) or not narrative.strip():
             raise WriterOutputError("Writer repair did not return a complete narrative_text")
 
+        # Repair has prose authority only.  Keep the original structured
+        # proposal intact and let StoryValidator re-evaluate every operation
+        # and thread against the repaired prose from scratch.
         candidate_payload = original.model_dump(mode="python")
         candidate_payload["narrative_text"] = narrative
-        candidate_payload["state_delta"] = [
-            operation.model_dump(mode="python") for operation in report.validated_delta
-        ]
-        rejected_thread_ids = {
-            item.path.rsplit("/", 1)[-1]
-            for item in report.violations
-            if item.severity == "high" and item.path.startswith("/threads/")
-        }
-        for key in ("threads_opened", "threads_advanced", "threads_resolved"):
-            candidate_payload[key] = [
-                thread
-                for thread in candidate_payload[key]
-                if thread.get("id") not in rejected_thread_ids
-            ]
         return WriterCandidate.model_validate(candidate_payload)
 
     @staticmethod

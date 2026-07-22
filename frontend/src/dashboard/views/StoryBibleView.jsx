@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { fetchStoryBible, saveStoryBible } from '../../services/api'
 import { showToast } from '../../utils/toast'
 
+const DEFAULT_API = { fetchStoryBible, saveStoryBible }
+
 const LIST_FIELDS = [
   ['immutable_world_rules', '不可变世界规则', '每行一条。Writer 和 StateDelta 都不能修改。'],
   ['forbidden_deviations', '禁止偏移', '明确列出绝不能发生的题材、设定或人物偏移。'],
@@ -15,6 +17,7 @@ function toForm(bible) {
     next[key] = (bible?.[key] || []).join('\n')
   })
   next.style_contract = JSON.stringify(bible?.style_contract || {}, null, 2)
+  next.reference_preferences = (bible?.reference_preferences || []).join('\n')
   return next
 }
 
@@ -25,7 +28,7 @@ function normaliseLines(value) {
     .filter(Boolean)
 }
 
-export default function StoryBibleView({ novel }) {
+export default function StoryBibleView({ novel, api = DEFAULT_API, notify = showToast }) {
   const [bible, setBible] = useState(null)
   const [migration, setMigration] = useState(null)
   const [form, setForm] = useState(null)
@@ -45,7 +48,7 @@ export default function StoryBibleView({ novel }) {
     let cancelled = false
     setLoading(true)
     setError('')
-    fetchStoryBible(novel.id)
+    api.fetchStoryBible(novel.id)
       .then((data) => {
         if (cancelled) return
         setBible(data.story_bible)
@@ -62,7 +65,7 @@ export default function StoryBibleView({ novel }) {
     return () => {
       cancelled = true
     }
-  }, [novel?.id])
+  }, [novel?.id, api])
 
   useEffect(() => {
     function beforeUnload(event) {
@@ -99,7 +102,11 @@ export default function StoryBibleView({ novel }) {
     }
     const payload = {
       expected_revision: bible.revision,
+      title: form.title || '',
       source_seed: form.source_seed || '',
+      theme_key: form.theme_key || '',
+      positioning: form.positioning || '',
+      reference_preferences: normaliseLines(form.reference_preferences),
       premise: form.premise.trim(),
       theme: form.theme.trim(),
       central_question: form.central_question || '',
@@ -114,12 +121,12 @@ export default function StoryBibleView({ novel }) {
     setSaving(true)
     setError('')
     try {
-      const data = await saveStoryBible(novel.id, payload)
+      const data = await api.saveStoryBible(novel.id, payload)
       setBible(data.story_bible)
       setForm(toForm(data.story_bible))
       setMigration((current) => ({ ...current, inferred_fields: [] }))
       setEdit(false)
-      showToast(`创作圣经已保存 · revision ${data.story_bible.revision}`, 'success')
+      notify(`创作圣经已保存 · revision ${data.story_bible.revision}`, 'success')
     } catch (err) {
       setError(
         err.code === 'REVISION_CONFLICT'
@@ -170,7 +177,11 @@ export default function StoryBibleView({ novel }) {
         <div className="dc-au-notice is-inferred">
           <span className="dc-au-notice-mark">推断草稿</span>
           <div>
-            <strong>由旧数据推断，需要确认</strong>
+            <strong>
+              {bible.migration.source === 'legacy_inferred'
+                ? '由旧数据推断，需要确认'
+                : '初始化补充字段待确认'}
+            </strong>
             <p>
               来源：{(migration?.source_files || bible.migration.source_files || []).join(' / ') || '作品标题'}。
               推断字段：{(bible.migration.inferred_fields || []).join('、') || '基础创作契约'}。
@@ -182,6 +193,27 @@ export default function StoryBibleView({ novel }) {
 
       <div className="dc-au-bible-grid">
         <section className="dc-au-paper is-lead">
+          <div className="dc-au-two-col">
+            <Field
+              label="作品标题 · TITLE"
+              value={form.title}
+              editing={edit}
+              onChange={(value) => update('title', value)}
+            />
+            <Field
+              label="主题 PRESET KEY"
+              value={form.theme_key}
+              editing={edit}
+              onChange={(value) => update('theme_key', value)}
+            />
+          </div>
+          <Field
+            label="原始种子 · SOURCE SEED（逐字保存）"
+            value={form.source_seed}
+            editing={edit}
+            multiline
+            onChange={(value) => update('source_seed', value)}
+          />
           <Field
             label="故事前提 · PREMISE"
             value={form.premise}
@@ -203,6 +235,22 @@ export default function StoryBibleView({ novel }) {
               value={form.central_question}
               editing={edit}
               onChange={(value) => update('central_question', value)}
+            />
+          </div>
+          <div className="dc-au-two-col">
+            <Field
+              label="作品定位 · POSITIONING"
+              value={form.positioning}
+              editing={edit}
+              multiline
+              onChange={(value) => update('positioning', value)}
+            />
+            <Field
+              label="参考偏好 · REFERENCES"
+              value={form.reference_preferences}
+              editing={edit}
+              multiline
+              onChange={(value) => update('reference_preferences', value)}
             />
           </div>
           <Field

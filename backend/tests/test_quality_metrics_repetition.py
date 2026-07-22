@@ -9,12 +9,10 @@ from __future__ import annotations
 import pytest
 
 from quality_metrics.repetition import (
-    RepetitionReport,
     char_ngram_distinct,
     char_ngram_overlap,
     repetition_report,
     word_ngram_distinct,
-    word_ngram_overlap,
 )
 
 
@@ -65,7 +63,6 @@ def test_char_ngram_overlap_empty_returns_zero() -> None:
 
 def test_char_ngram_handles_chinese() -> None:
     text = "他低头走过赤铜巷。外套领子竖着。"
-    grams = ["他低", "低头", "头走"]  # 部分预期 2-gram
     # 不直接调内部函数, 用 distinct 间接验证: 文本长度 13 (去标点), 2-gram 共
     # 12 个, 全 unique → distinct=1.0
     assert char_ngram_distinct(text, 2) == 1.0

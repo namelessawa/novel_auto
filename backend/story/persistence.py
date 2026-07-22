@@ -177,9 +177,12 @@ class StoryBibleStore(AtomicModelStore[StoryBible]):
             if current.revision != patch.expected_revision:
                 raise RevisionConflict(patch.expected_revision, current.revision)
             payload = patch.model_dump(exclude={"expected_revision"})
+            provenance = dict(current.field_provenance)
+            provenance.update({key: "user_input" for key in payload})
             updated = current.model_copy(
                 update={
                     **payload,
+                    "field_provenance": provenance,
                     "revision": current.revision + 1,
                     "updated_at": utc_now(),
                     "migration": current.migration.model_copy(
@@ -188,6 +191,130 @@ class StoryBibleStore(AtomicModelStore[StoryBible]):
                 }
             )
             return self.save(updated)
+
+    def initialise_from_user_inputs(
+        self,
+        *,
+        title: str,
+        source_seed: str,
+        theme_key: str,
+        theme_label: str,
+        positioning: str,
+        references: str,
+        style_contract: dict,
+        preset_seed: bool,
+    ) -> StoryBible:
+        """Persist bootstrap inputs before any LLM task starts.
+
+        A second identical bootstrap is idempotent.  A different request may
+        not overwrite the already confirmed contract; callers must use the
+        revision-aware StoryBible PUT endpoint instead.
+        """
+
+        with self.lock:
+            current = self.load()
+            references_list = [references] if references else []
+            style_key = str(style_contract.get("key") or "")
+            if current.source_seed or current.field_provenance.get("source_seed"):
+                existing = (
+                    current.title,
+                    current.source_seed,
+                    current.theme_key,
+                    current.positioning,
+                    current.reference_preferences,
+                    str(current.style_contract.get("key") or ""),
+                )
+                requested = (
+                    title,
+                    source_seed,
+                    theme_key,
+                    positioning,
+                    references_list,
+                    style_key,
+                )
+                if existing != requested:
+                    raise RevisionConflict(current.revision, current.revision)
+                return current
+
+            inferred_fields = [
+                "central_question",
+                "setting_summary",
+                "immutable_world_rules",
+                "protagonist_contracts",
+                "main_conflicts",
+            ]
+            if not theme_key:
+                inferred_fields.append("theme")
+            provenance = {
+                "source_seed": "preset_derived" if preset_seed else "user_input",
+                "title": "user_input",
+                "theme_key": "user_input",
+                "positioning": "user_input",
+                "reference_preferences": "user_input",
+                "style_contract": "preset_derived" if style_key else "user_input",
+                "premise": "preset_derived" if preset_seed else "user_input",
+            }
+            if theme_key:
+                provenance["theme"] = "preset_derived"
+            bible = current.model_copy(
+                update={
+                    "revision": current.revision + 1,
+                    "title": title,
+                    "source_seed": source_seed,
+                    "theme_key": theme_key,
+                    "positioning": positioning,
+                    "reference_preferences": references_list,
+                    "premise": source_seed,
+                    "theme": theme_label or "待从用户种子确认的主题",
+                    "setting_summary": current.setting_summary or "待由世界初始化补充的背景。",
+                    "style_contract": style_contract,
+                    "field_provenance": provenance,
+                    "updated_at": utc_now(),
+                    "migration": current.migration.model_copy(
+                        update={
+                            "source": "user_confirmed",
+                            "inferred_fields": inferred_fields,
+                            "needs_confirmation": True,
+                        }
+                    ),
+                }
+            )
+            return self.save(bible)
+
+    def update_style(
+        self,
+        *,
+        expected_revision: int,
+        style_contract: dict,
+        positioning: str,
+        references: str,
+    ) -> StoryBible:
+        with self.lock:
+            current = self.load()
+            if current.revision != expected_revision:
+                raise RevisionConflict(expected_revision, current.revision)
+            provenance = dict(current.field_provenance)
+            provenance.update(
+                {
+                    "style_contract": "preset_derived"
+                    if style_contract.get("key")
+                    else "user_input",
+                    "positioning": "user_input",
+                    "reference_preferences": "user_input",
+                }
+            )
+            return self.save(
+                current.model_copy(
+                    update={
+                        "revision": current.revision + 1,
+                        "style_contract": style_contract,
+                        "positioning": positioning,
+                        "reference_preferences": [references] if references else [],
+                        "field_provenance": provenance,
+                        "updated_at": utc_now(),
+                    }
+                )
+            )
 
 
 class CanonicalStateStore(AtomicModelStore[CanonicalState]):
@@ -282,6 +409,8 @@ class ContextManifestStore(AtomicModelStore[ContextManifest]):
                 canonical_state_revision=1,
                 total_chars=0,
                 total_token_estimate=0,
+                max_context_chars=0,
+                max_context_token_estimate=0,
             ),
         )
 

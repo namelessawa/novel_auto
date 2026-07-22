@@ -5,11 +5,9 @@
 
 from __future__ import annotations
 
-import pytest
 
 from quality_metrics.consistency import (
     CharacterFact,
-    ConsistencyReport,
     LocationFact,
     WorldSnapshot,
     check_narration_against_snapshot,
@@ -20,7 +18,7 @@ from quality_metrics.consistency import (
 def _snap(chars, locs):
     return WorldSnapshot(
         characters=[CharacterFact(**c) for c in chars],
-        locations=[LocationFact(**l) for l in locs],
+        locations=[LocationFact(**location) for location in locs],
     )
 
 
@@ -35,9 +33,6 @@ def test_clean_narrative_no_violation() -> None:
         chars=[{"id": "char_a", "name": "苏默", "current_location": "loc_city"}],
         locs=[{"id": "loc_city", "name": "锈幕城"}],
     )
-    text = "苏默低头走过锈幕城的赤铜巷。"  # 赤铜巷不在 known locs, 但不以
-    # 列举的 hallucination suffix 之一结尾 → 不触发
-    vios = check_narration_against_snapshot(text, snap)
     # "赤铜巷" 的后缀 "巷" 是 hallucination 候选, 但 "赤铜巷" 不在 snapshot —
     # 会被标 hallucinated_location. v1 接受这种"叙事补白"地点其实是合理误报
     # 候选 — 但我们要求低误报, 所以验证它的标 high 至少是符合契约的 (符合

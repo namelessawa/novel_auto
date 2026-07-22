@@ -8,6 +8,8 @@
 
 ### Added
 
+- 新增 author 权威链加固：bootstrap 前逐字持久化 seed 与字段 provenance、StateDelta 逐操作证据/类型闸、StoryBible stale-context 提交与恢复保护、故事线有限合并、Context 全局硬预算，以及 11 项前端真实交互测试。
+- 新增 `scripts/smoke_author_mode_recorded.py`，以零 Provider 调用录制验证 seed、旧事务拦截、缺证据 delta、runtime 重建和长期记忆复用的十步链路。
 - 新增默认作者模式：`StoryBible` 作为最高创作契约，`CanonicalState` 作为唯一当前事实，结合类型化长期记忆与故事线生命周期构建固定十槽上下文。
 - 新增单 Writer → 确定性 Validator → 至多一次定向修复 → journaled commit 主链，并提供故障恢复、损坏隔离、last-good 备份和修订号冲突保护。
 - 新增作者模式 REST API、编辑工作台、创作圣经/规范状态/故事线视图、上下文清单，以及旧 Tick/事实账本/记忆/摘要数据的幂等只读迁移。
@@ -21,6 +23,8 @@
 
 ### Changed
 
+- Author 模式风格 preset 统一写入 `StoryBible.style_contract` 并提升 revision；TickState style anchors 仅保留为 simulation 运行数据。
+- Repair 仅修改正文，之后以修复正文重新验证原候选的每条 StateDelta；缺失或不可定位 evidence 的变化永不进入 CanonicalState。
 - 作品默认不再实例化九 Agent Tick runtime；世界模拟改为显式开启、延迟加载的实验模式，其产出仍必须通过统一 Validator 与 CanonicalState 事务网关。
 - 知识图谱在作者模式中降级为只读派生视图；旧章节生成、Tick 与 Agent API 不得隐式拉起模拟 runtime。
 - 前端默认导航改为章节创作、创作圣经、规范状态和故事线，Tick、Agent 与知识图谱移入高级/实验入口。

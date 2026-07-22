@@ -9,7 +9,6 @@ tick 事件分布"统计基于污染后的数据, 趋势判断失真。
 
 from __future__ import annotations
 
-import pytest
 
 from memory_system.models import Event, TickSummary
 from persistence.tick_db import TickDB

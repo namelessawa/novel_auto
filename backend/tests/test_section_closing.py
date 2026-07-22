@@ -17,7 +17,6 @@ env kill switch: ``SECTION_CLOSING_ENABLE`` 默认 True.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -29,9 +28,9 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-import pytest
+import pytest  # noqa: E402
 
-from quality_metrics.section_closing import (
+from quality_metrics.section_closing import (  # noqa: E402
     SectionClosingReport,
     c6_section_closing_check,
     section_closing_report,

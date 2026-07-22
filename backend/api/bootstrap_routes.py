@@ -113,7 +113,7 @@ class BootstrapWorldRequest(BaseModel):
         default="",
         description=(
             "Phase 5+ 风格 preset key (novel_presets.STYLE_PRESETS). "
-            "持久化进 TickState, narrator 每 tick 拼到 user_prompt 头."
+            "author 模式持久化进 StoryBible；simulation 模式持久化进 TickState."
         ),
     )
     positioning: str = Field(
@@ -143,7 +143,8 @@ async def bootstrap_world_endpoint(
     novel_title = (novel.get("title") or "").strip()
 
     # Phase 5+: theme / style 校验 + seed 自动 resolve
-    resolved_seed = (req.seed or "").strip()
+    original_seed = req.seed or ""
+    resolved_seed = original_seed
     resolved_style = (req.style or "").strip()
     if req.theme:
         if not _PRESETS_AVAILABLE or req.theme not in THEME_SEEDS:
@@ -151,7 +152,7 @@ async def bootstrap_world_endpoint(
                 status_code=400,
                 detail=f"theme {req.theme!r} not in registry (valid: {sorted(THEME_SEEDS) if _PRESETS_AVAILABLE else 'none'})",
             )
-        if not resolved_seed:
+        if not resolved_seed.strip():
             resolved_seed = THEME_SEEDS[req.theme].seed
     if resolved_style:
         if not _PRESETS_AVAILABLE or resolved_style not in STYLE_PRESETS:
@@ -159,19 +160,63 @@ async def bootstrap_world_endpoint(
                 status_code=400,
                 detail=f"style {resolved_style!r} not in registry (valid: {sorted(STYLE_PRESETS) if _PRESETS_AVAILABLE else 'none'})",
             )
-    if not resolved_seed:
+    if not resolved_seed.strip():
         raise HTTPException(
             status_code=400,
             detail="必须提供 seed 或 theme (从注册表自动取 seed)",
         )
 
+    data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
+    from story.migrations import ensure_story_domain
+    from story.persistence import GenerationModeStore, RevisionConflict, StoryBibleStore
+
+    ensure_story_domain(data_dir, title=novel_title)
+    mode = GenerationModeStore(data_dir).load().mode
+    persisted_seed = resolved_seed
+    persisted_positioning = req.positioning
+    persisted_references = req.references
+    persisted_style = resolved_style
+    if mode == "author":
+        snapshot = STYLE_PRESETS[resolved_style].to_snapshot() if resolved_style else {}
+        style_contract = {
+            **snapshot,
+            "key": resolved_style,
+            "positioning": req.positioning,
+            "reference_preferences": [req.references] if req.references else [],
+        }
+        try:
+            bible = StoryBibleStore(data_dir).initialise_from_user_inputs(
+                title=novel_title,
+                source_seed=resolved_seed,
+                theme_key=req.theme,
+                theme_label=(THEME_SEEDS[req.theme].label if req.theme else ""),
+                positioning=req.positioning,
+                references=req.references,
+                style_contract=style_contract,
+                preset_seed=not bool(original_seed.strip()),
+            )
+        except RevisionConflict:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "STORY_BIBLE_ALREADY_CONFIRMED",
+                    "message": "创作圣经已保存；bootstrap 重试不能覆盖原始输入，请通过创作圣经页面修改。",
+                },
+            )
+        persisted_seed = bible.source_seed
+        persisted_positioning = bible.positioning
+        persisted_references = (
+            bible.reference_preferences[0] if bible.reference_preferences else ""
+        )
+        persisted_style = str(bible.style_contract.get("key") or "")
+
     executor = _make_bootstrap_world_executor(
-        seed=resolved_seed,
-        positioning=req.positioning,
-        references=req.references,
+        seed=persisted_seed,
+        positioning=persisted_positioning,
+        references=persisted_references,
         title=novel_title,
         also_generate_first_section=req.also_generate_first_section,
-        style_preset_key=resolved_style,
+        style_preset_key=persisted_style,
     )
 
     mgr = get_task_manager()
@@ -319,6 +364,16 @@ async def regenerate_style_anchors_endpoint(
     novel_title = (novel.get("title") or "").strip()
 
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
+    from story.persistence import GenerationModeStore
+
+    if GenerationModeStore(data_dir).load().mode == "author":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "AUTHOR_STYLE_BIBLE_REQUIRED",
+                "message": "作者模式的风格唯一权威是创作圣经，请在创作圣经中修改风格契约。",
+            },
+        )
     ts = TickState(data_dir=data_dir)
     # HIGH bug fix (code review 2026-06-17): __init__ 只初始化空字段, 必须先 load()
     # 把磁盘 tick_state.json 读回内存. 不 load 直接 save 会把 current_tick / open_loops
@@ -368,6 +423,7 @@ async def regenerate_style_anchors_endpoint(
 
 class SwitchStylePresetRequest(BaseModel):
     style: str = Field(description="目标 style preset key；空字符串回到默认行为")
+    expected_revision: int | None = Field(default=None, ge=1)
     positioning: str = Field(default=DEFAULT_POSITIONING)
     references: str = Field(default=DEFAULT_REFERENCES)
     regenerate_anchors: bool = Field(
@@ -394,6 +450,49 @@ async def switch_style_preset_endpoint(
         )
 
     data_dir = novel_manager.get_novel_data_dir(current_user.id, novel_id)
+    from story.persistence import GenerationModeStore, RevisionConflict, StoryBibleStore
+
+    if GenerationModeStore(data_dir).load().mode == "author":
+        store = StoryBibleStore(data_dir)
+        current = store.load()
+        snapshot = STYLE_PRESETS[style_key].to_snapshot() if style_key else {}
+        contract = {
+            **snapshot,
+            "key": style_key,
+            "positioning": req.positioning,
+            "reference_preferences": [req.references] if req.references else [],
+        }
+        try:
+            bible = store.update_style(
+                expected_revision=req.expected_revision or current.revision,
+                style_contract=contract,
+                positioning=req.positioning,
+                references=req.references,
+            )
+        except RevisionConflict as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "REVISION_CONFLICT",
+                    "message": "创作圣经已被其他会话更新，请刷新后重试。",
+                    "details": {"expected": exc.expected, "actual": exc.actual},
+                },
+            )
+        from story.runtime import drop_author_runtime
+
+        drop_author_runtime(current_user.id, novel_id)
+        novel_manager.touch_last_accessed(current_user.id, novel_id)
+        return {
+            "novel_id": novel_id,
+            "authority": "story_bible",
+            "story_bible_revision": bible.revision,
+            "style_preset_key": style_key,
+            "style_preset_version": bible.style_contract.get("version", ""),
+            "style_preset_prompt_hash": bible.style_contract.get("prompt_hash", ""),
+            "style_anchors_count": 0,
+            "message": "作者模式风格已写入创作圣经",
+        }
+
     ts = TickState(data_dir=data_dir)
     if not ts.load():
         raise HTTPException(status_code=409, detail="小说尚未完成世界冷启动")

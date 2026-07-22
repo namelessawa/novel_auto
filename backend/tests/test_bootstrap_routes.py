@@ -285,6 +285,48 @@ async def test_bootstrap_world_passes_user_inputs_to_seed_function(
 
 
 @pytest.mark.asyncio
+async def test_author_bootstrap_preserves_exact_source_seed(
+    isolated_env, patch_bootstrap_world, patch_section_runtime
+):
+    import novel_manager
+    from api.bootstrap_routes import (
+        BootstrapWorldRequest,
+        STYLE_PRESETS,
+        THEME_SEEDS,
+        bootstrap_world_endpoint,
+    )
+    from story.persistence import StoryBibleStore
+
+    user = _fake_user("u_exact_seed")
+    novel = novel_manager.create_novel(user.id, "逐字种子")
+    seed = "潮声：‘别回头’——第一行。\n第二行（保留！）"
+    theme_key = next(iter(THEME_SEEDS))
+    style_key = next(iter(STYLE_PRESETS))
+    await bootstrap_world_endpoint(
+        novel["id"],
+        BootstrapWorldRequest(
+            seed=seed,
+            theme=theme_key,
+            style=style_key,
+            positioning="冷峻；短句",
+            references="作者甲 / 作品乙",
+            also_generate_first_section=False,
+        ),
+        current_user=user,
+    )
+    bible = StoryBibleStore(
+        novel_manager.get_novel_data_dir(user.id, novel["id"])
+    ).load()
+    assert bible.source_seed == seed
+    assert bible.theme_key == theme_key
+    assert bible.style_contract["key"] == style_key
+    assert bible.positioning == "冷峻；短句"
+    assert bible.reference_preferences == ["作者甲 / 作品乙"]
+    assert bible.migration.source == "user_confirmed"
+    assert bible.field_provenance["source_seed"] == "user_input"
+
+
+@pytest.mark.asyncio
 async def test_bootstrap_world_uses_defaults_when_optional_fields_omitted(
     isolated_env, patch_bootstrap_world, patch_section_runtime
 ):
@@ -349,7 +391,7 @@ async def test_bootstrap_world_conflict_409_for_same_novel(
 
 
 @pytest.mark.asyncio
-async def test_bootstrap_world_failure_marks_task_failed(
+async def test_bootstrap_failure_does_not_lose_story_bible(
     isolated_env, patch_section_runtime, monkeypatch
 ):
     """bootstrap_world 抛异常时, task 状态应当 failed, 不应该链式触发首节。"""
@@ -391,6 +433,54 @@ async def test_bootstrap_world_failure_marks_task_failed(
     assert "LLM 配额耗尽" in final.error
     # 只应当有这 1 个任务 — 失败不链式
     assert len(mgr.list_for_user_and_novel(user.id, nid)) == 1
+    from story.persistence import StoryBibleStore
+
+    bible = StoryBibleStore(novel_manager.get_novel_data_dir(user.id, nid)).load()
+    assert bible.source_seed == "种子"
+    assert bible.migration.source == "user_confirmed"
+
+
+@pytest.mark.asyncio
+async def test_bootstrap_retry_does_not_overwrite_user_confirmed_bible(
+    isolated_env, patch_bootstrap_world, patch_section_runtime
+):
+    import novel_manager
+    from api.bootstrap_routes import BootstrapWorldRequest, bootstrap_world_endpoint
+    from story.models import StoryBibleUpdate
+    from story.persistence import StoryBibleStore
+
+    user = _fake_user("u_retry_bible")
+    novel = novel_manager.create_novel(user.id, "重试保护")
+    request = BootstrapWorldRequest(
+        seed="原始种子",
+        positioning="原定位",
+        references="原参考",
+        also_generate_first_section=False,
+    )
+    await bootstrap_world_endpoint(novel["id"], request, current_user=user)
+    await asyncio.sleep(0.2)
+    store = StoryBibleStore(novel_manager.get_novel_data_dir(user.id, novel["id"]))
+    bible = store.load()
+    confirmed = store.update(
+        StoryBibleUpdate(
+            expected_revision=bible.revision,
+            title=bible.title,
+            source_seed=bible.source_seed,
+            theme_key=bible.theme_key,
+            positioning=bible.positioning,
+            reference_preferences=bible.reference_preferences,
+            premise="用户确认的前提",
+            theme="用户确认的主题",
+            setting_summary="用户确认的背景",
+            style_contract=bible.style_contract,
+        )
+    )
+    await bootstrap_world_endpoint(novel["id"], request, current_user=user)
+    await asyncio.sleep(0.2)
+    restored = store.load()
+    assert restored.revision == confirmed.revision
+    assert restored.theme == "用户确认的主题"
+    assert restored.source_seed == "原始种子"
 
 
 @pytest.mark.asyncio
@@ -405,10 +495,13 @@ async def test_switch_style_preset_is_atomic_and_preserves_tick_state(
     from memory.tick_state import TickState
     from memory_system.models import StyleAnchor
     from novel_presets import get_style_preset
+    from story.models import GenerationModeConfig
+    from story.persistence import GenerationModeStore
 
     user = _fake_user("u_style_switch")
     novel = novel_manager.create_novel(user.id, "风格切换测试")
     data_dir = novel_manager.get_novel_data_dir(user.id, novel["id"])
+    GenerationModeStore(data_dir).save(GenerationModeConfig(mode="simulation"))
     ts = TickState(data_dir=data_dir)
     ts.advance_tick()
     old = get_style_preset("literary")
@@ -441,6 +534,150 @@ async def test_switch_style_preset_is_atomic_and_preserves_tick_state(
     assert restored.current_tick == 1
     assert restored.style_preset_prompt_hash == selected.prompt_hash
     assert [a.excerpt for a in restored.list_style_anchors()] == ["新热血锚点"]
+
+
+@pytest.mark.asyncio
+async def test_author_style_switch_updates_story_bible(
+    isolated_env, monkeypatch
+):
+    import novel_manager
+    from api.bootstrap_routes import SwitchStylePresetRequest, switch_style_preset_endpoint
+    from story.migrations import ensure_story_domain
+    from story.persistence import StoryBibleStore
+
+    user = _fake_user("u_author_style")
+    novel = novel_manager.create_novel(user.id, "作者风格")
+    data_dir = novel_manager.get_novel_data_dir(user.id, novel["id"])
+    ensure_story_domain(data_dir, title=novel["title"])
+    before = StoryBibleStore(data_dir).load()
+    called = {"anchors": 0}
+
+    async def _must_not_generate(**kwargs):
+        called["anchors"] += 1
+        raise AssertionError("author style switch must not generate TickState anchors")
+
+    monkeypatch.setattr("api.bootstrap_routes.generate_style_anchors", _must_not_generate)
+    result = await switch_style_preset_endpoint(
+        novel["id"],
+        SwitchStylePresetRequest(
+            style="hot_blooded",
+            expected_revision=before.revision,
+            positioning="短促有力",
+            references="不模仿具体作者",
+        ),
+        current_user=user,
+    )
+    after = StoryBibleStore(data_dir).load()
+    assert result["authority"] == "story_bible"
+    assert after.revision == before.revision + 1
+    assert after.style_contract["key"] == "hot_blooded"
+    assert after.positioning == "短促有力"
+    assert called["anchors"] == 0
+    assert not os.path.exists(os.path.join(data_dir, "tick_state.json"))
+
+
+@pytest.mark.asyncio
+async def test_author_style_switch_does_not_depend_on_tick_state(
+    isolated_env, monkeypatch
+):
+    import novel_manager
+    from api.bootstrap_routes import SwitchStylePresetRequest, switch_style_preset_endpoint
+    from story.migrations import ensure_story_domain
+
+    user = _fake_user("u_author_style_no_tick")
+    novel = novel_manager.create_novel(user.id, "无 Tick 风格")
+    data_dir = novel_manager.get_novel_data_dir(user.id, novel["id"])
+    ensure_story_domain(data_dir, title=novel["title"])
+    monkeypatch.setattr(
+        "api.bootstrap_routes.generate_style_anchors",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("must not run")),
+    )
+    result = await switch_style_preset_endpoint(
+        novel["id"],
+        SwitchStylePresetRequest(style="literary", regenerate_anchors=True),
+        current_user=user,
+    )
+    assert result["authority"] == "story_bible"
+    assert not os.path.exists(os.path.join(data_dir, "tick_state.json"))
+
+
+def test_author_seed_api_roundtrip_survives_runtime_rebuild(
+    isolated_env, patch_bootstrap_world, patch_section_runtime
+):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from api import bootstrap_routes, routes, story_routes
+    from auth import get_current_user
+    from story.runtime import clear_author_runtimes
+
+    user = _fake_user("u_seed_e2e")
+    app = FastAPI()
+    app.include_router(routes.router)
+    app.include_router(bootstrap_routes.router)
+    app.include_router(story_routes.router)
+    app.dependency_overrides[get_current_user] = lambda: user
+    seed = "钟摆停在 00:00——‘谁在撒谎？’\n第二行：保留【括号】与；分号。"
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/novels?auto_bootstrap=false",
+            json={"title": "精确种子 API", "generation_mode": "author"},
+        )
+        assert created.status_code == 200, created.text
+        novel_id = created.json()["id"]
+        boot = client.post(
+            f"/api/novels/{novel_id}/bootstrap-world",
+            json={
+                "seed": seed,
+                "positioning": "逐句克制",
+                "references": "仅作语感参考",
+                "also_generate_first_section": False,
+            },
+        )
+        assert boot.status_code == 200, boot.text
+        first = client.get(f"/api/novels/{novel_id}/story-bible")
+        assert first.status_code == 200
+        assert first.json()["story_bible"]["source_seed"] == seed
+        clear_author_runtimes()
+        second = client.get(f"/api/novels/{novel_id}/story-bible")
+        assert second.json()["story_bible"]["source_seed"] == seed
+
+
+@pytest.mark.asyncio
+async def test_simulation_style_switch_remains_isolated(
+    isolated_env, monkeypatch
+):
+    import novel_manager
+    from api.bootstrap_routes import SwitchStylePresetRequest, switch_style_preset_endpoint
+    from memory.tick_state import TickState
+    from memory_system.models import StyleAnchor
+    from story.migrations import ensure_story_domain
+    from story.models import GenerationModeConfig
+    from story.persistence import GenerationModeStore, StoryBibleStore
+
+    user = _fake_user("u_sim_style")
+    novel = novel_manager.create_novel(user.id, "模拟风格")
+    data_dir = novel_manager.get_novel_data_dir(user.id, novel["id"])
+    ensure_story_domain(data_dir, title=novel["title"])
+    GenerationModeStore(data_dir).save(GenerationModeConfig(mode="simulation"))
+    bible_before = StoryBibleStore(data_dir).load()
+    ts = TickState(data_dir=data_dir)
+    ts.save()
+
+    async def _anchors(**kwargs):
+        return [StyleAnchor(excerpt="模拟锚点", scene_type="action", weight=1.0)]
+
+    monkeypatch.setattr("api.bootstrap_routes.generate_style_anchors", _anchors)
+    monkeypatch.setattr("api.bootstrap_routes._reload_runtime", lambda *_: None)
+    await switch_style_preset_endpoint(
+        novel["id"],
+        SwitchStylePresetRequest(style="hot_blooded"),
+        current_user=user,
+    )
+    assert StoryBibleStore(data_dir).load() == bible_before
+    restored = TickState(data_dir=data_dir)
+    assert restored.load() is True
+    assert restored.style_preset_key == "hot_blooded"
 
 
 @pytest.mark.asyncio

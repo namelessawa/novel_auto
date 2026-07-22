@@ -26,9 +26,8 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-import pytest
 
-from agents.narrator_agent import _critic_force_above_len
+from agents.narrator_agent import _critic_force_above_len  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
