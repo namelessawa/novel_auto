@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import sys
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,9 @@ def _identity(
     provider: str,
     model: str,
     sections_per_combo: int,
+    desired_length: int,
+    checkpoint_every: int,
+    runtime_rebuild_every: int,
 ) -> dict[str, Any]:
     return {
         "themes": list(themes),
@@ -49,14 +53,18 @@ def _identity(
         "provider": provider,
         "model": model,
         "sections_per_combo": sections_per_combo,
+        "desired_length": desired_length,
+        "checkpoint_every": checkpoint_every,
+        "runtime_rebuild_every": runtime_rebuild_every,
     }
 
 
 def _combo_integrity(report: dict[str, Any]) -> list[str]:
     problems: list[str] = []
+    attempted = list(report.get("sections", []))
     committed = [item for item in report.get("sections", []) if item.get("committed")]
     section_ids = [str(item.get("section_id")) for item in committed]
-    transaction_ids = [str(item.get("transaction_id")) for item in committed]
+    transaction_ids = [str(item.get("transaction_id")) for item in attempted]
     revisions = [int(item.get("canonical_revision", 0)) for item in committed]
     if len(section_ids) != len(set(section_ids)):
         problems.append("duplicate_committed_section_id")
@@ -64,6 +72,26 @@ def _combo_integrity(report: dict[str, Any]) -> list[str]:
         problems.append("duplicate_committed_transaction_id")
     if revisions != list(range(2, 2 + len(revisions))):
         problems.append("canonical_revision_not_contiguous")
+    for previous, current in zip(attempted, attempted[1:]):
+        if int(previous.get("canonical_revision_after", 0)) != int(
+            current.get("canonical_revision_before", -1)
+        ):
+            problems.append("canonical_revision_chain_broken")
+            break
+    if any(
+        int(item.get("canonical_revision_after", 0))
+        != int(item.get("canonical_revision_before", 0))
+        + int(bool(item.get("committed")))
+        for item in attempted
+    ):
+        problems.append("canonical_revision_jump")
+    if len(
+        {
+            int(item.get("story_bible_revision", 0))
+            for item in attempted
+        }
+    ) > 1:
+        problems.append("story_bible_revision_changed")
     if any(
         not item.get("narrative_contract_pass")
         or int(item.get("state_conflict_count", 0))
@@ -92,6 +120,11 @@ def aggregate(
         for item in combinations
         if item.get("integrity")
     ]
+    integrity_codes = Counter(
+        code
+        for item in combinations
+        for code in item.get("integrity", [])
+    )
     expected_sections = expected_combinations * sections_per_combo
     all_combinations = len(combinations) == expected_combinations
     contract_rate = round(contract_pass / attempted, 4) if attempted else 0.0
@@ -118,13 +151,46 @@ def aggregate(
         bool(item.get("committed")) and int(item.get("state_conflict_count", 0)) > 0
         for item in sections
     )
+    illegal_thread_change_commits = sum(
+        int(item.get("illegal_thread_change_commits", 0))
+        for item in sections
+        if item.get("committed")
+    )
+    evidenceless_state_delta_commits = sum(
+        int(item.get("evidenceless_state_delta_commits", 0))
+        for item in sections
+        if item.get("committed")
+    )
     common_checks = {
         "all_combinations_completed": all_combinations,
         "all_attempts_completed": attempted == expected_sections,
         "hard_fact_error_commits_zero": hard_fact_error_commits == 0,
         "state_conflict_commits_zero": state_conflict_commits == 0,
         "transaction_data_corruption_zero": not integrity,
+        "revision_jumps_zero": not any(
+            code in integrity_codes
+            for code in (
+                "canonical_revision_not_contiguous",
+                "canonical_revision_chain_broken",
+                "canonical_revision_jump",
+            )
+        ),
+        "duplicate_sections_zero": (
+            integrity_codes["duplicate_committed_section_id"] == 0
+        ),
+        "duplicate_transactions_zero": (
+            integrity_codes["duplicate_committed_transaction_id"] == 0
+        ),
+        "story_bible_revision_stable": (
+            integrity_codes["story_bible_revision_changed"] == 0
+        ),
         "provider_errors_zero": provider_errors == 0,
+        "illegal_thread_change_commits_zero": (
+            illegal_thread_change_commits == 0
+        ),
+        "evidenceless_state_delta_commits_zero": (
+            evidenceless_state_delta_commits == 0
+        ),
     }
     complete = all_combinations and attempted == expected_sections
     mini_matrix = expected_combinations == 5 and expected_sections == 15
@@ -159,6 +225,7 @@ def aggregate(
         "expected_sections": expected_sections,
         "attempted": attempted,
         "committed": committed,
+        "rejected": attempted - committed,
         "contract_pass": contract_pass,
         "contract_pass_rate": contract_rate,
         "repairs": len(repaired),
@@ -168,8 +235,14 @@ def aggregate(
         "hard_rejects": hard_rejects,
         "hard_fact_error_commits": hard_fact_error_commits,
         "state_conflict_commits": state_conflict_commits,
+        "illegal_thread_change_commits": illegal_thread_change_commits,
+        "evidenceless_state_delta_commits": evidenceless_state_delta_commits,
         "data_integrity_violations": integrity,
+        "data_integrity_violation_codes": dict(integrity_codes.most_common()),
         "provider_errors": provider_errors,
+        "provider_calls": sum(
+            int(item.get("writer_calls", 0)) for item in sections
+        ),
         "prompt_tokens": sum(int(item.get("prompt_tokens", 0)) for item in sections),
         "completion_tokens": sum(
             int(item.get("completion_tokens", 0)) for item in sections
@@ -296,6 +369,9 @@ async def run_matrix(args: argparse.Namespace) -> dict[str, Any]:
         provider=str(provider["provider"]),
         model=model,
         sections_per_combo=args.sections_per_combo,
+        desired_length=args.desired_length,
+        checkpoint_every=args.checkpoint_every,
+        runtime_rebuild_every=args.runtime_rebuild_every,
     )
     matrix_path = output_dir / "stage1-matrix.json"
     if args.resume and matrix_path.is_file():

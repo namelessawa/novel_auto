@@ -109,6 +109,7 @@ async def test_recorded_longrange_repair_checkpoint_recovery_and_sample_replay(
     assert report["summary"]["runtime_rebuilds"] == 2
     assert report["config"]["provider"] == "recorded"
     assert report["config"]["model"] == "recorded"
+    assert report["config"]["desired_length"] == 300
     assert report["recovery_evidence"]["clean_staged_recovery"]["passed"] is True
     assert report["recovery_evidence"]["stale_staged_rejected"]["passed"] is True
     assert len(report["real_sample_replay"]) == 5
@@ -125,6 +126,29 @@ async def test_recorded_longrange_repair_checkpoint_recovery_and_sample_replay(
     assert len(primary_samples) == 6
     assert (output_dir / "samples" / "section_0004_repair_before.txt").is_file()
     assert (output_dir / "samples" / "section_0004_repair_after.txt").is_file()
+    first = report["sections"][0]
+    assert first["story_bible_revision"] >= 1
+    assert {
+        item["story_bible_revision"] for item in report["sections"]
+    } == {first["story_bible_revision"]}
+    assert first["canonical_revision_before"] == 1
+    assert first["canonical_revision_after"] == 2
+    assert first["provider"] == first["model"] == "recorded"
+    assert first["contract_hash"]
+    assert first["required_events"]
+    assert first["completed_events"] == first["required_events"]
+    assert first["missing_events"] == []
+    assert first["contract_result"] is True
+    assert first["committed_delta_count"] == len(first["committed_delta"])
+    assert isinstance(first["rejected_delta"], list)
+    assert set(first["thread_changes"]) == {"opened", "advanced", "resolved"}
+    assert first["committed_thread_changes"] == []
+    assert first["memory_records_added"] >= 1
+    assert f"section_summary_{first['section_id']}" in first[
+        "memory_record_ids_added"
+    ]
+    assert first["illegal_thread_change_commits"] == 0
+    assert first["evidenceless_state_delta_commits"] == 0
     assert analyze(report)["gate"] == "STAGE0_PASS"
     bible = json.loads(
         (output_dir / "runtime" / "story_bible.json").read_text(encoding="utf-8")

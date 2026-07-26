@@ -340,11 +340,25 @@ def _initialise_service(data_dir: Path, *, style: str, theme: str, writer=None):
     return service
 
 
-def _section_metrics(transaction, service, previous_text: str, latency: float) -> dict:
+def _section_metrics(
+    transaction,
+    service,
+    previous_text: str,
+    latency: float,
+    *,
+    provider: str = "recorded",
+    model: str = "recorded",
+) -> dict:
     narrative = transaction.narrative_validation_report
     authority = transaction.validation_report
     candidate = transaction.candidate
     text = candidate.narrative_text if candidate else ""
+    contract = transaction.narrative_contract
+    patches = (
+        transaction.repair_patches.patches
+        if transaction.repair_patches
+        else []
+    )
     slot = next(
         (
             item
@@ -355,16 +369,98 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
     )
     threads = service.threads.load().threads
     memories = service.memories.load().records
+    state = service.states.load()
     style = transaction.style_validation_report or {}
+    narrative_codes = [
+        item.code for item in (narrative.violations if narrative else [])
+    ]
+    state_codes = [
+        item.code for item in (authority.violations if authority else [])
+    ]
+    proposal_codes = [
+        item.code for item in (authority.proposal_drops if authority else [])
+    ]
+    completed_event_ids = [
+        item.event_id
+        for item in (narrative.event_results if narrative else [])
+        if item.status == "completed"
+    ]
+    missing_event_ids = [
+        item.event_id
+        for item in (narrative.event_results if narrative else [])
+        if item.status != "completed"
+    ]
+    committed_delta = (
+        list(authority.validated_delta)
+        if authority and transaction.committed
+        else []
+    )
+    validated_delta_keys = {
+        item.model_dump_json() for item in (authority.validated_delta if authority else [])
+    }
+    rejected_delta = [
+        item
+        for item in (candidate.state_delta if candidate else [])
+        if item.model_dump_json() not in validated_delta_keys
+    ]
+    committed_thread_changes = (
+        list(authority.thread_changes)
+        if authority and transaction.committed
+        else []
+    )
+    thread_change_counts = {
+        action: sum(
+            item.action == action for item in committed_thread_changes
+        )
+        for action in ("opened", "advanced", "resolved")
+    }
+    memory_selected_ids = list(slot.reference_ids) if slot else []
+    item_codes = {
+        "ITEM_OWNER_CONFLICT",
+        "ITEM_UNKNOWN",
+        "ITEM_TARGET_UNKNOWN",
+        "ITEM_TRANSFER_UNNARRATED",
+    }
+    character_codes = {
+        "CHARACTER_UNKNOWN",
+        "DEAD_CHARACTER_REVIVAL",
+        "LOCATION_UNKNOWN",
+        "LOCATION_JUMP",
+        "NARRATIVE_CHARACTER_ADDED",
+    }
+    knowledge_codes = {
+        "KNOWLEDGE_CHARACTER_UNKNOWN",
+        "READER_KNOWLEDGE_REVEALED_AGAIN",
+    }
+    relationship_codes = {
+        code
+        for code in [*narrative_codes, *state_codes]
+        if "RELATION" in code
+    }
+    all_codes = [*narrative_codes, *state_codes, *proposal_codes]
     return {
         "section_id": transaction.section_id,
         "transaction_id": transaction.id,
         "phase": transaction.phase,
         "committed": transaction.committed,
-        "narrative_contract_pass": bool(narrative and narrative.accepted),
-        "narrative_violation_codes": [
-            item.code for item in (narrative.violations if narrative else [])
+        "story_bible_revision": transaction.story_bible_revision,
+        "canonical_revision_before": transaction.canonical_state_revision,
+        "canonical_revision_after": state.revision,
+        "provider": provider,
+        "model": model,
+        "contract_hash": contract.contract_hash if contract else "",
+        "required_events": [
+            item.id for item in (contract.required_events if contract else [])
         ],
+        "completed_events": completed_event_ids,
+        "missing_events": missing_event_ids,
+        "end_states": [
+            item.model_dump(mode="json")
+            for item in (narrative.end_state_results if narrative else [])
+        ],
+        "contract_result": bool(narrative and narrative.accepted),
+        "narrative_contract_pass": bool(narrative and narrative.accepted),
+        "narrative_violation_codes": narrative_codes,
         "narrative_validation_history_codes": [
             [item.code for item in report.violations]
             for report in transaction.narrative_validation_history
@@ -404,24 +500,58 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
             item.code.startswith("TIME_") or item.code == "CAUSAL_LINK_WEAKENED"
             for item in (narrative.violations if narrative else [])
         ),
-        "canonical_revision": service.states.load().revision,
+        "canonical_revision": state.revision,
+        "canonical_state_sha256": hashlib.sha256(
+            state.model_dump_json().encode("utf-8")
+        ).hexdigest(),
+        "delta_count": len(candidate.state_delta) if candidate else 0,
+        "proposed_delta": [
+            item.model_dump(mode="json")
+            for item in (candidate.state_delta if candidate else [])
+        ],
+        "committed_delta_count": len(committed_delta),
+        "committed_delta": [
+            item.model_dump(mode="json") for item in committed_delta
+        ],
+        "rejected_delta": [
+            item.model_dump(mode="json") for item in rejected_delta
+        ],
         "validated_delta_count": len(authority.validated_delta) if authority else 0,
         "dropped_delta_count": authority.dropped_delta_count if authority else 0,
         "dropped_thread_change_count": (
             authority.dropped_thread_change_count if authority else 0
         ),
-        "proposal_drop_codes": [
-            item.code for item in (authority.proposal_drops if authority else [])
-        ],
+        "proposal_drop_codes": proposal_codes,
         "rejected_delta_count": len(candidate.state_delta) - len(authority.validated_delta)
         if candidate and authority
         else 0,
+        "evidenceless_state_delta_commits": sum(
+            not item.evidence.strip() for item in committed_delta
+        ),
+        "thread_proposals": {
+            "opened": len(candidate.threads_opened) if candidate else 0,
+            "advanced": len(candidate.threads_advanced) if candidate else 0,
+            "resolved": len(candidate.threads_resolved) if candidate else 0,
+        },
+        "thread_changes": thread_change_counts,
+        "committed_thread_changes": [
+            item.model_dump(mode="json") for item in committed_thread_changes
+        ],
+        "illegal_thread_change_commits": sum(
+            (
+                item.action == "resolved"
+                and not item.thread.resolution_evidence
+            )
+            or (
+                item.action in {"opened", "advanced"}
+                and not item.thread.evidence
+            )
+            for item in committed_thread_changes
+        ),
         "state_conflict_count": sum(
             item.severity == "high" for item in (authority.violations if authority else [])
         ),
-        "state_violation_codes": [
-            item.code for item in (authority.violations if authority else [])
-        ],
+        "state_violation_codes": state_codes,
         "state_validation_history_codes": [
             [item.code for item in report.violations]
             for report in transaction.validation_history
@@ -435,15 +565,52 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         "threads_resolved": sum(item.status == "resolved" for item in threads.values()),
         "threads_stale": sum(item.status == "stale" for item in threads.values()),
         "threads_created_per_section": len(candidate.threads_opened) if candidate else 0,
+        "threads_opened_count": thread_change_counts["opened"],
+        "threads_advanced_count": thread_change_counts["advanced"],
+        "threads_resolved_count": thread_change_counts["resolved"],
         "threads_resolved_with_evidence": sum(
             bool(item.resolution_evidence) for item in (candidate.threads_resolved if candidate else [])
         ),
         "main_conflict_progress": int(bool(candidate and candidate.threads_advanced)),
         "memory_records_total": len(memories),
         "memory_records_selected": slot.selected_count if slot else 0,
-        "memory_reference_hit_rate": 0.0,
+        "memory_selected_ids": memory_selected_ids,
+        "memory_reference_hit": int(bool(memory_selected_ids)),
+        "memory_reference_hit_rate": (
+            round(len(memory_selected_ids) / max(1, min(12, len(memories))), 4)
+            if memories
+            else 0.0
+        ),
         "relevant_memory_precision_sample": None,
-        "memory_growth_per_section": len(candidate.memory_records) + 1 if candidate else 0,
+        "memory_records_added": (
+            len(candidate.memory_records) + 1
+            if candidate and transaction.committed
+            else 0
+        ),
+        "memory_record_ids_added": (
+            [
+                *[item.id for item in candidate.memory_records],
+                f"section_summary_{transaction.section_id}",
+            ]
+            if candidate and transaction.committed
+            else []
+        ),
+        "memory_growth_per_section": (
+            len(candidate.memory_records) + 1
+            if candidate and transaction.committed
+            else 0
+        ),
+        "character_continuity_errors": sum(
+            code in character_codes for code in all_codes
+        ),
+        "knowledge_boundary_errors": sum(
+            code in knowledge_codes for code in all_codes
+        ),
+        "relationship_conflicts": len(relationship_codes),
+        "item_owner_conflict": sum(
+            code == "ITEM_OWNER_CONFLICT" for code in all_codes
+        ),
+        "item_state_conflict": sum(code in item_codes for code in all_codes),
         "style_contract_pass": style.get("passed"),
         "style_rewrite_rate": int(transaction.repair_performed),
         "style_drift_warning": bool(style.get("findings")),
@@ -462,6 +629,7 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         "provider_errors": 0,
         "retry_count": 0,
         "writer_calls": transaction.writer_calls,
+        "repair_used": transaction.repair_performed,
         "repair_performed": transaction.repair_performed,
         "repair_plan_counts": {
             "missing_events": len(transaction.repair_plan.missing_events),
@@ -476,9 +644,30 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         "repair_ignored_fields": list(transaction.repair_ignored_fields),
         "repair_audit_codes": list(transaction.repair_audit_codes),
         "repair_patch_count": (
-            len(transaction.repair_patches.patches)
-            if transaction.repair_patches
-            else 0
+            len(patches)
+        ),
+        "repair_patch_insert_count": sum(
+            item.patch_type == "insert" for item in patches
+        ),
+        "repair_patch_replace_count": sum(
+            item.patch_type == "replace" for item in patches
+        ),
+        "repair_patch_delete_count": sum(
+            item.patch_type == "delete" for item in patches
+        ),
+        "repair_patch_target_events": sorted(
+            {
+                event_id
+                for patch in patches
+                for event_id in patch.target_events
+            }
+        ),
+        "repair_patch_target_end_states": sorted(
+            {
+                state_id
+                for patch in patches
+                for state_id in patch.target_end_states
+            }
         ),
         "repair_patch_types": (
             [
@@ -517,6 +706,54 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
             and authority
             and authority.accepted
         ),
+    }
+
+
+def _rejection_evidence(transaction) -> dict[str, Any]:
+    candidate = transaction.candidate
+    history = list(transaction.candidate_history)
+    original = history[0] if history else candidate
+    repaired = history[-1] if len(history) >= 2 else candidate
+    return {
+        "schema_version": 1,
+        "section_id": transaction.section_id,
+        "transaction_id": transaction.id,
+        "phase": transaction.phase,
+        "original_narrative": (
+            original.narrative_text if original is not None else ""
+        ),
+        "repair_patches": (
+            transaction.repair_patches.model_dump(mode="json")
+            if transaction.repair_patches
+            else None
+        ),
+        "repair_patch_report": (
+            transaction.repair_patch_report.model_dump(mode="json")
+            if transaction.repair_patch_report
+            else None
+        ),
+        "repair_after_narrative": (
+            repaired.narrative_text if repaired is not None else ""
+        ),
+        "final_narrative_report": (
+            transaction.narrative_validation_report.model_dump(mode="json")
+            if transaction.narrative_validation_report
+            else None
+        ),
+        "narrative_validation_history": [
+            item.model_dump(mode="json")
+            for item in transaction.narrative_validation_history
+        ],
+        "final_state_report": (
+            transaction.validation_report.model_dump(mode="json")
+            if transaction.validation_report
+            else None
+        ),
+        "state_validation_history": [
+            item.model_dump(mode="json")
+            for item in transaction.validation_history
+        ],
+        "final_reject_reason": transaction.error,
     }
 
 
@@ -713,6 +950,7 @@ async def run_sequence(
         "theme": theme,
         "style": style,
         "seed": seed,
+        "desired_length": desired_length,
         "provider": provider,
         "model": model,
         "inject_failure": inject_failure,
@@ -730,7 +968,7 @@ async def run_sequence(
         if actual_identity != expected_identity:
             raise ValueError(
                 "resume configuration mismatch: mode/theme/style/seed/provider/model "
-                "must match the existing run"
+                "and desired_length must match the existing run"
             )
         report["config"].update(
             {
@@ -760,6 +998,7 @@ async def run_sequence(
                 "theme": theme,
                 "style": style,
                 "seed": seed,
+                "desired_length": desired_length,
                 "max_sections": limits.max_sections,
                 "max_total_tokens": limits.max_total_tokens,
                 "max_cost": limits.max_cost,
@@ -860,7 +1099,23 @@ async def run_sequence(
             _checkpoint(report, output_dir, checkpoint_every)
             break
         latency = time.perf_counter() - started
-        metrics = _section_metrics(transaction, service, previous_text, latency)
+        metrics = _section_metrics(
+            transaction,
+            service,
+            previous_text,
+            latency,
+            provider=provider,
+            model=model,
+        )
+        rejection_path = (
+            Path("rejections")
+            / f"section_{index:04d}_{transaction.id}.json"
+        )
+        metrics["rejection_evidence_file"] = (
+            rejection_path.as_posix()
+            if transaction.phase == "rejected"
+            else ""
+        )
         metrics["estimated_cost"] = _estimated_cost(transaction.usage, limits)
         report["sections"].append(metrics)
         report["summary"]["attempted"] += 1
@@ -873,10 +1128,10 @@ async def run_sequence(
             report["summary"]["estimated_cost"] + metrics["estimated_cost"], 8
         )
         if transaction.candidate:
-            previous_text = transaction.candidate.narrative_text
+            current_text = transaction.candidate.narrative_text
             _atomic_text(
                 output_dir / "samples" / f"section_{index:04d}.txt",
-                previous_text,
+                current_text,
             )
             if transaction.repair_performed and transaction.candidate_history:
                 _atomic_text(
@@ -885,8 +1140,15 @@ async def run_sequence(
                 )
                 _atomic_text(
                     output_dir / "samples" / f"section_{index:04d}_repair_after.txt",
-                    previous_text,
+                    current_text,
                 )
+            if transaction.committed:
+                previous_text = current_text
+        if transaction.phase == "rejected":
+            _atomic_json(
+                output_dir / rejection_path,
+                _rejection_evidence(transaction),
+            )
         _checkpoint(report, output_dir, checkpoint_every)
         if stop_on_gate_failure and (
             not transaction.committed
