@@ -33,6 +33,7 @@
 
 | 时间 | verdict | 关键信号 |
 | --- | --- | --- |
+| 2026-07-26 | [stage1-full-matrix-validation-20260726.md](stage1-full-matrix-validation-20260726.md) | 3 themes × 5 styles × 3 attempts，39/45 commit，**STAGE1_FAIL** |
 | 2026-06-25 | [verdict-phase6a-500tick-retry-0625.md](verdict-phase6a-500tick-retry-0625.md) | 500/500 effective, 3.0M tokens, narrate% 48% baseline. **反驳 run 1 "drift" 假设** |
 | 2026-06-25 | [verdict-spike-rootcause-0625.md](verdict-spike-rootcause-0625.md) | critic 96% ACCEPT, spike = narrative chars 暴涨 (plot beat 响应) |
 | 2026-06-24 | [verdict-phase6a-500tick.md](verdict-phase6a-500tick.md) | 334/500 quota wall, CONDITIONAL PASS, 怀疑 narrate-rate 失控 |
