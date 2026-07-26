@@ -35,6 +35,7 @@ from story.persistence import (
     StoryThreadStore,
 )
 from story.runtime import drop_author_runtime, get_author_runtime
+from story.section_budget import section_budget_plan_prompt_payload
 from story.service import GenerationRejected, StaleStoryBibleError
 from story.writing_plan import section_writing_plan_prompt_payload
 from tasks.task_manager import (
@@ -289,6 +290,9 @@ async def preview_author_section_contract(
     writing_plan = runtime.service.preview_section_writing_plan(
         SectionGoal(**request.model_dump())
     )
+    budget_plan = runtime.service.preview_section_budget_plan(
+        SectionGoal(**request.model_dump())
+    )
     return {
         "narrative_contract": {
             **narrative_contract_prompt_payload(contract),
@@ -298,6 +302,7 @@ async def preview_author_section_contract(
         },
         "event_execution_plan": event_execution_plan_prompt_payload(event_plan),
         "section_writing_plan": section_writing_plan_prompt_payload(writing_plan),
+        "section_budget_plan": section_budget_plan_prompt_payload(budget_plan),
     }
 
 
@@ -476,6 +481,11 @@ def _make_author_executor(goal: SectionGoal):
                 if transaction.section_writing_plan
                 else {}
             ),
+            "section_budget_plan": (
+                section_budget_plan_prompt_payload(transaction.section_budget_plan)
+                if transaction.section_budget_plan
+                else {}
+            ),
             "initial_length_report": (
                 transaction.initial_length_report.model_dump(mode="json")
                 if transaction.initial_length_report
@@ -484,6 +494,26 @@ def _make_author_executor(goal: SectionGoal):
             "final_length_report": (
                 transaction.final_length_report.model_dump(mode="json")
                 if transaction.final_length_report
+                else {}
+            ),
+            "initial_ending_report": (
+                transaction.initial_ending_report.model_dump(mode="json")
+                if transaction.initial_ending_report
+                else {}
+            ),
+            "final_ending_report": (
+                transaction.final_ending_report.model_dump(mode="json")
+                if transaction.final_ending_report
+                else {}
+            ),
+            "initial_balance_report": (
+                transaction.initial_balance_report.model_dump(mode="json")
+                if transaction.initial_balance_report
+                else {}
+            ),
+            "final_balance_report": (
+                transaction.final_balance_report.model_dump(mode="json")
+                if transaction.final_balance_report
                 else {}
             ),
             "repair_plan": (

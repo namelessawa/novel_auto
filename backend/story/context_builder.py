@@ -24,6 +24,10 @@ from story.narrative_contract import (
     NarrativeContract,
     narrative_contract_prompt_payload,
 )
+from story.section_budget import (
+    SectionBudgetPlan,
+    section_budget_plan_prompt_payload,
+)
 from story.writing_plan import (
     SectionWritingPlan,
     section_writing_plan_prompt_payload,
@@ -80,6 +84,7 @@ class ContextPackage:
     slots: dict[str, str]
     manifest: ContextManifest
     writing_plan: SectionWritingPlan | None = None
+    section_budget_plan: SectionBudgetPlan | None = None
 
 
 def _json(value: Any) -> str:
@@ -158,6 +163,7 @@ class ContextBuilder:
         narrative_contract: NarrativeContract | None = None,
         event_execution_plan: EventExecutionPlan | None = None,
         section_writing_plan: SectionWritingPlan | None = None,
+        section_budget_plan: SectionBudgetPlan | None = None,
     ) -> ContextPackage:
         relevant_ids = set(section_goal.involved_characters)
         if section_goal.viewpoint_character_id:
@@ -220,6 +226,11 @@ class ContextBuilder:
                         "section_writing_plan": (
                             section_writing_plan_prompt_payload(section_writing_plan)
                             if section_writing_plan
+                            else {}
+                        ),
+                        "section_budget_plan": (
+                            section_budget_plan_prompt_payload(section_budget_plan)
+                            if section_budget_plan
                             else {}
                         ),
                     }
@@ -378,6 +389,7 @@ class ContextBuilder:
             slots=slots,
             manifest=manifest,
             writing_plan=section_writing_plan,
+            section_budget_plan=section_budget_plan,
         )
 
     @staticmethod

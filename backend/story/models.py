@@ -13,9 +13,11 @@ from story.narrative_contract import (
     NarrativeContractInput,
     NarrativeValidationReport,
 )
+from story.ending_validator import EndingCompletionReport
 from story.repair_patch import RepairPatchSet, RepairPatchValidationReport
 from story.repair_plan import RepairPlan
-from story.section_length_validator import SectionLengthReport
+from story.section_budget import SectionBudgetPlan
+from story.section_length_validator import SectionBalanceReport, SectionLengthReport
 from story.writing_plan import SectionWritingPlan
 
 
@@ -410,8 +412,13 @@ class GenerationTransaction(StoryModel):
     narrative_contract: NarrativeContract | None = None
     event_execution_plan: EventExecutionPlan | None = None
     section_writing_plan: SectionWritingPlan | None = None
+    section_budget_plan: SectionBudgetPlan | None = None
     initial_length_report: SectionLengthReport | None = None
     final_length_report: SectionLengthReport | None = None
+    initial_ending_report: EndingCompletionReport | None = None
+    final_ending_report: EndingCompletionReport | None = None
+    initial_balance_report: SectionBalanceReport | None = None
+    final_balance_report: SectionBalanceReport | None = None
     repair_plan: RepairPlan | None = None
     repair_patches: RepairPatchSet | None = None
     repair_patch_report: RepairPatchValidationReport | None = None

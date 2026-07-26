@@ -11,10 +11,10 @@ from pydantic import Field, model_validator
 
 from story.event_execution import EventExecutionPlan
 from story.narrative_contract import NarrativeContract, NarrativeModel
-from story.repair_plan import RepairPlan
+from story.repair_plan import RepairPlan, compact_patch_templates
 
 
-PatchType = Literal["insert", "replace", "delete", "expand"]
+PatchType = Literal["insert", "replace", "delete", "expand", "compact"]
 
 
 class RepairPatchAnchor(NarrativeModel):
@@ -27,11 +27,17 @@ class RepairPatchAnchor(NarrativeModel):
 
     before_text: str = Field(default="", max_length=240)
     after_text: str = Field(default="", max_length=240)
+    start: str = Field(default="", max_length=240)
+    end: str = Field(default="", max_length=240)
 
     @model_validator(mode="after")
     def require_anchor(self) -> "RepairPatchAnchor":
-        if not self.before_text and not self.after_text:
+        if not any((self.before_text, self.after_text, self.start, self.end)):
             raise ValueError("at least one exact anchor is required")
+        if self.before_text and self.start:
+            raise ValueError("anchor cannot use both before_text and start")
+        if self.after_text and self.end:
+            raise ValueError("anchor cannot use both after_text and end")
         return self
 
 
@@ -45,6 +51,8 @@ class RepairPatch(NarrativeModel):
     preserve: list[str] = Field(default_factory=list)
     target_chars: int = Field(default=0, ge=0, le=300)
     purpose: str = Field(default="", max_length=240)
+    remove_reason: str = Field(default="", max_length=240)
+    max_remove_chars: int = Field(default=0, ge=0, le=200)
 
 
 class RepairPatchSet(NarrativeModel):
@@ -152,8 +160,8 @@ def _occurrences(text: str, needle: str) -> list[int]:
 
 
 def _resolve_patch(text: str, patch: RepairPatch) -> tuple[_ResolvedPatch | None, str]:
-    before = patch.anchor.before_text
-    after = patch.anchor.after_text
+    before = patch.anchor.before_text or patch.anchor.start
+    after = patch.anchor.after_text or patch.anchor.end
     if before and after:
         pairs: list[tuple[int, int]] = []
         after_positions = _occurrences(text, after)
@@ -285,8 +293,7 @@ class RepairPatchValidator:
         }
         authorized_numbers = _authorized_numbers(plan, original_text)
         authorized_repair_text = _authorized_repair_text(plan)
-        length_add_authorized = plan.length_adjustment.action == "add"
-        length_remove_authorized = plan.length_adjustment.action == "remove"
+        authorized_compacts = compact_patch_templates(plan, original_text)
         allowed_character_names = {
             name
             for entity in contract.allowed_entities.characters
@@ -329,9 +336,14 @@ class RepairPatchValidator:
                     )
                 )
 
-            if patch.patch_type == "delete" and patch.patch_text:
-                add("PATCH_DELETE_HAS_TEXT", "DELETE patch_text 必须为空")
-            if patch.patch_type != "delete" and not patch.patch_text.strip():
+            if patch.patch_type in {"delete", "compact"} and patch.patch_text:
+                add(
+                    "PATCH_DELETE_HAS_TEXT"
+                    if patch.patch_type == "delete"
+                    else "PATCH_COMPACT_HAS_TEXT",
+                    "DELETE/COMPACT patch_text 必须为空",
+                )
+            if patch.patch_type not in {"delete", "compact"} and not patch.patch_text.strip():
                 add("PATCH_TEXT_EMPTY", "INSERT/REPLACE 必须提供 patch_text")
             if _nonspace_chars(patch.patch_text) > patch.max_chars:
                 add(
@@ -346,7 +358,7 @@ class RepairPatchValidator:
                     resolved.target_text,
                 )
             if (
-                patch.patch_type in {"replace", "delete"}
+                patch.patch_type in {"replace", "delete", "compact"}
                 and resolved.target_text.strip() == text.strip()
             ):
                 add(
@@ -368,12 +380,14 @@ class RepairPatchValidator:
                 actual_chars = _nonspace_chars(patch.patch_text)
                 allowed_target = min(
                     300,
-                    plan.length_adjustment.target_chars,
                     max(0, plan.length_adjustment.min_chars - _nonspace_chars(text)),
                 )
                 allowed_max = min(
                     300,
                     max(0, plan.length_adjustment.max_chars - _nonspace_chars(text)),
+                )
+                length_add_authorized = (
+                    _nonspace_chars(text) < plan.length_adjustment.min_chars
                 )
                 if not length_add_authorized:
                     add("EXPAND_NOT_AUTHORIZED", "RepairPlan 未授权长度扩写")
@@ -417,10 +431,59 @@ class RepairPatchValidator:
                         "EXPAND 不得复制或重复已有正文",
                         patch.patch_text,
                     )
+                if patch.remove_reason or patch.max_remove_chars:
+                    add(
+                        "EXPAND_COMPACT_FIELDS_FORBIDDEN",
+                        "EXPAND 不能携带 COMPACT 字段",
+                    )
+            elif patch.patch_type == "compact":
+                effective_anchor = {
+                    "start": patch.anchor.start or patch.anchor.before_text,
+                    "end": patch.anchor.end or patch.anchor.after_text,
+                }
+                authorized = any(
+                    effective_anchor
+                    == {
+                        "start": str((item.get("anchor") or {}).get("start") or ""),
+                        "end": str((item.get("anchor") or {}).get("end") or ""),
+                    }
+                    and patch.remove_reason == item.get("remove_reason")
+                    and patch.max_remove_chars == item.get("max_remove_chars")
+                    and patch.preserve == item.get("preserve")
+                    for item in authorized_compacts
+                )
+                if not authorized:
+                    add(
+                        "COMPACT_NOT_AUTHORIZED",
+                        "COMPACT 必须逐字段匹配服务端可删除片段",
+                        resolved.target_text,
+                    )
+                if patch.target_events or patch.target_end_states:
+                    add(
+                        "COMPACT_TARGET_FORBIDDEN",
+                        "COMPACT 不能承担事件或终态修改",
+                    )
+                if patch.target_chars or patch.purpose:
+                    add(
+                        "COMPACT_EXPAND_FIELDS_FORBIDDEN",
+                        "COMPACT 不能携带 EXPAND 字段",
+                    )
+                removed_chars = _nonspace_chars(resolved.target_text)
+                if patch.max_remove_chars <= 0 or removed_chars > patch.max_remove_chars:
+                    add(
+                        "COMPACT_TOO_LARGE",
+                        "COMPACT 删除量超过服务端上限",
+                        str(removed_chars),
+                    )
             elif patch.target_chars or patch.purpose:
                 add(
                     "PATCH_EXPAND_FIELDS_FORBIDDEN",
                     "只有 EXPAND 可以携带 target_chars 与 purpose",
+                )
+            elif patch.remove_reason or patch.max_remove_chars:
+                add(
+                    "PATCH_COMPACT_FIELDS_FORBIDDEN",
+                    "只有 COMPACT 可以携带 remove_reason 与 max_remove_chars",
                 )
 
             delete_authorized = (
@@ -435,11 +498,10 @@ class RepairPatchValidator:
                 and not patch.target_end_states
                 and not delete_authorized
                 and not (
-                    patch.patch_type == "expand" and length_add_authorized
+                    patch.patch_type == "expand"
+                    and _nonspace_chars(text) < plan.length_adjustment.min_chars
                 )
-                and not (
-                    patch.patch_type == "delete" and length_remove_authorized
-                )
+                and patch.patch_type != "compact"
             ):
                 add(
                     "PATCH_PURPOSE_NOT_AUTHORIZED",
@@ -612,9 +674,16 @@ class RepairPatchValidator:
             if patch_errors:
                 continue
 
-            replacement = "" if patch.patch_type == "delete" else patch.patch_text
+            replacement = (
+                ""
+                if patch.patch_type in {"delete", "compact"}
+                else patch.patch_text
+            )
             text = text[: resolved.start] + replacement + text[resolved.end :]
-            if any(span and span not in text for span in patch.preserve):
+            if (
+                patch.patch_type != "compact"
+                and any(span and span not in text for span in patch.preserve)
+            ):
                 violations.append(
                     RepairPatchViolation(
                         code="REPAIR_REGRESSION",

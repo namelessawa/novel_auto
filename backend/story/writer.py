@@ -78,29 +78,33 @@ resolution_evidence。正文之外不要输出解释、Markdown 或思考过程�
 
 严格规则：
 1. 根对象只能包含 schema_version 和 patches。
-2. 每个 patch 只能是 insert、replace、delete、expand，并解决一个 RepairPlan 明确问题。
+2. 每个 patch 只能是 insert、replace、delete、expand、compact，并解决一个 RepairPlan 明确问题。
 3. anchor 必须逐字复制 relevant_windows 中唯一出现的短文本，不能概括。
 4. insert 默认插在 before_text 之后；replace/delete 在只有一个 anchor 时修改该 anchor，
    两个 anchor 时只修改二者之间的局部文本。
-5. patch_text 不超过 300 字。不得替换整篇正文。
-6. 先完成事件，再落实最终状态，再删除未授权新增，最后才允许受约束的 expand。
+5. patch_text 不超过 300 字；compact 单次删除不超过 200 字。不得替换整篇正文。
+6. 先完成事件，再落实最终状态，再删除未授权新增，最后才允许受约束的 expand/compact。
 7. 事件 patch 必须逐字落实 minimum_completion_evidence 的 actor、target 和完成动作。
 8. 终态 patch 必须明确写出谁交、谁收、什么物品以及最终由谁持有；决定、准备、暗示不算。
 9. 不修改 preserve 内容，不新增人物、背景、数字、日期、亲属、伤势、世界规则或支线。
 10. required_patches 非空时，必须逐字段、逐字原样复制并保持顺序；
     不得改写 patch_text，不得把姓名换成代词，不得替换或缩短 anchor/preserve。
 11. expansion_request 非空时，只能在 required_patches 后追加一个符合该请求的 expand。
+12. compact 必须逐字段复制 required_patches，不能自己选择删除范围。
 
 禁止输出 narrative_text、state_delta、threads、memory、summary、title、解释、Markdown
 或内部分析。即使你认为原文已经足够，也必须返回至少一个有效 patch。"""
 
     LENGTH_SYSTEM_PROMPT = """
-SectionWritingPlan is server-owned and mandatory. Follow its four structure
-parts and their character budgets. Write within its min_chars/max_chars range
+SectionWritingPlan and SectionBudgetPlan are server-owned and mandatory. Follow
+the four segment budgets and hard maxima. Write within the min_chars/max_chars range
 (for a 900-character request this is 900-1100), complete every required event
 and required end state, and do not add characters, background, numbers,
 kinship, casualties, injuries, dates, or world rules. Style changes narration,
 never the event inventory or final state.
+Stop immediately once all required events and end states are complete and the
+minimum length is reached. Never continue with another person, background,
+conflict, history, relationship, or explanation.
 """
 
     REPAIR_LENGTH_PROMPT = """
@@ -114,6 +118,9 @@ EXPAND may elaborate only existing action, environment, existing-character
 interaction, or existing emotion. It may not add an event, person, fact,
 number, date, kinship, casualty, injury, background, world rule, or state
 change, and it may not repeat source prose.
+COMPACT is server-selected deletion only. Copy its start/end anchors,
+remove_reason, preserve identifiers, and max_remove_chars exactly. Never put
+text into a COMPACT patch and never choose a different deletion span.
 """
 
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult:
@@ -123,23 +130,30 @@ change, and it may not repeat source prose.
             separators=(",", ":"),
         )
         writing_plan = context.writing_plan
+        budget_plan = context.section_budget_plan
         final_directive = ""
-        if writing_plan is not None:
+        if writing_plan is not None and budget_plan is not None:
             part_lines = "\n".join(
-                f"- {item.part}: 约 {item.target_chars} 字；{item.purpose}"
-                for item in writing_plan.structure
+                f"- {item.name}: 约 {item.budget} 字，最多 {item.max_chars} 字"
+                for item in budget_plan.segments
             )
+            balance = budget_plan.style_balance_contract
             final_directive = (
                 "\n\n## 服务端最终执行令（输出前必须逐项自检）\n"
-                f"narrative_text 目标 {writing_plan.target_chars} 字，硬接受区间 "
-                f"{writing_plan.min_chars}-{writing_plan.max_chars} 字。\n"
+                f"narrative_text 中心目标 {budget_plan.target_chars} 字，硬接受区间 "
+                f"{budget_plan.min_chars}-{budget_plan.max_chars} 字。\n"
                 "按以下四部分实际写足，不得合并成提纲：\n"
                 f"{part_lines}\n"
                 "先完成全部 required_events，再明确落实全部 required_end_states。"
-                "在返回 JSON 前，仅在内部统计 narrative_text 的非空白字符；若不足 "
-                f"{writing_plan.min_chars} 字，继续扩写已有动作、环境、已有人物互动"
-                "或已存在情绪，达到下限后才能返回。禁止用新人物、背景、数字、日期、"
-                "亲属、伤亡、伤势、敌人或世界规则补字数。不要输出统计过程。\n"
+                "停止条件同时满足时必须立即结束：全部必要事件完成、全部最终状态达到、"
+                f"非空白字符不少于 {budget_plan.min_chars}。不得超过 "
+                f"{budget_plan.max_chars} 字；不得在结束后增加新人物、背景、冲突、历史、"
+                "关系或解释。\n"
+                f"风格平衡：{balance.instruction}\n"
+                f"限制：{'；'.join(balance.limits)}。\n"
+                f"禁止：{'；'.join(balance.forbidden)}。\n"
+                "如果尚未达到最低长度，只能扩写已有动作、环境、已有人物互动或已存在"
+                "情绪。禁止用新事实补字数。不要输出统计过程。\n"
             )
         response = await llm_client.chat(
             system_prompt=(
@@ -234,6 +248,8 @@ change, and it may not repeat source prose.
             "preserve",
             "target_chars",
             "purpose",
+            "remove_reason",
+            "max_remove_chars",
         }
         for raw in raw_patches:
             if not isinstance(raw, dict):
@@ -245,7 +261,7 @@ change, and it may not repeat source prose.
             elif isinstance(anchor, dict):
                 item["anchor"] = {
                     key: anchor[key]
-                    for key in ("before_text", "after_text")
+                    for key in ("before_text", "after_text", "start", "end")
                     if key in anchor
                 }
             for key in ("target_events", "target_end_states", "preserve"):
@@ -293,6 +309,8 @@ change, and it may not repeat source prose.
             "preserve",
             "target_chars",
             "purpose",
+            "remove_reason",
+            "max_remove_chars",
         }
         if isinstance(raw_patches, list):
             for index, patch in enumerate(raw_patches):

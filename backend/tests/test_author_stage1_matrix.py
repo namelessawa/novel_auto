@@ -156,6 +156,21 @@ def test_mini_matrix_aggregate_uses_14_of_15_gate() -> None:
     assert summary["gate"] == "MINI_MATRIX_PASS"
     assert summary["committed"] == 14
     assert summary["contract_pass_rate"] == 0.9333
+    assert summary["length_in_range_rate"] == 1.0
+
+
+def test_mini_matrix_fails_when_fewer_than_93pct_are_900_to_1100() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:5]
+    matrix["combinations"][0]["sections"][0]["narrative_length"] = 1101
+    matrix["combinations"][1]["sections"][0]["narrative_length"] = 899
+
+    summary = aggregate(matrix, expected_combinations=5, sections_per_combo=3)
+
+    assert summary["length_in_range_count"] == 13
+    assert summary["length_in_range_rate"] == 0.8667
+    assert summary["gate_checks"]["length_900_1100_at_least_93pct"] is False
+    assert summary["gate"] == "MINI_MATRIX_FAIL"
 
 
 def test_stage1_aggregate_fails_on_unsafe_committed_proposals() -> None:

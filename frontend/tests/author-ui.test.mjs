@@ -185,6 +185,26 @@ function authorApi(overrides = {}) {
           forbidden_expansion: ['new event'],
         },
       },
+      section_budget_plan: {
+        target_chars: 1000,
+        min_chars: 900,
+        max_chars: 1100,
+        segments: [
+          { name: 'opening', budget: 180, max_chars: 230 },
+          { name: 'development', budget: 300, max_chars: 350 },
+          { name: 'conflict', budget: 300, max_chars: 350 },
+          { name: 'resolution', budget: 220, max_chars: 270 },
+        ],
+        stop_conditions: [
+          'required_events_completed',
+          'end_state_reached',
+          'minimum_length_reached',
+        ],
+        style_balance_contract: {
+          limits: ['description serves event'],
+          forbidden: ['post-resolution expansion'],
+        },
+      },
     }),
     fetchAuthorLongRunStatus: async () => ({
       run_id: 'run-1',
@@ -357,10 +377,11 @@ test('author studio previews a folded narrative contract before generation', asy
   assert.match(text, /最终必须达到/)
   assert.match(text, /不得新增/)
   assert.match(text, /天亮前交信/)
-  assert.match(text, /WritingPlan 结构/)
-  assert.match(text, /opening · 180 字/)
+  assert.match(text, /SectionBudget 分段/)
+  assert.match(text, /opening · 约 180 字 · 最多 230 字/)
+  assert.match(text, /停止条件/)
   assert.match(text, /服务端长度目标/)
-  assert.match(text, /900 字 · 接受区间 900—1100 字/)
+  assert.match(text, /1000 字 · 接受区间 900—1100 字/)
   assert.doesNotMatch(text, /system prompt|user prompt|思考过程/i)
   renderer.unmount()
 })
@@ -455,6 +476,18 @@ test('author validation separates narrative state and style and shows repair res
           phase: 'repaired', chars: 820, target: 900, ratio: 0.9111,
           accepted: false, violation_code: 'NARRATIVE_TOO_SHORT',
         },
+        initial_ending_report: {
+          phase: 'initial', accepted: false, post_resolution_chars: 80,
+          violation_code: 'POST_RESOLUTION_EXPANSION',
+        },
+        final_ending_report: {
+          phase: 'repaired', accepted: true, post_resolution_chars: 10,
+          violation_code: '',
+        },
+        final_balance_report: {
+          phase: 'repaired', event_pass: false, end_state_pass: false,
+          length_pass: false, ending_pass: true, accepted: false,
+        },
         style_validation_report: {
           evaluated: true,
           passed: true,
@@ -485,6 +518,9 @@ test('author validation separates narrative state and style and shows repair res
   assert.match(text, /修复前 未通过 → 修复后 未通过/)
   assert.match(text, /INITIAL720\/900 字 · ratio 0\.8/)
   assert.match(text, /REPAIRED820\/900 字 · ratio 0\.9111 · NARRATIVE_TOO_SHORT/)
+  assert.match(text, /Ending Gate/)
+  assert.match(text, /联合门禁/)
+  assert.match(text, /Event FAIL · EndState FAIL · Length FAIL · Ending PASS/)
   renderer.unmount()
 })
 

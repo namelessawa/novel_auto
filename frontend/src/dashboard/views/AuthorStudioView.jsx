@@ -188,11 +188,25 @@ export default function AuthorStudioView({
     : generation?.transaction?.section_writing_plan
       || generation?.task?.section_writing_plan
       || null
+  const activeBudgetPlan = contractPreview
+    ? contractPreview.section_budget_plan
+    : generation?.transaction?.section_budget_plan
+      || generation?.task?.section_budget_plan
+      || null
   const initialLengthReport = generation?.transaction?.initial_length_report
     || generation?.task?.initial_length_report
     || null
   const finalLengthReport = generation?.transaction?.final_length_report
     || generation?.task?.final_length_report
+    || null
+  const initialEndingReport = generation?.transaction?.initial_ending_report
+    || generation?.task?.initial_ending_report
+    || null
+  const finalEndingReport = generation?.transaction?.final_ending_report
+    || generation?.task?.final_ending_report
+    || null
+  const finalBalanceReport = generation?.transaction?.final_balance_report
+    || generation?.task?.final_balance_report
     || null
   const taskStatus = generation?.task?.status || (taskId ? 'queued' : 'idle')
   const generating = ['queued', 'running'].includes(taskStatus)
@@ -255,6 +269,7 @@ export default function AuthorStudioView({
         narrative_contract: data.narrative_contract,
         event_execution_plan: data.event_execution_plan || null,
         section_writing_plan: data.section_writing_plan || null,
+        section_budget_plan: data.section_budget_plan || null,
       })
       setContractOpen(true)
     } catch (err) {
@@ -388,6 +403,7 @@ export default function AuthorStudioView({
                   contract={activeContract}
                   eventPlan={activeEventPlan}
                   writingPlan={activeWritingPlan}
+                  budgetPlan={activeBudgetPlan}
                 />
               )}
             </div>
@@ -425,6 +441,9 @@ export default function AuthorStudioView({
                 repairAuditCodes={generation?.transaction?.repair_audit_codes || generation?.task?.repair_audit_codes || []}
                 initialLengthReport={initialLengthReport}
                 finalLengthReport={finalLengthReport}
+                initialEndingReport={initialEndingReport}
+                finalEndingReport={finalEndingReport}
+                finalBalanceReport={finalBalanceReport}
               />
             )}
             {!generation && (
@@ -509,9 +528,16 @@ function TransactionTimeline({ generation }) {
   )
 }
 
-function ContractPreview({ contract, eventPlan, writingPlan }) {
+function ContractPreview({ contract, eventPlan, writingPlan, budgetPlan }) {
   const groups = [
-    ['WritingPlan 结构', (writingPlan?.structure || []).map((item) => `${item.part} · ${item.target_chars} 字 · ${item.purpose}`)],
+    ['SectionBudget 分段', (budgetPlan?.segments || writingPlan?.structure || []).map((item) => (
+      item.name
+        ? `${item.name} · 约 ${item.budget} 字 · 最多 ${item.max_chars} 字`
+        : `${item.part} · ${item.target_chars} 字 · ${item.purpose}`
+    ))],
+    ['停止条件', budgetPlan?.stop_conditions || []],
+    ['风格平衡限制', budgetPlan?.style_balance_contract?.limits || []],
+    ['风格平衡禁止', budgetPlan?.style_balance_contract?.forbidden || []],
     ['风格扩写允许', writingPlan?.style_adaptation?.allowed_expansion || []],
     ['风格扩写禁止', writingPlan?.style_adaptation?.forbidden_expansion || []],
     ['执行顺序', (eventPlan?.ordered_events || []).map((item) => `${item.order}. ${item.description || `${item.actor || ''} ${item.action || ''} ${item.target || ''}`}`)],
@@ -534,7 +560,7 @@ function ContractPreview({ contract, eventPlan, writingPlan }) {
       <div>
         <strong>服务端长度目标</strong>
         <p>
-          {writingPlan?.target_chars || '—'} 字 · 接受区间 {writingPlan?.min_chars || contract.length_constraint?.min_chars || '—'}—{writingPlan?.max_chars || contract.length_constraint?.max_chars || '—'} 字
+          {budgetPlan?.target_chars || writingPlan?.target_chars || '—'} 字 · 接受区间 {budgetPlan?.min_chars || writingPlan?.min_chars || contract.length_constraint?.min_chars || '—'}—{budgetPlan?.max_chars || writingPlan?.max_chars || contract.length_constraint?.max_chars || '—'} 字
         </p>
       </div>
     </div>
@@ -554,6 +580,9 @@ function ValidationPanel({
   repairAuditCodes,
   initialLengthReport,
   finalLengthReport,
+  initialEndingReport,
+  finalEndingReport,
+  finalBalanceReport,
 }) {
   const accepted = Boolean(narrativeReport?.accepted && authorityReport?.accepted)
   return (
@@ -582,6 +611,23 @@ function ValidationPanel({
               {finalLengthReport.violation_code ? ` · ${finalLengthReport.violation_code}` : ''}
             </p>
           )}
+        </section>
+      )}
+      {(initialEndingReport || finalEndingReport) && (
+        <section className="dc-au-validation-group" data-validation-layer="ending-completion">
+          <header><strong>Ending Gate</strong><span>{finalEndingReport?.accepted ? 'PASS' : 'COMPACT'}</span></header>
+          <p data-testid="ending-completion-report">
+            终态后字符 {finalEndingReport?.post_resolution_chars ?? initialEndingReport?.post_resolution_chars ?? 0}
+            {finalEndingReport?.violation_code ? ` · ${finalEndingReport.violation_code}` : ''}
+          </p>
+        </section>
+      )}
+      {finalBalanceReport && (
+        <section className="dc-au-validation-group" data-validation-layer="section-balance">
+          <header><strong>联合门禁</strong><span>{finalBalanceReport.accepted ? 'PASS' : 'FAIL'}</span></header>
+          <p data-testid="section-balance-report">
+            Event {finalBalanceReport.event_pass ? 'PASS' : 'FAIL'} · EndState {finalBalanceReport.end_state_pass ? 'PASS' : 'FAIL'} · Length {finalBalanceReport.length_pass ? 'PASS' : 'FAIL'} · Ending {finalBalanceReport.ending_pass ? 'PASS' : 'FAIL'}
+          </p>
         </section>
       )}
       <EventCompletionGroup report={narrativeReport} eventPlan={eventPlan} />

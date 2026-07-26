@@ -41,6 +41,7 @@ class FakeWriter:
         self.generate_calls += 1
         assert "story_bible" in context.slots
         assert "section_writing_plan" in context.slots["narrative_contract"]
+        assert "section_budget_plan" in context.slots["narrative_contract"]
         return WriterResult(
             self.generated,
             {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},

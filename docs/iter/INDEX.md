@@ -6,6 +6,7 @@
 ## 2026-07-22 验收
 
 * [Event Completion Repair](event-completion-repair-20260722.md) — 24/24 离线通过；真实小矩阵 9/15，结论 `EVENT_REPAIR_FAIL`，后续阶段未运行。
+* [Section Balance Control](section-balance-control-20260726.md) — Budget + Ending Gate + COMPACT；离线 24/24、6/6，真实 Mini 8/15，结论 `SECTION_BALANCE_FAIL`，45 节 Stage 1 未运行。
 
 ## 起步阅读顺序
 
@@ -33,6 +34,7 @@
 
 | 时间 | verdict | 关键信号 |
 | --- | --- | --- |
+| 2026-07-27 | [section-balance-control-20260726.md](section-balance-control-20260726.md) | SectionBudget + Ending Gate + COMPACT；真实 Mini 8/15，**SECTION_BALANCE_FAIL** |
 | 2026-07-26 | [section-length-control-20260726.md](section-length-control-20260726.md) | WritingPlan + guarded EXPAND；离线 24/24、6/6，真实 Mini 9/15，**SECTION_LENGTH_FAIL** |
 | 2026-07-26 | [stage1-full-matrix-validation-20260726.md](stage1-full-matrix-validation-20260726.md) | 3 themes × 5 styles × 3 attempts，39/45 commit，**STAGE1_FAIL** |
 | 2026-06-25 | [verdict-phase6a-500tick-retry-0625.md](verdict-phase6a-500tick-retry-0625.md) | 500/500 effective, 3.0M tokens, narrate% 48% baseline. **反驳 run 1 "drift" 假设** |

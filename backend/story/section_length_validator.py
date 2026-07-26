@@ -6,7 +6,10 @@ from typing import Literal
 
 from pydantic import Field
 
+from story.ending_validator import EndingCompletionReport
 from story.narrative_contract import NarrativeModel, NarrativeViolation, narrative_char_count
+from story.narrative_contract import NarrativeValidationReport
+from story.section_budget import SectionBudgetPlan
 from story.writing_plan import SectionWritingPlan
 
 
@@ -29,7 +32,7 @@ class SectionLengthValidator:
     def validate(
         self,
         narrative_text: str,
-        plan: SectionWritingPlan,
+        plan: SectionWritingPlan | SectionBudgetPlan,
         *,
         phase: LengthValidationPhase,
     ) -> SectionLengthReport:
@@ -76,8 +79,55 @@ class SectionLengthValidator:
         )
 
 
+class SectionBalanceReport(NarrativeModel):
+    schema_version: int = Field(default=1, ge=1)
+    phase: LengthValidationPhase
+    event_pass: bool
+    end_state_pass: bool
+    length_pass: bool
+    ending_pass: bool
+    accepted: bool
+
+
+class SectionBalanceValidator:
+    """Explicit Event AND EndState AND Length AND Ending gate."""
+
+    @staticmethod
+    def validate(
+        *,
+        narrative_report: NarrativeValidationReport,
+        length_report: SectionLengthReport,
+        ending_report: EndingCompletionReport,
+        phase: LengthValidationPhase,
+    ) -> SectionBalanceReport:
+        event_pass = all(
+            item.status == "completed"
+            for item in narrative_report.event_results
+        )
+        end_state_pass = all(
+            item.reached for item in narrative_report.end_state_results
+        )
+        length_pass = length_report.accepted
+        ending_pass = ending_report.accepted
+        return SectionBalanceReport(
+            phase=phase,
+            event_pass=event_pass,
+            end_state_pass=end_state_pass,
+            length_pass=length_pass,
+            ending_pass=ending_pass,
+            accepted=(
+                event_pass
+                and end_state_pass
+                and length_pass
+                and ending_pass
+            ),
+        )
+
+
 __all__ = [
     "LengthValidationPhase",
+    "SectionBalanceReport",
+    "SectionBalanceValidator",
     "SectionLengthReport",
     "SectionLengthValidator",
 ]

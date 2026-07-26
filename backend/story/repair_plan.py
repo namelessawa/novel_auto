@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 
 from pydantic import Field
 
+from story.ending_validator import EndingCompletionReport
 from story.event_execution import EventExecutionPlan
 from story.narrative_contract import (
     NarrativeContract,
@@ -63,6 +65,7 @@ class RepairPlan(NarrativeModel):
     wrong_target_events: list[RepairEventInstruction] = Field(default_factory=list)
     wrong_end_states: list[RepairEndStateInstruction] = Field(default_factory=list)
     unsupported_additions: list[dict[str, str]] = Field(default_factory=list)
+    post_resolution_expansions: list[dict[str, Any]] = Field(default_factory=list)
     length_adjustment: LengthAdjustment
     must_preserve_spans: list[RepairPreserveSpan] = Field(default_factory=list)
     must_preserve_facts: list[dict[str, Any]] = Field(default_factory=list)
@@ -152,6 +155,7 @@ class RepairPlanBuilder:
         state_report: Any,
         narrative_text: str,
         section_writing_plan: SectionWritingPlan | None = None,
+        ending_report: EndingCompletionReport | None = None,
     ) -> RepairPlan:
         events = {item.id: item for item in event_plan.ordered_events}
         missing: list[RepairEventInstruction] = []
@@ -224,6 +228,30 @@ class RepairPlanBuilder:
                 )
                 preserved_texts.add(statement)
 
+        for operation in getattr(state_report, "validated_delta", []):
+            evidence = str(getattr(operation, "evidence", "") or "")
+            if evidence and evidence in narrative_text and evidence not in preserved_texts:
+                preserve.append(
+                    RepairPreserveSpan(
+                        text=evidence,
+                        reason="CanonicalState delta evidence 已通过",
+                    )
+                )
+                preserved_texts.add(evidence)
+        for change in getattr(state_report, "thread_changes", []):
+            evidence = str(
+                getattr(getattr(change, "thread", None), "resolution_evidence", "")
+                or ""
+            )
+            if evidence and evidence in narrative_text and evidence not in preserved_texts:
+                preserve.append(
+                    RepairPreserveSpan(
+                        text=evidence,
+                        reason="StoryThread evidence 已通过",
+                    )
+                )
+                preserved_texts.add(evidence)
+
         unsupported_codes = {
             "NARRATIVE_CHARACTER_ADDED",
             "NARRATIVE_RELATION_ADDED",
@@ -288,6 +316,10 @@ class RepairPlanBuilder:
             wrong_target_events=wrong_target,
             wrong_end_states=wrong_ends,
             unsupported_additions=unsupported,
+            post_resolution_expansions=[
+                item.model_dump(mode="json")
+                for item in (ending_report.issues if ending_report else [])
+            ],
             length_adjustment=adjustment,
             must_preserve_spans=preserve,
             must_preserve_facts=event_plan.preserve_facts,
@@ -302,7 +334,7 @@ class RepairPlanBuilder:
             style_constraints=event_plan.style_constraints,
             repair_instruction=(
                 "只输出局部 patches：优先完成事件，其次落实最终状态，再删除未授权新增，"
-                "然后才允许一个受约束的 EXPAND 处理长度；每个 patch 只能解决明确列出的 target，"
+                "然后才允许用 EXPAND 或 COMPACT 处理长度；每个 patch 只能解决明确列出的 target，"
                 "必须使用正文中唯一的逐字 anchor，不得重写整篇正文。"
             ),
         )
@@ -467,29 +499,125 @@ def _suggested_patch_templates(
                 ],
             }
         )
-    elif plan.length_adjustment.action == "remove":
-        target_text = _length_removal_text(plan, original_narrative)
-        if target_text:
-            templates.append(
-                {
-                    "patch_type": "delete",
-                    "anchor": {
-                        "before_text": target_text,
-                        "after_text": "",
-                    },
-                    "patch_text": "",
-                    "target_events": [],
-                    "target_end_states": [],
-                    "max_chars": 300,
-                    "preserve": [
-                        item.text for item in plan.must_preserve_spans if item.text
-                    ],
-                }
-            )
     # Apply inserts/replacements before deletes so a deletion cannot invalidate
     # a later anchor that was selected from the original prose.
     templates.extend(delete_templates)
     return templates
+
+
+_COMPACT_SENTENCE = re.compile(r"[^。！？!?\n]+[。！？!?]?")
+
+
+def _template_delta(template: dict[str, Any]) -> int:
+    if template.get("patch_type") in {"delete", "compact"}:
+        anchor = template.get("anchor") or {}
+        target = (
+            anchor.get("start")
+            or anchor.get("before_text")
+            or ""
+        )
+        return -narrative_char_count(str(target))
+    return narrative_char_count(str(template.get("patch_text") or ""))
+
+
+def compact_patch_templates(
+    plan: RepairPlan,
+    original_narrative: str,
+    *,
+    base_templates: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Select exact removable prose while excluding every protected evidence span."""
+    base = (
+        list(base_templates)
+        if base_templates is not None
+        else _suggested_patch_templates(plan, original_narrative)
+    )
+    projected_chars = (
+        plan.length_adjustment.current_chars
+        + sum(_template_delta(item) for item in base)
+    )
+    remaining = max(0, projected_chars - plan.length_adjustment.max_chars)
+    issue_evidence = {
+        str(item.get("evidence") or "")
+        for item in plan.post_resolution_expansions
+        if item.get("evidence")
+    }
+    if not remaining and not issue_evidence:
+        return []
+
+    protected_texts = [
+        item.text for item in plan.must_preserve_spans if item.text
+    ]
+    protected_texts.extend(
+        str((item.get("anchor") or {}).get("before_text") or "")
+        for item in base
+        if item.get("patch_type") == "delete"
+    )
+    protected_ranges: list[tuple[int, int]] = []
+    for protected in protected_texts:
+        start = original_narrative.find(protected)
+        if start >= 0:
+            protected_ranges.append((start, start + len(protected)))
+    preserve_refs = [
+        item.event_id or item.state_id
+        for item in plan.must_preserve_spans
+        if item.event_id or item.state_id
+    ]
+
+    candidates: list[tuple[str, str]] = []
+    for evidence in issue_evidence:
+        candidates.append((evidence, "remove post-resolution expansion"))
+    for match in reversed(list(_COMPACT_SENTENCE.finditer(original_narrative))):
+        text = match.group(0).strip()
+        candidates.append(
+            (text, "remove redundant style detail to satisfy section maximum")
+        )
+
+    selected: list[dict[str, Any]] = []
+    selected_texts: set[str] = set()
+    selected_ranges: list[tuple[int, int]] = []
+    pending_issue_evidence = set(issue_evidence)
+    for text, reason in candidates:
+        if not text or text in selected_texts:
+            continue
+        if original_narrative.count(text) != 1:
+            continue
+        start = original_narrative.find(text)
+        end = start + len(text)
+        if any(start < right and end > left for left, right in protected_ranges):
+            continue
+        if any(start < right and end > left for left, right in selected_ranges):
+            continue
+        chars = narrative_char_count(text)
+        if chars <= 0 or chars > 200:
+            continue
+        is_issue = text in pending_issue_evidence
+        if not is_issue and remaining <= 0:
+            continue
+        selected.append(
+            {
+                "patch_type": "compact",
+                "anchor": {"start": text, "end": ""},
+                "patch_text": "",
+                "target_events": [],
+                "target_end_states": [],
+                "max_chars": 300,
+                "preserve": preserve_refs,
+                "target_chars": 0,
+                "purpose": "",
+                "remove_reason": reason,
+                "max_remove_chars": chars,
+            }
+        )
+        selected_texts.add(text)
+        selected_ranges.append((start, end))
+        pending_issue_evidence.discard(text)
+        remaining = max(0, remaining - chars)
+        if len(base) + len(selected) >= 8:
+            break
+        if remaining <= 0 and not pending_issue_evidence:
+            break
+    return selected
 
 
 def repair_patch_prompt_payload(
@@ -500,18 +628,15 @@ def repair_patch_prompt_payload(
         plan,
         original_narrative,
     )
-    projected_delta = sum(
-        (
-            narrative_char_count(str(item.get("patch_text") or ""))
-            if item.get("patch_type") != "delete"
-            else -narrative_char_count(
-                str((item.get("anchor") or {}).get("before_text") or "")
-            )
-        )
-        for item in suggested_templates
+    compact_templates = compact_patch_templates(
+        plan,
+        original_narrative,
+        base_templates=suggested_templates,
     )
+    required_templates = [*suggested_templates, *compact_templates]
+    projected_delta = sum(_template_delta(item) for item in required_templates)
     expansion_target = min(
-        plan.length_adjustment.target_chars,
+        300,
         max(
             0,
             plan.length_adjustment.min_chars
@@ -557,20 +682,20 @@ def repair_patch_prompt_payload(
                 item.text for item in plan.must_preserve_spans if item.text
             ],
         }
-        if plan.length_adjustment.action == "add" and expansion_target > 0
+        if expansion_target > 0
         else None
     )
     return {
         "execution_mode": (
             "COPY_REQUIRED_PATCHES_THEN_GENERATE_EXPAND"
-            if suggested_templates and expansion_request
+            if required_templates and expansion_request
             else "COPY_SUGGESTED_TEMPLATES_EXACTLY"
-            if suggested_templates
+            if required_templates
             else "GENERATE_EXPAND"
             if expansion_request
             else "GENERATE_LOCAL_PATCHES"
         ),
-        "required_patches": suggested_templates,
+        "required_patches": required_templates,
         "expansion_request": expansion_request,
         "missing_events": [item.model_dump(mode="json") for item in plan.missing_events],
         "incomplete_events": [item.model_dump(mode="json") for item in plan.incomplete_events],
@@ -578,6 +703,7 @@ def repair_patch_prompt_payload(
         "wrong_target_events": [item.model_dump(mode="json") for item in plan.wrong_target_events],
         "wrong_end_states": [item.model_dump(mode="json") for item in plan.wrong_end_states],
         "unsupported_additions": plan.unsupported_additions,
+        "post_resolution_expansions": plan.post_resolution_expansions,
         "length_adjustment": plan.length_adjustment.model_dump(mode="json"),
         "must_preserve_spans": [
             {"text": item.text, "reason": item.reason}
@@ -591,16 +717,21 @@ def repair_patch_prompt_payload(
             "event_completion",
             "required_end_state",
             "unsupported_addition_delete",
-            "length_expand",
+            "length_expand_or_compact",
             "style_tiny_adjustment",
         ],
         "relevant_windows": _repair_windows(plan, original_narrative),
-        "suggested_patch_templates": suggested_templates,
+        "suggested_patch_templates": required_templates,
         "output_contract": {
             "patches": [
                 {
-                    "patch_type": "insert|replace|delete|expand",
-                    "anchor": {"before_text": "逐字锚点", "after_text": ""},
+                    "patch_type": "insert|replace|delete|expand|compact",
+                    "anchor": {
+                        "before_text": "逐字锚点",
+                        "after_text": "",
+                        "start": "",
+                        "end": "",
+                    },
                     "patch_text": "不超过 300 字的局部修改",
                     "target_events": [],
                     "target_end_states": [],
@@ -608,6 +739,8 @@ def repair_patch_prompt_payload(
                     "preserve": [],
                     "target_chars": 0,
                     "purpose": "",
+                    "remove_reason": "",
+                    "max_remove_chars": 0,
                 }
             ]
         },
@@ -621,7 +754,7 @@ def repair_patch_prompt_payload(
             if expansion_request
             else "required_patches 非空：只返回 {\"patches\": required_patches}，"
             "数组内每个字段和每个字符必须原样复制，不得同义改写。"
-            if suggested_templates
+            if required_templates
             else "required_patches 为空：按 output_contract 生成最小局部 patches。"
         ),
     }
@@ -676,6 +809,7 @@ __all__ = [
     "RepairPlanBuilder",
     "RepairPreserveSpan",
     "RepairRegressionValidator",
+    "compact_patch_templates",
     "repair_patch_prompt_payload",
     "repair_plan_prompt_payload",
 ]

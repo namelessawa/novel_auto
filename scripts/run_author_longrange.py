@@ -634,6 +634,11 @@ def _section_metrics(
             if transaction.section_writing_plan
             else {}
         ),
+        "section_budget_plan": (
+            transaction.section_budget_plan.model_dump(mode="json")
+            if transaction.section_budget_plan
+            else {}
+        ),
         "initial_length_report": (
             transaction.initial_length_report.model_dump(mode="json")
             if transaction.initial_length_report
@@ -642,6 +647,21 @@ def _section_metrics(
         "final_length_report": (
             transaction.final_length_report.model_dump(mode="json")
             if transaction.final_length_report
+            else {}
+        ),
+        "initial_ending_report": (
+            transaction.initial_ending_report.model_dump(mode="json")
+            if transaction.initial_ending_report
+            else {}
+        ),
+        "final_ending_report": (
+            transaction.final_ending_report.model_dump(mode="json")
+            if transaction.final_ending_report
+            else {}
+        ),
+        "final_balance_report": (
+            transaction.final_balance_report.model_dump(mode="json")
+            if transaction.final_balance_report
             else {}
         ),
         "prompt_tokens": int(transaction.usage.get("prompt_tokens", 0)),
@@ -680,6 +700,9 @@ def _section_metrics(
         ),
         "repair_patch_expand_count": sum(
             item.patch_type == "expand" for item in patches
+        ),
+        "repair_patch_compact_count": sum(
+            item.patch_type == "compact" for item in patches
         ),
         "repair_patch_target_events": sorted(
             {
