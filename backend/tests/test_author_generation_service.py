@@ -40,6 +40,7 @@ class FakeWriter:
     async def generate(self, context, goal):
         self.generate_calls += 1
         assert "story_bible" in context.slots
+        assert "section_writing_plan" in context.slots["narrative_contract"]
         return WriterResult(
             self.generated,
             {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
@@ -47,6 +48,31 @@ class FakeWriter:
 
     async def repair(self, candidate, report):
         self.repair_calls += 1
+        prompt_payload = repair_patch_prompt_payload(
+            report,
+            candidate.narrative_text,
+        )
+        patch_payloads = list(prompt_payload["suggested_patch_templates"])
+        expansion = prompt_payload.get("expansion_request")
+        if expansion:
+            source = (
+                "风沿着旧城墙缓缓移动，主角没有离开，只把眼前已经发生的选择重新看清。"
+            )
+            target = expansion["target_chars"]
+            patch_text = (source * ((target + len(source) - 1) // len(source)))[:target]
+            patch_payloads.append(
+                {
+                    "patch_type": "expand",
+                    "anchor": expansion["anchor"],
+                    "patch_text": patch_text,
+                    "target_events": [],
+                    "target_end_states": [],
+                    "max_chars": target,
+                    "preserve": expansion["preserve"],
+                    "target_chars": target,
+                    "purpose": expansion["purpose"],
+                }
+            )
         return WriterResult(
             candidate,
             {"prompt_tokens": 20, "completion_tokens": 30, "total_tokens": 50},
@@ -54,12 +80,7 @@ class FakeWriter:
                 self.repair_patches
                 if self.repair_patches is not None
                 else RepairPatchSet.model_validate(
-                    {
-                        "patches": repair_patch_prompt_payload(
-                            report,
-                            candidate.narrative_text,
-                        )["suggested_patch_templates"]
-                    }
+                    {"patches": patch_payloads}
                 )
             ),
         )
@@ -73,7 +94,10 @@ def clear_sections():
 
 
 def _goal() -> SectionGoal:
-    return SectionGoal(objective="让主角以一次选择回应身份与牺牲。")
+    return SectionGoal(
+        objective="让主角以一次选择回应身份与牺牲。",
+        desired_length=400,
+    )
 
 
 def _valid_candidate(text: str = "") -> WriterCandidate:

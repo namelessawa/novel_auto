@@ -36,6 +36,7 @@ from story.persistence import (
 )
 from story.runtime import drop_author_runtime, get_author_runtime
 from story.service import GenerationRejected, StaleStoryBibleError
+from story.writing_plan import section_writing_plan_prompt_payload
 from tasks.task_manager import (
     ProgressUpdater,
     TaskConflict,
@@ -285,6 +286,9 @@ async def preview_author_section_contract(
     event_plan = runtime.service.preview_event_execution_plan(
         SectionGoal(**request.model_dump())
     )
+    writing_plan = runtime.service.preview_section_writing_plan(
+        SectionGoal(**request.model_dump())
+    )
     return {
         "narrative_contract": {
             **narrative_contract_prompt_payload(contract),
@@ -293,6 +297,7 @@ async def preview_author_section_contract(
             "canonical_state_revision": contract.canonical_state_revision,
         },
         "event_execution_plan": event_execution_plan_prompt_payload(event_plan),
+        "section_writing_plan": section_writing_plan_prompt_payload(writing_plan),
     }
 
 
@@ -464,6 +469,21 @@ def _make_author_executor(goal: SectionGoal):
             "event_execution_plan": (
                 event_execution_plan_prompt_payload(transaction.event_execution_plan)
                 if transaction.event_execution_plan
+                else {}
+            ),
+            "section_writing_plan": (
+                section_writing_plan_prompt_payload(transaction.section_writing_plan)
+                if transaction.section_writing_plan
+                else {}
+            ),
+            "initial_length_report": (
+                transaction.initial_length_report.model_dump(mode="json")
+                if transaction.initial_length_report
+                else {}
+            ),
+            "final_length_report": (
+                transaction.final_length_report.model_dump(mode="json")
+                if transaction.final_length_report
                 else {}
             ),
             "repair_plan": (

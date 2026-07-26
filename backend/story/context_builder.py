@@ -24,6 +24,10 @@ from story.narrative_contract import (
     NarrativeContract,
     narrative_contract_prompt_payload,
 )
+from story.writing_plan import (
+    SectionWritingPlan,
+    section_writing_plan_prompt_payload,
+)
 
 
 SLOT_ORDER = (
@@ -75,6 +79,7 @@ class ContextPackage:
     prompt: str
     slots: dict[str, str]
     manifest: ContextManifest
+    writing_plan: SectionWritingPlan | None = None
 
 
 def _json(value: Any) -> str:
@@ -152,6 +157,7 @@ class ContextBuilder:
         long_term_memories: list[MemoryRecord],
         narrative_contract: NarrativeContract | None = None,
         event_execution_plan: EventExecutionPlan | None = None,
+        section_writing_plan: SectionWritingPlan | None = None,
     ) -> ContextPackage:
         relevant_ids = set(section_goal.involved_characters)
         if section_goal.viewpoint_character_id:
@@ -209,6 +215,11 @@ class ContextBuilder:
                         "event_execution_plan": (
                             event_execution_plan_prompt_payload(event_execution_plan)
                             if event_execution_plan
+                            else {}
+                        ),
+                        "section_writing_plan": (
+                            section_writing_plan_prompt_payload(section_writing_plan)
+                            if section_writing_plan
                             else {}
                         ),
                     }
@@ -362,7 +373,12 @@ class ContextBuilder:
             budget_utilization=round(len(prompt) / hard_char_cap, 4),
             slots=manifests,
         )
-        return ContextPackage(prompt=prompt, slots=slots, manifest=manifest)
+        return ContextPackage(
+            prompt=prompt,
+            slots=slots,
+            manifest=manifest,
+            writing_plan=section_writing_plan,
+        )
 
     @staticmethod
     def _render_prompt(slots: dict[str, str]) -> str:

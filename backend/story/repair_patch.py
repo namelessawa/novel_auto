@@ -14,7 +14,7 @@ from story.narrative_contract import NarrativeContract, NarrativeModel
 from story.repair_plan import RepairPlan
 
 
-PatchType = Literal["insert", "replace", "delete"]
+PatchType = Literal["insert", "replace", "delete", "expand"]
 
 
 class RepairPatchAnchor(NarrativeModel):
@@ -43,6 +43,8 @@ class RepairPatch(NarrativeModel):
     target_end_states: list[str] = Field(default_factory=list)
     max_chars: int = Field(default=300, ge=1, le=300)
     preserve: list[str] = Field(default_factory=list)
+    target_chars: int = Field(default=0, ge=0, le=300)
+    purpose: str = Field(default="", max_length=240)
 
 
 class RepairPatchSet(NarrativeModel):
@@ -108,6 +110,13 @@ _NEW_CHARACTER = re.compile(
     r"(?:名叫|叫作|自称)([\u3400-\u9fff]{2,5})|"
     r"(?:一个|一名|那名)([\u3400-\u9fff]{1,8}(?:人|水手|工人|医生|警官|调查员))"
 )
+_CLASSICAL_HISTORY = re.compile(
+    r"朝代|王朝|年号|官职|官衔|世家|宗族|家谱|前朝|本朝|开国|皇帝|丞相|太守"
+)
+_EXPAND_PURPOSE = (
+    "expand existing action, environment, interaction, or emotion "
+    "without adding plot or facts"
+)
 _POSSESSION = (
     "接过",
     "收下",
@@ -158,7 +167,7 @@ def _resolve_patch(text: str, patch: RepairPatch) -> tuple[_ResolvedPatch | None
         if len(set(pairs)) != 1:
             return None, "PATCH_ANCHOR_AMBIGUOUS"
         between_start, between_end = pairs[0]
-        if patch.patch_type == "insert":
+        if patch.patch_type in {"insert", "expand"}:
             return _ResolvedPatch(between_start, between_start, ""), ""
         return (
             _ResolvedPatch(
@@ -176,7 +185,7 @@ def _resolve_patch(text: str, patch: RepairPatch) -> tuple[_ResolvedPatch | None
     if len(positions) != 1:
         return None, "PATCH_ANCHOR_AMBIGUOUS"
     position = positions[0]
-    if patch.patch_type == "insert":
+    if patch.patch_type in {"insert", "expand"}:
         insertion = position + len(anchor) if before else position
         return _ResolvedPatch(insertion, insertion, ""), ""
     return _ResolvedPatch(position, position + len(anchor), anchor), ""
@@ -276,7 +285,8 @@ class RepairPatchValidator:
         }
         authorized_numbers = _authorized_numbers(plan, original_text)
         authorized_repair_text = _authorized_repair_text(plan)
-        length_authorized = plan.length_adjustment.action != "none"
+        length_add_authorized = plan.length_adjustment.action == "add"
+        length_remove_authorized = plan.length_adjustment.action == "remove"
         allowed_character_names = {
             name
             for entity in contract.allowed_entities.characters
@@ -354,6 +364,65 @@ class RepairPatchValidator:
                     ",".join(sorted(unknown_events | unknown_states)),
                 )
 
+            if patch.patch_type == "expand":
+                actual_chars = _nonspace_chars(patch.patch_text)
+                allowed_target = min(
+                    300,
+                    plan.length_adjustment.target_chars,
+                    max(0, plan.length_adjustment.min_chars - _nonspace_chars(text)),
+                )
+                allowed_max = min(
+                    300,
+                    max(0, plan.length_adjustment.max_chars - _nonspace_chars(text)),
+                )
+                if not length_add_authorized:
+                    add("EXPAND_NOT_AUTHORIZED", "RepairPlan 未授权长度扩写")
+                if patch.target_events or patch.target_end_states:
+                    add(
+                        "EXPAND_TARGET_FORBIDDEN",
+                        "EXPAND 不能承担新事件或终态变更",
+                    )
+                if patch.purpose != _EXPAND_PURPOSE:
+                    add(
+                        "EXPAND_PURPOSE_MISMATCH",
+                        "EXPAND purpose 必须逐字匹配服务端计划",
+                        patch.purpose,
+                    )
+                if (
+                    patch.target_chars <= 0
+                    or patch.target_chars > allowed_target
+                    or patch.max_chars < patch.target_chars
+                    or patch.max_chars > allowed_max
+                ):
+                    add(
+                        "EXPAND_TARGET_TOO_LARGE",
+                        "EXPAND target/max chars 超过服务端授权范围",
+                        f"{patch.target_chars}/{patch.max_chars}",
+                    )
+                if actual_chars > patch.max_chars:
+                    add(
+                        "EXPAND_TOO_LARGE",
+                        "EXPAND 正文超过 max_chars",
+                        str(actual_chars),
+                    )
+                if actual_chars < max(1, int(patch.target_chars * 0.6)):
+                    add(
+                        "EXPAND_TOO_SMALL",
+                        "EXPAND 正文未达到服务端目标的 60%",
+                        str(actual_chars),
+                    )
+                if patch.patch_text.strip() in original_text:
+                    add(
+                        "EXPAND_REPEATS_SOURCE",
+                        "EXPAND 不得复制或重复已有正文",
+                        patch.patch_text,
+                    )
+            elif patch.target_chars or patch.purpose:
+                add(
+                    "PATCH_EXPAND_FIELDS_FORBIDDEN",
+                    "只有 EXPAND 可以携带 target_chars 与 purpose",
+                )
+
             delete_authorized = (
                 patch.patch_type == "delete"
                 and any(
@@ -365,7 +434,12 @@ class RepairPatchValidator:
                 not patch.target_events
                 and not patch.target_end_states
                 and not delete_authorized
-                and not length_authorized
+                and not (
+                    patch.patch_type == "expand" and length_add_authorized
+                )
+                and not (
+                    patch.patch_type == "delete" and length_remove_authorized
+                )
             ):
                 add(
                     "PATCH_PURPOSE_NOT_AUTHORIZED",
@@ -376,7 +450,7 @@ class RepairPatchValidator:
             for preserved in plan.must_preserve_spans:
                 if (
                     not preserved.text
-                    or patch.patch_type == "insert"
+                    or patch.patch_type in {"insert", "expand"}
                     or delete_authorized
                 ):
                     continue
@@ -480,6 +554,14 @@ class RepairPatchValidator:
                             "Patch 不得新增人物",
                             new_character.group(0),
                         )
+                style_key = str(plan.style_constraints.get("key") or "")
+                classical_history = _CLASSICAL_HISTORY.search(patch.patch_text)
+                if style_key == "classical_chapter" and classical_history:
+                    add(
+                        "PATCH_ADDS_HISTORY",
+                        "古典章回扩写不得新增历史、朝代、家族或官职背景",
+                        classical_history.group(0),
+                    )
 
             for event_id in patch.target_events:
                 planned = plan_events.get(event_id)

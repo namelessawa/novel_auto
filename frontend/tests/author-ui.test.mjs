@@ -170,6 +170,21 @@ function authorApi(overrides = {}) {
       event_execution_plan: {
         ordered_events: [{ id: 'open', order: 1, actor: 'shen_yan', action: '打开旧信', description: '沈砚打开旧信' }],
       },
+      section_writing_plan: {
+        target_chars: 900,
+        min_chars: 900,
+        max_chars: 1100,
+        structure: [
+          { part: 'opening', target_chars: 180, purpose: '建立场景' },
+          { part: 'development', target_chars: 250, purpose: '推进既有动作' },
+          { part: 'conflict', target_chars: 250, purpose: '完成冲突' },
+          { part: 'resolution', target_chars: 220, purpose: '落实终态' },
+        ],
+        style_adaptation: {
+          allowed_expansion: ['existing action detail'],
+          forbidden_expansion: ['new event'],
+        },
+      },
     }),
     fetchAuthorLongRunStatus: async () => ({
       run_id: 'run-1',
@@ -342,7 +357,10 @@ test('author studio previews a folded narrative contract before generation', asy
   assert.match(text, /最终必须达到/)
   assert.match(text, /不得新增/)
   assert.match(text, /天亮前交信/)
-  assert.match(text, /900—1200 字/)
+  assert.match(text, /WritingPlan 结构/)
+  assert.match(text, /opening · 180 字/)
+  assert.match(text, /服务端长度目标/)
+  assert.match(text, /900 字 · 接受区间 900—1100 字/)
   assert.doesNotMatch(text, /system prompt|user prompt|思考过程/i)
   renderer.unmount()
 })
@@ -430,6 +448,13 @@ test('author validation separates narrative state and style and shows repair res
           violations: [{ code: 'PATCH_END_STATE_EVIDENCE_INCOMPLETE' }],
         },
         repair_audit_codes: ['PATCH_END_STATE_EVIDENCE_INCOMPLETE'],
+        initial_length_report: {
+          phase: 'initial', chars: 720, target: 900, ratio: 0.8, accepted: false,
+        },
+        final_length_report: {
+          phase: 'repaired', chars: 820, target: 900, ratio: 0.9111,
+          accepted: false, violation_code: 'NARRATIVE_TOO_SHORT',
+        },
         style_validation_report: {
           evaluated: true,
           passed: true,
@@ -458,6 +483,8 @@ test('author validation separates narrative state and style and shows repair res
   assert.match(text, /evt_handover/)
   assert.match(text, /END_STATE_NOT_REACHED/)
   assert.match(text, /修复前 未通过 → 修复后 未通过/)
+  assert.match(text, /INITIAL720\/900 字 · ratio 0\.8/)
+  assert.match(text, /REPAIRED820\/900 字 · ratio 0\.9111 · NARRATIVE_TOO_SHORT/)
   renderer.unmount()
 })
 

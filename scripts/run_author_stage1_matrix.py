@@ -131,6 +131,15 @@ def aggregate(
     repair_success_rate = (
         round(repair_success / len(repaired), 4) if repaired else 1.0
     )
+    average_narrative_length = (
+        round(
+            sum(int(item.get("narrative_length", 0)) for item in sections)
+            / attempted,
+            2,
+        )
+        if attempted
+        else 0.0
+    )
     hard_rejects = sum(
         int(item.get("summary", {}).get("hard_rejects", 0))
         for item in combinations
@@ -200,6 +209,12 @@ def aggregate(
             "committed_at_least_14_of_15": committed >= 14,
             "contract_accepted_at_least_93pct": contract_rate >= 0.93,
             "repair_after_accepted_at_least_90pct": repair_success_rate >= 0.90,
+            "average_narrative_length_at_least_850": (
+                average_narrative_length >= 850
+            ),
+            "repair_rate_at_most_40pct": (
+                (len(repaired) / attempted if attempted else 0.0) <= 0.40
+            ),
         }
         gate = "MINI_MATRIX_PASS" if complete and all(gate_checks.values()) else (
             "MINI_MATRIX_FAIL" if complete else "MINI_MATRIX_INCOMPLETE"
@@ -232,6 +247,10 @@ def aggregate(
         "repair_rate": round(len(repaired) / attempted, 4) if attempted else 0.0,
         "repair_success": repair_success,
         "repair_success_rate": repair_success_rate,
+        "average_narrative_length": average_narrative_length,
+        "expand_patch_count": sum(
+            int(item.get("repair_patch_expand_count", 0)) for item in sections
+        ),
         "hard_rejects": hard_rejects,
         "hard_fact_error_commits": hard_fact_error_commits,
         "state_conflict_commits": state_conflict_commits,

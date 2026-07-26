@@ -14,6 +14,7 @@ from story.narrative_contract import (
     NarrativeViolation,
     narrative_char_count,
 )
+from story.writing_plan import SectionWritingPlan
 
 
 class RepairEventInstruction(NarrativeModel):
@@ -150,6 +151,7 @@ class RepairPlanBuilder:
         narrative_report: NarrativeValidationReport,
         state_report: Any,
         narrative_text: str,
+        section_writing_plan: SectionWritingPlan | None = None,
     ) -> RepairPlan:
         events = {item.id: item for item in event_plan.ordered_events}
         missing: list[RepairEventInstruction] = []
@@ -240,33 +242,23 @@ class RepairPlanBuilder:
             if item.code.startswith("UNSUPPORTED_") or item.code in unsupported_codes
         ]
         chars = narrative_char_count(narrative_text)
-        minimum = contract.length_constraint.min_chars
-        maximum = contract.length_constraint.max_chars
-        has_higher_priority_issue = bool(
-            missing
-            or incomplete
-            or wrong_actor
-            or wrong_target
-            or wrong_ends
-            or unsupported
+        minimum = (
+            section_writing_plan.min_chars
+            if section_writing_plan is not None
+            else contract.length_constraint.min_chars
         )
-        if has_higher_priority_issue:
-            # A single Repair call must first complete events/end states or
-            # delete unsupported facts.  The model may not spend that call on
-            # free-form length padding.
-            adjustment = LengthAdjustment(
-                current_chars=chars,
-                min_chars=minimum,
-                max_chars=maximum,
-                action="none",
-            )
-        elif chars < minimum:
+        maximum = (
+            section_writing_plan.max_chars
+            if section_writing_plan is not None
+            else contract.length_constraint.max_chars
+        )
+        if chars < minimum:
             adjustment = LengthAdjustment(
                 current_chars=chars,
                 min_chars=minimum,
                 max_chars=maximum,
                 action="add",
-                target_chars=minimum - chars,
+                target_chars=min(300, minimum - chars),
             )
         elif chars > maximum:
             adjustment = LengthAdjustment(
@@ -310,7 +302,7 @@ class RepairPlanBuilder:
             style_constraints=event_plan.style_constraints,
             repair_instruction=(
                 "只输出局部 patches：优先完成事件，其次落实最终状态，再删除未授权新增，"
-                "仅在没有前三类问题时处理长度；每个 patch 只能解决明确列出的 target，"
+                "然后才允许一个受约束的 EXPAND 处理长度；每个 patch 只能解决明确列出的 target，"
                 "必须使用正文中唯一的逐字 anchor，不得重写整篇正文。"
             ),
         )
@@ -352,37 +344,6 @@ def _unique_tail_anchor(narrative: str) -> str:
             if anchor and narrative.count(anchor) == 1:
                 return anchor
     return stripped[-240:]
-
-
-def _length_addition_text(narrative: str, target_chars: int) -> str:
-    """Reuse existing prose for a conservative length-only patch template."""
-    stripped = narrative.rstrip()
-    if not stripped:
-        return ""
-    required = min(300, max(1, target_chars))
-    source_chars = sum(not char.isspace() for char in stripped)
-    if source_chars == 0:
-        return ""
-    source: list[str] = []
-    source_count = 0
-    for char in reversed(stripped):
-        source.append(char)
-        if not char.isspace():
-            source_count += 1
-        if source_count >= required:
-            break
-    suffix = "".join(reversed(source))
-    suffix_chars = sum(not char.isspace() for char in suffix)
-    repeated = suffix * max(1, (required + suffix_chars - 1) // suffix_chars)
-    selected: list[str] = []
-    count = 0
-    for char in repeated:
-        selected.append(char)
-        if not char.isspace():
-            count += 1
-        if count >= required:
-            break
-    return "".join(selected)
 
 
 def _length_removal_text(plan: RepairPlan, narrative: str) -> str:
@@ -506,28 +467,6 @@ def _suggested_patch_templates(
                 ],
             }
         )
-    elif plan.length_adjustment.action == "add":
-        patch_text = _length_addition_text(
-            original_narrative,
-            plan.length_adjustment.target_chars,
-        )
-        if patch_text:
-            templates.append(
-                {
-                    "patch_type": "insert",
-                    "anchor": {
-                        "before_text": _unique_tail_anchor(original_narrative),
-                        "after_text": "",
-                    },
-                    "patch_text": patch_text,
-                    "target_events": [],
-                    "target_end_states": [],
-                    "max_chars": 300,
-                    "preserve": [
-                        item.text for item in plan.must_preserve_spans if item.text
-                    ],
-                }
-            )
     elif plan.length_adjustment.action == "remove":
         target_text = _length_removal_text(plan, original_narrative)
         if target_text:
@@ -561,13 +500,78 @@ def repair_patch_prompt_payload(
         plan,
         original_narrative,
     )
+    projected_delta = sum(
+        (
+            narrative_char_count(str(item.get("patch_text") or ""))
+            if item.get("patch_type") != "delete"
+            else -narrative_char_count(
+                str((item.get("anchor") or {}).get("before_text") or "")
+            )
+        )
+        for item in suggested_templates
+    )
+    expansion_target = min(
+        plan.length_adjustment.target_chars,
+        max(
+            0,
+            plan.length_adjustment.min_chars
+            - plan.length_adjustment.current_chars
+            - projected_delta,
+        ),
+    )
+    expansion_max = min(
+        300,
+        max(
+            0,
+            plan.length_adjustment.max_chars
+            - plan.length_adjustment.current_chars
+            - projected_delta,
+        ),
+    )
+    expansion_request = (
+        {
+            "patch_type": "expand",
+            "anchor": {
+                "before_text": _unique_tail_anchor(original_narrative),
+                "after_text": "",
+            },
+            "target_chars": expansion_target,
+            "max_chars": expansion_max,
+            "purpose": (
+                "expand existing action, environment, interaction, or emotion "
+                "without adding plot or facts"
+            ),
+            "allowed_content": [
+                "existing action detail",
+                "existing environment",
+                "existing-character interaction",
+                "existing-character emotion",
+            ],
+            "forbidden_content": [
+                "new event",
+                "new character",
+                "new fact",
+                "new date, number, kinship, injury, casualty, or world rule",
+            ],
+            "preserve": [
+                item.text for item in plan.must_preserve_spans if item.text
+            ],
+        }
+        if plan.length_adjustment.action == "add" and expansion_target > 0
+        else None
+    )
     return {
         "execution_mode": (
-            "COPY_SUGGESTED_TEMPLATES_EXACTLY"
+            "COPY_REQUIRED_PATCHES_THEN_GENERATE_EXPAND"
+            if suggested_templates and expansion_request
+            else "COPY_SUGGESTED_TEMPLATES_EXACTLY"
             if suggested_templates
+            else "GENERATE_EXPAND"
+            if expansion_request
             else "GENERATE_LOCAL_PATCHES"
         ),
         "required_patches": suggested_templates,
+        "expansion_request": expansion_request,
         "missing_events": [item.model_dump(mode="json") for item in plan.missing_events],
         "incomplete_events": [item.model_dump(mode="json") for item in plan.incomplete_events],
         "wrong_actor_events": [item.model_dump(mode="json") for item in plan.wrong_actor_events],
@@ -587,25 +591,35 @@ def repair_patch_prompt_payload(
             "event_completion",
             "required_end_state",
             "unsupported_addition_delete",
-            "length_only_when_no_higher_priority_issue",
+            "length_expand",
+            "style_tiny_adjustment",
         ],
         "relevant_windows": _repair_windows(plan, original_narrative),
         "suggested_patch_templates": suggested_templates,
         "output_contract": {
             "patches": [
                 {
-                    "patch_type": "insert|replace|delete",
+                    "patch_type": "insert|replace|delete|expand",
                     "anchor": {"before_text": "逐字锚点", "after_text": ""},
                     "patch_text": "不超过 300 字的局部修改",
                     "target_events": [],
                     "target_end_states": [],
                     "max_chars": 300,
                     "preserve": [],
+                    "target_chars": 0,
+                    "purpose": "",
                 }
             ]
         },
         "final_instruction": (
-            "required_patches 非空：只返回 {\"patches\": required_patches}，"
+            "Copy every required_patches item exactly and in order. Then append "
+            "exactly one expand patch from expansion_request: copy patch_type, "
+            "anchor, target_chars, max_chars, purpose, and preserve exactly; generate "
+            "only patch_text and keep target lists empty. target_chars is the desired "
+            "addition; max_chars is the hard patch ceiling. "
+            "Never repeat source prose and never create plot or facts."
+            if expansion_request
+            else "required_patches 非空：只返回 {\"patches\": required_patches}，"
             "数组内每个字段和每个字符必须原样复制，不得同义改写。"
             if suggested_templates
             else "required_patches 为空：按 output_contract 生成最小局部 patches。"

@@ -56,6 +56,13 @@ DEFAULT_OUTPUT = (
     / "real-rejects-patch-replay.json"
 )
 
+# Offline replay has no LLM. This completes the one frozen length-only case
+# after its recorded real-provider addition. It is test data only and is never
+# imported by the runtime repair path.
+_OFFLINE_EXPAND_SUFFIXES = {
+    "action_conflict__literary__section_0001": "掌心仍轻压着衣袋，没有移开。",
+}
+
 
 def _atomic_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -120,14 +127,37 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
             state_report=initial_authority,
             narrative_text=original.narrative_text,
         )
-        patch_set = RepairPatchSet.model_validate(
-            {
-                "patches": repair_patch_prompt_payload(
-                    plan,
-                    original.narrative_text,
-                )["suggested_patch_templates"]
-            }
+        prompt_payload = repair_patch_prompt_payload(
+            plan,
+            original.narrative_text,
         )
+        patch_payloads = list(prompt_payload["suggested_patch_templates"])
+        expansion = prompt_payload.get("expansion_request")
+        if expansion:
+            recorded_text = case["provider_repair_output"]["narrative_text"]
+            recorded_addition = (
+                recorded_text[len(original.narrative_text) :]
+                if recorded_text.startswith(original.narrative_text)
+                else ""
+            )
+            patch_text = (
+                recorded_addition
+                + _OFFLINE_EXPAND_SUFFIXES.get(case["case_id"], "")
+            )
+            patch_payloads.append(
+                {
+                    "patch_type": expansion["patch_type"],
+                    "anchor": expansion["anchor"],
+                    "patch_text": patch_text,
+                    "target_events": [],
+                    "target_end_states": [],
+                    "max_chars": expansion["target_chars"],
+                    "preserve": expansion["preserve"],
+                    "target_chars": expansion["target_chars"],
+                    "purpose": expansion["purpose"],
+                }
+            )
+        patch_set = RepairPatchSet.model_validate({"patches": patch_payloads})
         applied = patch_validator.validate_and_apply(
             original_text=original.narrative_text,
             patch_set=patch_set,

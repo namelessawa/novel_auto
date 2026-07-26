@@ -61,6 +61,7 @@ def _matrix() -> dict:
                     "style_drift_warning": False,
                     "opening_overlap": 0.1,
                     "consecutive_ngram_overlap": 0.2,
+                    "narrative_length": 900,
                     "prompt_tokens": 100,
                     "completion_tokens": 50,
                     "repair_tokens": 25 if section == 2 else 0,

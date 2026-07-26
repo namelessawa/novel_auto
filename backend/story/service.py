@@ -47,8 +47,13 @@ from story.persistence import (
 )
 from story.repair_patch import RepairPatchSet, RepairPatchValidator
 from story.repair_plan import RepairPlan, RepairPlanBuilder, RepairRegressionValidator
+from story.section_length_validator import SectionLengthValidator
 from story.validator import StoryValidator
 from story.writer import AuthorWriter, WriterProtocol, WriterResult
+from story.writing_plan import (
+    SectionWritingPlan,
+    SectionWritingPlanBuilder,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +83,7 @@ class PreparedGeneration:
     goal: SectionGoal
     narrative_contract: NarrativeContract
     event_execution_plan: EventExecutionPlan
+    section_writing_plan: SectionWritingPlan
     context: ContextPackage
     transaction: GenerationTransaction
 
@@ -97,6 +103,7 @@ class AuthorGenerationService:
         narrative_validator: NarrativeContractValidator | None = None,
         contract_builder: NarrativeContractBuilder | None = None,
         event_plan_builder: EventExecutionPlanBuilder | None = None,
+        writing_plan_builder: SectionWritingPlanBuilder | None = None,
         repair_plan_builder: RepairPlanBuilder | None = None,
         context_builder: ContextBuilder | None = None,
     ) -> None:
@@ -116,6 +123,8 @@ class AuthorGenerationService:
         self.narrative_validator = narrative_validator or NarrativeContractValidator()
         self.contract_builder = contract_builder or NarrativeContractBuilder()
         self.event_plan_builder = event_plan_builder or EventExecutionPlanBuilder()
+        self.writing_plan_builder = writing_plan_builder or SectionWritingPlanBuilder()
+        self.section_length_validator = SectionLengthValidator()
         self.repair_plan_builder = repair_plan_builder or RepairPlanBuilder()
         self.repair_regression_validator = RepairRegressionValidator()
         self.repair_patch_validator = RepairPatchValidator()
@@ -150,6 +159,11 @@ class AuthorGenerationService:
                 generated = await self.generate(prepared)
                 transaction = self._record_generated(transaction, generated)
                 candidate = generated.candidate
+                initial_length_report = self.section_length_validator.validate(
+                    candidate.narrative_text,
+                    prepared.section_writing_plan,
+                    phase="initial",
+                )
                 narrative_report = self.validate_narrative(prepared, candidate)
                 strict_report = self.validate(prepared, candidate)
                 report = strict_report
@@ -163,6 +177,10 @@ class AuthorGenerationService:
                         "validation_history": validation_history,
                         "style_validation_report": self._style_report(
                             prepared, candidate, narrative_report
+                        ),
+                        "initial_length_report": initial_length_report,
+                        "final_length_report": initial_length_report.model_copy(
+                            update={"phase": "final"}
                         ),
                         "updated_at": utc_now(),
                     }
@@ -276,6 +294,18 @@ class AuthorGenerationService:
                         candidate,
                         drop_unsupported_proposals=True,
                     )
+                    final_length_report = self.section_length_validator.validate(
+                        candidate.narrative_text,
+                        prepared.section_writing_plan,
+                        phase="repaired",
+                    )
+                    transaction = transaction.model_copy(
+                        update={
+                            "final_length_report": final_length_report,
+                            "updated_at": utc_now(),
+                        }
+                    )
+                    self.transactions.save(transaction)
                     narrative_history.append(narrative_report)
                     validation_history.append(report)
                 else:
@@ -389,7 +419,16 @@ class AuthorGenerationService:
                 }
             )
             self.transactions.save(transaction)
-            narrative_report = self.validate_narrative(prepared, candidate)
+            length_report = self.section_length_validator.validate(
+                candidate.narrative_text,
+                prepared.section_writing_plan,
+                phase="final",
+            )
+            narrative_report = self.validate_narrative(
+                prepared,
+                candidate,
+                enforce_writing_length=(generation_mode == "author"),
+            )
             report = self.validate(
                 prepared,
                 candidate,
@@ -406,6 +445,10 @@ class AuthorGenerationService:
                         "style_validation_report": self._style_report(
                             prepared, candidate, narrative_report
                         ),
+                        "initial_length_report": length_report.model_copy(
+                            update={"phase": "initial"}
+                        ),
+                        "final_length_report": length_report,
                         "error": "外部候选未通过正文或权威状态契约校验",
                         "updated_at": utc_now(),
                     }
@@ -423,6 +466,10 @@ class AuthorGenerationService:
                         "style_validation_report": self._style_report(
                             prepared, candidate, narrative_report
                         ),
+                        "initial_length_report": length_report.model_copy(
+                            update={"phase": "initial"}
+                        ),
+                        "final_length_report": length_report,
                     }
                 ),
                 candidate,
@@ -483,6 +530,12 @@ class AuthorGenerationService:
             canonical_state=state,
             style_contract=bible.style_contract,
         )
+        section_writing_plan = self.writing_plan_builder.build(
+            contract=narrative_contract,
+            event_plan=event_execution_plan,
+            section_goal=prepared_goal,
+            style_contract=bible.style_contract,
+        )
         try:
             context = self.context_builder.build(
                 novel_id=self.novel_id,
@@ -491,6 +544,7 @@ class AuthorGenerationService:
                 canonical_state=state,
                 narrative_contract=narrative_contract,
                 event_execution_plan=event_execution_plan,
+                section_writing_plan=section_writing_plan,
                 section_goal=prepared_goal,
                 story_threads=list(threads.threads.values()),
                 previous_prose_tail=previous_tail,
@@ -511,6 +565,7 @@ class AuthorGenerationService:
             target_canonical_revision=state.revision + 1,
             narrative_contract=narrative_contract,
             event_execution_plan=event_execution_plan,
+            section_writing_plan=section_writing_plan,
             context_manifest=context.manifest,
         )
         self.transactions.save(transaction)
@@ -522,6 +577,7 @@ class AuthorGenerationService:
             goal=prepared_goal,
             narrative_contract=narrative_contract,
             event_execution_plan=event_execution_plan,
+            section_writing_plan=section_writing_plan,
             context=context,
             transaction=transaction,
         )
@@ -565,6 +621,33 @@ class AuthorGenerationService:
             style_contract=bible.style_contract,
         )
 
+    def preview_section_writing_plan(self, goal: SectionGoal) -> SectionWritingPlan:
+        bible = self.bibles.load()
+        state = self.states.load()
+        threads = self.threads.load()
+        chapter, section = self.sections.next_position()
+        section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
+        prepared_goal = goal.model_copy(update={"section_id": section_id})
+        contract = self.contract_builder.build(
+            story_bible=bible,
+            canonical_state=state,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
+        )
+        event_plan = self.event_plan_builder.build(
+            contract=contract,
+            section_goal=prepared_goal,
+            story_threads=list(threads.threads.values()),
+            canonical_state=state,
+            style_contract=bible.style_contract,
+        )
+        return self.writing_plan_builder.build(
+            contract=contract,
+            event_plan=event_plan,
+            section_goal=prepared_goal,
+            style_contract=bible.style_contract,
+        )
+
     async def generate(self, prepared: PreparedGeneration) -> WriterResult:
         return await self.writer.generate(prepared.context, prepared.goal)
 
@@ -590,13 +673,38 @@ class AuthorGenerationService:
         self,
         prepared: PreparedGeneration,
         candidate: WriterCandidate,
+        *,
+        enforce_writing_length: bool = True,
     ) -> NarrativeValidationReport:
-        return self.narrative_validator.validate(
+        report = self.narrative_validator.validate(
             prepared.narrative_contract,
             candidate.narrative_text,
             event_execution_plan=prepared.event_execution_plan,
             event_evidence=candidate.event_evidence,
             end_state_evidence=candidate.end_state_evidence,
+        )
+        if not enforce_writing_length:
+            return report
+        length_report = self.section_length_validator.validate(
+            candidate.narrative_text,
+            prepared.section_writing_plan,
+            phase="final",
+        )
+        length_violation = self.section_length_validator.violation(length_report)
+        if length_violation is None:
+            return report
+        violations = [
+            item
+            for item in report.violations
+            if item.code not in {"NARRATIVE_TOO_SHORT", "NARRATIVE_TOO_LONG"}
+        ]
+        return report.model_copy(
+            update={
+                "accepted": False,
+                "severity": "high",
+                "violations": [*violations, length_violation],
+                "repairable": True,
+            }
         )
 
     async def repair(
@@ -621,6 +729,7 @@ class AuthorGenerationService:
             narrative_report=narrative_report,
             state_report=state_report,
             narrative_text=candidate.narrative_text,
+            section_writing_plan=prepared.section_writing_plan,
         )
 
     @staticmethod
@@ -709,7 +818,16 @@ class AuthorGenerationService:
         *,
         generation_mode: str = "author",
     ) -> GenerationTransaction:
-        narrative_report = self.validate_narrative(prepared, candidate)
+        narrative_report = self.validate_narrative(
+            prepared,
+            candidate,
+            enforce_writing_length=(generation_mode == "author"),
+        )
+        final_length_report = self.section_length_validator.validate(
+            candidate.narrative_text,
+            prepared.section_writing_plan,
+            phase="final",
+        )
         authority_report = self.validate(
             prepared,
             candidate,
@@ -776,6 +894,7 @@ class AuthorGenerationService:
                 "candidate": candidate,
                 "narrative_contract": prepared.narrative_contract,
                 "narrative_validation_report": narrative_report,
+                "final_length_report": final_length_report,
                 "validation_report": report,
                 "style_validation_report": self._style_report(
                     prepared, candidate, narrative_report

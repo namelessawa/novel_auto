@@ -166,8 +166,16 @@ def _goal(index: int, *, desired_length: int):
         desired_length=desired_length,
         narrative_constraints=_constraints(
             index,
-            min_chars=max(80, desired_length // 2),
-            max_chars=max(240, desired_length * 2),
+            min_chars=(
+                desired_length
+                if desired_length >= 900
+                else max(80, desired_length // 2)
+            ),
+            max_chars=(
+                desired_length + 200
+                if desired_length >= 900
+                else max(240, desired_length * 2)
+            ),
         ),
     )
 
@@ -621,6 +629,21 @@ def _section_metrics(
         "repeated_dialogue_rate": None,
         "same_resolution_pattern_rate": None,
         "narrative_length": sum(not char.isspace() for char in text),
+        "section_writing_plan": (
+            transaction.section_writing_plan.model_dump(mode="json")
+            if transaction.section_writing_plan
+            else {}
+        ),
+        "initial_length_report": (
+            transaction.initial_length_report.model_dump(mode="json")
+            if transaction.initial_length_report
+            else {}
+        ),
+        "final_length_report": (
+            transaction.final_length_report.model_dump(mode="json")
+            if transaction.final_length_report
+            else {}
+        ),
         "prompt_tokens": int(transaction.usage.get("prompt_tokens", 0)),
         "completion_tokens": int(transaction.usage.get("completion_tokens", 0)),
         "repair_tokens": int(transaction.usage.get("repair_tokens", 0)),
@@ -654,6 +677,9 @@ def _section_metrics(
         ),
         "repair_patch_delete_count": sum(
             item.patch_type == "delete" for item in patches
+        ),
+        "repair_patch_expand_count": sum(
+            item.patch_type == "expand" for item in patches
         ),
         "repair_patch_target_events": sorted(
             {

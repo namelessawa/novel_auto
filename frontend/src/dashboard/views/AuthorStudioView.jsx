@@ -183,6 +183,17 @@ export default function AuthorStudioView({
     : generation?.transaction?.event_execution_plan
       || generation?.task?.event_execution_plan
       || null
+  const activeWritingPlan = contractPreview
+    ? contractPreview.section_writing_plan
+    : generation?.transaction?.section_writing_plan
+      || generation?.task?.section_writing_plan
+      || null
+  const initialLengthReport = generation?.transaction?.initial_length_report
+    || generation?.task?.initial_length_report
+    || null
+  const finalLengthReport = generation?.transaction?.final_length_report
+    || generation?.task?.final_length_report
+    || null
   const taskStatus = generation?.task?.status || (taskId ? 'queued' : 'idle')
   const generating = ['queued', 'running'].includes(taskStatus)
 
@@ -243,6 +254,7 @@ export default function AuthorStudioView({
       setContractPreview({
         narrative_contract: data.narrative_contract,
         event_execution_plan: data.event_execution_plan || null,
+        section_writing_plan: data.section_writing_plan || null,
       })
       setContractOpen(true)
     } catch (err) {
@@ -372,7 +384,11 @@ export default function AuthorStudioView({
                 <em>默认折叠 · 不显示 Prompt 或模型分析</em>
               </button>
               {contractOpen && activeContract && (
-                <ContractPreview contract={activeContract} eventPlan={activeEventPlan} />
+                <ContractPreview
+                  contract={activeContract}
+                  eventPlan={activeEventPlan}
+                  writingPlan={activeWritingPlan}
+                />
               )}
             </div>
             <button
@@ -407,6 +423,8 @@ export default function AuthorStudioView({
                 repairPatches={generation?.transaction?.repair_patches || generation?.task?.repair_patches}
                 repairPatchReport={generation?.transaction?.repair_patch_report || generation?.task?.repair_patch_report}
                 repairAuditCodes={generation?.transaction?.repair_audit_codes || generation?.task?.repair_audit_codes || []}
+                initialLengthReport={initialLengthReport}
+                finalLengthReport={finalLengthReport}
               />
             )}
             {!generation && (
@@ -491,8 +509,11 @@ function TransactionTimeline({ generation }) {
   )
 }
 
-function ContractPreview({ contract, eventPlan }) {
+function ContractPreview({ contract, eventPlan, writingPlan }) {
   const groups = [
+    ['WritingPlan 结构', (writingPlan?.structure || []).map((item) => `${item.part} · ${item.target_chars} 字 · ${item.purpose}`)],
+    ['风格扩写允许', writingPlan?.style_adaptation?.allowed_expansion || []],
+    ['风格扩写禁止', writingPlan?.style_adaptation?.forbidden_expansion || []],
     ['执行顺序', (eventPlan?.ordered_events || []).map((item) => `${item.order}. ${item.description || `${item.actor || ''} ${item.action || ''} ${item.target || ''}`}`)],
     ['必须发生', (contract.required_events || []).map((item) => item.description || `${item.actor || ''} ${item.action || ''} ${item.target || ''}`)],
     ['最终必须达到', (contract.required_end_state || []).map((item) => item.description || `${item.path} = ${String(item.expected)}`)],
@@ -511,8 +532,10 @@ function ContractPreview({ contract, eventPlan }) {
         </div>
       ))}
       <div>
-        <strong>目标字数</strong>
-        <p>{contract.length_constraint?.min_chars || '—'}—{contract.length_constraint?.max_chars || '—'} 字</p>
+        <strong>服务端长度目标</strong>
+        <p>
+          {writingPlan?.target_chars || '—'} 字 · 接受区间 {writingPlan?.min_chars || contract.length_constraint?.min_chars || '—'}—{writingPlan?.max_chars || contract.length_constraint?.max_chars || '—'} 字
+        </p>
       </div>
     </div>
   )
@@ -529,6 +552,8 @@ function ValidationPanel({
   repairPatches,
   repairPatchReport,
   repairAuditCodes,
+  initialLengthReport,
+  finalLengthReport,
 }) {
   const accepted = Boolean(narrativeReport?.accepted && authorityReport?.accepted)
   return (
@@ -541,6 +566,23 @@ function ValidationPanel({
         <p className="dc-au-repair-result" data-testid="repair-result">
           正文契约：修复前 {narrativeHistory[0].accepted ? '通过' : '未通过'} → 修复后 {narrativeHistory.at(-1).accepted ? '通过' : '未通过'}
         </p>
+      )}
+      {(initialLengthReport || finalLengthReport) && (
+        <section className="dc-au-validation-group" data-validation-layer="section-length">
+          <header><strong>章节长度</strong><span>{finalLengthReport?.accepted ? 'PASS' : 'ATTENTION'}</span></header>
+          {initialLengthReport && (
+            <p data-testid="initial-length-report">
+              <code>INITIAL</code>{initialLengthReport.chars}/{initialLengthReport.target} 字 · ratio {initialLengthReport.ratio}
+            </p>
+          )}
+          {finalLengthReport && (
+            <p data-testid="final-length-report">
+              <code>{finalLengthReport.phase?.toUpperCase() || 'FINAL'}</code>
+              {finalLengthReport.chars}/{finalLengthReport.target} 字 · ratio {finalLengthReport.ratio}
+              {finalLengthReport.violation_code ? ` · ${finalLengthReport.violation_code}` : ''}
+            </p>
+          )}
+        </section>
       )}
       <EventCompletionGroup report={narrativeReport} eventPlan={eventPlan} />
       <EndStateGroup report={narrativeReport} />

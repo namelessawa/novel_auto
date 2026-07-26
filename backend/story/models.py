@@ -15,6 +15,8 @@ from story.narrative_contract import (
 )
 from story.repair_patch import RepairPatchSet, RepairPatchValidationReport
 from story.repair_plan import RepairPlan
+from story.section_length_validator import SectionLengthReport
+from story.writing_plan import SectionWritingPlan
 
 
 def utc_now() -> str:
@@ -407,6 +409,9 @@ class GenerationTransaction(StoryModel):
     candidate_history: list[WriterCandidate] = Field(default_factory=list)
     narrative_contract: NarrativeContract | None = None
     event_execution_plan: EventExecutionPlan | None = None
+    section_writing_plan: SectionWritingPlan | None = None
+    initial_length_report: SectionLengthReport | None = None
+    final_length_report: SectionLengthReport | None = None
     repair_plan: RepairPlan | None = None
     repair_patches: RepairPatchSet | None = None
     repair_patch_report: RepairPatchValidationReport | None = None
