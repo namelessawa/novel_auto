@@ -11,7 +11,6 @@ from story.models import (
     StoryBible,
     StoryThread,
     StoryThreadRepository,
-    ValidationReport,
     WriterCandidate,
 )
 from story.validator import StoryValidator
@@ -316,19 +315,25 @@ def test_author_writer_uses_shared_repair_for_common_dirty_json() -> None:
 
 
 def test_author_repair_is_a_bounded_patch_and_ignores_invalid_extra_fields() -> None:
-    original = _candidate(narrative_text="阿澜停在旧港。")
-    repaired = AuthorWriter._parse_repair(
-        '{"narrative_text":"阿澜离开旧港，抵达潮塔。",'
+    content = (
+        '{"patches":[{"patch_type":"insert","anchor":"阿澜停在旧港。",'
+        '"patch_text":"阿澜离开旧港，抵达潮塔。","target_events":["move"],'
+        '"state_delta":[{"path":"/world/weather","value":"暴雨"}]}],'
+        '"narrative_text":"越权完整正文",'
         '"threads_advanced":[{"type":"mystery","description":"缺少 id"}],'
-        '"memory_records":[{"type":"fact","description":"越权改写"}]}',
-        original,
-        ValidationReport(accepted=True),
+        '"memory_records":[{"type":"fact","description":"越权改写"}]}'
     )
+    patches = AuthorWriter._parse_repair_patches(content)
+    ignored = AuthorWriter._repair_ignored_fields(content)
 
-    assert repaired.narrative_text == "阿澜离开旧港，抵达潮塔。"
-    assert repaired.section_summary == original.section_summary
-    assert repaired.threads_advanced == []
-    assert repaired.memory_records == original.memory_records
+    assert patches.patches[0].patch_text == "阿澜离开旧港，抵达潮塔。"
+    assert patches.patches[0].anchor.before_text == "阿澜停在旧港。"
+    assert ignored == [
+        "memory_records",
+        "narrative_text",
+        "patches[0].state_delta",
+        "threads_advanced",
+    ]
 
 
 def test_writer_contract_normalises_safe_singleton_lists() -> None:

@@ -13,6 +13,7 @@ from story.narrative_contract import (
     NarrativeContractInput,
     NarrativeValidationReport,
 )
+from story.repair_patch import RepairPatchSet, RepairPatchValidationReport
 from story.repair_plan import RepairPlan
 
 
@@ -407,7 +408,10 @@ class GenerationTransaction(StoryModel):
     narrative_contract: NarrativeContract | None = None
     event_execution_plan: EventExecutionPlan | None = None
     repair_plan: RepairPlan | None = None
+    repair_patches: RepairPatchSet | None = None
+    repair_patch_report: RepairPatchValidationReport | None = None
     repair_ignored_fields: list[str] = Field(default_factory=list)
+    repair_audit_codes: list[str] = Field(default_factory=list)
     repair_enforced_removals: list[dict[str, str]] = Field(default_factory=list)
     narrative_validation_report: NarrativeValidationReport | None = None
     narrative_validation_history: list[NarrativeValidationReport] = Field(

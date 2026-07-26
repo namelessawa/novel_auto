@@ -7,6 +7,11 @@ import pytest
 
 from story.models import StateDeltaOperation, StoryThread, WriterCandidate
 from story.narrative_contract import RequiredEvent
+from story.repair_patch import (
+    RepairPatch,
+    RepairPatchAnchor,
+    RepairPatchSet,
+)
 from story.service import GenerationRejected
 from story.writer import AuthorWriter
 from tests.test_narrative_contract_generation import (
@@ -91,22 +96,32 @@ async def test_repair_cannot_alter_delta_or_threads_and_invalid_originals_drop(
 
     assert transaction.committed is True
     assert transaction.candidate.state_delta == []
-    assert transaction.candidate.threads_opened == []
+    assert [item.id for item in transaction.candidate.threads_opened] == [
+        "original-open"
+    ]
     assert transaction.candidate.threads_advanced == []
     assert transaction.validation_report.dropped_delta_count == 1
-    assert transaction.validation_report.dropped_thread_change_count == 2
-    assert "THREAD_OPEN_NO_EVIDENCE" in {
+    assert transaction.validation_report.dropped_thread_change_count == 1
+    assert "THREAD_ADVANCE_UNKNOWN" in {
         item.code for item in transaction.validation_report.proposal_drops
     }
     assert service.states.load().world == {}
-    assert service.threads.load().threads == {}
+    assert set(service.threads.load().threads) == {"original-open"}
 
 
 def test_author_writer_ignores_and_records_non_prose_repair_fields() -> None:
-    original = _candidate("沈砚准备把信交给调查员。")
     content = json.dumps(
         {
-            "narrative_text": "沈砚把信交给调查员，调查员接过信。",
+            "patches": [
+                {
+                    "patch_type": "insert",
+                    "anchor": "沈砚准备把信交给调查员。",
+                    "patch_text": "沈砚把信交给调查员，调查员接过信。",
+                    "target_events": ["handover"],
+                    "debug": "ignored",
+                }
+            ],
+            "narrative_text": "完整正文不应被接受",
             "state_delta": [{"op": "set"}],
             "threads_opened": [{"id": "bad"}],
             "title": "不应接受",
@@ -114,12 +129,13 @@ def test_author_writer_ignores_and_records_non_prose_repair_fields() -> None:
         ensure_ascii=False,
     )
 
-    repaired = AuthorWriter._parse_repair(content, original)
+    patches = AuthorWriter._parse_repair_patches(content)
 
-    assert repaired.narrative_text.startswith("沈砚把信交给")
-    assert repaired.state_delta == original.state_delta
-    assert repaired.title == original.title
+    assert patches.patches[0].patch_type == "insert"
+    assert patches.patches[0].anchor.before_text.startswith("沈砚准备")
     assert AuthorWriter._repair_ignored_fields(content) == [
+        "narrative_text",
+        "patches[0].debug",
         "state_delta",
         "threads_opened",
         "title",
@@ -149,12 +165,29 @@ async def test_repair_regression_rejects_transaction(tmp_path: Path) -> None:
         title="修复前",
         section_summary="已包扎，交信未完成。",
     )
-    regressed = WriterCandidate(
-        narrative_text="沈砚把信交给调查员，调查员接过信并收进内袋。",
-        title="恶化",
-        section_summary="交信完成。",
+    regressed = _candidate(
+        "沈砚把信交给调查员，调查员接过信并收进内袋。"
     )
-    service = _service(tmp_path, ContractWriter(original, regressed))
+    malicious_patches = RepairPatchSet(
+        patches=[
+            RepairPatch(
+                patch_type="delete",
+                anchor=RepairPatchAnchor(
+                    before_text="沈砚包扎了林秋的手。"
+                ),
+                patch_text="",
+                target_events=["handover"],
+            )
+        ]
+    )
+    service = _service(
+        tmp_path,
+        ContractWriter(
+            original,
+            regressed,
+            repair_patches=malicious_patches,
+        ),
+    )
 
     with pytest.raises(GenerationRejected) as exc:
         await service.run(goal, request_id="repair-regression")
@@ -168,7 +201,7 @@ async def test_repair_regression_rejects_transaction(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_repair_enforcement_removes_replacement_unsupported_action(
+async def test_repair_patch_deletes_unsupported_action_before_event_insert(
     tmp_path: Path,
 ) -> None:
     original = _candidate(
@@ -183,10 +216,12 @@ async def test_repair_enforcement_removes_replacement_unsupported_action(
     transaction = await service.run(_goal(), request_id="repair-enforcement")
 
     assert transaction.committed is True
-    assert "甩开" not in transaction.candidate.narrative_text
-    assert transaction.repair_enforced_removals == [
-        {"code": "UNSUPPORTED_INJURY_ADDED", "evidence": "甩开林秋的手"}
-    ]
+    assert "反手扣住" not in transaction.candidate.narrative_text
+    assert transaction.repair_patch_report.accepted is True
+    assert any(
+        item.patch_type == "delete"
+        for item in transaction.repair_patches.patches
+    )
     assert transaction.narrative_validation_report.accepted is True
     assert transaction.narrative_validation_report.event_results[0].status == (
         "completed"

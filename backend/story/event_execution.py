@@ -95,9 +95,15 @@ def _completion_example(contract: NarrativeContract, event: Any) -> str:
     target = next((name for name in target_names if name != event.target), event.target)
     if "核对" in event.action and "保管" in event.action:
         return f"{actor}实际核对完{target}的指定记录，并将{target}收好继续保管。"
+    if "交信" in event.action:
+        return f"{actor}把信实际交给{target}，{target}接过信并收好。"
     if any(token in event.action for token in ("交给", "递给", "交到", "递到")):
         return f"{actor}把物品实际交给{target}，{target}接过并收好。"
-    return f"{actor}已经实际完成“{event.action}”，结果已经发生。"
+    target_clause = f"对{target}" if target else ""
+    return (
+        f"{actor}已经{target_clause}实际完成“{event.action}”，"
+        "动作结果已经发生。"
+    )
 
 
 class EventExecutionPlanBuilder:

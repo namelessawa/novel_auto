@@ -39,22 +39,36 @@ class RecordedWriter:
         )
 
     async def repair(self, candidate, report):
+        from story.repair_patch import RepairPatchSet
+        from story.repair_plan import repair_patch_prompt_payload
         from story.writer import WriterResult
 
         self.repair_calls += 1
-        # Repair authority is prose-only.  Returning the same prose proves an
-        # evidence-less operation stays excluded after the mandatory recheck.
+        # Repair authority is patch-only. Structured proposals stay on the
+        # original candidate and are rechecked/dropped by the server.
         return WriterResult(
             candidate=candidate,
             usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            repair_patches=RepairPatchSet.model_validate(
+                {
+                    "patches": repair_patch_prompt_payload(
+                        report,
+                        candidate.narrative_text,
+                    )["suggested_patch_templates"]
+                }
+            ),
         )
 
 
 def _candidate(text: str, summary: str, *, delta=None, memories=None):
     from story.models import WriterCandidate
 
+    padding = "沈砚仍在旧灯塔核对旧信，只确认当前已经发生的事实。"
+    narrative = text
+    while sum(not char.isspace() for char in narrative) < 220:
+        narrative += padding
     return WriterCandidate(
-        narrative_text=text,
+        narrative_text=narrative,
         title=summary[:12],
         section_summary=summary,
         state_delta=delta or [],
@@ -125,7 +139,8 @@ async def run_recorded(data_dir: Path) -> dict:
         ],
     )
     stale_candidate = _candidate(
-        "沈砚把旧信放回桌面，没有作出新的事实承诺。",
+        "沈砚已经实际完成“让沈砚暂缓选择。”，动作结果已经发生。"
+        "他把旧信放回桌面，没有作出新的事实承诺。",
         "沈砚暂停决定。",
     )
     fresh_memory = MemoryRecord(

@@ -33,6 +33,7 @@ from story.narrative_contract import (
     NarrativeContract,
     NarrativeContractBuilder,
     NarrativeValidationReport,
+    NarrativeViolation,
 )
 from story.narrative_validator import NarrativeContractValidator
 from story.persistence import (
@@ -44,12 +45,8 @@ from story.persistence import (
     StoryBibleStore,
     StoryThreadStore,
 )
-from story.repair_plan import (
-    DeterministicRepairEnforcer,
-    RepairPlan,
-    RepairPlanBuilder,
-    RepairRegressionValidator,
-)
+from story.repair_patch import RepairPatchSet, RepairPatchValidator
+from story.repair_plan import RepairPlan, RepairPlanBuilder, RepairRegressionValidator
 from story.validator import StoryValidator
 from story.writer import AuthorWriter, WriterProtocol, WriterResult
 
@@ -121,7 +118,7 @@ class AuthorGenerationService:
         self.event_plan_builder = event_plan_builder or EventExecutionPlanBuilder()
         self.repair_plan_builder = repair_plan_builder or RepairPlanBuilder()
         self.repair_regression_validator = RepairRegressionValidator()
-        self.repair_enforcer = DeterministicRepairEnforcer()
+        self.repair_patch_validator = RepairPatchValidator()
         self.context_builder = context_builder or ContextBuilder()
         self._generation_lock = asyncio.Lock()
         self.recover()
@@ -172,13 +169,10 @@ class AuthorGenerationService:
                 )
                 self.transactions.save(transaction)
 
-                # Repair has prose authority only and is triggered only by prose
-                # contract findings. Invalid optional delta/thread proposals are
-                # deterministically dropped instead of asking the model to rewrite them.
-                if (
-                    narrative_report.violations
-                    and narrative_report.repairable
-                ):
+                # Repair returns only bounded local patches.  Invalid optional
+                # delta/thread proposals are still dropped server-side and can
+                # never be rewritten by the model.
+                if narrative_report.violations and narrative_report.repairable:
                     repair_plan = self._repair_plan(
                         prepared,
                         transaction,
@@ -192,72 +186,88 @@ class AuthorGenerationService:
                     self.transactions.save(transaction)
                     original_candidate = candidate
                     repaired = await self.repair(candidate, repair_plan)
-                    # Enforce prose-only authority at the service boundary too;
-                    # custom/recorded WriterProtocol implementations cannot bypass it.
-                    candidate = original_candidate.model_copy(
-                        update={
-                            "narrative_text": repaired.candidate.narrative_text,
-                        }
+                    patch_set = repaired.repair_patches or RepairPatchSet()
+                    patch_result = self.repair_patch_validator.validate_and_apply(
+                        original_text=original_candidate.narrative_text,
+                        patch_set=patch_set,
+                        plan=repair_plan,
+                        contract=prepared.narrative_contract,
+                        event_plan=prepared.event_execution_plan,
                     )
+                    if patch_result.report.accepted:
+                        candidate = original_candidate.model_copy(
+                            update={"narrative_text": patch_result.narrative_text}
+                        )
+                        candidate_history = [
+                            *transaction.candidate_history,
+                            candidate,
+                        ]
+                    else:
+                        candidate = original_candidate
+                        candidate_history = list(transaction.candidate_history)
+                    patch_codes = [
+                        item.code for item in patch_result.report.violations
+                    ]
                     transaction = transaction.model_copy(
                         update={
                             "candidate": candidate,
-                            "candidate_history": [
-                                *transaction.candidate_history,
-                                candidate,
-                            ],
+                            "candidate_history": candidate_history,
                             "writer_calls": 2,
                             "repair_performed": True,
+                            "repair_patches": patch_set,
+                            "repair_patch_report": patch_result.report,
                             "repair_ignored_fields": repaired.ignored_fields,
+                            "repair_audit_codes": list(
+                                dict.fromkeys(
+                                    [*repaired.audit_codes, *patch_codes]
+                                )
+                            ),
                             "usage": self._merge_usage(transaction.usage, repaired.usage),
                             "updated_at": utc_now(),
                         }
                     )
                     self.transactions.save(transaction)
-                    narrative_report = self.validate_narrative(prepared, candidate)
-                    enforced_removals: list[dict[str, str]] = []
-                    # One model Repair call is the hard cap.  If it replaces one
-                    # unsupported addition with another, remove only the exact
-                    # validator-proven clause, then revalidate.  This bounded
-                    # deterministic pass has no authority over any other code.
-                    for _ in range(8):
-                        cleaned_text, removals = self.repair_enforcer.enforce(
-                            report=narrative_report,
-                            narrative_text=candidate.narrative_text,
+                    if patch_result.report.accepted:
+                        narrative_report = self.validate_narrative(
+                            prepared,
+                            candidate,
                         )
-                        if not removals:
-                            break
-                        enforced_removals.extend(removals)
-                        candidate = candidate.model_copy(
-                            update={"narrative_text": cleaned_text}
+                        regressions = self.repair_regression_validator.validate(
+                            plan=repair_plan,
+                            final_report=narrative_report,
+                            repaired_text=candidate.narrative_text,
                         )
-                        narrative_report = self.validate_narrative(prepared, candidate)
-                    if enforced_removals:
-                        transaction = transaction.model_copy(
-                            update={
-                                "candidate": candidate,
-                                "candidate_history": [
-                                    *transaction.candidate_history,
-                                    candidate,
-                                ],
-                                "repair_enforced_removals": enforced_removals,
-                                "updated_at": utc_now(),
-                            }
-                        )
-                        self.transactions.save(transaction)
-                    regressions = self.repair_regression_validator.validate(
-                        plan=repair_plan,
-                        final_report=narrative_report,
-                        repaired_text=candidate.narrative_text,
-                    )
-                    if regressions:
+                        if regressions:
+                            narrative_report = narrative_report.model_copy(
+                                update={
+                                    "accepted": False,
+                                    "severity": "high",
+                                    "violations": [
+                                        *narrative_report.violations,
+                                        *regressions,
+                                    ],
+                                }
+                            )
+                    else:
+                        patch_violations = [
+                            NarrativeViolation(
+                                code=item.code,
+                                message=item.message,
+                                severity="high",
+                                evidence=item.evidence,
+                                repair_hint=(
+                                    "局部 Patch 无效；事务拒绝且不允许第二次 Repair"
+                                ),
+                            )
+                            for item in patch_result.report.violations
+                        ]
                         narrative_report = narrative_report.model_copy(
                             update={
                                 "accepted": False,
                                 "severity": "high",
                                 "violations": [
                                     *narrative_report.violations,
-                                    *regressions,
+                                    *patch_violations,
                                 ],
                             }
                         )

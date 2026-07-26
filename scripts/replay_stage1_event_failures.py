@@ -28,9 +28,14 @@ from story.models import (  # noqa: E402
 )
 from story.narrative_contract import NarrativeContract  # noqa: E402
 from story.narrative_validator import NarrativeContractValidator  # noqa: E402
+from story.repair_patch import (  # noqa: E402
+    RepairPatchSet,
+    RepairPatchValidator,
+)
 from story.repair_plan import (  # noqa: E402
     RepairPlanBuilder,
     RepairRegressionValidator,
+    repair_patch_prompt_payload,
 )
 from story.validator import StoryValidator  # noqa: E402
 
@@ -100,6 +105,7 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     narrative_validator = NarrativeContractValidator()
     authority_validator = StoryValidator()
+    patch_validator = RepairPatchValidator()
 
     for case in cases:
         original_payload = case["original_candidate"]
@@ -137,6 +143,8 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
         )
 
         repair_plan = None
+        patch_set = RepairPatchSet()
+        patch_report = None
         repaired = not initial_narrative.accepted
         if repaired:
             repair_plan = RepairPlanBuilder().build(
@@ -147,7 +155,23 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
                 state_report=initial_authority,
                 narrative_text=original.narrative_text,
             )
-            final_text = case["fixed_repair_output"]["narrative_text"]
+            patch_set = RepairPatchSet.model_validate(
+                {
+                    "patches": repair_patch_prompt_payload(
+                        repair_plan,
+                        original.narrative_text,
+                    )["suggested_patch_templates"]
+                }
+            )
+            patch_result = patch_validator.validate_and_apply(
+                original_text=original.narrative_text,
+                patch_set=patch_set,
+                plan=repair_plan,
+                contract=contract,
+                event_plan=event_plan,
+            )
+            patch_report = patch_result.report
+            final_text = patch_result.narrative_text
         else:
             final_text = original.narrative_text
 
@@ -189,6 +213,19 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
                 "original_sha256": original_sha,
                 "initial_contract_accepted": initial_narrative.accepted,
                 "repair_attempted": repaired,
+                "patch_accepted": (
+                    patch_report.accepted if patch_report is not None else None
+                ),
+                "patch_count": len(patch_set.patches),
+                "patch_types": [item.patch_type for item in patch_set.patches],
+                "patch_codes": (
+                    [item.code for item in patch_report.violations]
+                    if patch_report is not None
+                    else []
+                ),
+                "patch_char_delta": (
+                    patch_report.char_delta if patch_report is not None else 0
+                ),
                 "repair_plan_counts": {
                     "missing_events": len(repair_plan.missing_events) if repair_plan else 0,
                     "incomplete_events": len(repair_plan.incomplete_events) if repair_plan else 0,
@@ -244,8 +281,8 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
             item["dropped_thread_change_count"] for item in results
         ),
         "gate": {
-            "minimum_recovered": 22,
-            "recovered_pass": recovered_count >= 22,
+            "required_recovered": len(results),
+            "recovered_pass": recovered_count == len(results),
             "zero_regression_pass": regression_count == 0,
             "zero_bad_commit_pass": bad_commit_count == 0,
         },
@@ -259,7 +296,7 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
 def _markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
     lines = [
-        "# Stage 1 Event Repair Offline Replay",
+        "# Stage 1 Repair Patch Offline Replay",
         "",
         f"- Cases: {summary['case_count']}",
         f"- Recovered: {summary['recovered_count']}/{summary['case_count']}",
@@ -270,15 +307,16 @@ def _markdown(report: dict[str, Any]) -> str:
         f"- Dropped thread changes: {summary['dropped_thread_change_count']}",
         f"- Gate: {'PASS' if summary['gate']['passed'] else 'FAIL'}",
         "",
-        "| Case | Repair | Contract | Authority | Delta drops | Thread drops | Result |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| Case | Repair | Patches | Contract | Authority | Delta drops | Thread drops | Result |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for item in report["cases"]:
         lines.append(
-            "| {case_id} | {repair} | {contract} | {authority} | {delta} | "
+            "| {case_id} | {repair} | {patches} | {contract} | {authority} | {delta} | "
             "{thread} | {result} |".format(
                 case_id=item["case_id"],
                 repair="yes" if item["repair_attempted"] else "no",
+                patches=item["patch_count"],
                 contract="pass" if item["final_contract_accepted"] else "fail",
                 authority="pass" if item["authority_accepted"] else "fail",
                 delta=item["dropped_delta_count"],

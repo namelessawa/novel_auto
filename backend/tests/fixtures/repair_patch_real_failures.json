@@ -1,0 +1,3619 @@
+{
+  "schema_version": 1,
+  "source": "stage1_real_15_glm52_r4_20260722_sanitized",
+  "evidence_boundary": "recorded real-provider original and failed Repair outputs; correct patches are derived and validated offline",
+  "case_count": 6,
+  "cases": [
+    {
+      "case_id": "action_conflict__hot_blooded__section_0003",
+      "theme": "action_conflict",
+      "style": "hot_blooded",
+      "section_goal": {
+        "section_id": "ch0001_s0003",
+        "objective": "核对旧信第3处记录并继续保管",
+        "desired_length": 450
+      },
+      "narrative_contract": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0003",
+        "story_bible_revision": 2,
+        "canonical_state_revision": 3,
+        "allowed_entities": {
+          "characters": [
+            {
+              "id": "lin_qiu",
+              "name": "林秋",
+              "aliases": [],
+              "max_count": 1
+            },
+            {
+              "id": "shen_yan",
+              "name": "沈砚",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "locations": [
+            {
+              "id": "lighthouse",
+              "name": "旧灯塔",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "items": [
+            {
+              "id": "letter",
+              "name": "旧信",
+              "aliases": [
+                "信纸",
+                "信封",
+                "封套",
+                "油纸封"
+              ],
+              "max_count": 1
+            }
+          ],
+          "organizations": [],
+          "generic_terms": [
+            "他",
+            "她",
+            "其",
+            "对方",
+            "路人"
+          ]
+        },
+        "required_facts": [],
+        "required_events": [
+          {
+            "id": "handover_3",
+            "actor": "lin_qiu",
+            "action": "核对旧信第3处记录并继续保管",
+            "target": "letter",
+            "description": "",
+            "required_evidence": true,
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,500}(?:核对|复核|读|查看)[\\s\\S]{0,160}(?:旧信|信纸|第3处|第3节)"
+            ],
+            "incomplete_patterns": [],
+            "keywords": [
+              "林秋",
+              "旧信",
+              "核对"
+            ],
+            "min_keyword_matches": 3
+          }
+        ],
+        "required_end_state": [
+          {
+            "id": "end_3",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "time_constraints": [],
+        "forbidden_additions": [
+          {
+            "id": "unsupported_number",
+            "category": "number",
+            "description": "未授权的事实性数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_date",
+            "category": "date",
+            "description": "未授权的具体日期或时间点",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_kinship",
+            "category": "kinship",
+            "description": "未授权的亲属关系",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_casualty",
+            "category": "casualty",
+            "description": "未授权的伤亡数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_injury",
+            "category": "injury",
+            "description": "未授权的新暴力或伤势",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_backstory",
+            "category": "backstory",
+            "description": "未授权的人物年龄或经历",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_entity",
+            "category": "entity",
+            "description": "未授权的人物、组织或责任主体",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          }
+        ],
+        "forbidden_outcomes": [],
+        "protected_relationships": [
+          {
+            "id": "canonical_relationship_shen_yan:lin_qiu",
+            "parties": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "relationship": "共同维护灯塔的多年搭档",
+            "forbidden_patterns": []
+          }
+        ],
+        "protected_causal_links": [],
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        },
+        "style_priority": "subordinate_to_facts",
+        "source_summary": [
+          "StoryBible@2",
+          "CanonicalState@3",
+          "SectionGoal:ch0001_s0003",
+          "StructuredUserConstraints"
+        ],
+        "contract_hash": "3b69fd5d2934fd33c12a2d4e5cf8f6ae20037cba4b6a1325c733c62c7caf7f3f"
+      },
+      "event_execution_plan": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0003",
+        "contract_hash": "3b69fd5d2934fd33c12a2d4e5cf8f6ae20037cba4b6a1325c733c62c7caf7f3f",
+        "ordered_events": [
+          {
+            "id": "handover_3",
+            "order": 1,
+            "actor": "lin_qiu",
+            "actor_aliases": [
+              "lin_qiu",
+              "林秋"
+            ],
+            "action": "核对旧信第3处记录并继续保管",
+            "target": "letter",
+            "target_aliases": [
+              "letter",
+              "旧信",
+              "信纸",
+              "信封",
+              "封套",
+              "油纸封"
+            ],
+            "description": "核对旧信第3处记录并继续保管",
+            "completion_type": "completed_action",
+            "required": true,
+            "allow_omission": false,
+            "minimum_completion_evidence": "林秋实际核对完旧信的指定记录，并将旧信收好继续保管。",
+            "completion_test": {
+              "actor_required": true,
+              "target_required": true,
+              "completed_tense_required": true
+            }
+          }
+        ],
+        "required_end_states": [
+          {
+            "id": "end_3",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "preserve_facts": [],
+        "forbidden_additions": [
+          "未授权的事实性数字",
+          "未授权的具体日期或时间点",
+          "未授权的亲属关系",
+          "未授权的伤亡数字",
+          "未授权的新暴力或伤势",
+          "未授权的人物年龄或经历",
+          "未授权的人物、组织或责任主体"
+        ],
+        "style_constraints": {
+          "key": "hot_blooded",
+          "label": "燃血热血 (高能高燃)",
+          "description": "情绪外放, 关键节拍上情感和动作齐爆. 适合热血少年向题材.",
+          "narrator_addendum": "# 本作风格契约 — hot_blooded\n开场压缩过场, 立刻选择素材中最值得燃的一次出手、承诺或反抗. 本段必须有 至少两级升级动作 (受阻→再冲/倒下→起身/犹疑→出手), 并让呼吸、心跳、疼痛或血涌和动作同拍. 必须出现一句角色说出口的誓言/挑战和至少一个感叹号; 感叹号不能代替行动. 结尾以宣言、冲锋或瞄准收束, 不得停在凝视、回忆、倒影等静态感伤画面. 禁: 平铺直叙, 过度内敛, 长段环境铺垫.\n\n",
+          "version": "2026-07-15.5",
+          "final_checklist": "严格段至少两级升级动作、一句说出口的誓言/挑战、一个感叹号，动作收尾。",
+          "det_rules": [
+            "no_meta_leak",
+            "hot_blooded_observables",
+            "active_ending"
+          ],
+          "strict_every_ticks": 3,
+          "strict_importance": 7,
+          "conflict_policy": "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+          "prompt_hash": "564b1b87c264c5a9f4ff404269e5869ad7971dd1f55f15212d7d3f3fe2a6e09a"
+        },
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        }
+      },
+      "original_candidate": {
+        "narrative_text": "铁门被沈砚一脚踹开，咸腥的风灌进来，把两人的头发掀得猎猎作响。林秋在门槛上踉跄半步，膝盖一软差点跪倒，沈砚一把扯住她的后领把她提起来。她借力站稳，反手从防水内袋里抽出油纸封，牙齿咬住封套一角撕开，信纸在狂风里哗啦翻卷。她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。“第三处核对完毕！”她吼出声，嗓子像砂纸刮过铁皮，眼眶里全是血丝，“沈砚你听着——这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！”沈砚胸腔里炸开一团热，他挥拳砸在铁门框上，骨节渗血，咧嘴吼回去：“那就冲！我开路，你跟紧，掉队的是狗！”他转身撞进雨幕，林秋紧跟着冲出去，脚步砸在水洼里溅起白沫，灯塔在身后发出沉闷的轰鸣。",
+        "section_summary": "沈砚踹开铁门后，林秋在门槛处险些摔倒，被沈砚拉起。林秋拆开旧信核对第三处记录，核对完毕后将信收回防水内袋，并再次宣誓保管旧信。两人随后冲出灯塔。",
+        "event_evidence": [
+          {
+            "event_id": "handover_3",
+            "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_3",
+            "evidence": "塞进内袋，拉链咬死。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "塞进内袋，拉链咬死。",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_3",
+            "type": "event",
+            "section_id": "ch0001_s0003",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋在灯塔底层铁门处拆开旧信核对第三处记录，核对完毕后将信收回防水内袋，并再次宣誓保管旧信，随后与沈砚冲出灯塔。",
+            "evidence": "第三处核对完毕！……这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [],
+            "created_at_revision": 4
+          },
+          {
+            "id": "mem_oath_3",
+            "type": "promise",
+            "section_id": "ch0001_s0003",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋再次发誓保管旧信，除非两只手都断了，否则绝不交出。",
+            "evidence": "这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！",
+            "importance": 9,
+            "canon_status": "confirmed",
+            "source_refs": [],
+            "created_at_revision": 4
+          }
+        ],
+        "consistency_notes": [
+          "旧信 holder 在 required_end_states 中要求为 lin_qiu，正文中林秋将信塞回内袋并拉链咬死，符合要求。",
+          "事件 handover_3 要求林秋核对旧信第3处记录并继续保管，正文中明确完成核对并收回信。",
+          "风格要求两级升级动作：林秋膝盖软倒→被拉起（受阻→再冲），沈砚砸门框→转身冲入雨幕（情绪爆发→行动），符合。",
+          "风格要求说出口的誓言/挑战：林秋说“这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！”，沈砚说“那就冲！我开路，你跟紧，掉队的是狗！”，符合。",
+          "风格要求感叹号：正文中出现多个感叹号，结尾以冲锋收束，未停在静态画面。",
+          "未新增任何未授权事实、人物、数字、日期或伤势。"
+        ],
+        "title": "第三处核对"
+      },
+      "original_sha256": "0c5b0e9dd65638f838b1a82d3c9acbd8a0df3f6dd6176c1ea0066a97067db216",
+      "provider_repair_output": {
+        "narrative_text": "铁门被沈砚一脚踹开，咸腥的风灌进来，把两人的头发掀得猎猎作响。林秋在门槛上踉跄半步，膝盖一软差点跪倒，沈砚一把扯住她的后领把她提起来。她借力站稳，反手从防水内袋里抽出油纸封，牙齿咬住封套一角撕开，信纸在狂风里哗啦翻卷。她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。“第三处核对完毕！”她吼出声，嗓子像砂纸刮过铁皮，眼眶里全是血丝，“沈砚你听着——这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！”沈砚胸腔里炸开一团热，他挥拳砸在铁门框上，骨节渗血，咧嘴吼回去：“那就冲！我开路，你跟紧，掉队的是狗！”他转身撞进雨幕，林秋紧跟着冲出去，脚步砸在水洼里溅起白沫，灯塔在身后发出沉闷的轰鸣。林秋一手死死按住内袋，旧信隔着布料硌在掌心，她咬紧牙关，在暴雨中把信护得更紧——这封信，她林秋带定了！",
+        "section_summary": "沈砚踹开铁门后，林秋在门槛处险些摔倒，被沈砚拉起。林秋拆开旧信核对第三处记录，核对完毕后将信收回防水内袋，并再次宣誓保管旧信。两人随后冲出灯塔。",
+        "event_evidence": [
+          {
+            "event_id": "handover_3",
+            "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_3",
+            "evidence": "塞进内袋，拉链咬死。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "塞进内袋，拉链咬死。",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_3",
+            "type": "event",
+            "section_id": "ch0001_s0003",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋在灯塔底层铁门处拆开旧信核对第三处记录，核对完毕后将信收回防水内袋，并再次宣誓保管旧信，随后与沈砚冲出灯塔。",
+            "evidence": "第三处核对完毕！……这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [],
+            "created_at_revision": 4
+          },
+          {
+            "id": "mem_oath_3",
+            "type": "promise",
+            "section_id": "ch0001_s0003",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋再次发誓保管旧信，除非两只手都断了，否则绝不交出。",
+            "evidence": "这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！",
+            "importance": 9,
+            "canon_status": "confirmed",
+            "source_refs": [],
+            "created_at_revision": 4
+          }
+        ],
+        "consistency_notes": [
+          "旧信 holder 在 required_end_states 中要求为 lin_qiu，正文中林秋将信塞回内袋并拉链咬死，符合要求。",
+          "事件 handover_3 要求林秋核对旧信第3处记录并继续保管，正文中明确完成核对并收回信。",
+          "风格要求两级升级动作：林秋膝盖软倒→被拉起（受阻→再冲），沈砚砸门框→转身冲入雨幕（情绪爆发→行动），符合。",
+          "风格要求说出口的誓言/挑战：林秋说“这封信我林秋带出去，除非我两只手都断了，不然谁也拿不走！”，沈砚说“那就冲！我开路，你跟紧，掉队的是狗！”，符合。",
+          "风格要求感叹号：正文中出现多个感叹号，结尾以冲锋收束，未停在静态画面。",
+          "未新增任何未授权事实、人物、数字、日期或伤势。"
+        ],
+        "title": "第三处核对"
+      },
+      "provider_repair_sha256": "7fee94e60b2e0d72123fe2cd171f005a219185de1e80c3c699f8ef7498b86dbd",
+      "recorded_validation": {
+        "initial_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_INCOMPLETE",
+              "message": "必要事件 handover_3 处于 contradicted，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            },
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_3 尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "repair_hint": "把讨论或假设改成已完成的实际动作"
+            },
+            {
+              "code": "END_STATE_WRONG_HOLDER",
+              "message": "最终状态 end_3 未达到: /items/letter/holder 应为 lin_qiu",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "repair_hint": "在正文结尾落实该状态，不要只讨论或计划"
+            }
+          ],
+          "missing_required_events": [
+            "handover_3"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_3",
+              "status": "contradicted",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "actor_matched": true,
+              "target_matched": false,
+              "action_matched": true,
+              "evidence_hint_matched": true,
+              "violation_code": "REQUIRED_EVENT_INCOMPLETE"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_3",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": false,
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "violation_code": "END_STATE_WRONG_HOLDER"
+            }
+          ],
+          "contract_coverage": 0.5,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 0.0,
+          "narrative_char_count": 323,
+          "repairable": true
+        },
+        "initial_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "塞进内袋，拉链咬死。",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        },
+        "provider_repair_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_INCOMPLETE",
+              "message": "必要事件 handover_3 处于 contradicted，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            },
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_3 尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "repair_hint": "把讨论或假设改成已完成的实际动作"
+            },
+            {
+              "code": "END_STATE_WRONG_HOLDER",
+              "message": "最终状态 end_3 未达到: /items/letter/holder 应为 lin_qiu",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "repair_hint": "在正文结尾落实该状态，不要只讨论或计划"
+            }
+          ],
+          "missing_required_events": [
+            "handover_3"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_3",
+              "status": "contradicted",
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "actor_matched": true,
+              "target_matched": false,
+              "action_matched": true,
+              "evidence_hint_matched": true,
+              "violation_code": "REQUIRED_EVENT_INCOMPLETE"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_3",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": false,
+              "evidence": "她单手按住纸面，目光钉在第三处记录上，嘴唇翕动逐字默念，然后猛地把信纸拍回封套，塞进内袋，拉链咬死。",
+              "violation_code": "END_STATE_WRONG_HOLDER"
+            }
+          ],
+          "contract_coverage": 0.5,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 0.0,
+          "narrative_char_count": 374,
+          "repairable": true
+        },
+        "provider_repair_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "塞进内袋，拉链咬死。",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        }
+      },
+      "recorded_usage": {
+        "total_tokens": 8168,
+        "completion_tokens": 1388,
+        "prompt_tokens": 6780,
+        "cached_tokens": 2048,
+        "repair_tokens": 1738
+      }
+    },
+    {
+      "case_id": "action_conflict__literary__section_0001",
+      "theme": "action_conflict",
+      "style": "literary",
+      "section_goal": {
+        "section_id": "ch0001_s0001",
+        "objective": "把旧信交给林秋",
+        "desired_length": 450
+      },
+      "narrative_contract": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0001",
+        "story_bible_revision": 2,
+        "canonical_state_revision": 1,
+        "allowed_entities": {
+          "characters": [
+            {
+              "id": "lin_qiu",
+              "name": "林秋",
+              "aliases": [],
+              "max_count": 1
+            },
+            {
+              "id": "shen_yan",
+              "name": "沈砚",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "locations": [
+            {
+              "id": "lighthouse",
+              "name": "旧灯塔",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "items": [
+            {
+              "id": "letter",
+              "name": "旧信",
+              "aliases": [
+                "信纸",
+                "信封",
+                "封套",
+                "油纸封"
+              ],
+              "max_count": 1
+            }
+          ],
+          "organizations": [],
+          "generic_terms": [
+            "他",
+            "她",
+            "其",
+            "对方",
+            "路人"
+          ]
+        },
+        "required_facts": [],
+        "required_events": [
+          {
+            "id": "handover_1",
+            "actor": "shen_yan",
+            "action": "把旧信交给林秋",
+            "target": "lin_qiu",
+            "description": "",
+            "required_evidence": true,
+            "evidence_patterns": [
+              "沈砚[\\s\\S]{0,500}(?:林秋[\\s\\S]{0,140}(?:接|接过|收下|放进|塞进|滑进)|(?:接过|收下)[\\s\\S]{0,40}(?:旧信|信纸|信封|封套|油纸封))"
+            ],
+            "incomplete_patterns": [],
+            "keywords": [
+              "沈砚",
+              "林秋",
+              "旧信",
+              "接"
+            ],
+            "min_keyword_matches": 4
+          }
+        ],
+        "required_end_state": [
+          {
+            "id": "end_1",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "time_constraints": [],
+        "forbidden_additions": [
+          {
+            "id": "unsupported_number",
+            "category": "number",
+            "description": "未授权的事实性数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_date",
+            "category": "date",
+            "description": "未授权的具体日期或时间点",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_kinship",
+            "category": "kinship",
+            "description": "未授权的亲属关系",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_casualty",
+            "category": "casualty",
+            "description": "未授权的伤亡数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_injury",
+            "category": "injury",
+            "description": "未授权的新暴力或伤势",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_backstory",
+            "category": "backstory",
+            "description": "未授权的人物年龄或经历",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_entity",
+            "category": "entity",
+            "description": "未授权的人物、组织或责任主体",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          }
+        ],
+        "forbidden_outcomes": [],
+        "protected_relationships": [
+          {
+            "id": "canonical_relationship_shen_yan:lin_qiu",
+            "parties": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "relationship": "共同维护灯塔的多年搭档",
+            "forbidden_patterns": []
+          }
+        ],
+        "protected_causal_links": [],
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        },
+        "style_priority": "subordinate_to_facts",
+        "source_summary": [
+          "StoryBible@2",
+          "CanonicalState@1",
+          "SectionGoal:ch0001_s0001",
+          "StructuredUserConstraints"
+        ],
+        "contract_hash": "be59198d81d69af5477678673b4ee54ef0202cac696b7d16c271b04d493873b5"
+      },
+      "event_execution_plan": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0001",
+        "contract_hash": "be59198d81d69af5477678673b4ee54ef0202cac696b7d16c271b04d493873b5",
+        "ordered_events": [
+          {
+            "id": "handover_1",
+            "order": 1,
+            "actor": "shen_yan",
+            "actor_aliases": [
+              "shen_yan",
+              "沈砚"
+            ],
+            "action": "把旧信交给林秋",
+            "target": "lin_qiu",
+            "target_aliases": [
+              "lin_qiu",
+              "林秋"
+            ],
+            "description": "把旧信交给林秋",
+            "completion_type": "item_transfer",
+            "required": true,
+            "allow_omission": false,
+            "minimum_completion_evidence": "沈砚把物品实际交给林秋，林秋接过并收好。",
+            "completion_test": {
+              "actor_required": true,
+              "target_required": true,
+              "completed_tense_required": true
+            }
+          }
+        ],
+        "required_end_states": [
+          {
+            "id": "end_1",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "preserve_facts": [],
+        "forbidden_additions": [
+          "未授权的事实性数字",
+          "未授权的具体日期或时间点",
+          "未授权的亲属关系",
+          "未授权的伤亡数字",
+          "未授权的新暴力或伤势",
+          "未授权的人物年龄或经历",
+          "未授权的人物、组织或责任主体"
+        ],
+        "style_constraints": {
+          "key": "literary",
+          "label": "描写细致 (文学性, 默认)",
+          "description": "具象意象 + 内心薄笔, 节奏舒缓但每段必有实物. 适合文学读者.",
+          "narrator_addendum": "# 本作风格契约 — literary\n每段至少一个摄像机拍得到的具体物 (颜色/温度/质感). 情绪由身体动作和物件反应承载, 不直报. 内心 1-2 句白描即可, 贴着目标走. 对白节制, 引号外配一个动作 beat. 禁: 大段心理独白, 抽象形容词堆叠.\n\n",
+          "version": "2026-07-15.5",
+          "final_checklist": "每段有具体物; 情绪落到动作/物件; 内心不超过两句。",
+          "det_rules": [
+            "no_meta_leak",
+            "character_presence"
+          ],
+          "strict_every_ticks": 1,
+          "strict_importance": 7,
+          "conflict_policy": "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379"
+        },
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        }
+      },
+      "original_candidate": {
+        "narrative_text": "塔顶的灯已经熄了。沈砚把油纸封从怀里取出来，封套边缘被体温焐得发软，边角那枚旧戳记糊成一小片灰蓝。他把它搁在桌面，推到林秋那侧。\n\n林秋没立刻接。她先把手在裤缝上擦了两下，才捏起封套，拇指沿着折痕轻轻地捋。纸面沙沙响，像干燥的蝉蜕。\n\n“你收着。”沈砚说。\n\n林秋把信纸抽出来，对着窗洞漏进来的光看了看。纸很薄，纤维里夹着几点褐斑。她把它重新塞回封套，放进自己贴身的衣袋里，手掌在外面按了按。",
+        "section_summary": "在旧灯塔内，沈砚将旧信（油纸封）交给林秋。林秋检查后将其收入贴身衣袋，完成交接。",
+        "event_evidence": [
+          {
+            "event_id": "handover_1",
+            "evidence": "沈砚把油纸封从怀里取出来…搁在桌面，推到林秋那侧。林秋…捏起封套…放进自己贴身的衣袋里，手掌在外面按了按。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_1",
+            "evidence": "林秋把信纸抽出来…重新塞回封套，放进自己贴身的衣袋里，手掌在外面按了按。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "林秋…放进自己贴身的衣袋里",
+            "confidence": 0.95
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_1",
+            "type": "event",
+            "section_id": "ch0001_s0001",
+            "entities": [
+              "shen_yan",
+              "lin_qiu",
+              "letter"
+            ],
+            "summary": "沈砚在旧灯塔内将旧信交给林秋，林秋检查后贴身收好。",
+            "evidence": "沈砚把油纸封从怀里取出来…搁在桌面，推到林秋那侧。林秋…放进自己贴身的衣袋里。",
+            "importance": 7,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0001"
+            ],
+            "created_at_revision": 1
+          }
+        ],
+        "consistency_notes": [
+          "事件 handover_1 按 order 1 完成，沈砚主动将旧信交给林秋，林秋接收并收好，符合 required_end_states。",
+          "所有实体（shen_yan, lin_qiu, letter, lighthouse）均来自 allowed_entities，无新增事实。",
+          "风格要求 literary 已满足：每段有具体物（油纸封、封套、戳记、裤缝、窗洞、褐斑、衣袋），情绪通过动作和物件承载（擦手、捋折痕、按衣袋），内心白描仅一句（“你收着”），无大段独白。"
+        ],
+        "title": "交接"
+      },
+      "original_sha256": "91efaa1249618065a9dab8deeaf994f3635df773df7c85006c66cb1fe6118144",
+      "provider_repair_output": {
+        "narrative_text": "塔顶的灯已经熄了。沈砚把油纸封从怀里取出来，封套边缘被体温焐得发软，边角那枚旧戳记糊成一小片灰蓝。他把它搁在桌面，推到林秋那侧。\n\n林秋没立刻接。她先把手在裤缝上擦了两下，才捏起封套，拇指沿着折痕轻轻地捋。纸面沙沙响，像干燥的蝉蜕。\n\n“你收着。”沈砚说。\n\n林秋把信纸抽出来，对着窗洞漏进来的光看了看。纸很薄，纤维里夹着几点褐斑。她把它重新塞回封套，放进自己贴身的衣袋里，手掌在外面按了按。衣袋的布料微微鼓起，像藏了一小片温热的夜。",
+        "section_summary": "在旧灯塔内，沈砚将旧信（油纸封）交给林秋。林秋检查后将其收入贴身衣袋，完成交接。",
+        "event_evidence": [
+          {
+            "event_id": "handover_1",
+            "evidence": "沈砚把油纸封从怀里取出来…搁在桌面，推到林秋那侧。林秋…捏起封套…放进自己贴身的衣袋里，手掌在外面按了按。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_1",
+            "evidence": "林秋把信纸抽出来…重新塞回封套，放进自己贴身的衣袋里，手掌在外面按了按。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "林秋…放进自己贴身的衣袋里",
+            "confidence": 0.95
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_1",
+            "type": "event",
+            "section_id": "ch0001_s0001",
+            "entities": [
+              "shen_yan",
+              "lin_qiu",
+              "letter"
+            ],
+            "summary": "沈砚在旧灯塔内将旧信交给林秋，林秋检查后贴身收好。",
+            "evidence": "沈砚把油纸封从怀里取出来…搁在桌面，推到林秋那侧。林秋…放进自己贴身的衣袋里。",
+            "importance": 7,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0001"
+            ],
+            "created_at_revision": 1
+          }
+        ],
+        "consistency_notes": [
+          "事件 handover_1 按 order 1 完成，沈砚主动将旧信交给林秋，林秋接收并收好，符合 required_end_states。",
+          "所有实体（shen_yan, lin_qiu, letter, lighthouse）均来自 allowed_entities，无新增事实。",
+          "风格要求 literary 已满足：每段有具体物（油纸封、封套、戳记、裤缝、窗洞、褐斑、衣袋），情绪通过动作和物件承载（擦手、捋折痕、按衣袋），内心白描仅一句（“你收着”），无大段独白。"
+        ],
+        "title": "交接"
+      },
+      "provider_repair_sha256": "357b08f92030d4499fe4277560ab1bcf5496f906d3799c455e2344d87532f425",
+      "recorded_validation": {
+        "initial_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "NARRATIVE_TOO_SHORT",
+              "message": "正文 190 字，低于最小值 225",
+              "severity": "high",
+              "path": "/length_constraint/min_chars",
+              "evidence": "",
+              "repair_hint": "只补足既定事件的动作与必要过渡"
+            }
+          ],
+          "missing_required_events": [],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_1",
+              "status": "completed",
+              "evidence": "沈砚把油纸封从怀里取出来，封套边缘被体温焐得发软，边角那枚旧戳记糊成一小片灰蓝。他把它搁在桌面，推到林秋那侧。\n\n林秋没立刻接。她先把手在裤缝上擦了两下，才捏起封套，拇指沿着折痕轻轻地捋。纸面沙沙响，像干燥的蝉蜕。\n\n“你收着。”沈砚说。\n\n林秋把信纸抽出来，对着窗洞漏进来的光看了看。纸很薄，纤维里夹着几点褐斑。她把它重新塞回封套，放进",
+              "actor_matched": true,
+              "target_matched": true,
+              "action_matched": true,
+              "evidence_hint_matched": false,
+              "violation_code": ""
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_1",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "林秋那侧。\n\n林秋没立刻接。她先把手在裤缝上擦了两下，才捏起封套，拇指沿着折痕轻轻地捋。纸面沙沙响，像干燥的蝉蜕。\n\n“你收着。”沈砚说。\n\n林秋把信纸抽出来，对着窗洞漏进来的光看了看。纸很薄，纤维里夹着几点褐斑。她把它重新塞回封套，放进自己贴身的衣袋",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 1.0,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 1.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 190,
+          "repairable": true
+        },
+        "initial_authority": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "DELTA_NARRATIVE_MISMATCH",
+              "message": "StateDelta 声称的证据未出现在正文中",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "林秋…放进自己贴身的衣袋里",
+              "repair_hint": "删除无依据变化或在正文中写明变化过程"
+            }
+          ],
+          "repairable": true,
+          "validated_delta": [],
+          "thread_changes": [],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        },
+        "provider_repair_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "NARRATIVE_TOO_SHORT",
+              "message": "正文 211 字，低于最小值 225",
+              "severity": "high",
+              "path": "/length_constraint/min_chars",
+              "evidence": "",
+              "repair_hint": "只补足既定事件的动作与必要过渡"
+            }
+          ],
+          "missing_required_events": [],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_1",
+              "status": "completed",
+              "evidence": "沈砚把油纸封从怀里取出来，封套边缘被体温焐得发软，边角那枚旧戳记糊成一小片灰蓝。他把它搁在桌面，推到林秋那侧。\n\n林秋没立刻接。她先把手在裤缝上擦了两下，才捏起封套，拇指沿着折痕轻轻地捋。纸面沙沙响，像干燥的蝉蜕。\n\n“你收着。”沈砚说。\n\n林秋把信纸抽出来，对着窗洞漏进来的光看了看。纸很薄，纤维里夹着几点褐斑。她把它重新塞回封套，放进",
+              "actor_matched": true,
+              "target_matched": true,
+              "action_matched": true,
+              "evidence_hint_matched": false,
+              "violation_code": ""
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_1",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "林秋那侧。\n\n林秋没立刻接。她先把手在裤缝上擦了两下，才捏起封套，拇指沿着折痕轻轻地捋。纸面沙沙响，像干燥的蝉蜕。\n\n“你收着。”沈砚说。\n\n林秋把信纸抽出来，对着窗洞漏进来的光看了看。纸很薄，纤维里夹着几点褐斑。她把它重新塞回封套，放进自己贴身的衣袋里，手掌在外面按了按。衣袋",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 1.0,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 1.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 211,
+          "repairable": true
+        },
+        "provider_repair_authority": {
+          "accepted": true,
+          "severity": "medium",
+          "violations": [
+            {
+              "code": "DELTA_NARRATIVE_MISMATCH",
+              "message": "StateDelta 声称的证据未出现在正文中；该结构化提案已由服务端移除",
+              "severity": "medium",
+              "path": "/items/letter/holder",
+              "evidence": "林秋…放进自己贴身的衣袋里",
+              "repair_hint": "删除无依据变化或在正文中写明变化过程"
+            }
+          ],
+          "repairable": true,
+          "validated_delta": [],
+          "thread_changes": [],
+          "proposal_drops": [
+            {
+              "code": "DELTA_NARRATIVE_MISMATCH",
+              "message": "StateDelta 声称的证据未出现在正文中",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "林秋…放进自己贴身的衣袋里",
+              "repair_hint": "删除无依据变化或在正文中写明变化过程"
+            }
+          ],
+          "dropped_delta_count": 1,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        }
+      },
+      "recorded_usage": {
+        "total_tokens": 6514,
+        "completion_tokens": 965,
+        "prompt_tokens": 5549,
+        "cached_tokens": 0,
+        "repair_tokens": 1569
+      }
+    },
+    {
+      "case_id": "action_conflict__literary__section_0002",
+      "theme": "action_conflict",
+      "style": "literary",
+      "section_goal": {
+        "section_id": "ch0001_s0001",
+        "objective": "核对旧信第2处记录并继续保管",
+        "desired_length": 450
+      },
+      "narrative_contract": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0001",
+        "story_bible_revision": 2,
+        "canonical_state_revision": 1,
+        "allowed_entities": {
+          "characters": [
+            {
+              "id": "lin_qiu",
+              "name": "林秋",
+              "aliases": [],
+              "max_count": 1
+            },
+            {
+              "id": "shen_yan",
+              "name": "沈砚",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "locations": [
+            {
+              "id": "lighthouse",
+              "name": "旧灯塔",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "items": [
+            {
+              "id": "letter",
+              "name": "旧信",
+              "aliases": [
+                "信纸",
+                "信封",
+                "封套",
+                "油纸封"
+              ],
+              "max_count": 1
+            }
+          ],
+          "organizations": [],
+          "generic_terms": [
+            "他",
+            "她",
+            "其",
+            "对方",
+            "路人"
+          ]
+        },
+        "required_facts": [],
+        "required_events": [
+          {
+            "id": "handover_2",
+            "actor": "lin_qiu",
+            "action": "核对旧信第2处记录并继续保管",
+            "target": "letter",
+            "description": "",
+            "required_evidence": true,
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,500}(?:核对|复核|读|查看)[\\s\\S]{0,160}(?:旧信|信纸|第2处|第2节)"
+            ],
+            "incomplete_patterns": [],
+            "keywords": [
+              "林秋",
+              "旧信",
+              "核对"
+            ],
+            "min_keyword_matches": 3
+          }
+        ],
+        "required_end_state": [
+          {
+            "id": "end_2",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "time_constraints": [],
+        "forbidden_additions": [
+          {
+            "id": "unsupported_number",
+            "category": "number",
+            "description": "未授权的事实性数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_date",
+            "category": "date",
+            "description": "未授权的具体日期或时间点",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_kinship",
+            "category": "kinship",
+            "description": "未授权的亲属关系",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_casualty",
+            "category": "casualty",
+            "description": "未授权的伤亡数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_injury",
+            "category": "injury",
+            "description": "未授权的新暴力或伤势",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_backstory",
+            "category": "backstory",
+            "description": "未授权的人物年龄或经历",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_entity",
+            "category": "entity",
+            "description": "未授权的人物、组织或责任主体",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          }
+        ],
+        "forbidden_outcomes": [],
+        "protected_relationships": [
+          {
+            "id": "canonical_relationship_shen_yan:lin_qiu",
+            "parties": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "relationship": "共同维护灯塔的多年搭档",
+            "forbidden_patterns": []
+          }
+        ],
+        "protected_causal_links": [],
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        },
+        "style_priority": "subordinate_to_facts",
+        "source_summary": [
+          "StoryBible@2",
+          "CanonicalState@1",
+          "SectionGoal:ch0001_s0001",
+          "StructuredUserConstraints"
+        ],
+        "contract_hash": "ab926ac25ce0e2787905e99784e804a4f40c73737ea1527947a99ae51438aefb"
+      },
+      "event_execution_plan": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0001",
+        "contract_hash": "ab926ac25ce0e2787905e99784e804a4f40c73737ea1527947a99ae51438aefb",
+        "ordered_events": [
+          {
+            "id": "handover_2",
+            "order": 1,
+            "actor": "lin_qiu",
+            "actor_aliases": [
+              "lin_qiu",
+              "林秋"
+            ],
+            "action": "核对旧信第2处记录并继续保管",
+            "target": "letter",
+            "target_aliases": [
+              "letter",
+              "旧信",
+              "信纸",
+              "信封",
+              "封套",
+              "油纸封"
+            ],
+            "description": "核对旧信第2处记录并继续保管",
+            "completion_type": "completed_action",
+            "required": true,
+            "allow_omission": false,
+            "minimum_completion_evidence": "林秋实际核对完旧信的指定记录，并将旧信收好继续保管。",
+            "completion_test": {
+              "actor_required": true,
+              "target_required": true,
+              "completed_tense_required": true
+            }
+          }
+        ],
+        "required_end_states": [
+          {
+            "id": "end_2",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "preserve_facts": [],
+        "forbidden_additions": [
+          "未授权的事实性数字",
+          "未授权的具体日期或时间点",
+          "未授权的亲属关系",
+          "未授权的伤亡数字",
+          "未授权的新暴力或伤势",
+          "未授权的人物年龄或经历",
+          "未授权的人物、组织或责任主体"
+        ],
+        "style_constraints": {
+          "key": "literary",
+          "label": "描写细致 (文学性, 默认)",
+          "description": "具象意象 + 内心薄笔, 节奏舒缓但每段必有实物. 适合文学读者.",
+          "narrator_addendum": "# 本作风格契约 — literary\n每段至少一个摄像机拍得到的具体物 (颜色/温度/质感). 情绪由身体动作和物件反应承载, 不直报. 内心 1-2 句白描即可, 贴着目标走. 对白节制, 引号外配一个动作 beat. 禁: 大段心理独白, 抽象形容词堆叠.\n\n",
+          "version": "2026-07-15.5",
+          "final_checklist": "每段有具体物; 情绪落到动作/物件; 内心不超过两句。",
+          "det_rules": [
+            "no_meta_leak",
+            "character_presence"
+          ],
+          "strict_every_ticks": 1,
+          "strict_importance": 7,
+          "conflict_policy": "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+          "prompt_hash": "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379"
+        },
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        }
+      },
+      "original_candidate": {
+        "narrative_text": "旧灯塔的石墙在傍晚泛出暗沉的灰青色，沈砚把油纸封从帆布袋里抽出来，搁在木桌上。纸面触手微凉，边角有一道旧折痕，像被反复摩挲过。\n\n林秋拉过煤油灯，灯罩在桌面上投下一圈晃动的暖光。她翻开封套，指尖点着第二处记录——一行褪色的数字，墨迹洇进纸纤维里，边缘发毛。她低头凑近灯焰，嘴唇无声地翕动，数了两遍，然后抬起眼。\n\n“数目对得上。”她说，声音压得很低，像怕惊动纸页里睡着的什么东西。\n\n沈砚没有接话，只是看着她的手把信纸重新折好，塞回油纸封里，拇指沿着封口压出一道平整的褶。她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。口袋的按扣“咔”一声咬合，清脆而短促。\n\n灯焰跳了一下，两个人的影子在石墙上晃了晃，又安静下来。",
+        "section_summary": "在旧灯塔内，林秋在沈砚的注视下翻开旧信，核对第二处记录的数字，确认无误后将信纸重新折好放回油纸封，并收入自己外套内侧口袋，继续保管旧信。",
+        "event_evidence": [
+          {
+            "event_id": "handover_2",
+            "evidence": "林秋拉过煤油灯……翻开封套，指尖点着第二处记录——一行褪色的数字……数了两遍……把信纸重新折好，塞回油纸封里……塞进外套内侧的口袋。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_2",
+            "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。口袋的按扣“咔”一声咬合。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_ch0001_s0001_handover",
+            "type": "event",
+            "section_id": "ch0001_s0001",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter",
+              "lighthouse"
+            ],
+            "summary": "林秋在旧灯塔内核对旧信第二处记录的数字，确认无误后亲自保管旧信。",
+            "evidence": "林秋拉过煤油灯……翻开封套，指尖点着第二处记录……数了两遍……把信纸重新折好，塞回油纸封里……塞进外套内侧的口袋。",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0001"
+            ],
+            "created_at_revision": 2
+          }
+        ],
+        "consistency_notes": [
+          "旧信持有者从 shen_yan 转移至 lin_qiu，符合 required_end_states。",
+          "事件 handover_2 由林秋实际完成，包含核对数字、折好信纸、收进口袋的完整动作链。",
+          "所有描写均落在具体物上（油纸封、煤油灯、褪色数字、按扣），符合 literary 风格契约。",
+          "未新增任何未授权实体、数字、日期或情节。"
+        ],
+        "title": "核对"
+      },
+      "original_sha256": "3a5f7dfa9f1936be26854359f18f1e02f5a6c7af905d14ac391ad0a30715595f",
+      "provider_repair_output": {
+        "narrative_text": "旧灯塔的石墙在傍晚泛出暗沉的灰青色，沈砚把油纸封从帆布袋里抽出来，搁在木桌上。纸面触手微凉，边角有一道旧折痕，像被反复摩挲过。\n\n林秋拉过煤油灯，灯罩在桌面上投下一圈晃动的暖光。她翻开封套，指尖点着第二处记录——一行褪色的数字，墨迹洇进纸纤维里，边缘发毛。她低头凑近灯焰，嘴唇无声地翕动，数了两遍，然后抬起眼。\n\n“数目对得上。”她说，声音压得很低，像怕惊动纸页里睡着的什么东西。\n\n沈砚没有接话，只是看着她的手把信纸重新折好，塞回油纸封里，拇指沿着封口压出一道平整的褶。她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。口袋的按扣“咔”一声咬合，清脆而短促。旧信安稳地贴在她胸口，隔着衣料微微发硬，像一枚沉默的护符。\n\n灯焰跳了一下，两个人的影子在石墙上晃了晃，又安静下来。",
+        "section_summary": "在旧灯塔内，林秋在沈砚的注视下翻开旧信，核对第二处记录的数字，确认无误后将信纸重新折好放回油纸封，并收入自己外套内侧口袋，继续保管旧信。",
+        "event_evidence": [
+          {
+            "event_id": "handover_2",
+            "evidence": "林秋拉过煤油灯……翻开封套，指尖点着第二处记录——一行褪色的数字……数了两遍……把信纸重新折好，塞回油纸封里……塞进外套内侧的口袋。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_2",
+            "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。口袋的按扣“咔”一声咬合。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_ch0001_s0001_handover",
+            "type": "event",
+            "section_id": "ch0001_s0001",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter",
+              "lighthouse"
+            ],
+            "summary": "林秋在旧灯塔内核对旧信第二处记录的数字，确认无误后亲自保管旧信。",
+            "evidence": "林秋拉过煤油灯……翻开封套，指尖点着第二处记录……数了两遍……把信纸重新折好，塞回油纸封里……塞进外套内侧的口袋。",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0001"
+            ],
+            "created_at_revision": 2
+          }
+        ],
+        "consistency_notes": [
+          "旧信持有者从 shen_yan 转移至 lin_qiu，符合 required_end_states。",
+          "事件 handover_2 由林秋实际完成，包含核对数字、折好信纸、收进口袋的完整动作链。",
+          "所有描写均落在具体物上（油纸封、煤油灯、褪色数字、按扣），符合 literary 风格契约。",
+          "未新增任何未授权实体、数字、日期或情节。"
+        ],
+        "title": "核对"
+      },
+      "provider_repair_sha256": "dd994d68580cce633d5baf40aa5b222be3536662ad4f73f9704a4a828d154a0d",
+      "recorded_validation": {
+        "initial_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_INCOMPLETE",
+              "message": "必要事件 handover_2 处于 contradicted，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            },
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_2 尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "repair_hint": "把讨论或假设改成已完成的实际动作"
+            },
+            {
+              "code": "END_STATE_WRONG_HOLDER",
+              "message": "最终状态 end_2 未达到: /items/letter/holder 应为 lin_qiu",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "repair_hint": "在正文结尾落实该状态，不要只讨论或计划"
+            }
+          ],
+          "missing_required_events": [
+            "handover_2"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_2",
+              "status": "contradicted",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "actor_matched": true,
+              "target_matched": false,
+              "action_matched": true,
+              "evidence_hint_matched": false,
+              "violation_code": "REQUIRED_EVENT_INCOMPLETE"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_2",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": false,
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "violation_code": "END_STATE_WRONG_HOLDER"
+            }
+          ],
+          "contract_coverage": 0.5,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 0.0,
+          "narrative_char_count": 306,
+          "repairable": true
+        },
+        "initial_authority": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "DELTA_NARRATIVE_MISMATCH",
+              "message": "StateDelta 声称的证据未出现在正文中",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。",
+              "repair_hint": "删除无依据变化或在正文中写明变化过程"
+            }
+          ],
+          "repairable": true,
+          "validated_delta": [],
+          "thread_changes": [],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        },
+        "provider_repair_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_INCOMPLETE",
+              "message": "必要事件 handover_2 处于 contradicted，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            },
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_2 尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "repair_hint": "把讨论或假设改成已完成的实际动作"
+            },
+            {
+              "code": "END_STATE_WRONG_HOLDER",
+              "message": "最终状态 end_2 未达到: /items/letter/holder 应为 lin_qiu",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "repair_hint": "在正文结尾落实该状态，不要只讨论或计划"
+            }
+          ],
+          "missing_required_events": [
+            "handover_2"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_2",
+              "status": "contradicted",
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "actor_matched": true,
+              "target_matched": false,
+              "action_matched": true,
+              "evidence_hint_matched": false,
+              "violation_code": "REQUIRED_EVENT_INCOMPLETE"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_2",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": false,
+              "evidence": "她将封套贴在自己胸口，隔着衣料按了按，才塞进外套内侧的口袋。",
+              "violation_code": "END_STATE_WRONG_HOLDER"
+            }
+          ],
+          "contract_coverage": 0.5,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 0.0,
+          "narrative_char_count": 335,
+          "repairable": true
+        },
+        "provider_repair_authority": {
+          "accepted": true,
+          "severity": "medium",
+          "violations": [
+            {
+              "code": "DELTA_NARRATIVE_MISMATCH",
+              "message": "StateDelta 声称的证据未出现在正文中；该结构化提案已由服务端移除",
+              "severity": "medium",
+              "path": "/items/letter/holder",
+              "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。",
+              "repair_hint": "删除无依据变化或在正文中写明变化过程"
+            }
+          ],
+          "repairable": true,
+          "validated_delta": [],
+          "thread_changes": [],
+          "proposal_drops": [
+            {
+              "code": "DELTA_NARRATIVE_MISMATCH",
+              "message": "StateDelta 声称的证据未出现在正文中",
+              "severity": "high",
+              "path": "/items/letter/holder",
+              "evidence": "她将封套贴在自己胸口……塞进外套内侧的口袋。",
+              "repair_hint": "删除无依据变化或在正文中写明变化过程"
+            }
+          ],
+          "dropped_delta_count": 1,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        }
+      },
+      "recorded_usage": {
+        "total_tokens": 6713,
+        "completion_tokens": 1154,
+        "prompt_tokens": 5559,
+        "cached_tokens": 2048,
+        "repair_tokens": 1645
+      }
+    },
+    {
+      "case_id": "action_conflict__noir_cold__section_0003",
+      "theme": "action_conflict",
+      "style": "noir_cold",
+      "section_goal": {
+        "section_id": "ch0001_s0003",
+        "objective": "核对旧信第3处记录并继续保管",
+        "desired_length": 450
+      },
+      "narrative_contract": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0003",
+        "story_bible_revision": 2,
+        "canonical_state_revision": 3,
+        "allowed_entities": {
+          "characters": [
+            {
+              "id": "lin_qiu",
+              "name": "林秋",
+              "aliases": [],
+              "max_count": 1
+            },
+            {
+              "id": "shen_yan",
+              "name": "沈砚",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "locations": [
+            {
+              "id": "lighthouse",
+              "name": "旧灯塔",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "items": [
+            {
+              "id": "letter",
+              "name": "旧信",
+              "aliases": [
+                "信纸",
+                "信封",
+                "封套",
+                "油纸封"
+              ],
+              "max_count": 1
+            }
+          ],
+          "organizations": [],
+          "generic_terms": [
+            "他",
+            "她",
+            "其",
+            "对方",
+            "路人"
+          ]
+        },
+        "required_facts": [],
+        "required_events": [
+          {
+            "id": "handover_3",
+            "actor": "lin_qiu",
+            "action": "核对旧信第3处记录并继续保管",
+            "target": "letter",
+            "description": "",
+            "required_evidence": true,
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,500}(?:核对|复核|读|查看)[\\s\\S]{0,160}(?:旧信|信纸|第3处|第3节)"
+            ],
+            "incomplete_patterns": [],
+            "keywords": [
+              "林秋",
+              "旧信",
+              "核对"
+            ],
+            "min_keyword_matches": 3
+          }
+        ],
+        "required_end_state": [
+          {
+            "id": "end_3",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "time_constraints": [],
+        "forbidden_additions": [
+          {
+            "id": "unsupported_number",
+            "category": "number",
+            "description": "未授权的事实性数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_date",
+            "category": "date",
+            "description": "未授权的具体日期或时间点",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_kinship",
+            "category": "kinship",
+            "description": "未授权的亲属关系",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_casualty",
+            "category": "casualty",
+            "description": "未授权的伤亡数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_injury",
+            "category": "injury",
+            "description": "未授权的新暴力或伤势",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_backstory",
+            "category": "backstory",
+            "description": "未授权的人物年龄或经历",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_entity",
+            "category": "entity",
+            "description": "未授权的人物、组织或责任主体",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          }
+        ],
+        "forbidden_outcomes": [],
+        "protected_relationships": [
+          {
+            "id": "canonical_relationship_shen_yan:lin_qiu",
+            "parties": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "relationship": "共同维护灯塔的多年搭档",
+            "forbidden_patterns": []
+          }
+        ],
+        "protected_causal_links": [],
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        },
+        "style_priority": "subordinate_to_facts",
+        "source_summary": [
+          "StoryBible@2",
+          "CanonicalState@3",
+          "SectionGoal:ch0001_s0003",
+          "StructuredUserConstraints"
+        ],
+        "contract_hash": "3b69fd5d2934fd33c12a2d4e5cf8f6ae20037cba4b6a1325c733c62c7caf7f3f"
+      },
+      "event_execution_plan": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0003",
+        "contract_hash": "3b69fd5d2934fd33c12a2d4e5cf8f6ae20037cba4b6a1325c733c62c7caf7f3f",
+        "ordered_events": [
+          {
+            "id": "handover_3",
+            "order": 1,
+            "actor": "lin_qiu",
+            "actor_aliases": [
+              "lin_qiu",
+              "林秋"
+            ],
+            "action": "核对旧信第3处记录并继续保管",
+            "target": "letter",
+            "target_aliases": [
+              "letter",
+              "旧信",
+              "信纸",
+              "信封",
+              "封套",
+              "油纸封"
+            ],
+            "description": "核对旧信第3处记录并继续保管",
+            "completion_type": "completed_action",
+            "required": true,
+            "allow_omission": false,
+            "minimum_completion_evidence": "林秋实际核对完旧信的指定记录，并将旧信收好继续保管。",
+            "completion_test": {
+              "actor_required": true,
+              "target_required": true,
+              "completed_tense_required": true
+            }
+          }
+        ],
+        "required_end_states": [
+          {
+            "id": "end_3",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "preserve_facts": [],
+        "forbidden_additions": [
+          "未授权的事实性数字",
+          "未授权的具体日期或时间点",
+          "未授权的亲属关系",
+          "未授权的伤亡数字",
+          "未授权的新暴力或伤势",
+          "未授权的人物年龄或经历",
+          "未授权的人物、组织或责任主体"
+        ],
+        "style_constraints": {
+          "key": "noir_cold",
+          "label": "冷峻冷酷 (黑色硬派)",
+          "description": "克制叙述, 拒绝感伤, 物件 > 心理. 适合悬疑/犯罪/谍战调性.",
+          "narrator_addendum": "# 本作风格契约 — noir_cold\n拒绝感伤化, 不用 '突然' / '心跳加速' 类直报情绪. 心理活动转化成动作: 嘴角动了一下, 烟掐灭. 信息克制 — 读者比角色多知 0.5 步. 对白短, 一句话一个意图. 禁: 抒情段落, 内心独白, 感叹号.\n**最低人物存在度**: 信息克制不等于角色消失. 每段视点角色至少 1 个 micro-action 或 1 句对白, 纯环境镜头 ≤ 2 句.\n\n",
+          "version": "2026-07-15.5",
+          "final_checklist": "不用感叹号和情绪直报；短对白；每段有人物动作或对白。",
+          "det_rules": [
+            "no_meta_leak",
+            "no_exclamation",
+            "character_presence"
+          ],
+          "strict_every_ticks": 1,
+          "strict_importance": 7,
+          "conflict_policy": "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+          "prompt_hash": "f50218b3d132ad961fafd477e494d25a27d2dd39c524428b0c3b121a5fcd7fa3"
+        },
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        }
+      },
+      "original_candidate": {
+        "narrative_text": "沈砚走到楼梯底部，手按在墙壁上，没有继续往下。\n塔顶传来纸页翻动的声音，很轻，像指甲划过干燥的纸面。\n他转身，重新上楼。脚步声比刚才慢。\n林秋还站在操作台前。外套内侧的封套已经抽出来，信纸摊在台面上，旁边摊着笔记本。林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。他抬头看了沈砚一眼，没说话，低头继续。\n笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。\n“第三处。”林秋说。\n他把笔记本转过来，推到沈砚面前。笔记本上并排写着两组数字，中间画了等号。\n沈砚看了一眼，没碰本子。\n林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。\n“还是我拿着。”\n沈砚的手从墙壁上移开。他转身下楼，这次没有停。",
+        "section_summary": "沈砚上楼观察林秋核对旧信第三处记录。林秋将信纸与笔记本对照，确认第三处记录无误后，将旧信收回外套内侧口袋，明确表示继续保管。沈砚随后下楼。",
+        "event_evidence": [
+          {
+            "event_id": "handover_3",
+            "evidence": "林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。……笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。'第三处。'林秋说。……林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_3",
+            "evidence": "林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_3",
+            "type": "event",
+            "section_id": "ch0001_s0003",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋在灯塔顶层核对旧信第三处记录，与笔记本对照确认无误后，将旧信收回外套内侧口袋，明确表示继续保管。沈砚上楼观察后再次下楼。",
+            "evidence": "林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。……笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。'第三处。'林秋说。……林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0003"
+            ],
+            "created_at_revision": 4
+          }
+        ],
+        "consistency_notes": [
+          "沈砚下楼后听到声音又上楼，符合 section_goal 指定沈砚为视点角色的要求，且未新增未授权实体。",
+          "林秋完成第三处核对并收回旧信，与 NarrativeContract 的 required_end_states 一致。",
+          "动作描写（拍胸口、推笔记本）替代心理描写，符合 noir_cold 风格契约。",
+          "无感叹号、无情绪直报、无内心独白，符合风格约束。",
+          "每段均有沈砚或林秋的具体动作或对白，满足人物存在度要求。"
+        ],
+        "title": "第三处"
+      },
+      "original_sha256": "96598942b7d425d4439d4bf07a64ab4e79cb6118cffc52dcdf633f52eaebcddf",
+      "provider_repair_output": {
+        "narrative_text": "沈砚走到楼梯底部，手按在墙壁上，没有继续往下。\n塔顶传来纸页翻动的声音，很轻，像指甲划过干燥的纸面。\n他转身，重新上楼。脚步声比刚才慢。\n林秋还站在操作台前。外套内侧的封套已经抽出来，信纸摊在台面上，旁边摊着笔记本。林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。他抬头看了沈砚一眼，没说话，低头继续。\n笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。\n“第三处。”林秋说。\n他把笔记本转过来，推到沈砚面前。笔记本上并排写着两组数字，中间画了等号。\n沈砚看了一眼，没碰本子。\n林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。\n“还是我拿着。”\n沈砚的手从墙壁上移开。他转身下楼，这次没有停。",
+        "section_summary": "沈砚上楼观察林秋核对旧信第三处记录。林秋将信纸与笔记本对照，确认第三处记录无误后，将旧信收回外套内侧口袋，明确表示继续保管。沈砚随后下楼。",
+        "event_evidence": [
+          {
+            "event_id": "handover_3",
+            "evidence": "林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。……笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。'第三处。'林秋说。……林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_3",
+            "evidence": "林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_3",
+            "type": "event",
+            "section_id": "ch0001_s0003",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋在灯塔顶层核对旧信第三处记录，与笔记本对照确认无误后，将旧信收回外套内侧口袋，明确表示继续保管。沈砚上楼观察后再次下楼。",
+            "evidence": "林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。……笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。'第三处。'林秋说。……林秋把信纸按原折痕折好，塞回封套。封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0003"
+            ],
+            "created_at_revision": 4
+          }
+        ],
+        "consistency_notes": [
+          "沈砚下楼后听到声音又上楼，符合 section_goal 指定沈砚为视点角色的要求，且未新增未授权实体。",
+          "林秋完成第三处核对并收回旧信，与 NarrativeContract 的 required_end_states 一致。",
+          "动作描写（拍胸口、推笔记本）替代心理描写，符合 noir_cold 风格契约。",
+          "无感叹号、无情绪直报、无内心独白，符合风格约束。",
+          "每段均有沈砚或林秋的具体动作或对白，满足人物存在度要求。"
+        ],
+        "title": "第三处"
+      },
+      "provider_repair_sha256": "96598942b7d425d4439d4bf07a64ab4e79cb6118cffc52dcdf633f52eaebcddf",
+      "recorded_validation": {
+        "initial_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_3 处于 missing，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            }
+          ],
+          "missing_required_events": [
+            "handover_3"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_3",
+              "status": "missing",
+              "evidence": "",
+              "actor_matched": false,
+              "target_matched": false,
+              "action_matched": false,
+              "evidence_hint_matched": false,
+              "violation_code": "REQUIRED_EVENT_MISSING"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_3",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "林秋还站在操作台前。外套内侧的封套已经抽出来，信纸摊在台面上，旁边摊着笔记本。林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。他抬头看了沈砚一眼，没说话，低头继续。\n笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。\n“第三处。”林秋说。\n他把笔记本转过来，推到沈砚面前。笔记本上并排写着两组数字，中间画了等号。\n沈砚看了一眼，没碰本子。",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 0.75,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 315,
+          "repairable": true
+        },
+        "initial_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        },
+        "provider_repair_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_3 处于 missing，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            }
+          ],
+          "missing_required_events": [
+            "handover_3"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_3",
+              "status": "missing",
+              "evidence": "",
+              "actor_matched": false,
+              "target_matched": false,
+              "action_matched": false,
+              "evidence_hint_matched": false,
+              "violation_code": "REQUIRED_EVENT_MISSING"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_3",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "林秋还站在操作台前。外套内侧的封套已经抽出来，信纸摊在台面上，旁边摊着笔记本。林秋的食指按在信纸第三处记录上，指尖压住一行墨迹。他抬头看了沈砚一眼，没说话，低头继续。\n笔记本翻到新的一页。林秋的目光在信纸和笔记本之间跳了三趟，然后停住。\n“第三处。”林秋说。\n他把笔记本转过来，推到沈砚面前。笔记本上并排写着两组数字，中间画了等号。\n沈砚看了一眼，没碰本子。",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 0.75,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 315,
+          "repairable": true
+        },
+        "provider_repair_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "封套放进外套内侧口袋，他拍了拍胸口位置，和上次一样。'还是我拿着。'",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        }
+      },
+      "recorded_usage": {
+        "total_tokens": 7814,
+        "completion_tokens": 1271,
+        "prompt_tokens": 6543,
+        "cached_tokens": 2048,
+        "repair_tokens": 1746
+      }
+    },
+    {
+      "case_id": "action_conflict__warm_healing__section_0002",
+      "theme": "action_conflict",
+      "style": "warm_healing",
+      "section_goal": {
+        "section_id": "ch0001_s0002",
+        "objective": "核对旧信第2处记录并继续保管",
+        "desired_length": 450
+      },
+      "narrative_contract": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0002",
+        "story_bible_revision": 2,
+        "canonical_state_revision": 2,
+        "allowed_entities": {
+          "characters": [
+            {
+              "id": "lin_qiu",
+              "name": "林秋",
+              "aliases": [],
+              "max_count": 1
+            },
+            {
+              "id": "shen_yan",
+              "name": "沈砚",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "locations": [
+            {
+              "id": "lighthouse",
+              "name": "旧灯塔",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "items": [
+            {
+              "id": "letter",
+              "name": "旧信",
+              "aliases": [
+                "信纸",
+                "信封",
+                "封套",
+                "油纸封"
+              ],
+              "max_count": 1
+            }
+          ],
+          "organizations": [],
+          "generic_terms": [
+            "他",
+            "她",
+            "其",
+            "对方",
+            "路人"
+          ]
+        },
+        "required_facts": [],
+        "required_events": [
+          {
+            "id": "handover_2",
+            "actor": "lin_qiu",
+            "action": "核对旧信第2处记录并继续保管",
+            "target": "letter",
+            "description": "",
+            "required_evidence": true,
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,500}(?:核对|复核|读|查看)[\\s\\S]{0,160}(?:旧信|信纸|第2处|第2节)"
+            ],
+            "incomplete_patterns": [],
+            "keywords": [
+              "林秋",
+              "旧信",
+              "核对"
+            ],
+            "min_keyword_matches": 3
+          }
+        ],
+        "required_end_state": [
+          {
+            "id": "end_2",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "time_constraints": [],
+        "forbidden_additions": [
+          {
+            "id": "unsupported_number",
+            "category": "number",
+            "description": "未授权的事实性数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_date",
+            "category": "date",
+            "description": "未授权的具体日期或时间点",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_kinship",
+            "category": "kinship",
+            "description": "未授权的亲属关系",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_casualty",
+            "category": "casualty",
+            "description": "未授权的伤亡数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_injury",
+            "category": "injury",
+            "description": "未授权的新暴力或伤势",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_backstory",
+            "category": "backstory",
+            "description": "未授权的人物年龄或经历",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_entity",
+            "category": "entity",
+            "description": "未授权的人物、组织或责任主体",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          }
+        ],
+        "forbidden_outcomes": [],
+        "protected_relationships": [
+          {
+            "id": "canonical_relationship_shen_yan:lin_qiu",
+            "parties": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "relationship": "共同维护灯塔的多年搭档",
+            "forbidden_patterns": []
+          }
+        ],
+        "protected_causal_links": [],
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        },
+        "style_priority": "subordinate_to_facts",
+        "source_summary": [
+          "StoryBible@2",
+          "CanonicalState@2",
+          "SectionGoal:ch0001_s0002",
+          "StructuredUserConstraints"
+        ],
+        "contract_hash": "33c39be20a81b11b64af4e820db84503d5a9b28112c24245443cea1f6a72065c"
+      },
+      "event_execution_plan": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0002",
+        "contract_hash": "33c39be20a81b11b64af4e820db84503d5a9b28112c24245443cea1f6a72065c",
+        "ordered_events": [
+          {
+            "id": "handover_2",
+            "order": 1,
+            "actor": "lin_qiu",
+            "actor_aliases": [
+              "lin_qiu",
+              "林秋"
+            ],
+            "action": "核对旧信第2处记录并继续保管",
+            "target": "letter",
+            "target_aliases": [
+              "letter",
+              "旧信",
+              "信纸",
+              "信封",
+              "封套",
+              "油纸封"
+            ],
+            "description": "核对旧信第2处记录并继续保管",
+            "completion_type": "completed_action",
+            "required": true,
+            "allow_omission": false,
+            "minimum_completion_evidence": "林秋实际核对完旧信的指定记录，并将旧信收好继续保管。",
+            "completion_test": {
+              "actor_required": true,
+              "target_required": true,
+              "completed_tense_required": true
+            }
+          }
+        ],
+        "required_end_states": [
+          {
+            "id": "end_2",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "preserve_facts": [],
+        "forbidden_additions": [
+          "未授权的事实性数字",
+          "未授权的具体日期或时间点",
+          "未授权的亲属关系",
+          "未授权的伤亡数字",
+          "未授权的新暴力或伤势",
+          "未授权的人物年龄或经历",
+          "未授权的人物、组织或责任主体"
+        ],
+        "style_constraints": {
+          "key": "warm_healing",
+          "label": "治愈温馨 (慢生活)",
+          "description": "低冲突, 高细节, 重日常质感与人际温度. 适合治愈/治愈系/慢生活题材.",
+          "narrator_addendum": "# 本作风格契约 — warm_healing\n本段中心必须是照料、修补、分享或体谅这类小行动, 至少写出一次关系温度的变化和一句轻声对白/可辨认的互动. 用食物、衣物、信件、工具、颜色或气味承载温暖, 结尾落在一个小小缓解, 不留灾难钩子. 若素材含死亡、暴力或灾变, 不得篡改事实, 但只把它压成远景压力/物件痕迹, 镜头留给人物怎样互相照顾; 禁止正面描写尸体、伤害过程和死亡倒计时. 若简报中确实只有一人, 就写其照料活物、修补他人物件或回应既有善意, 并留下便条、食物、归位标记等收件人日后能认出的回执; 不能只修完就独自离开, 也不凭空安排相遇.\n**最低人物存在度**: 日常细节必须挂在视点角色动作上, 每段至少有角色动作, 整段至少有 1 个关系/照料 beat, 收尾必须停在给予、分享、等待回应或被温柔接住的动作上. 禁: 急剧反转, 冷酷旁观, 大段冲突.\n\n",
+          "version": "2026-07-15.5",
+          "final_checklist": "写清照料/修补/分享及关系变化；不正写死亡暴力；以给予或回应收尾。",
+          "det_rules": [
+            "no_meta_leak",
+            "warm_safety",
+            "character_presence"
+          ],
+          "strict_every_ticks": 2,
+          "strict_importance": 7,
+          "conflict_policy": "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+          "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6"
+        },
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        }
+      },
+      "original_candidate": {
+        "narrative_text": "沈砚没有立刻离开，只是靠在栏杆上，看着林秋把围裙口袋按了又按。他闻到铁锈和盐粒混在一起的气味，还有从灯室深处透出来的淡淡煤油味。\n\n林秋抬起头，目光在他脸上停了一瞬，然后从口袋里重新取出那封油纸封，放在膝上。她翻开围裙下摆，手指沿着封套的折痕轻轻捋过，像在抚平什么看不见的皱褶。\n\n“第二处记录，是灯塔的经纬度。”她低声说，指尖点在封套背面一行褪色的墨迹上。“北纬三十四度，东经一百一十九度。和我们现在站的位置，差了不到半度。”\n\n沈砚偏过头，看见那行字迹已经淡得几乎吃进纸纹里，但林秋的指甲正沿着每一个数字的轮廓慢慢划过，仿佛在替写信的人重新描一遍。\n\n“记住了？”他问。\n\n“记住了。”林秋说完，把信重新叠好，塞回口袋。她站起身，走到灯室角落的樟木箱前，掀开箱盖，从里面抽出一块叠得方方正正的老油布。油布展开时发出干燥的窸窣声，樟木的气味一下子浓起来。\n\n她把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。整个过程她的手指不紧不慢，像在包一件早就熟悉的东西。\n\n包好后，她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。\n\n沈砚从栏杆边走过来，在箱盖旁蹲下，从口袋里摸出一小截铅笔，放在箱盖上。\n\n“下次核对，你记在纸上，别只靠脑子。”\n\n林秋看着他放下的铅笔，嘴角弯了一下，把那截铅笔捡起来，别在自己围裙的肩带上。\n\n“那你下次带块橡皮来。”她说。\n\n沈砚没答话，但鼻子里轻轻哼了一声，算是应了。灯罩上的铜光渐渐暗下去，海面的灰线融进了暮色里。",
+        "section_summary": "林秋在沈砚的注视下取出旧信，核对封套背面的第二处记录——灯塔的经纬度，并用指甲逐字描过褪色的墨迹。核对完毕后，她从樟木箱取出老油布，将旧信仔细包裹并用棉线系好，放回箱中盖好。沈砚在箱盖上放下一截铅笔供下次核对使用，林秋将其别在围裙肩带上，两人以简短对话收尾。",
+        "event_evidence": [
+          {
+            "event_id": "handover_2",
+            "evidence": "“第二处记录，是灯塔的经纬度。”她低声说，指尖点在封套背面一行褪色的墨迹上。……林秋说完，把信重新叠好，塞回口袋。……她把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。包好后，她把油布包放回樟木箱，盖上箱盖。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_2",
+            "evidence": "她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [
+          {
+            "id": "letter_custody",
+            "type": "goal",
+            "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+            "promised_question": "林秋将如何保管这封旧信？",
+            "involved_characters": [
+              "lin_qiu",
+              "shen_yan"
+            ],
+            "origin_refs": [
+              "ch0001_s0001"
+            ],
+            "status": "advancing",
+            "urgency": 3,
+            "resolution_requirements": [
+              "林秋完成对旧信的包裹与存放"
+            ],
+            "resolution_evidence": [],
+            "evidence": [
+              "她从樟木箱里抽出一块叠得方方正正的老油布……把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。包好后，她把油布包放回樟木箱，盖上箱盖。"
+            ],
+            "opened_at_revision": 2,
+            "updated_at_revision": 3,
+            "source": "author"
+          }
+        ],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_2",
+            "type": "event",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋在沈砚面前核对旧信上的第二处记录（灯塔经纬度），随后用樟木箱里的老油布将信包好放回箱中。",
+            "evidence": "“第二处记录，是灯塔的经纬度。”……她把旧信放在油布正中，对角折好……放回樟木箱，盖上箱盖。",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 3
+          },
+          {
+            "id": "mem_pencil_gift",
+            "type": "relationship_change",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "summary": "沈砚将一截铅笔放在樟木箱盖上供林秋下次核对记录使用，林秋将其别在围裙肩带上，两人以简短对话表达默契。",
+            "evidence": "沈砚从栏杆边走过来，在箱盖旁蹲下，从口袋里摸出一小截铅笔，放在箱盖上。……林秋看着他放下的铅笔，嘴角弯了一下，把那截铅笔捡起来，别在自己围裙的肩带上。",
+            "importance": 7,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 3
+          },
+          {
+            "id": "mem_coordinates_check",
+            "type": "revelation",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "letter"
+            ],
+            "summary": "旧信封套背面记录着灯塔的经纬度：北纬三十四度，东经一百一十九度，与当前灯塔位置相差不到半度。",
+            "evidence": "“北纬三十四度，东经一百一十九度。和我们现在站的位置，差了不到半度。”",
+            "importance": 6,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 3
+          }
+        ],
+        "consistency_notes": [
+          "林秋在上一节中提及的樟木箱老油布在本节中实际使用，与记忆 mem_decision_lin_qiu 一致。",
+          "本节以沈砚为视点角色，通过其感官（闻到铁锈、盐粒、煤油味）和观察（看见林秋的动作细节）完成叙事，符合 section_goal 的 viewpoint_character_id 要求。",
+          "旧信 holder 状态在上一节已由沈砚转移给林秋，本节林秋继续保管并完成包裹存放，end_state 与 narrative_contract 一致。",
+          "风格要求中的给予/回应收尾，通过沈砚放下铅笔和林秋别在肩带上的动作完成，未新增未授权实体。"
+        ],
+        "title": "经纬度"
+      },
+      "original_sha256": "63c255c9fdc3b3dc13741802ac2310ee57a93520484fe127ce5c94d1ddf5294c",
+      "provider_repair_output": {
+        "narrative_text": "沈砚没有立刻离开，只是靠在栏杆上，看着林秋把围裙口袋按了又按。他闻到铁锈和盐粒混在一起的气味，还有从灯室深处透出来的淡淡煤油味。\n\n林秋抬起头，目光在他脸上停了一瞬，然后从口袋里重新取出那封油纸封，放在膝上。她翻开围裙下摆，手指沿着封套的折痕轻轻捋过，像在抚平什么看不见的皱褶。\n\n“第二处记录，是灯塔的经纬度。”她低声说，指尖点在封套背面一行褪色的墨迹上。“北纬三十四度，东经一百一十九度。和我们现在站的位置，差了不到半度。”\n\n沈砚偏过头，看见那行字迹已经淡得几乎吃进纸纹里，但林秋的指甲正沿着每一个数字的轮廓慢慢划过，仿佛在替写信的人重新描一遍。\n\n“记住了？”他问。\n\n“记住了。”林秋说完，把信重新叠好，塞回口袋。她站起身，走到灯室角落的樟木箱前，掀开箱盖，从里面抽出一块叠得方方正正的老油布。油布展开时发出干燥的窸窣声，樟木的气味一下子浓起来。\n\n她把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。整个过程她的手指不紧不慢，像在包一件早就熟悉的东西。\n\n包好后，她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。\n\n沈砚从栏杆边走过来，在箱盖旁蹲下，从口袋里摸出一小截铅笔，放在箱盖上。\n\n“下次核对，你记在纸上，别只靠脑子。”\n\n林秋看着他放下的铅笔，嘴角弯了一下，把那截铅笔捡起来，别在自己围裙的肩带上。\n\n“那你下次带块橡皮来。”她说。\n\n沈砚没答话，但鼻子里轻轻哼了一声，算是应了。灯罩上的铜光渐渐暗下去，海面的灰线融进了暮色里。",
+        "section_summary": "林秋在沈砚的注视下取出旧信，核对封套背面的第二处记录——灯塔的经纬度，并用指甲逐字描过褪色的墨迹。核对完毕后，她从樟木箱取出老油布，将旧信仔细包裹并用棉线系好，放回箱中盖好。沈砚在箱盖上放下一截铅笔供下次核对使用，林秋将其别在围裙肩带上，两人以简短对话收尾。",
+        "event_evidence": [
+          {
+            "event_id": "handover_2",
+            "evidence": "“第二处记录，是灯塔的经纬度。”她低声说，指尖点在封套背面一行褪色的墨迹上。……林秋说完，把信重新叠好，塞回口袋。……她把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。包好后，她把油布包放回樟木箱，盖上箱盖。"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_2",
+            "evidence": "她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [
+          {
+            "id": "letter_custody",
+            "type": "goal",
+            "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+            "promised_question": "林秋将如何保管这封旧信？",
+            "involved_characters": [
+              "lin_qiu",
+              "shen_yan"
+            ],
+            "origin_refs": [
+              "ch0001_s0001"
+            ],
+            "status": "advancing",
+            "urgency": 3,
+            "resolution_requirements": [
+              "林秋完成对旧信的包裹与存放"
+            ],
+            "resolution_evidence": [],
+            "evidence": [
+              "她从樟木箱里抽出一块叠得方方正正的老油布……把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。包好后，她把油布包放回樟木箱，盖上箱盖。"
+            ],
+            "opened_at_revision": 2,
+            "updated_at_revision": 3,
+            "source": "author"
+          }
+        ],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_2",
+            "type": "event",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "lin_qiu",
+              "shen_yan",
+              "letter"
+            ],
+            "summary": "林秋在沈砚面前核对旧信上的第二处记录（灯塔经纬度），随后用樟木箱里的老油布将信包好放回箱中。",
+            "evidence": "“第二处记录，是灯塔的经纬度。”……她把旧信放在油布正中，对角折好……放回樟木箱，盖上箱盖。",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 3
+          },
+          {
+            "id": "mem_pencil_gift",
+            "type": "relationship_change",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "summary": "沈砚将一截铅笔放在樟木箱盖上供林秋下次核对记录使用，林秋将其别在围裙肩带上，两人以简短对话表达默契。",
+            "evidence": "沈砚从栏杆边走过来，在箱盖旁蹲下，从口袋里摸出一小截铅笔，放在箱盖上。……林秋看着他放下的铅笔，嘴角弯了一下，把那截铅笔捡起来，别在自己围裙的肩带上。",
+            "importance": 7,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 3
+          },
+          {
+            "id": "mem_coordinates_check",
+            "type": "revelation",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "letter"
+            ],
+            "summary": "旧信封套背面记录着灯塔的经纬度：北纬三十四度，东经一百一十九度，与当前灯塔位置相差不到半度。",
+            "evidence": "“北纬三十四度，东经一百一十九度。和我们现在站的位置，差了不到半度。”",
+            "importance": 6,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 3
+          }
+        ],
+        "consistency_notes": [
+          "林秋在上一节中提及的樟木箱老油布在本节中实际使用，与记忆 mem_decision_lin_qiu 一致。",
+          "本节以沈砚为视点角色，通过其感官（闻到铁锈、盐粒、煤油味）和观察（看见林秋的动作细节）完成叙事，符合 section_goal 的 viewpoint_character_id 要求。",
+          "旧信 holder 状态在上一节已由沈砚转移给林秋，本节林秋继续保管并完成包裹存放，end_state 与 narrative_contract 一致。",
+          "风格要求中的给予/回应收尾，通过沈砚放下铅笔和林秋别在肩带上的动作完成，未新增未授权实体。"
+        ],
+        "title": "经纬度"
+      },
+      "provider_repair_sha256": "63c255c9fdc3b3dc13741802ac2310ee57a93520484fe127ce5c94d1ddf5294c",
+      "recorded_validation": {
+        "initial_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_INCOMPLETE",
+              "message": "必要事件 handover_2 处于 mentioned，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "“下次核对，你记在纸上，别只靠脑子。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            },
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_2 尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "“下次核对，你记在纸上，别只靠脑子。",
+              "repair_hint": "把讨论或假设改成已完成的实际动作"
+            }
+          ],
+          "missing_required_events": [
+            "handover_2"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_2",
+              "status": "mentioned",
+              "evidence": "“下次核对，你记在纸上，别只靠脑子。",
+              "actor_matched": false,
+              "target_matched": false,
+              "action_matched": true,
+              "evidence_hint_matched": false,
+              "violation_code": "REQUIRED_EVENT_INCOMPLETE"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_2",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "”林秋说完，把信重新叠好，塞回口袋。",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 0.75,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 626,
+          "repairable": true
+        },
+        "initial_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [
+            {
+              "action": "advanced",
+              "thread": {
+                "id": "letter_custody",
+                "type": "goal",
+                "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+                "promised_question": "林秋将如何保管这封旧信？",
+                "involved_characters": [
+                  "lin_qiu",
+                  "shen_yan"
+                ],
+                "origin_refs": [
+                  "ch0001_s0001"
+                ],
+                "status": "advancing",
+                "urgency": 3,
+                "resolution_requirements": [
+                  "林秋完成对旧信的包裹与存放"
+                ],
+                "resolution_evidence": [],
+                "evidence": [
+                  "她从樟木箱里抽出一块叠得方方正正的老油布……把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。包好后，她把油布包放回樟木箱，盖上箱盖。"
+                ],
+                "opened_at_revision": 2,
+                "updated_at_revision": 3,
+                "source": "author"
+              }
+            }
+          ],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        },
+        "provider_repair_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_INCOMPLETE",
+              "message": "必要事件 handover_2 处于 mentioned，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "“下次核对，你记在纸上，别只靠脑子。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            },
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_2 尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_2",
+              "evidence": "“下次核对，你记在纸上，别只靠脑子。",
+              "repair_hint": "把讨论或假设改成已完成的实际动作"
+            }
+          ],
+          "missing_required_events": [
+            "handover_2"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_2",
+              "status": "mentioned",
+              "evidence": "“下次核对，你记在纸上，别只靠脑子。",
+              "actor_matched": false,
+              "target_matched": false,
+              "action_matched": true,
+              "evidence_hint_matched": false,
+              "violation_code": "REQUIRED_EVENT_INCOMPLETE"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_2",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "”林秋说完，把信重新叠好，塞回口袋。",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 0.75,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 626,
+          "repairable": true
+        },
+        "provider_repair_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "她把油布包放回樟木箱，盖上箱盖，手掌在箱盖上轻轻拍了两下。",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [
+            {
+              "action": "advanced",
+              "thread": {
+                "id": "letter_custody",
+                "type": "goal",
+                "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+                "promised_question": "林秋将如何保管这封旧信？",
+                "involved_characters": [
+                  "lin_qiu",
+                  "shen_yan"
+                ],
+                "origin_refs": [
+                  "ch0001_s0001"
+                ],
+                "status": "advancing",
+                "urgency": 3,
+                "resolution_requirements": [
+                  "林秋完成对旧信的包裹与存放"
+                ],
+                "resolution_evidence": [],
+                "evidence": [
+                  "她从樟木箱里抽出一块叠得方方正正的老油布……把旧信放在油布正中，对角折好，再仔细掖紧四个角，最后用一根褪色的棉线绕了两圈，打了个活结。包好后，她把油布包放回樟木箱，盖上箱盖。"
+                ],
+                "opened_at_revision": 2,
+                "updated_at_revision": 3,
+                "source": "author"
+              }
+            }
+          ],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        }
+      },
+      "recorded_usage": {
+        "total_tokens": 9718,
+        "completion_tokens": 2383,
+        "prompt_tokens": 7335,
+        "cached_tokens": 2048,
+        "repair_tokens": 2231
+      }
+    },
+    {
+      "case_id": "action_conflict__warm_healing__section_0003",
+      "theme": "action_conflict",
+      "style": "warm_healing",
+      "section_goal": {
+        "section_id": "ch0001_s0002",
+        "objective": "核对旧信第3处记录并继续保管",
+        "desired_length": 450
+      },
+      "narrative_contract": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0002",
+        "story_bible_revision": 2,
+        "canonical_state_revision": 2,
+        "allowed_entities": {
+          "characters": [
+            {
+              "id": "lin_qiu",
+              "name": "林秋",
+              "aliases": [],
+              "max_count": 1
+            },
+            {
+              "id": "shen_yan",
+              "name": "沈砚",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "locations": [
+            {
+              "id": "lighthouse",
+              "name": "旧灯塔",
+              "aliases": [],
+              "max_count": 1
+            }
+          ],
+          "items": [
+            {
+              "id": "letter",
+              "name": "旧信",
+              "aliases": [
+                "信纸",
+                "信封",
+                "封套",
+                "油纸封"
+              ],
+              "max_count": 1
+            }
+          ],
+          "organizations": [],
+          "generic_terms": [
+            "他",
+            "她",
+            "其",
+            "对方",
+            "路人"
+          ]
+        },
+        "required_facts": [],
+        "required_events": [
+          {
+            "id": "handover_3",
+            "actor": "lin_qiu",
+            "action": "核对旧信第3处记录并继续保管",
+            "target": "letter",
+            "description": "",
+            "required_evidence": true,
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,500}(?:核对|复核|读|查看)[\\s\\S]{0,160}(?:旧信|信纸|第3处|第3节)"
+            ],
+            "incomplete_patterns": [],
+            "keywords": [
+              "林秋",
+              "旧信",
+              "核对"
+            ],
+            "min_keyword_matches": 3
+          }
+        ],
+        "required_end_state": [
+          {
+            "id": "end_3",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "time_constraints": [],
+        "forbidden_additions": [
+          {
+            "id": "unsupported_number",
+            "category": "number",
+            "description": "未授权的事实性数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_date",
+            "category": "date",
+            "description": "未授权的具体日期或时间点",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_kinship",
+            "category": "kinship",
+            "description": "未授权的亲属关系",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_casualty",
+            "category": "casualty",
+            "description": "未授权的伤亡数字",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_injury",
+            "category": "injury",
+            "description": "未授权的新暴力或伤势",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_backstory",
+            "category": "backstory",
+            "description": "未授权的人物年龄或经历",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          },
+          {
+            "id": "unsupported_entity",
+            "category": "entity",
+            "description": "未授权的人物、组织或责任主体",
+            "code": "",
+            "patterns": [],
+            "allowed_patterns": [],
+            "severity": "high"
+          }
+        ],
+        "forbidden_outcomes": [],
+        "protected_relationships": [
+          {
+            "id": "canonical_relationship_shen_yan:lin_qiu",
+            "parties": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "relationship": "共同维护灯塔的多年搭档",
+            "forbidden_patterns": []
+          }
+        ],
+        "protected_causal_links": [],
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        },
+        "style_priority": "subordinate_to_facts",
+        "source_summary": [
+          "StoryBible@2",
+          "CanonicalState@2",
+          "SectionGoal:ch0001_s0002",
+          "StructuredUserConstraints"
+        ],
+        "contract_hash": "1c19d066eb9709e02368a636b71c50fc4c9398e547494a9981c6579d3fcc6cda"
+      },
+      "event_execution_plan": {
+        "schema_version": 1,
+        "section_id": "ch0001_s0002",
+        "contract_hash": "1c19d066eb9709e02368a636b71c50fc4c9398e547494a9981c6579d3fcc6cda",
+        "ordered_events": [
+          {
+            "id": "handover_3",
+            "order": 1,
+            "actor": "lin_qiu",
+            "actor_aliases": [
+              "lin_qiu",
+              "林秋"
+            ],
+            "action": "核对旧信第3处记录并继续保管",
+            "target": "letter",
+            "target_aliases": [
+              "letter",
+              "旧信",
+              "信纸",
+              "信封",
+              "封套",
+              "油纸封"
+            ],
+            "description": "核对旧信第3处记录并继续保管",
+            "completion_type": "completed_action",
+            "required": true,
+            "allow_omission": false,
+            "minimum_completion_evidence": "林秋实际核对完旧信的指定记录，并将旧信收好继续保管。",
+            "completion_test": {
+              "actor_required": true,
+              "target_required": true,
+              "completed_tense_required": true
+            }
+          }
+        ],
+        "required_end_states": [
+          {
+            "id": "end_3",
+            "path": "/items/letter/holder",
+            "expected": "lin_qiu",
+            "description": "",
+            "evidence_patterns": [
+              "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+            ],
+            "wrong_state_patterns": [
+              "沈砚仍把旧信藏在怀里"
+            ]
+          }
+        ],
+        "preserve_facts": [],
+        "forbidden_additions": [
+          "未授权的事实性数字",
+          "未授权的具体日期或时间点",
+          "未授权的亲属关系",
+          "未授权的伤亡数字",
+          "未授权的新暴力或伤势",
+          "未授权的人物年龄或经历",
+          "未授权的人物、组织或责任主体"
+        ],
+        "style_constraints": {
+          "key": "warm_healing",
+          "label": "治愈温馨 (慢生活)",
+          "description": "低冲突, 高细节, 重日常质感与人际温度. 适合治愈/治愈系/慢生活题材.",
+          "narrator_addendum": "# 本作风格契约 — warm_healing\n本段中心必须是照料、修补、分享或体谅这类小行动, 至少写出一次关系温度的变化和一句轻声对白/可辨认的互动. 用食物、衣物、信件、工具、颜色或气味承载温暖, 结尾落在一个小小缓解, 不留灾难钩子. 若素材含死亡、暴力或灾变, 不得篡改事实, 但只把它压成远景压力/物件痕迹, 镜头留给人物怎样互相照顾; 禁止正面描写尸体、伤害过程和死亡倒计时. 若简报中确实只有一人, 就写其照料活物、修补他人物件或回应既有善意, 并留下便条、食物、归位标记等收件人日后能认出的回执; 不能只修完就独自离开, 也不凭空安排相遇.\n**最低人物存在度**: 日常细节必须挂在视点角色动作上, 每段至少有角色动作, 整段至少有 1 个关系/照料 beat, 收尾必须停在给予、分享、等待回应或被温柔接住的动作上. 禁: 急剧反转, 冷酷旁观, 大段冲突.\n\n",
+          "version": "2026-07-15.5",
+          "final_checklist": "写清照料/修补/分享及关系变化；不正写死亡暴力；以给予或回应收尾。",
+          "det_rules": [
+            "no_meta_leak",
+            "warm_safety",
+            "character_presence"
+          ],
+          "strict_every_ticks": 2,
+          "strict_importance": 7,
+          "conflict_policy": "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+          "prompt_hash": "3fd266819b05763130156ba9584db7f4c347079b3972280ac229dd18c517afb6"
+        },
+        "length_constraint": {
+          "min_chars": 225,
+          "max_chars": 900
+        }
+      },
+      "original_candidate": {
+        "narrative_text": "沈砚靠在铁栏杆上，看着林秋从围裙口袋里取出那封旧信。她转身走进灯室，在樟木箱前蹲下来，掀开箱盖时带出一股陈年木香。箱底那块老油布叠得方正，边角已经发脆，但质地仍然柔韧。\n\n林秋把油布展开，铺在膝盖上，然后将旧信端端正正放在布面中央。她低下头，指尖沿着封套上的折痕缓缓划过，在第一处折痕停了一下，又移到第二处。到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。她把信举到灯罩反射的暖光下，侧着头辨认了片刻，嘴唇微微翕动，像在默念什么。\n\n“这一处磨损最重。”她轻声说，声音落在灯室四壁间，被铜罩轻轻弹回来。\n\n沈砚没有走近，只是从门口望着她。林秋把信放回油布上，仔细折好布的四个角，像包裹一件易碎的东西。她将包好的信贴回围裙内侧的口袋，手掌在外面压了压，然后站起身，把樟木箱的盖子合上。\n\n“收好了。”她转过来，对着门口的方向说。\n\n沈砚点点头，嘴角浮起一点弧度。海风从窗缝里挤进来，把灯罩上的暖光吹得晃了晃，落在林秋护着口袋的手背上。",
+        "section_summary": "林秋在灯室内打开樟木箱，取出老油布包裹旧信。她逐处核对折痕，在第三处发现纸面磨损最重，辨认后轻声告知沈砚。随后她用油布将信仔细包好，放回围裙口袋，确认收妥。沈砚在门口注视全程，以点头和微笑回应。",
+        "event_evidence": [
+          {
+            "event_id": "handover_3",
+            "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。她把信举到灯罩反射的暖光下，侧着头辨认了片刻"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_3",
+            "evidence": "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压，然后站起身，把樟木箱的盖子合上。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [
+          {
+            "id": "letter_custody",
+            "type": "goal",
+            "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+            "promised_question": "林秋将如何保管这封旧信？",
+            "involved_characters": [
+              "lin_qiu",
+              "shen_yan"
+            ],
+            "origin_refs": [
+              "ch0001_s0001"
+            ],
+            "status": "advancing",
+            "urgency": 3,
+            "resolution_requirements": [
+              "林秋完成对旧信的包裹与存放"
+            ],
+            "resolution_evidence": [],
+            "evidence": [
+              "林秋把油布展开，铺在膝盖上，然后将旧信端端正正放在布面中央",
+              "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压"
+            ],
+            "opened_at_revision": 2,
+            "updated_at_revision": 2,
+            "source": "author"
+          }
+        ],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_3",
+            "type": "event",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "lin_qiu",
+              "letter",
+              "shen_yan"
+            ],
+            "summary": "林秋在灯室内用老油布包裹旧信，逐处核对折痕，在第三处发现磨损最重并告知沈砚，随后将信收好。",
+            "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄……她把信举到灯罩反射的暖光下，侧着头辨认了片刻",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 2
+          },
+          {
+            "id": "mem_revelation_third_crease",
+            "type": "revelation",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "lin_qiu",
+              "letter"
+            ],
+            "summary": "林秋发现旧信第三处折痕磨损最重，纸面比其他地方更薄，隐约透出内页墨迹。",
+            "evidence": "那儿的纸面比其他地方更薄，隐约透出内页的墨迹",
+            "importance": 6,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 2
+          },
+          {
+            "id": "mem_relationship_warmth_2",
+            "type": "relationship_change",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "summary": "沈砚在门口静静注视林秋包裹旧信，以点头和微笑回应她的确认，默契中透出温暖。",
+            "evidence": "沈砚没有走近，只是从门口望着她……沈砚点点头，嘴角浮起一点弧度",
+            "importance": 7,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 2
+          }
+        ],
+        "consistency_notes": [
+          "旧信 holder 在事件完成后确认为 lin_qiu，与 required_end_states 一致。",
+          "林秋核对第三处记录的动作在正文中明确完成，符合 completion_test 要求。",
+          "沈砚作为视点角色，其观察和轻微互动满足风格契约中关系/照料 beat 的要求。",
+          "结尾落在林秋护着口袋、沈砚微笑回应的温暖瞬间，符合 warm_healing 收尾要求。"
+        ],
+        "title": "第三处折痕"
+      },
+      "original_sha256": "fd71fcf5aa9a3450e8ff0c277266a350b97c15ccbe6ea84ab6d4c94c0fde2780",
+      "provider_repair_output": {
+        "narrative_text": "沈砚靠在铁栏杆上，看着林秋从围裙口袋里取出那封旧信。她转身走进灯室，在樟木箱前蹲下来，掀开箱盖时带出一股陈年木香。箱底那块老油布叠得方正，边角已经发脆，但质地仍然柔韧。\n\n林秋把油布展开，铺在膝盖上，然后将旧信端端正正放在布面中央。她低下头，指尖沿着封套上的折痕缓缓划过，在第一处折痕停了一下，又移到第二处。到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。她把信举到灯罩反射的暖光下，侧着头辨认了片刻，嘴唇微微翕动，像在默念什么。\n\n“这一处磨损最重。”她轻声说，声音落在灯室四壁间，被铜罩轻轻弹回来。\n\n沈砚没有走近，只是从门口望着她。林秋把信放回油布上，仔细折好布的四个角，像包裹一件易碎的东西。她将包好的信贴回围裙内侧的口袋，手掌在外面压了压，然后站起身，把樟木箱的盖子合上。\n\n“收好了。”她转过来，对着门口的方向说。\n\n沈砚点点头，嘴角浮起一点弧度。海风从窗缝里挤进来，把灯罩上的暖光吹得晃了晃，落在林秋护着口袋的手背上。",
+        "section_summary": "林秋在灯室内打开樟木箱，取出老油布包裹旧信。她逐处核对折痕，在第三处发现纸面磨损最重，辨认后轻声告知沈砚。随后她用油布将信仔细包好，放回围裙口袋，确认收妥。沈砚在门口注视全程，以点头和微笑回应。",
+        "event_evidence": [
+          {
+            "event_id": "handover_3",
+            "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。她把信举到灯罩反射的暖光下，侧着头辨认了片刻"
+          }
+        ],
+        "end_state_evidence": [
+          {
+            "state_id": "end_3",
+            "evidence": "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压，然后站起身，把樟木箱的盖子合上。"
+          }
+        ],
+        "state_delta": [
+          {
+            "op": "set",
+            "path": "/items/letter/holder",
+            "value": "lin_qiu",
+            "evidence": "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压",
+            "confidence": 1.0
+          }
+        ],
+        "threads_opened": [],
+        "threads_advanced": [
+          {
+            "id": "letter_custody",
+            "type": "goal",
+            "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+            "promised_question": "林秋将如何保管这封旧信？",
+            "involved_characters": [
+              "lin_qiu",
+              "shen_yan"
+            ],
+            "origin_refs": [
+              "ch0001_s0001"
+            ],
+            "status": "advancing",
+            "urgency": 3,
+            "resolution_requirements": [
+              "林秋完成对旧信的包裹与存放"
+            ],
+            "resolution_evidence": [],
+            "evidence": [
+              "林秋把油布展开，铺在膝盖上，然后将旧信端端正正放在布面中央",
+              "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压"
+            ],
+            "opened_at_revision": 2,
+            "updated_at_revision": 2,
+            "source": "author"
+          }
+        ],
+        "threads_resolved": [],
+        "memory_records": [
+          {
+            "id": "mem_handover_3",
+            "type": "event",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "lin_qiu",
+              "letter",
+              "shen_yan"
+            ],
+            "summary": "林秋在灯室内用老油布包裹旧信，逐处核对折痕，在第三处发现磨损最重并告知沈砚，随后将信收好。",
+            "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄……她把信举到灯罩反射的暖光下，侧着头辨认了片刻",
+            "importance": 8,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 2
+          },
+          {
+            "id": "mem_revelation_third_crease",
+            "type": "revelation",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "lin_qiu",
+              "letter"
+            ],
+            "summary": "林秋发现旧信第三处折痕磨损最重，纸面比其他地方更薄，隐约透出内页墨迹。",
+            "evidence": "那儿的纸面比其他地方更薄，隐约透出内页的墨迹",
+            "importance": 6,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 2
+          },
+          {
+            "id": "mem_relationship_warmth_2",
+            "type": "relationship_change",
+            "section_id": "ch0001_s0002",
+            "entities": [
+              "shen_yan",
+              "lin_qiu"
+            ],
+            "summary": "沈砚在门口静静注视林秋包裹旧信，以点头和微笑回应她的确认，默契中透出温暖。",
+            "evidence": "沈砚没有走近，只是从门口望着她……沈砚点点头，嘴角浮起一点弧度",
+            "importance": 7,
+            "canon_status": "confirmed",
+            "source_refs": [
+              "ch0001_s0002"
+            ],
+            "created_at_revision": 2
+          }
+        ],
+        "consistency_notes": [
+          "旧信 holder 在事件完成后确认为 lin_qiu，与 required_end_states 一致。",
+          "林秋核对第三处记录的动作在正文中明确完成，符合 completion_test 要求。",
+          "沈砚作为视点角色，其观察和轻微互动满足风格契约中关系/照料 beat 的要求。",
+          "结尾落在林秋护着口袋、沈砚微笑回应的温暖瞬间，符合 warm_healing 收尾要求。"
+        ],
+        "title": "第三处折痕"
+      },
+      "provider_repair_sha256": "fd71fcf5aa9a3450e8ff0c277266a350b97c15ccbe6ea84ab6d4c94c0fde2780",
+      "recorded_validation": {
+        "initial_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_3 处于 missing，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            }
+          ],
+          "missing_required_events": [
+            "handover_3"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_3",
+              "status": "missing",
+              "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。",
+              "actor_matched": false,
+              "target_matched": false,
+              "action_matched": false,
+              "evidence_hint_matched": true,
+              "violation_code": "REQUIRED_EVENT_MISSING"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_3",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "林秋把信放回油布上，仔细折好布的四个角，像包裹一件易碎的东西。",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 0.75,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 420,
+          "repairable": true
+        },
+        "initial_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [
+            {
+              "action": "advanced",
+              "thread": {
+                "id": "letter_custody",
+                "type": "goal",
+                "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+                "promised_question": "林秋将如何保管这封旧信？",
+                "involved_characters": [
+                  "lin_qiu",
+                  "shen_yan"
+                ],
+                "origin_refs": [
+                  "ch0001_s0001"
+                ],
+                "status": "advancing",
+                "urgency": 3,
+                "resolution_requirements": [
+                  "林秋完成对旧信的包裹与存放"
+                ],
+                "resolution_evidence": [],
+                "evidence": [
+                  "林秋把油布展开，铺在膝盖上，然后将旧信端端正正放在布面中央",
+                  "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压"
+                ],
+                "opened_at_revision": 2,
+                "updated_at_revision": 2,
+                "source": "author"
+              }
+            }
+          ],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        },
+        "provider_repair_narrative": {
+          "accepted": false,
+          "severity": "high",
+          "violations": [
+            {
+              "code": "REQUIRED_EVENT_MISSING",
+              "message": "必要事件 handover_3 处于 missing，尚未实际完成",
+              "severity": "high",
+              "path": "/required_events/handover_3",
+              "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。",
+              "repair_hint": "只补写该事件的完成动作，不新增人物或原因"
+            }
+          ],
+          "missing_required_events": [
+            "handover_3"
+          ],
+          "unsupported_additions": [],
+          "event_results": [
+            {
+              "event_id": "handover_3",
+              "status": "missing",
+              "evidence": "到第三处时，她的手指顿住了——那儿的纸面比其他地方更薄，隐约透出内页的墨迹。",
+              "actor_matched": false,
+              "target_matched": false,
+              "action_matched": false,
+              "evidence_hint_matched": true,
+              "violation_code": "REQUIRED_EVENT_MISSING"
+            }
+          ],
+          "end_state_results": [
+            {
+              "id": "end_3",
+              "path": "/items/letter/holder",
+              "expected": "lin_qiu",
+              "reached": true,
+              "evidence": "林秋把信放回油布上，仔细折好布的四个角，像包裹一件易碎的东西。",
+              "violation_code": ""
+            }
+          ],
+          "contract_coverage": 0.75,
+          "required_fact_coverage": 1.0,
+          "required_event_coverage": 0.0,
+          "required_end_state_coverage": 1.0,
+          "narrative_char_count": 420,
+          "repairable": true
+        },
+        "provider_repair_authority": {
+          "accepted": true,
+          "severity": "low",
+          "violations": [],
+          "repairable": true,
+          "validated_delta": [
+            {
+              "op": "set",
+              "path": "/items/letter/holder",
+              "value": "lin_qiu",
+              "evidence": "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压",
+              "confidence": 1.0
+            }
+          ],
+          "thread_changes": [
+            {
+              "action": "advanced",
+              "thread": {
+                "id": "letter_custody",
+                "type": "goal",
+                "description": "林秋接手旧信保管责任，需用樟木箱老油布妥善包裹保存。",
+                "promised_question": "林秋将如何保管这封旧信？",
+                "involved_characters": [
+                  "lin_qiu",
+                  "shen_yan"
+                ],
+                "origin_refs": [
+                  "ch0001_s0001"
+                ],
+                "status": "advancing",
+                "urgency": 3,
+                "resolution_requirements": [
+                  "林秋完成对旧信的包裹与存放"
+                ],
+                "resolution_evidence": [],
+                "evidence": [
+                  "林秋把油布展开，铺在膝盖上，然后将旧信端端正正放在布面中央",
+                  "她将包好的信贴回围裙内侧的口袋，手掌在外面压了压"
+                ],
+                "opened_at_revision": 2,
+                "updated_at_revision": 2,
+                "source": "author"
+              }
+            }
+          ],
+          "proposal_drops": [],
+          "dropped_delta_count": 0,
+          "dropped_thread_change_count": 0,
+          "repair_context": {}
+        }
+      },
+      "recorded_usage": {
+        "total_tokens": 9060,
+        "completion_tokens": 1873,
+        "prompt_tokens": 7187,
+        "cached_tokens": 2048,
+        "repair_tokens": 1922
+      }
+    }
+  ]
+}

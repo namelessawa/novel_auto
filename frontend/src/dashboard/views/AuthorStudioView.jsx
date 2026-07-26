@@ -404,7 +404,9 @@ export default function AuthorStudioView({
                 repaired={generation?.transaction?.repair_performed || generation?.task?.repair_performed}
                 eventPlan={activeEventPlan}
                 repairPlan={generation?.transaction?.repair_plan || generation?.task?.repair_plan}
-                repairEnforcedRemovals={generation?.transaction?.repair_enforced_removals || generation?.task?.repair_enforced_removals || []}
+                repairPatches={generation?.transaction?.repair_patches || generation?.task?.repair_patches}
+                repairPatchReport={generation?.transaction?.repair_patch_report || generation?.task?.repair_patch_report}
+                repairAuditCodes={generation?.transaction?.repair_audit_codes || generation?.task?.repair_audit_codes || []}
               />
             )}
             {!generation && (
@@ -524,7 +526,9 @@ function ValidationPanel({
   repaired,
   eventPlan,
   repairPlan,
-  repairEnforcedRemovals,
+  repairPatches,
+  repairPatchReport,
+  repairAuditCodes,
 }) {
   const accepted = Boolean(narrativeReport?.accepted && authorityReport?.accepted)
   return (
@@ -558,7 +562,14 @@ function ValidationPanel({
         proposalKind="thread"
       />
       <ValidationGroup title="风格检查" report={styleReport} observational />
-      {repairPlan && <RepairPlanSummary plan={repairPlan} enforcedRemovals={repairEnforcedRemovals} />}
+      {repairPlan && (
+        <RepairPlanSummary
+          plan={repairPlan}
+          patches={repairPatches}
+          patchReport={repairPatchReport}
+          auditCodes={repairAuditCodes}
+        />
+      )}
     </div>
   )
 }
@@ -607,7 +618,7 @@ function EndStateGroup({ report }) {
   )
 }
 
-function RepairPlanSummary({ plan, enforcedRemovals = [] }) {
+function RepairPlanSummary({ plan, patches, patchReport, auditCodes = [] }) {
   const metrics = [
     ['missing', plan.missing_events?.length || 0],
     ['incomplete', plan.incomplete_events?.length || 0],
@@ -616,14 +627,27 @@ function RepairPlanSummary({ plan, enforcedRemovals = [] }) {
     ['end state', plan.wrong_end_states?.length || 0],
     ['unsupported', plan.unsupported_additions?.length || 0],
   ]
+  const patchItems = patches?.patches || []
+  const patchTypes = patchItems.map((item) => item.patch_type).join(' / ')
+  const patchCodes = patchReport?.violations?.map((item) => item.code) || []
   return (
     <section className="dc-au-validation-group" data-validation-layer="repair-plan">
-      <header><strong>RepairPlan 摘要</strong><span>PROSE ONLY</span></header>
+      <header><strong>RepairPlan 摘要</strong><span>PATCH MODE</span></header>
       <p>{metrics.map(([label, value]) => `${label}: ${value}`).join(' · ')}</p>
       <p><code>preserve</code>{plan.must_preserve_spans?.length || 0} spans / {plan.must_preserve_facts?.length || 0} facts</p>
-      {enforcedRemovals.length > 0 && (
-        <p data-testid="repair-enforced-removals">
-          <code>deterministic cleanup</code>{enforcedRemovals.length} unsupported clause(s) removed; full contract revalidated
+      <p data-testid="repair-patch-summary">
+        <code>{patchReport?.accepted ? 'PATCH APPLIED' : 'PATCH BLOCKED'}</code>
+        {patchItems.length} local patch(es){patchTypes ? ` · ${patchTypes}` : ''}
+        {typeof patchReport?.char_delta === 'number' ? ` · Δ${patchReport.char_delta} chars` : ''}
+      </p>
+      {patchCodes.length > 0 && (
+        <p data-testid="repair-patch-codes">
+          <code>PATCH VALIDATOR</code>{patchCodes.join(' · ')}
+        </p>
+      )}
+      {auditCodes.length > 0 && (
+        <p data-testid="repair-audit-codes">
+          <code>AUDIT</code>{auditCodes.join(' · ')}
         </p>
       )}
     </section>

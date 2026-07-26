@@ -471,7 +471,18 @@ def _make_author_executor(goal: SectionGoal):
                 if transaction.repair_plan
                 else {}
             ),
+            "repair_patches": (
+                transaction.repair_patches.model_dump(mode="json")
+                if transaction.repair_patches
+                else {}
+            ),
+            "repair_patch_report": (
+                transaction.repair_patch_report.model_dump(mode="json")
+                if transaction.repair_patch_report
+                else {}
+            ),
             "repair_ignored_fields": transaction.repair_ignored_fields,
+            "repair_audit_codes": transaction.repair_audit_codes,
             "repair_enforced_removals": transaction.repair_enforced_removals,
             "repair_performed": transaction.repair_performed,
             "committed": transaction.committed,

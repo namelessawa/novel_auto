@@ -419,9 +419,17 @@ test('author validation separates narrative state and style and shows repair res
           must_preserve_spans: [],
           must_preserve_facts: [],
         },
-        repair_enforced_removals: [
-          { code: 'UNSUPPORTED_INJURY_ADDED', evidence: '无依据动作' },
-        ],
+        repair_patches: {
+          patches: [
+            { patch_type: 'insert', patch_text: '沈砚完成交信。' },
+          ],
+        },
+        repair_patch_report: {
+          accepted: false,
+          char_delta: 8,
+          violations: [{ code: 'PATCH_END_STATE_EVIDENCE_INCOMPLETE' }],
+        },
+        repair_audit_codes: ['PATCH_END_STATE_EVIDENCE_INCOMPLETE'],
         style_validation_report: {
           evaluated: true,
           passed: true,
@@ -442,7 +450,9 @@ test('author validation separates narrative state and style and shows repair res
   assert.match(text, /状态变更/)
   assert.match(text, /故事线提案/)
   assert.match(text, /RepairPlan 摘要/)
-  assert.match(text, /deterministic cleanup1 unsupported clause/)
+  assert.match(text, /PATCH MODE/)
+  assert.match(text, /PATCH BLOCKED1 local patch/)
+  assert.match(text, /PATCH_END_STATE_EVIDENCE_INCOMPLETE/)
   assert.match(text, /DROPPED1/)
   assert.match(text, /风格检查/)
   assert.match(text, /evt_handover/)

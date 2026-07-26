@@ -12,7 +12,6 @@ from story.narrative_contract import (
 )
 from story.narrative_validator import NarrativeContractValidator
 from story.repair_plan import (
-    DeterministicRepairEnforcer,
     RepairPlanBuilder,
     RepairRegressionValidator,
 )
@@ -127,42 +126,3 @@ def test_repair_preserving_completed_event_has_no_regression() -> None:
         final_report=final,
         repaired_text=repaired,
     ) == []
-
-
-def test_enforcer_removes_only_validator_proven_unsupported_clause() -> None:
-    contract, event_plan, _, _ = _plan_and_report(
-        "沈砚替林秋包扎了手。沈砚准备把旧信交给林秋。"
-    )
-    text = (
-        "沈砚替林秋包扎了手。沈砚猛地甩开她的手，随即把旧信交给林秋，"
-        "林秋接过旧信并收好。"
-    )
-    report = NarrativeContractValidator().validate(
-        contract, text, event_execution_plan=event_plan
-    )
-
-    cleaned, removals = DeterministicRepairEnforcer().enforce(
-        report=report,
-        narrative_text=text,
-    )
-
-    assert removals == [
-        {"code": "UNSUPPORTED_INJURY_ADDED", "evidence": "甩开她的手"}
-    ]
-    assert "甩开" not in cleaned
-    assert "把旧信交给林秋" in cleaned
-
-
-def test_enforcer_has_no_authority_over_required_event_violation() -> None:
-    _, _, report, _ = _plan_and_report(
-        "沈砚替林秋包扎了手。沈砚准备把旧信交给林秋。"
-    )
-    original = "沈砚替林秋包扎了手。沈砚准备把旧信交给林秋。"
-
-    cleaned, removals = DeterministicRepairEnforcer().enforce(
-        report=report,
-        narrative_text=original,
-    )
-
-    assert cleaned == original
-    assert removals == []

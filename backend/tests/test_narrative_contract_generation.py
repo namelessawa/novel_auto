@@ -21,13 +21,29 @@ from story.narrative_contract import (
     RequiredEvent,
 )
 from story.service import AuthorGenerationService, GenerationRejected
+from story.repair_patch import RepairPatchSet
+from story.repair_plan import repair_patch_prompt_payload
 from story.writer import AuthorWriter, WriterResult
 
 
+def _recorded_patch_set(candidate: WriterCandidate, plan) -> RepairPatchSet:
+    payload = repair_patch_prompt_payload(plan, candidate.narrative_text)
+    return RepairPatchSet.model_validate(
+        {"patches": payload["suggested_patch_templates"]}
+    )
+
+
 class ContractWriter:
-    def __init__(self, first: WriterCandidate, repaired: WriterCandidate):
+    def __init__(
+        self,
+        first: WriterCandidate,
+        repaired: WriterCandidate,
+        *,
+        repair_patches: RepairPatchSet | None = None,
+    ):
         self.first = first
         self.repaired = repaired
+        self.repair_patches = repair_patches
         self.generate_calls = 0
         self.repair_calls = 0
         self.repair_report = None
@@ -42,7 +58,15 @@ class ContractWriter:
     async def repair(self, candidate, report):
         self.repair_calls += 1
         self.repair_report = report
-        return WriterResult(self.repaired, {"repair_tokens": 5, "total_tokens": 5})
+        return WriterResult(
+            candidate,
+            {"repair_tokens": 5, "total_tokens": 5},
+            repair_patches=(
+                self.repair_patches
+                if self.repair_patches is not None
+                else _recorded_patch_set(candidate, report)
+            ),
+        )
 
 
 @pytest.fixture(autouse=True)
@@ -146,7 +170,10 @@ async def test_repair_fixes_prose_and_both_validators_rerun(tmp_path: Path) -> N
 @pytest.mark.asyncio
 async def test_repair_still_fails_and_transaction_never_commits(tmp_path: Path) -> None:
     bad = _candidate("林秋拿着信，两人只讨论是否交出去。")
-    service = _service(tmp_path, ContractWriter(bad, bad))
+    service = _service(
+        tmp_path,
+        ContractWriter(bad, bad, repair_patches=RepairPatchSet()),
+    )
 
     with pytest.raises(GenerationRejected) as exc:
         await service.run(_goal(), request_id="repair_reject")

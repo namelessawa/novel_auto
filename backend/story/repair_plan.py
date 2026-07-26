@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any, Literal
 
 from pydantic import Field
@@ -21,8 +20,11 @@ class RepairEventInstruction(NarrativeModel):
     event_id: str
     status: str
     actor: str = ""
+    actor_aliases: list[str] = Field(default_factory=list)
     action: str
     target: str = ""
+    target_aliases: list[str] = Field(default_factory=list)
+    current_evidence: str = ""
     completion_requirement: str
     minimum_completion_evidence: str = ""
 
@@ -32,6 +34,7 @@ class RepairEndStateInstruction(NarrativeModel):
     path: str
     expected: Any
     current_evidence: str = ""
+    minimum_completion_evidence: str = ""
 
 
 class RepairPreserveSpan(NarrativeModel):
@@ -80,19 +83,59 @@ class RepairPlan(NarrativeModel):
         }
 
 
-def _event_instruction(plan_event: Any, status: str) -> RepairEventInstruction:
+def _event_instruction(
+    plan_event: Any,
+    status: str,
+    current_evidence: str = "",
+) -> RepairEventInstruction:
     return RepairEventInstruction(
         event_id=plan_event.id,
         status=status,
         actor=plan_event.actor,
+        actor_aliases=plan_event.actor_aliases,
         action=plan_event.action,
         target=plan_event.target,
+        target_aliases=plan_event.target_aliases,
+        current_evidence=current_evidence,
         completion_requirement=(
             "正文中必须由指定 actor 对指定 target 实际完成动作；"
             "准备、计划、未遂、假设、否定和仅提及均不算完成。"
         ),
         minimum_completion_evidence=plan_event.minimum_completion_evidence,
     )
+
+
+def _display_name(contract: NarrativeContract, identifier: str) -> str:
+    for group in (
+        contract.allowed_entities.characters,
+        contract.allowed_entities.locations,
+        contract.allowed_entities.items,
+        contract.allowed_entities.organizations,
+    ):
+        for item in group:
+            if identifier in item.all_names:
+                return next(
+                    (name for name in item.all_names if name != identifier),
+                    item.name or identifier,
+                )
+    return identifier
+
+
+def _end_state_completion_evidence(
+    contract: NarrativeContract,
+    path: str,
+    expected: Any,
+) -> str:
+    parts = [part for part in path.split("/") if part]
+    expected_name = _display_name(contract, str(expected))
+    if len(parts) >= 2 and parts[-1] in {"holder", "owner", "owners"}:
+        item_name = _display_name(contract, parts[-2])
+        return (
+            f"{expected_name}将{item_name}收好并继续保管，"
+            f"{item_name}最终由{expected_name}持有。"
+        )
+    subject = _display_name(contract, parts[-2] if len(parts) >= 2 else path)
+    return f"{subject}的最终状态已经明确变为“{expected}”。"
 
 
 class RepairPlanBuilder:
@@ -116,7 +159,11 @@ class RepairPlanBuilder:
         preserve: list[RepairPreserveSpan] = []
         for result in narrative_report.event_results:
             planned = events[result.event_id]
-            instruction = _event_instruction(planned, result.status)
+            instruction = _event_instruction(
+                planned,
+                result.status,
+                result.evidence,
+            )
             if result.status == "completed":
                 preserve.append(
                     RepairPreserveSpan(
@@ -151,13 +198,37 @@ class RepairPlanBuilder:
                         path=result.path,
                         expected=result.expected,
                         current_evidence=result.evidence,
+                        minimum_completion_evidence=_end_state_completion_evidence(
+                            contract,
+                            result.path,
+                            result.expected,
+                        ),
                     )
                 )
+
+        preserved_texts = {item.text for item in preserve if item.text}
+        for fact in event_plan.preserve_facts:
+            statement = str(fact.get("statement") or "")
+            if (
+                statement
+                and statement in narrative_text
+                and statement not in preserved_texts
+            ):
+                preserve.append(
+                    RepairPreserveSpan(
+                        text=statement,
+                        reason=f"{fact.get('id') or 'required_fact'} 已通过",
+                    )
+                )
+                preserved_texts.add(statement)
 
         unsupported_codes = {
             "NARRATIVE_CHARACTER_ADDED",
             "NARRATIVE_RELATION_ADDED",
             "NARRATIVE_ORGANIZATION_ADDED",
+            "FORBIDDEN_OUTCOME_MENTIONED",
+            "TIME_CONSTRAINT_MUTATED",
+            "CAUSAL_LINK_WEAKENED",
         }
         unsupported = [
             {
@@ -171,7 +242,25 @@ class RepairPlanBuilder:
         chars = narrative_char_count(narrative_text)
         minimum = contract.length_constraint.min_chars
         maximum = contract.length_constraint.max_chars
-        if chars < minimum:
+        has_higher_priority_issue = bool(
+            missing
+            or incomplete
+            or wrong_actor
+            or wrong_target
+            or wrong_ends
+            or unsupported
+        )
+        if has_higher_priority_issue:
+            # A single Repair call must first complete events/end states or
+            # delete unsupported facts.  The model may not spend that call on
+            # free-form length padding.
+            adjustment = LengthAdjustment(
+                current_chars=chars,
+                min_chars=minimum,
+                max_chars=maximum,
+                action="none",
+            )
+        elif chars < minimum:
             adjustment = LengthAdjustment(
                 current_chars=chars,
                 min_chars=minimum,
@@ -220,18 +309,265 @@ class RepairPlanBuilder:
             ],
             style_constraints=event_plan.style_constraints,
             repair_instruction=(
-                "只修改正文：按事件顺序补齐缺失、未完成、动作人错误或对象错误的动作，"
-                "在最后一段落实所有错误终态，删除明确的未授权新增，同时保持已完成事件；"
-                "每个待修事件必须写出 minimum_completion_evidence 所要求的明确完成句，"
-                "不得仅用气氛、暗示、动作开端或同义的计划句代替；"
-                "返回完整修复后正文，不输出解释或任何结构化状态提案。"
+                "只输出局部 patches：优先完成事件，其次落实最终状态，再删除未授权新增，"
+                "仅在没有前三类问题时处理长度；每个 patch 只能解决明确列出的 target，"
+                "必须使用正文中唯一的逐字 anchor，不得重写整篇正文。"
             ),
         )
 
 
-def repair_plan_prompt_payload(plan: RepairPlan, original_narrative: str) -> dict[str, Any]:
+def _window(
+    narrative: str,
+    evidence: str,
+    *,
+    radius: int = 260,
+) -> dict[str, Any] | None:
+    if not evidence:
+        return None
+    position = narrative.find(evidence)
+    if position < 0:
+        return None
+    start = max(0, position - radius)
+    end = min(len(narrative), position + len(evidence) + radius)
     return {
-        "original_narrative": original_narrative,
+        "start": start,
+        "end": end,
+        "text": narrative[start:end],
+    }
+
+
+def _unique_tail_anchor(narrative: str) -> str:
+    stripped = narrative.rstrip()
+    for size in (240, 180, 120, 90, 60, 48, 36, 28, 20, 14):
+        anchor = stripped[-size:]
+        if anchor and narrative.count(anchor) == 1:
+            return anchor
+    for size in (240, 180, 120, 90, 60, 48, 36, 28, 20, 14):
+        anchor = stripped[:size]
+        if anchor and narrative.count(anchor) == 1:
+            return anchor
+    for size in (240, 180, 120, 90, 60, 48, 36, 28, 20, 14):
+        for end in range(len(stripped), size - 1, -max(1, size // 2)):
+            anchor = stripped[end - size : end]
+            if anchor and narrative.count(anchor) == 1:
+                return anchor
+    return stripped[-240:]
+
+
+def _length_addition_text(narrative: str, target_chars: int) -> str:
+    """Reuse existing prose for a conservative length-only patch template."""
+    stripped = narrative.rstrip()
+    if not stripped:
+        return ""
+    required = min(300, max(1, target_chars))
+    source_chars = sum(not char.isspace() for char in stripped)
+    if source_chars == 0:
+        return ""
+    source: list[str] = []
+    source_count = 0
+    for char in reversed(stripped):
+        source.append(char)
+        if not char.isspace():
+            source_count += 1
+        if source_count >= required:
+            break
+    suffix = "".join(reversed(source))
+    suffix_chars = sum(not char.isspace() for char in suffix)
+    repeated = suffix * max(1, (required + suffix_chars - 1) // suffix_chars)
+    selected: list[str] = []
+    count = 0
+    for char in repeated:
+        selected.append(char)
+        if not char.isspace():
+            count += 1
+        if count >= required:
+            break
+    return "".join(selected)
+
+
+def _length_removal_text(plan: RepairPlan, narrative: str) -> str:
+    """Select a unique tail span outside already-approved evidence."""
+    protected: list[tuple[int, int]] = []
+    for item in plan.must_preserve_spans:
+        if not item.text:
+            continue
+        start = narrative.find(item.text)
+        if start >= 0:
+            protected.append((start, start + len(item.text)))
+
+    target = min(300, max(1, plan.length_adjustment.target_chars))
+    run_end = len(narrative)
+    while run_end > 0:
+        overlapping = [
+            (start, end)
+            for start, end in protected
+            if start < run_end and end > 0
+        ]
+        blocking = max(overlapping, key=lambda item: item[1], default=None)
+        run_start = blocking[1] if blocking and blocking[1] < run_end else 0
+        if blocking and blocking[1] >= run_end:
+            run_end = blocking[0]
+            continue
+
+        count = 0
+        start = run_end
+        while start > run_start and count < target:
+            start -= 1
+            if not narrative[start].isspace():
+                count += 1
+        selected = narrative[start:run_end]
+        if count >= target and narrative.count(selected) == 1:
+            return selected
+        run_end = run_start
+    return ""
+
+
+def _repair_windows(plan: RepairPlan, narrative: str) -> list[dict[str, Any]]:
+    windows: list[dict[str, Any]] = []
+    evidence_values = [
+        item.current_evidence
+        for item in [
+            *plan.incomplete_events,
+            *plan.wrong_actor_events,
+            *plan.wrong_target_events,
+        ]
+    ]
+    evidence_values.extend(item.current_evidence for item in plan.wrong_end_states)
+    evidence_values.extend(
+        str(item.get("evidence") or "") for item in plan.unsupported_additions
+    )
+    for evidence in evidence_values:
+        selected = _window(narrative, evidence)
+        if selected and selected not in windows:
+            windows.append(selected)
+    tail_start = max(0, len(narrative) - 700)
+    tail = {"start": tail_start, "end": len(narrative), "text": narrative[tail_start:]}
+    if tail not in windows:
+        windows.append(tail)
+    return windows
+
+
+def _suggested_patch_templates(
+    plan: RepairPlan,
+    original_narrative: str,
+) -> list[dict[str, Any]]:
+    templates: list[dict[str, Any]] = []
+    delete_templates: list[dict[str, Any]] = []
+    delete_evidence_seen: set[str] = set()
+    for item in plan.unsupported_additions:
+        evidence = str(item.get("evidence") or "")
+        if (
+            evidence
+            and evidence not in delete_evidence_seen
+            and original_narrative.count(evidence) == 1
+        ):
+            delete_evidence_seen.add(evidence)
+            delete_templates.append(
+                {
+                    "patch_type": "delete",
+                    "anchor": {"before_text": evidence, "after_text": ""},
+                    "patch_text": "",
+                    "target_events": [],
+                    "target_end_states": [],
+                    "max_chars": 300,
+                    "preserve": [],
+                }
+            )
+
+    pending_events = [
+        *plan.missing_events,
+        *plan.incomplete_events,
+        *plan.wrong_actor_events,
+        *plan.wrong_target_events,
+    ]
+    event_text = "".join(
+        item.minimum_completion_evidence for item in pending_events
+    )
+    combined_text = event_text
+    for item in plan.wrong_end_states:
+        if item.minimum_completion_evidence not in combined_text:
+            combined_text += item.minimum_completion_evidence
+    if combined_text:
+        templates.append(
+            {
+                "patch_type": "insert",
+                "anchor": {
+                    "before_text": _unique_tail_anchor(original_narrative),
+                    "after_text": "",
+                },
+                "patch_text": combined_text[:300],
+                "target_events": [item.event_id for item in pending_events],
+                "target_end_states": [
+                    item.state_id for item in plan.wrong_end_states
+                ],
+                "max_chars": 300,
+                "preserve": [
+                    item.text for item in plan.must_preserve_spans if item.text
+                ],
+            }
+        )
+    elif plan.length_adjustment.action == "add":
+        patch_text = _length_addition_text(
+            original_narrative,
+            plan.length_adjustment.target_chars,
+        )
+        if patch_text:
+            templates.append(
+                {
+                    "patch_type": "insert",
+                    "anchor": {
+                        "before_text": _unique_tail_anchor(original_narrative),
+                        "after_text": "",
+                    },
+                    "patch_text": patch_text,
+                    "target_events": [],
+                    "target_end_states": [],
+                    "max_chars": 300,
+                    "preserve": [
+                        item.text for item in plan.must_preserve_spans if item.text
+                    ],
+                }
+            )
+    elif plan.length_adjustment.action == "remove":
+        target_text = _length_removal_text(plan, original_narrative)
+        if target_text:
+            templates.append(
+                {
+                    "patch_type": "delete",
+                    "anchor": {
+                        "before_text": target_text,
+                        "after_text": "",
+                    },
+                    "patch_text": "",
+                    "target_events": [],
+                    "target_end_states": [],
+                    "max_chars": 300,
+                    "preserve": [
+                        item.text for item in plan.must_preserve_spans if item.text
+                    ],
+                }
+            )
+    # Apply inserts/replacements before deletes so a deletion cannot invalidate
+    # a later anchor that was selected from the original prose.
+    templates.extend(delete_templates)
+    return templates
+
+
+def repair_patch_prompt_payload(
+    plan: RepairPlan,
+    original_narrative: str,
+) -> dict[str, Any]:
+    suggested_templates = _suggested_patch_templates(
+        plan,
+        original_narrative,
+    )
+    return {
+        "execution_mode": (
+            "COPY_SUGGESTED_TEMPLATES_EXACTLY"
+            if suggested_templates
+            else "GENERATE_LOCAL_PATCHES"
+        ),
+        "required_patches": suggested_templates,
         "missing_events": [item.model_dump(mode="json") for item in plan.missing_events],
         "incomplete_events": [item.model_dump(mode="json") for item in plan.incomplete_events],
         "wrong_actor_events": [item.model_dump(mode="json") for item in plan.wrong_actor_events],
@@ -247,8 +583,39 @@ def repair_plan_prompt_payload(plan: RepairPlan, original_narrative: str) -> dic
         "forbidden_changes": plan.forbidden_changes,
         "minimum_style_constraints": plan.style_constraints,
         "instruction": plan.repair_instruction,
-        "output_contract": {"narrative_text": "修复后的完整正文"},
+        "priority_order": [
+            "event_completion",
+            "required_end_state",
+            "unsupported_addition_delete",
+            "length_only_when_no_higher_priority_issue",
+        ],
+        "relevant_windows": _repair_windows(plan, original_narrative),
+        "suggested_patch_templates": suggested_templates,
+        "output_contract": {
+            "patches": [
+                {
+                    "patch_type": "insert|replace|delete",
+                    "anchor": {"before_text": "逐字锚点", "after_text": ""},
+                    "patch_text": "不超过 300 字的局部修改",
+                    "target_events": [],
+                    "target_end_states": [],
+                    "max_chars": 300,
+                    "preserve": [],
+                }
+            ]
+        },
+        "final_instruction": (
+            "required_patches 非空：只返回 {\"patches\": required_patches}，"
+            "数组内每个字段和每个字符必须原样复制，不得同义改写。"
+            if suggested_templates
+            else "required_patches 为空：按 output_contract 生成最小局部 patches。"
+        ),
     }
+
+
+def repair_plan_prompt_payload(plan: RepairPlan, original_narrative: str) -> dict[str, Any]:
+    """Backward-compatible name; the payload is patch-only."""
+    return repair_patch_prompt_payload(plan, original_narrative)
 
 
 class RepairRegressionValidator:
@@ -287,76 +654,7 @@ class RepairRegressionValidator:
         return violations
 
 
-_REMOVABLE_UNSUPPORTED_CODES = {
-    "NARRATIVE_CHARACTER_ADDED",
-    "NARRATIVE_RELATION_ADDED",
-    "NARRATIVE_ORGANIZATION_ADDED",
-}
-
-
-def _remove_evidence_clause(text: str, evidence: str) -> str:
-    """Remove the smallest punctuation-bounded clause containing evidence."""
-    position = text.find(evidence)
-    if position < 0:
-        return text
-    left = max(text.rfind(mark, 0, position) for mark in "，。！？；\n")
-    evidence_end = position + len(evidence)
-    right_candidates = [
-        found
-        for mark in "，。！？；\n"
-        if (found := text.find(mark, evidence_end)) >= 0
-    ]
-    right = min(right_candidates, default=len(text))
-    clause_start = left + 1
-    if right >= len(text):
-        cleaned = text[:clause_start]
-    elif text[right] in "，；\n":
-        cleaned = text[:clause_start] + text[right + 1 :]
-    else:
-        # Preserve the sentence terminator when the unsupported clause is the
-        # final clause of a sentence.
-        cleaned = text[:clause_start] + text[right:]
-    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
-    cleaned = re.sub(r"([。！？])[,，；]+", r"\1", cleaned)
-    cleaned = re.sub(r"^[，；\s]+", "", cleaned)
-    return cleaned.strip()
-
-
-class DeterministicRepairEnforcer:
-    """Delete only validator-proven unsupported clauses after the one Repair call.
-
-    This is deliberately narrower than prose rewriting: required-event, end-state,
-    length, fact and style violations are never modified here.  The caller must
-    revalidate the entire contract and RepairRegression after every enforcement.
-    """
-
-    def enforce(
-        self,
-        *,
-        report: NarrativeValidationReport,
-        narrative_text: str,
-    ) -> tuple[str, list[dict[str, str]]]:
-        cleaned = narrative_text
-        removals: list[dict[str, str]] = []
-        for violation in report.violations:
-            if not (
-                violation.code.startswith("UNSUPPORTED_")
-                or violation.code in _REMOVABLE_UNSUPPORTED_CODES
-            ):
-                continue
-            evidence = violation.evidence.strip()
-            if not evidence:
-                continue
-            updated = _remove_evidence_clause(cleaned, evidence)
-            if updated == cleaned:
-                continue
-            cleaned = updated
-            removals.append({"code": violation.code, "evidence": evidence})
-        return cleaned, removals
-
-
 __all__ = [
-    "DeterministicRepairEnforcer",
     "LengthAdjustment",
     "RepairEndStateInstruction",
     "RepairEventInstruction",
@@ -364,5 +662,6 @@ __all__ = [
     "RepairPlanBuilder",
     "RepairPreserveSpan",
     "RepairRegressionValidator",
+    "repair_patch_prompt_payload",
     "repair_plan_prompt_payload",
 ]

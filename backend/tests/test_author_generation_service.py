@@ -12,6 +12,8 @@ from story.models import (
     WriterCandidate,
 )
 from story.persistence import StoryBibleStore
+from story.repair_patch import RepairPatchSet
+from story.repair_plan import repair_patch_prompt_payload
 from story.service import (
     AuthorGenerationService,
     CommitPendingError,
@@ -22,9 +24,16 @@ from story.writer import WriterResult
 
 
 class FakeWriter:
-    def __init__(self, generated: WriterCandidate, repaired: WriterCandidate | None = None):
+    def __init__(
+        self,
+        generated: WriterCandidate,
+        repaired: WriterCandidate | None = None,
+        *,
+        repair_patches: RepairPatchSet | None = None,
+    ):
         self.generated = generated
         self.repaired = repaired or generated
+        self.repair_patches = repair_patches
         self.generate_calls = 0
         self.repair_calls = 0
 
@@ -39,8 +48,20 @@ class FakeWriter:
     async def repair(self, candidate, report):
         self.repair_calls += 1
         return WriterResult(
-            self.repaired,
+            candidate,
             {"prompt_tokens": 20, "completion_tokens": 30, "total_tokens": 50},
+            repair_patches=(
+                self.repair_patches
+                if self.repair_patches is not None
+                else RepairPatchSet.model_validate(
+                    {
+                        "patches": repair_patch_prompt_payload(
+                            report,
+                            candidate.narrative_text,
+                        )["suggested_patch_templates"]
+                    }
+                )
+            ),
         )
 
 
@@ -112,7 +133,9 @@ async def test_author_service_commits_one_writer_call_and_persists_long_memory(
 
 @pytest.mark.asyncio
 async def test_author_service_repairs_once_then_commits(tmp_path: Path) -> None:
-    bad = _valid_candidate("旧王复活，身份与牺牲失去意义。" * 12).model_copy(
+    bad = _valid_candidate(
+        "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
+    ).model_copy(
         update={
             "state_delta": [
                 StateDeltaOperation(
@@ -142,7 +165,9 @@ async def test_author_service_repairs_once_then_commits(tmp_path: Path) -> None:
 async def test_author_service_rejects_after_single_failed_repair_without_half_commit(
     tmp_path: Path,
 ) -> None:
-    bad = _valid_candidate("旧王复活，身份与牺牲失去意义。" * 12).model_copy(
+    bad = _valid_candidate(
+        "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
+    ).model_copy(
         update={
             "state_delta": [
                 StateDeltaOperation(
@@ -154,7 +179,7 @@ async def test_author_service_rejects_after_single_failed_repair_without_half_co
             ]
         }
     )
-    writer = FakeWriter(bad, bad)
+    writer = FakeWriter(bad, bad, repair_patches=RepairPatchSet())
     service = _service(tmp_path, writer)
 
     with pytest.raises(GenerationRejected) as error:
@@ -243,21 +268,18 @@ async def test_repair_must_revalidate_delta_against_repaired_prose(tmp_path: Pat
         value="暴雨",
         evidence="旧城骤然落下暴雨",
     )
-    original = _valid_candidate("旧王复活，身份与牺牲失去意义。" * 12).model_copy(
+    original = _valid_candidate(
+        "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
+    ).model_copy(
         update={"state_delta": [operation]}
     )
-    repaired = original.model_copy(
-        update={
-            "narrative_text": "旧城骤然落下暴雨，主角仍为身份与牺牲承担代价。" * 10
-        }
-    )
+    repaired = _valid_candidate()
     service = _service(tmp_path, FakeWriter(original, repaired))
     tx = await service.run(_goal(), request_id="revalidate_repair")
     assert tx.committed is True
-    assert service.states.load().world["weather"] == "暴雨"
-    assert [item.path for item in tx.validation_report.validated_delta] == [
-        "/world/weather"
-    ]
+    assert "weather" not in service.states.load().world
+    assert tx.validation_report.validated_delta == []
+    assert tx.validation_report.dropped_delta_count == 1
 
 
 @pytest.mark.asyncio

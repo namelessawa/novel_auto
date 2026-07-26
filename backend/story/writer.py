@@ -10,7 +10,8 @@ from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 from story.context_builder import ContextPackage
 from story.models import SectionGoal, WriterCandidate
-from story.repair_plan import RepairPlan, repair_plan_prompt_payload
+from story.repair_patch import RepairPatchSet
+from story.repair_plan import RepairPlan, repair_patch_prompt_payload
 
 
 class WriterOutputError(RuntimeError):
@@ -22,6 +23,8 @@ class WriterResult:
     candidate: WriterCandidate
     usage: dict[str, int]
     ignored_fields: list[str] = field(default_factory=list)
+    audit_codes: list[str] = field(default_factory=list)
+    repair_patches: RepairPatchSet | None = None
 
 
 class WriterProtocol(Protocol):
@@ -70,15 +73,26 @@ state_delta 的每项必须包含 op、path、value、evidence、confidence；pa
 CanonicalState。不得提出 StoryBible 修改。故事线 resolved 必须附正文中可定位的
 resolution_evidence。正文之外不要输出解释、Markdown 或思考过程。"""
 
-    REPAIR_SYSTEM_PROMPT = """你是小说一致性修复器。输入只含原正文、固定事实、
-缺失事件、错误最终状态、新增事实、长度问题和最低风格要求。最多执行这一次修复。
-只做最小修正；按 RepairPlan 补齐指定事件和终态；不新增人物、数字、日期、亲属、伤势或支线；必须落实缺失结局；
-不改变已正确完成的事件；风格优先级低于事实；不要修改 StoryBible。
-硬性执行顺序：先逐字删除 unsupported_additions 中列出的 evidence；再为每个待修事件写入 minimum_completion_evidence 所要求的明确完成句；最后让最后一项持有、打开、接收或位置陈述与 wrong_end_states 完全一致。即使你认为原文已经暗示完成，也必须执行这些明示修改，不得原样返回。
-返回一个 JSON 补丁，必须含
-{"narrative_text":"修复后的完整正文"}。不得返回或重写 state_delta、故事线、
-title、section_summary、memory_records、consistency_notes、critique 或解释字段；
-系统会自动保留已经通过校验的结构化变化并剔除高风险变化。"""
+    REPAIR_SYSTEM_PROMPT = """你不是作者，你是只做局部修改的小说编辑。
+最多执行这一次 Repair。你的任务不是重写文章，只能输出 patch JSON。
+
+严格规则：
+1. 根对象只能包含 schema_version 和 patches。
+2. 每个 patch 只能是 insert、replace、delete，并解决一个 RepairPlan 明确问题。
+3. anchor 必须逐字复制 relevant_windows 中唯一出现的短文本，不能概括。
+4. insert 默认插在 before_text 之后；replace/delete 在只有一个 anchor 时修改该 anchor，
+   两个 anchor 时只修改二者之间的局部文本。
+5. patch_text 不超过 300 字。不得替换整篇正文。
+6. 先完成事件，再落实最终状态，再删除未授权新增；存在前三类问题时不做自由长度填充。
+7. 事件 patch 必须逐字落实 minimum_completion_evidence 的 actor、target 和完成动作。
+8. 终态 patch 必须明确写出谁交、谁收、什么物品以及最终由谁持有；决定、准备、暗示不算。
+9. 不修改 preserve 内容，不新增人物、背景、数字、日期、亲属、伤势、世界规则或支线。
+10. suggested_patch_templates 非空时，必须逐字段、逐字原样复制整个数组作为 patches；
+    不得改写 patch_text，不得把姓名换成代词，不得替换或缩短 anchor/preserve。
+11. 只有 suggested_patch_templates 为空时，才允许根据 relevant_windows 自行生成 patch。
+
+禁止输出 narrative_text、state_delta、threads、memory、summary、title、解释、Markdown
+或内部分析。即使你认为原文已经足够，也必须返回至少一个有效 patch。"""
 
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult:
         output_schema = json.dumps(
@@ -109,23 +123,36 @@ title、section_summary、memory_records、consistency_notes、critique 或解�
     async def repair(
         self, candidate: WriterCandidate, plan: RepairPlan
     ) -> WriterResult:
+        output_schema = json.dumps(
+            RepairPatchSet.model_json_schema(),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
         response = await llm_client.chat(
-            system_prompt=self.REPAIR_SYSTEM_PROMPT,
+            system_prompt=(
+                self.REPAIR_SYSTEM_PROMPT
+                + "\n以下 JSON Schema 是唯一输出契约；additionalProperties=false：\n"
+                + output_schema
+            ),
             user_prompt=json.dumps(
-                repair_plan_prompt_payload(plan, candidate.narrative_text),
+                repair_patch_prompt_payload(plan, candidate.narrative_text),
                 ensure_ascii=False,
                 indent=2,
             ),
             temperature=0.0,
-            max_tokens=8192,
+            max_tokens=4096,
             agent_id="author_writer_repair",
             priority="critical",
         )
         ignored_fields = self._repair_ignored_fields(response.content)
         return WriterResult(
-            candidate=self._parse_repair(response.content, candidate, plan),
+            candidate=candidate,
             usage=self._usage(response),
             ignored_fields=ignored_fields,
+            audit_codes=(
+                ["REPAIR_EXTRA_FIELD_IGNORED"] if ignored_fields else []
+            ),
+            repair_patches=self._parse_repair_patches(response.content),
         )
 
     @staticmethod
@@ -141,29 +168,61 @@ title、section_summary、memory_records、consistency_notes、critique 或解�
             raise WriterOutputError(f"WriterCandidate validation failed: {exc}") from exc
 
     @staticmethod
-    def _parse_repair(
-        content: str,
-        original: WriterCandidate,
-        report: object | None = None,
-    ) -> WriterCandidate:
+    def _parse_repair_patches(content: str) -> RepairPatchSet:
         try:
             payload = parse_llm_json((content or "").strip())
         except json.JSONDecodeError as exc:
             raise WriterOutputError("Writer repair returned invalid JSON") from exc
-        if "narrative_text" not in payload and isinstance(
-            payload.get("repaired_narrative"), str
-        ):
-            payload["narrative_text"] = payload["repaired_narrative"]
-        narrative = payload.get("narrative_text")
-        if not isinstance(narrative, str) or not narrative.strip():
-            raise WriterOutputError("Writer repair did not return a complete narrative_text")
-
-        # Repair has prose authority only.  Keep the original structured
-        # proposal intact and let StoryValidator re-evaluate every operation
-        # and thread against the repaired prose from scratch.
-        candidate_payload = original.model_dump(mode="python")
-        candidate_payload["narrative_text"] = narrative
-        return WriterCandidate.model_validate(candidate_payload)
+        if not isinstance(payload, dict):
+            raise WriterOutputError("Writer repair must return a JSON object")
+        raw_patches = payload.get("patches", [])
+        if isinstance(raw_patches, dict):
+            raw_patches = [raw_patches]
+        if not isinstance(raw_patches, list):
+            raw_patches = []
+        patches: list[dict] = []
+        allowed_patch_fields = {
+            "patch_type",
+            "anchor",
+            "patch_text",
+            "target_events",
+            "target_end_states",
+            "max_chars",
+            "preserve",
+        }
+        for raw in raw_patches:
+            if not isinstance(raw, dict):
+                continue
+            item = {key: raw[key] for key in allowed_patch_fields if key in raw}
+            anchor = item.get("anchor")
+            if isinstance(anchor, str):
+                item["anchor"] = {"before_text": anchor, "after_text": ""}
+            elif isinstance(anchor, dict):
+                item["anchor"] = {
+                    key: anchor[key]
+                    for key in ("before_text", "after_text")
+                    if key in anchor
+                }
+            for key in ("target_events", "target_end_states", "preserve"):
+                value = item.get(key, [])
+                if value is None:
+                    item[key] = []
+                elif not isinstance(value, list):
+                    item[key] = [value]
+            if isinstance(item.get("patch_type"), str):
+                item["patch_type"] = item["patch_type"].strip().lower()
+            patches.append(item)
+        try:
+            return RepairPatchSet.model_validate(
+                {
+                    "schema_version": payload.get("schema_version", 1),
+                    "patches": patches,
+                }
+            )
+        except Exception as exc:
+            raise WriterOutputError(
+                f"Writer repair patch validation failed: {exc}"
+            ) from exc
 
     @staticmethod
     def _repair_ignored_fields(content: str) -> list[str]:
@@ -173,7 +232,31 @@ title、section_summary、memory_records、consistency_notes、critique 或解�
             return []
         if not isinstance(payload, dict):
             return []
-        return sorted(set(payload) - {"narrative_text"})
+        ignored = {
+            key for key in payload if key not in {"schema_version", "patches"}
+        }
+        raw_patches = payload.get("patches", [])
+        if isinstance(raw_patches, dict):
+            raw_patches = [raw_patches]
+        allowed_patch_fields = {
+            "patch_type",
+            "anchor",
+            "patch_text",
+            "target_events",
+            "target_end_states",
+            "max_chars",
+            "preserve",
+        }
+        if isinstance(raw_patches, list):
+            for index, patch in enumerate(raw_patches):
+                if not isinstance(patch, dict):
+                    continue
+                ignored.update(
+                    f"patches[{index}].{key}"
+                    for key in patch
+                    if key not in allowed_patch_fields
+                )
+        return sorted(ignored)
 
     @staticmethod
     def _usage(response) -> dict[str, int]:

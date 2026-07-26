@@ -230,7 +230,7 @@ class RecordedLongRangeWriter:
         self.last_length = goal.desired_length
         valid = _recorded_valid_text(self.last_index, self.last_length)
         if self.repair_every and self.last_index % self.repair_every == 0:
-            text = "沈砚仍把旧信藏在怀里，并说父亲会替他们处理。" + valid[:80]
+            text = "沈砚仍把旧信藏在怀里，并说父亲会替他们处理。" + valid
         else:
             text = valid
         return WriterResult(
@@ -244,20 +244,27 @@ class RecordedLongRangeWriter:
         )
 
     async def repair(self, candidate, report):
+        from story.repair_patch import RepairPatchSet
+        from story.repair_plan import repair_patch_prompt_payload
         from story.writer import WriterResult
 
         self.repair_calls += 1
         return WriterResult(
-            _candidate(
-                _recorded_valid_text(self.last_index, self.last_length),
-                self.last_index,
-            ),
+            candidate,
             {
                 "prompt_tokens": 0,
                 "completion_tokens": 0,
                 "repair_tokens": 0,
                 "total_tokens": 0,
             },
+            repair_patches=RepairPatchSet.model_validate(
+                {
+                    "patches": repair_patch_prompt_payload(
+                        report,
+                        candidate.narrative_text,
+                    )["suggested_patch_templates"]
+                }
+            ),
         )
 
 
@@ -467,6 +474,38 @@ def _section_metrics(transaction, service, previous_text: str, latency: float) -
         if transaction.repair_plan
         else {},
         "repair_ignored_fields": list(transaction.repair_ignored_fields),
+        "repair_audit_codes": list(transaction.repair_audit_codes),
+        "repair_patch_count": (
+            len(transaction.repair_patches.patches)
+            if transaction.repair_patches
+            else 0
+        ),
+        "repair_patch_types": (
+            [
+                item.patch_type
+                for item in transaction.repair_patches.patches
+            ]
+            if transaction.repair_patches
+            else []
+        ),
+        "repair_patch_accepted": (
+            transaction.repair_patch_report.accepted
+            if transaction.repair_patch_report
+            else None
+        ),
+        "repair_patch_codes": (
+            [
+                item.code
+                for item in transaction.repair_patch_report.violations
+            ]
+            if transaction.repair_patch_report
+            else []
+        ),
+        "repair_patch_char_delta": (
+            transaction.repair_patch_report.char_delta
+            if transaction.repair_patch_report
+            else 0
+        ),
         "repair_enforced_removals": list(transaction.repair_enforced_removals),
         "repair_enforced_removal_count": len(
             transaction.repair_enforced_removals
