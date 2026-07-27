@@ -7,10 +7,16 @@ import copy
 import logging
 import os
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import novel_manager
 from sections.section_store import TickSection, get_section_store
+from story.chapter_plan import ChapterPlan, ChapterPlanBuilder
+from story.chapter_plan_validator import (
+    ChapterPlanValidationReport,
+    ChapterPlanValidator,
+    WriterPlanEvidenceValidator,
+)
 from story.context_builder import ContextBudgetExceeded, ContextBuilder, ContextPackage
 from story.event_execution import (
     EventExecutionPlan,
@@ -61,7 +67,7 @@ from story.section_length_validator import (
     SectionLengthValidator,
 )
 from story.validator import StoryValidator
-from story.writer import AuthorWriter, WriterProtocol, WriterResult
+from story.writer import AuthorWriter, PlannerResult, WriterProtocol, WriterResult
 from story.writer_preflight import (
     WriterPreflightReport,
     WriterPreflightValidator,
@@ -109,6 +115,7 @@ class PreparedGeneration:
     section_budget_plan: SectionBudgetPlan
     context: ContextPackage
     transaction: GenerationTransaction
+    chapter_plan: ChapterPlan | None = None
 
 
 class AuthorGenerationService:
@@ -128,6 +135,8 @@ class AuthorGenerationService:
         event_plan_builder: EventExecutionPlanBuilder | None = None,
         writing_plan_builder: SectionWritingPlanBuilder | None = None,
         budget_plan_builder: SectionBudgetPlanBuilder | None = None,
+        chapter_plan_builder: ChapterPlanBuilder | None = None,
+        chapter_plan_validator: ChapterPlanValidator | None = None,
         preflight_validator: WriterPreflightValidator | None = None,
         repair_plan_builder: RepairPlanBuilder | None = None,
         context_builder: ContextBuilder | None = None,
@@ -150,6 +159,11 @@ class AuthorGenerationService:
         self.event_plan_builder = event_plan_builder or EventExecutionPlanBuilder()
         self.writing_plan_builder = writing_plan_builder or SectionWritingPlanBuilder()
         self.budget_plan_builder = budget_plan_builder or SectionBudgetPlanBuilder()
+        self.chapter_plan_builder = chapter_plan_builder or ChapterPlanBuilder()
+        self.chapter_plan_validator = (
+            chapter_plan_validator or ChapterPlanValidator()
+        )
+        self.writer_plan_evidence_validator = WriterPlanEvidenceValidator()
         self.section_length_validator = SectionLengthValidator()
         self.ending_completion_validator = EndingCompletionValidator()
         self.section_balance_validator = SectionBalanceValidator()
@@ -188,14 +202,74 @@ class AuthorGenerationService:
             prepared = self.prepare(goal, request_id=request_id)
             transaction = prepared.transaction
             try:
+                planner_method = getattr(self.writer, "plan", None)
+                planned = await self.plan(prepared)
+                plan_report = self.validate_chapter_plan(
+                    prepared,
+                    planned.plan,
+                )
+                transaction = transaction.model_copy(
+                    update={
+                        "phase": "planned",
+                        "planner_calls": int(callable(planner_method)),
+                        "chapter_plan": planned.plan,
+                        "chapter_plan_validation_report": plan_report,
+                        "chapter_plan_success": plan_report.accepted,
+                        "usage": self._merge_usage(
+                            transaction.usage,
+                            planned.usage,
+                            phase="planner",
+                        ),
+                        "updated_at": utc_now(),
+                    }
+                )
+                self.transactions.save(transaction)
+                if not plan_report.accepted:
+                    rejected = transaction.model_copy(
+                        update={
+                            "phase": "rejected",
+                            "error_code": "CHAPTER_PLAN_INVALID",
+                            "error": "章节计划未通过冻结权威校验，正文未生成且事务未提交",
+                            "updated_at": utc_now(),
+                        }
+                    )
+                    self.transactions.save(rejected)
+                    raise GenerationRejected(rejected)
+                prepared = replace(
+                    prepared,
+                    chapter_plan=planned.plan,
+                    context=replace(
+                        prepared.context,
+                        chapter_plan=planned.plan,
+                    ),
+                    transaction=transaction,
+                )
                 generated = await self.generate(prepared)
                 transaction = self._record_generated(transaction, generated)
                 candidate = generated.candidate
+                writer_plan_follow_report = (
+                    self.writer_plan_evidence_validator.validate(
+                        plan=planned.plan,
+                        evidence=candidate.chapter_evidence,
+                    )
+                )
+                transaction = transaction.model_copy(
+                    update={
+                        "writer_plan_follow_report": writer_plan_follow_report,
+                        "writer_plan_followed": writer_plan_follow_report.accepted,
+                        "updated_at": utc_now(),
+                    }
+                )
+                self.transactions.save(transaction)
                 initial_preflight_report = self.preflight(prepared, candidate)
                 transaction = transaction.model_copy(
                     update={
                         "initial_preflight_report": initial_preflight_report,
                         "final_preflight_report": initial_preflight_report,
+                        "writer_plan_followed": bool(
+                            writer_plan_follow_report.accepted
+                            and initial_preflight_report.accepted
+                        ),
                         "updated_at": utc_now(),
                     }
                 )
@@ -798,6 +872,36 @@ class AuthorGenerationService:
             style_contract=bible.style_contract,
         )
 
+    async def plan(self, prepared: PreparedGeneration) -> PlannerResult:
+        planner_method = getattr(self.writer, "plan", None)
+        if callable(planner_method):
+            return await planner_method(prepared.context, prepared.goal)
+        # Existing injected Writers used by deterministic tests predate planning.
+        # They receive the same safe server-derived allocation without an LLM call.
+        return PlannerResult(
+            plan=self.chapter_plan_builder.build(
+                event_plan=prepared.event_execution_plan,
+                budget_plan=prepared.section_budget_plan,
+            ),
+            usage={
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cached_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+
+    def validate_chapter_plan(
+        self,
+        prepared: PreparedGeneration,
+        plan: ChapterPlan,
+    ) -> ChapterPlanValidationReport:
+        return self.chapter_plan_validator.validate(
+            plan=plan,
+            event_plan=prepared.event_execution_plan,
+            budget_plan=prepared.section_budget_plan,
+        )
+
     async def generate(self, prepared: PreparedGeneration) -> WriterResult:
         return await self.writer.generate(prepared.context, prepared.goal)
 
@@ -1027,7 +1131,11 @@ class AuthorGenerationService:
                 "candidate": result.candidate,
                 "candidate_history": [result.candidate],
                 "writer_calls": 1,
-                "usage": result.usage,
+                "usage": self._merge_usage(
+                    transaction.usage,
+                    result.usage,
+                    phase="writer",
+                ),
                 "updated_at": utc_now(),
             }
         )
@@ -1375,10 +1483,15 @@ class AuthorGenerationService:
             key: int(left.get(key, 0)) + int(right.get(key, 0))
             for key in set(left) | set(right)
         }
-        phase_key = "retry_tokens" if phase == "retry" else "repair_tokens"
-        merged[phase_key] = int(left.get(phase_key, 0)) + int(
-            right.get("total_tokens", 0)
-        )
+        phase_key = {
+            "planner": "planner_tokens",
+            "retry": "retry_tokens",
+            "repair": "repair_tokens",
+        }.get(phase)
+        if phase_key:
+            merged[phase_key] = int(left.get(phase_key, 0)) + int(
+                right.get("total_tokens", 0)
+            )
         return merged
 
 

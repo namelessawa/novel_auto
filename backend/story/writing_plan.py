@@ -73,8 +73,8 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "noir_cold": StyleLengthContract(
         key="noir_cold",
         instruction=(
-            "Cold does not mean short or omission. Keep expression restrained while fully "
-            "showing the contracted action, decision, and result."
+            "Cold does not mean short or omission. Short sentences do not mean a short "
+            "chapter; every required event needs action, decision, and result."
         ),
         allowed_expansion=[
             "existing action detail",
@@ -87,8 +87,8 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "warm_healing": StyleLengthContract(
         key="warm_healing",
         instruction=(
-            "Warmth comes from concrete care actions, not more paragraphs. Required "
-            "conflict and its outcome may not be removed."
+            "Warmth comes from concrete care actions. Every warm paragraph must advance "
+            "an existing event rather than add emotion alone."
         ),
         allowed_expansion=[
             "care using an existing object",
@@ -105,8 +105,8 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "hot_blooded": StyleLengthContract(
         key="hot_blooded",
         instruction=(
-            "Strengthen only actions already required by the contract. Do not invent "
-            "war, death, casualty counts, enemies, injuries, or background."
+            "Intensity comes only from actions already required by the contract. Do not "
+            "invent enemies, war, death, casualty counts, injuries, or background."
         ),
         allowed_expansion=[
             "beats inside an existing required action",
@@ -123,7 +123,7 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "classical_chapter": StyleLengthContract(
         key="classical_chapter",
         instruction=(
-            "Classical expression comes from syntax, rhythm, and narration around "
+            "Classical expression comes only from language, syntax, and rhythm around "
             "the existing action chain. Never add historical background."
         ),
         allowed_expansion=[

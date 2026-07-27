@@ -7,6 +7,7 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
+from story.chapter_plan import ChapterPlan
 from story.event_execution import (
     EventExecutionPlan,
     event_execution_plan_prompt_payload,
@@ -83,9 +84,11 @@ class ContextPackage:
     prompt: str
     slots: dict[str, str]
     manifest: ContextManifest
+    narrative_contract: NarrativeContract | None = None
     event_execution_plan: EventExecutionPlan | None = None
     writing_plan: SectionWritingPlan | None = None
     section_budget_plan: SectionBudgetPlan | None = None
+    chapter_plan: ChapterPlan | None = None
 
 
 def _json(value: Any) -> str:
@@ -389,6 +392,7 @@ class ContextBuilder:
             prompt=prompt,
             slots=slots,
             manifest=manifest,
+            narrative_contract=narrative_contract,
             event_execution_plan=event_execution_plan,
             writing_plan=section_writing_plan,
             section_budget_plan=section_budget_plan,

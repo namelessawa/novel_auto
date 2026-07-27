@@ -121,6 +121,24 @@ def aggregate(
     writer_first_pass_rate = (
         round(writer_first_pass_count / attempted, 4) if attempted else 0.0
     )
+    chapter_plan_success_count = sum(
+        bool(item.get("chapter_plan_success")) for item in sections
+    )
+    chapter_plan_success_rate = (
+        round(chapter_plan_success_count / attempted, 4) if attempted else 0.0
+    )
+    writer_plan_follow_count = sum(
+        bool(item.get("writer_plan_followed")) for item in sections
+    )
+    writer_plan_follow_rate = (
+        round(writer_plan_follow_count / attempted, 4) if attempted else 0.0
+    )
+    first_pass_after_plan_count = sum(
+        bool(item.get("first_pass_after_plan")) for item in sections
+    )
+    first_pass_after_plan_rate = (
+        round(first_pass_after_plan_count / attempted, 4) if attempted else 0.0
+    )
     integrity = [
         {"run_id": item.get("run_id"), "problems": item.get("integrity", [])}
         for item in combinations
@@ -207,6 +225,9 @@ def aggregate(
             integrity_codes["story_bible_revision_changed"] == 0
         ),
         "provider_errors_zero": provider_errors == 0,
+        "chapter_plan_success_at_least_95pct": (
+            chapter_plan_success_rate >= 0.95
+        ),
         "illegal_thread_change_commits_zero": (
             illegal_thread_change_commits == 0
         ),
@@ -257,6 +278,12 @@ def aggregate(
         "contract_pass_rate": contract_rate,
         "writer_first_pass_pass": writer_first_pass_count,
         "writer_first_pass_rate": writer_first_pass_rate,
+        "chapter_plan_success": chapter_plan_success_count,
+        "chapter_plan_success_rate": chapter_plan_success_rate,
+        "writer_plan_followed": writer_plan_follow_count,
+        "writer_plan_follow_rate": writer_plan_follow_rate,
+        "first_pass_after_plan": first_pass_after_plan_count,
+        "first_pass_after_plan_rate": first_pass_after_plan_rate,
         "writer_retries": sum(
             bool(item.get("writer_retry_performed")) for item in sections
         ),
@@ -282,7 +309,15 @@ def aggregate(
         "data_integrity_violation_codes": dict(integrity_codes.most_common()),
         "provider_errors": provider_errors,
         "provider_calls": sum(
-            int(item.get("writer_calls", 0)) for item in sections
+            int(item.get("writer_calls", 0))
+            + int(item.get("planner_calls", 0))
+            for item in sections
+        ),
+        "planner_calls": sum(
+            int(item.get("planner_calls", 0)) for item in sections
+        ),
+        "planner_tokens": sum(
+            int(item.get("planner_tokens", 0)) for item in sections
         ),
         "prompt_tokens": sum(int(item.get("prompt_tokens", 0)) for item in sections),
         "completion_tokens": sum(

@@ -658,6 +658,23 @@ def _section_metrics(
             if transaction.section_budget_plan
             else {}
         ),
+        "chapter_plan": (
+            transaction.chapter_plan.model_dump(mode="json")
+            if transaction.chapter_plan
+            else {}
+        ),
+        "chapter_plan_validation_report": (
+            transaction.chapter_plan_validation_report.model_dump(mode="json")
+            if transaction.chapter_plan_validation_report
+            else {}
+        ),
+        "chapter_plan_success": transaction.chapter_plan_success,
+        "writer_plan_follow_report": (
+            transaction.writer_plan_follow_report.model_dump(mode="json")
+            if transaction.writer_plan_follow_report
+            else {}
+        ),
+        "writer_plan_followed": transaction.writer_plan_followed,
         "initial_length_report": (
             transaction.initial_length_report.model_dump(mode="json")
             if transaction.initial_length_report
@@ -695,6 +712,7 @@ def _section_metrics(
         ),
         "prompt_tokens": int(transaction.usage.get("prompt_tokens", 0)),
         "completion_tokens": int(transaction.usage.get("completion_tokens", 0)),
+        "planner_tokens": int(transaction.usage.get("planner_tokens", 0)),
         "retry_tokens": int(transaction.usage.get("retry_tokens", 0)),
         "repair_tokens": int(transaction.usage.get("repair_tokens", 0)),
         "total_tokens": int(transaction.usage.get("total_tokens", 0)),
@@ -703,6 +721,11 @@ def _section_metrics(
         "retry_count": transaction.writer_retry_count,
         "writer_retry_performed": transaction.writer_retry_performed,
         "writer_first_pass_pass": transaction.writer_first_pass_pass,
+        "first_pass_after_plan": bool(
+            transaction.chapter_plan_success
+            and transaction.writer_first_pass_pass
+        ),
+        "planner_calls": transaction.planner_calls,
         "writer_calls": transaction.writer_calls,
         "repair_used": transaction.repair_performed,
         "repair_performed": transaction.repair_performed,
@@ -1100,6 +1123,10 @@ async def run_sequence(
                 "contract_pass": 0,
                 "repairs": 0,
                 "writer_first_pass_pass": 0,
+                "chapter_plan_success": 0,
+                "writer_plan_followed": 0,
+                "first_pass_after_plan": 0,
+                "planner_calls": 0,
                 "writer_retries": 0,
                 "hard_rejects": 0,
                 "total_tokens": 0,
@@ -1208,6 +1235,21 @@ async def run_sequence(
         report["summary"]["writer_first_pass_pass"] = int(
             report["summary"].get("writer_first_pass_pass", 0)
         ) + int(transaction.writer_first_pass_pass)
+        report["summary"]["chapter_plan_success"] = int(
+            report["summary"].get("chapter_plan_success", 0)
+        ) + int(transaction.chapter_plan_success)
+        report["summary"]["writer_plan_followed"] = int(
+            report["summary"].get("writer_plan_followed", 0)
+        ) + int(transaction.writer_plan_followed)
+        report["summary"]["first_pass_after_plan"] = int(
+            report["summary"].get("first_pass_after_plan", 0)
+        ) + int(
+            transaction.chapter_plan_success
+            and transaction.writer_first_pass_pass
+        )
+        report["summary"]["planner_calls"] = int(
+            report["summary"].get("planner_calls", 0)
+        ) + int(transaction.planner_calls)
         report["summary"]["writer_retries"] = int(
             report["summary"].get("writer_retries", 0)
         ) + int(transaction.writer_retry_performed)
@@ -1288,6 +1330,21 @@ async def run_sequence(
     ) if report["summary"]["attempted"] else 0.0
     report["summary"]["writer_first_pass_rate"] = round(
         int(report["summary"].get("writer_first_pass_pass", 0))
+        / report["summary"]["attempted"],
+        4,
+    ) if report["summary"]["attempted"] else 0.0
+    report["summary"]["chapter_plan_success_rate"] = round(
+        int(report["summary"].get("chapter_plan_success", 0))
+        / report["summary"]["attempted"],
+        4,
+    ) if report["summary"]["attempted"] else 0.0
+    report["summary"]["writer_plan_follow_rate"] = round(
+        int(report["summary"].get("writer_plan_followed", 0))
+        / report["summary"]["attempted"],
+        4,
+    ) if report["summary"]["attempted"] else 0.0
+    report["summary"]["first_pass_after_plan_rate"] = round(
+        int(report["summary"].get("first_pass_after_plan", 0))
         / report["summary"]["attempted"],
         4,
     ) if report["summary"]["attempted"] else 0.0

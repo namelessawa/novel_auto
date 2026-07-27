@@ -8,6 +8,7 @@ from typing import Protocol
 
 from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
+from story.chapter_plan import ChapterPlan
 from story.context_builder import ContextPackage
 from story.models import SectionGoal, WriterCandidate
 from story.repair_patch import RepairPatchSet
@@ -28,7 +29,15 @@ class WriterResult:
     repair_patches: RepairPatchSet | None = None
 
 
+@dataclass(frozen=True)
+class PlannerResult:
+    plan: ChapterPlan
+    usage: dict[str, int]
+
+
 class WriterProtocol(Protocol):
+    async def plan(self, context: ContextPackage, goal: SectionGoal) -> PlannerResult: ...
+
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult: ...
 
     async def retry(
@@ -45,6 +54,36 @@ class WriterProtocol(Protocol):
 
 
 class AuthorWriter:
+    PLANNER_SYSTEM_PROMPT = """You are the internal planning pass of one novel Writer.
+Return one ChapterPlan JSON object and nothing else. This is temporary section
+planning, not canon, memory, state, or a separate story agent.
+
+You may only allocate the required event IDs and required end-state IDs supplied
+by the frozen NarrativeContract and EventExecutionPlan. You must not create a
+person, location, item, organization, event, thread, state delta, memory,
+background fact, history, relationship, injury, casualty, number, date, or world
+rule. Copy IDs exactly. Do not paraphrase IDs.
+
+Use exactly four segments in this order: opening, development, conflict,
+resolution. Segment target_chars must sum exactly to SectionBudgetPlan
+target_chars. Bind every required event to exactly one segment, preserve event
+order, list every required event in required_events, list every required end
+state in required_end_states, and preserve all server stop conditions. The
+resolution segment lands the required end states. StyleBalanceContract controls
+expression only; it may not change event count, structure, or length."""
+
+    PLANNING_WRITER_PROMPT = """
+The ChapterPlan below is mandatory. Write its four segments in order and allocate
+attention according to target_chars. Complete only the listed existing events.
+After segment 4 reaches every required end state and the minimum length, stop.
+Do not create plot to fill length. Length must come from elaborating existing
+events, not from new people, background, conflict, history, or world rules.
+
+Return chapter_evidence with exactly one record for each segment 1-4. Each record
+contains only the event IDs actually completed in that planned segment. This
+evidence is diagnostic and never overrides prose validation.
+"""
+
     SYSTEM_PROMPT = """你是长篇小说 Writer。你收到十一个按优先级隔离的上下文槽位。
 NarrativeContract 是本节人物、事实、事件链、时间压力和固定结局的正文硬契约；
 StoryBible 是主题与世界规则的最高权威；CanonicalState 是当前事实的唯一权威；
@@ -63,13 +102,17 @@ Style controls expression, not event count and not chapter length.
 只返回一个 JSON 对象，字段严格为：
 narrative_text, title, section_summary, event_evidence, end_state_evidence,
 state_delta, threads_opened,
-threads_advanced, threads_resolved, memory_records, consistency_notes。
+threads_advanced, threads_resolved, memory_records, consistency_notes,
+chapter_evidence。
 
 最小合法形态是：
 {"narrative_text":"连续正文","title":"小标题","section_summary":"事实摘要",
 "event_evidence":[],"end_state_evidence":[],
 "state_delta":[],"threads_opened":[],"threads_advanced":[],"threads_resolved":[],
-"memory_records":[],"consistency_notes":[]}
+"memory_records":[],"consistency_notes":[],
+"chapter_evidence":[{"segment":1,"events_completed":[]},
+{"segment":2,"events_completed":[]},{"segment":3,"events_completed":[]},
+{"segment":4,"events_completed":[]}]}
 没有确定变化时保持数组为空，不要用 null。state_delta 项形如
 {"op":"set","path":"/characters/角色ID/字段","value":"新值",
 "evidence":"正文中逐字出现的短句","confidence":0.9}。
@@ -145,6 +188,35 @@ remove_reason, preserve identifiers, and max_remove_chars exactly. Never put
 text into a COMPACT patch and never choose a different deletion span.
 """
 
+    async def plan(self, context: ContextPackage, goal: SectionGoal) -> PlannerResult:
+        del goal
+        output_schema = json.dumps(
+            ChapterPlan.model_json_schema(),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        response = await llm_client.chat(
+            system_prompt=(
+                self.PLANNER_SYSTEM_PROMPT
+                + "\nThe following JSON Schema is the only output contract; "
+                "additionalProperties=false:\n"
+                + output_schema
+            ),
+            user_prompt=json.dumps(
+                self._planner_payload(context),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+            temperature=0.0,
+            max_tokens=2048,
+            agent_id="author_writer_planner",
+            priority="critical",
+        )
+        return PlannerResult(
+            plan=self._parse_plan(response.content),
+            usage=self._usage(response),
+        )
+
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult:
         output_schema = json.dumps(
             WriterCandidate.model_json_schema(),
@@ -155,6 +227,7 @@ text into a COMPACT patch and never choose a different deletion span.
             system_prompt=(
                 self.SYSTEM_PROMPT
                 + self.LENGTH_SYSTEM_PROMPT
+                + self.PLANNING_WRITER_PROMPT
                 + "\n以下 JSON Schema 是唯一输出契约；additionalProperties=false：\n"
                 + output_schema
             ),
@@ -212,6 +285,7 @@ text into a COMPACT patch and never choose a different deletion span.
             system_prompt=(
                 self.SYSTEM_PROMPT
                 + self.LENGTH_SYSTEM_PROMPT
+                + self.PLANNING_WRITER_PROMPT
                 + self.RETRY_SYSTEM_PROMPT
                 + "\n以下 JSON Schema 是唯一输出契约；additionalProperties=false：\n"
                 + output_schema
@@ -279,6 +353,19 @@ text into a COMPACT patch and never choose a different deletion span.
             return WriterCandidate.model_validate(payload)
         except Exception as exc:
             raise WriterOutputError(f"WriterCandidate validation failed: {exc}") from exc
+
+    @staticmethod
+    def _parse_plan(content: str) -> ChapterPlan:
+        try:
+            payload = parse_llm_json((content or "").strip())
+        except json.JSONDecodeError as exc:
+            raise WriterOutputError("Writer planner returned invalid JSON") from exc
+        try:
+            return ChapterPlan.model_validate(payload)
+        except Exception as exc:
+            raise WriterOutputError(
+                f"ChapterPlan validation failed: {exc}"
+            ) from exc
 
     @staticmethod
     def _parse_repair_patches(content: str) -> RepairPatchSet:
@@ -390,8 +477,38 @@ text into a COMPACT patch and never choose a different deletion span.
             for item in budget_plan.segments
         )
         balance = budget_plan.style_balance_contract
+        chapter_plan = context.chapter_plan
+        plan_lines = ""
+        if chapter_plan is not None:
+            rendered_segments = [
+                (
+                    f"Segment {segment.order}: 目标={segment.purpose}; "
+                    f"长度={segment.target_chars}; "
+                    f"事件={json.dumps(segment.events, ensure_ascii=False)}"
+                )
+                for segment in sorted(
+                    chapter_plan.segments,
+                    key=lambda item: item.order,
+                )
+            ]
+            plan_lines = (
+                "\n## 你的章节计划\n"
+                + "\n".join(rendered_segments)
+                + "\nrequired_end_states="
+                + json.dumps(
+                    chapter_plan.required_end_states,
+                    ensure_ascii=False,
+                )
+                + "\nstop_condition="
+                + json.dumps(
+                    chapter_plan.stop_condition,
+                    ensure_ascii=False,
+                )
+                + "\n完成第四段后停止。\n"
+            )
         return (
-            "\n\n## 服务端最终执行令（输出前必须逐项自检）\n"
+            plan_lines
+            + "\n\n## 服务端最终执行令（输出前必须逐项自检）\n"
             f"narrative_text 中心目标 {budget_plan.target_chars} 字，硬接受区间 "
             f"{budget_plan.min_chars}-{budget_plan.max_chars} 字。\n"
             "按以下四部分实际写足，不得合并成提纲：\n"
@@ -405,8 +522,42 @@ text into a COMPACT patch and never choose a different deletion span.
             f"限制：{'；'.join(balance.limits)}。\n"
             f"禁止：{'；'.join(balance.forbidden)}。\n"
             "如果尚未达到最低长度，只能扩写已有动作、环境、已有人物互动或已存在"
-            "情绪。禁止用新事实补字数。不要输出统计过程。\n"
+            "情绪。不要创造新的剧情来填充长度。禁止用新人物、新背景、新冲突或"
+            "新事实补字数。不要输出统计过程。\n"
         )
+
+    @staticmethod
+    def _planner_payload(context: ContextPackage) -> dict:
+        narrative_contract = (
+            context.narrative_contract.model_dump(mode="json")
+            if context.narrative_contract
+            else {}
+        )
+        event_plan = (
+            context.event_execution_plan.model_dump(mode="json")
+            if context.event_execution_plan
+            else {}
+        )
+        budget_plan = (
+            context.section_budget_plan.model_dump(mode="json")
+            if context.section_budget_plan
+            else {}
+        )
+        style_balance = (
+            context.section_budget_plan.style_balance_contract.model_dump(
+                mode="json"
+            )
+            if context.section_budget_plan
+            else {}
+        )
+        return {
+            "story_bible": context.slots.get("story_bible", ""),
+            "canonical_state": context.slots.get("canonical_state", ""),
+            "narrative_contract": narrative_contract,
+            "event_execution_plan": event_plan,
+            "section_budget_plan": budget_plan,
+            "style_balance_contract": style_balance,
+        }
 
     @staticmethod
     def _usage(response) -> dict[str, int]:
@@ -423,6 +574,7 @@ text into a COMPACT patch and never choose a different deletion span.
 
 __all__ = [
     "AuthorWriter",
+    "PlannerResult",
     "WriterOutputError",
     "WriterProtocol",
     "WriterResult",

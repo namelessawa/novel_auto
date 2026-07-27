@@ -7,6 +7,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from story.chapter_plan import ChapterEvidence, ChapterPlan
+from story.chapter_plan_validator import (
+    ChapterPlanValidationReport,
+    WriterPlanFollowReport,
+)
 from story.event_execution import EventExecutionPlan
 from story.narrative_contract import (
     NarrativeContract,
@@ -312,6 +317,7 @@ class WriterCandidate(StoryModel):
     threads_resolved: list[StoryThread] = Field(default_factory=list)
     memory_records: list[MemoryRecord] = Field(default_factory=list)
     consistency_notes: list[str] = Field(default_factory=list)
+    chapter_evidence: list[ChapterEvidence] = Field(default_factory=list)
     title: str = ""
 
     @field_validator(
@@ -323,6 +329,7 @@ class WriterCandidate(StoryModel):
         "threads_resolved",
         "memory_records",
         "consistency_notes",
+        "chapter_evidence",
         mode="before",
     )
     @classmethod
@@ -385,6 +392,7 @@ class ContextManifest(StoryModel):
 
 TransactionPhase = Literal[
     "prepared",
+    "planned",
     "generated",
     "validated",
     "committing",
@@ -410,6 +418,9 @@ class GenerationTransaction(StoryModel):
     writer_retry_count: int = Field(default=0, ge=0, le=1)
     writer_retry_performed: bool = False
     writer_first_pass_pass: bool = False
+    planner_calls: int = Field(default=0, ge=0, le=1)
+    chapter_plan_success: bool = False
+    writer_plan_followed: bool = False
     repair_performed: bool = False
     committed: bool = False
     candidate: WriterCandidate | None = None
@@ -418,6 +429,9 @@ class GenerationTransaction(StoryModel):
     event_execution_plan: EventExecutionPlan | None = None
     section_writing_plan: SectionWritingPlan | None = None
     section_budget_plan: SectionBudgetPlan | None = None
+    chapter_plan: ChapterPlan | None = None
+    chapter_plan_validation_report: ChapterPlanValidationReport | None = None
+    writer_plan_follow_report: WriterPlanFollowReport | None = None
     initial_preflight_report: WriterPreflightReport | None = None
     final_preflight_report: WriterPreflightReport | None = None
     initial_length_report: SectionLengthReport | None = None

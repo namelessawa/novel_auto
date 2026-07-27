@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 import novel_manager
 from auth import User, get_current_user
 from sections.section_store import get_section_store
+from story.chapter_plan import chapter_plan_prompt_payload
 from story.event_execution import event_execution_plan_prompt_payload
 from story.migrations import ensure_story_domain
 from story.models import (
@@ -495,6 +496,24 @@ def _make_author_executor(goal: SectionGoal):
                 if transaction.section_budget_plan
                 else {}
             ),
+            "chapter_plan": (
+                chapter_plan_prompt_payload(transaction.chapter_plan)
+                if transaction.chapter_plan
+                else {}
+            ),
+            "chapter_plan_validation_report": (
+                transaction.chapter_plan_validation_report.model_dump(mode="json")
+                if transaction.chapter_plan_validation_report
+                else {}
+            ),
+            "chapter_plan_success": transaction.chapter_plan_success,
+            "writer_plan_follow_report": (
+                transaction.writer_plan_follow_report.model_dump(mode="json")
+                if transaction.writer_plan_follow_report
+                else {}
+            ),
+            "writer_plan_followed": transaction.writer_plan_followed,
+            "planner_calls": transaction.planner_calls,
             "initial_preflight_report": (
                 transaction.initial_preflight_report.model_dump(mode="json")
                 if transaction.initial_preflight_report

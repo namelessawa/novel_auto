@@ -44,6 +44,11 @@ def _matrix() -> dict:
                     "repair_performed": section == 2,
                     "repair_success": section == 2,
                     "writer_first_pass_pass": section != 2,
+                    "chapter_plan_success": True,
+                    "writer_plan_followed": True,
+                    "first_pass_after_plan": section != 2,
+                    "planner_calls": 1,
+                    "planner_tokens": 10,
                     "writer_retry_performed": False,
                     "repair_patch_count": 1 if section == 2 else 0,
                     "repair_patch_types": ["insert"] if section == 2 else [],
@@ -108,7 +113,11 @@ def test_stage1_aggregate_requires_and_accepts_complete_45_section_matrix() -> N
     assert summary["repair_rate"] == 0.3333
     assert summary["writer_first_pass_rate"] == 0.6667
     assert summary["repair_success_rate"] == 1.0
-    assert summary["provider_calls"] == 60
+    assert summary["provider_calls"] == 105
+    assert summary["planner_calls"] == 45
+    assert summary["chapter_plan_success_rate"] == 1.0
+    assert summary["writer_plan_follow_rate"] == 1.0
+    assert summary["first_pass_after_plan_rate"] == 0.6667
     assert summary["total_tokens"] == 6750
     assert all(summary["gate_checks"].values())
 
@@ -200,6 +209,22 @@ def test_mini_matrix_requires_eight_writer_first_passes() -> None:
     assert summary["writer_first_pass_pass"] == 7
     assert summary["writer_first_pass_rate"] == 0.4667
     assert summary["gate_checks"]["writer_first_pass_at_least_8_of_15"] is False
+    assert summary["gate"] == "MINI_MATRIX_FAIL"
+
+
+def test_mini_matrix_requires_95pct_valid_chapter_plans() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:5]
+    matrix["combinations"][0]["sections"][0]["chapter_plan_success"] = False
+
+    summary = aggregate(matrix, expected_combinations=5, sections_per_combo=3)
+
+    assert summary["chapter_plan_success"] == 14
+    assert summary["chapter_plan_success_rate"] == 0.9333
+    assert (
+        summary["gate_checks"]["chapter_plan_success_at_least_95pct"]
+        is False
+    )
     assert summary["gate"] == "MINI_MATRIX_FAIL"
 
 
