@@ -115,6 +115,12 @@ def aggregate(
     contract_pass = sum(bool(item.get("narrative_contract_pass")) for item in sections)
     repaired = [item for item in sections if item.get("repair_performed")]
     repair_success = sum(bool(item.get("repair_success")) for item in repaired)
+    writer_first_pass_count = sum(
+        bool(item.get("writer_first_pass_pass")) for item in sections
+    )
+    writer_first_pass_rate = (
+        round(writer_first_pass_count / attempted, 4) if attempted else 0.0
+    )
     integrity = [
         {"run_id": item.get("run_id"), "problems": item.get("integrity", [])}
         for item in combinations
@@ -214,6 +220,7 @@ def aggregate(
         gate_checks = {
             **common_checks,
             "committed_at_least_14_of_15": committed >= 14,
+            "writer_first_pass_at_least_8_of_15": writer_first_pass_count >= 8,
             "contract_accepted_at_least_93pct": contract_rate >= 0.93,
             "repair_after_accepted_at_least_90pct": repair_success_rate >= 0.90,
             "length_900_1100_at_least_93pct": length_in_range_rate >= 0.93,
@@ -248,6 +255,11 @@ def aggregate(
         "rejected": attempted - committed,
         "contract_pass": contract_pass,
         "contract_pass_rate": contract_rate,
+        "writer_first_pass_pass": writer_first_pass_count,
+        "writer_first_pass_rate": writer_first_pass_rate,
+        "writer_retries": sum(
+            bool(item.get("writer_retry_performed")) for item in sections
+        ),
         "repairs": len(repaired),
         "repair_rate": round(len(repaired) / attempted, 4) if attempted else 0.0,
         "repair_success": repair_success,
@@ -277,6 +289,7 @@ def aggregate(
             int(item.get("completion_tokens", 0)) for item in sections
         ),
         "repair_tokens": sum(int(item.get("repair_tokens", 0)) for item in sections),
+        "retry_tokens": sum(int(item.get("retry_tokens", 0)) for item in sections),
         "total_tokens": sum(int(item.get("total_tokens", 0)) for item in sections),
         "required_events_completed": sum(
             int(item.get("required_events_completed", 0)) for item in sections
@@ -333,18 +346,19 @@ def _render_markdown(matrix: dict[str, Any]) -> str:
         "",
         "## Combinations",
         "",
-        "| Theme | Style | Attempted | Committed | Contract | Repair | Reject | Tokens | Integrity |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| Theme | Style | Attempted | Committed | First pass | Contract | Repair | Reject | Tokens | Integrity |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for item in matrix.get("combinations", []):
         combo = item["summary"]
         lines.append(
-            "| {theme} | {style} | {attempted} | {committed} | {contract_pass} | "
+            "| {theme} | {style} | {attempted} | {committed} | {first_pass} | {contract_pass} | "
             "{repairs} | {hard_rejects} | {total_tokens} | {integrity} |".format(
                 theme=item["theme"],
                 style=item["style"],
                 attempted=combo.get("attempted", 0),
                 committed=combo.get("committed", 0),
+                first_pass=combo.get("writer_first_pass_pass", 0),
                 contract_pass=combo.get("contract_pass", 0),
                 repairs=combo.get("repairs", 0),
                 hard_rejects=combo.get("hard_rejects", 0),

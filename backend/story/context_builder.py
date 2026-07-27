@@ -83,6 +83,7 @@ class ContextPackage:
     prompt: str
     slots: dict[str, str]
     manifest: ContextManifest
+    event_execution_plan: EventExecutionPlan | None = None
     writing_plan: SectionWritingPlan | None = None
     section_budget_plan: SectionBudgetPlan | None = None
 
@@ -388,6 +389,7 @@ class ContextBuilder:
             prompt=prompt,
             slots=slots,
             manifest=manifest,
+            event_execution_plan=event_execution_plan,
             writing_plan=section_writing_plan,
             section_budget_plan=section_budget_plan,
         )

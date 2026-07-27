@@ -12,6 +12,7 @@ from story.context_builder import ContextPackage
 from story.models import SectionGoal, WriterCandidate
 from story.repair_patch import RepairPatchSet
 from story.repair_plan import RepairPlan, repair_patch_prompt_payload
+from story.writer_preflight import WriterPreflightReport
 
 
 class WriterOutputError(RuntimeError):
@@ -30,6 +31,14 @@ class WriterResult:
 class WriterProtocol(Protocol):
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult: ...
 
+    async def retry(
+        self,
+        context: ContextPackage,
+        goal: SectionGoal,
+        candidate: WriterCandidate,
+        preflight_report: WriterPreflightReport,
+    ) -> WriterResult: ...
+
     async def repair(
         self, candidate: WriterCandidate, plan: RepairPlan
     ) -> WriterResult: ...
@@ -43,6 +52,7 @@ StoryBible 是主题与世界规则的最高权威；CanonicalState 是当前事
 
 权威顺序必须遵守：NarrativeContract > StoryBible / CanonicalState > StyleContract。
 风格要求若不能在现有事件链内完成，则允许少满足一项风格特征，不允许新增事实。
+Style controls expression, not event count and not chapter length.
 不得靠新增打斗、亲属、陪同者、数字、日期、伤势或幕后责任人满足风格；不得为了
 含蓄、悬念或格式而省略 NarrativeContract 的必要事件和最终状态。
 
@@ -95,6 +105,18 @@ resolution_evidence。正文之外不要输出解释、Markdown 或思考过程�
 禁止输出 narrative_text、state_delta、threads、memory、summary、title、解释、Markdown
 或内部分析。即使你认为原文已经足够，也必须返回至少一个有效 patch。"""
 
+    RETRY_SYSTEM_PROMPT = """上一版章节没有达到交付要求。
+不要解释，不要修补上一版，也不要输出差异；重新生成一份完整正文。
+
+必须满足：
+1. SectionBudgetPlan 的长度范围和四段内容比例。
+2. EventExecutionPlan 中的所有必要事件。
+3. NarrativeContract 中的全部最终状态。
+4. 当前风格，但风格只控制表达，不控制事件数量或章节长度。
+
+不要增加新人物、新背景、新历史、新关系、新伤亡、新伤势、新数字、日期或世界规则。
+Writer Retry 只有这一次。正文之外仍必须遵守 WriterCandidate JSON Schema。"""
+
     LENGTH_SYSTEM_PROMPT = """
 SectionWritingPlan and SectionBudgetPlan are server-owned and mandatory. Follow
 the four segment budgets and hard maxima. Write within the min_chars/max_chars range
@@ -129,32 +151,6 @@ text into a COMPACT patch and never choose a different deletion span.
             ensure_ascii=False,
             separators=(",", ":"),
         )
-        writing_plan = context.writing_plan
-        budget_plan = context.section_budget_plan
-        final_directive = ""
-        if writing_plan is not None and budget_plan is not None:
-            part_lines = "\n".join(
-                f"- {item.name}: 约 {item.budget} 字，最多 {item.max_chars} 字"
-                for item in budget_plan.segments
-            )
-            balance = budget_plan.style_balance_contract
-            final_directive = (
-                "\n\n## 服务端最终执行令（输出前必须逐项自检）\n"
-                f"narrative_text 中心目标 {budget_plan.target_chars} 字，硬接受区间 "
-                f"{budget_plan.min_chars}-{budget_plan.max_chars} 字。\n"
-                "按以下四部分实际写足，不得合并成提纲：\n"
-                f"{part_lines}\n"
-                "先完成全部 required_events，再明确落实全部 required_end_states。"
-                "停止条件同时满足时必须立即结束：全部必要事件完成、全部最终状态达到、"
-                f"非空白字符不少于 {budget_plan.min_chars}。不得超过 "
-                f"{budget_plan.max_chars} 字；不得在结束后增加新人物、背景、冲突、历史、"
-                "关系或解释。\n"
-                f"风格平衡：{balance.instruction}\n"
-                f"限制：{'；'.join(balance.limits)}。\n"
-                f"禁止：{'；'.join(balance.forbidden)}。\n"
-                "如果尚未达到最低长度，只能扩写已有动作、环境、已有人物互动或已存在"
-                "情绪。禁止用新事实补字数。不要输出统计过程。\n"
-            )
         response = await llm_client.chat(
             system_prompt=(
                 self.SYSTEM_PROMPT
@@ -162,13 +158,73 @@ text into a COMPACT patch and never choose a different deletion span.
                 + "\n以下 JSON Schema 是唯一输出契约；additionalProperties=false：\n"
                 + output_schema
             ),
-            user_prompt=context.prompt + final_directive,
+            user_prompt=context.prompt + self._final_directive(context),
             temperature=0.65,
             # Reasoning-capable OpenAI-compatible models may consume hidden/reasoning
             # budget before emitting the JSON candidate. Keep the bounded 8192 ceiling
             # available so valid section prose is not truncated before serialization.
             max_tokens=8192,
             agent_id="author_writer",
+            priority="critical",
+        )
+        return WriterResult(
+            candidate=self._parse(response.content),
+            usage=self._usage(response),
+        )
+
+    async def retry(
+        self,
+        context: ContextPackage,
+        goal: SectionGoal,
+        candidate: WriterCandidate,
+        preflight_report: WriterPreflightReport,
+    ) -> WriterResult:
+        del goal
+        output_schema = json.dumps(
+            WriterCandidate.model_json_schema(),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        retry_payload = {
+            "preflight_errors": preflight_report.retry_reasons(),
+            "writing_plan": (
+                context.writing_plan.model_dump(mode="json")
+                if context.writing_plan
+                else {}
+            ),
+            "section_budget_plan": (
+                context.section_budget_plan.model_dump(mode="json")
+                if context.section_budget_plan
+                else {}
+            ),
+            "event_plan": (
+                context.event_execution_plan.model_dump(mode="json")
+                if context.event_execution_plan
+                else {}
+            ),
+            "previous_draft_audit": {
+                "chars": preflight_report.chars,
+                "title": candidate.title,
+                "section_summary": candidate.section_summary,
+            },
+        }
+        response = await llm_client.chat(
+            system_prompt=(
+                self.SYSTEM_PROMPT
+                + self.LENGTH_SYSTEM_PROMPT
+                + self.RETRY_SYSTEM_PROMPT
+                + "\n以下 JSON Schema 是唯一输出契约；additionalProperties=false：\n"
+                + output_schema
+            ),
+            user_prompt=(
+                context.prompt
+                + self._final_directive(context)
+                + "\n\n## Writer Retry 输入\n"
+                + json.dumps(retry_payload, ensure_ascii=False, indent=2)
+            ),
+            temperature=0.45,
+            max_tokens=8192,
+            agent_id="author_writer_retry",
             priority="critical",
         )
         return WriterResult(
@@ -322,6 +378,35 @@ text into a COMPACT patch and never choose a different deletion span.
                     if key not in allowed_patch_fields
                 )
         return sorted(ignored)
+
+    @staticmethod
+    def _final_directive(context: ContextPackage) -> str:
+        writing_plan = context.writing_plan
+        budget_plan = context.section_budget_plan
+        if writing_plan is None or budget_plan is None:
+            return ""
+        part_lines = "\n".join(
+            f"- {item.name}: 约 {item.budget} 字，最多 {item.max_chars} 字"
+            for item in budget_plan.segments
+        )
+        balance = budget_plan.style_balance_contract
+        return (
+            "\n\n## 服务端最终执行令（输出前必须逐项自检）\n"
+            f"narrative_text 中心目标 {budget_plan.target_chars} 字，硬接受区间 "
+            f"{budget_plan.min_chars}-{budget_plan.max_chars} 字。\n"
+            "按以下四部分实际写足，不得合并成提纲：\n"
+            f"{part_lines}\n"
+            "先完成全部 required_events，再明确落实全部 required_end_states。"
+            "停止条件同时满足时必须立即结束：全部必要事件完成、全部最终状态达到、"
+            f"非空白字符不少于 {budget_plan.min_chars}。不得超过 "
+            f"{budget_plan.max_chars} 字；不得在结束后增加新人物、背景、冲突、历史、"
+            "关系或解释。\n"
+            f"风格平衡：{balance.instruction}\n"
+            f"限制：{'；'.join(balance.limits)}。\n"
+            f"禁止：{'；'.join(balance.forbidden)}。\n"
+            "如果尚未达到最低长度，只能扩写已有动作、环境、已有人物互动或已存在"
+            "情绪。禁止用新事实补字数。不要输出统计过程。\n"
+        )
 
     @staticmethod
     def _usage(response) -> dict[str, int]:

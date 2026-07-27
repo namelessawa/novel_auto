@@ -43,6 +43,8 @@ def _matrix() -> dict:
                     "evidenceless_state_delta_commits": 0,
                     "repair_performed": section == 2,
                     "repair_success": section == 2,
+                    "writer_first_pass_pass": section != 2,
+                    "writer_retry_performed": False,
                     "repair_patch_count": 1 if section == 2 else 0,
                     "repair_patch_types": ["insert"] if section == 2 else [],
                     "writer_calls": 2 if section == 2 else 1,
@@ -104,6 +106,7 @@ def test_stage1_aggregate_requires_and_accepts_complete_45_section_matrix() -> N
     assert summary["attempted"] == summary["committed"] == 45
     assert summary["contract_pass_rate"] == 1.0
     assert summary["repair_rate"] == 0.3333
+    assert summary["writer_first_pass_rate"] == 0.6667
     assert summary["repair_success_rate"] == 1.0
     assert summary["provider_calls"] == 60
     assert summary["total_tokens"] == 6750
@@ -157,6 +160,8 @@ def test_mini_matrix_aggregate_uses_14_of_15_gate() -> None:
     assert summary["committed"] == 14
     assert summary["contract_pass_rate"] == 0.9333
     assert summary["length_in_range_rate"] == 1.0
+    assert summary["writer_first_pass_pass"] == 10
+    assert summary["gate_checks"]["writer_first_pass_at_least_8_of_15"] is True
 
 
 def test_mini_matrix_fails_when_fewer_than_93pct_are_900_to_1100() -> None:
@@ -170,6 +175,31 @@ def test_mini_matrix_fails_when_fewer_than_93pct_are_900_to_1100() -> None:
     assert summary["length_in_range_count"] == 13
     assert summary["length_in_range_rate"] == 0.8667
     assert summary["gate_checks"]["length_900_1100_at_least_93pct"] is False
+    assert summary["gate"] == "MINI_MATRIX_FAIL"
+
+
+def test_mini_matrix_requires_eight_writer_first_passes() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:5]
+    for item in [
+        section
+        for combination in matrix["combinations"]
+        for section in combination["sections"]
+    ]:
+        item["writer_first_pass_pass"] = False
+    all_sections = [
+        section
+        for combination in matrix["combinations"]
+        for section in combination["sections"]
+    ]
+    for item in all_sections[:7]:
+        item["writer_first_pass_pass"] = True
+
+    summary = aggregate(matrix, expected_combinations=5, sections_per_combo=3)
+
+    assert summary["writer_first_pass_pass"] == 7
+    assert summary["writer_first_pass_rate"] == 0.4667
+    assert summary["gate_checks"]["writer_first_pass_at_least_8_of_15"] is False
     assert summary["gate"] == "MINI_MATRIX_FAIL"
 
 

@@ -227,6 +227,7 @@ class RecordedLongRangeWriter:
         self.last_index = 0
         self.last_length = 300
         self.generate_calls = 0
+        self.retry_calls = 0
         self.repair_calls = 0
 
     async def generate(self, context, goal):
@@ -247,6 +248,24 @@ class RecordedLongRangeWriter:
                 "prompt_tokens": 0,
                 "completion_tokens": 0,
                 "repair_tokens": 0,
+                "total_tokens": 0,
+            },
+        )
+
+    async def retry(self, context, goal, candidate, preflight_report):
+        from story.writer import WriterResult
+
+        del context, goal, candidate, preflight_report
+        self.retry_calls += 1
+        return WriterResult(
+            _candidate(
+                _recorded_valid_text(self.last_index, self.last_length),
+                self.last_index,
+            ),
+            {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "retry_tokens": 0,
                 "total_tokens": 0,
             },
         )
@@ -664,13 +683,26 @@ def _section_metrics(
             if transaction.final_balance_report
             else {}
         ),
+        "initial_preflight_report": (
+            transaction.initial_preflight_report.model_dump(mode="json")
+            if transaction.initial_preflight_report
+            else {}
+        ),
+        "final_preflight_report": (
+            transaction.final_preflight_report.model_dump(mode="json")
+            if transaction.final_preflight_report
+            else {}
+        ),
         "prompt_tokens": int(transaction.usage.get("prompt_tokens", 0)),
         "completion_tokens": int(transaction.usage.get("completion_tokens", 0)),
+        "retry_tokens": int(transaction.usage.get("retry_tokens", 0)),
         "repair_tokens": int(transaction.usage.get("repair_tokens", 0)),
         "total_tokens": int(transaction.usage.get("total_tokens", 0)),
         "latency_seconds": round(latency, 4),
         "provider_errors": 0,
-        "retry_count": 0,
+        "retry_count": transaction.writer_retry_count,
+        "writer_retry_performed": transaction.writer_retry_performed,
+        "writer_first_pass_pass": transaction.writer_first_pass_pass,
         "writer_calls": transaction.writer_calls,
         "repair_used": transaction.repair_performed,
         "repair_performed": transaction.repair_performed,
@@ -1067,6 +1099,8 @@ async def run_sequence(
                 "committed": 0,
                 "contract_pass": 0,
                 "repairs": 0,
+                "writer_first_pass_pass": 0,
+                "writer_retries": 0,
                 "hard_rejects": 0,
                 "total_tokens": 0,
                 "estimated_cost": 0.0,
@@ -1171,6 +1205,12 @@ async def run_sequence(
         report["summary"]["committed"] += int(transaction.committed)
         report["summary"]["contract_pass"] += int(metrics["narrative_contract_pass"])
         report["summary"]["repairs"] += int(transaction.repair_performed)
+        report["summary"]["writer_first_pass_pass"] = int(
+            report["summary"].get("writer_first_pass_pass", 0)
+        ) + int(transaction.writer_first_pass_pass)
+        report["summary"]["writer_retries"] = int(
+            report["summary"].get("writer_retries", 0)
+        ) + int(transaction.writer_retry_performed)
         report["summary"]["hard_rejects"] += int(transaction.phase == "rejected")
         report["summary"]["total_tokens"] += metrics["total_tokens"]
         report["summary"]["estimated_cost"] = round(
@@ -1245,6 +1285,11 @@ async def run_sequence(
     ) if report["summary"]["attempted"] else 0.0
     report["summary"]["repair_rate"] = round(
         report["summary"]["repairs"] / report["summary"]["attempted"], 4
+    ) if report["summary"]["attempted"] else 0.0
+    report["summary"]["writer_first_pass_rate"] = round(
+        int(report["summary"].get("writer_first_pass_pass", 0))
+        / report["summary"]["attempted"],
+        4,
     ) if report["summary"]["attempted"] else 0.0
     report["summary"]["completed_at"] = datetime.now().astimezone().isoformat(
         timespec="seconds"

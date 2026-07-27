@@ -51,6 +51,7 @@ from story.persistence import (
 )
 from story.repair_patch import RepairPatchSet, RepairPatchValidator
 from story.repair_plan import RepairPlan, RepairPlanBuilder, RepairRegressionValidator
+from story.revision_guard import RevisionGuardError, TransactionRevisionGuard
 from story.section_budget import SectionBudgetPlan, SectionBudgetPlanBuilder
 from story.section_length_validator import (
     LengthValidationPhase,
@@ -61,6 +62,10 @@ from story.section_length_validator import (
 )
 from story.validator import StoryValidator
 from story.writer import AuthorWriter, WriterProtocol, WriterResult
+from story.writer_preflight import (
+    WriterPreflightReport,
+    WriterPreflightValidator,
+)
 from story.writing_plan import (
     SectionWritingPlan,
     SectionWritingPlanBuilder,
@@ -82,6 +87,12 @@ class CommitPendingError(RuntimeError):
 class StaleStoryBibleError(RuntimeError):
     def __init__(self, transaction: GenerationTransaction) -> None:
         super().__init__(transaction.error or "StoryBible revision became stale")
+        self.transaction = transaction
+
+
+class RevisionChainBrokenError(RuntimeError):
+    def __init__(self, transaction: GenerationTransaction) -> None:
+        super().__init__(transaction.error or "Canonical revision chain is broken")
         self.transaction = transaction
 
 
@@ -117,6 +128,7 @@ class AuthorGenerationService:
         event_plan_builder: EventExecutionPlanBuilder | None = None,
         writing_plan_builder: SectionWritingPlanBuilder | None = None,
         budget_plan_builder: SectionBudgetPlanBuilder | None = None,
+        preflight_validator: WriterPreflightValidator | None = None,
         repair_plan_builder: RepairPlanBuilder | None = None,
         context_builder: ContextBuilder | None = None,
     ) -> None:
@@ -141,10 +153,14 @@ class AuthorGenerationService:
         self.section_length_validator = SectionLengthValidator()
         self.ending_completion_validator = EndingCompletionValidator()
         self.section_balance_validator = SectionBalanceValidator()
+        self.writer_preflight_validator = (
+            preflight_validator or WriterPreflightValidator()
+        )
         self.repair_plan_builder = repair_plan_builder or RepairPlanBuilder()
         self.repair_regression_validator = RepairRegressionValidator()
         self.repair_patch_validator = RepairPatchValidator()
         self.context_builder = context_builder or ContextBuilder()
+        self.revision_guard = TransactionRevisionGuard()
         self._generation_lock = asyncio.Lock()
         self.recover()
 
@@ -175,6 +191,44 @@ class AuthorGenerationService:
                 generated = await self.generate(prepared)
                 transaction = self._record_generated(transaction, generated)
                 candidate = generated.candidate
+                initial_preflight_report = self.preflight(prepared, candidate)
+                transaction = transaction.model_copy(
+                    update={
+                        "initial_preflight_report": initial_preflight_report,
+                        "final_preflight_report": initial_preflight_report,
+                        "updated_at": utc_now(),
+                    }
+                )
+                self.transactions.save(transaction)
+                retry_method = getattr(self.writer, "retry", None)
+                if initial_preflight_report.retry_required and callable(retry_method):
+                    retried = await self.retry(
+                        prepared,
+                        candidate,
+                        initial_preflight_report,
+                    )
+                    candidate = retried.candidate
+                    final_preflight_report = self.preflight(prepared, candidate)
+                    transaction = transaction.model_copy(
+                        update={
+                            "candidate": candidate,
+                            "candidate_history": [
+                                *transaction.candidate_history,
+                                candidate,
+                            ],
+                            "writer_calls": 2,
+                            "writer_retry_count": 1,
+                            "writer_retry_performed": True,
+                            "final_preflight_report": final_preflight_report,
+                            "usage": self._merge_usage(
+                                transaction.usage,
+                                retried.usage,
+                                phase="retry",
+                            ),
+                            "updated_at": utc_now(),
+                        }
+                    )
+                    self.transactions.save(transaction)
                 (
                     narrative_report,
                     initial_length_report,
@@ -187,6 +241,11 @@ class AuthorGenerationService:
                 )
                 strict_report = self.validate(prepared, candidate)
                 report = strict_report
+                writer_first_pass_pass = bool(
+                    initial_preflight_report.accepted
+                    and narrative_report.accepted
+                    and strict_report.accepted
+                )
                 narrative_history = [narrative_report]
                 validation_history = [strict_report]
                 transaction = transaction.model_copy(
@@ -198,6 +257,7 @@ class AuthorGenerationService:
                         "style_validation_report": self._style_report(
                             prepared, candidate, narrative_report
                         ),
+                        "writer_first_pass_pass": writer_first_pass_pass,
                         "initial_length_report": initial_length_report,
                         "final_length_report": initial_length_report.model_copy(
                             update={"phase": "final"}
@@ -259,7 +319,7 @@ class AuthorGenerationService:
                         update={
                             "candidate": candidate,
                             "candidate_history": candidate_history,
-                            "writer_calls": 2,
+                            "writer_calls": min(3, transaction.writer_calls + 1),
                             "repair_performed": True,
                             "repair_patches": patch_set,
                             "repair_patch_report": patch_result.report,
@@ -269,7 +329,11 @@ class AuthorGenerationService:
                                     [*repaired.audit_codes, *patch_codes]
                                 )
                             ),
-                            "usage": self._merge_usage(transaction.usage, repaired.usage),
+                            "usage": self._merge_usage(
+                                transaction.usage,
+                                repaired.usage,
+                                phase="repair",
+                            ),
                             "updated_at": utc_now(),
                         }
                     )
@@ -407,6 +471,8 @@ class AuthorGenerationService:
             except GenerationRejected:
                 raise
             except StaleStoryBibleError:
+                raise
+            except RevisionChainBrokenError:
                 raise
             except Exception as exc:
                 # A committing transaction is intentionally left recoverable.
@@ -636,6 +702,7 @@ class AuthorGenerationService:
             story_bible_revision=bible.revision,
             canonical_state_revision=state.revision,
             target_canonical_revision=state.revision + 1,
+            journal_canonical_revision=state.revision,
             narrative_contract=narrative_contract,
             event_execution_plan=event_execution_plan,
             section_writing_plan=section_writing_plan,
@@ -733,6 +800,34 @@ class AuthorGenerationService:
 
     async def generate(self, prepared: PreparedGeneration) -> WriterResult:
         return await self.writer.generate(prepared.context, prepared.goal)
+
+    def preflight(
+        self,
+        prepared: PreparedGeneration,
+        candidate: WriterCandidate,
+    ) -> WriterPreflightReport:
+        return self.writer_preflight_validator.validate(
+            candidate=candidate,
+            contract=prepared.narrative_contract,
+            event_plan=prepared.event_execution_plan,
+            budget_plan=prepared.section_budget_plan,
+        )
+
+    async def retry(
+        self,
+        prepared: PreparedGeneration,
+        candidate: WriterCandidate,
+        preflight_report: WriterPreflightReport,
+    ) -> WriterResult:
+        retry_method = getattr(self.writer, "retry", None)
+        if not callable(retry_method):
+            raise RuntimeError("configured Writer does not support Writer Retry")
+        return await retry_method(
+            prepared.context,
+            prepared.goal,
+            candidate,
+            preflight_report,
+        )
 
     def validate(
         self,
@@ -1087,6 +1182,22 @@ class AuthorGenerationService:
                 )
                 raise StaleStoryBibleError(stale)
 
+            current_revision = self.states.load().revision
+            try:
+                if transaction.phase == "committing":
+                    self.revision_guard.ensure_recovery(
+                        transaction,
+                        current_revision=current_revision,
+                    )
+                else:
+                    self.revision_guard.ensure_commit(
+                        transaction,
+                        current_revision=current_revision,
+                    )
+            except RevisionGuardError as exc:
+                broken = self._mark_revision_chain_broken(transaction, exc)
+                raise RevisionChainBrokenError(broken) from exc
+
             committing = transaction.model_copy(
                 update={"phase": "committing", "updated_at": utc_now()}
             )
@@ -1105,6 +1216,14 @@ class AuthorGenerationService:
                 target_state,
                 base_revision=committing.canonical_state_revision,
             )
+            if committing.journal_canonical_revision != target_state.revision:
+                committing = committing.model_copy(
+                    update={
+                        "journal_canonical_revision": target_state.revision,
+                        "updated_at": utc_now(),
+                    }
+                )
+                self.transactions.save(committing)
             self._save_revision_target(
                 self.threads,
                 target_threads,
@@ -1124,6 +1243,29 @@ class AuthorGenerationService:
                 }
             )
             self.transactions.save(committed)
+
+    def _mark_revision_chain_broken(
+        self,
+        transaction: GenerationTransaction,
+        error: RevisionGuardError,
+    ) -> GenerationTransaction:
+        report = error.report
+        broken = transaction.model_copy(
+            update={
+                "phase": "rejected",
+                "committed": False,
+                "error_code": "REVISION_CHAIN_BROKEN",
+                "error": (
+                    "事务修订链不一致，拒绝提交或恢复："
+                    f"expected={report.expected_revision}, "
+                    f"journal={report.journal_revision}, "
+                    f"canonical={report.current_revision}, "
+                    f"target={report.target_revision}"
+                ),
+                "updated_at": utc_now(),
+            }
+        )
+        return self.transactions.save(broken)
 
     def _mark_stale_and_rollback(
         self, transaction: GenerationTransaction, actual_revision: int
@@ -1223,12 +1365,18 @@ class AuthorGenerationService:
         return MemoryRepositoryState.model_validate(payload)
 
     @staticmethod
-    def _merge_usage(left: dict[str, int], right: dict[str, int]) -> dict[str, int]:
+    def _merge_usage(
+        left: dict[str, int],
+        right: dict[str, int],
+        *,
+        phase: str = "repair",
+    ) -> dict[str, int]:
         merged = {
             key: int(left.get(key, 0)) + int(right.get(key, 0))
             for key in set(left) | set(right)
         }
-        merged["repair_tokens"] = int(left.get("repair_tokens", 0)) + int(
+        phase_key = "retry_tokens" if phase == "retry" else "repair_tokens"
+        merged[phase_key] = int(left.get(phase_key, 0)) + int(
             right.get("total_tokens", 0)
         )
         return merged
@@ -1239,5 +1387,6 @@ __all__ = [
     "CommitPendingError",
     "GenerationRejected",
     "PreparedGeneration",
+    "RevisionChainBrokenError",
     "StaleStoryBibleError",
 ]

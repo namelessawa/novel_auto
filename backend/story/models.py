@@ -18,6 +18,7 @@ from story.repair_patch import RepairPatchSet, RepairPatchValidationReport
 from story.repair_plan import RepairPlan
 from story.section_budget import SectionBudgetPlan
 from story.section_length_validator import SectionBalanceReport, SectionLengthReport
+from story.writer_preflight import WriterPreflightReport
 from story.writing_plan import SectionWritingPlan
 
 
@@ -404,7 +405,11 @@ class GenerationTransaction(StoryModel):
     story_bible_revision: int = Field(ge=1)
     canonical_state_revision: int = Field(ge=1)
     target_canonical_revision: int = Field(ge=1)
-    writer_calls: int = Field(default=0, ge=0, le=2)
+    journal_canonical_revision: int = Field(default=1, ge=1)
+    writer_calls: int = Field(default=0, ge=0, le=3)
+    writer_retry_count: int = Field(default=0, ge=0, le=1)
+    writer_retry_performed: bool = False
+    writer_first_pass_pass: bool = False
     repair_performed: bool = False
     committed: bool = False
     candidate: WriterCandidate | None = None
@@ -413,6 +418,8 @@ class GenerationTransaction(StoryModel):
     event_execution_plan: EventExecutionPlan | None = None
     section_writing_plan: SectionWritingPlan | None = None
     section_budget_plan: SectionBudgetPlan | None = None
+    initial_preflight_report: WriterPreflightReport | None = None
+    final_preflight_report: WriterPreflightReport | None = None
     initial_length_report: SectionLengthReport | None = None
     final_length_report: SectionLengthReport | None = None
     initial_ending_report: EndingCompletionReport | None = None

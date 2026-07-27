@@ -7,6 +7,7 @@
 
 * [Event Completion Repair](event-completion-repair-20260722.md) — 24/24 离线通过；真实小矩阵 9/15，结论 `EVENT_REPAIR_FAIL`，后续阶段未运行。
 * [Section Balance Control](section-balance-control-20260726.md) — Budget + Ending Gate + COMPACT；离线 24/24、6/6，真实 Mini 8/15，结论 `SECTION_BALANCE_FAIL`，45 节 Stage 1 未运行。
+* [Writer First-Pass Optimization](writer-first-pass-optimization-20260727.md) — Preflight + 单次 Retry + Revision Guard；真实 Mini 11/15、初稿直通 3/15，结论 `WRITER_FIRST_PASS_FAIL`。
 
 ## 起步阅读顺序
 
@@ -34,6 +35,7 @@
 
 | 时间 | verdict | 关键信号 |
 | --- | --- | --- |
+| 2026-07-27 | [writer-first-pass-optimization-20260727.md](writer-first-pass-optimization-20260727.md) | Preflight + Retry + Revision Guard；真实 Mini 11/15、first pass 3/15，**WRITER_FIRST_PASS_FAIL** |
 | 2026-07-27 | [section-balance-control-20260726.md](section-balance-control-20260726.md) | SectionBudget + Ending Gate + COMPACT；真实 Mini 8/15，**SECTION_BALANCE_FAIL** |
 | 2026-07-26 | [section-length-control-20260726.md](section-length-control-20260726.md) | WritingPlan + guarded EXPAND；离线 24/24、6/6，真实 Mini 9/15，**SECTION_LENGTH_FAIL** |
 | 2026-07-26 | [stage1-full-matrix-validation-20260726.md](stage1-full-matrix-validation-20260726.md) | 3 themes × 5 styles × 3 attempts，39/45 commit，**STAGE1_FAIL** |

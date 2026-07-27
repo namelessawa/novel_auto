@@ -54,8 +54,9 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "literary": StyleLengthContract(
         key="literary",
         instruction=(
-            "Use concrete description, environment, and existing-character interiority "
-            "to meet length; do not alter the event chain."
+            "Style controls expression, not structure. Every detail must serve an "
+            "existing character, required event, or existing environment; long "
+            "description without event function is forbidden."
         ),
         allowed_expansion=[
             "environment already present in the scene",
@@ -63,14 +64,17 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
             "existing-character interiority",
             "transitions between required actions",
         ],
-        forbidden_expansion=[*_COMMON_FORBIDDEN, "event substitution"],
+        forbidden_expansion=[
+            *_COMMON_FORBIDDEN,
+            "event substitution",
+            "long description without event function",
+        ],
     ),
     "noir_cold": StyleLengthContract(
         key="noir_cold",
         instruction=(
-            "Cold does not mean short. Keep sentences restrained and emotion low, "
-            "while meeting length through action, scene observation, dialogue pauses, "
-            "and existing-character scrutiny."
+            "Cold does not mean short or omission. Keep expression restrained while fully "
+            "showing the contracted action, decision, and result."
         ),
         allowed_expansion=[
             "existing action detail",
@@ -83,8 +87,8 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "warm_healing": StyleLengthContract(
         key="warm_healing",
         instruction=(
-            "Meet length through care, existing objects, and existing-character "
-            "interaction; required conflict and its outcome may not be removed."
+            "Warmth comes from concrete care actions, not more paragraphs. Required "
+            "conflict and its outcome may not be removed."
         ),
         allowed_expansion=[
             "care using an existing object",
@@ -92,7 +96,11 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
             "sensory comfort already supported by the scene",
             "response after the required conflict",
         ],
-        forbidden_expansion=[*_COMMON_FORBIDDEN, "deleting or softening required conflict"],
+        forbidden_expansion=[
+            *_COMMON_FORBIDDEN,
+            "deleting or softening required conflict",
+            "more than two consecutive emotional-description paragraphs",
+        ],
     ),
     "hot_blooded": StyleLengthContract(
         key="hot_blooded",
@@ -115,8 +123,8 @@ _STYLE_LENGTH_CONTRACTS: dict[str, StyleLengthContract] = {
     "classical_chapter": StyleLengthContract(
         key="classical_chapter",
         instruction=(
-            "Meet length with cadence, observation, and the existing action chain. "
-            "Do not invent history, dynasty, family, office, date, or character."
+            "Classical expression comes from syntax, rhythm, and narration around "
+            "the existing action chain. Never add historical background."
         ),
         allowed_expansion=[
             "cadence around existing actions",

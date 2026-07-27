@@ -36,7 +36,11 @@ from story.persistence import (
 )
 from story.runtime import drop_author_runtime, get_author_runtime
 from story.section_budget import section_budget_plan_prompt_payload
-from story.service import GenerationRejected, StaleStoryBibleError
+from story.service import (
+    GenerationRejected,
+    RevisionChainBrokenError,
+    StaleStoryBibleError,
+)
 from story.writing_plan import section_writing_plan_prompt_payload
 from tasks.task_manager import (
     ProgressUpdater,
@@ -427,6 +431,11 @@ def _make_author_executor(goal: SectionGoal):
             raise RuntimeError(
                 "STORY_BIBLE_REVISION_STALE: " + exc.transaction.error
             ) from exc
+        except RevisionChainBrokenError as exc:
+            updater.set(last_message=exc.transaction.error)
+            raise RuntimeError(
+                "REVISION_CHAIN_BROKEN: " + exc.transaction.error
+            ) from exc
         except GenerationRejected as exc:
             narrative_codes = [
                 item.code
@@ -486,6 +495,19 @@ def _make_author_executor(goal: SectionGoal):
                 if transaction.section_budget_plan
                 else {}
             ),
+            "initial_preflight_report": (
+                transaction.initial_preflight_report.model_dump(mode="json")
+                if transaction.initial_preflight_report
+                else {}
+            ),
+            "final_preflight_report": (
+                transaction.final_preflight_report.model_dump(mode="json")
+                if transaction.final_preflight_report
+                else {}
+            ),
+            "writer_first_pass_pass": transaction.writer_first_pass_pass,
+            "writer_retry_count": transaction.writer_retry_count,
+            "writer_retry_performed": transaction.writer_retry_performed,
             "initial_length_report": (
                 transaction.initial_length_report.model_dump(mode="json")
                 if transaction.initial_length_report

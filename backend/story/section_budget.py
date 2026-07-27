@@ -56,18 +56,22 @@ _STYLE_BALANCE_CONTRACTS: dict[str, StyleBalanceContract] = {
     "literary": StyleBalanceContract(
         key="literary",
         instruction=(
-            "Every added environmental, interior, or sensory detail must advance "
-            "a required event. Literary texture may not create another scene."
+            "Style controls expression, not structure. Every detail must serve an "
+            "existing character, required event, or existing environment."
         ),
         allowed=["event-serving environment", "event-serving interiority", "action detail"],
         limits=["each descriptive beat must connect to the current required action"],
-        forbidden=["new scene for literary effect", "description after stop conditions"],
+        forbidden=[
+            "new scene for literary effect",
+            "long description without event function",
+            "description after stop conditions",
+        ],
     ),
     "noir_cold": StyleBalanceContract(
         key="noir_cold",
         instruction=(
-            "Cold does not mean short. Use restrained dialogue and action detail "
-            "without omitting any required event."
+            "Cold does not mean short or omission. Use restrained expression while fully "
+            "showing action, decision, and result."
         ),
         allowed=["short sentences", "restrained dialogue", "existing action detail"],
         limits=["low emotion must still fill the server segment budgets"],
@@ -77,7 +81,7 @@ _STYLE_BALANCE_CONTRACTS: dict[str, StyleBalanceContract] = {
         key="warm_healing",
         instruction=(
             "Warmth comes from existing characters taking concrete care actions, "
-            "not from adding more description."
+            "not from adding more paragraphs."
         ),
         allowed=["care action", "existing-object interaction", "brief response"],
         limits=["at most two consecutive emotional-description paragraphs"],
@@ -93,8 +97,8 @@ _STYLE_BALANCE_CONTRACTS: dict[str, StyleBalanceContract] = {
     "classical_chapter": StyleBalanceContract(
         key="classical_chapter",
         instruction=(
-            "Classical cadence must come from syntax around the existing event chain, "
-            "not from invented history."
+            "Classical expression must come from syntax, rhythm, and narration around "
+            "the existing event chain, not from invented history."
         ),
         allowed=["cadence", "existing-character dialogue", "existing-scene observation"],
         limits=["all ornament must remain inside the current event"],
