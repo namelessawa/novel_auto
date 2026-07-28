@@ -211,3 +211,55 @@ and
 
 Next Gate: P4, product API/UI/export/audit UX and closure of the P0 baseline
 defects required by later hard Gates.
+
+## P4 — author evidence desk, recovery, exports, and warning-free baseline
+
+Status: **PASS**
+
+The author surface now presents a single evidence ledger for the frozen
+ContextManifest, deterministic plan, NarrativeContract, selected semantic
+memories, active StoryThreads, initial/Repair/final validation receipts, token
+and latency usage, rejection reasons, and transaction state. Recovery and both
+export actions are visible beside those receipts. The UI uses a restrained
+editorial manuscript-ledger hierarchy so authority and transaction evidence
+remain readable without turning diagnostics into a second runtime.
+
+The API boundary is allowlist-based. Public transaction and task payloads do
+not serialize provider configuration, credentials, raw provider payloads, or
+stack traces. Manuscript export includes only sections backed by committed
+transactions; rejected and staged candidates are excluded. Evidence export
+contains provenance, hashes, and public receipts, not candidate prose.
+Recovery resume is idempotent and remains subject to the same frozen-revision
+and full-validation commit path.
+
+The P0 baseline defects required by this hard Gate are closed:
+
+- source hashes canonicalize line endings before SHA-256, making calibration
+  reproducible on Windows without changing the frozen fixture or weakening a
+  Validator;
+- Starlette remains on FastAPI's supported stable 0.x line, removing the
+  Starlette/httpx deprecation warning;
+- every test-owned coroutine now uses pytest-asyncio's lifecycle, while the one
+  synchronous CLI probe uses a fresh loop that is explicitly closed. A
+  per-test forced-GC diagnostic located and verified all Windows Proactor
+  socket/loop leaks.
+
+Formal evidence:
+
+- Full backend regression with warnings fatal: 1568 passed, 0 failed,
+  0 warnings.
+- Story API, export/redaction, recovery, and calibration tests: 17 passed.
+- Author UI mock/error/recovery/export tests: 16 passed.
+- Frontend production build: passed with Vite 6.4.3, 59 modules transformed.
+- npm production audit: 0 vulnerabilities.
+- npm full audit: 0 vulnerabilities; high/critical: 0.
+- Changed-file Ruff and `git diff --check`: passed.
+- Provider calls/tokens: 0/0; Validator thresholds changed: 0; frozen fixtures
+  changed: 0.
+
+Machine-readable evidence:
+`.tmp/final-goal-20260728/p4/gate.json`, SHA-256
+`0C6473B9EBBEE6383139ACF202EB36443EF3D7E1CE323CC0B18C665A15C39A55`.
+
+Next Gate: P5, complete static analysis, compile checks, recorded author-mode
+smoke, and repository-wide acceptance prerequisites.

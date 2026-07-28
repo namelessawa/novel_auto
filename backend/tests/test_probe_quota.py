@@ -29,10 +29,19 @@ import pytest  # noqa: E402
 import probe_quota  # noqa: E402
 
 
+def _run_in_isolated_loop(awaitable):
+    """Run a CLI coroutine without replacing pytest-asyncio's policy loop."""
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(awaitable)
+    finally:
+        loop.close()
+
+
 def _run_probe_with_mock(mock_chat) -> int:
     """Patch llm_client.chat with the given AsyncMock and run _probe()."""
     with patch("nf_core.llm_client.llm_client.chat", mock_chat):
-        return asyncio.run(probe_quota._probe())
+        return _run_in_isolated_loop(probe_quota._probe())
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +147,9 @@ def test_main_no_args_uses_default_provider(monkeypatch, capsys) -> None:
     mock_resp.content = "ok"
     mock_resp.usage = {"total_tokens": 30}
     monkeypatch.setattr(sys, "argv", ["probe_quota"])
-    with patch("nf_core.llm_client.llm_client.chat", AsyncMock(return_value=mock_resp)):
+    with (
+        patch("nf_core.llm_client.llm_client.chat", AsyncMock(return_value=mock_resp)),
+        patch("probe_quota.asyncio.run", side_effect=_run_in_isolated_loop),
+    ):
         rc = probe_quota.main()
     assert rc == 0

@@ -780,6 +780,55 @@ export async function fetchAuthorLongRunStatus(novelId) {
   return assertOk(res)
 }
 
+export async function fetchAuthorMemories(novelId, limit = 100) {
+  const params = new URLSearchParams({ limit: String(limit) })
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/memories?${params}`,
+  )
+  return assertOk(res)
+}
+
+export async function fetchAuthorTransactions(novelId, limit = 50) {
+  const params = new URLSearchParams({ limit: String(limit) })
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/transactions?${params}`,
+  )
+  return assertOk(res)
+}
+
+export async function resumeAuthorRecovery(novelId) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/recovery/resume`,
+    { method: 'POST' },
+  )
+  return assertOk(res)
+}
+
+async function downloadAuthorArtifact(novelId, kind) {
+  const res = await authedFetch(
+    `/api/novels/${encodeURIComponent(novelId)}/exports/${kind}`,
+  )
+  if (!res.ok) {
+    return assertOk(res)
+  }
+  const disposition = res.headers.get('content-disposition') || ''
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  const basic = disposition.match(/filename="([^"]+)"/i)?.[1]
+  return {
+    blob: await res.blob(),
+    filename: encoded ? decodeURIComponent(encoded) : basic || `${kind}.txt`,
+    sha256: res.headers.get('x-artifact-sha256') || '',
+  }
+}
+
+export async function downloadAuthorManuscript(novelId) {
+  return downloadAuthorArtifact(novelId, 'manuscript')
+}
+
+export async function downloadAuthorEvidence(novelId) {
+  return downloadAuthorArtifact(novelId, 'evidence')
+}
+
 // ---------------------------------------------------------------------------
 // Tick architecture
 // ---------------------------------------------------------------------------

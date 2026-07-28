@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import glob
 import json
+from pathlib import Path
 
 
 from memory.summary_tree import SummaryTree
@@ -72,7 +73,7 @@ def test_tick_state_save_after_quarantine_does_not_overwrite_original(tmp_path) 
     # 隔离档案依然保留原始 probe
     corrupted = _list_corrupt(str(state_path))
     assert len(corrupted) == 1
-    assert "CORRUPTED_PAYLOAD_PROBE" in open(corrupted[0], "r", encoding="utf-8").read()
+    assert "CORRUPTED_PAYLOAD_PROBE" in Path(corrupted[0]).read_text(encoding="utf-8")
 
 
 def test_tick_state_missing_file_no_quarantine(tmp_path) -> None:

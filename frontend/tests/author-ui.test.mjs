@@ -150,6 +150,14 @@ function authorApi(overrides = {}) {
       section: { id: 'section-1' },
     }),
     fetchContextManifest: async () => ({
+      contract_hash: 'abc123456789',
+      execution_spec_hash: 'def987654321',
+      selected_memory_ids: ['memory-promise'],
+      memory_selections: [{
+        memory_id: 'memory-promise',
+        selection_reason: 'target_thread_match',
+      }],
+      active_thread_ids: ['harbor'],
       total_chars: 7200,
       max_context_chars: 24000,
       total_token_estimate: 3600,
@@ -157,6 +165,36 @@ function authorApi(overrides = {}) {
       budget_utilization: 0.3,
       rejected_reason: '',
       slots: [{ name: 'story_bible', char_count: 1200, token_estimate: 600, truncated: false }],
+    }),
+    fetchAuthorMemories: async () => ({
+      revision: 5,
+      selected_memory_ids: ['memory-promise'],
+      records: [{
+        id: 'memory-promise',
+        type: 'promise',
+        summary: '沈砚承诺在天亮前交付旧信。',
+        importance: 8,
+        canon_status: 'confirmed',
+        created_at_revision: 3,
+        selected: true,
+      }],
+    }),
+    fetchAuthorTransactions: async () => ({ transactions: [], total: 0 }),
+    resumeAuthorRecovery: async () => ({
+      status: 'clean',
+      pending_before: [],
+      recovered_transaction_ids: [],
+      pending_after: [],
+    }),
+    downloadAuthorManuscript: async () => ({
+      blob: null,
+      filename: 'manuscript.md',
+      sha256: 'a'.repeat(64),
+    }),
+    downloadAuthorEvidence: async () => ({
+      blob: null,
+      filename: 'evidence.json',
+      sha256: 'b'.repeat(64),
     }),
     previewAuthorNarrativeContract: async () => ({
       narrative_contract: {
@@ -570,6 +608,93 @@ test('test_frontend_displays_stale_context_message', async () => {
   const text = snapshotText(renderer)
   assert.match(text, /创作圣经在生成期间发生了变化/)
   assert.match(text, /本次候选基于旧版本，未提交/)
+  renderer.unmount()
+})
+
+test('author evidence ledger shows revisions, memory, threads, receipts, recovery and exports', async () => {
+  let recoveryCalls = 0
+  let manuscriptExports = 0
+  let evidenceExports = 0
+  const api = authorApi({
+    fetchAuthorTransactions: async () => ({
+      total: 1,
+      transactions: [{
+        id: 'tx-rejected-1',
+        phase: 'rejected',
+        story_bible_revision: 2,
+        canonical_state_revision: 3,
+        target_canonical_revision: 4,
+        writer_calls: 1,
+        planner_calls: 0,
+        repair_performed: true,
+        initial_preflight_report: { accepted: false },
+        final_preflight_report: { accepted: false },
+        repair_patch_report: { char_delta: 18 },
+        usage: { total_tokens: 456 },
+        error_code: 'END_STATE_NOT_REACHED',
+        error: '最终状态未达到，事务未提交',
+        created_at: '2026-07-28T00:00:00Z',
+        updated_at: '2026-07-28T00:00:02.500Z',
+      }],
+    }),
+    resumeAuthorRecovery: async () => {
+      recoveryCalls += 1
+      return {
+        status: 'recovered',
+        pending_before: ['tx-pending'],
+        recovered_transaction_ids: ['tx-pending'],
+        pending_after: [],
+      }
+    },
+    downloadAuthorManuscript: async () => {
+      manuscriptExports += 1
+      return { blob: null, filename: 'novel.md', sha256: 'a'.repeat(64) }
+    },
+    downloadAuthorEvidence: async () => {
+      evidenceExports += 1
+      return { blob: null, filename: 'evidence.json', sha256: 'b'.repeat(64) }
+    },
+  })
+  const renderer = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+    novel: { id: 'n1' }, api, notify() {},
+  })
+  const initial = nodeText(renderer.toJSON())
+  assert.match(initial, /EVIDENCE LEDGER/)
+  assert.match(initial, /MEMORY LEDGERR5/)
+  assert.match(initial, /abc1234567…/)
+  assert.match(initial, /沈砚承诺在天亮前交付旧信/)
+  assert.match(initial, /调查港难/)
+  assert.match(initial, /tx-rejected-1/)
+  assert.match(initial, /INITIAL FAIL/)
+  assert.match(initial, /REPAIR Δ18/)
+  assert.match(initial, /FINAL FAIL/)
+  assert.match(initial, /456 tokens/)
+  assert.match(initial, /END_STATE_NOT_REACHED/)
+
+  await click(findButton(renderer, '恢复待提交事务'))
+  assert.equal(recoveryCalls, 1)
+  assert.match(nodeText(renderer.toJSON()), /RECOVERED恢复 1 · 尚待处理 0/)
+
+  await click(findButton(renderer, '导出正式稿件'))
+  await click(findButton(renderer, '导出审计证据'))
+  assert.equal(manuscriptExports, 1)
+  assert.equal(evidenceExports, 1)
+  renderer.unmount()
+})
+
+test('author export failure is visible and leaves the studio recoverable', async () => {
+  const api = authorApi({
+    downloadAuthorEvidence: async () => {
+      throw new Error('证据导出暂时不可用')
+    },
+  })
+  const renderer = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+    novel: { id: 'n1' }, api, notify() {},
+  })
+  await click(findButton(renderer, '导出审计证据'))
+  const text = snapshotText(renderer)
+  assert.match(text, /证据导出暂时不可用/)
+  assert.match(text, /恢复待提交事务/)
   renderer.unmount()
 })
 

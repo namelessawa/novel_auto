@@ -5,10 +5,10 @@ Showrunner.sidelined_characters → orchestrator wire → tick_state TTL map.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 
+import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.event_injector import EventInjector
@@ -243,7 +243,8 @@ def _showrunner_response(sidelined):
     }
 
 
-def test_orchestrator_wire_sidelines_actually_skip_batch_decide(
+@pytest.mark.asyncio
+async def test_orchestrator_wire_sidelines_actually_skip_batch_decide(
     tmp_path, mock_llm, caplog, monkeypatch,
 ):
     """Showrunner 输出 sidelined → orchestrator 实际不调 batch_decide LLM."""
@@ -281,7 +282,7 @@ def test_orchestrator_wire_sidelines_actually_skip_batch_decide(
         event_injector=EventInjector(),
     )
     for _ in range(5):
-        asyncio.run(orch.run_tick())
+        await orch.run_tick()
 
     # char_a 应被 sideline (ttl 默认 10)
     assert ts.is_character_sidelined("char_a")
@@ -291,7 +292,8 @@ def test_orchestrator_wire_sidelines_actually_skip_batch_decide(
     assert sidelines["char_a"] == ts.SIDELINE_DEFAULT_TTL
 
 
-def test_orchestrator_unknown_sideline_id_logs_warning(
+@pytest.mark.asyncio
+async def test_orchestrator_unknown_sideline_id_logs_warning(
     tmp_path, mock_llm, caplog, monkeypatch,
 ):
     """LLM 偶尔输出不存在 char_id, orchestrator 必须 logger.warning + 不写入."""
@@ -326,7 +328,7 @@ def test_orchestrator_unknown_sideline_id_logs_warning(
         event_injector=EventInjector(),
     )
     for _ in range(5):
-        asyncio.run(orch.run_tick())
+        await orch.run_tick()
 
     assert "char_GHOST" in caplog.text
     assert "unknown" in caplog.text

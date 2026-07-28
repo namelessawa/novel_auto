@@ -33,7 +33,11 @@ ERROR_TYPES = [
 
 
 def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Git may materialize the same JSON source as LF or CRLF.  Source artifact
+    # identity is therefore defined over canonical UTF-8 line endings so the
+    # frozen calibration receipt is reproducible across operating systems.
+    content = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def _stable_sha256(value: Any) -> str:

@@ -6,8 +6,7 @@ Phase 2 §closed=0 leakage: 跨 130 tick × 3 seed bench 全 0 自动关闭.
 
 from __future__ import annotations
 
-import asyncio
-
+import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.event_injector import EventInjector
@@ -114,7 +113,8 @@ def _build_responses_5_ticks(loops_to_close: list[str]) -> list[dict]:
     return responses
 
 
-def test_showrunner_close_loops_actually_drains_pool(
+@pytest.mark.asyncio
+async def test_showrunner_close_loops_actually_drains_pool(
     tmp_path, mock_llm, monkeypatch
 ) -> None:
     """Showrunner 输出 loops_to_close 后, tick_state.get_open_loops()
@@ -140,7 +140,7 @@ def test_showrunner_close_loops_actually_drains_pool(
 
     # 跑到 tick 5 触发 Showrunner. tick 1-4 不该 close (cadence=5)
     for _ in range(5):
-        asyncio.run(orch.run_tick())
+        await orch.run_tick()
 
     # 关键断言: loop_0 / loop_3 已不在池中
     remaining_ids = {loop.id for loop in ts.get_open_loops()}
@@ -150,7 +150,8 @@ def test_showrunner_close_loops_actually_drains_pool(
     assert remaining_ids == {"loop_1", "loop_2", "loop_4", "loop_5"}
 
 
-def test_showrunner_close_ignores_unknown_ids(
+@pytest.mark.asyncio
+async def test_showrunner_close_ignores_unknown_ids(
     tmp_path, mock_llm, monkeypatch
 ) -> None:
     """LLM 偶尔输出不存在的 ID, orchestrator 必须 silently ignore."""
@@ -172,7 +173,7 @@ def test_showrunner_close_ignores_unknown_ids(
         event_injector=EventInjector(),
     )
     for _ in range(5):
-        asyncio.run(orch.run_tick())
+        await orch.run_tick()
 
     remaining_ids = {loop.id for loop in ts.get_open_loops()}
     # loop_1 关闭, 不存在 ID 静默忽略 → 不抛
@@ -180,7 +181,8 @@ def test_showrunner_close_ignores_unknown_ids(
     assert len(remaining_ids) == 5
 
 
-def test_showrunner_empty_close_list_keeps_pool(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_showrunner_empty_close_list_keeps_pool(tmp_path, mock_llm) -> None:
     """Showrunner 不推荐关闭 → 池子完整保留."""
     mock_llm.set_responses(_build_responses_5_ticks([]))
     ts = _bootstrap_with_loops(tmp_path)
@@ -195,11 +197,12 @@ def test_showrunner_empty_close_list_keeps_pool(tmp_path, mock_llm) -> None:
         event_injector=EventInjector(),
     )
     for _ in range(5):
-        asyncio.run(orch.run_tick())
+        await orch.run_tick()
     assert len(ts.get_open_loops()) == 6
 
 
-def test_showrunner_assess_raises_pool_unchanged(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_showrunner_assess_raises_pool_unchanged(tmp_path, mock_llm) -> None:
     """iter#106 review MEDIUM gap: Showrunner.assess 抛错时池子必须不变.
 
     orchestrator 的 try/except 已包住 assess + close 全段, 但缺测试保证
@@ -233,7 +236,7 @@ def test_showrunner_assess_raises_pool_unchanged(tmp_path, mock_llm) -> None:
         event_injector=EventInjector(),
     )
     for _ in range(5):
-        asyncio.run(orch.run_tick())
+        await orch.run_tick()
     # 关键 invariant: 池子状态不变
     assert len(ts.get_open_loops()) == 6
     assert {loop.id for loop in ts.get_open_loops()} == {

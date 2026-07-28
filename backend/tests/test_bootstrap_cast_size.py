@@ -144,12 +144,11 @@ def test_partial_cast_set_raises(a, b, c):
             )
 
 
-def test_bootstrap_world_partial_cast_raises(monkeypatch):
+@pytest.mark.asyncio
+async def test_bootstrap_world_partial_cast_raises(monkeypatch):
     """bootstrap_world 集成层: partial 设 → ValueError before LLM 调用.
     iter#123 review MEDIUM gap — 之前无集成测试守卫 partial 路径.
     """
-    import asyncio
-
     import bootstrap_prompts
 
     async def _unexpected_llm_call(*args, **kwargs):
@@ -157,7 +156,7 @@ def test_bootstrap_world_partial_cast_raises(monkeypatch):
 
     monkeypatch.setattr(bootstrap_prompts, "_llm_json", _unexpected_llm_call)
 
-    async def _run():
+    with pytest.raises(ValueError, match="all-or-nothing"):
         await bootstrap_prompts.bootstrap_world(
             novel_id="test_partial",
             data_dir="/tmp/test_partial_cast",
@@ -166,6 +165,3 @@ def test_bootstrap_world_partial_cast_raises(monkeypatch):
             references="测试",
             cast_a_count=3,  # 仅设 a, b/c None — 必须 fail-loud
         )
-
-    with pytest.raises(ValueError, match="all-or-nothing"):
-        asyncio.run(_run())

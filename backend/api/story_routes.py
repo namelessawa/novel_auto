@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
+import re
 from datetime import datetime
 from typing import Any
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
@@ -31,6 +35,7 @@ from story.persistence import (
     ContextManifestStore,
     GenerationModeStore,
     GenerationTransactionStore,
+    MemoryRepository,
     RevisionConflict,
     StoryBibleStore,
     StoryThreadStore,
@@ -53,6 +58,71 @@ from tasks.task_manager import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/novels/{novel_id}", tags=["author-story"])
+
+_SENSITIVE_TEXT = re.compile(
+    r"(?i)(?:api[_ -]?key|api[_ -]?secret|authorization|bearer\s+\S+|"
+    r"\bsk-[A-Za-z0-9_-]{8,}|traceback\s+\(most recent call last\))"
+)
+_PUBLIC_TRANSACTION_FIELDS = {
+    "id",
+    "section_id",
+    "phase",
+    "story_bible_revision",
+    "canonical_state_revision",
+    "target_canonical_revision",
+    "journal_canonical_revision",
+    "writer_calls",
+    "writer_retry_count",
+    "writer_retry_performed",
+    "writer_first_pass_pass",
+    "planner_calls",
+    "chapter_plan_success",
+    "writer_plan_followed",
+    "repair_performed",
+    "committed",
+    "narrative_contract",
+    "event_execution_plan",
+    "section_writing_plan",
+    "section_budget_plan",
+    "chapter_plan",
+    "chapter_plan_validation_report",
+    "writer_plan_follow_report",
+    "initial_preflight_report",
+    "final_preflight_report",
+    "initial_length_report",
+    "final_length_report",
+    "initial_ending_report",
+    "final_ending_report",
+    "initial_balance_report",
+    "final_balance_report",
+    "repair_plan",
+    "repair_patches",
+    "repair_patch_report",
+    "repair_ignored_fields",
+    "repair_audit_codes",
+    "repair_enforced_removals",
+    "narrative_validation_report",
+    "narrative_validation_history",
+    "validation_report",
+    "validation_history",
+    "style_validation_report",
+    "context_manifest",
+    "thread_liveness",
+    "usage",
+    "recovery_count",
+    "error_code",
+    "error",
+    "created_at",
+    "updated_at",
+}
+_PUBLIC_USAGE_FIELDS = {
+    "prompt_tokens",
+    "completion_tokens",
+    "total_tokens",
+    "planner_tokens",
+    "retry_tokens",
+    "repair_tokens",
+}
 
 
 class SectionGenerateRequest(BaseModel):
@@ -86,21 +156,25 @@ def _owned_data_dir(user_id: str, novel_id: str) -> tuple[str, dict, Any]:
     return data_dir, novel, report
 
 
+def _safe_public_message(value: str, fallback: str = "内部错误已记录") -> str:
+    lines = str(value or "").splitlines()
+    first_line = (lines[0] if lines else "").strip()[:500]
+    if _SENSITIVE_TEXT.search(first_line):
+        return fallback
+    return first_line
+
+
 def _public_transaction(transaction: GenerationTransaction) -> dict[str, Any]:
     payload = transaction.model_dump(
         mode="json",
-        exclude={
-            "candidate",
-            "candidate_history",
-            "base_canonical_state",
-            "base_story_threads",
-            "base_memory_repository",
-            "target_canonical_state",
-            "target_story_threads",
-            "target_memory_repository",
-            "section_record",
-        },
+        include=_PUBLIC_TRANSACTION_FIELDS,
     )
+    payload["usage"] = {
+        key: int(value)
+        for key, value in transaction.usage.items()
+        if key in _PUBLIC_USAGE_FIELDS
+    }
+    payload["error"] = _safe_public_message(transaction.error)
     if transaction.narrative_contract:
         payload["narrative_contract"] = {
             **narrative_contract_prompt_payload(transaction.narrative_contract),
@@ -110,7 +184,94 @@ def _public_transaction(transaction: GenerationTransaction) -> dict[str, Any]:
                 transaction.narrative_contract.canonical_state_revision
             ),
         }
+    if transaction.event_execution_plan:
+        payload["event_execution_plan"] = event_execution_plan_prompt_payload(
+            transaction.event_execution_plan
+        )
+    if transaction.section_writing_plan:
+        payload["section_writing_plan"] = section_writing_plan_prompt_payload(
+            transaction.section_writing_plan
+        )
+    if transaction.section_budget_plan:
+        payload["section_budget_plan"] = section_budget_plan_prompt_payload(
+            transaction.section_budget_plan
+        )
+    if transaction.chapter_plan:
+        payload["chapter_plan"] = chapter_plan_prompt_payload(transaction.chapter_plan)
     return payload
+
+
+def _public_task(task) -> dict[str, Any]:
+    progress = task.progress.model_dump(mode="json")
+    progress["last_message"] = _safe_public_message(
+        progress.get("last_message", ""),
+        fallback="任务执行状态已更新",
+    )
+    return {
+        "id": task.id,
+        "novel_id": task.novel_id,
+        "kind": task.kind,
+        "status": task.status,
+        "progress": progress,
+        "error": _safe_public_message(task.error),
+        "chapter": task.chapter,
+        "section_no": task.section_no,
+        "result_title": task.result_title,
+        "result_word_count": task.result_word_count,
+        "transaction_id": task.transaction_id,
+        "story_bible_revision": task.story_bible_revision,
+        "canonical_state_revision": task.canonical_state_revision,
+        "validation_report": task.validation_report,
+        "repair_performed": task.repair_performed,
+        "committed": task.committed,
+        "created_at": task.created_at,
+        "started_at": task.started_at,
+        "completed_at": task.completed_at,
+    }
+
+
+def _committed_sections(novel_id: str, data_dir: str) -> tuple[list, list[str]]:
+    transactions = {
+        transaction.id: transaction
+        for transaction in GenerationTransactionStore(data_dir).list_all()
+    }
+    included = []
+    excluded_ids: list[str] = []
+    for section in get_section_store(novel_id, data_dir=data_dir).list_all():
+        transaction = transactions.get(section.transaction_id)
+        if transaction is not None:
+            accepted = transaction.committed and transaction.phase == "committed"
+        else:
+            accepted = (
+                section.generation_mode == "simulation" and not section.transaction_id
+            )
+        if accepted:
+            included.append(section)
+        else:
+            excluded_ids.append(section.id or section.transaction_id)
+    return included, excluded_ids
+
+
+def _render_manuscript(title: str, sections: list) -> str:
+    lines = [f"# {title or '未命名作品'}", ""]
+    chapter = None
+    for section in sections:
+        if section.chapter != chapter:
+            chapter = section.chapter
+            lines.extend([f"## 第 {chapter} 章", ""])
+        lines.extend(
+            [
+                f"### 第 {section.section} 节 {section.title}".rstrip(),
+                "",
+                section.content,
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _sha256_bytes(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
 
 
 @router.get("/story-bible")
@@ -167,6 +328,44 @@ async def get_story_threads(
     data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
     repository = StoryThreadStore(data_dir).load()
     return repository.model_dump(mode="json")
+
+
+@router.get("/memories")
+async def get_author_memories(
+    novel_id: str,
+    limit: int = Query(default=100, ge=1, le=500),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Return user-visible memory evidence, never Writer prompts or provider data."""
+    data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
+    repository = MemoryRepository(data_dir).load()
+    manifest = ContextManifestStore(data_dir, novel_id=novel_id).load()
+    selected_ids = set(manifest.selected_memory_ids)
+    records = sorted(
+        repository.records.values(),
+        key=lambda item: (item.created_at_revision, item.importance, item.id),
+        reverse=True,
+    )[:limit]
+    return {
+        "revision": repository.revision,
+        "selected_memory_ids": sorted(selected_ids),
+        "records": [
+            {
+                "id": item.id,
+                "type": item.type,
+                "section_id": item.section_id,
+                "entities": item.entities,
+                "summary": item.summary,
+                "evidence": item.evidence,
+                "importance": item.importance,
+                "canon_status": item.canon_status,
+                "source_refs": item.source_refs,
+                "created_at_revision": item.created_at_revision,
+                "selected": item.id in selected_ids,
+            }
+            for item in records
+        ],
+    }
 
 
 @router.get("/generation-mode")
@@ -324,7 +523,7 @@ async def get_author_section_status(
         task = manager.get(task_or_section_id)
         if task.user_id != current_user.id or task.novel_id != novel_id:
             _api_error(404, "STATUS_NOT_FOUND", "生成任务或章节不存在")
-        task_payload = task.model_dump(mode="json")
+        task_payload = _public_task(task)
     except TaskNotFound:
         pass
 
@@ -353,6 +552,152 @@ async def get_context_manifest(
     data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
     manifest = ContextManifestStore(data_dir, novel_id=novel_id).load()
     return manifest.model_dump(mode="json")
+
+
+@router.get("/transactions")
+async def list_author_transactions(
+    novel_id: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
+    transactions = GenerationTransactionStore(data_dir).list_all()
+    transactions.sort(key=lambda item: (item.updated_at, item.id), reverse=True)
+    return {
+        "transactions": [
+            _public_transaction(transaction) for transaction in transactions[:limit]
+        ],
+        "total": len(transactions),
+    }
+
+
+@router.post("/recovery/resume")
+async def resume_author_transactions(
+    novel_id: str, current_user: User = Depends(get_current_user)
+) -> dict:
+    data_dir, _, _ = _owned_data_dir(current_user.id, novel_id)
+    runtime = get_author_runtime(current_user.id, novel_id)
+    pending_before = [
+        item.id for item in GenerationTransactionStore(data_dir).list_pending()
+    ]
+    recovered = await run_in_threadpool(runtime.service.recover)
+    pending_after = [
+        item.id for item in GenerationTransactionStore(data_dir).list_pending()
+    ]
+    novel_manager.touch_last_accessed(current_user.id, novel_id)
+    return {
+        "status": "recovered" if recovered else "clean",
+        "pending_before": pending_before,
+        "recovered_transaction_ids": recovered,
+        "pending_after": pending_after,
+    }
+
+
+@router.get("/exports/manuscript")
+async def export_author_manuscript(
+    novel_id: str, current_user: User = Depends(get_current_user)
+) -> Response:
+    data_dir, novel, _ = _owned_data_dir(current_user.id, novel_id)
+    sections, excluded_ids = _committed_sections(novel_id, data_dir)
+    manuscript = _render_manuscript(str(novel.get("title") or ""), sections)
+    content = manuscript.encode("utf-8")
+    return Response(
+        content=content,
+        media_type="text/markdown; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                "attachment; filename=\"manuscript.md\"; "
+                f"filename*=UTF-8''{quote(novel_id)}-manuscript.md"
+            ),
+            "X-Artifact-SHA256": _sha256_bytes(content),
+            "X-Included-Sections": str(len(sections)),
+            "X-Excluded-Sections": str(len(excluded_ids)),
+        },
+    )
+
+
+@router.get("/exports/evidence")
+async def export_author_evidence(
+    novel_id: str, current_user: User = Depends(get_current_user)
+) -> Response:
+    data_dir, novel, _ = _owned_data_dir(current_user.id, novel_id)
+    bible = StoryBibleStore(data_dir).load()
+    canonical = CanonicalStateStore(data_dir).load()
+    threads = StoryThreadStore(data_dir).load()
+    memories = MemoryRepository(data_dir).load()
+    manifest = ContextManifestStore(data_dir, novel_id=novel_id).load()
+    transactions = GenerationTransactionStore(data_dir).list_all()
+    transactions.sort(key=lambda item: (item.updated_at, item.id))
+    sections, excluded_ids = _committed_sections(novel_id, data_dir)
+    manuscript = _render_manuscript(str(novel.get("title") or ""), sections).encode(
+        "utf-8"
+    )
+    payload = {
+        "schema_version": 1,
+        "novel_id": novel_id,
+        "title": str(novel.get("title") or ""),
+        "generated_at": datetime.now().astimezone().isoformat(),
+        "authorities": {
+            "story_bible_revision": bible.revision,
+            "canonical_state_revision": canonical.revision,
+            "memory_revision": memories.revision,
+            "story_bible_sha256": _sha256_bytes(
+                bible.model_dump_json().encode("utf-8")
+            ),
+            "canonical_state_sha256": _sha256_bytes(
+                canonical.model_dump_json().encode("utf-8")
+            ),
+        },
+        "context_manifest": manifest.model_dump(mode="json"),
+        "story_threads": threads.model_dump(mode="json"),
+        "memories": {
+            "revision": memories.revision,
+            "records": [
+                {
+                    "id": item.id,
+                    "type": item.type,
+                    "section_id": item.section_id,
+                    "entities": item.entities,
+                    "summary": item.summary,
+                    "importance": item.importance,
+                    "canon_status": item.canon_status,
+                    "source_refs": item.source_refs,
+                    "created_at_revision": item.created_at_revision,
+                }
+                for item in sorted(memories.records.values(), key=lambda row: row.id)
+            ],
+        },
+        "transactions": [_public_transaction(item) for item in transactions],
+        "committed_sections": [
+            {
+                "id": item.id,
+                "chapter": item.chapter,
+                "section": item.section,
+                "title": item.title,
+                "word_count": item.word_count,
+                "transaction_id": item.transaction_id,
+                "story_bible_revision": item.story_bible_revision,
+                "canonical_state_revision": item.canonical_state_revision,
+            }
+            for item in sections
+        ],
+        "excluded_section_ids": excluded_ids,
+        "manuscript_sha256": _sha256_bytes(manuscript),
+    }
+    content = (
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    ).encode("utf-8")
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": (
+                "attachment; filename=\"evidence.json\"; "
+                f"filename*=UTF-8''{quote(novel_id)}-evidence.json"
+            ),
+            "X-Artifact-SHA256": _sha256_bytes(content),
+        },
+    )
 
 
 @router.get("/long-run/status")

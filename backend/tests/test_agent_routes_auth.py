@@ -38,13 +38,15 @@ def test_list_agents_requires_auth(app, monkeypatch) -> None:
     monkeypatch.setattr(
         auth_deps, "get_auth_config", lambda: AuthConfig(enabled=True)
     )
-    r = TestClient(app).get("/api/agents")
+    with TestClient(app) as client:
+        r = client.get("/api/agents")
     assert r.status_code == 401
 
 
 def test_list_agents_ok_when_logged_in(app) -> None:
     app.dependency_overrides[get_current_user] = _fake_user
-    r = TestClient(app).get("/api/agents")
+    with TestClient(app) as client:
+        r = client.get("/api/agents")
     assert r.status_code == 200
     body = r.json()
     assert body["count"] >= 9

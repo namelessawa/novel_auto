@@ -5,6 +5,7 @@ from pathlib import Path
 
 from scripts.build_state_guard_calibration import (
     ERROR_TYPES,
+    _file_sha256,
     build_dataset,
     repair_review_text,
 )
@@ -25,6 +26,15 @@ GENERATED = (
     / "state_guard_calibration"
     / "phase8-state-guard-calibration-v1.json"
 )
+
+
+def test_source_artifact_hash_is_line_ending_invariant(tmp_path: Path) -> None:
+    lf = tmp_path / "lf.json"
+    crlf = tmp_path / "crlf.json"
+    lf.write_bytes(b'{\n  "value": 1\n}\n')
+    crlf.write_bytes(b'{\r\n  "value": 1\r\n}\r\n')
+
+    assert _file_sha256(lf) == _file_sha256(crlf)
 
 
 def test_calibration_dataset_has_73_loss_aware_double_reviewed_cases() -> None:
@@ -126,7 +136,7 @@ def test_calibration_artifact_is_reproducible_and_source_hashed() -> None:
         {
             "filename": "phase8-phase7-guard-recorded-v1.json",
             "sha256": (
-                "c495d3c8a791d6ac698594c4e9b97ff8bff5e6c86059d66bea856be7b5d07be2"
+                "6accf925094f9e7f8ca859b972a43291344e76d047cf3b3c2a3c6ea56d101a51"
             ),
             "cases_sha256": (
                 "529f42977b2cb7f39f480a48d42d84bc5a987a966c8263b139a0e4a6171cf8c2"

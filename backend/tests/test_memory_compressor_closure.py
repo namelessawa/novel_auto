@@ -11,8 +11,7 @@
 
 from __future__ import annotations
 
-import asyncio
-
+import pytest
 
 from agents.memory_compressor import MemoryCompressor
 from memory.memory_store import PriorityMemoryStore
@@ -91,7 +90,10 @@ def test_parse_fallback_when_no_source_ids(tmp_path) -> None:
     assert sorted(result[0].source_ids) == ["evt_0", "evt_1", "evt_2"]
 
 
-def test_compress_then_replace_actually_shrinks_store(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_compress_then_replace_actually_shrinks_store(
+    tmp_path, mock_llm
+) -> None:
     """端到端: 3 个旧 L0 → compress → replace_with_compressed → store 数量下降。"""
     store = PriorityMemoryStore(data_dir=str(tmp_path))
     # 注入 3 条 L0, 都"老到足以压缩" (tick_range[1] = 5, 当前 tick=100 → 距 95 > 50)
@@ -116,12 +118,10 @@ def test_compress_then_replace_actually_shrinks_store(tmp_path, mock_llm) -> Non
         ]
     )
 
-    out = asyncio.run(
-        comp.compress(
-            current_tick=100,
-            memory_entries=[r.entry for r in store.all_records()],
-            open_loop_origin_ids=[],
-        )
+    out = await comp.compress(
+        current_tick=100,
+        memory_entries=[r.entry for r in store.all_records()],
+        open_loop_origin_ids=[],
     )
     assert len(out.l0_to_l1) == 1
     new_l1 = out.l0_to_l1[0]

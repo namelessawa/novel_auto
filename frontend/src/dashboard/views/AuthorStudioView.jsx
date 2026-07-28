@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  downloadAuthorEvidence,
+  downloadAuthorManuscript,
   fetchAuthorSectionStatus,
   fetchAuthorLongRunStatus,
+  fetchAuthorMemories,
+  fetchAuthorTransactions,
   fetchCanonicalState,
   fetchContextManifest,
   fetchGenerationMode,
@@ -10,13 +14,18 @@ import {
   generateAuthorSection,
   listTickSections,
   previewAuthorNarrativeContract,
+  resumeAuthorRecovery,
   updateGenerationMode,
 } from '../../services/api'
 import { showToast } from '../../utils/toast'
 
 const DEFAULT_API = {
+  downloadAuthorEvidence,
+  downloadAuthorManuscript,
   fetchAuthorSectionStatus,
   fetchAuthorLongRunStatus,
+  fetchAuthorMemories,
+  fetchAuthorTransactions,
   fetchCanonicalState,
   fetchContextManifest,
   fetchGenerationMode,
@@ -25,6 +34,7 @@ const DEFAULT_API = {
   generateAuthorSection,
   listTickSections,
   previewAuthorNarrativeContract,
+  resumeAuthorRecovery,
   updateGenerationMode,
 }
 
@@ -41,6 +51,9 @@ export default function AuthorStudioView({
   const [mode, setMode] = useState(null)
   const [sections, setSections] = useState([])
   const [manifest, setManifest] = useState(null)
+  const [memories, setMemories] = useState([])
+  const [memoryRevision, setMemoryRevision] = useState(0)
+  const [transactions, setTransactions] = useState([])
   const [longRunStatus, setLongRunStatus] = useState(null)
   const [contractPreview, setContractPreview] = useState(null)
   const [contractOpen, setContractOpen] = useState(false)
@@ -48,6 +61,9 @@ export default function AuthorStudioView({
   const [debugOpen, setDebugOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modeBusy, setModeBusy] = useState(false)
+  const [recoveryBusy, setRecoveryBusy] = useState(false)
+  const [exportBusy, setExportBusy] = useState('')
+  const [recoveryResult, setRecoveryResult] = useState(null)
   const [taskId, setTaskId] = useState('')
   const [generation, setGeneration] = useState(null)
   const [error, setError] = useState('')
@@ -65,12 +81,31 @@ export default function AuthorStudioView({
     setLoading(true)
     setError('')
     try {
-      const [bibleData, stateData, threadData, modeData, sectionData, longRunData] = await Promise.all([
+      const [
+        bibleData,
+        stateData,
+        threadData,
+        modeData,
+        sectionData,
+        manifestData,
+        memoryData,
+        transactionData,
+        longRunData,
+      ] = await Promise.all([
         api.fetchStoryBible(novel.id),
         api.fetchCanonicalState(novel.id),
         api.fetchStoryThreads(novel.id),
         api.fetchGenerationMode(novel.id),
         api.listTickSections(novel.id),
+        api.fetchContextManifest
+          ? api.fetchContextManifest(novel.id).catch(() => null)
+          : Promise.resolve(null),
+        api.fetchAuthorMemories
+          ? api.fetchAuthorMemories(novel.id).catch(() => null)
+          : Promise.resolve(null),
+        api.fetchAuthorTransactions
+          ? api.fetchAuthorTransactions(novel.id).catch(() => null)
+          : Promise.resolve(null),
         api.fetchAuthorLongRunStatus
           ? api.fetchAuthorLongRunStatus(novel.id).catch(() => null)
           : Promise.resolve(null),
@@ -80,6 +115,12 @@ export default function AuthorStudioView({
       setThreads(threadData.threads || {})
       setMode(modeData)
       setSections(sectionData.sections || [])
+      if (manifestData) setManifest(manifestData)
+      if (memoryData) {
+        setMemories(memoryData.records || [])
+        setMemoryRevision(memoryData.revision || 0)
+      }
+      if (transactionData) setTransactions(transactionData.transactions || [])
       if (longRunData) setLongRunStatus(longRunData)
       setGoal((current) => ({
         ...current,
@@ -98,6 +139,7 @@ export default function AuthorStudioView({
     setManifest(null)
     setContractPreview(null)
     setContractOpen(false)
+    setRecoveryResult(null)
     load()
   }, [load])
 
@@ -210,6 +252,10 @@ export default function AuthorStudioView({
     || null
   const taskStatus = generation?.task?.status || (taskId ? 'queued' : 'idle')
   const generating = ['queued', 'running'].includes(taskStatus)
+  const selectedMemoryIds = new Set(manifest?.selected_memory_ids || [])
+  const selectedMemories = memories.filter((item) => (
+    item.selected || selectedMemoryIds.has(item.id)
+  ))
 
   async function switchMode(nextMode) {
     if (!mode || nextMode === mode.mode || modeBusy) return
@@ -276,6 +322,49 @@ export default function AuthorStudioView({
       setError(err.message || '正文契约预览失败')
     } finally {
       setPreviewBusy(false)
+    }
+  }
+
+  async function resumeRecovery() {
+    if (!api.resumeAuthorRecovery || recoveryBusy) return
+    setRecoveryBusy(true)
+    setError('')
+    try {
+      const result = await api.resumeAuthorRecovery(novel.id)
+      setRecoveryResult(result)
+      await load()
+      notify(
+        result.recovered_transaction_ids?.length
+          ? `已恢复 ${result.recovered_transaction_ids.length} 个待提交事务`
+          : '没有需要恢复的事务',
+        'success',
+      )
+    } catch (err) {
+      setError(err.message || '恢复检查失败')
+    } finally {
+      setRecoveryBusy(false)
+    }
+  }
+
+  async function exportArtifact(kind) {
+    const downloader = kind === 'manuscript'
+      ? api.downloadAuthorManuscript
+      : api.downloadAuthorEvidence
+    if (!downloader || exportBusy) return
+    setExportBusy(kind)
+    setError('')
+    try {
+      const artifact = await downloader(novel.id)
+      saveArtifact(artifact)
+      notify(
+        `${kind === 'manuscript' ? '正式稿件' : '审计证据'}已导出`
+          + (artifact?.sha256 ? ` · SHA-256 ${artifact.sha256.slice(0, 12)}…` : ''),
+        'success',
+      )
+    } catch (err) {
+      setError(err.message || '导出失败')
+    } finally {
+      setExportBusy('')
     }
   }
 
@@ -466,6 +555,161 @@ export default function AuthorStudioView({
           <p>{lastSection.content || '正文已提交，可在章节页阅读全文。'}</p>
         </section>
       )}
+
+      <section className="dc-au-evidence-ledger" data-testid="author-evidence-ledger">
+        <header className="dc-au-evidence-head">
+          <div>
+            <div className="dc-au-card-number">03 · EVIDENCE LEDGER</div>
+            <h2>权威上下文与事务证据</h2>
+            <p>只展示冻结 revision、选择理由、确定性计划、校验差异与提交凭证。</p>
+          </div>
+          <div className="dc-au-evidence-actions">
+            <button type="button" onClick={resumeRecovery} disabled={recoveryBusy}>
+              <span>{recoveryBusy ? '检查中…' : '恢复待提交事务'}</span>
+              <em>IDEMPOTENT</em>
+            </button>
+            <button
+              type="button"
+              onClick={() => exportArtifact('manuscript')}
+              disabled={Boolean(exportBusy)}
+            >
+              <span>{exportBusy === 'manuscript' ? '导出中…' : '导出正式稿件'}</span>
+              <em>COMMITTED ONLY</em>
+            </button>
+            <button
+              type="button"
+              onClick={() => exportArtifact('evidence')}
+              disabled={Boolean(exportBusy)}
+            >
+              <span>{exportBusy === 'evidence' ? '导出中…' : '导出审计证据'}</span>
+              <em>JSON + SHA-256</em>
+            </button>
+          </div>
+        </header>
+
+        {recoveryResult && (
+          <div className="dc-au-recovery-result" data-testid="author-recovery-result">
+            <strong>{recoveryResult.status === 'recovered' ? 'RECOVERED' : 'CLEAN'}</strong>
+            <span>
+              恢复 {recoveryResult.recovered_transaction_ids?.length || 0} ·
+              尚待处理 {recoveryResult.pending_after?.length || 0}
+            </span>
+          </div>
+        )}
+
+        <div className="dc-au-authority-stamps">
+          <div><span>STORY BIBLE</span><strong>R{bible?.revision || '—'}</strong></div>
+          <div><span>CANONICAL STATE</span><strong>R{canonical?.revision || '—'}</strong></div>
+          <div><span>MEMORY LEDGER</span><strong>R{memoryRevision || '—'}</strong></div>
+          <div>
+            <span>CONTRACT HASH</span>
+            <strong title={manifest?.contract_hash || ''}>
+              {shortHash(manifest?.contract_hash)}
+            </strong>
+          </div>
+          <div>
+            <span>EXECUTION SPEC</span>
+            <strong title={manifest?.execution_spec_hash || ''}>
+              {shortHash(manifest?.execution_spec_hash)}
+            </strong>
+          </div>
+        </div>
+
+        <div className="dc-au-evidence-grid">
+          <section>
+            <header><span>SELECTED MEMORY</span><strong>{selectedMemories.length}</strong></header>
+            <div className="dc-au-evidence-list">
+              {selectedMemories.map((memory) => (
+                <article key={memory.id}>
+                  <div>
+                    <code>{memory.type || 'memory'} · R{memory.created_at_revision || 0}</code>
+                    <em>{memory.canon_status || 'confirmed'}</em>
+                  </div>
+                  <strong>{memory.summary || memory.id}</strong>
+                  <p>{memory.id} · importance {memory.importance ?? '—'}</p>
+                </article>
+              ))}
+              {!selectedMemories.length && (
+                <p className="dc-au-evidence-empty">本次 ContextManifest 未选择长期记忆。</p>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <header><span>ACTIVE THREADS</span><strong>{activeThreads.length}</strong></header>
+            <div className="dc-au-evidence-list">
+              {activeThreads.map((thread) => (
+                <article key={thread.id || thread.description}>
+                  <div>
+                    <code>{thread.id || 'thread'}</code>
+                    <em>{thread.status || 'open'}</em>
+                  </div>
+                  <strong>{thread.description || thread.id}</strong>
+                  <p>
+                    urgency {thread.urgency ?? '—'} · progress R
+                    {thread.last_progress_revision ?? thread.last_advanced_revision ?? '—'}
+                  </p>
+                </article>
+              ))}
+              {!activeThreads.length && (
+                <p className="dc-au-evidence-empty">没有活跃故事线。</p>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <section className="dc-au-transaction-ledger">
+          <header>
+            <span>TRANSACTION RECEIPTS</span>
+            <strong>{transactions.length}</strong>
+          </header>
+          <div>
+            {transactions.slice(0, 12).map((transaction) => (
+              <article
+                className={`is-${transaction.phase}`}
+                key={transaction.id}
+                data-transaction-phase={transaction.phase}
+              >
+                <div className="dc-au-receipt-id">
+                  <code>{transaction.id}</code>
+                  <strong>{transaction.phase?.toUpperCase()}</strong>
+                </div>
+                <div className="dc-au-receipt-revisions">
+                  <span>BIBLE R{transaction.story_bible_revision}</span>
+                  <span>
+                    STATE R{transaction.canonical_state_revision}
+                    →R{transaction.target_canonical_revision}
+                  </span>
+                </div>
+                <div className="dc-au-receipt-gates">
+                  <span>INITIAL {gateLabel(transaction.initial_preflight_report)}</span>
+                  <span>
+                    REPAIR {transaction.repair_performed
+                      ? `Δ${transaction.repair_patch_report?.char_delta ?? '—'}`
+                      : 'SKIP'}
+                  </span>
+                  <span>FINAL {gateLabel(transaction.final_preflight_report)}</span>
+                </div>
+                <div className="dc-au-receipt-metrics">
+                  <span>{transaction.writer_calls || 0} Writer</span>
+                  <span>{transaction.planner_calls || 0} Planner</span>
+                  <span>{transaction.usage?.total_tokens || 0} tokens</span>
+                  <span>{elapsedSeconds(transaction)}s</span>
+                </div>
+                {(transaction.error_code || transaction.error) && (
+                  <p className="dc-au-reject-reason">
+                    <code>{transaction.error_code || 'REJECTED'}</code>
+                    {transaction.error || '事务未提交'}
+                  </p>
+                )}
+              </article>
+            ))}
+            {!transactions.length && (
+              <p className="dc-au-evidence-empty">尚无章节事务凭证。</p>
+            )}
+          </div>
+        </section>
+      </section>
 
       <section className="dc-au-manifest">
         <button type="button" onClick={() => setDebugOpen((value) => !value)}>
@@ -816,4 +1060,30 @@ function goalPayload(goal) {
 
 function splitIds(value) {
   return String(value || '').split(/[,，\s]+/).map((item) => item.trim()).filter(Boolean)
+}
+
+function shortHash(value) {
+  return value ? `${String(value).slice(0, 10)}…` : '—'
+}
+
+function gateLabel(report) {
+  if (!report) return '—'
+  return (report.accepted ?? report.passed) ? 'PASS' : 'FAIL'
+}
+
+function elapsedSeconds(transaction) {
+  const start = Date.parse(transaction.created_at || '')
+  const end = Date.parse(transaction.updated_at || '')
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 0
+  return Math.max(0, Math.round((end - start) / 100) / 10)
+}
+
+function saveArtifact(artifact) {
+  if (!artifact?.blob || typeof document === 'undefined' || typeof URL === 'undefined') return
+  const href = URL.createObjectURL(artifact.blob)
+  const anchor = document.createElement('a')
+  anchor.href = href
+  anchor.download = artifact.filename || 'novel-auto-artifact'
+  anchor.click()
+  URL.revokeObjectURL(href)
 }

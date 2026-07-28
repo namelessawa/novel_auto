@@ -3,8 +3,7 @@ TickDB 全部接入,验证 cadence 调度与持久化端到端。"""
 
 from __future__ import annotations
 
-import asyncio
-
+import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.event_injector import EventInjector
@@ -167,7 +166,10 @@ def _bootstrap(data_dir: str) -> TickState:
     return ts
 
 
-def test_event_injector_triggered_when_open_loops_below_min(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_event_injector_triggered_when_open_loops_below_min(
+    tmp_path, mock_llm
+) -> None:
     """OpenLoop 数 <3 时 Orchestrator 必须触发 EventInjector。"""
     mock_llm.set_responses(
         [
@@ -193,7 +195,7 @@ def test_event_injector_triggered_when_open_loops_below_min(tmp_path, mock_llm) 
         event_injector=injector,
         main_tracking_character_id="alice",
     )
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     assert "event_injector" in summary.agents_called
     assert any(
@@ -201,7 +203,8 @@ def test_event_injector_triggered_when_open_loops_below_min(tmp_path, mock_llm) 
     ), summary.events_generated
 
 
-def test_tick_db_persists_summary_and_events(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_tick_db_persists_summary_and_events(tmp_path, mock_llm) -> None:
     """每 tick 结束 TickDB.insert_tick 写入 tick_log + events。"""
     mock_llm.set_responses(
         [
@@ -226,7 +229,7 @@ def test_tick_db_persists_summary_and_events(tmp_path, mock_llm) -> None:
         tick_db=tick_db,
         main_tracking_character_id="alice",
     )
-    asyncio.run(orch.run_tick())
+    await orch.run_tick()
 
     rows = tick_db.get_recent_ticks(n=5)
     assert len(rows) == 1
@@ -245,7 +248,8 @@ def test_tick_db_persists_summary_and_events(tmp_path, mock_llm) -> None:
     tick_db.close()
 
 
-def test_showrunner_called_on_cadence_5(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_showrunner_called_on_cadence_5(tmp_path, mock_llm) -> None:
     """showrunner 仅在 tick%5==0 被调用。前 4 tick 不触发。"""
     responses = []
     for t in range(1, 6):
@@ -279,7 +283,7 @@ def test_showrunner_called_on_cadence_5(tmp_path, mock_llm) -> None:
 
     summaries = []
     for _ in range(5):
-        summaries.append(asyncio.run(orch.run_tick()))
+        summaries.append(await orch.run_tick())
 
     # tick 1-4 不应有 showrunner
     for s in summaries[:4]:
@@ -288,7 +292,8 @@ def test_showrunner_called_on_cadence_5(tmp_path, mock_llm) -> None:
     assert "showrunner" in summaries[4].agents_called
 
 
-def test_novelty_critic_writes_warnings(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_novelty_critic_writes_warnings(tmp_path, mock_llm) -> None:
     """每 20 tick NoveltyCritic 跑,recommendations 写入 TickState.novelty_warnings。"""
     # 直接构造 tick=20 的场景
     responses = []
@@ -327,7 +332,7 @@ def test_novelty_critic_writes_warnings(tmp_path, mock_llm) -> None:
 
     final_summary = None
     for _ in range(20):
-        final_summary = asyncio.run(orch.run_tick())
+        final_summary = await orch.run_tick()
 
     assert "novelty_critic" in final_summary.agents_called
     warnings = ts.get_novelty_warnings()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 
@@ -9,7 +8,6 @@ import pytest
 from scripts.replay_runtime_sequence import (
     ReplayFixture,
     load_fixture,
-    run_replay,
     run_replay_async,
 )
 from tick_runtime import TickRuntime
@@ -24,9 +22,14 @@ FIXTURE = (
 TYPED_FIXTURE = FIXTURE.with_name("typed_continuity_overlay_v1.json")
 
 
-def test_full_runtime_mock_replay_exercises_production_path(tmp_path) -> None:
-    report = run_replay(
-        FIXTURE,
+def _default_fixture() -> ReplayFixture:
+    return load_fixture(FIXTURE)
+
+
+@pytest.mark.asyncio
+async def test_full_runtime_mock_replay_exercises_production_path(tmp_path) -> None:
+    report = await run_replay_async(
+        _default_fixture(),
         work_dir=tmp_path / "accepted",
         max_calls=10,
     )
@@ -120,14 +123,15 @@ def _typed_fixture() -> ReplayFixture:
     return load_fixture(TYPED_FIXTURE)
 
 
-def test_rejected_tick_does_not_project_guarded_narrative_facts(tmp_path) -> None:
+@pytest.mark.asyncio
+async def test_rejected_tick_does_not_project_guarded_narrative_facts(
+    tmp_path,
+) -> None:
     fixture = _rejected_fixture()
-    report = asyncio.run(
-        run_replay_async(
-            fixture,
-            work_dir=tmp_path / "rejected",
-            max_calls=12,
-        )
+    report = await run_replay_async(
+        fixture,
+        work_dir=tmp_path / "rejected",
+        max_calls=12,
     )
 
     tick = report["ticks"][0]
@@ -148,14 +152,15 @@ def test_rejected_tick_does_not_project_guarded_narrative_facts(tmp_path) -> Non
     assert report["expectations"]["all_passed"] is True
 
 
-def test_typed_ledger_survives_full_runtime_and_projects_compatibly(tmp_path) -> None:
-    report = asyncio.run(
-        run_replay_async(
-            _typed_fixture(),
-            work_dir=tmp_path / "typed",
-            max_calls=10,
-            mode="recorded",
-        )
+@pytest.mark.asyncio
+async def test_typed_ledger_survives_full_runtime_and_projects_compatibly(
+    tmp_path,
+) -> None:
+    report = await run_replay_async(
+        _typed_fixture(),
+        work_dir=tmp_path / "typed",
+        max_calls=10,
+        mode="recorded",
     )
 
     assert report["expectations"]["all_passed"] is True
@@ -184,9 +189,14 @@ def test_typed_ledger_survives_full_runtime_and_projects_compatibly(tmp_path) ->
     assert active[("item:map", "item_holder")] == "alice"
 
 
-def test_mock_replay_fact_and_call_evidence_is_repeatable(tmp_path) -> None:
-    first = run_replay(FIXTURE, work_dir=tmp_path / "first", max_calls=10)
-    second = run_replay(FIXTURE, work_dir=tmp_path / "second", max_calls=10)
+@pytest.mark.asyncio
+async def test_mock_replay_fact_and_call_evidence_is_repeatable(tmp_path) -> None:
+    first = await run_replay_async(
+        _default_fixture(), work_dir=tmp_path / "first", max_calls=10
+    )
+    second = await run_replay_async(
+        _default_fixture(), work_dir=tmp_path / "second", max_calls=10
+    )
 
     assert first["fixture_sha256"] == second["fixture_sha256"]
     assert first["ticks"][0]["fact_diff"] == second["ticks"][0]["fact_diff"]
@@ -204,25 +214,26 @@ def test_mock_replay_fact_and_call_evidence_is_repeatable(tmp_path) -> None:
     ]
 
 
-def test_recorded_replay_has_stable_evidence_and_reuses_complete_checkpoint(
+@pytest.mark.asyncio
+async def test_recorded_replay_has_stable_evidence_and_reuses_complete_checkpoint(
     tmp_path,
 ) -> None:
     checkpoint = tmp_path / "recorded.json"
-    first = run_replay(
-        FIXTURE,
+    first = await run_replay_async(
+        _default_fixture(),
         work_dir=tmp_path / "first-recorded",
         max_calls=10,
         checkpoint_path=checkpoint,
         mode="recorded",
     )
-    second = run_replay(
-        FIXTURE,
+    second = await run_replay_async(
+        _default_fixture(),
         work_dir=tmp_path / "second-recorded",
         max_calls=10,
         mode="recorded",
     )
-    resumed = run_replay(
-        FIXTURE,
+    resumed = await run_replay_async(
+        _default_fixture(),
         work_dir=tmp_path / "unused-on-resume",
         max_calls=10,
         checkpoint_path=checkpoint,
@@ -242,18 +253,19 @@ def test_recorded_replay_has_stable_evidence_and_reuses_complete_checkpoint(
     assert not (tmp_path / "unused-on-resume").exists()
 
 
-def test_replay_resume_rejects_mode_mismatch(tmp_path) -> None:
+@pytest.mark.asyncio
+async def test_replay_resume_rejects_mode_mismatch(tmp_path) -> None:
     checkpoint = tmp_path / "recorded.json"
-    run_replay(
-        FIXTURE,
+    await run_replay_async(
+        _default_fixture(),
         work_dir=tmp_path / "recorded",
         checkpoint_path=checkpoint,
         mode="recorded",
     )
 
     with pytest.raises(ValueError, match="mode does not match"):
-        run_replay(
-            FIXTURE,
+        await run_replay_async(
+            _default_fixture(),
             work_dir=tmp_path / "unused",
             checkpoint_path=checkpoint,
             mode="mock",

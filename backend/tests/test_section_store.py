@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -117,7 +118,7 @@ def test_appended_content_is_valid_json_per_line(tmp_path):
     store = SectionStore(data_dir=str(tmp_path))
     store.append(_make_section(chapter=1, section=1))
     store.append(_make_section(chapter=1, section=2))
-    raw = open(store.jsonl_path, encoding="utf-8").read().strip().split("\n")
+    raw = Path(store.jsonl_path).read_text(encoding="utf-8").strip().split("\n")
     assert len(raw) == 2
     for line in raw:
         payload = json.loads(line)  # 每行必须是合法 JSON

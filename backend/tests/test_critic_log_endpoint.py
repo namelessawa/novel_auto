@@ -54,7 +54,8 @@ def client(tmp_path):
         ts.advance_tick()
     stub_rt = _StubRuntime(tick_state=ts)
     app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
-    yield TestClient(app), data_dir
+    with TestClient(app) as test_client:
+        yield test_client, data_dir
     app.dependency_overrides.clear()
 
 

@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import patch
 
 import pytest
@@ -135,7 +134,10 @@ def _make_injected_event(ev_id: str = "evt_user_test_0") -> Event:
     )
 
 
-def test_injected_event_consumed_on_successful_tick(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_injected_event_consumed_on_successful_tick(
+    tmp_path, mock_llm
+) -> None:
     """成功 tick 后, 注入队列里对应 id 的事件应被移除 (正常路径不回归)。"""
     mock_llm.set_responses(
         [
@@ -151,7 +153,7 @@ def test_injected_event_consumed_on_successful_tick(tmp_path, mock_llm) -> None:
     orch.inject_event(evt)
     assert len(orch._injected_pending) == 1
 
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     assert summary.tick == 1
     # 注入 id 应出现在 events_generated 里
@@ -162,7 +164,10 @@ def test_injected_event_consumed_on_successful_tick(tmp_path, mock_llm) -> None:
     )
 
 
-def test_injected_event_preserved_when_tick_fails(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_injected_event_preserved_when_tick_fails(
+    tmp_path, mock_llm
+) -> None:
     """tick 中途异常时, 注入事件必须留在队列里供下 tick 重试 — 这是 P2 核心修复。
 
     此前 .clear() 在阶段 2 末就执行, 阶段 3-7 抛错就永久丢失。
@@ -182,7 +187,7 @@ def test_injected_event_preserved_when_tick_fails(tmp_path, mock_llm) -> None:
         side_effect=RuntimeError("simulated mid-tick failure"),
     ):
         with pytest.raises(RuntimeError, match="simulated mid-tick failure"):
-            asyncio.run(orch.run_tick())
+            await orch.run_tick()
 
     # 关键断言: 事件没被消费, 仍在队列里
     assert len(orch._injected_pending) == 1, (
@@ -192,7 +197,10 @@ def test_injected_event_preserved_when_tick_fails(tmp_path, mock_llm) -> None:
     assert orch._injected_pending[0].id == evt.id
 
 
-def test_concurrent_inject_during_tick_preserved(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_concurrent_inject_during_tick_preserved(
+    tmp_path, mock_llm
+) -> None:
     """tick 期间通过 inject_event 新追加的事件 (不同 id) 不应被本 tick 误消费。
 
     虽然 _tick_lock 保护 run_tick, inject_event 本身不加锁, HTTP 线程理论上
@@ -221,7 +229,7 @@ def test_concurrent_inject_during_tick_preserved(tmp_path, mock_llm) -> None:
 
     orch._narrate = _spy_narrate
 
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     # initial 应被消费, late 应保留供下 tick
     remaining_ids = {e.id for e in orch._injected_pending}

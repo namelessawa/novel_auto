@@ -12,9 +12,9 @@ LLM 响应,验证 7 阶段调度的端到端行为:
 
 from __future__ import annotations
 
-import asyncio
 import json
 
+import pytest
 
 from agents.character_agent import CharacterAgent
 from agents.narrator_agent import NarratorAgent
@@ -165,7 +165,10 @@ def _build_orchestrator(ts: TickState) -> Orchestrator:
     )
 
 
-def test_single_tick_produces_summary_and_narrative(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_single_tick_produces_summary_and_narrative(
+    tmp_path, mock_llm
+) -> None:
     """全链路:WorldSimulator → CharacterAgent(alice + bob) → Narrator → 落盘。"""
     mock_llm.set_responses(
         [
@@ -178,7 +181,7 @@ def test_single_tick_produces_summary_and_narrative(tmp_path, mock_llm) -> None:
 
     ts = _bootstrap_state(str(tmp_path))
     orch = _build_orchestrator(ts)
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     assert summary.tick == 1
     assert summary.world_time == 1
@@ -227,7 +230,8 @@ def test_single_tick_produces_summary_and_narrative(tmp_path, mock_llm) -> None:
     assert learned[0]["known_by"] == ["alice"]
 
 
-def test_low_value_events_skip_narration(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_low_value_events_skip_narration(tmp_path, mock_llm) -> None:
     """事件价值过低 + 距上次叙述很近 → Narrator 应跳过,不消耗 LLM。"""
     # WorldSimulator 输出价值=1 的事件,无 CharacterAgent 决策(无可见事件触发)
     low_value_sim = _world_sim_response(world_time=1, narrative_value=1)
@@ -243,13 +247,16 @@ def test_low_value_events_skip_narration(tmp_path, mock_llm) -> None:
     ts = _bootstrap_state(str(tmp_path))
     ts.mark_narration(0)  # 上次叙述就在 tick 0
     orch = _build_orchestrator(ts)
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     assert summary.narrator_produced_text is False
     assert summary.narrator_output_chars == 0
 
 
-def test_tick_state_persisted_and_restored_across_runs(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_tick_state_persisted_and_restored_across_runs(
+    tmp_path, mock_llm
+) -> None:
     """跑两个 tick,验证第二个 Orchestrator 实例 load() 后从 tick=2 继续。"""
     mock_llm.set_responses(
         [
@@ -266,8 +273,8 @@ def test_tick_state_persisted_and_restored_across_runs(tmp_path, mock_llm) -> No
 
     ts1 = _bootstrap_state(str(tmp_path))
     orch1 = _build_orchestrator(ts1)
-    asyncio.run(orch1.run_tick())
-    s2 = asyncio.run(orch1.run_tick())
+    await orch1.run_tick()
+    s2 = await orch1.run_tick()
     assert s2.tick == 2
 
     # 用新 TickState 实例,验证 load 后能从 tick 3 继续
@@ -278,7 +285,8 @@ def test_tick_state_persisted_and_restored_across_runs(tmp_path, mock_llm) -> No
     assert ts2.get_open_loop_count() == 2  # 两次叙述各开一条新 loop
 
 
-def test_action_conflict_logged_in_agents_called(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_action_conflict_logged_in_agents_called(tmp_path, mock_llm) -> None:
     """两个角色 fight 同一目标 → ActionResolver 标注冲突,Orchestrator 上报。"""
     # 让两个事件参与者都被波及触发 CharacterAgent
     sim = _world_sim_response(world_time=1)
@@ -298,7 +306,7 @@ def test_action_conflict_logged_in_agents_called(tmp_path, mock_llm) -> None:
 
     ts = _bootstrap_state(str(tmp_path))
     orch = _build_orchestrator(ts)
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     # action_resolver 应被记录为 conflicts > 0
     conflict_marker = [a for a in summary.agents_called if a.startswith("action_resolver")]
@@ -306,7 +314,10 @@ def test_action_conflict_logged_in_agents_called(tmp_path, mock_llm) -> None:
     assert "conflicts=1" in conflict_marker[0]
 
 
-def test_external_inject_event_appears_in_next_tick(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_external_inject_event_appears_in_next_tick(
+    tmp_path, mock_llm
+) -> None:
     """inject_event 注入的事件应在下一个 tick 的事件流中出现。"""
     injected = Event(
         id="evt_external",
@@ -332,7 +343,7 @@ def test_external_inject_event_appears_in_next_tick(tmp_path, mock_llm) -> None:
     ts = _bootstrap_state(str(tmp_path))
     orch = _build_orchestrator(ts)
     orch.inject_event(injected)
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     assert "evt_external" in summary.events_generated
     assert summary.narrator_produced_text is True
@@ -414,7 +425,10 @@ def _character_action_with_hard_state(
     }
 
 
-def test_tick_applies_hard_state_transitions_end_to_end(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_tick_applies_hard_state_transitions_end_to_end(
+    tmp_path, mock_llm
+) -> None:
     """v2.16 端到端: CharacterAgent 输出硬状态字段 → Orchestrator 应用到 CharacterState
     且同步 WorldState.locations.present_characters。
 
@@ -438,7 +452,7 @@ def test_tick_applies_hard_state_transitions_end_to_end(tmp_path, mock_llm) -> N
 
     ts = _bootstrap_state(str(tmp_path))
     orch = _build_orchestrator(ts)
-    summary = asyncio.run(orch.run_tick())
+    summary = await orch.run_tick()
 
     # 1. CharacterState 硬转移落地
     alice = ts.get_character_state("alice")
@@ -468,7 +482,8 @@ def test_tick_applies_hard_state_transitions_end_to_end(tmp_path, mock_llm) -> N
     assert summary.narrator_produced_text is True
 
 
-def test_tick_records_agent_id_and_priority_to_token_budget(
+@pytest.mark.asyncio
+async def test_tick_records_agent_id_and_priority_to_token_budget(
     tmp_path, mock_llm
 ) -> None:
     """v2.16 端到端: 一个 tick 跑完后, TokenBudgetTracker 里的记录不能再是
@@ -491,7 +506,7 @@ def test_tick_records_agent_id_and_priority_to_token_budget(
     )
     ts = _bootstrap_state(str(tmp_path))
     orch = _build_orchestrator(ts)
-    asyncio.run(orch.run_tick())
+    await orch.run_tick()
 
     tracker = orch._token_budget
     agent_ids = {rec.agent_id for rec in tracker.records}

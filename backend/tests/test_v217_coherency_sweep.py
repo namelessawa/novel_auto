@@ -12,7 +12,6 @@ Fix 4(前端 Tick 控制台)由 npm run build + 真实 LLM 集成测试覆盖。
 
 from __future__ import annotations
 
-import asyncio
 import json
 
 import pytest
@@ -335,7 +334,8 @@ def test_agent_routes_scan_last_invoked_finds_with_alias(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_pipeline_save_state_persists_summary_tree(tmp_path):
+@pytest.mark.asyncio
+async def test_pipeline_save_state_persists_summary_tree(tmp_path):
     from memory_system.models import Section
     from pipeline.engine import GenerationPipeline
 
@@ -355,7 +355,7 @@ def test_pipeline_save_state_persists_summary_tree(tmp_path):
     async def add():
         await p.summary_tree.add_section_summary(1, 1, "一段摘要")
 
-    asyncio.run(add())
+    await add()
 
     p.save_state()
     tree_path = tmp_path / "summary_tree_legacy.json"
@@ -368,7 +368,8 @@ def test_pipeline_save_state_persists_summary_tree(tmp_path):
     )
 
 
-def test_pipeline_load_state_restores_summary_tree(tmp_path):
+@pytest.mark.asyncio
+async def test_pipeline_load_state_restores_summary_tree(tmp_path):
     from memory_system.models import Section
     from pipeline.engine import GenerationPipeline
 
@@ -381,7 +382,7 @@ def test_pipeline_load_state_restores_summary_tree(tmp_path):
     async def add():
         await p1.summary_tree.add_section_summary(1, 1, "alice meets dragon")
 
-    asyncio.run(add())
+    await add()
     p1.save_state()
 
     # 模拟重启 — 新 pipeline 实例从同一 data_dir 读回

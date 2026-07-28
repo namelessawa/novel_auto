@@ -4,13 +4,15 @@ import json
 from collections import Counter
 from pathlib import Path
 
+import pytest
+
 from scripts.build_phase9_guard_fixtures import (
     build_hard_negative_suite,
     build_probable_fp_suite,
 )
 from scripts.replay_runtime_sequence import (
     load_guard_replay_suite,
-    run_guard_replay_suite,
+    run_guard_replay_suite_async,
 )
 
 
@@ -48,10 +50,11 @@ def test_hard_negative_fixture_is_reproducible_and_covers_taxonomy() -> None:
         assert counts[code] >= 3, (code, counts)
 
 
-def test_hard_negatives_execute_full_state_guard_and_remain_rejected(
+@pytest.mark.asyncio
+async def test_hard_negatives_execute_full_state_guard_and_remain_rejected(
     tmp_path,
 ) -> None:
-    report = run_guard_replay_suite(
+    report = await run_guard_replay_suite_async(
         SUITE,
         work_dir=tmp_path / "hard-negatives",
         max_calls=20,
@@ -117,10 +120,11 @@ def test_probable_fp_fixture_is_reproducible_and_meets_dataset_gate() -> None:
     assert 39 / combined_total <= 0.40
 
 
-def test_probable_fp_suite_records_baseline_false_reject_without_payload_loss(
+@pytest.mark.asyncio
+async def test_probable_fp_suite_records_baseline_false_reject_without_payload_loss(
     tmp_path,
 ) -> None:
-    report = run_guard_replay_suite(
+    report = await run_guard_replay_suite_async(
         FP_SUITE,
         work_dir=tmp_path / "probable-fp",
         max_calls=20,

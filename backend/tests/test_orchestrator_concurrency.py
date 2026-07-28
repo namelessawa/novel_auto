@@ -81,7 +81,8 @@ def _bootstrap(tmp_path) -> tuple[TickState, Orchestrator]:
     return ts, orch
 
 
-def test_run_tick_serializes_concurrent_calls(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_run_tick_serializes_concurrent_calls(tmp_path, mock_llm) -> None:
     """两个 run_tick 并发触发 → tick 必须串行推进, current_tick 增量恰为 2。"""
     # 给两轮 tick 准备无 character_action / 无 narrator 的最小响应链
     mock_llm.set_responses(
@@ -96,7 +97,7 @@ def test_run_tick_serializes_concurrent_calls(tmp_path, mock_llm) -> None:
     async def _run_both() -> tuple:
         return await asyncio.gather(orch.run_tick(), orch.run_tick())
 
-    s1, s2 = asyncio.run(_run_both())
+    s1, s2 = await _run_both()
 
     # tick_state 实际推进 2 步, 不多不少
     assert ts.current_tick == 2
@@ -104,7 +105,8 @@ def test_run_tick_serializes_concurrent_calls(tmp_path, mock_llm) -> None:
     assert {s1.tick, s2.tick} == {1, 2}
 
 
-def test_paused_route_rejects_manual_run(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_paused_route_rejects_manual_run(tmp_path, mock_llm) -> None:
     """pause() 后调用 /api/tick/run 必须返回 409, 不推进 tick。
 
     v2.26 — route handler 签名改为 (runtime=Depends(_resolve_runtime)), 测试直接
@@ -133,4 +135,4 @@ def test_paused_route_rejects_manual_run(tmp_path, mock_llm) -> None:
         assert res["ok"] is True
         assert ts.current_tick == 1
 
-    asyncio.run(_scenario())
+    await _scenario()

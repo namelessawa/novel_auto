@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import os
 
 import pytest
@@ -10,7 +9,8 @@ import pytest
 from memory.summary_tree import Legend, SummaryNode, SummaryTree
 
 
-def test_persist_round_trip_with_pending_leaves(tmp_path) -> None:
+@pytest.mark.asyncio
+async def test_persist_round_trip_with_pending_leaves(tmp_path) -> None:
     tree = SummaryTree(merge_threshold=10)
 
     async def add_some():
@@ -18,7 +18,7 @@ def test_persist_round_trip_with_pending_leaves(tmp_path) -> None:
         await tree.add_section_summary(1, 2, "alice meets bob")
         await tree.add_section_summary(2, 1, "bob betrays alice")
 
-    asyncio.run(add_some())
+    await add_some()
 
     path = str(tmp_path / "summary_tree.json")
     tree.persist_to_disk(path)
@@ -78,7 +78,8 @@ def test_atomic_write_no_partial_on_error(tmp_path, monkeypatch) -> None:
     assert leftovers == []
 
 
-def test_legendize_calls_llm_and_records(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_legendize_calls_llm_and_records(tmp_path, mock_llm) -> None:
     mock_llm.set_responses(["这是一段传说化的内容,有不同流传版本。"])
 
     tree = SummaryTree()
@@ -87,7 +88,9 @@ def test_legendize_calls_llm_and_records(tmp_path, mock_llm) -> None:
         SummaryNode(node_id="ch1_s2", level=0, summary="bob's secret revealed", chapter_range=(1, 1)),
     ]
 
-    legend = asyncio.run(tree.legendize(["ch1_s1", "ch1_s2"], classification="folk_tale"))
+    legend = await tree.legendize(
+        ["ch1_s1", "ch1_s2"], classification="folk_tale"
+    )
     assert isinstance(legend, Legend)
     assert tree.legend_count == 1
     assert legend.legendary_form.startswith("这是一段传说化的内容")
@@ -95,7 +98,8 @@ def test_legendize_calls_llm_and_records(tmp_path, mock_llm) -> None:
     assert legend.classification == "folk_tale"
 
 
-def test_legendize_llm_failure_uses_fallback(tmp_path, monkeypatch) -> None:
+@pytest.mark.asyncio
+async def test_legendize_llm_failure_uses_fallback(tmp_path, monkeypatch) -> None:
     """LLM 抛错时,legendize 不应崩溃,应给出 [传说] 前缀的兜底文本。"""
     import nf_core.llm_client as llm_mod
 
@@ -108,15 +112,16 @@ def test_legendize_llm_failure_uses_fallback(tmp_path, monkeypatch) -> None:
     tree._leaves = [
         SummaryNode(node_id="ch1_s1", level=0, summary="hero falls", chapter_range=(1, 1))
     ]
-    legend = asyncio.run(tree.legendize(["ch1_s1"]))
+    legend = await tree.legendize(["ch1_s1"])
     assert legend.legendary_form.startswith("[传说]")
     assert tree.legend_count == 1
 
 
-def test_legendize_unknown_node_raises(tmp_path) -> None:
+@pytest.mark.asyncio
+async def test_legendize_unknown_node_raises(tmp_path) -> None:
     tree = SummaryTree()
     with pytest.raises(ValueError, match="找不到任何指定 node_id"):
-        asyncio.run(tree.legendize(["ghost_node"]))
+        await tree.legendize(["ghost_node"])
 
 
 def test_prune_nodes_removes_from_all_layers(tmp_path) -> None:
@@ -132,13 +137,14 @@ def test_prune_nodes_removes_from_all_layers(tmp_path) -> None:
     assert tree.leaf_count == 0
 
 
-def test_persisted_legends_round_trip(tmp_path, mock_llm) -> None:
+@pytest.mark.asyncio
+async def test_persisted_legends_round_trip(tmp_path, mock_llm) -> None:
     mock_llm.set_responses(["一种说法是英雄飞升,另一种说法是英雄战死。"])
     tree = SummaryTree()
     tree._leaves = [
         SummaryNode(node_id="ch1_s1", level=0, summary="hero ends", chapter_range=(1, 1))
     ]
-    asyncio.run(tree.legendize(["ch1_s1"], classification="folk_tale"))
+    await tree.legendize(["ch1_s1"], classification="folk_tale")
 
     path = str(tmp_path / "tree.json")
     tree.persist_to_disk(path)

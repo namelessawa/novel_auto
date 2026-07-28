@@ -15,9 +15,20 @@ from api import story_routes
 from auth import get_current_user
 from auth.models import User
 from sections.section_store import TickSection, _clear_for_tests
-from story.models import GenerationTransaction, ValidationReport, ValidationViolation
+from story.models import (
+    ContextManifest,
+    GenerationTransaction,
+    MemoryRecord,
+    ValidationReport,
+    ValidationViolation,
+    WriterCandidate,
+)
 from story.narrative_contract import NarrativeValidationReport
-from story.persistence import GenerationTransactionStore
+from story.persistence import (
+    ContextManifestStore,
+    GenerationTransactionStore,
+    MemoryRepository,
+)
 from story.runtime import clear_author_runtimes
 from story.service import GenerationRejected
 from tasks.task_manager import get_task_manager
@@ -360,3 +371,195 @@ def test_long_run_status_aggregates_transactions_without_prose(isolated_api) -> 
     assert payload["total_tokens"] == 12
     assert payload["restart_recovery_count"] == 1
     assert "narrative_text" not in response.text
+
+
+def test_memory_and_transaction_ledger_are_auditable_and_redacted(
+    isolated_api,
+) -> None:
+    novel = novel_manager.create_novel("alice", "证据台")
+    data_dir = novel_manager.get_novel_data_dir("alice", novel["id"])
+    memory_store = MemoryRepository(data_dir)
+    memory_store.save(
+        memory_store.load().model_copy(
+            update={
+                "revision": 2,
+                "records": {
+                    "memory-1": MemoryRecord(
+                        id="memory-1",
+                        type="promise",
+                        section_id="ch0001_s0001",
+                        entities=["shen_yan"],
+                        summary="沈砚承诺在天亮前交信。",
+                        importance=8,
+                        created_at_revision=2,
+                    )
+                },
+            }
+        )
+    )
+    ContextManifestStore(data_dir, novel_id=novel["id"]).save(
+        ContextManifest(
+            novel_id=novel["id"],
+            section_id="ch0001_s0002",
+            story_bible_revision=1,
+            canonical_state_revision=2,
+            selected_memory_ids=["memory-1"],
+            active_thread_ids=["harbor"],
+            total_chars=10,
+            total_token_estimate=5,
+            max_context_chars=100,
+            max_context_token_estimate=50,
+        )
+    )
+    GenerationTransactionStore(data_dir).save(
+        GenerationTransaction(
+            id="redacted_transaction",
+            user_id="alice",
+            novel_id=novel["id"],
+            section_id="ch0001_s0002",
+            phase="rejected",
+            story_bible_revision=1,
+            canonical_state_revision=2,
+            target_canonical_revision=3,
+            writer_calls=1,
+            candidate=WriterCandidate(
+                narrative_text="REJECTED_CANDIDATE_MUST_NEVER_LEAK",
+                section_summary="拒绝候选",
+            ),
+            usage={"total_tokens": 12, "api_key": 999},
+            error="Authorization: fixture-redaction-sentinel",
+        )
+    )
+
+    client = _client("alice")
+    memories = client.get(f"/api/novels/{novel['id']}/memories")
+    assert memories.status_code == 200, memories.text
+    assert memories.json()["records"][0]["selected"] is True
+    assert memories.json()["records"][0]["summary"] == "沈砚承诺在天亮前交信。"
+
+    transactions = client.get(f"/api/novels/{novel['id']}/transactions")
+    assert transactions.status_code == 200, transactions.text
+    payload = transactions.json()["transactions"][0]
+    assert payload["error"] == "内部错误已记录"
+    assert payload["usage"] == {"total_tokens": 12}
+    assert "REJECTED_CANDIDATE_MUST_NEVER_LEAK" not in transactions.text
+    assert "fixture-redaction-sentinel" not in transactions.text
+    assert "api_key" not in transactions.text
+    assert "base_canonical_state" not in transactions.text
+
+
+def test_exports_include_only_committed_prose_and_public_evidence(
+    isolated_api,
+) -> None:
+    novel = novel_manager.create_novel("alice", "导出边界")
+    data_dir = novel_manager.get_novel_data_dir("alice", novel["id"])
+    transactions = GenerationTransactionStore(data_dir)
+    store = story_routes.get_section_store(novel["id"], data_dir=data_dir)
+    rows = [
+        ("committed_tx", "committed", True, "COMMITTED_PROSE", 1),
+        ("rejected_tx", "rejected", False, "REJECTED_PROSE", 2),
+        ("staged_tx", "validated", False, "STAGED_PROSE", 3),
+    ]
+    for transaction_id, phase, committed, prose, section_no in rows:
+        transactions.save(
+            GenerationTransaction(
+                id=transaction_id,
+                user_id="alice",
+                novel_id=novel["id"],
+                section_id=f"ch0001_s{section_no:04d}",
+                phase=phase,
+                story_bible_revision=1,
+                canonical_state_revision=section_no,
+                target_canonical_revision=section_no + 1,
+                writer_calls=1,
+                committed=committed,
+                candidate=WriterCandidate(
+                    narrative_text=f"{prose}_CANDIDATE",
+                    section_summary=prose,
+                ),
+            )
+        )
+        store.append(
+            TickSection(
+                id=f"ch0001_s{section_no:04d}",
+                chapter=1,
+                section=section_no,
+                title=prose,
+                content=prose,
+                word_count=len(prose),
+                tick_start=0,
+                tick_end=0,
+                generation_mode="author",
+                transaction_id=transaction_id,
+            )
+        )
+
+    client = _client("alice")
+    manuscript = client.get(f"/api/novels/{novel['id']}/exports/manuscript")
+    assert manuscript.status_code == 200, manuscript.text
+    assert "COMMITTED_PROSE" in manuscript.text
+    assert "REJECTED_PROSE" not in manuscript.text
+    assert "STAGED_PROSE" not in manuscript.text
+    assert manuscript.headers["x-included-sections"] == "1"
+    assert manuscript.headers["x-excluded-sections"] == "2"
+    assert len(manuscript.headers["x-artifact-sha256"]) == 64
+
+    evidence = client.get(f"/api/novels/{novel['id']}/exports/evidence")
+    assert evidence.status_code == 200, evidence.text
+    assert evidence.json()["committed_sections"][0]["id"] == "ch0001_s0001"
+    assert set(evidence.json()["excluded_section_ids"]) == {
+        "ch0001_s0002",
+        "ch0001_s0003",
+    }
+    assert "COMMITTED_PROSE_CANDIDATE" not in evidence.text
+    assert "REJECTED_PROSE_CANDIDATE" not in evidence.text
+    assert "STAGED_PROSE_CANDIDATE" not in evidence.text
+    assert len(evidence.headers["x-artifact-sha256"]) == 64
+
+
+def test_recovery_resume_is_idempotent_and_reports_pending(
+    isolated_api, monkeypatch
+) -> None:
+    novel = novel_manager.create_novel("alice", "恢复")
+    data_dir = novel_manager.get_novel_data_dir("alice", novel["id"])
+    transactions = GenerationTransactionStore(data_dir)
+    pending = GenerationTransaction(
+        id="pending_tx",
+        user_id="alice",
+        novel_id=novel["id"],
+        section_id="ch0001_s0001",
+        phase="validated",
+        story_bible_revision=1,
+        canonical_state_revision=1,
+        target_canonical_revision=2,
+        writer_calls=1,
+    )
+    transactions.save(pending)
+
+    class _RecoveryService:
+        def recover(self):
+            current = transactions.load("pending_tx")
+            transactions.save(
+                current.model_copy(update={"phase": "committed", "committed": True})
+            )
+            return ["pending_tx"]
+
+    monkeypatch.setattr(
+        story_routes,
+        "get_author_runtime",
+        lambda user_id, novel_id: SimpleNamespace(service=_RecoveryService()),
+    )
+    client = _client("alice")
+    first = client.post(f"/api/novels/{novel['id']}/recovery/resume")
+    assert first.status_code == 200, first.text
+    assert first.json() == {
+        "status": "recovered",
+        "pending_before": ["pending_tx"],
+        "recovered_transaction_ids": ["pending_tx"],
+        "pending_after": [],
+    }
+
+    second = client.post(f"/api/novels/{novel['id']}/recovery/resume")
+    assert second.status_code == 200, second.text
+    assert second.json()["pending_before"] == []
+    assert second.json()["pending_after"] == []
