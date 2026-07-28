@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "case_id": "p6_seed_20260727_action_conflict_literary_section_0001",
+  "classification": "PROVIDER_ERROR",
+  "provider": "custom",
+  "model": "glm-5.2",
+  "seed": 20260727,
+  "theme": "action_conflict",
+  "style": "literary",
+  "section": 1,
+  "attempt": 1,
+  "failure_type": "WriterOutputError",
+  "failure_message": "Writer returned invalid JSON",
+  "provider_response_persisted": false,
+  "provider_response_reason": "provider response omitted by the existing credential-safe failure boundary",
+  "contract_hash": "1027d3e3889934539f6469c34eec384bd15183fcc99e5ef8677eee94d287a143",
+  "execution_spec_hash": "3d9e4a9099eba16c1567d8429690c365fd049965b337dd03bc1b90b56e942058",
+  "frozen_artifacts": [
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727/stage1-matrix.json",
+      "sha256": "AAAF766584A9BBFE9ED99519011EBD4265EBA407C4BF3D0A5A0DDC6EAC043073",
+      "bytes": 4771
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727/runs/action_conflict__literary/report.json",
+      "sha256": "B25AF1DF7BFAA94F3C0C5C664D37EE60E0BD25D4EE8634E40FA2DE158411D0C3",
+      "bytes": 2590
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727/runs/action_conflict__literary/failures/section_0001_attempt_01.json",
+      "sha256": "67FF71CAEC04BC4D47F3E2FFC366E0BC812784775F6E7EE166A7931E4183AF9D",
+      "bytes": 160
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727/runs/action_conflict__literary/runtime/generation_transactions/section_0001.json",
+      "sha256": "3AB5572326DD81927D3BE8D0E7F754FDD4D88A85327F5A0913298B87AAFDE5B4",
+      "bytes": 22685
+    }
+  ],
+  "expected_configuration": {
+    "structured_output_thinking_mode": "disabled",
+    "preserve_explicit_operator_override": true
+  }
+}

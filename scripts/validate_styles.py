@@ -139,6 +139,15 @@ def _configure_provider(path: Path) -> dict[str, Any]:
                 model = value
     if not (key and base and model):
         raise ValueError("provider file must contain API key, base URL and model")
+    # P6 real-provider failure 2026-07-29: glm-5.2 exhausted the structured
+    # Writer response in reasoning output and returned no parseable JSON.  The
+    # repository's OpenAI-compatible client already has a provider-supported
+    # thinking-disable transport switch.  Select it for GLM structured-output
+    # validation unless an operator explicitly supplied a different mode.
+    thinking_mode = (os.environ.get("LLM_THINKING_MODE") or "").strip()
+    if not thinking_mode and model.strip().lower().startswith("glm-"):
+        thinking_mode = "disabled"
+        os.environ["LLM_THINKING_MODE"] = thinking_mode
     os.environ.update({
         "LLM_PROVIDER": "custom",
         "CUSTOM_API_KEY": key,
@@ -149,6 +158,7 @@ def _configure_provider(path: Path) -> dict[str, Any]:
         "provider": "custom",
         "base_url": base,
         "model": model,
+        "thinking_mode": thinking_mode,
         "credential_present": True,
         "source_file": str(path.resolve()),
     }
