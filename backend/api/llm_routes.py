@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import AsyncIterator
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from openai import AsyncOpenAI

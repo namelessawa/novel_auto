@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from dataclasses import dataclass, field
 
 # backend/config/settings.py → ../.. = 项目根

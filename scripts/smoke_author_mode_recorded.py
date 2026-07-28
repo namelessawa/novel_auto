@@ -27,14 +27,42 @@ class RecordedWriter:
         self.repair_calls = 0
 
     async def generate(self, context, goal):
+        from story.chapter_plan import ChapterEvidence
         from story.writer import WriterResult
 
         self.contexts.append(context)
         self.generate_calls += 1
         if not self.candidates:
             raise AssertionError("recorded Writer candidate queue exhausted")
+        candidate = self.candidates.pop(0)
+        narrative_text = candidate.narrative_text
+        event_plan = context.event_execution_plan
+        if event_plan is not None:
+            completion_lines = [
+                item.minimum_completion_evidence
+                for item in [
+                    *event_plan.ordered_events,
+                    *event_plan.required_end_states,
+                ]
+                if item.minimum_completion_evidence
+                and item.minimum_completion_evidence not in narrative_text
+            ]
+            if completion_lines:
+                narrative_text = "".join([narrative_text, *completion_lines])
+        chapter_evidence = [
+            ChapterEvidence(
+                segment=segment.order,
+                events_completed=segment.events,
+            )
+            for segment in (context.chapter_plan.segments if context.chapter_plan else [])
+        ]
         return WriterResult(
-            candidate=self.candidates.pop(0),
+            candidate=candidate.model_copy(
+                update={
+                    "narrative_text": narrative_text,
+                    "chapter_evidence": chapter_evidence,
+                }
+            ),
             usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         )
 
@@ -65,7 +93,7 @@ def _candidate(text: str, summary: str, *, delta=None, memories=None):
 
     padding = "沈砚仍在旧灯塔核对旧信，只确认当前已经发生的事实。"
     narrative = text
-    while sum(not char.isspace() for char in narrative) < 220:
+    while sum(not char.isspace() for char in narrative) < 420:
         narrative += padding
     return WriterCandidate(
         narrative_text=narrative,

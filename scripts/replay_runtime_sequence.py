@@ -35,7 +35,6 @@ for entry in (str(BACKEND), str(ROOT)):
     if entry not in sys.path:
         sys.path.insert(0, entry)
 
-from graph.knowledge_graph import KnowledgeGraph  # noqa: E402
 from memory.tick_state import TickState  # noqa: E402
 from memory_system.models import (  # noqa: E402
     CharacterProfile,

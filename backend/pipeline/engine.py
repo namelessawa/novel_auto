@@ -15,7 +15,7 @@ from agents.update_agent import UpdateAgent
 from agents.validation_agent import ValidationAgent
 from agents.writer_agent import WriterAgent
 from config.settings import settings
-from memory_system.models import ActionPlan, Section, ValidationResult
+from memory_system.models import ActionPlan, Section
 from graph.knowledge_graph import KnowledgeGraph
 from memory.summary_tree import SummaryTree
 from memory.working_memory import ActiveCharacter, SceneContext, WorkingMemory
@@ -269,7 +269,7 @@ class GenerationPipeline:
         )
         yield PipelineEvent(
             PipelineStage.PLANNING,
-            f"行动指南就绪",
+            "行动指南就绪",
             {"plan": plan.plan_text},
         )
 

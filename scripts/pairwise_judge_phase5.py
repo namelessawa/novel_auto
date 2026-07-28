@@ -19,7 +19,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import random
 import sys
 from pathlib import Path
@@ -28,7 +27,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_REPO_ROOT / "backend"))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(_REPO_ROOT / ".env")
 
@@ -170,7 +169,7 @@ async def main() -> int:
     decisive = counts["a_wins"] + counts["b_wins"]
     b_win_rate = counts["b_wins"] / decisive if decisive else 0.0
     print()
-    print(f"=== Summary ===")
+    print("=== Summary ===")
     print(f"  A wins (baseline): {counts['a_wins']}")
     print(f"  B wins (Phase 5-B): {counts['b_wins']}")
     print(f"  TIE              : {counts['tie']}")

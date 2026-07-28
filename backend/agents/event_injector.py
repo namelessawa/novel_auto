@@ -200,7 +200,10 @@ class EventInjector:
             "active_global_events": world_state.active_global_events,
             "world_rules": world_state.world_rules,
             "factions": [f.id for f in world_state.factions],
-            "locations": [{"id": l.id, "name": l.name} for l in world_state.locations],
+            "locations": [
+                {"id": location.id, "name": location.name}
+                for location in world_state.locations
+            ],
         }
         recent_evt_lite = [
             {"id": e.id, "type": e.type, "loc": e.location, "desc": e.description[:80]}
@@ -217,19 +220,19 @@ class EventInjector:
         ]
         loops_lite = [
             {
-                "id": l.id,
-                "urgency": l.urgency,
-                "type": l.type,
-                "desc": l.description[:80],
+                "id": loop.id,
+                "urgency": loop.urgency,
+                "type": loop.type,
+                "desc": loop.description[:80],
                 # Phase 2 Stage 4 (iter#90) — surface stale 状态供 LLM 决策.
                 "stale_ticks": tick - max(
-                    getattr(l, "last_referenced_tick", 0) or 0,
-                    getattr(l, "opened_tick", 0) or 0,
+                    getattr(loop, "last_referenced_tick", 0) or 0,
+                    getattr(loop, "opened_tick", 0) or 0,
                 ),
             }
-            for l in open_loops
+            for loop in open_loops
         ]
-        stale_count = sum(1 for l in loops_lite if l["stale_ticks"] > 20)
+        stale_count = sum(1 for loop in loops_lite if loop["stale_ticks"] > 20)
         # Phase 2 (iter#96) — open_pressure: plot 密集题材 (民国谍战类) 跨题材
         # 验证 (iter#95) 显示 open_count 单调上涨但 stale 长期保持 0, 让
         # iter#90 原则 #6 (stale≥3 才不新种) 来不及生效就触底. open_pressure

@@ -392,7 +392,9 @@ def _build_live_context(spec: AgentSpec, runtime) -> dict:
 
     elif aid == "event_injector":
         ctx.update({
-            "open_loops_top_10": [_dump_pydantic(l) for l in ts.get_open_loops(top_k=10)],
+            "open_loops_top_10": [
+                _dump_pydantic(loop) for loop in ts.get_open_loops(top_k=10)
+            ],
             "open_loop_count": ts.get_open_loop_count(),
             "last_event_tick_by_type": dict(getattr(ts, "_last_event_tick_by_type", {})),
             "recent_events_3_ticks": [
@@ -436,7 +438,9 @@ def _build_live_context(spec: AgentSpec, runtime) -> dict:
         ctx.update({
             "character_states": [_dump_pydantic(s) for s in ts.list_character_states()[:8]],
             "style_anchors_top_5": [_dump_pydantic(a) for a in ts.get_style_anchors(top_k=5)],
-            "open_loops_top_10": [_dump_pydantic(l) for l in ts.get_open_loops(top_k=10)],
+            "open_loops_top_10": [
+                _dump_pydantic(loop) for loop in ts.get_open_loops(top_k=10)
+            ],
             "last_narration_tick": ts.last_narration_tick,
             "ticks_since_last_narration": (
                 ts.current_tick - ts.last_narration_tick
@@ -458,8 +462,11 @@ def _build_live_context(spec: AgentSpec, runtime) -> dict:
         ctx.update({
             "tick_history_20": _recent_ticks(20),
             "open_loops_with_age": [
-                {**_dump_pydantic(l), "age": ts.current_tick - l.opened_tick}
-                for l in ts.get_open_loops(top_k=15)
+                {
+                    **_dump_pydantic(loop),
+                    "age": ts.current_tick - loop.opened_tick,
+                }
+                for loop in ts.get_open_loops(top_k=15)
             ],
             "arc_status": arc_status,
             "novelty_warnings": list(ts.get_novelty_warnings()),

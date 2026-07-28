@@ -37,6 +37,7 @@ from agents.quality_spec import (
     render_critique_block_semantic,
     render_show_dont_tell_block,
 )
+from nf_core.env_helpers import env_bool as _env_bool
 from nf_core.json_utils import parse_llm_json
 from nf_core.llm_client import llm_client
 
@@ -261,7 +262,6 @@ MAX_REWRITE_ROUNDS = _env_int("CRITIC_MAX_REWRITE_ROUNDS", 1)
 # rewrite) 后直接接受, 不再做 2nd critique. 实测 2nd critique 几乎总是
 # POLISH (modify 已清掉高触发), 等于纯浪费. 通过 env 可恢复为 2/3/4.
 MAX_TOTAL_ROUNDS = _env_int("CRITIC_MAX_TOTAL_ROUNDS", 1)
-from nf_core.env_helpers import env_bool as _env_bool
 
 
 # v2.38 (iter#72) — env_bool 共享 helper.

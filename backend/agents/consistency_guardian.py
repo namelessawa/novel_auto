@@ -224,8 +224,8 @@ class ConsistencyGuardian:
                     evidence=unique_flags,
                     resolution_method="state_update",
                     resolution_specifics=(
-                        f"建议为该 agent 设 model_tier_override='haiku', "
-                        f"或临时增大 cooldown_until_tick 让其降级冷静。"
+                        "建议为该 agent 设 model_tier_override='haiku', "
+                        "或临时增大 cooldown_until_tick 让其降级冷静。"
                     ),
                 )
             )

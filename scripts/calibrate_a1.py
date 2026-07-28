@@ -36,7 +36,10 @@ for p in (_ROOT, _BACKEND):
     if sp not in sys.path:
         sys.path.insert(0, sp)
 
-from agents.quality_checks import check_word_repetition, _length_aware_threshold
+from agents.quality_checks import (  # noqa: E402
+    _length_aware_threshold,
+    check_word_repetition,
+)
 
 
 def _gather_narratives(root: Path) -> list[tuple[str, str]]:

@@ -177,7 +177,7 @@ def build_ffmpeg_args(
     video_concat_input = "".join(f"[v{i}]" for i in range(n))
     if n == 1:
         # n=1 时 concat 也能工作, 但直接重命名更省一次操作
-        video_chain_parts.append(f"[v0]copy[concat_v]")
+        video_chain_parts.append("[v0]copy[concat_v]")
     else:
         video_chain_parts.append(
             f"{video_concat_input}concat=n={n}:v=1:a=0[concat_v]"

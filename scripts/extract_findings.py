@@ -1,5 +1,6 @@
 """Extract findings + verdicts from workflow agent jsonl transcripts."""
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -79,7 +80,6 @@ def first_user_prompt(jsonl_path):
     return ""
 
 # Enrich verdicts with finding id parsed from prompt
-import re
 for v in verdicts:
     prompt = first_user_prompt(DIR / v["file"])
     m_title = re.search(r"- title:\s*([^\n]+)", prompt)

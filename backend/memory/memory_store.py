@@ -21,7 +21,7 @@ import logging
 import os
 import tempfile
 from dataclasses import dataclass, field
-from typing import Iterable, Literal
+from typing import Iterable
 
 from memory_system.models import MemoryEntry, MemoryTier
 

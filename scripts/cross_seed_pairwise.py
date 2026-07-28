@@ -25,7 +25,6 @@ HARD STOP: 任一 seed 的 pairwise 进程退出码 = 2 (judge 不可用) → �
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys

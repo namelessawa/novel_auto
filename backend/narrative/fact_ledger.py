@@ -26,10 +26,10 @@ import logging
 import os
 import tempfile
 from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Iterable, Literal, Optional
+from dataclasses import dataclass
+from typing import Iterable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 logger = logging.getLogger(__name__)
 

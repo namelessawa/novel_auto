@@ -263,3 +263,51 @@ Machine-readable evidence:
 
 Next Gate: P5, complete static analysis, compile checks, recorded author-mode
 smoke, and repository-wide acceptance prerequisites.
+
+## P5 — complete offline acceptance Gate
+
+Status: **PASS**
+
+Repository-wide Ruff was frozen at 57 findings (E402=25, E741=9, F401=18,
+F541=5) and reduced to zero through import cleanup, readable local names,
+removal of inert f-string prefixes, and explicit E402 exceptions only where an
+entry point must establish the documented repository paths before importing
+bare backend modules. No runtime contract or Validator threshold changed.
+
+The recorded author smoke initially failed as `TEST_INFRA_FAILURE`: its stale
+recorded candidate was 244 characters before Repair and 277 afterwards against
+the current server-owned 400-character minimum. The rejected transaction,
+reports, and zero-token receipt are retained under the P5 evidence directory.
+A new regression now exercises the whole smoke. The minimal fix teaches only
+the recorded Writer to consume the frozen execution plan, provide four-segment
+ChapterPlan evidence, append required completion evidence, and meet the
+server-owned minimum. The final smoke completed all ten authority,
+stale-context, recovery, memory, and reconstruction checks with five Writer
+calls and no Repair or provider calls.
+
+Formal evidence:
+
+- Full backend tests with warnings fatal: 1569 passed, 0 failed, 0 warnings.
+- Ruff: 0; compileall: 0; `git diff --check`: passed.
+- Author UI: 16 passed; production build: passed; production and full npm
+  audits: 0 vulnerabilities.
+- Frozen Stage1 replay: 24/24 recovered, 17/17 Repairs succeeded,
+  regressions/bad commits 0.
+- Frozen final real rejects: 6/6, Patch/Validator/regression failures 0.
+- Recorded long range: 100/100 committed after a 50-section checkpoint and
+  resume; runtime rebuilds 18; semantic recall 7/7; planner calls, full Retry
+  calls, provider errors, wrong-version uses, thread-liveness violations,
+  revision gaps, duplicates, and half commits all 0.
+- Recorded context token p95/max: 6467/6467 against 12000.
+- Actionable tracked and branch-diff secret hits: 0. Five tracked matches are
+  explicit pre-existing example placeholders.
+- Original user worktree state and protected hashes remain exact.
+
+Machine-readable evidence:
+`.tmp/final-goal-20260728/p5/gate.json`, SHA-256
+`F77D1FC9E29B26D1E175B860F7D99B17864FFBCBDEB00C0672D8FF685881292F`.
+The P5 long-range artifact SHA-256 is
+`A494014565F9656F931F9A721B4E8FEE6B2D38BB9200DC7309E0CB33D6277AFA`.
+
+Next Gate: P6, the bounded real-provider acceptance matrix using process-only
+configuration from `coding.txt`.

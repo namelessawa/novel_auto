@@ -213,15 +213,18 @@ class Showrunner:
     ) -> str:
         # 计算 cold_threads 候选 (字段可能为 None — or 0 兜底防 TypeError)
         cold_candidates = []
-        for l in open_loops:
-            stale = (current_tick - max(l.last_referenced_tick or 0, l.opened_tick or 0))
+        for loop in open_loops:
+            stale = (
+                current_tick
+                - max(loop.last_referenced_tick or 0, loop.opened_tick or 0)
+            )
             if stale > 20:
                 cold_candidates.append(
                     {
-                        "loop_id": l.id,
+                        "loop_id": loop.id,
                         "stale_ticks": stale,
-                        "urgency": l.urgency,
-                        "desc": l.description[:80],
+                        "urgency": loop.urgency,
+                        "desc": loop.description[:80],
                     }
                 )
 
@@ -230,15 +233,15 @@ class Showrunner:
         # 净浪费), 开放伏笔 description 截 60 (从 80).
         loops_view = [
             {
-                "id": l.id,
-                "urgency": l.urgency,
-                "type": l.type,
-                "desc": l.description[:60],
+                "id": loop.id,
+                "urgency": loop.urgency,
+                "type": loop.type,
+                "desc": loop.description[:60],
                 "stale_ticks": current_tick - max(
-                    l.last_referenced_tick or 0, l.opened_tick or 0
+                    loop.last_referenced_tick or 0, loop.opened_tick or 0
                 ),
             }
-            for l in open_loops
+            for loop in open_loops
         ]
         return f"""\
 # 当前 tick={current_tick}, 累计 ticks={total_ticks}

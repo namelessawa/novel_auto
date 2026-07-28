@@ -39,7 +39,6 @@ from .models import (
     VerifyOTPRequest,
 )
 
-_bearer = HTTPBearer(auto_error=False)
 from .otp import (
     OTPExpired,
     OTPInvalid,
@@ -51,6 +50,8 @@ from .password import hash_password, verify_password
 from .rate_limit import RateLimit, get_rate_limiter
 from .smtp_client import SMTPError
 from .store import get_user_store
+
+_bearer = HTTPBearer(auto_error=False)
 
 logger = logging.getLogger(__name__)
 

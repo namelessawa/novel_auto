@@ -1,5 +1,7 @@
 """Entry point for the Novel Generation Agent System (v2.26 multi-tenant)."""
 
+# ruff: noqa: E402
+
 from __future__ import annotations
 
 import asyncio

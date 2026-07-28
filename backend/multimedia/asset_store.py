@@ -29,7 +29,6 @@ write_manifest 加文件锁意义不大, 简单 threading.Lock 够用.
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
 import threading
