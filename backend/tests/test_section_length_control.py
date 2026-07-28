@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -21,6 +24,11 @@ from tests.test_repair_plan import _plan_and_report
 EXPAND_PURPOSE = (
     "expand existing action, environment, interaction, or emotion "
     "without adding plot or facts"
+)
+P6_EXPAND_NUMBER_FIXTURE = (
+    Path(__file__).parent
+    / "fixtures"
+    / "p6_seed_20260727_expand_number_reject.json"
 )
 
 
@@ -114,6 +122,37 @@ def test_bounded_expand_is_accepted() -> None:
     assert result.report.accepted is True
     assert result.report.char_delta > 0
     assert result.narrative_text.endswith("继续确认。")
+
+
+def test_p6_approximate_particle_count_is_removed_and_audited() -> None:
+    evidence = json.loads(P6_EXPAND_NUMBER_FIXTURE.read_text(encoding="utf-8"))
+    provider_patch = evidence["provider_patch"]
+    original, contract, event_plan, plan = _expand_context(target_chars=10)
+    patch = _expand_patch(
+        provider_patch["patch_text"],
+        target_chars=provider_patch["target_chars"],
+        max_chars=provider_patch["max_chars"],
+    )
+
+    result = RepairPatchValidator().validate_and_apply(
+        original_text=original,
+        patch_set=RepairPatchSet(patches=[patch]),
+        plan=plan,
+        contract=contract,
+        event_plan=event_plan,
+    )
+
+    assert result.report.accepted is True
+    assert "一两颗" not in result.narrative_text
+    assert "有些粘在指缝间" in result.narrative_text
+    assert result.enforced_removals == [
+        {
+            "patch_index": "0",
+            "code": evidence["expected_fix"]["audit_code"],
+            "removed": "一两颗",
+            "replacement": evidence["expected_fix"]["replacement"],
+        }
+    ]
 
 
 def test_expand_may_exceed_target_without_exceeding_server_maximum() -> None:

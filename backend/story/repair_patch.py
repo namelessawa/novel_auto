@@ -80,6 +80,7 @@ class RepairPatchValidationReport(NarrativeModel):
 class RepairPatchApplyResult(NarrativeModel):
     narrative_text: str
     report: RepairPatchValidationReport
+    enforced_removals: list[dict[str, str]] = Field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,7 @@ _CASUALTY = re.compile(
     r"(?:条|名|个|位)?(?:人命|人死亡|人丧生|人遇难)"
 )
 _NUMBER = re.compile(r"\d+|[零〇一二两三四五六七八九十百千万]+")
+_APPROXIMATE_PARTICLE_COUNT = re.compile(r"一两(?:颗|粒)")
 _INJURY = re.compile(r"骨折|中弹|刺伤|重伤|轻伤|流血|伤口")
 _BACKSTORY = re.compile(
     r"(?:小时候|童年|多年前|曾经|原来|其实).{0,24}"
@@ -252,6 +254,40 @@ def _authorized_repair_text(plan: RepairPlan) -> str:
     )
 
 
+def _normalize_expand_particle_count(
+    patch: RepairPatch,
+    *,
+    patch_index: int,
+    authorized_numbers: set[str],
+) -> tuple[RepairPatch, list[dict[str, str]]]:
+    """Remove one narrow non-canonical particle count without weakening gates.
+
+    The original provider patch remains persisted on the transaction.  This
+    normalization only removes the approximate ``一两颗/一两粒`` quantity from
+    an EXPAND patch, records the exact edit, and then sends the resulting patch
+    through every existing deterministic patch and narrative validator.
+    """
+    if patch.patch_type != "expand" or "一两" in authorized_numbers:
+        return patch, []
+    removals: list[dict[str, str]] = []
+
+    def replace(match: re.Match[str]) -> str:
+        removals.append(
+            {
+                "patch_index": str(patch_index),
+                "code": "PATCH_APPROXIMATE_PARTICLE_COUNT_REMOVED",
+                "removed": match.group(0),
+                "replacement": "些",
+            }
+        )
+        return "些"
+
+    normalized = _APPROXIMATE_PARTICLE_COUNT.sub(replace, patch.patch_text)
+    if not removals:
+        return patch, []
+    return patch.model_copy(update={"patch_text": normalized}), removals
+
+
 class RepairPatchValidator:
     """Validate and apply a bounded patch set without prose-generation authority."""
 
@@ -267,6 +303,7 @@ class RepairPatchValidator:
         text = original_text
         original_hash = hashlib.sha256(original_text.encode("utf-8")).hexdigest()
         violations: list[RepairPatchViolation] = []
+        enforced_removals: list[dict[str, str]] = []
         applied_count = 0
         allowed_events = {
             item.event_id
@@ -308,7 +345,13 @@ class RepairPatchValidator:
                 )
             )
 
-        for index, patch in enumerate(patch_set.patches):
+        for index, provider_patch in enumerate(patch_set.patches):
+            patch, patch_removals = _normalize_expand_particle_count(
+                provider_patch,
+                patch_index=index,
+                authorized_numbers=authorized_numbers,
+            )
+            enforced_removals.extend(patch_removals)
             resolved, anchor_error = _resolve_patch(text, patch)
             if anchor_error:
                 violations.append(
@@ -714,6 +757,7 @@ class RepairPatchValidator:
         return RepairPatchApplyResult(
             narrative_text=text if report.accepted else original_text,
             report=report,
+            enforced_removals=enforced_removals,
         )
 
 

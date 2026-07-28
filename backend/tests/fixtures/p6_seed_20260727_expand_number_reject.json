@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "case_id": "p6_seed_20260727_action_conflict_literary_section_0003",
+  "classification": "WRITER_EXECUTION_FAILURE",
+  "provider": "custom",
+  "model": "glm-5.2",
+  "seed": 20260727,
+  "theme": "action_conflict",
+  "style": "literary",
+  "section": 3,
+  "attempt": 1,
+  "initial_chars": 890,
+  "minimum_chars": 900,
+  "initial_violation_codes": [
+    "NARRATIVE_TOO_SHORT"
+  ],
+  "provider_patch": {
+    "patch_type": "expand",
+    "patch_text": "盐粒从他虎口上滚落，有一两颗粘在指缝间，硌着皮肤。",
+    "patch_text_sha256": "a78d089ba1439bf69a0955e46c3c42389f8a105536db1093a99495644b35cfd3",
+    "patch_text_chars": 25,
+    "target_chars": 10,
+    "max_chars": 210,
+    "purpose": "expand existing action, environment, interaction, or emotion without adding plot or facts"
+  },
+  "repair_patch_violation_codes": [
+    "PATCH_ADDS_NUMBER"
+  ],
+  "repair_patch_violation_evidence": "一两",
+  "final_chars": 890,
+  "final_violation_codes": [
+    "NARRATIVE_TOO_SHORT",
+    "PATCH_ADDS_NUMBER"
+  ],
+  "committed": false,
+  "bad_fact_committed": false,
+  "original_narrative_sha256": "43f3289b4c4219f56523fdc27ce608c543065038fbfef5060755a4a82bb2a402",
+  "frozen_artifacts": [
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-02/stage1-matrix.json",
+      "sha256": "9233231FD8FF514982C201AEC72AB5E575AE5ADF5E3374395FC69BD8EC78C8DF"
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-02/runs/action_conflict__literary/report.json",
+      "sha256": "F38DCE9E56BF653725B4097DE09F24630315BC7166D60B1549ECB6E5ECEAFB95"
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-02/runs/action_conflict__literary/rejections/section_0003_section_0003.json",
+      "sha256": "126D1FA9C41FC2161C9E4F7E0E129BB49E9D444F6F91818EE0E5CE02C9249C0A"
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-02/runs/action_conflict__literary/runtime/generation_transactions/section_0003.json",
+      "sha256": "ADB2EC5816063863BA23FD177881C6696DFB197D77B4B82A9BAB2D114BD8F877"
+    }
+  ],
+  "expected_fix": {
+    "action": "deterministically remove the unauthorized approximate particle count before validation",
+    "replacement": "些",
+    "audit_code": "PATCH_APPROXIMATE_PARTICLE_COUNT_REMOVED",
+    "validator_must_still_reject_other_unauthorized_numbers": true
+  }
+}

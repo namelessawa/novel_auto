@@ -385,6 +385,9 @@ class AuthorGenerationService:
                             "repair_performed": True,
                             "repair_patches": patch_set,
                             "repair_patch_report": patch_result.report,
+                            "repair_enforced_removals": (
+                                patch_result.enforced_removals
+                            ),
                             "repair_ignored_fields": repaired.ignored_fields,
                             "repair_audit_codes": list(
                                 dict.fromkeys(
