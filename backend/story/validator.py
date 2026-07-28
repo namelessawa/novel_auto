@@ -259,6 +259,7 @@ class StoryValidator:
                     "evidence": evidence,
                     "involved_characters": involved,
                     "updated_at_revision": target_revision,
+                    "last_advanced_revision": target_revision,
                 }
                 if "urgency" in change.thread.model_fields_set:
                     updates["urgency"] = change.thread.urgency
@@ -628,7 +629,20 @@ class StoryValidator:
         existing: StoryThread,
         violations: list[ValidationViolation],
     ) -> None:
-        for field in ("type", "description", "origin_refs", "opened_at_revision", "source"):
+        for field in (
+            "type",
+            "description",
+            "origin_refs",
+            "open_condition",
+            "advance_condition",
+            "resolve_condition",
+            "target_start_revision",
+            "target_end_revision",
+            "last_advanced_revision",
+            "pause_until_revision",
+            "opened_at_revision",
+            "source",
+        ):
             if field not in proposed.model_fields_set:
                 continue
             if getattr(proposed, field) == getattr(existing, field):

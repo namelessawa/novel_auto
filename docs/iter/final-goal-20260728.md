@@ -100,3 +100,60 @@ Verification:
 - Validator files modified: 0.
 
 Next Gate: P2, auditable semantic memory and StoryThread liveness.
+
+## P2 — auditable semantic memory and StoryThread liveness
+
+Status: **PASS**
+
+Every generation now persists a frozen `ContextManifest` containing Bible and
+Canonical revisions, NarrativeContract and deterministic execution-spec hashes,
+actual active thread IDs, selected memory IDs, per-memory selection reasons and
+matched entities/threads, discarded candidates and reasons, per-slot
+character/token budgets, global utilization, and truncation state.
+
+Memory selection is deterministic and fail-closed:
+
+- only `confirmed` memories at or before the frozen Canonical revision may enter;
+- machine-checkable canonical claims discard conflicting memories;
+- superseded, uncertain, future, irrelevant, and rank-limited memories retain an
+  auditable discard record;
+- section summaries carry entity/thread provenance but never override
+  CanonicalState.
+
+Seven semantic-recall probes cover character knowledge boundaries,
+relationships, item ownership/state, location rules, open promises, main-thread
+clues, and superseded facts. A probe passes only when the correct memory is
+selected, its required semantics appear in prose, forbidden old facts do not,
+and final CanonicalState still satisfies the frozen claims. Selecting an ID
+without using its semantics is a regression failure.
+
+Active StoryThreads now have deterministic open/advance/resolve conditions,
+revision windows, last-progress revision, deadlines, and an explicit pause
+field. On the third section without progress, due threads are inserted into the
+frozen SectionGoal and EventExecutionPlan. The authority validator requires
+matching prose evidence and an advance/resolve proposal; opening an unrelated
+thread cannot satisfy this Gate. Successful changes atomically update
+`last_advanced_revision`, and every transaction records its liveness decision.
+
+Formal evidence:
+
+- P2 regression set: 56 passed, 0 failed.
+- Recorded long-range: 100/100 atomically committed after a 50-section
+  checkpoint and process resume.
+- Runtime rebuilds: 18; resume count: 1.
+- Staged recovery and stale StoryBible rejection: passed.
+- Semantic recall: 7/7; wrong-version memory uses: 0.
+- Knowledge, relationship, item, location, and time conflicts: 0.
+- Revision jumps, duplicate sections, duplicate transactions, half commits: 0.
+- Main-thread liveness window violations: 0.
+- Context token p95/max: 8414/8414 against the 12000-token hard limit.
+- Planner provider calls: 0; full Writer Retry calls: 0.
+- Changed-file Ruff, compileall, and `git diff --check`: passed.
+
+Machine-readable evidence:
+`.tmp/final-goal-20260728/p2/recorded-100-final/report.json`, SHA-256
+`EBC29D38FA4E9AC048B1AF8BAF51D6D0116220252B0A9436E0866216E55800F9`.
+All thirteen P2 Gate checks in that artifact are `true`.
+
+Next Gate: P3, Writer first-pass quality, bounded Repair quality, and frozen
+quality fixtures.

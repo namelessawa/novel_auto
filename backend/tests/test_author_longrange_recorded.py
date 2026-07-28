@@ -135,6 +135,16 @@ async def test_recorded_longrange_repair_checkpoint_recovery_and_sample_replay(
     assert first["canonical_revision_after"] == 2
     assert first["provider"] == first["model"] == "recorded"
     assert first["contract_hash"]
+    assert first["context_contract_hash"] == first["contract_hash"]
+    assert first["execution_spec_hash"]
+    assert first["context_active_thread_ids"] == ["main_letter"]
+    assert first["context_total_tokens"] <= first["context_max_tokens"]
+    assert all(item["selection_reason"] for item in first["memory_selections"])
+    discarded = {
+        item["memory_id"]: item["reason"] for item in first["memory_discards"]
+    }
+    assert discarded["memory_stale_holder"] == "canon_status_superseded"
+    assert discarded["memory_item_holder"] == "canonical_conflict"
     assert first["required_events"]
     assert first["completed_events"] == first["required_events"]
     assert first["missing_events"] == []
@@ -245,3 +255,48 @@ async def test_recorded_runtime_rebuild_failure_injection_is_checkpointed(
     assert report["config"]["runtime_rebuild_every"] == 0
     assert report["config"]["inject_failure"] == "runtime_rebuild:1"
     assert report["recovery_evidence"]["canonical_revision_contiguous"] is True
+
+
+@pytest.mark.asyncio
+async def test_recorded_100_section_p2_gate_with_resume_and_semantic_recall(
+    tmp_path,
+) -> None:
+    output_dir = tmp_path / "p2-recorded-100"
+    await run_sequence(
+        output_dir=output_dir,
+        mode="recorded",
+        style="literary",
+        theme="reality_mystery",
+        seed=20260728,
+        desired_length=300,
+        checkpoint_every=10,
+        runtime_rebuild_every=5,
+        limits=_limits(50),
+        resume=False,
+        stop_on_gate_failure=True,
+    )
+    report = await run_sequence(
+        output_dir=output_dir,
+        mode="recorded",
+        style="literary",
+        theme="reality_mystery",
+        seed=20260728,
+        desired_length=300,
+        checkpoint_every=10,
+        runtime_rebuild_every=5,
+        limits=_limits(100),
+        resume=True,
+        stop_on_gate_failure=True,
+    )
+
+    assert report["summary"]["committed"] == 100
+    assert report["summary"]["semantic_recall_pass"] == 7
+    assert report["summary"]["semantic_recall_total"] == 7
+    assert report["summary"]["wrong_version_memory_uses"] == 0
+    assert report["summary"]["thread_liveness_violations"] == 0
+    assert report["summary"]["planner_calls"] == 0
+    assert report["summary"]["writer_retries"] == 0
+    assert report["summary"]["context_token_p95"] <= 12000
+    assert report["recovery_evidence"]["resume_used"] is True
+    assert report["p2_gate"]["passed"] is True
+    assert all(report["p2_gate"]["checks"].values())

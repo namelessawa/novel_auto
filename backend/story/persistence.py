@@ -9,6 +9,7 @@ import shutil
 import tempfile
 import threading
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Generic, TypeVar
 
@@ -20,7 +21,10 @@ from story.models import (
     GenerationModeConfig,
     GenerationModeUpdate,
     GenerationTransaction,
+    MemoryDiscardManifest,
+    MemoryRecord,
     MemoryRepositoryState,
+    MemorySelectionManifest,
     MigrationReport,
     StoryBible,
     StoryBibleUpdate,
@@ -341,6 +345,49 @@ class StoryThreadStore(AtomicModelStore[StoryThreadRepository]):
         )
 
 
+@dataclass(frozen=True)
+class MemorySelectionResult:
+    selected: list[MemoryRecord]
+    selections: list[MemorySelectionManifest]
+    discarded: list[MemoryDiscardManifest]
+
+
+def _canonical_value(state: CanonicalState, path: str):
+    value = state.model_dump(mode="python")
+    for raw in path.strip("/").split("/"):
+        key = raw.replace("~1", "/").replace("~0", "~")
+        if not isinstance(value, dict) or key not in value:
+            return None, False
+        value = value[key]
+    return value, True
+
+
+def _memory_conflicts(
+    record: MemoryRecord,
+    state: CanonicalState | None,
+) -> list[str]:
+    if state is None:
+        return []
+    conflicts: list[str] = []
+    for claim in record.canonical_claims:
+        actual, exists = _canonical_value(state, claim.path)
+        if not exists:
+            conflicts.append(claim.path)
+            continue
+        if claim.operator == "contains":
+            if isinstance(actual, dict):
+                matched = claim.expected in actual or claim.expected in actual.values()
+            elif isinstance(actual, (list, tuple, set, str)):
+                matched = claim.expected in actual
+            else:
+                matched = False
+        else:
+            matched = actual == claim.expected
+        if not matched:
+            conflicts.append(claim.path)
+    return conflicts
+
+
 class MemoryRepository(AtomicModelStore[MemoryRepositoryState]):
     def __init__(self, data_dir: str) -> None:
         super().__init__(
@@ -356,17 +403,117 @@ class MemoryRepository(AtomicModelStore[MemoryRepositoryState]):
         return records[: max(0, limit)]
 
     def relevant(self, entity_ids: set[str], thread_ids: set[str], limit: int = 12) -> list:
+        return self.select_relevant(
+            entity_ids,
+            thread_ids,
+            canonical_state=None,
+            canonical_revision=None,
+            limit=limit,
+        ).selected
+
+    def select_relevant(
+        self,
+        entity_ids: set[str],
+        thread_ids: set[str],
+        *,
+        canonical_state: CanonicalState | None,
+        canonical_revision: int | None,
+        limit: int = 12,
+    ) -> MemorySelectionResult:
         candidates = []
+        discarded: list[MemoryDiscardManifest] = []
         for record in self.load().records.values():
-            if record.canon_status == "superseded":
+            if record.canon_status != "confirmed":
+                discarded.append(
+                    MemoryDiscardManifest(
+                        memory_id=record.id,
+                        reason=f"canon_status_{record.canon_status}",
+                        memory_revision=record.created_at_revision,
+                        canon_status=record.canon_status,
+                    )
+                )
                 continue
-            overlap = len(entity_ids.intersection(record.entities))
-            thread_overlap = sum(ref in thread_ids for ref in record.source_refs)
+            if (
+                canonical_revision is not None
+                and record.created_at_revision > canonical_revision
+            ):
+                discarded.append(
+                    MemoryDiscardManifest(
+                        memory_id=record.id,
+                        reason="future_canonical_revision",
+                        memory_revision=record.created_at_revision,
+                        canon_status=record.canon_status,
+                    )
+                )
+                continue
+            conflicts = _memory_conflicts(record, canonical_state)
+            if conflicts:
+                discarded.append(
+                    MemoryDiscardManifest(
+                        memory_id=record.id,
+                        reason="canonical_conflict",
+                        memory_revision=record.created_at_revision,
+                        canon_status=record.canon_status,
+                        conflicting_paths=conflicts,
+                    )
+                )
+                continue
+            matched_entities = sorted(entity_ids.intersection(record.entities))
+            matched_threads = sorted(thread_ids.intersection(record.source_refs))
+            overlap = len(matched_entities)
+            thread_overlap = len(matched_threads)
             score = record.importance * 10 + overlap * 25 + thread_overlap * 30
             if overlap or thread_overlap or record.importance >= 8:
-                candidates.append((score, record.created_at_revision, record.id, record))
+                reasons = []
+                if matched_entities:
+                    reasons.append("entity_match")
+                if matched_threads:
+                    reasons.append("thread_match")
+                if record.importance >= 8:
+                    reasons.append("high_importance")
+                candidates.append(
+                    (
+                        score,
+                        record.created_at_revision,
+                        record.id,
+                        record,
+                        MemorySelectionManifest(
+                            memory_id=record.id,
+                            selection_reason="+".join(reasons),
+                            matched_entities=matched_entities,
+                            matched_threads=matched_threads,
+                            memory_revision=record.created_at_revision,
+                            canon_status=record.canon_status,
+                            score=score,
+                        ),
+                    )
+                )
+            else:
+                discarded.append(
+                    MemoryDiscardManifest(
+                        memory_id=record.id,
+                        reason="not_relevant",
+                        memory_revision=record.created_at_revision,
+                        canon_status=record.canon_status,
+                    )
+                )
         candidates.sort(reverse=True)
-        return [item[-1] for item in candidates[: max(0, limit)]]
+        selected_rows = candidates[: max(0, limit)]
+        for row in candidates[max(0, limit) :]:
+            discarded.append(
+                MemoryDiscardManifest(
+                    memory_id=row[3].id,
+                    reason="rank_limit",
+                    memory_revision=row[3].created_at_revision,
+                    canon_status=row[3].canon_status,
+                )
+            )
+        discarded.sort(key=lambda item: (item.reason, item.memory_id))
+        return MemorySelectionResult(
+            selected=[row[3] for row in selected_rows],
+            selections=[row[4] for row in selected_rows],
+            discarded=discarded,
+        )
 
 
 class GenerationModeStore(AtomicModelStore[GenerationModeConfig]):

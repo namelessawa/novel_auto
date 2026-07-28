@@ -477,6 +477,24 @@ class NarrativeContractBuilder:
                         evidence_patterns=[re.escape(requirement)],
                     )
                 )
+            if (
+                thread.id in section_goal.liveness_required_threads
+                and thread.advance_condition
+            ):
+                keywords = _objective_keywords(thread.advance_condition)
+                events.append(
+                    RequiredEvent(
+                        id=f"thread_advance_{thread.id}",
+                        actor="",
+                        action=thread.advance_condition,
+                        description=(
+                            f"推进故事线 {thread.id}: {thread.advance_condition}"
+                        ),
+                        evidence_patterns=[re.escape(thread.advance_condition)],
+                        keywords=keywords,
+                        min_keyword_matches=min(2, max(1, len(keywords))),
+                    )
+                )
 
         relationships = list(explicit.protected_relationships)
         for key, value in canonical_state.relationships.items():

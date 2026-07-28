@@ -177,6 +177,13 @@ class StoryThread(StoryModel):
     resolution_requirements: list[str] = Field(default_factory=list)
     resolution_evidence: list[str] = Field(default_factory=list)
     evidence: list[str] = Field(default_factory=list)
+    open_condition: str = ""
+    advance_condition: str = ""
+    resolve_condition: str = ""
+    target_start_revision: int = Field(default=0, ge=0)
+    target_end_revision: int = Field(default=0, ge=0)
+    last_advanced_revision: int = Field(default=0, ge=0)
+    pause_until_revision: int = Field(default=0, ge=0)
     opened_at_revision: int = Field(default=0, ge=0)
     updated_at_revision: int = Field(default=0, ge=0)
     source: Literal["author", "simulation", "legacy_inferred"] = "author"
@@ -211,6 +218,14 @@ MemoryType = Literal[
 ]
 
 
+class MemoryCanonicalClaim(StoryModel):
+    """Machine-checkable CanonicalState predicate carried by a memory."""
+
+    path: str = Field(min_length=2, pattern=r"^/")
+    expected: Any = None
+    operator: Literal["equals", "contains"] = "equals"
+
+
 class MemoryRecord(StoryModel):
     id: str = Field(min_length=1)
     type: MemoryType = "event"
@@ -221,6 +236,7 @@ class MemoryRecord(StoryModel):
     importance: int = Field(default=5, ge=0, le=10)
     canon_status: Literal["confirmed", "uncertain", "superseded"] = "confirmed"
     source_refs: list[str] = Field(default_factory=list)
+    canonical_claims: list[MemoryCanonicalClaim] = Field(default_factory=list)
     created_at_revision: int = Field(default=0, ge=0)
 
     @field_validator("entities", "source_refs", mode="before")
@@ -274,6 +290,8 @@ class SectionGoal(StoryModel):
     location_id: str = ""
     involved_characters: list[str] = Field(default_factory=list)
     target_threads: list[str] = Field(default_factory=list)
+    liveness_required_threads: list[str] = Field(default_factory=list)
+    pause_thread_progress: bool = False
     desired_length: int = Field(default=1800, ge=200, le=10000)
     narrative_constraints: NarrativeContractInput = Field(
         default_factory=NarrativeContractInput
@@ -367,11 +385,30 @@ class ContextSlotManifest(StoryModel):
     char_count: int = Field(ge=0)
     token_estimate: int = Field(ge=0)
     budget_chars: int = Field(ge=0)
+    budget_token_estimate: int = Field(default=0, ge=0)
     truncated: bool = False
     reference_ids: list[str] = Field(default_factory=list)
     selected_count: int = Field(default=0, ge=0)
     omitted_count: int = Field(default=0, ge=0)
     duplicate_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
+class MemorySelectionManifest(StoryModel):
+    memory_id: str
+    selection_reason: str
+    matched_entities: list[str] = Field(default_factory=list)
+    matched_threads: list[str] = Field(default_factory=list)
+    memory_revision: int = Field(default=0, ge=0)
+    canon_status: Literal["confirmed", "uncertain", "superseded"] = "confirmed"
+    score: int = Field(default=0, ge=0)
+
+
+class MemoryDiscardManifest(StoryModel):
+    memory_id: str
+    reason: str
+    memory_revision: int = Field(default=0, ge=0)
+    canon_status: Literal["confirmed", "uncertain", "superseded"] = "confirmed"
+    conflicting_paths: list[str] = Field(default_factory=list)
 
 
 class ContextManifest(StoryModel):
@@ -380,14 +417,33 @@ class ContextManifest(StoryModel):
     section_id: str
     story_bible_revision: int = Field(ge=1)
     canonical_state_revision: int = Field(ge=1)
+    contract_hash: str = ""
+    execution_spec_hash: str = ""
+    selected_memory_ids: list[str] = Field(default_factory=list)
+    memory_selections: list[MemorySelectionManifest] = Field(default_factory=list)
+    discarded_memories: list[MemoryDiscardManifest] = Field(default_factory=list)
+    active_thread_ids: list[str] = Field(default_factory=list)
     total_chars: int = Field(ge=0)
     total_token_estimate: int = Field(ge=0)
     max_context_chars: int = Field(default=0, ge=0)
     max_context_token_estimate: int = Field(default=0, ge=0)
     budget_utilization: float = Field(default=0.0, ge=0.0)
+    truncated: bool = False
     rejected_reason: str = ""
     slots: list[ContextSlotManifest] = Field(default_factory=list)
     created_at: str = Field(default_factory=utc_now)
+
+
+class ThreadLivenessRecord(StoryModel):
+    thread_id: str
+    canonical_revision_before: int = Field(ge=1)
+    age_since_progress: int = Field(default=0, ge=0)
+    target_end_revision: int = Field(default=0, ge=0)
+    due: bool = False
+    paused: bool = False
+    action: Literal["none", "advanced", "resolved"] = "none"
+    evidence: list[str] = Field(default_factory=list)
+    compliant: bool = True
 
 
 TransactionPhase = Literal[
@@ -454,6 +510,7 @@ class GenerationTransaction(StoryModel):
     validation_history: list[ValidationReport] = Field(default_factory=list)
     style_validation_report: dict[str, Any] = Field(default_factory=dict)
     context_manifest: ContextManifest | None = None
+    thread_liveness: list[ThreadLivenessRecord] = Field(default_factory=list)
     base_canonical_state: dict[str, Any] = Field(default_factory=dict)
     base_story_threads: dict[str, Any] = Field(default_factory=dict)
     base_memory_repository: dict[str, Any] = Field(default_factory=dict)

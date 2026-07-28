@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from dataclasses import dataclass
@@ -16,7 +17,9 @@ from story.models import (
     CanonicalState,
     ContextManifest,
     ContextSlotManifest,
+    MemoryDiscardManifest,
     MemoryRecord,
+    MemorySelectionManifest,
     SectionGoal,
     StoryBible,
     StoryThread,
@@ -95,6 +98,16 @@ def _json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2)
 
 
+def _stable_hash(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def _head(text: str, budget: int) -> tuple[str, bool]:
     if budget <= 0:
         return "", bool(text)
@@ -164,6 +177,8 @@ class ContextBuilder:
         previous_prose_tail: str,
         recent_summaries: list[dict[str, Any] | str],
         long_term_memories: list[MemoryRecord],
+        memory_selections: list[MemorySelectionManifest] | None = None,
+        discarded_memories: list[MemoryDiscardManifest] | None = None,
         narrative_contract: NarrativeContract | None = None,
         event_execution_plan: EventExecutionPlan | None = None,
         section_writing_plan: SectionWritingPlan | None = None,
@@ -187,8 +202,8 @@ class ContextBuilder:
             relevant_ids=relevant_ids,
             location_id=section_goal.location_id,
         )
-        active_threads = [
-            thread.model_dump(mode="json")
+        selected_active_threads = [
+            thread
             for thread in story_threads
             if thread.status not in {"resolved", "abandoned"}
             and (
@@ -198,12 +213,15 @@ class ContextBuilder:
                 or thread.urgency >= 7
             )
         ]
-        if not active_threads:
-            active_threads = [
-                thread.model_dump(mode="json")
+        if not selected_active_threads:
+            selected_active_threads = [
+                thread
                 for thread in story_threads
                 if thread.status not in {"resolved", "abandoned"}
             ][:8]
+        active_threads = [
+            thread.model_dump(mode="json") for thread in selected_active_threads
+        ]
 
         character_knowledge = {
             character_id: canonical_state.character_knowledge.get(character_id, [])
@@ -347,7 +365,7 @@ class ContextBuilder:
             references = self._references(
                 name,
                 section_goal=section_goal,
-                story_threads=story_threads,
+                story_threads=selected_active_threads,
                 memories=long_term_memories,
             )
             selected_count = 0
@@ -363,6 +381,9 @@ class ContextBuilder:
                     char_count=len(rendered),
                     token_estimate=_token_estimate(rendered),
                     budget_chars=effective_budgets[name],
+                    budget_token_estimate=_token_estimate(
+                        "x" * effective_budgets[name]
+                    ),
                     truncated=truncated[name],
                     reference_ids=references,
                     selected_count=selected_count,
@@ -376,16 +397,48 @@ class ContextBuilder:
             )
             previous_rendered += "\n" + rendered
 
+        execution_spec = {
+            "section_goal": section_goal.model_dump(mode="json"),
+            "narrative_contract": (
+                narrative_contract.model_dump(mode="json")
+                if narrative_contract
+                else {}
+            ),
+            "event_execution_plan": (
+                event_execution_plan.model_dump(mode="json")
+                if event_execution_plan
+                else {}
+            ),
+            "section_writing_plan": (
+                section_writing_plan.model_dump(mode="json")
+                if section_writing_plan
+                else {}
+            ),
+            "section_budget_plan": (
+                section_budget_plan.model_dump(mode="json")
+                if section_budget_plan
+                else {}
+            ),
+        }
         manifest = ContextManifest(
             novel_id=novel_id,
             section_id=section_id,
             story_bible_revision=story_bible.revision,
             canonical_state_revision=canonical_state.revision,
+            contract_hash=(
+                narrative_contract.contract_hash if narrative_contract else ""
+            ),
+            execution_spec_hash=_stable_hash(execution_spec),
+            selected_memory_ids=[record.id for record in long_term_memories],
+            memory_selections=memory_selections or [],
+            discarded_memories=discarded_memories or [],
+            active_thread_ids=[thread.id for thread in selected_active_threads],
             total_chars=len(prompt),
             total_token_estimate=_token_estimate(prompt),
             max_context_chars=self.max_context_chars,
             max_context_token_estimate=self.max_context_token_estimate,
             budget_utilization=round(len(prompt) / hard_char_cap, 4),
+            truncated=any(truncated.values()),
             slots=manifests,
         )
         return ContextPackage(

@@ -12,6 +12,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import math
 import os
 import random
 import re
@@ -180,7 +181,7 @@ def _goal(index: int, *, desired_length: int):
     )
 
 
-def _recorded_valid_text(index: int, desired_length: int) -> str:
+def _recorded_valid_text(index: int, desired_length: int, goal=None) -> str:
     if index == 1:
         event = "沈砚把旧信交给林秋，林秋接过旧信，并把它放进桌上的防潮袋。"
     else:
@@ -193,14 +194,32 @@ def _recorded_valid_text(index: int, desired_length: int) -> str:
         f"{event}"
         "这次行动推进了公开真相的责任线，没有改变两人的既有关系。"
     )
+    semantic_phrases = {
+        10: [
+            "沈砚仍不知道旧信末页的落款",
+            "两人仍是共同维护灯塔的多年搭档",
+        ],
+        20: [
+            "旧信仍由林秋保管",
+            "灯塔地下室禁止明火",
+        ],
+        30: [
+            "他们仍须在日出前复核最后一页",
+            "他们确认旧信缺失的页码仍是主线线索",
+        ],
+    }
+    if index in semantic_phrases:
+        base += "。" + "。".join(semantic_phrases[index]) + "。"
+    if goal and goal.liveness_required_threads:
+        base += "两人对照缺页位置，确认旧信缺失的页码。"
     padding = "灯光扫过桌面，两人继续核对已经确认的事实。"
     while sum(not char.isspace() for char in base) < max(80, desired_length // 2):
         base += padding
     return base
 
 
-def _candidate(text: str, index: int):
-    from story.models import StateDeltaOperation, WriterCandidate
+def _candidate(text: str, index: int, goal=None):
+    from story.models import StateDeltaOperation, StoryThread, WriterCandidate
 
     state_delta = []
     if index == 1 and "沈砚把旧信交给林秋" in text:
@@ -213,11 +232,24 @@ def _candidate(text: str, index: int):
             )
         ]
 
+    advanced = []
+    if goal:
+        advanced = [
+            StoryThread(
+                id=thread_id,
+                description="查清旧信缺失的页码与责任链",
+                status="advancing",
+                evidence=["确认旧信缺失的页码"],
+            )
+            for thread_id in goal.liveness_required_threads
+        ]
+
     return WriterCandidate(
         narrative_text=text,
         title=f"交接 {index}",
         section_summary=f"沈砚与林秋完成第{index}次旧信交接。",
         state_delta=state_delta,
+        threads_advanced=advanced,
     )
 
 
@@ -226,6 +258,7 @@ class RecordedLongRangeWriter:
         self.repair_every = repair_every
         self.last_index = 0
         self.last_length = 300
+        self.last_goal = None
         self.generate_calls = 0
         self.retry_calls = 0
         self.repair_calls = 0
@@ -237,35 +270,22 @@ class RecordedLongRangeWriter:
         match = re.search(r"第(\d+)(?:次|处)", goal.objective)
         self.last_index = int(match.group(1)) if match else self.generate_calls
         self.last_length = goal.desired_length
-        valid = _recorded_valid_text(self.last_index, self.last_length)
+        self.last_goal = goal
+        valid = _recorded_valid_text(
+            self.last_index,
+            self.last_length,
+            goal,
+        )
         if self.repair_every and self.last_index % self.repair_every == 0:
             text = "沈砚仍把旧信藏在怀里，并说父亲会替他们处理。" + valid
         else:
             text = valid
         return WriterResult(
-            _candidate(text, self.last_index),
+            _candidate(text, self.last_index, goal),
             {
                 "prompt_tokens": 0,
                 "completion_tokens": 0,
                 "repair_tokens": 0,
-                "total_tokens": 0,
-            },
-        )
-
-    async def retry(self, context, goal, candidate, preflight_report):
-        from story.writer import WriterResult
-
-        del context, goal, candidate, preflight_report
-        self.retry_calls += 1
-        return WriterResult(
-            _candidate(
-                _recorded_valid_text(self.last_index, self.last_length),
-                self.last_index,
-            ),
-            {
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "retry_tokens": 0,
                 "total_tokens": 0,
             },
         )
@@ -315,7 +335,14 @@ def _estimated_cost(usage: dict[str, int], limits: RunLimits) -> float:
 
 
 def _initialise_service(data_dir: Path, *, style: str, theme: str, writer=None):
-    from story.models import CanonicalState
+    from story.models import (
+        CanonicalState,
+        MemoryCanonicalClaim,
+        MemoryRecord,
+        MemoryRepositoryState,
+        StoryThread,
+        StoryThreadRepository,
+    )
     from story.service import AuthorGenerationService
 
     service = AuthorGenerationService(
@@ -345,7 +372,12 @@ def _initialise_service(data_dir: Path, *, style: str, theme: str, writer=None):
         service.states.save(
             CanonicalState(
                 revision=1,
-                world={"locations": [{"id": "lighthouse", "name": "旧灯塔"}]},
+                world={
+                    "locations": [{"id": "lighthouse", "name": "旧灯塔"}],
+                    "location_rules": {
+                        "lighthouse": "地下室禁止明火",
+                    },
+                },
                 characters={
                     "shen_yan": {"name": "沈砚", "location": "lighthouse"},
                     "lin_qiu": {"name": "林秋", "location": "lighthouse"},
@@ -362,6 +394,126 @@ def _initialise_service(data_dir: Path, *, style: str, theme: str, writer=None):
                 relationships={
                     "shen_yan:lin_qiu": {"description": "共同维护灯塔的多年搭档"}
                 },
+                character_knowledge={
+                    "shen_yan": ["不知道旧信末页的落款"],
+                    "lin_qiu": ["旧信末页的落款模糊不清"],
+                },
+                canonical_facts={
+                    "promise": {
+                        "subject": "shen_yan",
+                        "predicate": "承诺",
+                        "object": "日出前复核最后一页",
+                        "status": "open",
+                    },
+                    "main_clue": {
+                        "subject": "lin_qiu",
+                        "predicate": "追查",
+                        "object": "旧信缺失的页码",
+                        "status": "open",
+                    },
+                },
+            )
+        )
+        main_thread = StoryThread(
+            id="main_letter",
+            type="conflict",
+            description="查清旧信缺失的页码与责任链",
+            status="open",
+            urgency=9,
+            involved_characters=["shen_yan", "lin_qiu"],
+            open_condition="发现旧信缺页",
+            advance_condition="确认旧信缺失的页码",
+            resolve_condition="确认缺页内容与责任人",
+            target_start_revision=1,
+            target_end_revision=1000,
+            opened_at_revision=1,
+            updated_at_revision=1,
+            evidence=["旧信缺失的页码"],
+        )
+        service.threads.save(
+            StoryThreadRepository(
+                revision=1,
+                threads={main_thread.id: main_thread},
+            )
+        )
+
+        def memory(
+            memory_id: str,
+            summary: str,
+            path: str,
+            expected: Any,
+            *,
+            operator: str = "equals",
+            canon_status: str = "confirmed",
+        ) -> MemoryRecord:
+            return MemoryRecord(
+                id=memory_id,
+                type="revelation",
+                summary=summary,
+                entities=["shen_yan", "lin_qiu", "letter", "lighthouse"],
+                importance=10,
+                canon_status=canon_status,
+                source_refs=["main_letter"],
+                canonical_claims=[
+                    MemoryCanonicalClaim(
+                        path=path,
+                        expected=expected,
+                        operator=operator,
+                    )
+                ],
+                created_at_revision=1,
+            )
+
+        seeded_memories = [
+            memory(
+                "memory_knowledge_boundary",
+                "沈砚仍不知道旧信末页的落款",
+                "/character_knowledge/shen_yan",
+                "不知道旧信末页的落款",
+                operator="contains",
+            ),
+            memory(
+                "memory_relationship",
+                "两人仍是共同维护灯塔的多年搭档",
+                "/relationships/shen_yan:lin_qiu/description",
+                "共同维护灯塔的多年搭档",
+            ),
+            memory(
+                "memory_item_holder",
+                "旧信由林秋保管",
+                "/items/letter/holder",
+                "lin_qiu",
+            ),
+            memory(
+                "memory_location_rule",
+                "灯塔地下室禁止明火",
+                "/world/location_rules/lighthouse",
+                "地下室禁止明火",
+            ),
+            memory(
+                "memory_promise",
+                "他们须在日出前复核最后一页",
+                "/canonical_facts/promise/status",
+                "open",
+            ),
+            memory(
+                "memory_main_thread",
+                "旧信缺失页码仍是主线线索",
+                "/canonical_facts/main_clue/status",
+                "open",
+            ),
+            memory(
+                "memory_stale_holder",
+                "旧信仍由沈砚保管",
+                "/items/letter/holder",
+                "shen_yan",
+                canon_status="superseded",
+            ),
+        ]
+        service.memories.save(
+            MemoryRepositoryState(
+                revision=1,
+                records={item.id: item for item in seeded_memories},
             )
         )
     return service
@@ -381,6 +533,7 @@ def _section_metrics(
     candidate = transaction.candidate
     text = candidate.narrative_text if candidate else ""
     contract = transaction.narrative_contract
+    manifest = transaction.context_manifest
     patches = (
         transaction.repair_patches.patches
         if transaction.repair_patches
@@ -476,6 +629,28 @@ def _section_metrics(
         "provider": provider,
         "model": model,
         "contract_hash": contract.contract_hash if contract else "",
+        "context_contract_hash": manifest.contract_hash if manifest else "",
+        "execution_spec_hash": manifest.execution_spec_hash if manifest else "",
+        "context_total_chars": manifest.total_chars if manifest else 0,
+        "context_total_tokens": (
+            manifest.total_token_estimate if manifest else 0
+        ),
+        "context_max_chars": manifest.max_context_chars if manifest else 0,
+        "context_max_tokens": (
+            manifest.max_context_token_estimate if manifest else 0
+        ),
+        "context_budget_utilization": (
+            manifest.budget_utilization if manifest else 0.0
+        ),
+        "context_truncated": manifest.truncated if manifest else False,
+        "context_active_thread_ids": (
+            list(manifest.active_thread_ids) if manifest else []
+        ),
+        "context_slots": (
+            [item.model_dump(mode="json") for item in manifest.slots]
+            if manifest
+            else []
+        ),
         "required_events": [
             item.id for item in (contract.required_events if contract else [])
         ],
@@ -599,9 +774,25 @@ def _section_metrics(
             bool(item.resolution_evidence) for item in (candidate.threads_resolved if candidate else [])
         ),
         "main_conflict_progress": int(bool(candidate and candidate.threads_advanced)),
+        "thread_liveness": [
+            item.model_dump(mode="json") for item in transaction.thread_liveness
+        ],
+        "thread_liveness_violations": sum(
+            item.due and not item.compliant for item in transaction.thread_liveness
+        ),
         "memory_records_total": len(memories),
         "memory_records_selected": slot.selected_count if slot else 0,
         "memory_selected_ids": memory_selected_ids,
+        "memory_selections": (
+            [item.model_dump(mode="json") for item in manifest.memory_selections]
+            if manifest
+            else []
+        ),
+        "memory_discards": (
+            [item.model_dump(mode="json") for item in manifest.discarded_memories]
+            if manifest
+            else []
+        ),
         "memory_reference_hit": int(bool(memory_selected_ids)),
         "memory_reference_hit_rate": (
             round(len(memory_selected_ids) / max(1, min(12, len(memories))), 4)
@@ -1044,6 +1235,10 @@ async def run_sequence(
     stop_on_gate_failure: bool = False,
 ) -> dict[str, Any]:
     from sections.section_store import _clear_for_tests
+    from story.semantic_recall import (
+        SemanticRecallValidator,
+        recorded_semantic_recall_probes,
+    )
     from story.service import GenerationRejected
 
     random.seed(seed)
@@ -1085,6 +1280,9 @@ async def run_sequence(
             }
         )
         report["summary"]["stop_reason"] = ""
+        report["summary"]["resume_count"] = (
+            int(report["summary"].get("resume_count", 0)) + 1
+        )
     else:
         report = {
             "schema_version": 1,
@@ -1132,6 +1330,7 @@ async def run_sequence(
                 "total_tokens": 0,
                 "estimated_cost": 0.0,
                 "runtime_rebuilds": 0,
+                "resume_count": 0,
                 "provider_errors": 0,
                 "stop_reason": "",
             },
@@ -1162,6 +1361,8 @@ async def run_sequence(
             )
         if raw_section:
             injection_section = max(1, int(raw_section))
+    recall_validator = SemanticRecallValidator()
+    recall_probes = recorded_semantic_recall_probes()
 
     for index in range(start_index, limits.max_sections + 1):
         total_tokens = int(report["summary"]["total_tokens"])
@@ -1216,6 +1417,39 @@ async def run_sequence(
             latency,
             provider=provider,
             model=model,
+        )
+        due_probes = [
+            probe for probe in recall_probes if probe.due_section == index
+        ]
+        recall_results = [
+            recall_validator.validate(
+                probe,
+                manifest=transaction.context_manifest,
+                narrative_text=(
+                    transaction.candidate.narrative_text
+                    if transaction.candidate
+                    else ""
+                ),
+                final_state=service.states.load(),
+            )
+            for probe in due_probes
+            if transaction.context_manifest is not None
+        ]
+        metrics["semantic_recall"] = [
+            item.model_dump(mode="json") for item in recall_results
+        ]
+        metrics["semantic_recall_pass"] = sum(
+            item.accepted for item in recall_results
+        )
+        metrics["semantic_recall_total"] = len(recall_results)
+        metrics["wrong_version_memory_uses"] = sum(
+            code
+            in {
+                "STALE_MEMORY_SELECTED",
+                "STALE_OR_FORBIDDEN_FACT_USED",
+            }
+            for item in recall_results
+            for code in item.violation_codes
         )
         rejection_path = (
             Path("rejections")
@@ -1318,10 +1552,49 @@ async def run_sequence(
             == len(report["sections"]),
             "canonical_revision_contiguous": service.states.load().revision
             == 1 + report["summary"]["committed"],
+            "resume_used": int(report["summary"].get("resume_count", 0)) > 0,
         }
         report["recovery_evidence"].update(
             await _run_recovery_probes(output_dir, style=style, theme=theme)
         )
+    recall_results = [
+        item
+        for section in report["sections"]
+        for item in section.get("semantic_recall", [])
+    ]
+    context_tokens = sorted(
+        int(section.get("context_total_tokens", 0))
+        for section in report["sections"]
+    )
+    p95_index = max(0, math.ceil(len(context_tokens) * 0.95) - 1)
+    context_p95 = context_tokens[p95_index] if context_tokens else 0
+    report["summary"].update(
+        {
+            "semantic_recall_pass": sum(
+                bool(item.get("accepted")) for item in recall_results
+            ),
+            "semantic_recall_total": len(recall_results),
+            "semantic_recall_pass_rate": (
+                round(
+                    sum(bool(item.get("accepted")) for item in recall_results)
+                    / len(recall_results),
+                    4,
+                )
+                if recall_results
+                else 0.0
+            ),
+            "wrong_version_memory_uses": sum(
+                int(section.get("wrong_version_memory_uses", 0))
+                for section in report["sections"]
+            ),
+            "thread_liveness_violations": sum(
+                int(section.get("thread_liveness_violations", 0))
+                for section in report["sections"]
+            ),
+            "context_token_p95": context_p95,
+            "context_token_max": max(context_tokens, default=0),
+        }
+    )
     report["summary"]["contract_pass_rate"] = round(
         report["summary"]["contract_pass"] / report["summary"]["attempted"], 4
     ) if report["summary"]["attempted"] else 0.0
@@ -1348,6 +1621,87 @@ async def run_sequence(
         / report["summary"]["attempted"],
         4,
     ) if report["summary"]["attempted"] else 0.0
+    sections = report["sections"]
+    section_ids = [item["section_id"] for item in sections]
+    transaction_ids = [item["transaction_id"] for item in sections]
+    revisions_contiguous = all(
+        int(item["canonical_revision_after"])
+        == int(item["canonical_revision_before"]) + int(item["committed"])
+        for item in sections
+    ) and all(
+        int(current["canonical_revision_before"])
+        == int(previous["canonical_revision_after"])
+        for previous, current in zip(sections, sections[1:])
+    )
+    pending_transactions = [
+        item.id
+        for item in service.transactions.list_all()
+        if item.phase in {"validated", "committing"} or (item.committed and item.phase != "committed")
+    ]
+    p2_checks = {
+        "recorded_100_committed": (
+            mode == "recorded"
+            and limits.max_sections >= 100
+            and report["summary"]["committed"] == limits.max_sections
+        ),
+        "semantic_recall_100_percent": (
+            report["summary"]["semantic_recall_total"] == 7
+            and report["summary"]["semantic_recall_pass"] == 7
+        ),
+        "wrong_version_memory_uses_zero": (
+            report["summary"]["wrong_version_memory_uses"] == 0
+        ),
+        "authority_conflicts_zero": sum(
+            int(item.get(key, 0))
+            for item in sections
+            for key in (
+                "knowledge_boundary_errors",
+                "relationship_conflicts",
+                "item_state_conflict",
+                "time_constraint_violation_count",
+            )
+        )
+        == 0,
+        "checkpoint_resume_rebuild": bool(
+            (output_dir / "checkpoint.json").is_file()
+            and report["recovery_evidence"].get("resume_used")
+            and report["summary"]["runtime_rebuilds"] > 0
+        ),
+        "staged_recovery": bool(
+            report["recovery_evidence"]
+            .get("clean_staged_recovery", {})
+            .get("passed")
+        ),
+        "stale_rejection": bool(
+            report["recovery_evidence"]
+            .get("stale_staged_rejected", {})
+            .get("passed")
+        ),
+        "revision_contiguous": revisions_contiguous,
+        "section_ids_unique": len(section_ids) == len(set(section_ids)),
+        "transaction_ids_unique": (
+            len(transaction_ids) == len(set(transaction_ids))
+        ),
+        "half_commits_zero": not pending_transactions,
+        "thread_liveness_violations_zero": (
+            report["summary"]["thread_liveness_violations"] == 0
+        ),
+        "context_p95_within_budget": all(
+            report["summary"]["context_token_p95"]
+            <= int(item.get("context_max_tokens", 0))
+            for item in sections
+        ),
+    }
+    report["p2_gate"] = {
+        "applicable": mode == "recorded" and limits.max_sections >= 100,
+        "passed": bool(
+            mode == "recorded"
+            and limits.max_sections >= 100
+            and all(p2_checks.values())
+        ),
+        "checks": p2_checks,
+        "pending_transactions": pending_transactions,
+    }
     report["summary"]["completed_at"] = datetime.now().astimezone().isoformat(
         timespec="seconds"
     )

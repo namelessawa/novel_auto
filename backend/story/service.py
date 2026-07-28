@@ -70,6 +70,7 @@ from story.section_length_validator import (
     SectionLengthReport,
     SectionLengthValidator,
 )
+from story.thread_liveness import ThreadLivenessPolicy
 from story.validator import StoryValidator
 from story.writer import AuthorWriter, PlannerResult, WriterProtocol, WriterResult
 from story.writer_preflight import (
@@ -186,6 +187,7 @@ class AuthorGenerationService:
         self.repair_regression_validator = RepairRegressionValidator()
         self.repair_patch_validator = RepairPatchValidator()
         self.context_builder = context_builder or ContextBuilder()
+        self.thread_liveness = ThreadLivenessPolicy()
         self.revision_guard = TransactionRevisionGuard()
         self._generation_lock = asyncio.Lock()
         self.recover()
@@ -691,6 +693,11 @@ class AuthorGenerationService:
         chapter, section = self.sections.next_position()
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
+        prepared_goal = self.thread_liveness.bind_goal(
+            prepared_goal,
+            threads,
+            canonical_revision=state.revision,
+        )
 
         previous = self.sections.get_last()
         previous_tail = previous.content[-5000:] if previous else ""
@@ -705,11 +712,14 @@ class AuthorGenerationService:
         entity_ids = set(prepared_goal.involved_characters)
         if prepared_goal.viewpoint_character_id:
             entity_ids.add(prepared_goal.viewpoint_character_id)
-        long_memories = self.memories.relevant(
+        memory_selection = self.memories.select_relevant(
             entity_ids,
             set(prepared_goal.target_threads),
+            canonical_state=state,
+            canonical_revision=state.revision,
             limit=12,
         )
+        long_memories = memory_selection.selected
         narrative_contract = self.contract_builder.build(
             story_bible=bible,
             canonical_state=state,
@@ -749,6 +759,8 @@ class AuthorGenerationService:
                 previous_prose_tail=previous_tail,
                 recent_summaries=recent_summaries,
                 long_term_memories=long_memories,
+                memory_selections=memory_selection.selections,
+                discarded_memories=memory_selection.discarded,
             )
         except ContextBudgetExceeded as exc:
             self.manifests.save(exc.manifest)
@@ -795,6 +807,9 @@ class AuthorGenerationService:
         chapter, section = self.sections.next_position()
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
+        prepared_goal = self.thread_liveness.bind_goal(
+            prepared_goal, threads, canonical_revision=state.revision
+        )
         return self.contract_builder.build(
             story_bible=bible,
             canonical_state=state,
@@ -809,6 +824,9 @@ class AuthorGenerationService:
         chapter, section = self.sections.next_position()
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
+        prepared_goal = self.thread_liveness.bind_goal(
+            prepared_goal, threads, canonical_revision=state.revision
+        )
         contract = self.contract_builder.build(
             story_bible=bible,
             canonical_state=state,
@@ -830,6 +848,9 @@ class AuthorGenerationService:
         chapter, section = self.sections.next_position()
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
+        prepared_goal = self.thread_liveness.bind_goal(
+            prepared_goal, threads, canonical_revision=state.revision
+        )
         contract = self.contract_builder.build(
             story_bible=bible,
             canonical_state=state,
@@ -913,7 +934,7 @@ class AuthorGenerationService:
         source_mode: str = "author",
         drop_unsupported_proposals: bool = False,
     ) -> ValidationReport:
-        return self.validator.validate(
+        report = self.validator.validate(
             bible=prepared.bible,
             state=prepared.state,
             threads=prepared.threads,
@@ -921,6 +942,12 @@ class AuthorGenerationService:
             candidate=candidate,
             source_mode=source_mode,
             drop_unsupported_proposals=drop_unsupported_proposals,
+        )
+        return self.thread_liveness.validate(
+            prepared.goal,
+            prepared.threads,
+            report,
+            canonical_revision=prepared.state.revision,
         )
 
     def validate_narrative(
@@ -1165,8 +1192,15 @@ class AuthorGenerationService:
         target_memories = self._target_memories(
             prepared.memories,
             candidate,
+            goal=prepared.goal,
             section_id=transaction.section_id,
             revision=target_state.revision,
+        )
+        thread_liveness = self.thread_liveness.records(
+            prepared.goal,
+            prepared.threads,
+            report,
+            canonical_revision=prepared.state.revision,
         )
         chapter, section = self.sections.next_position()
         goal = prepared.goal
@@ -1190,6 +1224,9 @@ class AuthorGenerationService:
                 "section_summary": candidate.section_summary,
                 "context_manifest": prepared.context.manifest.model_dump(mode="json"),
                 "consistency_notes": candidate.consistency_notes,
+                "thread_liveness": [
+                    item.model_dump(mode="json") for item in thread_liveness
+                ],
             },
             created_at=TickSection.now_iso(),
         )
@@ -1204,6 +1241,7 @@ class AuthorGenerationService:
                 "final_ending_report": final_ending_report,
                 "final_balance_report": final_balance_report,
                 "validation_report": report,
+                "thread_liveness": thread_liveness,
                 "style_validation_report": self._style_report(
                     prepared, candidate, narrative_report
                 ),
@@ -1417,6 +1455,7 @@ class AuthorGenerationService:
         current: MemoryRepositoryState,
         candidate: WriterCandidate,
         *,
+        goal: SectionGoal,
         section_id: str,
         revision: int,
     ) -> MemoryRepositoryState:
@@ -1427,9 +1466,21 @@ class AuthorGenerationService:
             type="event",
             section_id=section_id,
             summary=candidate.section_summary,
+            entities=list(
+                dict.fromkeys(
+                    item
+                    for item in [
+                        goal.viewpoint_character_id,
+                        *goal.involved_characters,
+                    ]
+                    if item
+                )
+            ),
             importance=7,
             canon_status="confirmed",
-            source_refs=[section_id],
+            source_refs=list(
+                dict.fromkeys([section_id, *goal.target_threads])
+            ),
             created_at_revision=revision,
         )
         records[automatic.id] = automatic.model_dump(mode="python")
