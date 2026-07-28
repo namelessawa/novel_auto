@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from story.models import StateDeltaOperation, WriterCandidate
+from story.models import WriterCandidate
 from story.repair_patch import RepairPatchSet
-from story.service import AuthorGenerationService, GenerationRejected
+from story.service import GenerationRejected
 from story.writer import AuthorWriter, WriterResult
 from tests.test_author_generation_service import _goal, _service, _valid_candidate
 
@@ -57,60 +57,51 @@ def _short() -> WriterCandidate:
 
 
 @pytest.mark.asyncio
-async def test_retry_produces_valid_chapter(tmp_path: Path) -> None:
+async def test_default_flow_never_calls_exposed_full_retry(tmp_path: Path) -> None:
     writer = RetryWriter(_short(), _valid_candidate())
     service = _service(tmp_path, writer)
 
-    transaction = await service.run(_goal(), request_id="retry_valid")
+    with pytest.raises(GenerationRejected):
+        await service.run(_goal(), request_id="retry_disabled")
 
-    assert transaction.committed is True
-    assert transaction.writer_retry_performed is True
-    assert transaction.writer_retry_count == 1
+    transaction = service.transactions.load("retry_disabled")
+    assert transaction.committed is False
+    assert transaction.writer_retry_performed is False
+    assert transaction.writer_retry_count == 0
     assert transaction.writer_calls == 2
-    assert transaction.repair_performed is False
+    assert transaction.repair_performed is True
     assert transaction.writer_first_pass_pass is False
-    assert transaction.final_preflight_report.accepted is True
-    assert transaction.usage["retry_tokens"] == 20
-    assert writer.retry_calls == 1
+    assert transaction.usage.get("retry_tokens", 0) == 0
+    assert writer.generate_calls == 1
+    assert writer.retry_calls == 0
+    assert writer.repair_calls == 1
 
 
-def test_retry_prompt_forbids_new_facts() -> None:
-    prompt = AuthorWriter.RETRY_SYSTEM_PROMPT
-
-    for forbidden in ("新人物", "新背景", "新历史", "新关系", "新伤亡"):
-        assert forbidden in prompt
-    assert "Style controls expression" not in prompt
-    assert "风格只控制表达" in prompt
+def test_author_writer_has_no_full_retry_provider_path() -> None:
+    assert not hasattr(AuthorWriter, "RETRY_SYSTEM_PROMPT")
+    assert not hasattr(AuthorWriter, "retry")
 
 
 @pytest.mark.asyncio
-async def test_retry_does_not_modify_state_before_commit(tmp_path: Path) -> None:
-    retried = _valid_candidate().model_copy(
-        update={
-            "state_delta": [
-                StateDeltaOperation(
-                    op="set",
-                    path="/world/weather",
-                    value="暴雨",
-                    evidence="正文没有这句证据",
-                )
-            ]
-        }
-    )
-    writer = RetryWriter(_short(), retried)
+async def test_disabled_retry_cannot_modify_state_before_rejection(
+    tmp_path: Path,
+) -> None:
+    writer = RetryWriter(_short(), _valid_candidate())
     service = _service(tmp_path, writer)
-    prepared = service.prepare(_goal(), request_id="retry_no_state")
-    generated = await service.generate(prepared)
-    report = service.preflight(prepared, generated.candidate)
+    before = service.states.load()
 
-    await service.retry(prepared, generated.candidate, report)
+    with pytest.raises(GenerationRejected):
+        await service.run(_goal(), request_id="retry_no_state")
 
-    assert service.states.load() == prepared.state
+    assert writer.retry_calls == 0
+    assert service.states.load() == before
     assert service.sections.count() == 0
 
 
 @pytest.mark.asyncio
-async def test_retry_limited_once(tmp_path: Path) -> None:
+async def test_default_call_cap_is_one_initial_plus_one_repair(
+    tmp_path: Path,
+) -> None:
     writer = RetryWriter(_short(), _short())
     service = _service(tmp_path, writer)
 
@@ -119,8 +110,50 @@ async def test_retry_limited_once(tmp_path: Path) -> None:
 
     transaction = service.transactions.load("retry_once")
     assert writer.generate_calls == 1
-    assert writer.retry_calls == 1
+    assert writer.retry_calls == 0
     assert writer.repair_calls == 1
-    assert transaction.writer_retry_count == 1
-    assert transaction.writer_calls == 3
+    assert transaction.writer_retry_count == 0
+    assert transaction.writer_retry_performed is False
+    assert transaction.writer_calls == 2
     assert transaction.repair_performed is True
+
+
+@pytest.mark.asyncio
+async def test_valid_first_pass_uses_only_one_provider_call(
+    tmp_path: Path,
+) -> None:
+    writer = RetryWriter(_valid_candidate(), _short())
+    service = _service(tmp_path, writer)
+
+    transaction = await service.run(_goal(), request_id="retry_not_needed")
+
+    assert transaction.committed is True
+    assert transaction.writer_calls == 1
+    assert transaction.planner_calls == 0
+    assert transaction.writer_retry_count == 0
+    assert transaction.repair_performed is False
+    assert writer.generate_calls == 1
+    assert writer.retry_calls == 0
+    assert writer.repair_calls == 0
+
+
+def test_legacy_retry_metrics_remain_readable(tmp_path: Path) -> None:
+    writer = RetryWriter(_valid_candidate(), _valid_candidate())
+    service = _service(tmp_path, writer)
+    prepared = service.prepare(_goal(), request_id="legacy_retry_metrics")
+    legacy = prepared.transaction.model_copy(
+        update={
+            "writer_calls": 3,
+            "writer_retry_count": 1,
+            "writer_retry_performed": True,
+            "usage": {"retry_tokens": 20, "total_tokens": 170},
+        }
+    )
+
+    service.transactions.save(legacy)
+    loaded = service.transactions.load(legacy.id)
+
+    assert loaded.writer_calls == 3
+    assert loaded.writer_retry_count == 1
+    assert loaded.writer_retry_performed is True
+    assert loaded.usage["retry_tokens"] == 20

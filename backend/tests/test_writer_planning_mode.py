@@ -79,7 +79,9 @@ class PlanningWriter:
 
 
 @pytest.mark.asyncio
-async def test_plan_followed_and_length_respected(tmp_path: Path) -> None:
+async def test_deterministic_plan_followed_and_length_respected(
+    tmp_path: Path,
+) -> None:
     writer = PlanningWriter(_valid_candidate())
     service = _service(tmp_path, writer)
 
@@ -89,12 +91,13 @@ async def test_plan_followed_and_length_respected(tmp_path: Path) -> None:
     assert transaction.chapter_plan_success is True
     assert transaction.writer_plan_followed is True
     assert transaction.writer_first_pass_pass is True
-    assert transaction.planner_calls == 1
+    assert transaction.planner_calls == 0
     assert transaction.writer_calls == 1
-    assert transaction.usage["planner_tokens"] == 10
-    assert transaction.usage["total_tokens"] == 160
+    assert transaction.usage["planner_tokens"] == 0
+    assert transaction.usage["total_tokens"] == 150
     assert transaction.final_length_report.accepted is True
     assert transaction.final_ending_report.accepted is True
+    assert writer.plan_calls == 0
 
 
 @pytest.mark.asyncio
@@ -119,12 +122,14 @@ async def test_plan_ignored_is_recorded_but_prose_validator_remains_authoritativ
 async def test_plan_failure_cannot_generate_or_commit(tmp_path: Path) -> None:
     writer = PlanningWriter(_valid_candidate(), invalid_plan=True)
     service = _service(tmp_path, writer)
+    service.enable_llm_planner = True
 
     with pytest.raises(GenerationRejected) as error:
         await service.run(_goal(), request_id="plan_invalid")
 
     assert error.value.transaction.error_code == "CHAPTER_PLAN_INVALID"
     assert writer.generate_calls == 0
+    assert writer.plan_calls == 1
     assert service.states.load().revision == 1
     assert service.threads.load().revision == 1
     assert service.memories.load().revision == 1
@@ -152,6 +157,7 @@ async def test_writer_failure_after_valid_plan_cannot_commit(tmp_path: Path) -> 
 async def test_planner_cannot_alter_state_thread_or_memory(tmp_path: Path) -> None:
     writer = PlanningWriter(_valid_candidate())
     service: AuthorGenerationService = _service(tmp_path, writer)
+    service.enable_llm_planner = True
     prepared = service.prepare(_goal(), request_id="planner_read_only")
     before = (
         service.states.load(),
@@ -171,9 +177,60 @@ async def test_planner_cannot_alter_state_thread_or_memory(tmp_path: Path) -> No
     )
 
 
-def test_writer_directive_stops_after_resolution() -> None:
+@pytest.mark.asyncio
+async def test_default_mode_cannot_call_exposed_planner(tmp_path: Path) -> None:
     writer = PlanningWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+
+    transaction = await service.run(_goal(), request_id="planner_default_off")
+
+    assert transaction.committed is True
+    assert transaction.planner_calls == 0
+    assert writer.plan_calls == 0
+    assert transaction.usage["planner_tokens"] == 0
+
+
+@pytest.mark.asyncio
+async def test_experimental_planner_is_explicit_and_preserves_commit_semantics(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AUTHOR_LLM_PLANNER_EXPERIMENTAL", "1")
+    writer = PlanningWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+
+    transaction = await service.run(_goal(), request_id="planner_experimental")
+
+    assert transaction.committed is True
+    assert service.enable_llm_planner is True
+    assert transaction.planner_calls == 1
+    assert writer.plan_calls == 1
+    assert transaction.target_canonical_revision == 2
+    assert service.states.load().revision == 2
+    assert service.sections.count() == 1
+
+
+@pytest.mark.asyncio
+async def test_unknown_planner_flag_cannot_bypass_default(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AUTHOR_LLM_PLANNER_EXPERIMENTAL", "enabled-maybe")
+    writer = PlanningWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+
+    transaction = await service.run(_goal(), request_id="planner_flag_closed")
+
+    assert transaction.committed is True
+    assert service.enable_llm_planner is False
+    assert transaction.planner_calls == 0
+    assert writer.plan_calls == 0
+
+
+def test_writer_directive_stops_after_resolution() -> None:
     # The directive is exercised through the service in the async tests; this
     # assertion pins the explicit stop contract against prompt regressions.
-    assert "After segment 4" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "soft structural guidance" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "not exact prose quotas" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "only hard length boundary" in AuthorWriter.PLANNING_WRITER_PROMPT
     assert "Do not create plot to fill length" in AuthorWriter.PLANNING_WRITER_PROMPT

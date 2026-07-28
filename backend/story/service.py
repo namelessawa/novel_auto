@@ -10,8 +10,12 @@ import uuid
 from dataclasses import dataclass, replace
 
 import novel_manager
+from nf_core.env_helpers import env_bool
 from sections.section_store import TickSection, get_section_store
-from story.chapter_plan import ChapterPlan, ChapterPlanBuilder
+from story.chapter_plan import (
+    ChapterPlan,
+    DeterministicChapterPlanBuilder,
+)
 from story.chapter_plan_validator import (
     ChapterPlanValidationReport,
     ChapterPlanValidator,
@@ -135,8 +139,9 @@ class AuthorGenerationService:
         event_plan_builder: EventExecutionPlanBuilder | None = None,
         writing_plan_builder: SectionWritingPlanBuilder | None = None,
         budget_plan_builder: SectionBudgetPlanBuilder | None = None,
-        chapter_plan_builder: ChapterPlanBuilder | None = None,
+        chapter_plan_builder: DeterministicChapterPlanBuilder | None = None,
         chapter_plan_validator: ChapterPlanValidator | None = None,
+        enable_llm_planner: bool | None = None,
         preflight_validator: WriterPreflightValidator | None = None,
         repair_plan_builder: RepairPlanBuilder | None = None,
         context_builder: ContextBuilder | None = None,
@@ -159,9 +164,16 @@ class AuthorGenerationService:
         self.event_plan_builder = event_plan_builder or EventExecutionPlanBuilder()
         self.writing_plan_builder = writing_plan_builder or SectionWritingPlanBuilder()
         self.budget_plan_builder = budget_plan_builder or SectionBudgetPlanBuilder()
-        self.chapter_plan_builder = chapter_plan_builder or ChapterPlanBuilder()
+        self.chapter_plan_builder = (
+            chapter_plan_builder or DeterministicChapterPlanBuilder()
+        )
         self.chapter_plan_validator = (
             chapter_plan_validator or ChapterPlanValidator()
+        )
+        self.enable_llm_planner = (
+            env_bool("AUTHOR_LLM_PLANNER_EXPERIMENTAL", default=False)
+            if enable_llm_planner is None
+            else bool(enable_llm_planner)
         )
         self.writer_plan_evidence_validator = WriterPlanEvidenceValidator()
         self.section_length_validator = SectionLengthValidator()
@@ -203,6 +215,9 @@ class AuthorGenerationService:
             transaction = prepared.transaction
             try:
                 planner_method = getattr(self.writer, "plan", None)
+                planner_provider_call = bool(
+                    self.enable_llm_planner and callable(planner_method)
+                )
                 planned = await self.plan(prepared)
                 plan_report = self.validate_chapter_plan(
                     prepared,
@@ -211,7 +226,7 @@ class AuthorGenerationService:
                 transaction = transaction.model_copy(
                     update={
                         "phase": "planned",
-                        "planner_calls": int(callable(planner_method)),
+                        "planner_calls": int(planner_provider_call),
                         "chapter_plan": planned.plan,
                         "chapter_plan_validation_report": plan_report,
                         "chapter_plan_success": plan_report.accepted,
@@ -274,35 +289,6 @@ class AuthorGenerationService:
                     }
                 )
                 self.transactions.save(transaction)
-                retry_method = getattr(self.writer, "retry", None)
-                if initial_preflight_report.retry_required and callable(retry_method):
-                    retried = await self.retry(
-                        prepared,
-                        candidate,
-                        initial_preflight_report,
-                    )
-                    candidate = retried.candidate
-                    final_preflight_report = self.preflight(prepared, candidate)
-                    transaction = transaction.model_copy(
-                        update={
-                            "candidate": candidate,
-                            "candidate_history": [
-                                *transaction.candidate_history,
-                                candidate,
-                            ],
-                            "writer_calls": 2,
-                            "writer_retry_count": 1,
-                            "writer_retry_performed": True,
-                            "final_preflight_report": final_preflight_report,
-                            "usage": self._merge_usage(
-                                transaction.usage,
-                                retried.usage,
-                                phase="retry",
-                            ),
-                            "updated_at": utc_now(),
-                        }
-                    )
-                    self.transactions.save(transaction)
                 (
                     narrative_report,
                     initial_length_report,
@@ -874,10 +860,12 @@ class AuthorGenerationService:
 
     async def plan(self, prepared: PreparedGeneration) -> PlannerResult:
         planner_method = getattr(self.writer, "plan", None)
-        if callable(planner_method):
+        if self.enable_llm_planner and callable(planner_method):
             return await planner_method(prepared.context, prepared.goal)
-        # Existing injected Writers used by deterministic tests predate planning.
-        # They receive the same safe server-derived allocation without an LLM call.
+        # The formal path is server-owned and deterministic. Existing injected
+        # Writers and AuthorWriter receive the same frozen allocation without a
+        # Planner provider call. The optional LLM planner above is diagnostic
+        # only and must be explicitly enabled.
         return PlannerResult(
             plan=self.chapter_plan_builder.build(
                 event_plan=prepared.event_execution_plan,
@@ -915,22 +903,6 @@ class AuthorGenerationService:
             contract=prepared.narrative_contract,
             event_plan=prepared.event_execution_plan,
             budget_plan=prepared.section_budget_plan,
-        )
-
-    async def retry(
-        self,
-        prepared: PreparedGeneration,
-        candidate: WriterCandidate,
-        preflight_report: WriterPreflightReport,
-    ) -> WriterResult:
-        retry_method = getattr(self.writer, "retry", None)
-        if not callable(retry_method):
-            raise RuntimeError("configured Writer does not support Writer Retry")
-        return await retry_method(
-            prepared.context,
-            prepared.goal,
-            candidate,
-            preflight_report,
         )
 
     def validate(

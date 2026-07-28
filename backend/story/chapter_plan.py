@@ -74,8 +74,12 @@ class ChapterEvidence(NarrativeModel):
         return value if isinstance(value, list) else [value]
 
 
-class ChapterPlanBuilder:
-    """Create a safe fallback plan for injected/legacy Writers in offline tests."""
+class DeterministicChapterPlanBuilder:
+    """Build a server-owned execution plan from frozen section authorities.
+
+    Segment character counts remain ChapterPlan diagnostics and soft Writer
+    guidance. Only the total SectionBudgetPlan range is a hard prose gate.
+    """
 
     _PURPOSES: tuple[ChapterPlanPurpose, ...] = (
         "opening",
@@ -127,6 +131,11 @@ class ChapterPlanBuilder:
         )
 
 
+# Read-only import compatibility for merged tests and downstream integrations.
+# New formal-path code uses the explicit deterministic name above.
+ChapterPlanBuilder = DeterministicChapterPlanBuilder
+
+
 def chapter_plan_prompt_payload(plan: ChapterPlan) -> dict:
     return plan.model_dump(mode="json")
 
@@ -135,6 +144,7 @@ __all__ = [
     "ChapterEvidence",
     "ChapterPlan",
     "ChapterPlanBuilder",
+    "DeterministicChapterPlanBuilder",
     "ChapterPlanPurpose",
     "ChapterPlanSegment",
     "chapter_plan_prompt_payload",

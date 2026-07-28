@@ -13,7 +13,6 @@ from story.context_builder import ContextPackage
 from story.models import SectionGoal, WriterCandidate
 from story.repair_patch import RepairPatchSet
 from story.repair_plan import RepairPlan, repair_patch_prompt_payload
-from story.writer_preflight import WriterPreflightReport
 
 
 class WriterOutputError(RuntimeError):
@@ -40,14 +39,6 @@ class WriterProtocol(Protocol):
 
     async def generate(self, context: ContextPackage, goal: SectionGoal) -> WriterResult: ...
 
-    async def retry(
-        self,
-        context: ContextPackage,
-        goal: SectionGoal,
-        candidate: WriterCandidate,
-        preflight_report: WriterPreflightReport,
-    ) -> WriterResult: ...
-
     async def repair(
         self, candidate: WriterCandidate, plan: RepairPlan
     ) -> WriterResult: ...
@@ -73,9 +64,12 @@ resolution segment lands the required end states. StyleBalanceContract controls
 expression only; it may not change event count, structure, or length."""
 
     PLANNING_WRITER_PROMPT = """
-The ChapterPlan below is mandatory. Write its four segments in order and allocate
-attention according to target_chars. Complete only the listed existing events.
-After segment 4 reaches every required end state and the minimum length, stop.
+The server-derived ChapterPlan below is mandatory for required event order,
+required end states, and stop conditions. Its four segments and per-segment
+target_chars are soft structural guidance, not exact prose quotas. The total
+SectionBudgetPlan min_chars/max_chars range is the only hard length boundary.
+Complete only the listed existing events. Once every required end state and the
+minimum total length are reached, stop.
 Do not create plot to fill length. Length must come from elaborating existing
 events, not from new people, background, conflict, history, or world rules.
 
@@ -147,18 +141,6 @@ resolution_evidence。正文之外不要输出解释、Markdown 或思考过程�
 
 禁止输出 narrative_text、state_delta、threads、memory、summary、title、解释、Markdown
 或内部分析。即使你认为原文已经足够，也必须返回至少一个有效 patch。"""
-
-    RETRY_SYSTEM_PROMPT = """上一版章节没有达到交付要求。
-不要解释，不要修补上一版，也不要输出差异；重新生成一份完整正文。
-
-必须满足：
-1. SectionBudgetPlan 的长度范围和四段内容比例。
-2. EventExecutionPlan 中的所有必要事件。
-3. NarrativeContract 中的全部最终状态。
-4. 当前风格，但风格只控制表达，不控制事件数量或章节长度。
-
-不要增加新人物、新背景、新历史、新关系、新伤亡、新伤势、新数字、日期或世界规则。
-Writer Retry 只有这一次。正文之外仍必须遵守 WriterCandidate JSON Schema。"""
 
     LENGTH_SYSTEM_PROMPT = """
 SectionWritingPlan and SectionBudgetPlan are server-owned and mandatory. Follow
@@ -238,67 +220,6 @@ text into a COMPACT patch and never choose a different deletion span.
             # available so valid section prose is not truncated before serialization.
             max_tokens=8192,
             agent_id="author_writer",
-            priority="critical",
-        )
-        return WriterResult(
-            candidate=self._parse(response.content),
-            usage=self._usage(response),
-        )
-
-    async def retry(
-        self,
-        context: ContextPackage,
-        goal: SectionGoal,
-        candidate: WriterCandidate,
-        preflight_report: WriterPreflightReport,
-    ) -> WriterResult:
-        del goal
-        output_schema = json.dumps(
-            WriterCandidate.model_json_schema(),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
-        retry_payload = {
-            "preflight_errors": preflight_report.retry_reasons(),
-            "writing_plan": (
-                context.writing_plan.model_dump(mode="json")
-                if context.writing_plan
-                else {}
-            ),
-            "section_budget_plan": (
-                context.section_budget_plan.model_dump(mode="json")
-                if context.section_budget_plan
-                else {}
-            ),
-            "event_plan": (
-                context.event_execution_plan.model_dump(mode="json")
-                if context.event_execution_plan
-                else {}
-            ),
-            "previous_draft_audit": {
-                "chars": preflight_report.chars,
-                "title": candidate.title,
-                "section_summary": candidate.section_summary,
-            },
-        }
-        response = await llm_client.chat(
-            system_prompt=(
-                self.SYSTEM_PROMPT
-                + self.LENGTH_SYSTEM_PROMPT
-                + self.PLANNING_WRITER_PROMPT
-                + self.RETRY_SYSTEM_PROMPT
-                + "\n以下 JSON Schema 是唯一输出契约；additionalProperties=false：\n"
-                + output_schema
-            ),
-            user_prompt=(
-                context.prompt
-                + self._final_directive(context)
-                + "\n\n## Writer Retry 输入\n"
-                + json.dumps(retry_payload, ensure_ascii=False, indent=2)
-            ),
-            temperature=0.45,
-            max_tokens=8192,
-            agent_id="author_writer_retry",
             priority="critical",
         )
         return WriterResult(
@@ -483,7 +404,7 @@ text into a COMPACT patch and never choose a different deletion span.
             rendered_segments = [
                 (
                     f"Segment {segment.order}: 目标={segment.purpose}; "
-                    f"长度={segment.target_chars}; "
+                    f"软长度参考={segment.target_chars}; "
                     f"事件={json.dumps(segment.events, ensure_ascii=False)}"
                 )
                 for segment in sorted(
@@ -504,14 +425,14 @@ text into a COMPACT patch and never choose a different deletion span.
                     chapter_plan.stop_condition,
                     ensure_ascii=False,
                 )
-                + "\n完成第四段后停止。\n"
+                + "\n满足 stop_condition 后立即停止。\n"
             )
         return (
             plan_lines
             + "\n\n## 服务端最终执行令（输出前必须逐项自检）\n"
             f"narrative_text 中心目标 {budget_plan.target_chars} 字，硬接受区间 "
             f"{budget_plan.min_chars}-{budget_plan.max_chars} 字。\n"
-            "按以下四部分实际写足，不得合并成提纲：\n"
+            "以下四部分仅作结构提示，可自然衔接；分段字数不是硬配额：\n"
             f"{part_lines}\n"
             "先完成全部 required_events，再明确落实全部 required_end_states。"
             "停止条件同时满足时必须立即结束：全部必要事件完成、全部最终状态达到、"

@@ -68,3 +68,35 @@ Local resumable state is under `.tmp/final-goal-20260728/`.
 P1 only: collapse the default runtime to deterministic planning, one Writer
 call, and at most one targeted Repair while preserving validators and legacy
 read compatibility.
+
+## P1 — runtime-chain simplification
+
+Status: **PASS**
+
+The formal generation path now builds `ChapterPlan` deterministically from the
+frozen `EventExecutionPlan` and `SectionBudgetPlan`. `AuthorWriter.plan()` is
+reachable only when `AUTHOR_LLM_PLANNER_EXPERIMENTAL` is explicitly true; the
+flag defaults false and unrecognized values fail closed. The ChapterPlan schema,
+deterministic validator, diagnostics, and persisted transaction fields remain
+available.
+
+The complete Writer Retry provider path and prompt were removed. A transaction
+can now perform exactly one initial Writer call and at most one bounded Repair
+Patch call. Old transactions containing `writer_retry_count`,
+`writer_retry_performed`, and `retry_tokens` remain readable.
+
+Per-segment character counts remain valid ChapterPlan diagnostics, but the
+Writer prompt now treats them as soft structural guidance. Only the total
+`SectionBudgetPlan` range remains a hard length Gate.
+
+Verification:
+
+- P1 targeted planning, retry-removal, transaction, recovery, ChapterPlan, and
+  revision-guard tests: 42 passed.
+- Full backend regression: 1555 passed, 1 failed, 1 warning. The only failure is
+  the exact P0-frozen cross-platform calibration hash test; new failures: 0.
+- Changed-file Ruff: passed.
+- Changed-file compileall and `git diff --check`: passed.
+- Validator files modified: 0.
+
+Next Gate: P2, auditable semantic memory and StoryThread liveness.
