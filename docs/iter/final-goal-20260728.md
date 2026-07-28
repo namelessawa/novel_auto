@@ -157,3 +157,57 @@ All thirteen P2 Gate checks in that artifact are `true`.
 
 Next Gate: P3, Writer first-pass quality, bounded Repair quality, and frozen
 quality fixtures.
+
+## P3 — Writer first-pass input and one bounded Repair
+
+Status: **PASS**
+
+The Writer prompt now carries each event and required end state once. The
+NarrativeContract slot retains authority-only facts and constraints, while the
+deterministic EventExecutionPlan is the sole Writer-facing event/end-state
+inventory. The duplicated SectionWritingPlan and SectionBudgetPlan JSON copies
+were removed from that slot; the server-owned final directive remains the sole
+four-segment budget and stop-condition instruction. The full plans remain
+frozen in the transaction and execution-spec hash.
+
+For the common 900–1100 acceptance range, `SectionBudgetPlanBuilder` keeps the
+center target at 1000. All five style contracts state that style cannot change
+facts; noir explicitly cannot be short, classical cannot add history, and
+hot-blooded cannot add injuries, casualties, enemies, or background.
+
+Preflight issues are now typed entries in `RepairPlan` and are exposed to the
+single Patch prompt with their code, message, and details. This does not restore
+full Writer Retry: an initial Writer candidate still gets at most one bounded
+Patch call followed by complete Narrative, authority, length, ending, balance,
+regression, revision, and atomic-commit revalidation.
+
+The Patch schema and validator continue to support missing/incomplete events,
+wrong actor/target/end state, unsupported-fact deletion, bounded expansion, and
+server-selected compaction. They continue to reject whole-section replacement,
+unlisted content, proposal/title/summary/memory mutation, and regressions.
+
+Formal evidence:
+
+- Frozen historical failures: 24/24 recovered; 17/17 attempted Repairs
+  succeeded; regression 0; bad commit 0.
+- Frozen final real rejects: 6/6; Patch failure 0; Validator failure 0;
+  regression 0.
+- P3 regression set: 66 passed, 0 failed.
+- Historical weakness coverage includes noir/classical under-length,
+  hot-blooded unsafe expansion, `POST_RESOLUTION_EXPANSION`,
+  `REQUIRED_EVENT_INCOMPLETE`, and `END_STATE_WRONG_HOLDER`.
+- New real-provider failures in P3: 0; therefore new-failure fixture coverage is
+  100% without changing either frozen fixture.
+- Changed-file Ruff, compileall, and `git diff --check`: passed.
+- Validator thresholds modified: 0; full Writer Retry calls: 0.
+
+Machine-readable evidence:
+`.tmp/final-goal-20260728/p3/gate.json`, SHA-256
+`BC400019A6FCFB9803A400AE59FAB18B6177B6BD97B940303812B2CB0AD77A7D`.
+The replay artifacts have SHA-256
+`B2F77BE1D37C5FD52F860E5EF4678DF807BD2C3D50A96D81276F928CA2E38159`
+and
+`871DC3F50003F8938C8F1726C8AFE437F4246237C04FB94FC6992AA0291EC81B`.
+
+Next Gate: P4, product API/UI/export/audit UX and closure of the P0 baseline
+defects required by later hard Gates.

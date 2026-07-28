@@ -53,6 +53,9 @@ class ContractWriter:
         assert "narrative_contract" in context.slots
         assert "subordinate_to_facts" in context.slots["narrative_contract"]
         assert "SERVER_ONLY_NEVER_EXPOSE" not in context.prompt
+        assert context.slots["narrative_contract"].count('"id": "handover"') == 1
+        assert '"section_writing_plan"' not in context.slots["narrative_contract"]
+        assert '"section_budget_plan"' not in context.slots["narrative_contract"]
         return WriterResult(self.first, {"total_tokens": 10})
 
     async def repair(self, candidate, report):
@@ -164,6 +167,13 @@ async def test_repair_fixes_prose_and_both_validators_rerun(tmp_path: Path) -> N
     assert len(transaction.validation_history) == 2
     assert writer.repair_report.repair_context["missing_required_events"]
     assert writer.repair_report.repair_context["wrong_end_states"]
+    assert {
+        item["code"]
+        for item in writer.repair_report.repair_context["preflight_issues"]
+    } >= {
+        "PREFLIGHT_EVENT_COVERAGE_LOW",
+        "PREFLIGHT_END_STATE_UNREACHABLE",
+    }
     assert service.sections.count() == 1
 
 

@@ -1057,6 +1057,7 @@ class AuthorGenerationService:
             narrative_text=candidate.narrative_text,
             section_writing_plan=prepared.section_writing_plan,
             ending_report=ending_report,
+            preflight_report=transaction.initial_preflight_report,
         )
 
     @staticmethod

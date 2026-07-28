@@ -55,6 +55,12 @@ class LengthAdjustment(NarrativeModel):
     target_chars: int = Field(default=0, ge=0)
 
 
+class PreflightRepairIssue(NarrativeModel):
+    code: str
+    message: str
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
 class RepairPlan(NarrativeModel):
     schema_version: int = Field(default=1, ge=1)
     transaction_id: str
@@ -66,6 +72,7 @@ class RepairPlan(NarrativeModel):
     wrong_end_states: list[RepairEndStateInstruction] = Field(default_factory=list)
     unsupported_additions: list[dict[str, str]] = Field(default_factory=list)
     post_resolution_expansions: list[dict[str, Any]] = Field(default_factory=list)
+    preflight_issues: list[PreflightRepairIssue] = Field(default_factory=list)
     length_adjustment: LengthAdjustment
     must_preserve_spans: list[RepairPreserveSpan] = Field(default_factory=list)
     must_preserve_facts: list[dict[str, Any]] = Field(default_factory=list)
@@ -83,6 +90,9 @@ class RepairPlan(NarrativeModel):
             ],
             "wrong_end_states": [
                 item.model_dump(mode="json") for item in self.wrong_end_states
+            ],
+            "preflight_issues": [
+                item.model_dump(mode="json") for item in self.preflight_issues
             ],
         }
 
@@ -156,6 +166,7 @@ class RepairPlanBuilder:
         narrative_text: str,
         section_writing_plan: SectionWritingPlan | None = None,
         ending_report: EndingCompletionReport | None = None,
+        preflight_report: Any = None,
     ) -> RepairPlan:
         events = {item.id: item for item in event_plan.ordered_events}
         missing: list[RepairEventInstruction] = []
@@ -319,6 +330,14 @@ class RepairPlanBuilder:
             post_resolution_expansions=[
                 item.model_dump(mode="json")
                 for item in (ending_report.issues if ending_report else [])
+            ],
+            preflight_issues=[
+                PreflightRepairIssue.model_validate(
+                    item.model_dump(mode="json")
+                )
+                for item in (
+                    getattr(preflight_report, "issues", []) or []
+                )
             ],
             length_adjustment=adjustment,
             must_preserve_spans=preserve,
@@ -704,6 +723,9 @@ def repair_patch_prompt_payload(
         "wrong_end_states": [item.model_dump(mode="json") for item in plan.wrong_end_states],
         "unsupported_additions": plan.unsupported_additions,
         "post_resolution_expansions": plan.post_resolution_expansions,
+        "preflight_issues": [
+            item.model_dump(mode="json") for item in plan.preflight_issues
+        ],
         "length_adjustment": plan.length_adjustment.model_dump(mode="json"),
         "must_preserve_spans": [
             {"text": item.text, "reason": item.reason}
@@ -803,6 +825,7 @@ class RepairRegressionValidator:
 
 __all__ = [
     "LengthAdjustment",
+    "PreflightRepairIssue",
     "RepairEndStateInstruction",
     "RepairEventInstruction",
     "RepairPlan",

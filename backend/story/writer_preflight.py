@@ -129,7 +129,7 @@ def _structure_segments(
 
 
 class WriterPreflightValidator:
-    """Decide whether one full Writer retry is warranted."""
+    """Emit structured, provider-free issues for the one RepairPlan."""
 
     def __init__(
         self,

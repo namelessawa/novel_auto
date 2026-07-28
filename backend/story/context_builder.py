@@ -30,11 +30,9 @@ from story.narrative_contract import (
 )
 from story.section_budget import (
     SectionBudgetPlan,
-    section_budget_plan_prompt_payload,
 )
 from story.writing_plan import (
     SectionWritingPlan,
-    section_writing_plan_prompt_payload,
 )
 
 
@@ -230,6 +228,22 @@ class ContextBuilder:
         }
         memory_payload = [record.model_dump(mode="json") for record in long_term_memories]
         recent_payload = recent_summaries[-12:]
+        contract_payload = (
+            narrative_contract_prompt_payload(narrative_contract)
+            if narrative_contract
+            else {}
+        )
+        # Event inventory, end states, forbidden additions and the hard length
+        # range are already copied into EventExecutionPlan.  Keep one Writer-
+        # facing source for those fields instead of paying for duplicate JSON.
+        if event_execution_plan:
+            for duplicate in (
+                "required_events",
+                "required_end_state",
+                "forbidden_additions",
+                "length_constraint",
+            ):
+                contract_payload.pop(duplicate, None)
 
         raw_slots = {
             "story_bible": bible_text,
@@ -237,22 +251,10 @@ class ContextBuilder:
             "narrative_contract": (
                 _json(
                     {
-                        "narrative_contract": narrative_contract_prompt_payload(
-                            narrative_contract
-                        ),
+                        "narrative_contract": contract_payload,
                         "event_execution_plan": (
                             event_execution_plan_prompt_payload(event_execution_plan)
                             if event_execution_plan
-                            else {}
-                        ),
-                        "section_writing_plan": (
-                            section_writing_plan_prompt_payload(section_writing_plan)
-                            if section_writing_plan
-                            else {}
-                        ),
-                        "section_budget_plan": (
-                            section_budget_plan_prompt_payload(section_budget_plan)
-                            if section_budget_plan
                             else {}
                         ),
                     }

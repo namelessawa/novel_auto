@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from story.event_execution import EventExecutionPlanBuilder
 from story.models import ValidationReport
 from story.narrative_contract import (
@@ -14,7 +16,9 @@ from story.narrative_validator import NarrativeContractValidator
 from story.repair_plan import (
     RepairPlanBuilder,
     RepairRegressionValidator,
+    repair_patch_prompt_payload,
 )
+from story.writer_preflight import WriterPreflightIssue
 
 
 def _contract() -> NarrativeContract:
@@ -126,3 +130,48 @@ def test_repair_preserving_completed_event_has_no_regression() -> None:
         final_report=final,
         repaired_text=repaired,
     ) == []
+
+
+def test_preflight_issues_are_structured_in_repair_plan_and_prompt() -> None:
+    contract = _contract()
+    event_plan = EventExecutionPlanBuilder().build(
+        contract=contract,
+        section_goal=type("Goal", (), {"section_id": "repair"})(),
+        story_threads=[],
+        canonical_state=None,
+    )
+    text = "沈砚准备把旧信交给林秋。"
+    narrative = NarrativeContractValidator().validate(
+        contract,
+        text,
+        event_execution_plan=event_plan,
+    )
+    preflight = SimpleNamespace(
+        issues=[
+            WriterPreflightIssue(
+                code="PREFLIGHT_EVENT_COVERAGE_LOW",
+                message="必要事件未完成",
+                details={"missing_events": ["handover"]},
+            )
+        ]
+    )
+
+    plan = RepairPlanBuilder().build(
+        transaction_id="preflight",
+        contract=contract,
+        event_plan=event_plan,
+        narrative_report=narrative,
+        state_report=ValidationReport(accepted=True),
+        narrative_text=text,
+        preflight_report=preflight,
+    )
+    payload = repair_patch_prompt_payload(plan, text)
+
+    assert plan.preflight_issues[0].code == "PREFLIGHT_EVENT_COVERAGE_LOW"
+    assert payload["preflight_issues"] == [
+        {
+            "code": "PREFLIGHT_EVENT_COVERAGE_LOW",
+            "message": "必要事件未完成",
+            "details": {"missing_events": ["handover"]},
+        }
+    ]
