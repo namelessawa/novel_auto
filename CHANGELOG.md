@@ -8,6 +8,11 @@
 
 ### Added
 
+- 新增统一 fail-closed 最终验收 runner，汇总 P0–P9、完整离线 Gate、真实
+  Provider checkpoint、精确 secret scan、artifact SHA-256、恢复指令和机器可读
+  verdict。
+- 新增可审计 `ContextManifest` 记忆选择/丢弃原因、语义回忆探针、StoryThread
+  liveness、Author evidence ledger、事务恢复与 committed-only 正文/证据导出。
 - 新增确定性 `EventExecutionPlan`、逐事件完成/最终状态证据校验、prose-only `RepairPlan`、Repair 回归保护、24 案例离线回放与真实小矩阵分级门禁；真实 15 节 Gate 未通过，完整 Stage 1 按规则未运行。
 - 新增确定性 `NarrativeContract` 与独立正文校验层，覆盖允许实体、必要事实/事件/最终状态、时间与因果、禁止新增、关系保护和统一中文长度边界；Writer 风格明确服从事实契约。
 - 新增可恢复长程验证 runner/analyzer/comparator、五份真实风格原文不可变回归、Repair 前后候选历史、独立 repair token 统计，以及 Author Studio 契约预览和分层验证诊断。
@@ -26,6 +31,12 @@
 
 ### Changed
 
+- 正式 Author 链收敛为冻结权威上下文、确定性 ChapterPlan、单次 Writer、
+  确定性校验、最多一次局部 Patch Repair、全量复验、RevisionGuard 和原子提交；
+  默认 LLM Planner 与完整 Writer Retry Provider 调用均为 0。
+- 最终 P6 历史 Mini seed 在两轮修复后仍失败并正确输出
+  `NOVEL_AUTO_FINAL_FAIL`；P7/P8 未越级执行，Validator、seed 和冻结 fixture
+  均未放宽或替换。
 - Author 模式风格 preset 统一写入 `StoryBible.style_contract` 并提升 revision；TickState style anchors 仅保留为 simulation 运行数据。
 - Repair 仅修改正文，之后以修复正文重新验证原候选的每条 StateDelta；缺失或不可定位 evidence 的变化永不进入 CanonicalState。
 - 作品默认不再实例化九 Agent Tick runtime；世界模拟改为显式开启、延迟加载的实验模式，其产出仍必须通过统一 Validator 与 CanonicalState 事务网关。
@@ -38,6 +49,7 @@
 
 ### Removed
 
+- 删除正式路径中的完整 Writer Retry；旧事务的 retry 字段仍保持只读兼容。
 - `CLAUDE.md` 与 `structure.md` 不再由 Git 跟踪；本地副本继续保留。
 
 ## [2.49] — 2026-06-25

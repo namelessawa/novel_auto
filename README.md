@@ -17,6 +17,23 @@
 - 阅读与多媒体：Narrative 分页、视点标记、全文搜索，以及分段、图片、TTS、字幕和视频生成链路。
 - Web 应用能力：邮箱 OTP/JWT、多租户数据隔离、任务队列、SSE 状态推送和知识图谱可视化。
 
+## 最终验收与证据
+
+统一验收入口会执行 warnings-as-errors 后端测试、Ruff、compileall、Author
+UI、生产构建、依赖审计、diff 检查和精确凭据扫描，并生成机器可读报告、artifact
+SHA-256 与恢复指令：
+
+```powershell
+python scripts/run_final_acceptance.py --resume
+```
+
+该 runner 失败闭合：不能通过参数跳过硬 Gate，也不会在 P6 失败后进入 P7/P8。
+当前最终目标执行在历史 Mini seed 达到两轮修复上限后仍未通过，因此 verdict 为
+`NOVEL_AUTO_FINAL_FAIL`；拒绝事务未进入正式正文或 Canon。架构、验收与迁移细节见
+[FINAL_ARCHITECTURE](./docs/FINAL_ARCHITECTURE.md)、
+[FINAL_ACCEPTANCE](./docs/FINAL_ACCEPTANCE.md) 和
+[FINAL_MIGRATION_ROLLBACK](./docs/FINAL_MIGRATION_ROLLBACK.md)。
+
 ## 架构概览
 
 ```mermaid

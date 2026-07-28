@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "case_id": "p6_seed_20260727_attempt_03_action_conflict_literary_section_0001",
+  "classification": [
+    "WRITER_EXECUTION_FAILURE",
+    "REPAIR_FAILURE",
+    "VALIDATOR_TRUE_REJECTION"
+  ],
+  "provider": "custom",
+  "model": "glm-5.2",
+  "seed": 20260727,
+  "theme": "action_conflict",
+  "style": "literary",
+  "section": 1,
+  "initial_chars": 656,
+  "minimum_chars": 900,
+  "initial_violation_codes": [
+    "NARRATIVE_TOO_SHORT"
+  ],
+  "repair_patch": {
+    "patch_type": "expand",
+    "patch_text_sha256": "b6b009877747335dc3f565620a0d16e862e0167b65bcd7b60442d44564259331",
+    "patch_text_chars": 393,
+    "before_anchor_sha256": "d0b223b994f061a2571a061b1408c2037cd0622f86cb94f55c30a5ca6ac486d0",
+    "before_anchor_chars": 240,
+    "after_anchor_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after_anchor_chars": 0
+  },
+  "repair_patch_violation_codes": [
+    "PATCH_ANCHOR_NOT_FOUND"
+  ],
+  "final_chars": 656,
+  "final_violation_codes": [
+    "NARRATIVE_TOO_SHORT",
+    "PATCH_ANCHOR_NOT_FOUND"
+  ],
+  "required_events_completed": 1,
+  "required_events_total": 1,
+  "required_end_states_reached": 1,
+  "required_end_states_total": 1,
+  "planner_provider_calls": 0,
+  "writer_calls": 2,
+  "full_retry_calls": 0,
+  "total_tokens": 11968,
+  "latency_seconds": 36.8587,
+  "state_conflict_commits": 0,
+  "illegal_thread_change_commits": 0,
+  "evidenceless_state_delta_commits": 0,
+  "committed": false,
+  "original_narrative_sha256": "a79b12089a5ad78ee2aba4ba41936a4f3f466940114ec8b423ec8849cae18d2e",
+  "maximum_repair_rounds_exhausted": true,
+  "expected_verdict": "NOVEL_AUTO_FINAL_FAIL",
+  "frozen_artifacts": [
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-03/stage1-matrix.json",
+      "sha256": "34F4D8FDB4597CA310C945F3C3BE646F98D48C928A30D2AB1185365DD29E5B53"
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-03/runs/action_conflict__literary/report.json",
+      "sha256": "D76687812B390299567CE12C15EBBAE274717792E3C87AA537D84D3F70317F2E"
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-03/runs/action_conflict__literary/rejections/section_0001_section_0001.json",
+      "sha256": "E831B51280E129C6F16EFDA20AC9C9693078377A686263968DB6F9E7654C1FC3"
+    },
+    {
+      "path": ".tmp/final-goal-20260728/p6/seed-20260727-attempt-03/runs/action_conflict__literary/runtime/generation_transactions/section_0001.json",
+      "sha256": "B7E9EBBFB0B2D8C14ED5212BA67E801325038C379A86C24224A922CD65BD4792"
+    }
+  ],
+  "next_action": "Do not run another real P6 attempt without opening a new explicitly authorized development cycle."
+}

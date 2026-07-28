@@ -311,3 +311,52 @@ The P5 long-range artifact SHA-256 is
 
 Next Gate: P6, the bounded real-provider acceptance matrix using process-only
 configuration from `coding.txt`.
+
+## P6 — real-provider Mini Gate
+
+Status: **FAIL**
+
+The historical seed was executed first with `action_conflict`, all five frozen
+styles, three sections per style, desired length 900, per-section checkpoints,
+runtime rebuild every two sections, no combo retry, no Planner provider call
+and no full Writer Retry. Every attempt used the original process-only
+`coding.txt` configuration and was preceded by a successful quota smoke.
+
+The first attempt failed before candidate validation because GLM 5.2 returned
+invalid structured Writer JSON. Evidence was frozen before change. Regression
+tests now require structured GLM acceptance to disable thinking unless an
+operator explicitly overrides it; the configuration is part of matrix identity.
+The complete offline Gate then passed (1571 backend tests).
+
+The second attempt completed literary 2/3. The rejected third section was 890
+characters against the frozen 900 minimum. Its expansion Repair introduced
+`一两颗`; `PATCH_ADDS_NUMBER` correctly rejected it and no bad candidate was
+committed. A frozen regression led to a narrow audited deterministic removal
+for approximate particle counts only. All other number/fact safety tests remain
+unchanged. The complete offline Gate then passed with 1572 backend tests.
+
+The final permitted attempt produced a 656-character first section. Its required
+event and required end state both passed, but the one expansion Repair used a
+missing 240-character anchor and full revalidation reported
+`NARRATIVE_TOO_SHORT,PATCH_ANCHOR_NOT_FOUND`. The transaction remained rejected;
+hard fact/state/thread bad commits, revision anomalies and half commits were 0.
+
+The P6 two-repair-round allowance is exhausted. Seed 20260728 was not run, and
+P7/P8 were strictly not entered. This is a quality failure, not a quota block.
+
+## P7 — Full Matrix
+
+Status: **NOT RUN — P6 prerequisite failed**
+
+## P8 — real long-range memory Gate
+
+Status: **NOT RUN — P6 prerequisite failed**
+
+## P9 — final delivery
+
+Status: **PASS (delivery Gate; overall verdict remains FAIL)**
+
+The unified fail-closed runner, final architecture/acceptance/goal documents,
+migration and rollback instructions, machine results, artifact hashes, secret
+scan and recovery instructions are delivered. The overall verdict is fixed as
+`NOVEL_AUTO_FINAL_FAIL`; P9 delivery cannot convert the failed P6 Gate to PASS.
