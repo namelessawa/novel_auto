@@ -1,0 +1,866 @@
+{
+    "schema_version":  1,
+    "case_id":  "p6_seed_20260727_action_conflict_literary_section_0001_length_anchor_recovery",
+    "source_cycle":  "final-goal-20260728",
+    "source_transaction_sha256":  "b7e9ebbfb0b2d8c14ed5212ba67e801325038c379a86c24224a922cd65bd4792",
+    "original_narrative_sha256":  "a79b12089a5ad78ee2aba4ba41936a4f3f466940114ec8b423ec8849cae18d2e",
+    "original_chars":  null,
+    "original_candidate":  {
+                               "narrative_text":  "沈砚的手指在旧灯塔底层石壁上缓缓划过，苔藓碎屑簌簌剥落，露出底下暗灰色的岩面。潮气从墙缝渗出，凝成细密的水珠，沿着指尖滑落。地下室禁明火，灯罩里只余冷光，将他的影子贴在潮湿的地面上。旧信就搁在他膝上，油纸封套被潮气泡得发软，边角起了一层薄薄的毛边。他拇指压着信封口，指腹下纸面粗粝，像攥住一截将断未断的绳头。夜里灯塔的风穿过通风口灌下来，带着咸腥的水汽打在脸侧。他微微侧过身，把信封拢近胸前，不让风掀动封口。灯塔铁梯在头顶发出低沉嗡鸣，是金属在反复胀缩。他们在这座灯塔共事多年，不必回头也知道彼此的位置——林秋就在对面的石台前，面前摊着记录簿，笔尖悬在纸面上不动。沈砚低声说了一句该核了，把油纸封套从膝上拿起。封面上旧墨迹已淡成灰褐，指腹摩过时能感到纸纤维的毛刺，像抚过干裂的河床。他将信封翻转，背面的折痕处裂开一道细口，露出内层泛黄的信纸边沿。封口蜡早已碎裂，残块嵌在纸纤维里，呈暗红色。他捏住封口两侧，拇指沿蜡残痕缓缓拉开，纸页之间发出极轻的沙声。封口纸条半粘半脱，他另一只手伸进信封内壁，指尖触到信纸，干燥微温。他将信纸从封套中完整抽出，叠放在掌心，纸面边缘在冷光下泛着淡黄。信纸上的字迹细小，墨色深深浅浅，末页的落款模糊得几乎不可辨认。他目光在末页落款处停了一瞬，墨迹在那里洇成一团灰雾，什么也辨不出。沈砚将信纸和封套合拢，重新叠成原来的折痕，递向对面。他说了句你来看。林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋，按平袋口。旧信落在林秋掌中的重量，沈砚隔着半臂的距离也能感觉到——纸页薄，分量却沉。",
+                               "section_summary":  "在旧灯塔地下室，沈砚从油纸封套中取出旧信，发现末页落款模糊不可辨，随即将信纸连同封套递给林秋。林秋接过旧信并收进胸前内袋。",
+                               "event_evidence":  [
+                                                      {
+                                                          "event_id":  "handover_1",
+                                                          "evidence":  "他将信纸和封套合拢，重新叠成原来的折痕，递向对面……林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋，按平袋口。"
+                                                      }
+                                                  ],
+                               "end_state_evidence":  [
+                                                          {
+                                                              "state_id":  "end_1",
+                                                              "evidence":  "林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋，按平袋口。"
+                                                          }
+                                                      ],
+                               "state_delta":  [
+                                                   {
+                                                       "op":  "set",
+                                                       "path":  "/items/letter/holder",
+                                                       "value":  "lin_qiu",
+                                                       "evidence":  "林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋",
+                                                       "confidence":  1.0
+                                                   }
+                                               ],
+                               "threads_opened":  [
+
+                                                  ],
+                               "threads_advanced":  [
+                                                        {
+                                                            "id":  "main_letter",
+                                                            "type":  "conflict",
+                                                            "description":  "查清旧信缺失的页码与责任链",
+                                                            "promised_question":  "",
+                                                            "involved_characters":  [
+                                                                                        "shen_yan",
+                                                                                        "lin_qiu"
+                                                                                    ],
+                                                            "origin_refs":  [
+
+                                                                            ],
+                                                            "status":  "advancing",
+                                                            "urgency":  9,
+                                                            "resolution_requirements":  [
+
+                                                                                        ],
+                                                            "resolution_evidence":  [
+
+                                                                                    ],
+                                                            "evidence":  [
+                                                                             "信纸上的字迹细小，墨色深深浅浅，末页的落款模糊得几乎不可辨认"
+                                                                         ],
+                                                            "open_condition":  "发现旧信缺页",
+                                                            "advance_condition":  "确认旧信缺失的页码",
+                                                            "resolve_condition":  "确认缺页内容与责任人",
+                                                            "target_start_revision":  1,
+                                                            "target_end_revision":  1000,
+                                                            "last_advanced_revision":  1,
+                                                            "pause_until_revision":  0,
+                                                            "opened_at_revision":  1,
+                                                            "updated_at_revision":  1,
+                                                            "source":  "author"
+                                                        }
+                                                    ],
+                               "threads_resolved":  [
+
+                                                    ],
+                               "memory_records":  [
+                                                      {
+                                                          "id":  "mem_handover_1",
+                                                          "type":  "event",
+                                                          "section_id":  "ch0001_s0001",
+                                                          "entities":  [
+                                                                           "shen_yan",
+                                                                           "lin_qiu",
+                                                                           "letter",
+                                                                           "lighthouse"
+                                                                       ],
+                                                          "summary":  "沈砚在灯塔地下室将旧信交给林秋，林秋接过并收入胸前内袋",
+                                                          "evidence":  "他将信纸和封套合拢，重新叠成原来的折痕，递向对面……林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋",
+                                                          "importance":  9,
+                                                          "canon_status":  "confirmed",
+                                                          "source_refs":  [
+                                                                              "handover_1"
+                                                                          ],
+                                                          "canonical_claims":  [
+                                                                                   {
+                                                                                       "path":  "/items/letter/holder",
+                                                                                       "expected":  "lin_qiu",
+                                                                                       "operator":  "equals"
+                                                                                   }
+                                                                               ],
+                                                          "created_at_revision":  1
+                                                      },
+                                                      {
+                                                          "id":  "mem_clue_advance",
+                                                          "type":  "revelation",
+                                                          "section_id":  "ch0001_s0001",
+                                                          "entities":  [
+                                                                           "shen_yan",
+                                                                           "lin_qiu",
+                                                                           "letter"
+                                                                       ],
+                                                          "summary":  "沈砚发现旧信末页落款模糊不可辨认，与林秋已知信息一致",
+                                                          "evidence":  "末页的落款模糊得几乎不可辨认",
+                                                          "importance":  8,
+                                                          "canon_status":  "confirmed",
+                                                          "source_refs":  [
+                                                                              "main_letter"
+                                                                          ],
+                                                          "canonical_claims":  [
+                                                                                   {
+                                                                                       "path":  "/canonical_facts/main_clue/status",
+                                                                                       "expected":  "open",
+                                                                                       "operator":  "equals"
+                                                                                   }
+                                                                               ],
+                                                          "created_at_revision":  1
+                                                      }
+                                                  ],
+                               "consistency_notes":  [
+                                                         "旧信持有人由shen_yan变更为lin_qiu，与end_1一致",
+                                                         "地下室禁止明火规则已遵守，照明使用灯罩冷光",
+                                                         "沈砚不知末页落款、林秋知落款模糊的角色知识边界均保持一致",
+                                                         "未新增人物、亲属、数字、日期或幕后责任人"
+                                                     ],
+                               "chapter_evidence":  [
+                                                        {
+                                                            "segment":  1,
+                                                            "events_completed":  [
+
+                                                                                 ]
+                                                        },
+                                                        {
+                                                            "segment":  2,
+                                                            "events_completed":  [
+
+                                                                                 ]
+                                                        },
+                                                        {
+                                                            "segment":  3,
+                                                            "events_completed":  [
+                                                                                     "handover_1"
+                                                                                 ]
+                                                        },
+                                                        {
+                                                            "segment":  4,
+                                                            "events_completed":  [
+
+                                                                                 ]
+                                                        }
+                                                    ],
+                               "title":  "旧信交割"
+                           },
+    "narrative_contract":  {
+                               "schema_version":  1,
+                               "section_id":  "ch0001_s0001",
+                               "story_bible_revision":  2,
+                               "canonical_state_revision":  1,
+                               "allowed_entities":  {
+                                                        "characters":  [
+                                                                           {
+                                                                               "id":  "lin_qiu",
+                                                                               "name":  "林秋",
+                                                                               "aliases":  [
+
+                                                                                           ],
+                                                                               "max_count":  1
+                                                                           },
+                                                                           {
+                                                                               "id":  "shen_yan",
+                                                                               "name":  "沈砚",
+                                                                               "aliases":  [
+
+                                                                                           ],
+                                                                               "max_count":  1
+                                                                           }
+                                                                       ],
+                                                        "locations":  [
+                                                                          {
+                                                                              "id":  "lighthouse",
+                                                                              "name":  "旧灯塔",
+                                                                              "aliases":  [
+
+                                                                                          ],
+                                                                              "max_count":  1
+                                                                          }
+                                                                      ],
+                                                        "items":  [
+                                                                      {
+                                                                          "id":  "letter",
+                                                                          "name":  "旧信",
+                                                                          "aliases":  [
+                                                                                          "信纸",
+                                                                                          "信封",
+                                                                                          "封套",
+                                                                                          "油纸封"
+                                                                                      ],
+                                                                          "max_count":  1
+                                                                      }
+                                                                  ],
+                                                        "organizations":  [
+
+                                                                          ],
+                                                        "generic_terms":  [
+                                                                              "他",
+                                                                              "她",
+                                                                              "其",
+                                                                              "对方",
+                                                                              "路人"
+                                                                          ]
+                                                    },
+                               "required_facts":  [
+                                                      {
+                                                          "id":  "canonical_promise",
+                                                          "subject":  "shen_yan",
+                                                          "predicate":  "承诺",
+                                                          "object":  "日出前复核最后一页",
+                                                          "time":  "",
+                                                          "statement":  "",
+                                                          "required_in_prose":  false,
+                                                          "evidence_patterns":  [
+
+                                                                                ],
+                                                          "mutation_patterns":  [
+
+                                                                                ],
+                                                          "contradiction_patterns":  [
+
+                                                                                     ]
+                                                      },
+                                                      {
+                                                          "id":  "canonical_main_clue",
+                                                          "subject":  "lin_qiu",
+                                                          "predicate":  "追查",
+                                                          "object":  "旧信缺失的页码",
+                                                          "time":  "",
+                                                          "statement":  "",
+                                                          "required_in_prose":  false,
+                                                          "evidence_patterns":  [
+
+                                                                                ],
+                                                          "mutation_patterns":  [
+
+                                                                                ],
+                                                          "contradiction_patterns":  [
+
+                                                                                     ]
+                                                      }
+                                                  ],
+                               "required_events":  [
+                                                       {
+                                                           "id":  "handover_1",
+                                                           "actor":  "shen_yan",
+                                                           "action":  "把旧信交给林秋",
+                                                           "target":  "lin_qiu",
+                                                           "description":  "",
+                                                           "required_evidence":  true,
+                                                           "evidence_patterns":  [
+                                                                                     "沈砚[\\s\\S]{0,500}(?:林秋[\\s\\S]{0,140}(?:接|接过|收下|放进|塞进|滑进)|(?:接过|收下)[\\s\\S]{0,40}(?:旧信|信纸|信封|封套|油纸封))"
+                                                                                 ],
+                                                           "incomplete_patterns":  [
+
+                                                                                   ],
+                                                           "keywords":  [
+                                                                            "沈砚",
+                                                                            "林秋",
+                                                                            "旧信",
+                                                                            "接"
+                                                                        ],
+                                                           "min_keyword_matches":  4
+                                                       }
+                                                   ],
+                               "required_end_state":  [
+                                                          {
+                                                              "id":  "end_1",
+                                                              "path":  "/items/letter/holder",
+                                                              "expected":  "lin_qiu",
+                                                              "description":  "",
+                                                              "evidence_patterns":  [
+                                                                                        "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+                                                                                    ],
+                                                              "wrong_state_patterns":  [
+                                                                                           "沈砚仍把旧信藏在怀里"
+                                                                                       ]
+                                                          }
+                                                      ],
+                               "time_constraints":  [
+
+                                                    ],
+                               "forbidden_additions":  [
+                                                           {
+                                                               "id":  "unsupported_number",
+                                                               "category":  "number",
+                                                               "description":  "未授权的事实性数字",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           },
+                                                           {
+                                                               "id":  "unsupported_date",
+                                                               "category":  "date",
+                                                               "description":  "未授权的具体日期或时间点",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           },
+                                                           {
+                                                               "id":  "unsupported_kinship",
+                                                               "category":  "kinship",
+                                                               "description":  "未授权的亲属关系",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           },
+                                                           {
+                                                               "id":  "unsupported_casualty",
+                                                               "category":  "casualty",
+                                                               "description":  "未授权的伤亡数字",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           },
+                                                           {
+                                                               "id":  "unsupported_injury",
+                                                               "category":  "injury",
+                                                               "description":  "未授权的新暴力或伤势",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           },
+                                                           {
+                                                               "id":  "unsupported_backstory",
+                                                               "category":  "backstory",
+                                                               "description":  "未授权的人物年龄或经历",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           },
+                                                           {
+                                                               "id":  "unsupported_entity",
+                                                               "category":  "entity",
+                                                               "description":  "未授权的人物、组织或责任主体",
+                                                               "code":  "",
+                                                               "patterns":  [
+
+                                                                            ],
+                                                               "allowed_patterns":  [
+
+                                                                                    ],
+                                                               "severity":  "high"
+                                                           }
+                                                       ],
+                               "forbidden_outcomes":  [
+
+                                                      ],
+                               "protected_relationships":  [
+                                                               {
+                                                                   "id":  "canonical_relationship_shen_yan:lin_qiu",
+                                                                   "parties":  [
+                                                                                   "shen_yan",
+                                                                                   "lin_qiu"
+                                                                               ],
+                                                                   "relationship":  "共同维护灯塔的多年搭档",
+                                                                   "forbidden_patterns":  [
+
+                                                                                          ]
+                                                               }
+                                                           ],
+                               "protected_causal_links":  [
+
+                                                          ],
+                               "length_constraint":  {
+                                                         "min_chars":  900,
+                                                         "max_chars":  1100
+                                                     },
+                               "style_priority":  "subordinate_to_facts",
+                               "source_summary":  [
+                                                      "StoryBible@2",
+                                                      "CanonicalState@1",
+                                                      "SectionGoal:ch0001_s0001",
+                                                      "StructuredUserConstraints"
+                                                  ],
+                               "contract_hash":  "1027d3e3889934539f6469c34eec384bd15183fcc99e5ef8677eee94d287a143"
+                           },
+    "event_execution_plan":  {
+                                 "schema_version":  1,
+                                 "section_id":  "ch0001_s0001",
+                                 "contract_hash":  "1027d3e3889934539f6469c34eec384bd15183fcc99e5ef8677eee94d287a143",
+                                 "ordered_events":  [
+                                                        {
+                                                            "id":  "handover_1",
+                                                            "order":  1,
+                                                            "actor":  "shen_yan",
+                                                            "actor_aliases":  [
+                                                                                  "shen_yan",
+                                                                                  "沈砚"
+                                                                              ],
+                                                            "action":  "把旧信交给林秋",
+                                                            "target":  "lin_qiu",
+                                                            "target_aliases":  [
+                                                                                   "lin_qiu",
+                                                                                   "林秋"
+                                                                               ],
+                                                            "description":  "把旧信交给林秋",
+                                                            "completion_type":  "item_transfer",
+                                                            "required":  true,
+                                                            "allow_omission":  false,
+                                                            "minimum_completion_evidence":  "沈砚把物品实际交给林秋，林秋接过并收好。",
+                                                            "completion_test":  {
+                                                                                    "actor_required":  true,
+                                                                                    "target_required":  true,
+                                                                                    "completed_tense_required":  true
+                                                                                }
+                                                        }
+                                                    ],
+                                 "required_end_states":  [
+                                                             {
+                                                                 "id":  "end_1",
+                                                                 "path":  "/items/letter/holder",
+                                                                 "expected":  "lin_qiu",
+                                                                 "description":  "",
+                                                                 "evidence_patterns":  [
+                                                                                           "林秋[\\s\\S]{0,600}(?:旧信|信纸|信封|封套|油纸封|将信)[\\s\\S]{0,120}(?:接过|收下|放进|塞进|滑进|装进|收好|保管|抽屉|口袋|衣袋|侧袋)"
+                                                                                       ],
+                                                                 "wrong_state_patterns":  [
+                                                                                              "沈砚仍把旧信藏在怀里"
+                                                                                          ]
+                                                             }
+                                                         ],
+                                 "preserve_facts":  [
+                                                        {
+                                                            "id":  "canonical_promise",
+                                                            "subject":  "shen_yan",
+                                                            "predicate":  "承诺",
+                                                            "object":  "日出前复核最后一页",
+                                                            "time":  "",
+                                                            "statement":  ""
+                                                        },
+                                                        {
+                                                            "id":  "canonical_main_clue",
+                                                            "subject":  "lin_qiu",
+                                                            "predicate":  "追查",
+                                                            "object":  "旧信缺失的页码",
+                                                            "time":  "",
+                                                            "statement":  ""
+                                                        }
+                                                    ],
+                                 "forbidden_additions":  [
+                                                             "未授权的事实性数字",
+                                                             "未授权的具体日期或时间点",
+                                                             "未授权的亲属关系",
+                                                             "未授权的伤亡数字",
+                                                             "未授权的新暴力或伤势",
+                                                             "未授权的人物年龄或经历",
+                                                             "未授权的人物、组织或责任主体"
+                                                         ],
+                                 "style_constraints":  {
+                                                           "key":  "literary",
+                                                           "label":  "描写细致 (文学性, 默认)",
+                                                           "description":  "具象意象 + 内心薄笔, 节奏舒缓但每段必有实物. 适合文学读者.",
+                                                           "narrator_addendum":  "# 本作风格契约 — literary\n每段至少一个摄像机拍得到的具体物 (颜色/温度/质感). 情绪由身体动作和物件反应承载, 不直报. 内心 1-2 句白描即可, 贴着目标走. 对白节制, 引号外配一个动作 beat. 禁: 大段心理独白, 抽象形容词堆叠.\n\n",
+                                                           "version":  "2026-07-15.5",
+                                                           "final_checklist":  "每段有具体物; 情绪落到动作/物件; 内心不超过两句。",
+                                                           "det_rules":  [
+                                                                             "no_meta_leak",
+                                                                             "character_presence"
+                                                                         ],
+                                                           "strict_every_ticks":  1,
+                                                           "strict_importance":  7,
+                                                           "conflict_policy":  "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+                                                           "prompt_hash":  "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379"
+                                                       },
+                                 "length_constraint":  {
+                                                           "min_chars":  900,
+                                                           "max_chars":  1100
+                                                       }
+                             },
+    "section_writing_plan":  {
+                                 "schema_version":  1,
+                                 "section_id":  "ch0001_s0001",
+                                 "target_chars":  900,
+                                 "min_chars":  900,
+                                 "max_chars":  1100,
+                                 "structure":  [
+                                                   {
+                                                       "part":  "opening",
+                                                       "target_chars":  180,
+                                                       "purpose":  "Establish the existing scene and begin the first required action."
+                                                   },
+                                                   {
+                                                       "part":  "development",
+                                                       "target_chars":  250,
+                                                       "purpose":  "Develop only the contracted actions and existing interactions."
+                                                   },
+                                                   {
+                                                       "part":  "conflict",
+                                                       "target_chars":  250,
+                                                       "purpose":  "Complete the central required action without adding escalation facts."
+                                                   },
+                                                   {
+                                                       "part":  "resolution",
+                                                       "target_chars":  220,
+                                                       "purpose":  "Land every required end state explicitly and close the section."
+                                                   }
+                                               ],
+                                 "required_events":  [
+                                                         {
+                                                             "id":  "handover_1",
+                                                             "order":  1,
+                                                             "actor":  "shen_yan",
+                                                             "action":  "把旧信交给林秋",
+                                                             "target":  "lin_qiu",
+                                                             "minimum_completion_evidence":  "沈砚把物品实际交给林秋，林秋接过并收好。"
+                                                         }
+                                                     ],
+                                 "required_end_states":  [
+                                                             {
+                                                                 "id":  "end_1",
+                                                                 "path":  "/items/letter/holder",
+                                                                 "expected":  "lin_qiu",
+                                                                 "description":  ""
+                                                             }
+                                                         ],
+                                 "style_adaptation":  {
+                                                          "key":  "literary",
+                                                          "instruction":  "Style controls expression, not structure. Every detail must serve an existing character, required event, or existing environment; long description without event function is forbidden.",
+                                                          "allowed_expansion":  [
+                                                                                    "environment already present in the scene",
+                                                                                    "sensory observation",
+                                                                                    "existing-character interiority",
+                                                                                    "transitions between required actions"
+                                                                                ],
+                                                          "forbidden_expansion":  [
+                                                                                      "new event",
+                                                                                      "new character or organization",
+                                                                                      "new background fact or world rule",
+                                                                                      "new number, date, kinship, injury, or casualty",
+                                                                                      "event substitution",
+                                                                                      "long description without event function"
+                                                                                  ]
+                                                      }
+                             },
+    "section_budget_plan":  {
+                                "schema_version":  1,
+                                "section_id":  "ch0001_s0001",
+                                "target_chars":  1000,
+                                "min_chars":  900,
+                                "max_chars":  1100,
+                                "segments":  [
+                                                 {
+                                                     "name":  "opening",
+                                                     "budget":  180,
+                                                     "max_chars":  230
+                                                 },
+                                                 {
+                                                     "name":  "development",
+                                                     "budget":  300,
+                                                     "max_chars":  350
+                                                 },
+                                                 {
+                                                     "name":  "conflict",
+                                                     "budget":  300,
+                                                     "max_chars":  350
+                                                 },
+                                                 {
+                                                     "name":  "resolution",
+                                                     "budget":  220,
+                                                     "max_chars":  270
+                                                 }
+                                             ],
+                                "stop_conditions":  [
+                                                        "required_events_completed",
+                                                        "end_state_reached",
+                                                        "minimum_length_reached"
+                                                    ],
+                                "style_balance_contract":  {
+                                                               "key":  "literary",
+                                                               "instruction":  "Style controls expression, not structure. Every detail must serve an existing character, required event, or existing environment.",
+                                                               "allowed":  [
+                                                                               "event-serving environment",
+                                                                               "event-serving interiority",
+                                                                               "action detail"
+                                                                           ],
+                                                               "limits":  [
+                                                                              "each descriptive beat must connect to the current required action"
+                                                                          ],
+                                                               "forbidden":  [
+                                                                                 "new scene for literary effect",
+                                                                                 "long description without event function",
+                                                                                 "description after stop conditions"
+                                                                             ]
+                                                           }
+                            },
+    "initial_narrative_validation_report":  {
+                                                "accepted":  false,
+                                                "severity":  "high",
+                                                "violations":  [
+                                                                   {
+                                                                       "code":  "NARRATIVE_TOO_SHORT",
+                                                                       "message":  "正文仅 656 字，低于服务端 WritingPlan 最低 900 字",
+                                                                       "severity":  "high",
+                                                                       "path":  "/length_constraint",
+                                                                       "evidence":  "656",
+                                                                       "repair_hint":  "只扩写现有动作、环境、互动或情绪，不得新增事件、人物或事实"
+                                                                   }
+                                                               ],
+                                                "missing_required_events":  [
+
+                                                                            ],
+                                                "unsupported_additions":  [
+
+                                                                          ],
+                                                "event_results":  [
+                                                                      {
+                                                                          "event_id":  "handover_1",
+                                                                          "status":  "completed",
+                                                                          "evidence":  "他将信纸从封套中完整抽出，叠放在掌心，纸面边缘在冷光下泛着淡黄。",
+                                                                          "actor_matched":  true,
+                                                                          "target_matched":  false,
+                                                                          "action_matched":  true,
+                                                                          "evidence_hint_matched":  false,
+                                                                          "violation_code":  ""
+                                                                      }
+                                                                  ],
+                                                "end_state_results":  [
+                                                                          {
+                                                                              "id":  "end_1",
+                                                                              "path":  "/items/letter/holder",
+                                                                              "expected":  "lin_qiu",
+                                                                              "reached":  true,
+                                                                              "evidence":  "林秋就在对面的石台前，面前摊着记录簿，笔尖悬在纸面上不动。沈砚低声说了一句该核了，把油纸封套从膝上拿起。封面上旧墨迹已淡成灰褐，指腹摩过时能感到纸纤维的毛刺，像抚过干裂的河床。他将信封翻转，背面的折痕处裂开一道细口，露出内层泛黄的信纸边沿。封口蜡早已碎裂，残块嵌在纸纤维里，呈暗红色。他捏住封口两侧，拇指沿蜡残痕缓缓拉开，纸页之间发出极轻的沙声。封口纸条半粘半",
+                                                                              "violation_code":  ""
+                                                                          }
+                                                                      ],
+                                                "contract_coverage":  1.0,
+                                                "required_fact_coverage":  1.0,
+                                                "required_event_coverage":  1.0,
+                                                "required_end_state_coverage":  1.0,
+                                                "narrative_char_count":  656,
+                                                "repairable":  true
+                                            },
+    "initial_length_report":  {
+                                  "schema_version":  1,
+                                  "phase":  "initial",
+                                  "chars":  656,
+                                  "target":  1000,
+                                  "min_chars":  900,
+                                  "max_chars":  1100,
+                                  "ratio":  0.656,
+                                  "accepted":  false,
+                                  "violation_code":  "NARRATIVE_TOO_SHORT"
+                              },
+    "initial_ending_report":  {
+                                  "schema_version":  1,
+                                  "phase":  "initial",
+                                  "end_state_reached":  true,
+                                  "resolution_offset":  491,
+                                  "post_resolution_chars":  165,
+                                  "needs_compact":  false,
+                                  "accepted":  true,
+                                  "violation_code":  "",
+                                  "issues":  [
+
+                                             ]
+                              },
+    "repair_plan":  {
+                        "schema_version":  1,
+                        "transaction_id":  "section_0001",
+                        "original_contract_hash":  "1027d3e3889934539f6469c34eec384bd15183fcc99e5ef8677eee94d287a143",
+                        "missing_events":  [
+
+                                           ],
+                        "incomplete_events":  [
+
+                                              ],
+                        "wrong_actor_events":  [
+
+                                               ],
+                        "wrong_target_events":  [
+
+                                                ],
+                        "wrong_end_states":  [
+
+                                             ],
+                        "unsupported_additions":  [
+
+                                                  ],
+                        "post_resolution_expansions":  [
+
+                                                       ],
+                        "preflight_issues":  [
+                                                 {
+                                                     "code":  "PREFLIGHT_TOO_SHORT",
+                                                     "message":  "初稿 656 字，低于下限 900 字",
+                                                     "details":  {
+                                                                     "chars":  656,
+                                                                     "min_chars":  900
+                                                                 }
+                                                 }
+                                             ],
+                        "length_adjustment":  {
+                                                  "current_chars":  656,
+                                                  "min_chars":  900,
+                                                  "max_chars":  1100,
+                                                  "action":  "add",
+                                                  "target_chars":  244
+                                              },
+                        "must_preserve_spans":  [
+                                                    {
+                                                        "text":  "他将信纸从封套中完整抽出，叠放在掌心，纸面边缘在冷光下泛着淡黄。",
+                                                        "reason":  "handover_1 已完成",
+                                                        "event_id":  "handover_1",
+                                                        "state_id":  ""
+                                                    },
+                                                    {
+                                                        "text":  "林秋就在对面的石台前，面前摊着记录簿，笔尖悬在纸面上不动。沈砚低声说了一句该核了，把油纸封套从膝上拿起。封面上旧墨迹已淡成灰褐，指腹摩过时能感到纸纤维的毛刺，像抚过干裂的河床。他将信封翻转，背面的折痕处裂开一道细口，露出内层泛黄的信纸边沿。封口蜡早已碎裂，残块嵌在纸纤维里，呈暗红色。他捏住封口两侧，拇指沿蜡残痕缓缓拉开，纸页之间发出极轻的沙声。封口纸条半粘半",
+                                                        "reason":  "end_1 已达到",
+                                                        "event_id":  "",
+                                                        "state_id":  "end_1"
+                                                    },
+                                                    {
+                                                        "text":  "林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋",
+                                                        "reason":  "CanonicalState delta evidence 已通过",
+                                                        "event_id":  "",
+                                                        "state_id":  ""
+                                                    }
+                                                ],
+                        "must_preserve_facts":  [
+                                                    {
+                                                        "id":  "canonical_promise",
+                                                        "subject":  "shen_yan",
+                                                        "predicate":  "承诺",
+                                                        "object":  "日出前复核最后一页",
+                                                        "time":  "",
+                                                        "statement":  ""
+                                                    },
+                                                    {
+                                                        "id":  "canonical_main_clue",
+                                                        "subject":  "lin_qiu",
+                                                        "predicate":  "追查",
+                                                        "object":  "旧信缺失的页码",
+                                                        "time":  "",
+                                                        "statement":  ""
+                                                    }
+                                                ],
+                        "forbidden_changes":  [
+                                                  "不得修改或返回 StateDelta",
+                                                  "不得修改或返回 StoryThread",
+                                                  "不得修改或返回 memory_records、title、section_summary 或 consistency_notes",
+                                                  "不得新增人物、关系、日期、数字、伤势、背景或支线",
+                                                  "不得删除已完成事件或已达到终态",
+                                                  "原结构化提案存在问题，将由服务端剔除: THREAD_FIELD_OVERRIDE_FORBIDDEN"
+                                              ],
+                        "style_constraints":  {
+                                                  "key":  "literary",
+                                                  "label":  "描写细致 (文学性, 默认)",
+                                                  "description":  "具象意象 + 内心薄笔, 节奏舒缓但每段必有实物. 适合文学读者.",
+                                                  "narrator_addendum":  "# 本作风格契约 — literary\n每段至少一个摄像机拍得到的具体物 (颜色/温度/质感). 情绪由身体动作和物件反应承载, 不直报. 内心 1-2 句白描即可, 贴着目标走. 对白节制, 引号外配一个动作 beat. 禁: 大段心理独白, 抽象形容词堆叠.\n\n",
+                                                  "version":  "2026-07-15.5",
+                                                  "final_checklist":  "每段有具体物; 情绪落到动作/物件; 内心不超过两句。",
+                                                  "det_rules":  [
+                                                                    "no_meta_leak",
+                                                                    "character_presence"
+                                                                ],
+                                                  "strict_every_ticks":  1,
+                                                  "strict_importance":  7,
+                                                  "conflict_policy":  "事实与风格冲突时保留事实; 风格只改变叙述方式, 不新增事件、人物或设定。",
+                                                  "prompt_hash":  "167640ffd938c6732d050ef2f4adf2325b4aacfc6d0029bbbf96d0d39f5b5379"
+                                              },
+                        "repair_instruction":  "只输出局部 patches：优先完成事件，其次落实最终状态，再删除未授权新增，然后才允许用 EXPAND 或 COMPACT 处理长度；每个 patch 只能解决明确列出的 target，必须使用正文中唯一的逐字 anchor，不得重写整篇正文。"
+                    },
+    "provider_repair_output":  {
+                                   "schema_version":  1,
+                                   "patches":  [
+                                                   {
+                                                       "patch_type":  "expand",
+                                                       "anchor":  {
+                                                                      "before_text":  "之间发出极轻的沙声。封口纸条半粘半脱，他另一只手伸进信封内壁，指尖触到信纸，干燥微温。他将信纸从封套中完整抽出，叠放在掌心，纸面边缘在冷光下泛着淡黄。信纸上的字迹细小，墨色深深浅浅，末页的落款模糊得几乎不可辨认。他目光在末页落款处停了一瞬，墨迹在那里洇成一团灰雾，什么也辨不出。沈砚将信纸和封套合拢，重新叠成原来的折痕，递向对面。他说了句你来看。林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋，按平袋口。旧信落在林秋掌中的重量，沈砚隔着半臂的距离也能感觉到--纸页薄，分量却沉。",
+                                                                      "after_text":  "",
+                                                                      "start":  "",
+                                                                      "end":  ""
+                                                                  },
+                                                       "patch_text":  "林秋的手指在接住信纸之前先顿了顿，悬在石台上方，像是在等那点残余的蜡碎落净。沈砚没有催促，手指仍扣在封套边缘，拇指腹上沾了一层细密的纸屑。灯塔深处的气流又涌上来，这一阵比先前凉，贴着脚踝漫过去，石壁上的水珠被吹得微微颤动，像一层薄汗。林秋的记录簿被风翻开了半页，纸角翘起又落下，他腾出一只手按住，另一只手才缓缓伸过来。指尖碰上信纸的刹那，两人的手背几乎相触，沈砚感到对方指节微凉，带着钢笔金属套的余温。信纸从掌心滑出的那一瞬，纸纤维在指腹间轻轻刮过，像被一根干透的草叶划了一下。林秋捏住折痕两侧，目光没有立刻落向字迹，而是先扫过纸面边缘的毛口，似在辨认哪一页被折压得最久。冷光将信纸上的墨色压得更深了几分，那些深深浅浅的笔画在阴影里显得格外密，像一排被水浸泡过的蚁迹。沈砚的手空了之后仍维持着递出的姿势，半秒后才收回，搁回膝上。指腹上残留的纸屑粘在皮肤纹路里，他用拇指碾了碾，没有碾掉。",
+                                                       "target_events":  [
+
+                                                                         ],
+                                                       "target_end_states":  [
+
+                                                                             ],
+                                                       "max_chars":  300,
+                                                       "preserve":  [
+                                                                        "他将信纸从封套中完整抽出，叠放在掌心，纸面边缘在冷光下泛着淡黄。",
+                                                                        "林秋就在对面的石台前，面前摊着记录簿，笔尖悬在纸面上不动。沈砚低声说了一句该核了，把油纸封套从膝上拿起。封面上旧墨迹已淡成灰褐，指腹摩过时能感到纸纤维的毛刺，像抚过干裂的河床。他将信封翻转，背面的折痕处裂开一道细口，露出内层泛黄的信纸边沿。封口蜡早已碎裂，残块嵌在纸纤维里，呈暗红色。他捏住封口两侧，拇指沿蜡残痕缓缓拉开，纸页之间发出极轻的沙声。封口纸条半粘半",
+                                                                        "林秋接过信纸，指尖压住折痕，将它收进自己胸前内袋"
+                                                                    ],
+                                                       "target_chars":  244,
+                                                       "purpose":  "expand existing action, environment, interaction, or emotion without adding plot or facts",
+                                                       "remove_reason":  "",
+                                                       "max_remove_chars":  0
+                                                   }
+                                               ]
+                               },
+    "repair_patch_report":  {
+                                "accepted":  false,
+                                "violations":  [
+                                                   {
+                                                       "code":  "PATCH_ANCHOR_NOT_FOUND",
+                                                       "message":  "Patch anchor 必须在当前正文中唯一匹配",
+                                                       "patch_index":  0,
+                                                       "evidence":  "之间发出极轻的沙声。封口纸条半粘半脱，他另一只手伸进信封内壁，指尖触到信纸，干燥微温。他将信纸从封套中完整抽出，叠放在掌心，纸面边缘在冷光下泛着淡黄。信纸上的字迹细小，墨色深深浅浅，末页的落款模糊得几乎不可辨认。他目光在末页落款处停了一瞬，墨迹在那里洇成一团灰雾，什么也辨不出。沈砚将信纸和封套合拢，重新叠成原来的折痕，递向对面。他说了句你来看。林秋接过信纸，"
+                                                   }
+                                               ],
+                                "patch_count":  1,
+                                "applied_count":  0,
+                                "original_sha256":  "a79b12089a5ad78ee2aba4ba41936a4f3f466940114ec8b423ec8849cae18d2e",
+                                "final_sha256":  "a79b12089a5ad78ee2aba4ba41936a4f3f466940114ec8b423ec8849cae18d2e",
+                                "char_delta":  0
+                            },
+    "expected_new_outcome":  {
+                                 "min_chars":  900,
+                                 "max_chars":  1100,
+                                 "event_violations":  0,
+                                 "end_state_violations":  0,
+                                 "post_resolution_expansions":  0,
+                                 "planner_calls":  0,
+                                 "retry_calls":  0,
+                                 "max_repair_calls":  1
+                             }
+}
