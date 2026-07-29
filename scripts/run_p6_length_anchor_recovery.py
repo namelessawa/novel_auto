@@ -891,6 +891,10 @@ def _finalize(
         if passed
         else "P6_LENGTH_ANCHOR_RECOVERY_FAIL"
     )
+    state["status"] = "complete"
+    state["verdict"] = verdict
+    state["updated_at"] = _now()
+    _atomic_json(evidence_root / "cycle-state.json", state)
     recovery = "\n".join(
         [
             "# Recovery instructions",
@@ -978,10 +982,6 @@ def _finalize(
             "hashes": hashes,
         },
     )
-    state["status"] = "complete"
-    state["verdict"] = verdict
-    state["updated_at"] = _now()
-    _atomic_json(evidence_root / "cycle-state.json", state)
     return report
 
 
