@@ -31,7 +31,8 @@ from story.models import (  # noqa: E402
 from story.narrative_contract import NarrativeContract  # noqa: E402
 from story.narrative_validator import NarrativeContractValidator  # noqa: E402
 from story.repair_patch import (  # noqa: E402
-    RepairPatchSet,
+    ProviderRepairPatch,
+    ProviderRepairPatchSet,
     RepairPatchValidator,
 )
 from story.repair_plan import (  # noqa: E402
@@ -60,7 +61,11 @@ DEFAULT_OUTPUT = (
 # after its recorded real-provider addition. It is test data only and is never
 # imported by the runtime repair path.
 _OFFLINE_EXPAND_SUFFIXES = {
-    "action_conflict__literary__section_0001": "掌心仍轻压着衣袋，没有移开。",
+    "action_conflict__literary__section_0001": (
+        "掌心仍轻压着衣袋，没有移开。"
+        "潮气沿石壁缓缓滑落，衣袋边缘仍贴着掌心，纸页没有再被取出。"
+        "风从窗洞掠过时，布面只轻轻起伏，手指仍稳稳压住原处。"
+    ),
 }
 
 
@@ -131,9 +136,8 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
             plan,
             original.narrative_text,
         )
-        patch_payloads = list(prompt_payload["suggested_patch_templates"])
-        expansion = prompt_payload.get("expansion_request")
-        if expansion:
+        provider_patches: list[ProviderRepairPatch] = []
+        for request in prompt_payload["provider_patch_requests"]:
             recorded_text = case["provider_repair_output"]["narrative_text"]
             recorded_addition = (
                 recorded_text[len(original.narrative_text) :]
@@ -144,27 +148,23 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
                 recorded_addition
                 + _OFFLINE_EXPAND_SUFFIXES.get(case["case_id"], "")
             )
-            patch_payloads.append(
-                {
-                    "patch_type": expansion["patch_type"],
-                    "anchor": expansion["anchor"],
-                    "patch_text": patch_text,
-                    "target_events": [],
-                    "target_end_states": [],
-                    "max_chars": expansion["target_chars"],
-                    "preserve": expansion["preserve"],
-                    "target_chars": expansion["target_chars"],
-                    "purpose": expansion["purpose"],
-                }
+            provider_patches.append(
+                ProviderRepairPatch(
+                    patch_id=request["patch_id"],
+                    patch_text=patch_text,
+                )
             )
-        patch_set = RepairPatchSet.model_validate({"patches": patch_payloads})
         applied = patch_validator.validate_and_apply(
             original_text=original.narrative_text,
-            patch_set=patch_set,
+            patch_set=None,
+            provider_patch_set=ProviderRepairPatchSet(
+                patches=provider_patches
+            ),
             plan=plan,
             contract=contract,
             event_plan=event_plan,
         )
+        patch_set = applied.applied_patches
         final_candidate = original.model_copy(
             update={"narrative_text": applied.narrative_text}
         )

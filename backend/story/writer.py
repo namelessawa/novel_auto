@@ -11,7 +11,10 @@ from nf_core.llm_client import llm_client
 from story.chapter_plan import ChapterPlan
 from story.context_builder import ContextPackage
 from story.models import SectionGoal, WriterCandidate
-from story.repair_patch import RepairPatchSet
+from story.repair_patch import (
+    ProviderRepairPatchSet,
+    RepairPatchSet,
+)
 from story.repair_plan import RepairPlan, repair_patch_prompt_payload
 
 
@@ -26,6 +29,7 @@ class WriterResult:
     ignored_fields: list[str] = field(default_factory=list)
     audit_codes: list[str] = field(default_factory=list)
     repair_patches: RepairPatchSet | None = None
+    provider_repair_patches: ProviderRepairPatchSet | None = None
 
 
 @dataclass(frozen=True)
@@ -68,8 +72,10 @@ The server-derived ChapterPlan below is mandatory for required event order,
 required end states, and stop conditions. Its four segments and per-segment
 target_chars are soft structural guidance, not exact prose quotas. The total
 SectionBudgetPlan min_chars/max_chars range is the only hard length boundary.
-Complete only the listed existing events. Once every required end state and the
-minimum total length are reached, stop.
+Complete only the listed existing events. Build existing action, environment,
+current-character interaction, and existing emotion toward the server target
+before writing terminal end-state evidence. Put terminal evidence in the final
+closure, then stop.
 Do not create plot to fill length. Length must come from elaborating existing
 events, not from new people, background, conflict, history, or world rules.
 
@@ -125,22 +131,16 @@ resolution_evidence。正文之外不要输出解释、Markdown 或思考过程�
 
 严格规则：
 1. 根对象只能包含 schema_version 和 patches。
-2. 每个 patch 只能是 insert、replace、delete、expand、compact，并解决一个 RepairPlan 明确问题。
-3. anchor 必须逐字复制 relevant_windows 中唯一出现的短文本，不能概括。
-4. insert 默认插在 before_text 之后；replace/delete 在只有一个 anchor 时修改该 anchor，
-   两个 anchor 时只修改二者之间的局部文本。
-5. patch_text 不超过 300 字；compact 单次删除不超过 200 字。不得替换整篇正文。
-6. 先完成事件，再落实最终状态，再删除未授权新增，最后才允许受约束的 expand/compact。
-7. 事件 patch 必须逐字落实 minimum_completion_evidence 的 actor、target 和完成动作。
-8. 终态 patch 必须明确写出谁交、谁收、什么物品以及最终由谁持有；决定、准备、暗示不算。
-9. 不修改 preserve 内容，不新增人物、背景、数字、日期、亲属、伤势、世界规则或支线。
-10. required_patches 非空时，必须逐字段、逐字原样复制并保持顺序；
-    不得改写 patch_text，不得把姓名换成代词，不得替换或缩短 anchor/preserve。
-11. expansion_request 非空时，只能在 required_patches 后追加一个符合该请求的 expand。
-12. compact 必须逐字段复制 required_patches，不能自己选择删除范围。
+2. 每个 patch 只能包含 patch_id 和 patch_text。
+3. patch_id 必须逐字复制 provider_patch_requests；不得新增、遗漏或重复。
+4. 你无权返回或修改 patch_type、anchor、offset、targets、target_chars、max_chars、
+   preserve、purpose、remove_reason、原文 hash 或契约 hash；这些字段由服务端冻结。
+5. patch_text 只扩写获准的既有动作、环境、已有人物互动或已存在情绪。
+6. 不新增人物、背景、数字、日期、亲属、伤势、伤亡、世界规则、状态或支线。
+7. 不复制整段原文，不输出完整 narrative_text，也不做自报字数。
 
 禁止输出 narrative_text、state_delta、threads、memory、summary、title、解释、Markdown
-或内部分析。即使你认为原文已经足够，也必须返回至少一个有效 patch。"""
+或内部分析。"""
 
     LENGTH_SYSTEM_PROMPT = """
 SectionWritingPlan and SectionBudgetPlan are server-owned and mandatory. Follow
@@ -149,25 +149,18 @@ the four segment budgets and hard maxima. Write within the min_chars/max_chars r
 and required end state, and do not add characters, background, numbers,
 kinship, casualties, injuries, dates, or world rules. Style changes narration,
 never the event inventory or final state.
-Stop immediately once all required events and end states are complete and the
-minimum length is reached. Never continue with another person, background,
-conflict, history, relationship, or explanation.
+The minimum is a rejection floor, not the writing target. Do not close before
+the safe target zone. Put the terminal state in the final closure and stop
+immediately afterward. Never continue with another person, background, conflict,
+history, relationship, or explanation.
 """
 
     REPAIR_LENGTH_PROMPT = """
-EXPAND is the only length-addition patch type. It is lower priority than event
-completion, required end states, and deletion of illegal facts. Copy every
-required_patches entry exactly and in order. If expansion_request exists,
-append exactly one EXPAND patch using its exact anchor, target_chars, max_chars,
-purpose, and preserve fields; generate only patch_text. target_chars is the
-desired addition and max_chars is the hard ceiling.
-EXPAND may elaborate only existing action, environment, existing-character
-interaction, or existing emotion. It may not add an event, person, fact,
-number, date, kinship, casualty, injury, background, world rule, or state
-change, and it may not repeat source prose.
-COMPACT is server-selected deletion only. Copy its start/end anchors,
-remove_reason, preserve identifiers, and max_remove_chars exactly. Never put
-text into a COMPACT patch and never choose a different deletion span.
+The server has already selected every operation and placement. Generate prose
+only for provider_patch_requests. Aim near target_chars but never exceed
+max_chars. Do not truncate prose automatically and do not report a character
+count. The server applies deterministic event, end-state, delete, and compact
+operations without asking you to copy them.
 """
 
     async def plan(self, context: ContextPackage, goal: SectionGoal) -> PlannerResult:
@@ -231,7 +224,7 @@ text into a COMPACT patch and never choose a different deletion span.
         self, candidate: WriterCandidate, plan: RepairPlan
     ) -> WriterResult:
         output_schema = json.dumps(
-            RepairPatchSet.model_json_schema(),
+            ProviderRepairPatchSet.model_json_schema(),
             ensure_ascii=False,
             separators=(",", ":"),
         )
@@ -260,7 +253,9 @@ text into a COMPACT patch and never choose a different deletion span.
             audit_codes=(
                 ["REPAIR_EXTRA_FIELD_IGNORED"] if ignored_fields else []
             ),
-            repair_patches=self._parse_repair_patches(response.content),
+            provider_repair_patches=self._parse_provider_repair_patches(
+                response.content
+            ),
         )
 
     @staticmethod
@@ -289,7 +284,43 @@ text into a COMPACT patch and never choose a different deletion span.
             ) from exc
 
     @staticmethod
+    def _parse_provider_repair_patches(
+        content: str,
+    ) -> ProviderRepairPatchSet:
+        try:
+            payload = parse_llm_json((content or "").strip())
+        except json.JSONDecodeError as exc:
+            raise WriterOutputError("Writer repair returned invalid JSON") from exc
+        if not isinstance(payload, dict):
+            raise WriterOutputError("Writer repair must return a JSON object")
+        raw_patches = payload.get("patches", [])
+        if isinstance(raw_patches, dict):
+            raw_patches = [raw_patches]
+        if not isinstance(raw_patches, list):
+            raw_patches = []
+        patches = [
+            {
+                "patch_id": raw.get("patch_id"),
+                "patch_text": raw.get("patch_text"),
+            }
+            for raw in raw_patches
+            if isinstance(raw, dict)
+        ]
+        try:
+            return ProviderRepairPatchSet.model_validate(
+                {
+                    "schema_version": payload.get("schema_version", 1),
+                    "patches": patches,
+                }
+            )
+        except Exception as exc:
+            raise WriterOutputError(
+                f"Writer repair patch validation failed: {exc}"
+            ) from exc
+
+    @staticmethod
     def _parse_repair_patches(content: str) -> RepairPatchSet:
+        """Legacy parser for persisted fixtures and compatibility tests only."""
         try:
             payload = parse_llm_json((content or "").strip())
         except json.JSONDecodeError as exc:
@@ -303,6 +334,7 @@ text into a COMPACT patch and never choose a different deletion span.
             raw_patches = []
         patches: list[dict] = []
         allowed_patch_fields = {
+            "patch_id",
             "patch_type",
             "anchor",
             "patch_text",
@@ -363,19 +395,7 @@ text into a COMPACT patch and never choose a different deletion span.
         raw_patches = payload.get("patches", [])
         if isinstance(raw_patches, dict):
             raw_patches = [raw_patches]
-        allowed_patch_fields = {
-            "patch_type",
-            "anchor",
-            "patch_text",
-            "target_events",
-            "target_end_states",
-            "max_chars",
-            "preserve",
-            "target_chars",
-            "purpose",
-            "remove_reason",
-            "max_remove_chars",
-        }
+        allowed_patch_fields = {"patch_id", "patch_text"}
         if isinstance(raw_patches, list):
             for index, patch in enumerate(raw_patches):
                 if not isinstance(patch, dict):
@@ -434,17 +454,20 @@ text into a COMPACT patch and never choose a different deletion span.
             f"{budget_plan.min_chars}-{budget_plan.max_chars} 字。\n"
             "以下四部分仅作结构提示，可自然衔接；分段字数不是硬配额：\n"
             f"{part_lines}\n"
-            "先完成全部 required_events，再明确落实全部 required_end_states。"
-            "停止条件同时满足时必须立即结束：全部必要事件完成、全部最终状态达到、"
-            f"非空白字符不少于 {budget_plan.min_chars}。不得超过 "
+            "先在既有事件内部扩写动作、环境、当前人物互动和已有情绪，目标进入"
+            f"约 {max(budget_plan.min_chars, budget_plan.target_chars - 50)}-"
+            f"{budget_plan.target_chars} 字安全区后，再在最后收束段明确落实全部 "
+            "required_end_states；终态证据后立即结束。最低字数只是拒绝下限，不是"
+            "写作目标，也不得提前用终态收口。停止时必须已完成全部必要事件和全部"
+            "最终状态。不得超过 "
             f"{budget_plan.max_chars} 字；不得在结束后增加新人物、背景、冲突、历史、"
             "关系或解释。\n"
             f"风格平衡：{balance.instruction}\n"
             f"限制：{'；'.join(balance.limits)}。\n"
             f"禁止：{'；'.join(balance.forbidden)}。\n"
-            "如果尚未达到最低长度，只能扩写已有动作、环境、已有人物互动或已存在"
+            "如果尚未进入目标安全区，只能扩写已有动作、环境、已有人物互动或已存在"
             "情绪。不要创造新的剧情来填充长度。禁止用新人物、新背景、新冲突或"
-            "新事实补字数。不要输出统计过程。\n"
+            "新事实补字数。不要输出、自报或猜测统计字数。\n"
         )
 
     @staticmethod

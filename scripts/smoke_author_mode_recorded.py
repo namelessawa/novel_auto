@@ -67,23 +67,38 @@ class RecordedWriter:
         )
 
     async def repair(self, candidate, report):
-        from story.repair_patch import RepairPatchSet
+        from story.repair_patch import (
+            ProviderRepairPatch,
+            ProviderRepairPatchSet,
+        )
         from story.repair_plan import repair_patch_prompt_payload
         from story.writer import WriterResult
 
         self.repair_calls += 1
         # Repair authority is patch-only. Structured proposals stay on the
         # original candidate and are rechecked/dropped by the server.
+        payload = repair_patch_prompt_payload(
+            report,
+            candidate.narrative_text,
+        )
+        source = "潮声贴着灯塔石壁回落，沈砚只继续眼前已有的动作与观察。"
+        provider_patches = []
+        for request in payload["provider_patch_requests"]:
+            target = request["target_chars"]
+            patch_text = (
+                source * ((target + len(source) - 1) // len(source))
+            )[:target]
+            provider_patches.append(
+                ProviderRepairPatch(
+                    patch_id=request["patch_id"],
+                    patch_text=patch_text,
+                )
+            )
         return WriterResult(
             candidate=candidate,
             usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-            repair_patches=RepairPatchSet.model_validate(
-                {
-                    "patches": repair_patch_prompt_payload(
-                        report,
-                        candidate.narrative_text,
-                    )["suggested_patch_templates"]
-                }
+            provider_repair_patches=ProviderRepairPatchSet(
+                patches=provider_patches
             ),
         )
 

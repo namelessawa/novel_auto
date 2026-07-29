@@ -59,7 +59,11 @@ from story.persistence import (
     StoryBibleStore,
     StoryThreadStore,
 )
-from story.repair_patch import RepairPatchSet, RepairPatchValidator
+from story.repair_patch import (
+    ProviderRepairPatch,
+    ProviderRepairPatchSet,
+    RepairPatchValidator,
+)
 from story.repair_plan import RepairPlan, RepairPlanBuilder, RepairRegressionValidator
 from story.revision_guard import RevisionGuardError, TransactionRevisionGuard
 from story.section_budget import SectionBudgetPlan, SectionBudgetPlanBuilder
@@ -354,15 +358,66 @@ class AuthorGenerationService:
                     )
                     self.transactions.save(transaction)
                     original_candidate = candidate
-                    repaired = await self.repair(candidate, repair_plan)
-                    patch_set = repaired.repair_patches or RepairPatchSet()
+                    repair_provider_called = any(
+                        item.provider_text_required
+                        for item in repair_plan.patch_templates
+                    )
+                    if repair_provider_called:
+                        repaired = await self.repair(candidate, repair_plan)
+                    else:
+                        repaired = WriterResult(
+                            candidate=candidate,
+                            usage={
+                                "prompt_tokens": 0,
+                                "completion_tokens": 0,
+                                "cached_tokens": 0,
+                                "total_tokens": 0,
+                            },
+                        )
+                    provider_patch_set = repaired.provider_repair_patches
+                    audit_codes = list(repaired.audit_codes)
+                    if (
+                        provider_patch_set is None
+                        and repaired.repair_patches is not None
+                        and repair_plan.patch_templates
+                    ):
+                        required_templates = [
+                            item
+                            for item in repair_plan.patch_templates
+                            if item.provider_text_required
+                        ]
+                        legacy_expands = [
+                            item
+                            for item in repaired.repair_patches.patches
+                            if item.patch_type == "expand"
+                        ]
+                        provider_patch_set = ProviderRepairPatchSet(
+                            patches=[
+                                ProviderRepairPatch(
+                                    patch_id=template.patch_id,
+                                    patch_text=patch.patch_text,
+                                )
+                                for template, patch in zip(
+                                    required_templates,
+                                    legacy_expands,
+                                    strict=False,
+                                )
+                            ]
+                        )
+                        audit_codes.append("LEGACY_REPAIR_PATCH_ADAPTER")
                     patch_result = self.repair_patch_validator.validate_and_apply(
                         original_text=original_candidate.narrative_text,
-                        patch_set=patch_set,
+                        patch_set=(
+                            repaired.repair_patches
+                            if not repair_plan.patch_templates
+                            else None
+                        ),
+                        provider_patch_set=provider_patch_set,
                         plan=repair_plan,
                         contract=prepared.narrative_contract,
                         event_plan=prepared.event_execution_plan,
                     )
+                    patch_set = patch_result.applied_patches
                     if patch_result.report.accepted:
                         candidate = original_candidate.model_copy(
                             update={"narrative_text": patch_result.narrative_text}
@@ -381,7 +436,11 @@ class AuthorGenerationService:
                         update={
                             "candidate": candidate,
                             "candidate_history": candidate_history,
-                            "writer_calls": min(3, transaction.writer_calls + 1),
+                            "writer_calls": min(
+                                3,
+                                transaction.writer_calls
+                                + int(repair_provider_called),
+                            ),
                             "repair_performed": True,
                             "repair_patches": patch_set,
                             "repair_patch_report": patch_result.report,
@@ -391,7 +450,7 @@ class AuthorGenerationService:
                             "repair_ignored_fields": repaired.ignored_fields,
                             "repair_audit_codes": list(
                                 dict.fromkeys(
-                                    [*repaired.audit_codes, *patch_codes]
+                                    [*audit_codes, *patch_codes]
                                 )
                             ),
                             "usage": self._merge_usage(
@@ -1059,6 +1118,7 @@ class AuthorGenerationService:
             state_report=state_report,
             narrative_text=candidate.narrative_text,
             section_writing_plan=prepared.section_writing_plan,
+            section_target_chars=prepared.section_budget_plan.target_chars,
             ending_report=ending_report,
             preflight_report=transaction.initial_preflight_report,
         )

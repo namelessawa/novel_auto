@@ -12,7 +12,11 @@ from story.models import (
     WriterCandidate,
 )
 from story.persistence import StoryBibleStore
-from story.repair_patch import RepairPatchSet
+from story.repair_patch import (
+    ProviderRepairPatch,
+    ProviderRepairPatchSet,
+    RepairPatchSet,
+)
 from story.repair_plan import repair_patch_prompt_payload
 from story.service import (
     AuthorGenerationService,
@@ -55,26 +59,18 @@ class FakeWriter:
             report,
             candidate.narrative_text,
         )
-        patch_payloads = list(prompt_payload["suggested_patch_templates"])
-        expansion = prompt_payload.get("expansion_request")
-        if expansion:
+        provider_patches: list[ProviderRepairPatch] = []
+        for request in prompt_payload["provider_patch_requests"]:
             source = (
                 "风沿着旧城墙缓缓移动，主角没有离开，只把眼前已经发生的选择重新看清。"
             )
-            target = expansion["target_chars"]
+            target = request["target_chars"]
             patch_text = (source * ((target + len(source) - 1) // len(source)))[:target]
-            patch_payloads.append(
-                {
-                    "patch_type": "expand",
-                    "anchor": expansion["anchor"],
-                    "patch_text": patch_text,
-                    "target_events": [],
-                    "target_end_states": [],
-                    "max_chars": target,
-                    "preserve": expansion["preserve"],
-                    "target_chars": target,
-                    "purpose": expansion["purpose"],
-                }
+            provider_patches.append(
+                ProviderRepairPatch(
+                    patch_id=request["patch_id"],
+                    patch_text=patch_text,
+                )
             )
         return WriterResult(
             candidate,
@@ -82,9 +78,12 @@ class FakeWriter:
             repair_patches=(
                 self.repair_patches
                 if self.repair_patches is not None
-                else RepairPatchSet.model_validate(
-                    {"patches": patch_payloads}
-                )
+                else None
+            ),
+            provider_repair_patches=(
+                None
+                if self.repair_patches is not None
+                else ProviderRepairPatchSet(patches=provider_patches)
             ),
         )
 

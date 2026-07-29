@@ -29,13 +29,13 @@ from story.models import (  # noqa: E402
 from story.narrative_contract import NarrativeContract  # noqa: E402
 from story.narrative_validator import NarrativeContractValidator  # noqa: E402
 from story.repair_patch import (  # noqa: E402
+    ProviderRepairPatchSet,
     RepairPatchSet,
     RepairPatchValidator,
 )
 from story.repair_plan import (  # noqa: E402
     RepairPlanBuilder,
     RepairRegressionValidator,
-    repair_patch_prompt_payload,
 )
 from story.validator import StoryValidator  # noqa: E402
 
@@ -155,21 +155,15 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
                 state_report=initial_authority,
                 narrative_text=original.narrative_text,
             )
-            patch_set = RepairPatchSet.model_validate(
-                {
-                    "patches": repair_patch_prompt_payload(
-                        repair_plan,
-                        original.narrative_text,
-                    )["suggested_patch_templates"]
-                }
-            )
             patch_result = patch_validator.validate_and_apply(
                 original_text=original.narrative_text,
-                patch_set=patch_set,
+                patch_set=None,
+                provider_patch_set=ProviderRepairPatchSet(),
                 plan=repair_plan,
                 contract=contract,
                 event_plan=event_plan,
             )
+            patch_set = patch_result.applied_patches
             patch_report = patch_result.report
             final_text = patch_result.narrative_text
         else:
@@ -218,6 +212,10 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
                 ),
                 "patch_count": len(patch_set.patches),
                 "patch_types": [item.patch_type for item in patch_set.patches],
+                "patches": [
+                    item.model_dump(mode="json")
+                    for item in patch_set.patches
+                ],
                 "patch_codes": (
                     [item.code for item in patch_report.violations]
                     if patch_report is not None
@@ -233,6 +231,18 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
                     "wrong_target_events": len(repair_plan.wrong_target_events) if repair_plan else 0,
                     "wrong_end_states": len(repair_plan.wrong_end_states) if repair_plan else 0,
                 },
+                "repair_event_evidence": (
+                    [
+                        item.current_evidence
+                        for item in [
+                            *repair_plan.incomplete_events,
+                            *repair_plan.wrong_actor_events,
+                            *repair_plan.wrong_target_events,
+                        ]
+                    ]
+                    if repair_plan is not None
+                    else []
+                ),
                 "final_contract_accepted": final_narrative.accepted,
                 "final_contract_codes": [
                     item.code for item in final_narrative.violations

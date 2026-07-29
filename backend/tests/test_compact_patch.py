@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from story.event_execution import EventExecutionPlanBuilder
 from story.models import ValidationReport
 from story.narrative_validator import NarrativeContractValidator
-from story.repair_patch import RepairPatchSet, RepairPatchValidator
-from story.repair_plan import RepairPlanBuilder, repair_patch_prompt_payload
+from story.repair_patch import (
+    ProviderRepairPatchSet,
+    RepairPatchSet,
+    RepairPatchValidator,
+)
+from story.repair_plan import RepairPlanBuilder
 from tests.test_repair_plan import _contract
-from story.event_execution import EventExecutionPlanBuilder
 
 
 def _compact_case():
@@ -46,39 +50,33 @@ def _compact_case():
         state_report=ValidationReport(accepted=True),
         narrative_text=text,
     )
-    payload = repair_patch_prompt_payload(plan, text)
-    compact_payloads = [
-        item for item in payload["required_patches"]
-        if item["patch_type"] == "compact"
-    ]
-    return contract, event_plan, text, report, plan, compact_payloads
-
-
-def test_compact_removes_duplicate_style_detail() -> None:
-    contract, event_plan, text, _, plan, compact_payloads = _compact_case()
     result = RepairPatchValidator().validate_and_apply(
         original_text=text,
-        patch_set=RepairPatchSet.model_validate({"patches": compact_payloads}),
+        patch_set=None,
+        provider_patch_set=ProviderRepairPatchSet(),
         plan=plan,
         contract=contract,
         event_plan=event_plan,
     )
+    compact_patches = [
+        item
+        for item in result.applied_patches.patches
+        if item.patch_type == "compact"
+    ]
+    return contract, event_plan, text, report, plan, compact_patches, result
 
-    assert compact_payloads
+
+def test_compact_removes_duplicate_style_detail() -> None:
+    _, _, text, _, _, compact_patches, result = _compact_case()
+
+    assert compact_patches
     assert result.report.accepted is True
     assert result.report.char_delta < 0
     assert len(result.narrative_text) < len(text)
 
 
 def test_compact_preserves_event() -> None:
-    contract, event_plan, text, _, plan, compact_payloads = _compact_case()
-    result = RepairPatchValidator().validate_and_apply(
-        original_text=text,
-        patch_set=RepairPatchSet.model_validate({"patches": compact_payloads}),
-        plan=plan,
-        contract=contract,
-        event_plan=event_plan,
-    )
+    contract, event_plan, _, _, _, _, result = _compact_case()
     final = NarrativeContractValidator().validate(
         contract,
         result.narrative_text,
@@ -89,14 +87,7 @@ def test_compact_preserves_event() -> None:
 
 
 def test_compact_preserves_end_state() -> None:
-    contract, event_plan, text, _, plan, compact_payloads = _compact_case()
-    result = RepairPatchValidator().validate_and_apply(
-        original_text=text,
-        patch_set=RepairPatchSet.model_validate({"patches": compact_payloads}),
-        plan=plan,
-        contract=contract,
-        event_plan=event_plan,
-    )
+    contract, event_plan, _, _, _, _, result = _compact_case()
     final = NarrativeContractValidator().validate(
         contract,
         result.narrative_text,
@@ -107,13 +98,17 @@ def test_compact_preserves_end_state() -> None:
 
 
 def test_compact_cannot_remove_evidence() -> None:
-    contract, event_plan, text, _, plan, compact_payloads = _compact_case()
-    patch = compact_payloads[0] | {
-        "anchor": {"start": "沈砚替林秋包扎了手。", "end": ""}
-    }
+    contract, event_plan, text, _, plan, compact_patches, _ = _compact_case()
+    patch = compact_patches[0].model_copy(
+        update={
+            "start_offset": text.index("沈砚替林秋包扎了手。"),
+            "end_offset": text.index("沈砚替林秋包扎了手。")
+            + len("沈砚替林秋包扎了手。"),
+        }
+    )
     result = RepairPatchValidator().validate_and_apply(
         original_text=text,
-        patch_set=RepairPatchSet.model_validate({"patches": [patch]}),
+        patch_set=RepairPatchSet(patches=[patch]),
         plan=plan,
         contract=contract,
         event_plan=event_plan,
@@ -125,11 +120,13 @@ def test_compact_cannot_remove_evidence() -> None:
 
 
 def test_compact_cannot_add_facts() -> None:
-    contract, event_plan, text, _, plan, compact_payloads = _compact_case()
-    patch = compact_payloads[0] | {"patch_text": "一名陌生人走进灯塔。"}
+    contract, event_plan, text, _, plan, compact_patches, _ = _compact_case()
+    patch = compact_patches[0].model_copy(
+        update={"patch_text": "一名陌生人走进灯塔。"}
+    )
     result = RepairPatchValidator().validate_and_apply(
         original_text=text,
-        patch_set=RepairPatchSet.model_validate({"patches": [patch]}),
+        patch_set=RepairPatchSet(patches=[patch]),
         plan=plan,
         contract=contract,
         event_plan=event_plan,

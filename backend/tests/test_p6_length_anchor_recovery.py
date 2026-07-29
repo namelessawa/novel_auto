@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ast
 import hashlib
 import inspect
 import json
@@ -28,7 +27,11 @@ from story.repair_plan import (
 from story.section_budget import SectionBudgetPlanBuilder
 from story.service import AuthorGenerationService
 from story.writer import AuthorWriter
-from story.writing_plan import SectionWritingPlan
+from story.writing_plan import (
+    SectionWritingPlan,
+    StyleLengthContract,
+    WritingPlanPart,
+)
 
 
 FIXTURE = (
@@ -163,7 +166,7 @@ def test_server_template_owns_every_security_sensitive_field() -> None:
     assert template.patch_id
     assert template.patch_type == "expand"
     assert template.insertion_offset is not None
-    assert template.target_chars == 344
+    assert template.target_chars == 324
     assert template.max_chars == 444
     assert template.preserve
     assert template.purpose
@@ -537,7 +540,10 @@ def test_provider_cannot_expand_frozen_text_beyond_1100() -> None:
 def test_default_planner_provider_path_remains_disabled() -> None:
     init_source = inspect.getsource(AuthorGenerationService.__init__)
 
-    assert 'AUTHOR_LLM_PLANNER_EXPERIMENTAL", "0"' in init_source
+    assert (
+        'env_bool("AUTHOR_LLM_PLANNER_EXPERIMENTAL", default=False)'
+        in init_source
+    )
 
 
 def test_full_retry_provider_path_remains_absent() -> None:
@@ -545,34 +551,43 @@ def test_full_retry_provider_path_remains_absent() -> None:
 
 
 def test_service_contains_only_one_repair_await() -> None:
-    tree = ast.parse(inspect.getsource(AuthorGenerationService))
-    repair_awaits = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Await)
-        and isinstance(node.value, ast.Call)
-        and isinstance(node.value.func, ast.Attribute)
-        and node.value.func.attr == "repair"
-    ]
+    run_source = inspect.getsource(AuthorGenerationService.run)
 
-    assert len(repair_awaits) == 1
+    assert run_source.count("await self.repair(") == 1
 
 
 def test_900_1100_writer_budget_targets_safe_center() -> None:
     writing_plan = SectionWritingPlan(
         section_id="safe-center",
-        requested_chars=1000,
         target_chars=1000,
         min_chars=900,
         max_chars=1100,
-        hard_max_chars=1100,
-        segment_budgets=[],
-        stop_conditions=[],
-        style_adaptation={
-            "key": "literary",
-            "instruction": "",
-            "forbidden_expansion": [],
-        },
+        structure=[
+            WritingPlanPart(
+                part="opening",
+                target_chars=200,
+                purpose="open",
+            ),
+            WritingPlanPart(
+                part="development",
+                target_chars=280,
+                purpose="develop",
+            ),
+            WritingPlanPart(
+                part="conflict",
+                target_chars=280,
+                purpose="conflict",
+            ),
+            WritingPlanPart(
+                part="resolution",
+                target_chars=240,
+                purpose="resolve",
+            ),
+        ],
+        style_adaptation=StyleLengthContract(
+            key="literary",
+            instruction="existing material only",
+        ),
     )
 
     budget = SectionBudgetPlanBuilder().build(

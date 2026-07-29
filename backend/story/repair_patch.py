@@ -5,16 +5,20 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass
-from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from story.event_execution import EventExecutionPlan
 from story.narrative_contract import NarrativeContract, NarrativeModel
-from story.repair_plan import RepairPlan, compact_patch_templates
+from story.repair_plan import (
+    RepairPatchType,
+    RepairPlan,
+    ServerRepairPatchTemplate,
+    compact_patch_templates,
+)
 
 
-PatchType = Literal["insert", "replace", "delete", "expand", "compact"]
+PatchType = RepairPatchType
 
 
 class RepairPatchAnchor(NarrativeModel):
@@ -42,22 +46,51 @@ class RepairPatchAnchor(NarrativeModel):
 
 
 class RepairPatch(NarrativeModel):
+    patch_id: str = Field(default="", max_length=128)
     patch_type: PatchType
-    anchor: RepairPatchAnchor
+    anchor: RepairPatchAnchor | None = None
+    insertion_offset: int | None = Field(default=None, ge=0)
+    start_offset: int | None = Field(default=None, ge=0)
+    end_offset: int | None = Field(default=None, ge=0)
     patch_text: str = Field(default="", max_length=600)
     target_events: list[str] = Field(default_factory=list)
     target_end_states: list[str] = Field(default_factory=list)
-    max_chars: int = Field(default=300, ge=1, le=300)
+    max_chars: int = Field(default=300, ge=1, le=450)
     preserve: list[str] = Field(default_factory=list)
-    target_chars: int = Field(default=0, ge=0, le=300)
+    target_chars: int = Field(default=0, ge=0, le=450)
     purpose: str = Field(default="", max_length=240)
     remove_reason: str = Field(default="", max_length=240)
-    max_remove_chars: int = Field(default=0, ge=0, le=200)
+    max_remove_chars: int = Field(default=0, ge=0, le=300)
+    original_narrative_sha256: str = Field(default="", max_length=64)
+    contract_hash: str = ""
+
+    @model_validator(mode="after")
+    def require_anchor_or_frozen_offset(self) -> "RepairPatch":
+        if self.patch_type in {"insert", "expand"}:
+            if self.anchor is None and self.insertion_offset is None:
+                raise ValueError("insert/expand requires an anchor or frozen offset")
+        elif self.anchor is None and (
+            self.start_offset is None or self.end_offset is None
+        ):
+            raise ValueError("replace/delete/compact requires an anchor or frozen range")
+        return self
 
 
 class RepairPatchSet(NarrativeModel):
     schema_version: int = Field(default=1, ge=1)
     patches: list[RepairPatch] = Field(default_factory=list, max_length=8)
+
+
+class ProviderRepairPatch(NarrativeModel):
+    """The complete provider authority for one repair response."""
+
+    patch_id: str = Field(min_length=1, max_length=128)
+    patch_text: str = Field(max_length=900)
+
+
+class ProviderRepairPatchSet(NarrativeModel):
+    schema_version: int = Field(default=1, ge=1)
+    patches: list[ProviderRepairPatch] = Field(default_factory=list, max_length=8)
 
 
 class RepairPatchViolation(NarrativeModel):
@@ -78,8 +111,11 @@ class RepairPatchValidationReport(NarrativeModel):
 
 
 class RepairPatchApplyResult(NarrativeModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
     narrative_text: str
     report: RepairPatchValidationReport
+    applied_patches: RepairPatchSet = Field(default_factory=RepairPatchSet)
     enforced_removals: list[dict[str, str]] = Field(default_factory=list)
 
 
@@ -162,6 +198,37 @@ def _occurrences(text: str, needle: str) -> list[int]:
 
 
 def _resolve_patch(text: str, patch: RepairPatch) -> tuple[_ResolvedPatch | None, str]:
+    if patch.patch_type in {"insert", "expand"} and patch.insertion_offset is not None:
+        if patch.insertion_offset > len(text):
+            return None, "PATCH_OFFSET_OUT_OF_RANGE"
+        return (
+            _ResolvedPatch(
+                patch.insertion_offset,
+                patch.insertion_offset,
+                "",
+            ),
+            "",
+        )
+    if (
+        patch.patch_type not in {"insert", "expand"}
+        and patch.start_offset is not None
+        and patch.end_offset is not None
+    ):
+        if (
+            patch.start_offset > patch.end_offset
+            or patch.end_offset > len(text)
+        ):
+            return None, "PATCH_OFFSET_OUT_OF_RANGE"
+        return (
+            _ResolvedPatch(
+                patch.start_offset,
+                patch.end_offset,
+                text[patch.start_offset : patch.end_offset],
+            ),
+            "",
+        )
+    if patch.anchor is None:
+        return None, "PATCH_PLACEMENT_MISSING"
     before = patch.anchor.before_text or patch.anchor.start
     after = patch.anchor.after_text or patch.anchor.end
     if before and after:
@@ -288,6 +355,121 @@ def _normalize_expand_particle_count(
     return patch.model_copy(update={"patch_text": normalized}), removals
 
 
+def _template_patch(
+    template: ServerRepairPatchTemplate,
+    *,
+    patch_text: str,
+) -> RepairPatch:
+    return RepairPatch(
+        patch_id=template.patch_id,
+        patch_type=template.patch_type,
+        insertion_offset=template.insertion_offset,
+        start_offset=template.start_offset,
+        end_offset=template.end_offset,
+        patch_text=patch_text,
+        target_events=template.target_events,
+        target_end_states=template.target_end_states,
+        max_chars=template.max_chars,
+        preserve=template.preserve,
+        target_chars=template.target_chars,
+        purpose=template.purpose,
+        remove_reason=template.remove_reason,
+        max_remove_chars=template.max_remove_chars,
+        original_narrative_sha256=template.original_narrative_sha256,
+        contract_hash=template.contract_hash,
+    )
+
+
+def _bound_apply_order(
+    indexed_patch: tuple[int, RepairPatch],
+) -> tuple[int, int, int]:
+    index, patch = indexed_patch
+    placement = (
+        patch.insertion_offset
+        if patch.insertion_offset is not None
+        else patch.start_offset
+        if patch.start_offset is not None
+        else -1
+    )
+    # For inserts at one frozen boundary, applying terminal evidence first,
+    # event evidence second, and expansion last yields final prose ordered as
+    # expansion -> event -> terminal state.
+    same_offset_rank = (
+        3
+        if patch.target_end_states
+        else 2
+        if patch.target_events
+        else 1
+        if patch.patch_type == "expand"
+        else 0
+    )
+    return placement, same_offset_rank, index
+
+
+def _bind_server_templates(
+    *,
+    templates: list[ServerRepairPatchTemplate],
+    provider_patch_set: ProviderRepairPatchSet,
+) -> tuple[RepairPatchSet, list[RepairPatchViolation]]:
+    violations: list[RepairPatchViolation] = []
+    required = {
+        item.patch_id: item
+        for item in templates
+        if item.provider_text_required
+    }
+    returned_ids = [item.patch_id for item in provider_patch_set.patches]
+    seen: set[str] = set()
+    for index, patch_id in enumerate(returned_ids):
+        if patch_id in seen:
+            violations.append(
+                RepairPatchViolation(
+                    code="PATCH_ID_DUPLICATE",
+                    message="Provider 重复返回同一个 patch_id",
+                    patch_index=index,
+                    evidence=patch_id,
+                )
+            )
+        seen.add(patch_id)
+        if patch_id not in required:
+            violations.append(
+                RepairPatchViolation(
+                    code="PATCH_ID_UNKNOWN",
+                    message="Provider 返回了服务端未请求的 patch_id",
+                    patch_index=index,
+                    evidence=patch_id,
+                )
+            )
+    for missing in sorted(set(required) - set(returned_ids)):
+        violations.append(
+            RepairPatchViolation(
+                code="PATCH_ID_MISSING",
+                message="Provider 未返回服务端要求的 patch_id",
+                evidence=missing,
+            )
+        )
+    if violations:
+        return RepairPatchSet(), violations
+
+    provider_text = {
+        item.patch_id: item.patch_text
+        for item in provider_patch_set.patches
+    }
+    bound = [
+        _template_patch(
+            template,
+            patch_text=(
+                provider_text[template.patch_id]
+                if template.provider_text_required
+                else template.server_patch_text or ""
+            ),
+        )
+        for template in templates
+    ]
+    indexed = list(enumerate(bound))
+    indexed.sort(key=_bound_apply_order, reverse=True)
+    return RepairPatchSet(patches=[item for _, item in indexed]), []
+
+
 class RepairPatchValidator:
     """Validate and apply a bounded patch set without prose-generation authority."""
 
@@ -295,7 +477,8 @@ class RepairPatchValidator:
         self,
         *,
         original_text: str,
-        patch_set: RepairPatchSet,
+        patch_set: RepairPatchSet | None,
+        provider_patch_set: ProviderRepairPatchSet | None = None,
         plan: RepairPlan,
         contract: NarrativeContract,
         event_plan: EventExecutionPlan,
@@ -305,6 +488,67 @@ class RepairPatchValidator:
         violations: list[RepairPatchViolation] = []
         enforced_removals: list[dict[str, str]] = []
         applied_count = 0
+        templates = plan.patch_templates
+        server_template_mode = bool(templates and patch_set is None)
+        if server_template_mode:
+            authority_errors: list[RepairPatchViolation] = []
+            for index, template in enumerate(templates):
+                if template.original_narrative_sha256 != original_hash:
+                    authority_errors.append(
+                        RepairPatchViolation(
+                            code="ORIGINAL_NARRATIVE_HASH_MISMATCH",
+                            message="原正文 hash 与冻结 Repair 模板不一致",
+                            patch_index=index,
+                            evidence=template.patch_id,
+                        )
+                    )
+                if template.contract_hash != contract.contract_hash:
+                    authority_errors.append(
+                        RepairPatchViolation(
+                            code="REPAIR_CONTRACT_HASH_MISMATCH",
+                            message="NarrativeContract hash 与冻结 Repair 模板不一致",
+                            patch_index=index,
+                            evidence=template.patch_id,
+                        )
+                    )
+            if authority_errors:
+                report = RepairPatchValidationReport(
+                    accepted=False,
+                    violations=authority_errors,
+                    patch_count=len(templates),
+                    applied_count=0,
+                    original_sha256=original_hash,
+                    final_sha256=original_hash,
+                    char_delta=0,
+                )
+                return RepairPatchApplyResult(
+                    narrative_text=original_text,
+                    report=report,
+                )
+            patch_set, bind_errors = _bind_server_templates(
+                templates=templates,
+                provider_patch_set=(
+                    provider_patch_set or ProviderRepairPatchSet()
+                ),
+            )
+            if bind_errors:
+                report = RepairPatchValidationReport(
+                    accepted=False,
+                    violations=bind_errors,
+                    patch_count=len(templates),
+                    applied_count=0,
+                    original_sha256=original_hash,
+                    final_sha256=original_hash,
+                    char_delta=0,
+                )
+                return RepairPatchApplyResult(
+                    narrative_text=original_text,
+                    report=report,
+                )
+        patch_set = patch_set or RepairPatchSet()
+        template_by_id = {
+            item.patch_id: item for item in templates
+        }
         allowed_events = {
             item.event_id
             for item in [
@@ -360,7 +604,12 @@ class RepairPatchValidator:
                         message="Patch anchor 必须在当前正文中唯一匹配",
                         patch_index=index,
                         evidence=(
-                            patch.anchor.before_text or patch.anchor.after_text
+                            (
+                                patch.anchor.before_text
+                                or patch.anchor.after_text
+                            )
+                            if patch.anchor is not None
+                            else patch.patch_id
                         )[:180],
                     )
                 )
@@ -421,16 +670,36 @@ class RepairPatchValidator:
 
             if patch.patch_type == "expand":
                 actual_chars = _nonspace_chars(patch.patch_text)
-                allowed_target = min(
-                    300,
-                    max(0, plan.length_adjustment.min_chars - _nonspace_chars(text)),
+                frozen_template = (
+                    template_by_id.get(patch.patch_id)
+                    if server_template_mode
+                    else None
                 )
-                allowed_max = min(
-                    300,
-                    max(0, plan.length_adjustment.max_chars - _nonspace_chars(text)),
-                )
+                if frozen_template is not None:
+                    allowed_target = frozen_template.target_chars
+                    allowed_max = frozen_template.max_chars
+                else:
+                    allowed_target = min(
+                        450,
+                        max(
+                            0,
+                            (
+                                plan.length_adjustment.desired_final_chars
+                                or plan.length_adjustment.min_chars
+                            )
+                            - _nonspace_chars(text),
+                        ),
+                    )
+                    allowed_max = min(
+                        450,
+                        max(
+                            0,
+                            plan.length_adjustment.max_chars
+                            - _nonspace_chars(text),
+                        ),
+                    )
                 length_add_authorized = (
-                    _nonspace_chars(text) < plan.length_adjustment.min_chars
+                    plan.length_adjustment.action == "add"
                 )
                 if not length_add_authorized:
                     add("EXPAND_NOT_AUTHORIZED", "RepairPlan 未授权长度扩写")
@@ -445,11 +714,17 @@ class RepairPatchValidator:
                         "EXPAND purpose 必须逐字匹配服务端计划",
                         patch.purpose,
                     )
+                authority_mismatch = (
+                    patch.target_chars != allowed_target
+                    or patch.max_chars != allowed_max
+                    if frozen_template is not None
+                    else patch.target_chars > allowed_target
+                    or patch.max_chars > allowed_max
+                )
                 if (
                     patch.target_chars <= 0
-                    or patch.target_chars > allowed_target
                     or patch.max_chars < patch.target_chars
-                    or patch.max_chars > allowed_max
+                    or authority_mismatch
                 ):
                     add(
                         "EXPAND_TARGET_TOO_LARGE",
@@ -480,21 +755,38 @@ class RepairPatchValidator:
                         "EXPAND 不能携带 COMPACT 字段",
                     )
             elif patch.patch_type == "compact":
-                effective_anchor = {
-                    "start": patch.anchor.start or patch.anchor.before_text,
-                    "end": patch.anchor.end or patch.anchor.after_text,
-                }
-                authorized = any(
-                    effective_anchor
-                    == {
-                        "start": str((item.get("anchor") or {}).get("start") or ""),
-                        "end": str((item.get("anchor") or {}).get("end") or ""),
-                    }
-                    and patch.remove_reason == item.get("remove_reason")
-                    and patch.max_remove_chars == item.get("max_remove_chars")
-                    and patch.preserve == item.get("preserve")
-                    for item in authorized_compacts
-                )
+                if server_template_mode and patch.patch_id in template_by_id:
+                    authorized = True
+                else:
+                    if patch.anchor is None:
+                        authorized = False
+                        effective_anchor = {"start": "", "end": ""}
+                    else:
+                        effective_anchor = {
+                            "start": (
+                                patch.anchor.start
+                                or patch.anchor.before_text
+                            ),
+                            "end": (
+                                patch.anchor.end
+                                or patch.anchor.after_text
+                            ),
+                        }
+                    authorized = any(
+                        effective_anchor
+                        == {
+                            "start": str(
+                                (item.get("anchor") or {}).get("start") or ""
+                            ),
+                            "end": str(
+                                (item.get("anchor") or {}).get("end") or ""
+                            ),
+                        }
+                        and patch.remove_reason == item.get("remove_reason")
+                        and patch.max_remove_chars == item.get("max_remove_chars")
+                        and patch.preserve == item.get("preserve")
+                        for item in authorized_compacts
+                    )
                 if not authorized:
                     add(
                         "COMPACT_NOT_AUTHORIZED",
@@ -737,6 +1029,14 @@ class RepairPatchValidator:
                 continue
             applied_count += 1
 
+        if _nonspace_chars(text) > plan.length_adjustment.max_chars:
+            violations.append(
+                RepairPatchViolation(
+                    code="PATCH_FINAL_TOO_LONG",
+                    message="应用局部 Patch 后正文超过服务端最大长度",
+                    evidence=str(_nonspace_chars(text)),
+                )
+            )
         final_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         if not violations and final_hash == original_hash:
             violations.append(
@@ -757,12 +1057,15 @@ class RepairPatchValidator:
         return RepairPatchApplyResult(
             narrative_text=text if report.accepted else original_text,
             report=report,
+            applied_patches=patch_set,
             enforced_removals=enforced_removals,
         )
 
 
 __all__ = [
     "PatchType",
+    "ProviderRepairPatch",
+    "ProviderRepairPatchSet",
     "RepairPatch",
     "RepairPatchAnchor",
     "RepairPatchApplyResult",

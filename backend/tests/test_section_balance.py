@@ -53,9 +53,9 @@ def _budget(style: str = "literary"):
 def test_segment_budget_respected() -> None:
     plan = _budget()
 
-    assert plan.target_chars == 1000
-    assert [item.budget for item in plan.segments] == [180, 300, 300, 220]
-    assert [item.max_chars for item in plan.segments] == [230, 350, 350, 270]
+    assert plan.target_chars == 1030
+    assert [item.budget for item in plan.segments] == [185, 309, 309, 227]
+    assert [item.max_chars for item in plan.segments] == [235, 359, 359, 277]
     assert sum(item.budget for item in plan.segments) == plan.target_chars
     assert plan.stop_conditions == [
         "required_events_completed",

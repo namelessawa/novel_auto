@@ -65,12 +65,13 @@ def test_repair_patch_cannot_return_state_change_without_evidence() -> None:
         )
 
 
-def test_repair_prompt_requires_exact_template_copy() -> None:
+def test_repair_prompt_exposes_only_provider_text_requests() -> None:
     original = "沈砚替林秋包扎了手。沈砚准备把旧信交给林秋。"
     _, _, _, plan = _plan_and_report(original)
     payload = repair_patch_prompt_payload(plan, original)
 
-    assert payload["execution_mode"] == "COPY_SUGGESTED_TEMPLATES_EXACTLY"
-    assert payload["required_patches"] == payload["suggested_patch_templates"]
-    assert "逐字段、逐字原样复制" in AuthorWriter.REPAIR_SYSTEM_PROMPT
-    assert "不得同义改写" in payload["final_instruction"]
+    assert payload["execution_mode"] == "SERVER_OWNED_TEMPLATE_TEXT_ONLY"
+    assert payload["provider_patch_requests"] == []
+    assert payload["server_owned_actions"]
+    assert "patch_id 和 patch_text" in AuthorWriter.REPAIR_SYSTEM_PROMPT
+    assert "Do not return patch_type, anchor" in payload["final_instruction"]

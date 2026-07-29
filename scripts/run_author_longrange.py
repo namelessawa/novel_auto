@@ -291,11 +291,31 @@ class RecordedLongRangeWriter:
         )
 
     async def repair(self, candidate, report):
-        from story.repair_patch import RepairPatchSet
+        from story.repair_patch import (
+            ProviderRepairPatch,
+            ProviderRepairPatchSet,
+        )
         from story.repair_plan import repair_patch_prompt_payload
         from story.writer import WriterResult
 
         self.repair_calls += 1
+        payload = repair_patch_prompt_payload(
+            report,
+            candidate.narrative_text,
+        )
+        source = "海风贴着石墙缓慢移动，二人只把眼前已经发生的动作继续做实。"
+        provider_patches = []
+        for request in payload["provider_patch_requests"]:
+            target = request["target_chars"]
+            patch_text = (
+                source * ((target + len(source) - 1) // len(source))
+            )[:target]
+            provider_patches.append(
+                ProviderRepairPatch(
+                    patch_id=request["patch_id"],
+                    patch_text=patch_text,
+                )
+            )
         return WriterResult(
             candidate,
             {
@@ -304,13 +324,8 @@ class RecordedLongRangeWriter:
                 "repair_tokens": 0,
                 "total_tokens": 0,
             },
-            repair_patches=RepairPatchSet.model_validate(
-                {
-                    "patches": repair_patch_prompt_payload(
-                        report,
-                        candidate.narrative_text,
-                    )["suggested_patch_templates"]
-                }
+            provider_repair_patches=ProviderRepairPatchSet(
+                patches=provider_patches
             ),
         )
 

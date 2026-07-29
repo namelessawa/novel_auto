@@ -316,22 +316,26 @@ def test_author_writer_uses_shared_repair_for_common_dirty_json() -> None:
 
 def test_author_repair_is_a_bounded_patch_and_ignores_invalid_extra_fields() -> None:
     content = (
-        '{"patches":[{"patch_type":"insert","anchor":"阿澜停在旧港。",'
+        '{"patches":[{"patch_id":"repair-move","patch_type":"insert",'
+        '"anchor":"阿澜停在旧港。",'
         '"patch_text":"阿澜离开旧港，抵达潮塔。","target_events":["move"],'
         '"state_delta":[{"path":"/world/weather","value":"暴雨"}]}],'
         '"narrative_text":"越权完整正文",'
         '"threads_advanced":[{"type":"mystery","description":"缺少 id"}],'
         '"memory_records":[{"type":"fact","description":"越权改写"}]}'
     )
-    patches = AuthorWriter._parse_repair_patches(content)
+    patches = AuthorWriter._parse_provider_repair_patches(content)
     ignored = AuthorWriter._repair_ignored_fields(content)
 
     assert patches.patches[0].patch_text == "阿澜离开旧港，抵达潮塔。"
-    assert patches.patches[0].anchor.before_text == "阿澜停在旧港。"
+    assert patches.patches[0].patch_id == "repair-move"
     assert ignored == [
         "memory_records",
         "narrative_text",
+        "patches[0].anchor",
+        "patches[0].patch_type",
         "patches[0].state_delta",
+        "patches[0].target_events",
         "threads_advanced",
     ]
 

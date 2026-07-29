@@ -12,7 +12,6 @@ from story.repair_patch import (
     RepairPatchAnchor,
     RepairPatchSet,
 )
-from story.service import GenerationRejected
 from story.writer import AuthorWriter
 from tests.test_narrative_contract_generation import (
     ContractWriter,
@@ -114,6 +113,7 @@ def test_author_writer_ignores_and_records_non_prose_repair_fields() -> None:
         {
             "patches": [
                 {
+                    "patch_id": "repair-provider-prose",
                     "patch_type": "insert",
                     "anchor": "沈砚准备把信交给调查员。",
                     "patch_text": "沈砚把信交给调查员，调查员接过信。",
@@ -129,13 +129,16 @@ def test_author_writer_ignores_and_records_non_prose_repair_fields() -> None:
         ensure_ascii=False,
     )
 
-    patches = AuthorWriter._parse_repair_patches(content)
+    patches = AuthorWriter._parse_provider_repair_patches(content)
 
-    assert patches.patches[0].patch_type == "insert"
-    assert patches.patches[0].anchor.before_text.startswith("沈砚准备")
+    assert patches.patches[0].patch_id == "repair-provider-prose"
+    assert patches.patches[0].patch_text.startswith("沈砚把信")
     assert AuthorWriter._repair_ignored_fields(content) == [
         "narrative_text",
+        "patches[0].anchor",
         "patches[0].debug",
+        "patches[0].patch_type",
+        "patches[0].target_events",
         "state_delta",
         "threads_opened",
         "title",
@@ -143,7 +146,9 @@ def test_author_writer_ignores_and_records_non_prose_repair_fields() -> None:
 
 
 @pytest.mark.asyncio
-async def test_repair_regression_rejects_transaction(tmp_path: Path) -> None:
+async def test_provider_cannot_delete_preserved_event_from_server_template(
+    tmp_path: Path,
+) -> None:
     goal = _goal()
     constraints = goal.narrative_constraints.model_copy(
         update={
@@ -180,24 +185,19 @@ async def test_repair_regression_rejects_transaction(tmp_path: Path) -> None:
             )
         ]
     )
+    writer = ContractWriter(original, regressed)
+    writer.repair_patches = malicious_patches
     service = _service(
         tmp_path,
-        ContractWriter(
-            original,
-            regressed,
-            repair_patches=malicious_patches,
-        ),
+        writer,
     )
 
-    with pytest.raises(GenerationRejected) as exc:
-        await service.run(goal, request_id="repair-regression")
+    transaction = await service.run(goal, request_id="repair-regression")
 
-    codes = [
-        item.code
-        for item in exc.value.transaction.narrative_validation_report.violations
-    ]
-    assert "REPAIR_REGRESSION" in codes
-    assert service.sections.count() == 0
+    assert transaction.committed is True
+    assert "沈砚包扎了林秋的手。" in transaction.candidate.narrative_text
+    assert writer.repair_calls == 0
+    assert service.sections.count() == 1
 
 
 @pytest.mark.asyncio

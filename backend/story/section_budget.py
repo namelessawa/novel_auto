@@ -142,8 +142,18 @@ class SectionBudgetPlanBuilder:
         writing_plan: SectionWritingPlan,
         style_contract: dict[str, Any] | None,
     ) -> SectionBudgetPlan:
-        target = (writing_plan.min_chars + writing_plan.max_chars) // 2
-        target = max(writing_plan.min_chars, min(target, writing_plan.max_chars))
+        midpoint = (writing_plan.min_chars + writing_plan.max_chars) // 2
+        safe_lower = min(writing_plan.max_chars, writing_plan.min_chars + 80)
+        safe_upper = max(writing_plan.min_chars, writing_plan.max_chars - 50)
+        if safe_lower > safe_upper:
+            safe_lower, safe_upper = (
+                writing_plan.min_chars,
+                writing_plan.max_chars,
+            )
+        target = max(
+            safe_lower,
+            min(midpoint + 30, safe_upper),
+        )
         budgets: list[int] = []
         used = 0
         for index, (_, ratio) in enumerate(self._SEGMENTS):

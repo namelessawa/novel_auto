@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from story.ending_validator import EndingCompletionReport
 from story.event_execution import EventExecutionPlan
@@ -53,12 +54,72 @@ class LengthAdjustment(NarrativeModel):
     max_chars: int = Field(ge=1)
     action: Literal["none", "add", "remove"] = "none"
     target_chars: int = Field(default=0, ge=0)
+    desired_final_chars: int = Field(default=0, ge=0)
+    max_add_chars: int = Field(default=0, ge=0)
 
 
 class PreflightRepairIssue(NarrativeModel):
     code: str
     message: str
     details: dict[str, Any] = Field(default_factory=dict)
+
+
+RepairPatchType = Literal["insert", "replace", "delete", "expand", "compact"]
+
+
+class ServerRepairPatchTemplate(NarrativeModel):
+    """Immutable server authority for one bounded repair operation.
+
+    Provider output is never parsed into this model.  The provider may supply
+    prose only for templates with ``provider_text_required``; every placement,
+    scope, target, preservation, length, and authority field remains frozen.
+    """
+
+    schema_version: int = Field(default=1, ge=1)
+    patch_id: str = Field(min_length=1, max_length=128)
+    patch_type: RepairPatchType
+    exact_anchor: str = Field(default="", max_length=240)
+    insertion_offset: int | None = Field(default=None, ge=0)
+    start_offset: int | None = Field(default=None, ge=0)
+    end_offset: int | None = Field(default=None, ge=0)
+    target_events: list[str] = Field(default_factory=list)
+    target_end_states: list[str] = Field(default_factory=list)
+    target_chars: int = Field(default=0, ge=0, le=450)
+    max_chars: int = Field(default=300, ge=1, le=450)
+    preserve: list[str] = Field(default_factory=list)
+    purpose: str = Field(default="", max_length=240)
+    remove_reason: str = Field(default="", max_length=240)
+    max_remove_chars: int = Field(default=0, ge=0, le=300)
+    original_narrative_sha256: str = Field(
+        min_length=64,
+        max_length=64,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    contract_hash: str = Field(min_length=1)
+    provider_text_required: bool = False
+    server_patch_text: str | None = Field(default=None, max_length=600)
+
+    @model_validator(mode="after")
+    def validate_frozen_placement_and_text(self) -> "ServerRepairPatchTemplate":
+        if self.patch_type in {"insert", "expand"}:
+            if self.insertion_offset is None:
+                raise ValueError("insert/expand template requires insertion_offset")
+            if self.start_offset is not None or self.end_offset is not None:
+                raise ValueError("insert/expand template cannot carry an edit range")
+        elif (
+            self.start_offset is None
+            or self.end_offset is None
+            or self.end_offset < self.start_offset
+        ):
+            raise ValueError("replace/delete/compact template requires a valid range")
+        if self.provider_text_required:
+            if self.patch_type != "expand":
+                raise ValueError("only expand may require provider prose")
+            if self.server_patch_text is not None:
+                raise ValueError("provider template cannot carry server patch prose")
+        elif self.server_patch_text is None:
+            raise ValueError("deterministic template requires server patch prose")
+        return self
 
 
 class RepairPlan(NarrativeModel):
@@ -79,6 +140,10 @@ class RepairPlan(NarrativeModel):
     forbidden_changes: list[str] = Field(default_factory=list)
     style_constraints: dict[str, Any] = Field(default_factory=dict)
     repair_instruction: str
+    patch_templates: list[ServerRepairPatchTemplate] = Field(
+        default_factory=list,
+        max_length=8,
+    )
 
     @property
     def repair_context(self) -> dict[str, Any]:
@@ -165,6 +230,7 @@ class RepairPlanBuilder:
         state_report: Any,
         narrative_text: str,
         section_writing_plan: SectionWritingPlan | None = None,
+        section_target_chars: int | None = None,
         ending_report: EndingCompletionReport | None = None,
         preflight_report: Any = None,
     ) -> RepairPlan:
@@ -291,13 +357,25 @@ class RepairPlanBuilder:
             if section_writing_plan is not None
             else contract.length_constraint.max_chars
         )
+        desired_lower = min(maximum, minimum + 80)
+        desired_upper = max(minimum, maximum - 50)
+        if desired_lower > desired_upper:
+            desired_lower, desired_upper = minimum, maximum
+        desired = (
+            int(section_target_chars)
+            if section_target_chars is not None
+            else desired_lower
+        )
+        desired = max(desired_lower, min(desired, desired_upper))
         if chars < minimum:
             adjustment = LengthAdjustment(
                 current_chars=chars,
                 min_chars=minimum,
                 max_chars=maximum,
                 action="add",
-                target_chars=min(300, minimum - chars),
+                target_chars=max(0, desired - chars),
+                desired_final_chars=desired,
+                max_add_chars=max(0, maximum - chars),
             )
         elif chars > maximum:
             adjustment = LengthAdjustment(
@@ -306,6 +384,7 @@ class RepairPlanBuilder:
                 max_chars=maximum,
                 action="remove",
                 target_chars=chars - maximum,
+                desired_final_chars=desired,
             )
         else:
             adjustment = LengthAdjustment(
@@ -313,12 +392,13 @@ class RepairPlanBuilder:
                 min_chars=minimum,
                 max_chars=maximum,
                 action="none",
+                desired_final_chars=desired,
             )
 
         proposal_codes = [
             item.code for item in getattr(state_report, "violations", [])
         ]
-        return RepairPlan(
+        plan = RepairPlan(
             transaction_id=transaction_id,
             original_contract_hash=contract.contract_hash,
             missing_events=missing,
@@ -354,8 +434,18 @@ class RepairPlanBuilder:
             repair_instruction=(
                 "只输出局部 patches：优先完成事件，其次落实最终状态，再删除未授权新增，"
                 "然后才允许用 EXPAND 或 COMPACT 处理长度；每个 patch 只能解决明确列出的 target，"
-                "必须使用正文中唯一的逐字 anchor，不得重写整篇正文。"
+                "只能为服务端 patch_id 生成获准的局部正文，不得返回或修改位置、长度、target、"
+                "preserve、原文 hash 或契约 hash，不得重写整篇正文。"
             ),
+        )
+        return plan.model_copy(
+            update={
+                "patch_templates": build_server_patch_templates(
+                    plan=plan,
+                    original_narrative=narrative_text,
+                    contract_hash=contract.contract_hash,
+                )
+            }
         )
 
 
@@ -639,52 +729,366 @@ def compact_patch_templates(
     return selected
 
 
+_NONEMPTY_PARAGRAPH = re.compile(r"[^\r\n]+")
+
+
+def _paragraph_ranges(narrative: str) -> list[tuple[int, int]]:
+    return [
+        (match.start(), match.end())
+        for match in _NONEMPTY_PARAGRAPH.finditer(narrative)
+        if match.group(0).strip()
+    ]
+
+
+def _paragraph_start(
+    paragraphs: list[tuple[int, int]],
+    position: int,
+) -> int | None:
+    for start, end in paragraphs:
+        if start <= position < end:
+            return start
+    return None
+
+
+def _safe_expansion_offset(
+    plan: RepairPlan,
+    narrative: str,
+    *,
+    deletion_ranges: list[tuple[int, int]],
+) -> int:
+    """Choose a stable pre-terminal insertion boundary in authority order."""
+    paragraphs = _paragraph_ranges(narrative)
+    end_state_positions = [
+        narrative.find(item.text)
+        for item in plan.must_preserve_spans
+        if item.state_id and item.text and narrative.find(item.text) >= 0
+    ]
+    if end_state_positions:
+        earliest = min(end_state_positions)
+        offset = _paragraph_start(paragraphs, earliest)
+        offset = earliest if offset is None else offset
+    else:
+        event_evidence = [
+            (narrative.rfind(item.text), item.text)
+            for item in plan.must_preserve_spans
+            if item.text and narrative.rfind(item.text) >= 0
+        ]
+        pending_event_instructions = [
+            *plan.missing_events,
+            *plan.incomplete_events,
+            *plan.wrong_actor_events,
+            *plan.wrong_target_events,
+        ]
+        event_evidence.extend(
+            (narrative.rfind(item.current_evidence), item.current_evidence)
+            for item in pending_event_instructions
+            if (
+                item.current_evidence
+                and narrative.rfind(item.current_evidence) >= 0
+            )
+        )
+        target_terms = {
+            term
+            for item in pending_event_instructions
+            for term in [item.target, *item.target_aliases]
+            if term
+        }
+        for sentence in _COMPACT_SENTENCE.finditer(narrative):
+            text = sentence.group(0)
+            if target_terms and any(term in text for term in target_terms):
+                event_evidence.append((sentence.start(), text))
+        if event_evidence:
+            position, evidence = max(event_evidence, key=lambda item: item[0])
+            evidence_end = position + len(evidence)
+            closure = re.search(r"[。！？!?]", narrative[evidence_end:])
+            offset = (
+                evidence_end + closure.end()
+                if closure is not None
+                else evidence_end
+            )
+        elif paragraphs:
+            offset = paragraphs[-1][0]
+        else:
+            offset = 0
+
+    # An insertion at a boundary is safe.  If an authority bug ever selects an
+    # interior position, fail closed by moving to the beginning of that range.
+    for preserved in plan.must_preserve_spans:
+        if not preserved.text:
+            continue
+        start = narrative.find(preserved.text)
+        if start < 0:
+            continue
+        end = start + len(preserved.text)
+        if start < offset < end:
+            offset = start
+    for start, end in deletion_ranges:
+        if start < offset < end:
+            offset = start
+    return max(0, min(offset, len(narrative)))
+
+
+def _server_patch_id(
+    *,
+    plan: RepairPlan,
+    index: int,
+    patch_type: RepairPatchType,
+    placement: str,
+    targets: list[str],
+) -> str:
+    authority = "|".join(
+        [
+            plan.transaction_id,
+            str(index),
+            patch_type,
+            placement,
+            *targets,
+        ]
+    )
+    digest = hashlib.sha256(authority.encode("utf-8")).hexdigest()[:16]
+    return f"repair-{index:02d}-{digest}"
+
+
+def _template_delta_from_model(
+    template: ServerRepairPatchTemplate,
+    narrative: str,
+) -> int:
+    if template.patch_type in {"delete", "compact"}:
+        assert template.start_offset is not None
+        assert template.end_offset is not None
+        return -narrative_char_count(
+            narrative[template.start_offset : template.end_offset]
+        )
+    return narrative_char_count(template.server_patch_text or "")
+
+
+def build_server_patch_templates(
+    *,
+    plan: RepairPlan,
+    original_narrative: str,
+    contract_hash: str,
+) -> list[ServerRepairPatchTemplate]:
+    """Freeze all repair authority before a provider can generate prose."""
+    original_hash = hashlib.sha256(
+        original_narrative.encode("utf-8")
+    ).hexdigest()
+    preserve = [
+        item.text for item in plan.must_preserve_spans if item.text
+    ]
+    unsupported_ranges: list[tuple[int, int, str]] = []
+    seen_unsupported: set[str] = set()
+    for item in plan.unsupported_additions:
+        evidence = str(item.get("evidence") or "")
+        if (
+            not evidence
+            or evidence in seen_unsupported
+            or original_narrative.count(evidence) != 1
+        ):
+            continue
+        seen_unsupported.add(evidence)
+        start = original_narrative.find(evidence)
+        unsupported_ranges.append((start, start + len(evidence), evidence))
+
+    compact_payloads = compact_patch_templates(
+        plan,
+        original_narrative,
+        base_templates=[],
+    )
+    compact_ranges: list[tuple[int, int, dict[str, Any]]] = []
+    for payload in compact_payloads:
+        anchor = payload.get("anchor") or {}
+        target = str(anchor.get("start") or anchor.get("before_text") or "")
+        if not target or original_narrative.count(target) != 1:
+            continue
+        start = original_narrative.find(target)
+        compact_ranges.append((start, start + len(target), payload))
+
+    deletion_ranges = [
+        (start, end)
+        for start, end, _ in unsupported_ranges
+    ]
+    deletion_ranges.extend(
+        (start, end) for start, end, _ in compact_ranges
+    )
+    insertion_offset = _safe_expansion_offset(
+        plan,
+        original_narrative,
+        deletion_ranges=deletion_ranges,
+    )
+
+    templates: list[ServerRepairPatchTemplate] = []
+
+    def append_template(
+        *,
+        patch_type: RepairPatchType,
+        insertion: int | None = None,
+        start: int | None = None,
+        end: int | None = None,
+        target_events: list[str] | None = None,
+        target_end_states: list[str] | None = None,
+        target_chars: int = 0,
+        max_chars: int = 300,
+        purpose: str = "",
+        remove_reason: str = "",
+        max_remove_chars: int = 0,
+        provider_text_required: bool = False,
+        server_patch_text: str | None = None,
+        template_preserve: list[str] | None = None,
+    ) -> None:
+        if len(templates) >= 8:
+            return
+        targets = [*(target_events or []), *(target_end_states or [])]
+        placement = (
+            f"insert:{insertion}"
+            if insertion is not None
+            else f"range:{start}:{end}"
+        )
+        templates.append(
+            ServerRepairPatchTemplate(
+                patch_id=_server_patch_id(
+                    plan=plan,
+                    index=len(templates),
+                    patch_type=patch_type,
+                    placement=placement,
+                    targets=targets,
+                ),
+                patch_type=patch_type,
+                insertion_offset=insertion,
+                start_offset=start,
+                end_offset=end,
+                target_events=target_events or [],
+                target_end_states=target_end_states or [],
+                target_chars=target_chars,
+                max_chars=max_chars,
+                preserve=(
+                    preserve
+                    if template_preserve is None
+                    else template_preserve
+                ),
+                purpose=purpose,
+                remove_reason=remove_reason,
+                max_remove_chars=max_remove_chars,
+                original_narrative_sha256=original_hash,
+                contract_hash=contract_hash,
+                provider_text_required=provider_text_required,
+                server_patch_text=server_patch_text,
+            )
+        )
+
+    pending_events = [
+        *plan.missing_events,
+        *plan.incomplete_events,
+        *plan.wrong_actor_events,
+        *plan.wrong_target_events,
+    ]
+    for item in pending_events:
+        evidence = item.minimum_completion_evidence
+        if not evidence:
+            continue
+        chars = narrative_char_count(evidence)
+        if chars > 450:
+            raise ValueError("minimum event evidence exceeds repair patch maximum")
+        append_template(
+            patch_type="insert",
+            insertion=insertion_offset,
+            target_events=[item.event_id],
+            max_chars=max(1, chars),
+            server_patch_text=evidence,
+        )
+    for item in plan.wrong_end_states:
+        evidence = item.minimum_completion_evidence
+        if not evidence:
+            continue
+        chars = narrative_char_count(evidence)
+        if chars > 450:
+            raise ValueError("minimum end-state evidence exceeds repair patch maximum")
+        append_template(
+            patch_type="insert",
+            insertion=insertion_offset,
+            target_end_states=[item.state_id],
+            max_chars=max(1, chars),
+            server_patch_text=evidence,
+        )
+    for start, end, evidence in unsupported_ranges:
+        chars = narrative_char_count(evidence)
+        if chars > 300:
+            raise ValueError("unsupported addition exceeds local delete maximum")
+        append_template(
+            patch_type="delete",
+            start=start,
+            end=end,
+            max_chars=max(1, chars),
+            server_patch_text="",
+            template_preserve=[],
+        )
+    for start, end, payload in compact_ranges:
+        chars = narrative_char_count(original_narrative[start:end])
+        append_template(
+            patch_type="compact",
+            start=start,
+            end=end,
+            max_chars=max(1, min(450, chars)),
+            remove_reason=str(payload.get("remove_reason") or ""),
+            max_remove_chars=int(payload.get("max_remove_chars") or chars),
+            server_patch_text="",
+            template_preserve=[
+                str(item) for item in payload.get("preserve", [])
+            ],
+        )
+
+    projected_delta = sum(
+        _template_delta_from_model(item, original_narrative)
+        for item in templates
+    )
+    adjustment = plan.length_adjustment
+    projected_chars = adjustment.current_chars + projected_delta
+    desired = adjustment.desired_final_chars
+    if desired <= 0:
+        lower = min(adjustment.max_chars, adjustment.min_chars + 80)
+        upper = max(adjustment.min_chars, adjustment.max_chars - 50)
+        if lower > upper:
+            lower, upper = adjustment.min_chars, adjustment.max_chars
+        desired = max(
+            lower,
+            min(
+                lower,
+                upper,
+            ),
+        )
+    target_add = max(0, desired - projected_chars)
+    max_add = max(0, adjustment.max_chars - projected_chars)
+    if adjustment.action == "add" and target_add > 0 and max_add > 0:
+        max_patch_chars = min(450, max_add)
+        append_template(
+            patch_type="expand",
+            insertion=insertion_offset,
+            target_chars=min(target_add, max_patch_chars),
+            max_chars=max_patch_chars,
+            purpose=(
+                "expand existing action, environment, interaction, or emotion "
+                "without adding plot or facts"
+            ),
+            provider_text_required=True,
+            server_patch_text=None,
+        )
+    return templates
+
+
 def repair_patch_prompt_payload(
     plan: RepairPlan,
     original_narrative: str,
 ) -> dict[str, Any]:
-    suggested_templates = _suggested_patch_templates(
-        plan,
-        original_narrative,
+    templates = plan.patch_templates or build_server_patch_templates(
+        plan=plan,
+        original_narrative=original_narrative,
+        contract_hash=plan.original_contract_hash,
     )
-    compact_templates = compact_patch_templates(
-        plan,
-        original_narrative,
-        base_templates=suggested_templates,
-    )
-    required_templates = [*suggested_templates, *compact_templates]
-    projected_delta = sum(_template_delta(item) for item in required_templates)
-    expansion_target = min(
-        300,
-        max(
-            0,
-            plan.length_adjustment.min_chars
-            - plan.length_adjustment.current_chars
-            - projected_delta,
-        ),
-    )
-    expansion_max = min(
-        300,
-        max(
-            0,
-            plan.length_adjustment.max_chars
-            - plan.length_adjustment.current_chars
-            - projected_delta,
-        ),
-    )
-    expansion_request = (
+    provider_requests = [
         {
-            "patch_type": "expand",
-            "anchor": {
-                "before_text": _unique_tail_anchor(original_narrative),
-                "after_text": "",
-            },
-            "target_chars": expansion_target,
-            "max_chars": expansion_max,
-            "purpose": (
-                "expand existing action, environment, interaction, or emotion "
-                "without adding plot or facts"
-            ),
+            "patch_id": item.patch_id,
+            "target_chars": item.target_chars,
+            "max_chars": item.max_chars,
+            "purpose": item.purpose,
             "allowed_content": [
                 "existing action detail",
                 "existing environment",
@@ -697,25 +1101,24 @@ def repair_patch_prompt_payload(
                 "new fact",
                 "new date, number, kinship, injury, casualty, or world rule",
             ],
-            "preserve": [
-                item.text for item in plan.must_preserve_spans if item.text
-            ],
         }
-        if expansion_target > 0
-        else None
-    )
+        for item in templates
+        if item.provider_text_required
+    ]
     return {
-        "execution_mode": (
-            "COPY_REQUIRED_PATCHES_THEN_GENERATE_EXPAND"
-            if required_templates and expansion_request
-            else "COPY_SUGGESTED_TEMPLATES_EXACTLY"
-            if required_templates
-            else "GENERATE_EXPAND"
-            if expansion_request
-            else "GENERATE_LOCAL_PATCHES"
+        "execution_mode": "SERVER_OWNED_TEMPLATE_TEXT_ONLY",
+        "provider_patch_requests": provider_requests,
+        "server_owned_actions": [
+            {
+                "patch_id": item.patch_id,
+                "patch_type": item.patch_type,
+                "provider_text_required": item.provider_text_required,
+            }
+            for item in templates
+        ],
+        "expansion_request": (
+            provider_requests[0] if provider_requests else None
         ),
-        "required_patches": required_templates,
-        "expansion_request": expansion_request,
         "missing_events": [item.model_dump(mode="json") for item in plan.missing_events],
         "incomplete_events": [item.model_dump(mode="json") for item in plan.incomplete_events],
         "wrong_actor_events": [item.model_dump(mode="json") for item in plan.wrong_actor_events],
@@ -743,41 +1146,20 @@ def repair_patch_prompt_payload(
             "style_tiny_adjustment",
         ],
         "relevant_windows": _repair_windows(plan, original_narrative),
-        "suggested_patch_templates": required_templates,
         "output_contract": {
             "patches": [
                 {
-                    "patch_type": "insert|replace|delete|expand|compact",
-                    "anchor": {
-                        "before_text": "逐字锚点",
-                        "after_text": "",
-                        "start": "",
-                        "end": "",
-                    },
-                    "patch_text": "不超过 300 字的局部修改",
-                    "target_events": [],
-                    "target_end_states": [],
-                    "max_chars": 300,
-                    "preserve": [],
-                    "target_chars": 0,
-                    "purpose": "",
-                    "remove_reason": "",
-                    "max_remove_chars": 0,
+                    "patch_id": "copy from provider_patch_requests",
+                    "patch_text": "only provider-authored prose",
                 }
             ]
         },
         "final_instruction": (
-            "Copy every required_patches item exactly and in order. Then append "
-            "exactly one expand patch from expansion_request: copy patch_type, "
-            "anchor, target_chars, max_chars, purpose, and preserve exactly; generate "
-            "only patch_text and keep target lists empty. target_chars is the desired "
-            "addition; max_chars is the hard patch ceiling. "
-            "Never repeat source prose and never create plot or facts."
-            if expansion_request
-            else "required_patches 非空：只返回 {\"patches\": required_patches}，"
-            "数组内每个字段和每个字符必须原样复制，不得同义改写。"
-            if required_templates
-            else "required_patches 为空：按 output_contract 生成最小局部 patches。"
+            "Return schema_version=1 and exactly one patch_id/patch_text pair for "
+            "every provider_patch_requests item. Do not return patch_type, anchor, "
+            "offset, targets, target_chars, max_chars, preserve, purpose, hashes, "
+            "state, threads, memory, or full narrative. Never repeat source prose "
+            "and never create plot or facts."
         ),
     }
 
@@ -828,10 +1210,13 @@ __all__ = [
     "PreflightRepairIssue",
     "RepairEndStateInstruction",
     "RepairEventInstruction",
+    "RepairPatchType",
     "RepairPlan",
     "RepairPlanBuilder",
     "RepairPreserveSpan",
     "RepairRegressionValidator",
+    "ServerRepairPatchTemplate",
+    "build_server_patch_templates",
     "compact_patch_templates",
     "repair_patch_prompt_payload",
     "repair_plan_prompt_payload",
