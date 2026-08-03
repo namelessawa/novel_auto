@@ -34,6 +34,7 @@ frontend/.env.production
 /data/
 /results/
 /temp/
+/.tmp/
 
 # 归档目录里 v1.x 运行数据
 old/results/

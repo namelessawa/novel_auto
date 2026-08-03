@@ -42,16 +42,163 @@ def _atomic_json(path: Path, payload: Any) -> None:
     _atomic_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
-def _safe_error(exc: Exception) -> dict[str, str]:
-    return {
-        "type": type(exc).__name__,
-        "message": "generation failed; provider response omitted",
+_SAFE_PROVIDER_STAGES = {
+    "planner",
+    "writer",
+    "writer_json_repair",
+    "repair",
+    "repair_json_repair",
+}
+
+
+def _safe_error(exc: Exception) -> dict[str, Any]:
+    from nf_core.provider_runtime import (
+        is_recognized_provider_error,
+        safe_provider_runtime_receipt,
+    )
+
+    payload: dict[str, Any] = {
+        "provider_failure": bool(is_recognized_provider_error(exc)),
+        "planner_calls": 0,
+        "writer_calls": 0,
+        "structured_output_repair_count": 0,
+        "provider_call_count": 0,
+        "provider_call_count_known": False,
     }
+    if not payload["provider_failure"]:
+        return payload
+    stage = str(getattr(exc, "provider_stage", "") or "")
+    try:
+        primary_calls = int(getattr(exc, "provider_primary_calls", 0) or 0)
+        structured_calls = int(
+            getattr(exc, "structured_output_repair_calls", 0) or 0
+        )
+        reported_total = int(getattr(exc, "provider_call_count", 0) or 0)
+    except (TypeError, ValueError):
+        primary_calls = structured_calls = reported_total = -1
+    count_known = bool(
+        stage in _SAFE_PROVIDER_STAGES
+        and 0 <= primary_calls <= 1
+        and 0 <= structured_calls <= 1
+        and reported_total == primary_calls + structured_calls
+        and reported_total >= 1
+    )
+    payload.update(
+        {
+            "provider_code": str(getattr(exc, "code", "")),
+            "provider_http_category": str(getattr(exc, "http_category", "")),
+            "provider_stage": stage if stage in _SAFE_PROVIDER_STAGES else "",
+            "planner_calls": primary_calls if count_known and stage == "planner" else 0,
+            "writer_calls": primary_calls if count_known and stage != "planner" else 0,
+            "structured_output_repair_count": (
+                structured_calls if count_known else 0
+            ),
+            "provider_call_count": reported_total if count_known else 0,
+            "provider_call_count_known": count_known,
+        }
+    )
+    receipt = safe_provider_runtime_receipt(getattr(exc, "config", None))
+    if receipt is not None:
+        payload.update(
+            {
+                "runtime_provider": receipt.provider,
+                "runtime_provider_model": receipt.model,
+                "runtime_provider_source": receipt.source,
+                "runtime_provider_config_fingerprint": receipt.config_fingerprint,
+            }
+        )
+    return payload
 
 
-def _request_id(index: int, failures: list[dict[str, Any]]) -> tuple[str, int]:
+def _failed_transaction_evidence(transaction: Any) -> dict[str, Any]:
+    from nf_core.provider_runtime import PROVIDER_ERROR_CATEGORY_BY_CODE
+
+    planner_calls = int(transaction.planner_calls)
+    writer_calls = int(transaction.writer_calls)
+    structured_calls = int(transaction.structured_output_repair_count)
+    total_calls = planner_calls + writer_calls + structured_calls
+    code = str(transaction.error_code or "")
+    category = str(transaction.provider_error_category or "")
+    stage = str(transaction.provider_error_stage or "")
+    provider_failure = bool(
+        PROVIDER_ERROR_CATEGORY_BY_CODE.get(code) == category
+    )
+    call_count_known = bool(
+        total_calls > 0
+        and (
+            not provider_failure
+            or stage in _SAFE_PROVIDER_STAGES
+        )
+    )
+    payload: dict[str, Any] = {
+        "provider_failure": provider_failure,
+        "planner_calls": planner_calls,
+        "writer_calls": writer_calls,
+        "structured_output_repair_count": structured_calls,
+        "provider_call_count": total_calls,
+        "provider_call_count_known": call_count_known,
+        "transaction_phase": str(transaction.phase),
+    }
+    if provider_failure:
+        payload.update(
+            {
+                "provider_code": code,
+                "provider_http_category": category,
+                "provider_stage": stage,
+            }
+        )
+    if all(
+        (
+            transaction.provider,
+            transaction.provider_model,
+            transaction.provider_source,
+            transaction.provider_config_fingerprint,
+        )
+    ):
+        payload.update(
+            {
+                "runtime_provider": transaction.provider,
+                "runtime_provider_model": transaction.provider_model,
+                "runtime_provider_source": transaction.provider_source,
+                "runtime_provider_config_fingerprint": (
+                    transaction.provider_config_fingerprint
+                ),
+            }
+        )
+    return payload
+
+
+def _provider_call_total(report: dict[str, Any]) -> int:
+    return sum(
+        int(item.get("planner_calls", 0))
+        + int(item.get("writer_calls", 0))
+        + int(item.get("structured_output_repair_count", 0))
+        for item in report.get("sections", [])
+    ) + sum(
+        int(item.get("provider_call_count", 0))
+        for item in report.get("failures", [])
+    )
+
+
+_ID_NAMESPACE_PATTERN = re.compile(r"^[a-z0-9_]+$")
+
+
+def _validated_id_namespace(value: str) -> str:
+    namespace = str(value or "").strip().lower()
+    if namespace and not _ID_NAMESPACE_PATTERN.fullmatch(namespace):
+        raise ValueError("id_namespace must match [a-z0-9_]+")
+    return namespace
+
+
+def _request_id(
+    index: int,
+    failures: list[dict[str, Any]],
+    *,
+    id_namespace: str = "",
+) -> tuple[str, int]:
     prior_failures = sum(int(item.get("section", -1)) == index for item in failures)
-    request_id = f"section_{index:04d}"
+    prefix = f"{id_namespace}_" if id_namespace else ""
+    request_id = f"{prefix}section_{index:04d}"
     if prior_failures:
         request_id += f"_retry_{prior_failures:02d}"
     return request_id, prior_failures
@@ -151,7 +298,7 @@ def _constraints(index: int, *, min_chars: int, max_chars: int):
     )
 
 
-def _goal(index: int, *, desired_length: int):
+def _goal(index: int, *, desired_length: int, section_id: str = ""):
     from story.models import SectionGoal
 
     objective = (
@@ -160,6 +307,7 @@ def _goal(index: int, *, desired_length: int):
         else f"推进旧信责任线：林秋核对第{index}处记录并继续保管旧信"
     )
     return SectionGoal(
+        section_id=section_id,
         objective=objective,
         viewpoint_character_id="shen_yan",
         location_id="lighthouse",
@@ -854,6 +1002,20 @@ def _section_metrics(
         "repeated_dialogue_rate": None,
         "same_resolution_pattern_rate": None,
         "narrative_length": sum(not char.isspace() for char in text),
+        "initial_narrative_length": (
+            transaction.initial_length_report.chars
+            if transaction.initial_length_report
+            else 0
+        ),
+        "writer_block_nonspace_lengths": list(
+            transaction.writer_block_nonspace_lengths
+        ),
+        "writer_cell_nonspace_lengths": list(
+            transaction.writer_cell_nonspace_lengths
+        ),
+        "writer_cell_sentence_boundary_counts": list(
+            transaction.writer_cell_sentence_boundary_counts
+        ),
         "section_writing_plan": (
             transaction.section_writing_plan.model_dump(mode="json")
             if transaction.section_writing_plan
@@ -933,6 +1095,15 @@ def _section_metrics(
         ),
         "planner_calls": transaction.planner_calls,
         "writer_calls": transaction.writer_calls,
+        "structured_output_repair_count": (
+            transaction.structured_output_repair_count
+        ),
+        "runtime_provider": transaction.provider,
+        "runtime_provider_model": transaction.provider_model,
+        "runtime_provider_source": transaction.provider_source,
+        "runtime_provider_config_fingerprint": (
+            transaction.provider_config_fingerprint
+        ),
         "repair_used": transaction.repair_performed,
         "repair_performed": transaction.repair_performed,
         "repair_plan_counts": {
@@ -949,6 +1120,21 @@ def _section_metrics(
         "repair_audit_codes": list(transaction.repair_audit_codes),
         "repair_patch_count": (
             len(patches)
+        ),
+        "repair_patch_nonspace_lengths": [
+            sum(not char.isspace() for char in item.patch_text)
+            for item in patches
+        ],
+        "repair_patch_total_nonspace_chars": sum(
+            sum(not char.isspace() for char in item.patch_text)
+            for item in patches
+        ),
+        "repair_patch_max_nonspace_chars": max(
+            (
+                sum(not char.isspace() for char in item.patch_text)
+                for item in patches
+            ),
+            default=0,
         ),
         "repair_patch_insert_count": sum(
             item.patch_type == "insert" for item in patches
@@ -1248,6 +1434,7 @@ async def run_sequence(
     runtime_rebuild_every: int | None = None,
     inject_failure: str = "",
     stop_on_gate_failure: bool = False,
+    id_namespace: str = "",
 ) -> dict[str, Any]:
     from sections.section_store import _clear_for_tests
     from story.semantic_recall import (
@@ -1256,6 +1443,7 @@ async def run_sequence(
     )
     from story.service import GenerationRejected
 
+    id_namespace = _validated_id_namespace(id_namespace)
     random.seed(seed)
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = output_dir / "report.json"
@@ -1268,6 +1456,7 @@ async def run_sequence(
         "provider": provider,
         "model": model,
         "inject_failure": inject_failure,
+        "id_namespace": id_namespace,
     }
     rebuild_every = (
         checkpoint_every
@@ -1301,7 +1490,11 @@ async def run_sequence(
     else:
         report = {
             "schema_version": 1,
-            "run_id": f"author-{mode}-{theme}-{style}-{seed}",
+            "run_id": (
+                f"author-{id_namespace}-{mode}-{theme}-{style}-{seed}"
+                if id_namespace
+                else f"author-{mode}-{theme}-{style}-{seed}"
+            ),
             "stage": "stage0" if mode == "recorded" else "real_pilot",
             "evidence_boundary": {
                 "deterministic": True,
@@ -1322,6 +1515,7 @@ async def run_sequence(
                 "checkpoint_every": checkpoint_every,
                 "runtime_rebuild_every": rebuild_every,
                 "inject_failure": inject_failure,
+                "id_namespace": id_namespace,
                 "stop_on_gate_failure": stop_on_gate_failure,
                 "provider": provider,
                 "model": model,
@@ -1346,6 +1540,7 @@ async def run_sequence(
                 "estimated_cost": 0.0,
                 "runtime_rebuilds": 0,
                 "resume_count": 0,
+                "provider_calls": 0,
                 "provider_errors": 0,
                 "stop_reason": "",
             },
@@ -1388,9 +1583,20 @@ async def run_sequence(
         if limits.max_cost and float(report["summary"]["estimated_cost"]) >= limits.max_cost:
             report["summary"]["stop_reason"] = "max_cost"
             break
-        goal = _goal(index, desired_length=desired_length)
+        section_id = (
+            f"{id_namespace}_section_{index:04d}" if id_namespace else ""
+        )
+        goal = _goal(
+            index,
+            desired_length=desired_length,
+            section_id=section_id,
+        )
         started = time.perf_counter()
-        request_id, prior_failures = _request_id(index, report["failures"])
+        request_id, prior_failures = _request_id(
+            index,
+            report["failures"],
+            id_namespace=id_namespace,
+        )
         try:
             if injection_kind == "provider_error" and index == injection_section:
                 already_injected = any(
@@ -1403,7 +1609,7 @@ async def run_sequence(
         except GenerationRejected as exc:
             transaction = exc.transaction
         except Exception as exc:
-            failure = {
+            failure: dict[str, Any] = {
                 "section": index,
                 "attempt": prior_failures + 1,
                 "injected_failure": (
@@ -1411,10 +1617,18 @@ async def run_sequence(
                     if injection_kind == "provider_error" and index == injection_section
                     else ""
                 ),
-                **_safe_error(exc),
             }
+            if service.transactions.exists(request_id):
+                failed_transaction = service.transactions.load(request_id)
+                failure.update(_failed_transaction_evidence(failed_transaction))
+            else:
+                failure.update(_safe_error(exc))
             report["failures"].append(failure)
-            report["summary"]["provider_errors"] += int(mode == "real")
+            report["summary"]["provider_errors"] = int(mode == "real") * sum(
+                bool(item.get("provider_failure"))
+                for item in report["failures"]
+            )
+            report["summary"]["provider_calls"] = _provider_call_total(report)
             _atomic_json(
                 output_dir
                 / "failures"
@@ -1636,6 +1850,15 @@ async def run_sequence(
         / report["summary"]["attempted"],
         4,
     ) if report["summary"]["attempted"] else 0.0
+    report["summary"]["provider_calls"] = _provider_call_total(report)
+    report["summary"]["planner_calls"] = sum(
+        int(item.get("planner_calls", 0)) for item in report["sections"]
+    ) + sum(
+        int(item.get("planner_calls", 0)) for item in report["failures"]
+    )
+    report["summary"]["provider_errors"] = int(mode == "real") * sum(
+        bool(item.get("provider_failure")) for item in report["failures"]
+    )
     sections = report["sections"]
     section_ids = [item["section_id"] for item in sections]
     transaction_ids = [item["transaction_id"] for item in sections]
@@ -1721,36 +1944,41 @@ async def run_sequence(
         timespec="seconds"
     )
     _checkpoint(report, output_dir, checkpoint_every)
-    secret = os.environ.get("CUSTOM_API_KEY", "")
+    from nf_core.provider_runtime import get_stage_provider_config
+
+    stage_config = get_stage_provider_config()
+    secret = stage_config.api_key if stage_config is not None else ""
     rendered = json.dumps(report, ensure_ascii=False)
     if secret and secret in rendered:
         raise RuntimeError("credential leak guard rejected long-range report")
     return report
 
 
-def _configure_real_provider(args: argparse.Namespace) -> dict[str, str]:
-    from validate_styles import _configure_provider
+def _configure_real_provider(args: argparse.Namespace):
+    from validate_styles import configure_provider_runtime
 
-    provider = _configure_provider(args.provider_file.resolve())
-    if args.model:
-        os.environ["CUSTOM_MODEL"] = args.model
+    provider = configure_provider_runtime(args.provider_file.resolve())
+    if args.model and args.model != provider.model:
+        raise ValueError(
+            "--model cannot override the model in the read-only provider file"
+        )
     if args.provider and args.provider != "custom":
         raise ValueError("--provider currently accepts custom for provider-file isolation")
-    os.environ.setdefault("LLM_MAX_RETRIES", "1")
     print(
         json.dumps(
             {
-                "provider": provider["provider"],
-                "model": args.model or provider["model"],
+                "provider": provider.provider,
+                "model": provider.model,
+                "thinking_mode": provider.thinking_mode,
+                "sdk_retries": provider.max_retries,
+                "source": provider.source,
+                "config_fingerprint": provider.config_fingerprint,
                 "credential_persisted": False,
             },
             ensure_ascii=False,
         )
     )
-    return {
-        "provider": str(provider["provider"]),
-        "model": str(args.model or provider["model"]),
-    }
+    return provider
 
 
 def _parse_args() -> argparse.Namespace:
@@ -1776,6 +2004,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--provider", default="custom")
     parser.add_argument("--provider-file", type=Path, default=ROOT / "coding.txt")
     parser.add_argument("--model", default="")
+    parser.add_argument("--id-namespace", default="")
     parser.add_argument("--theme", default=DEFAULT_THEMES.split(",")[0])
     parser.add_argument("--style", default=DEFAULT_STYLES.split(",")[0])
     parser.add_argument("--seed", type=int, default=20260722)
@@ -1789,8 +2018,13 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
     provider_metadata = {"provider": "recorded", "model": "recorded"}
+    provider_config = None
     if args.mode == "real":
-        provider_metadata = _configure_real_provider(args)
+        provider_config = _configure_real_provider(args)
+        provider_metadata = {
+            "provider": provider_config.provider,
+            "model": provider_config.model,
+        }
     limits = RunLimits(
         max_sections=max(1, args.max_sections),
         max_total_tokens=max(0, args.max_total_tokens),
@@ -1798,26 +2032,44 @@ def main() -> int:
         prompt_cost_per_million=max(0.0, args.prompt_cost_per_million),
         completion_cost_per_million=max(0.0, args.completion_cost_per_million),
     )
-    report = asyncio.run(
-        run_sequence(
-            output_dir=args.output_dir.resolve(),
-            mode=args.mode,
-            style=args.style,
-            theme=args.theme,
-            seed=args.seed,
-            desired_length=max(200, args.desired_length),
-            checkpoint_every=max(1, args.checkpoint_every),
-            limits=limits,
-            resume=args.resume,
-            provider=provider_metadata["provider"],
-            model=provider_metadata["model"],
-            runtime_rebuild_every=(
-                None if args.runtime_rebuild_every <= 0 else args.runtime_rebuild_every
-            ),
-            inject_failure=args.inject_failure,
-            stop_on_gate_failure=args.stop_on_gate_failure,
-        )
-    )
+    async def _execute():
+        try:
+            return await run_sequence(
+                output_dir=args.output_dir.resolve(),
+                mode=args.mode,
+                style=args.style,
+                theme=args.theme,
+                seed=args.seed,
+                desired_length=max(200, args.desired_length),
+                checkpoint_every=max(1, args.checkpoint_every),
+                limits=limits,
+                resume=args.resume,
+                provider=provider_metadata["provider"],
+                model=provider_metadata["model"],
+                runtime_rebuild_every=(
+                    None
+                    if args.runtime_rebuild_every <= 0
+                    else args.runtime_rebuild_every
+                ),
+                inject_failure=args.inject_failure,
+                stop_on_gate_failure=args.stop_on_gate_failure,
+                id_namespace=args.id_namespace,
+            )
+        finally:
+            if provider_config is not None:
+                from nf_core.llm_client import llm_client
+
+                await llm_client.aclose()
+
+    if provider_config is not None:
+        from nf_core.llm_client import llm_client
+        from nf_core.provider_runtime import stage_provider_scope
+
+        with stage_provider_scope(provider_config):
+            llm_client.reload(config=provider_config)
+            report = asyncio.run(_execute())
+    else:
+        report = asyncio.run(_execute())
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
     return 0 if not report["summary"]["stop_reason"] else 2
 

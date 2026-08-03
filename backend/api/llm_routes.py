@@ -27,12 +27,20 @@ import logging
 import re
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 
 from auth import User, get_current_user
 from middleware.url_safety import is_safe_public_url
-from nf_core.llm_client import extract_message_text
+from nf_core.provider_runtime import (
+    ProviderConfigurationError,
+    ProviderError,
+    ProviderRuntimeConfig,
+    ephemeral_provider_client,
+    get_request_provider_config,
+    provider_output_invalid,
+    reset_request_provider_config,
+    set_request_provider_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +89,13 @@ def _safe_base_url(raw: str | None, default: str) -> str:
     return value
 
 
+def _request_provider_defaults() -> tuple[str, str]:
+    current = get_request_provider_config()
+    if current is None:
+        return "https://api.deepseek.com", "deepseek-chat"
+    return current.base_url, current.model
+
+
 async def _one_shot_complete(
     *,
     api_key: str,
@@ -99,42 +114,72 @@ async def _one_shot_complete(
     返回空字符串 → 502. 兼容: 非 reasoning 模型也不会输出 2048 字 (system
     prompt 已限定 60-150 字 / 2-6 字).
     """
+    request_config = get_request_provider_config()
     try:
-        client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=30)
-        resp = await client.chat.completions.create(
+        config = ProviderRuntimeConfig.from_explicit(
+            provider=(
+                request_config.provider if request_config is not None else "custom"
+            ),
+            api_key=api_key,
+            base_url=base_url,
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+            thinking_mode=(
+                request_config.thinking_mode if request_config is not None else ""
+            ),
+            timeout=(
+                request_config.timeout if request_config is not None else 30
+            ),
+            max_retries=(
+                request_config.max_retries if request_config is not None else 0
+            ),
             temperature=0.95,
-            max_tokens=max_tokens,
+            max_tokens_cap=(
+                request_config.max_tokens_cap
+                if request_config is not None
+                else 65536
+            ),
+            source="request",
         )
-        # 抽文本 — content 空时退到 reasoning_content, 兼容推理模型
-        choice = resp.choices[0]
-        text = extract_message_text(choice.message)
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "PROVIDER_CONFIG_INVALID",
+                "message": str(exc),
+                "details": {},
+            },
+        ) from exc
+    token = set_request_provider_config(config)
+    try:
+        from nf_core.llm_client import llm_client
+
+        async with ephemeral_provider_client(config) as client:
+            resp = await llm_client.chat(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=0.95,
+                max_tokens=max_tokens,
+                agent_id="user_llm_one_shot",
+                priority="critical",
+                provider_config=config,
+                client_override=client,
+            )
+        text = resp.content.strip()
         if not text:
-            finish_reason = getattr(choice, "finish_reason", "?")
-            logger.warning(
-                "LLM 返回空: model=%s finish_reason=%s — 可能 reasoning 模型 "
-                "max_tokens 不够或上游审核拦截", model, finish_reason,
-            )
-            raise HTTPException(
-                status_code=502,
-                detail=(
-                    f"LLM 返回为空 (finish_reason={finish_reason}). "
-                    "若用 reasoning 模型 (MiMo / DeepSeek-Reasoner / QwQ), "
-                    "建议换非推理变体, 或检查是否被内容审核拦截."
-                ),
-            )
+            raise provider_output_invalid(config, "模型服务返回为空")
         return text
-    except HTTPException:
-        raise
-    except Exception as e:
-        # 不暴露 key 痕迹
-        msg = str(e).replace(api_key, "<redacted>") if api_key else str(e)
-        logger.error("user-key one-shot LLM call failed: %s", msg)
-        raise HTTPException(status_code=502, detail=f"LLM 调用失败: {msg}")
+    except ProviderError as exc:
+        logger.warning(
+            "user provider call failed code=%s fingerprint=%s",
+            exc.code,
+            config.config_fingerprint,
+        )
+        raise HTTPException(
+            status_code=exc.http_status,
+            detail=exc.to_detail(),
+        ) from exc
+    finally:
+        reset_request_provider_config(token)
 
 
 _SEED_SYSTEM_PROMPT = (
@@ -217,8 +262,9 @@ async def random_seed(
     ),
 ) -> RandomResponse:
     api_key = _validate_header_key(x_user_llm_key)
-    base_url = _safe_base_url(x_user_llm_base_url, "https://api.deepseek.com")
-    model = (x_user_llm_model or "deepseek-chat").strip()
+    default_base_url, default_model = _request_provider_defaults()
+    base_url = _safe_base_url(x_user_llm_base_url, default_base_url)
+    model = (x_user_llm_model or default_model).strip()
 
     title = req.existing_title.strip()
     if title:
@@ -253,8 +299,9 @@ async def random_title(
     ),
 ) -> RandomResponse:
     api_key = _validate_header_key(x_user_llm_key)
-    base_url = _safe_base_url(x_user_llm_base_url, "https://api.deepseek.com")
-    model = (x_user_llm_model or "deepseek-chat").strip()
+    default_base_url, default_model = _request_provider_defaults()
+    base_url = _safe_base_url(x_user_llm_base_url, default_base_url)
+    model = (x_user_llm_model or default_model).strip()
 
     seed = req.existing_seed.strip()
     if seed:
@@ -302,8 +349,9 @@ async def random_positioning(
     免得用户拿到一个奇幻动作题材的标题, 还在用默认的"古典含蓄"模板生成
     style_anchors, 最终 narrator 产出与标题脱节。"""
     api_key = _validate_header_key(x_user_llm_key)
-    base_url = _safe_base_url(x_user_llm_base_url, "https://api.deepseek.com")
-    model = (x_user_llm_model or "deepseek-chat").strip()
+    default_base_url, default_model = _request_provider_defaults()
+    base_url = _safe_base_url(x_user_llm_base_url, default_base_url)
+    model = (x_user_llm_model or default_model).strip()
 
     title = req.existing_title.strip()
     seed = req.existing_seed.strip()

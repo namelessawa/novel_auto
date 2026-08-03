@@ -136,18 +136,29 @@ def replay_fixture(path: Path = DEFAULT_FIXTURE) -> dict[str, Any]:
             plan,
             original.narrative_text,
         )
+        requests = prompt_payload["provider_patch_requests"]
+        recorded_text = case["provider_repair_output"]["narrative_text"]
+        recorded_addition = (
+            recorded_text[len(original.narrative_text) :]
+            if recorded_text.startswith(original.narrative_text)
+            else ""
+        )
+        source = recorded_addition + _OFFLINE_EXPAND_SUFFIXES.get(
+            case["case_id"],
+            "",
+        )
+        target_total = sum(int(item["target_chars"]) for item in requests)
+        if source and len(source) < target_total:
+            source = (
+                source * ((target_total + len(source) - 1) // len(source))
+            )
+        source = source[:target_total]
         provider_patches: list[ProviderRepairPatch] = []
-        for request in prompt_payload["provider_patch_requests"]:
-            recorded_text = case["provider_repair_output"]["narrative_text"]
-            recorded_addition = (
-                recorded_text[len(original.narrative_text) :]
-                if recorded_text.startswith(original.narrative_text)
-                else ""
-            )
-            patch_text = (
-                recorded_addition
-                + _OFFLINE_EXPAND_SUFFIXES.get(case["case_id"], "")
-            )
+        offset = 0
+        for request in requests:
+            target = int(request["target_chars"])
+            patch_text = source[offset : offset + target]
+            offset += target
             provider_patches.append(
                 ProviderRepairPatch(
                     patch_id=request["patch_id"],

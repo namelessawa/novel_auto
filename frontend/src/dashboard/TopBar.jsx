@@ -16,6 +16,7 @@ export default function TopBar({
   onOpenConfig,
   onOpenProfile,
   onOpenSecurity,
+  onToggleNavigation,
 }) {
   const { user, logout } = useAuth()
   const [novelOpen, setNovelOpen] = useState(false)
@@ -44,6 +45,17 @@ export default function TopBar({
 
   return (
     <header className="dc-topbar">
+      <button
+        type="button"
+        className="dc-mobile-menu"
+        onClick={onToggleNavigation}
+        aria-label="打开导航"
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
       {/* Brand */}
       <div className="dc-brand">
         <div className="dc-brand-mark" />
@@ -282,7 +294,7 @@ export default function TopBar({
                       strokeLinecap="round"
                     />
                   </svg>
-                  系统配置
+                  Provider 配置
                 </button>
               </div>
               <div className="dc-account-sep" />

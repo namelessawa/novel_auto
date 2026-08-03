@@ -57,7 +57,8 @@ def client(tmp_path):
     db = TickDB(str(tmp_path / "ticks.db"))
     stub_rt = _StubRuntime(tick_state=ts, tick_db=db)
     app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
-    yield TestClient(app), data_dir
+    with TestClient(app) as test_client:
+        yield test_client, data_dir
     app.dependency_overrides.clear()
     db.close()
 

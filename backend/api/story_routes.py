@@ -72,10 +72,16 @@ _PUBLIC_TRANSACTION_FIELDS = {
     "target_canonical_revision",
     "journal_canonical_revision",
     "writer_calls",
+    "structured_output_repair_count",
     "writer_retry_count",
     "writer_retry_performed",
     "writer_first_pass_pass",
     "planner_calls",
+    "provider",
+    "provider_model",
+    "provider_source",
+    "provider_config_fingerprint",
+    "provider_config_fingerprints",
     "chapter_plan_success",
     "writer_plan_followed",
     "repair_performed",
@@ -198,6 +204,28 @@ def _public_transaction(transaction: GenerationTransaction) -> dict[str, Any]:
         )
     if transaction.chapter_plan:
         payload["chapter_plan"] = chapter_plan_prompt_payload(transaction.chapter_plan)
+    if transaction.production_context is not None:
+        snapshot = transaction.production_context
+        payload["production_context"] = {
+            "job_id": snapshot.job_id,
+            "job_revision": snapshot.job_revision,
+            "production_spec_revision": snapshot.production_spec.revision,
+            "outline_revision": snapshot.outline_revision,
+            "chapter_id": snapshot.chapter_outline.id,
+            "chapter_ordinal": snapshot.chapter_outline.ordinal,
+            "section_ordinal": snapshot.section_ordinal,
+            "chapter_attempt": snapshot.chapter_attempt,
+            "section_target_chars": snapshot.section_target_chars,
+            "section_min_chars": snapshot.section_min_chars,
+            "section_max_chars": snapshot.section_max_chars,
+            "story_bible_revision": snapshot.story_bible_revision,
+            "canonical_state_revision": snapshot.canonical_state_revision,
+            "story_thread_revision": snapshot.story_thread_revision,
+            "memory_revision": snapshot.memory_revision,
+            "style_profile_id": snapshot.style_profile.id,
+            "style_profile_revision": snapshot.style_profile.revision,
+            "style_prompt_hash": snapshot.style_profile.prompt_hash,
+        }
     return payload
 
 

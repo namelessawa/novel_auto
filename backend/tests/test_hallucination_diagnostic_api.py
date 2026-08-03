@@ -44,7 +44,8 @@ def client(tmp_path):
     ts.upsert_character_state(CharacterState(character_id="elara"))
     stub_rt = _StubRuntime(tick_state=ts)
     app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
-    yield TestClient(app), ts
+    with TestClient(app) as test_client:
+        yield test_client, ts
     app.dependency_overrides.clear()
 
 
@@ -102,6 +103,6 @@ def test_diagnostic_hallucination_requires_auth() -> None:
 
     app = FastAPI()
     app.include_router(router)
-    c = TestClient(app)
-    r = c.get("/api/tick/diagnostic/hallucination")
+    with TestClient(app) as c:
+        r = c.get("/api/tick/diagnostic/hallucination")
     assert r.status_code == 401

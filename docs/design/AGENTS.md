@@ -4,16 +4,23 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-无限小说生成系统 — 单栈 FastAPI + React/Vite,9 Agent + 7 阶段 Tick 调度的
-多智能体小说生成系统。设计哲学来自
-[`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md):
-**故事是模拟的副产品,Narrator 选择性讲述**。
+无限小说生成系统 — 单栈 FastAPI + React/Vite 的整书长篇小说生产系统。默认产品路径是
+Author production：整书规格与大纲 → 串行章节/分节 Writer → 确定性校验 → 原子提交。
+9 Agent + 7 阶段 Tick 世界模拟保留为显式实验功能，其设计哲学来自
+[`infinite-novel-multiagent-prompts.md`](./infinite-novel-multiagent-prompts.md)，但不参与默认
+建书、大纲或整书生产。
 
-> v1.x 章节驱动单体生成器已整体归档到 `old/`,不参与运行时。详见 `CHANGELOG.md` 2.1.0。
+> 旧章节驱动单体生成器已整体归档到 `old/`，不参与运行时。
 
 ## 核心架构
 
-### 9 Agent + 7 阶段 Tick 循环
+### 默认 Author production
+
+整书契约、持久化、编排与 API 位于 `backend/story/production_*.py`、
+`backend/api/production_routes.py` 和 `backend/api/production_control_routes.py`。默认路径
+不构建 Tick runtime；完整说明见 [`../FINAL_ARCHITECTURE.md`](../FINAL_ARCHITECTURE.md)。
+
+### 实验性 9 Agent + 7 阶段 Tick 循环
 
 | # | Agent | 频率 | LLM | 路径 |
 |---|-------|------|-----|------|
@@ -30,15 +37,21 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ### 多 LLM 提供商
 
-`core/config.py` 通过 `LLM_PROVIDER` 环境变量切换:
-- `deepseek` (默认), `mimo` (小米), `custom` (任意 OpenAI 兼容)
+`core/config.py` 使用数据驱动 provider catalog。运行时配置优先级固定为：请求显式配置 →
+Stage 显式配置 → 服务端持久配置 → 环境 fallback；浏览器还可使用会话或当前设备配置。
 
 `backend/config/settings.py` 用 `importlib` 加载 `core/config.py:get_active_llm_config()`,
-读取 `.env`。`.env` 缺失时回落到根 `config.json`。
+兼容读取部署环境和根 `config.json`。真实验收只显式只读传入原始 `coding.txt`，不把凭据
+复制进仓库文件。
 
 ### 数据存储
 
-`backend/data/novels/{novel_id}/` 下:
+`backend/data/novels/{novel_id}/` 下，默认 Author 主要维护 `production_spec.json`、
+`book_outline.json`、`style_profiles.json`、`active_style.json`、`generation_jobs/`、
+`production_attempts/`、`production_events/`、`production_chapters/` 及 StoryBible/Canon/
+Thread/Memory/transaction 权威文件。
+
+实验性 simulation 继续维护：
 - `tick_state.json` — Pydantic v2 dump(WorldState + CharacterProfile×N + OpenLoop + …)
 - `summary_tree.json` — 分层摘要 + L3 传说
 - `ticks.db` — SQLite WAL (tick_log + events 两表)
@@ -61,7 +74,7 @@ start.bat                    # Windows
 
 # 单独启动
 python run.py --reload                            # 后端 → http://127.0.0.1:8762
-cd frontend && npm run dev                        # 前端 → http://127.0.0.1:3143/nw/
+cd frontend && npm run dev                        # 前端 → http://127.0.0.1:3143/
 
 # 冷启动一个新世界
 python -m backend.bootstrap_prompts --novel-id mountain --seed "..."
@@ -105,14 +118,14 @@ python run.py                     # FastAPI 自动 mount frontend/dist 到 /nw/
 | `backend/bootstrap_prompts.py` | 5 prompt 冷启动 CLI |
 | `backend/api/tick_routes.py` | 14 条 tick 控制 REST 端点 |
 | `backend/api/routes.py` | 节级管线 REST + SSE(legacy 节级管线) |
-| `backend/config/settings.py` | `.env` + `config.json` 双源配置 |
+| `backend/config/settings.py` | 服务端配置与 legacy 环境/config fallback |
 | `backend/nf_core/llm_client.py` | OpenAI SDK 包装,支持 streaming + JSON mode |
 | `backend/nf_core/action_resolver.py` | 纯 Python 行动冲突解析 |
 | `backend/nf_core/prompt_builder.py` | Token 自适应裁剪 |
 | `core/config.py` | 多 provider 路由,backend 通过 importlib 加载 |
 | `memory_system/models.py` | Pydantic v2 tick 契约 + 遗留 dataclass |
 | `evaluation/continuity_v2.py` | ConsistencyGuardian 复用的连贯性评估器 |
-| `frontend/vite.config.js` | base=/nw/,/api → 8762 proxy(host=127.0.0.1 强制 IPv4) |
+| `frontend/vite.config.js` | base 默认 `/`，`/api` → 8762 proxy（host 强制 IPv4） |
 | `frontend/src/` | React 18 + react-force-graph-2d + react-markdown |
 | `run.py` | 根级启动入口,等价 uvicorn backend.main:app --app-dir backend |
 
@@ -142,7 +155,7 @@ backend 内所有文件操作通过 `TickState.data_dir` 走绝对路径,不接�
 
 ## 测试约定
 
-测试文件:`backend/tests/test_*.py`,8 个文件 50 个用例。
+测试文件为 `backend/tests/test_*.py`；不要在文档中缓存易过期的文件/用例总数。
 
 - 用 `mock_llm` fixture 控制 LLM 输出
 - `mock_llm.set_responses([dict, str, ...])` 排队下一组返回
@@ -154,4 +167,5 @@ backend 内所有文件操作通过 `TickState.data_dir` 走绝对路径,不接�
 - ❌ 重新引入 `core.NovelGenerator` 链路(章节式生成)— 已归档到 `old/core/`
 - ❌ 在 backend 子模块写 `from backend.X` — 用裸 import 即可
 - ❌ 改动 `old/` 内容 — 那是只读归档
-- ❌ 在 `config.json` 里硬编码 API key — 放 `.env`
+- ❌ 在 `config.json`、作品目录或仓库文件中硬编码 API key。浏览器使用会话/设备配置，
+  服务端由部署环境或秘密管理系统注入；真实验收只显式只读传入原始 `coding.txt`

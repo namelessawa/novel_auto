@@ -18,6 +18,13 @@ import pytest
 
 import novel_manager
 from memory_system.models import EntityType, TickSummary
+from nf_core.provider_runtime import (
+    ProviderRuntimeConfig,
+    provider_client_registry,
+    reset_stage_provider_config,
+    resolve_provider_runtime,
+    set_stage_provider_config,
+)
 from persistence.tick_db import TickDB
 
 
@@ -78,20 +85,35 @@ def test_set_active_novel_id_is_noop_v226(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def llm_client_isolated():
+def offline_provider():
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="test",
+        api_key="test-only-key",
+        base_url="https://provider.invalid/v1",
+        model="test-model",
+        source="test_fixture",
+    )
+    token = set_stage_provider_config(config)
+    provider_client_registry.invalidate()
+    try:
+        yield config
+    finally:
+        provider_client_registry.invalidate()
+        reset_stage_provider_config(token)
+
+
+@pytest.fixture
+def llm_client_isolated(offline_provider):
     """每个用例独立 — 测试结束后用启动期 settings 显式还原 _client/_model。"""
     import nf_core.llm_client as llm_module
-    from config.settings import settings as _live
 
-    saved = (_live.deepseek_api_key, _live.deepseek_base_url, _live.deepseek_model)
+    saved = resolve_provider_runtime()
     yield llm_module
-    llm_module.llm_client.reload(
-        api_key=saved[0], base_url=saved[1], model=saved[2]
-    )
+    llm_module.llm_client.reload(config=saved)
 
 
 def test_llm_client_reload_explicit_params(llm_client_isolated):
-    """显式传 api_key/base_url/model 时, 立即生效, 不读 config.json。"""
+    """Explicit reload reports/invalidate the config without rebinding context."""
     llm_module = llm_client_isolated
 
     old_client = llm_module.llm_client._client
@@ -100,37 +122,31 @@ def test_llm_client_reload_explicit_params(llm_client_isolated):
         base_url="https://example.test/v1",
         model="custom-model-x",
     )
-    assert applied["base_url"] == "https://example.test/v1"
     assert applied["model"] == "custom-model-x"
-    assert llm_module.llm_client._model == "custom-model-x"
+    assert applied["source"] == "explicit"
+    assert "base_url" not in applied
+    assert llm_module.llm_client._model == "test-model"
     assert llm_module.llm_client._client is not old_client
 
 
-def test_llm_client_reload_picks_up_config_json_change(monkeypatch, llm_client_isolated):
-    """reload() 无参时必须重读 resolve_llm_block_now 的结果。"""
-    import sys
-    # NOTE: ``config/__init__.py`` 用 ``from .settings import settings`` 把
-    # ``config.settings`` 这个属性名劫持成了 Settings 实例 — 所以
-    # ``import config.settings as cfg_mod`` 会拿到 Settings 实例, 不是模块。
-    # 用 sys.modules 显式取出真正的子模块对象。
-    cfg_mod = sys.modules["config.settings"]
+def test_llm_client_reload_no_args_accepts_dynamic_runtime_config(
+    monkeypatch,
+    llm_client_isolated,
+):
+    """reload() must resolve the current runtime instead of an import snapshot."""
     llm_module = llm_client_isolated
-
-    fake_block = {
-        "api_key": "sk-from-reload",
-        "base_url": "https://hot.example.com/v1",
-        "model": "hot-model",
-        "provider": "custom",
-        "timeout": 60,
-        "source": "config.json",
-    }
-    monkeypatch.setattr(cfg_mod, "resolve_llm_block_now", lambda: fake_block)
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="custom",
+        api_key="sk-from-reload",
+        base_url="https://hot.example.invalid/v1",
+        model="hot-model",
+        source="server_config",
+    )
+    monkeypatch.setattr(llm_module, "resolve_provider_runtime", lambda: config)
 
     applied = llm_module.llm_client.reload()
-    assert applied["base_url"] == "https://hot.example.com/v1"
     assert applied["model"] == "hot-model"
-    assert applied["source"] == "config.json"
-    assert llm_module.llm_client._model == "hot-model"
+    assert applied["source"] == "server_config"
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +155,10 @@ def test_llm_client_reload_picks_up_config_json_change(monkeypatch, llm_client_i
 
 
 @pytest.mark.asyncio
-async def test_chat_raises_budget_exceeded_when_over_limit(monkeypatch):
+async def test_chat_raises_budget_exceeded_when_over_limit(
+    monkeypatch,
+    offline_provider,
+):
     """累计超额时,medium/optional 必须被拦截在 OpenAI 调用之前。"""
     import nf_core.llm_client as llm_module
     from nf_core.token_budget import (
@@ -181,7 +200,10 @@ async def test_chat_raises_budget_exceeded_when_over_limit(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_chat_critical_priority_always_proceeds(monkeypatch):
+async def test_chat_critical_priority_always_proceeds(
+    monkeypatch,
+    offline_provider,
+):
     """critical 即使爆预算也必须放行 — Narrator/Guardian 不可掐断。"""
     import nf_core.llm_client as llm_module
     from nf_core.token_budget import (
@@ -226,7 +248,10 @@ async def test_chat_critical_priority_always_proceeds(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_chat_no_budget_limit_allows_everything(monkeypatch):
+async def test_chat_no_budget_limit_allows_everything(
+    monkeypatch,
+    offline_provider,
+):
     """未设上限的 tracker 不应拦截任何调用 — 默认行为不变。"""
     import nf_core.llm_client as llm_module
     from nf_core.token_budget import TokenBudgetTracker, set_global_tracker

@@ -29,9 +29,18 @@ from story.persistence import (
     GenerationTransactionStore,
     MemoryRepository,
 )
+from story.production_models import (
+    ChapterOutline,
+    NovelProductionSpec,
+    ProductionContextSnapshot,
+    StyleProfile,
+)
 from story.runtime import clear_author_runtimes
 from story.service import GenerationRejected
 from tasks.task_manager import get_task_manager
+
+
+_OPEN_CLIENTS: list[TestClient] = []
 
 
 def _user(uid: str) -> User:
@@ -55,17 +64,24 @@ def isolated_api(monkeypatch, tmp_path):
     get_task_manager()._clear_for_tests()
     clear_author_runtimes()
     _clear_for_tests()
-    yield
-    get_task_manager()._clear_for_tests()
-    clear_author_runtimes()
-    _clear_for_tests()
+    try:
+        yield
+    finally:
+        while _OPEN_CLIENTS:
+            _OPEN_CLIENTS.pop().__exit__(None, None, None)
+        get_task_manager()._clear_for_tests()
+        clear_author_runtimes()
+        _clear_for_tests()
 
 
 def _client(uid: str) -> TestClient:
     app = FastAPI()
     app.include_router(story_routes.router)
     app.dependency_overrides[get_current_user] = lambda: _user(uid)
-    return TestClient(app)
+    client = TestClient(app)
+    client.__enter__()
+    _OPEN_CLIENTS.append(client)
+    return client
 
 
 def test_story_bible_get_put_and_revision_conflict(isolated_api) -> None:
@@ -428,6 +444,46 @@ def test_memory_and_transaction_ledger_are_auditable_and_redacted(
             ),
             usage={"total_tokens": 12, "api_key": 999},
             error="Authorization: fixture-redaction-sentinel",
+            production_context=ProductionContextSnapshot(
+                job_id="job_public_evidence",
+                job_revision=3,
+                production_spec=NovelProductionSpec(
+                    title="Public evidence",
+                    premise="A recoverable production run.",
+                    theme="continuity",
+                    target_total_chars=1_000,
+                    volume_count=1,
+                    chapter_count=1,
+                    target_chapter_chars=1_000,
+                    accepted_chapter_min_chars=900,
+                    accepted_chapter_max_chars=1_100,
+                    section_target_chars=1_000,
+                ),
+                outline_revision=4,
+                chapter_outline=ChapterOutline(
+                    id="chapter_0001",
+                    ordinal=1,
+                    volume_id="volume_0001",
+                    title="Public chapter",
+                    objective="Advance the public evidence contract.",
+                    target_chars=1_000,
+                ),
+                style_profile=StyleProfile(
+                    id="style_public",
+                    revision=2,
+                    name="Public style",
+                    optional_user_sample="PRIVATE_STYLE_SAMPLE_MUST_NEVER_LEAK",
+                ),
+                story_bible_revision=1,
+                canonical_state_revision=2,
+                story_thread_revision=1,
+                memory_revision=1,
+                chapter_attempt=1,
+                section_ordinal=2,
+                section_target_chars=1_000,
+                section_min_chars=900,
+                section_max_chars=1_100,
+            ),
         )
     )
 
@@ -446,6 +502,14 @@ def test_memory_and_transaction_ledger_are_auditable_and_redacted(
     assert "fixture-redaction-sentinel" not in transactions.text
     assert "api_key" not in transactions.text
     assert "base_canonical_state" not in transactions.text
+    assert "PRIVATE_STYLE_SAMPLE_MUST_NEVER_LEAK" not in transactions.text
+    production_context = payload["production_context"]
+    assert production_context["job_id"] == "job_public_evidence"
+    assert production_context["chapter_ordinal"] == 1
+    assert production_context["section_ordinal"] == 2
+    assert production_context["style_profile_id"] == "style_public"
+    assert production_context["style_profile_revision"] == 2
+    assert len(production_context["style_prompt_hash"]) == 64
 
 
 def test_exports_include_only_committed_prose_and_public_evidence(

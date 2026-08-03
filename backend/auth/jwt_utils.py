@@ -19,13 +19,17 @@ import secrets
 import threading
 from datetime import datetime, timedelta, timezone
 
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 
 from .config import get_auth_config
 
 
 class TokenError(Exception):
     """统一 JWT 解码/校验错误 — routes 转 401。"""
+
+    def __init__(self, code: str = "AUTH_TOKEN_INVALID") -> None:
+        self.code = code
+        super().__init__(code)
 
 
 # 内存撤销表 — jti -> exp_timestamp。lazy cleanup 在每次 revoke 时跑一次。
@@ -54,8 +58,10 @@ def decode_token(token: str) -> dict:
     cfg = get_auth_config()
     try:
         return jwt.decode(token, cfg.jwt_secret, algorithms=[cfg.jwt_algorithm])
-    except JWTError as e:
-        raise TokenError(str(e)) from e
+    except ExpiredSignatureError as exc:
+        raise TokenError("AUTH_TOKEN_EXPIRED") from exc
+    except JWTError as exc:
+        raise TokenError("AUTH_TOKEN_INVALID") from exc
 
 
 def is_near_expiry(payload: dict, threshold_days: int = 1) -> bool:

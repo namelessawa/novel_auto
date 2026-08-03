@@ -4,7 +4,7 @@
     "git_sha": "e63bb36f30654adfbe03fad09d4be52f7e4caed5",
     "provider": {
       "provider": "custom",
-      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "base_url": "[REDACTED_PROVIDER_BASE_URL]",
       "model": "glm-5.2",
       "credential_present": true,
       "source_file": "E:\\pythonproject\\novel_auto\\coding.txt"

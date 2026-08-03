@@ -1,5 +1,9 @@
 # Phase 6 FINAL — 长程持久性 + 产品价值兑现 (2026-06-23 ~ 06-25)
 
+> 历史 simulation 阶段记录，仅用于追溯 Tick 实验；其中 PASS 不代表当前整书 Author
+> production 或最终发布 verdict。当前结论只看
+> [`../FINAL_ACCEPTANCE.md`](../FINAL_ACCEPTANCE.md)。
+
 > Plan: `PHASE6_PLAN.md` (06-17 draft).
 > Execution: 2026-06-23 → 06-25 单/双 session, **70+ iter ship**.
 > 验收: 阅读 reader, 跑 bench, /code-review pass.
@@ -130,7 +134,7 @@ iter#YYY (proposed) — 加 narrate_rate-based intensity guard:
 * `docs/iter/INDEX.md` (800+ artifact 导航)
 * `docs/iter/verdict-3seed-final.md` (cross-seed 对比)
 * `docs/iter/verdict-phase6a-500tick.md` + `verdict-phase6a-500tick-retry-0625.md` + `verdict-spike-rootcause-0625.md` (Phase 6-A 系列)
-* `docs/iter/CHANGELOG.md` v2.49 段
+* `docs/iter/CHANGELOG.md` 对应历史阶段段落
 * `CLAUDE.md` "Phase 6 新增 env" + "Phase 6 新增 scripts" + "Phase 6-B Reader API" 三段
 
 ## verdict

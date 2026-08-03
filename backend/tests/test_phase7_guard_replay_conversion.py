@@ -16,10 +16,10 @@ SOURCES = [
 ]
 EXPECTED_SOURCE_HASHES = {
     "phase7-gateb-sidecar-run1-glm-20260721.json": (
-        "cdc088f57d9e984caea279ea2e6d4a4ca0eaffc6fbe24d2ccaa7f8bed777317a"
+        "800ec141312cb3ecc509a18873e90b29f262f06f30b7ce409da14fc797a9785b"
     ),
     "phase7-gateb-sidecar-run2-glm-20260721.json": (
-        "58a6a8ecee0e102e5b596956b651b7d355ccc37e2ffcf5927742d1483c50b9a7"
+        "cb76d381dbe35ad9682cfb5b9a48a06eddfc94db5a315e05cce34406bea819aa"
     ),
 }
 

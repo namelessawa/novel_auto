@@ -6,6 +6,7 @@
 """
 
 import os
+from collections.abc import Mapping
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -91,18 +92,27 @@ _PROVIDER_CATALOG: tuple[tuple[str, str, str, str, str], ...] = (
 )
 
 
-def _build_provider(key: str, label: str, default_base_url: str, default_model: str, env_prefix: str) -> dict:
+def _build_provider(
+    key: str,
+    label: str,
+    default_base_url: str,
+    default_model: str,
+    env_prefix: str,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict:
     """从 catalog 一行 + env 派生 provider 配置 dict.
 
     env_prefix=ARK → 读 ARK_API_KEY / ARK_BASE_URL / ARK_MODEL, 留空时回落到
     default_base_url / default_model. custom 类 provider (空 default) 不会
     通过 _complete() 校验, 自动跳过 fallback.
     """
+    source = os.environ if environ is None else environ
     return {
         "label": label,
-        "api_key": os.getenv(f"{env_prefix}_API_KEY", ""),
-        "base_url": os.getenv(f"{env_prefix}_BASE_URL", default_base_url),
-        "model": os.getenv(f"{env_prefix}_MODEL", default_model),
+        "api_key": source.get(f"{env_prefix}_API_KEY", ""),
+        "base_url": source.get(f"{env_prefix}_BASE_URL", default_base_url),
+        "model": source.get(f"{env_prefix}_MODEL", default_model),
         "env_prefix": env_prefix,
     }
 
@@ -129,6 +139,82 @@ CUSTOM_BASE_URL = PROVIDERS["custom"]["base_url"]
 CUSTOM_MODEL = PROVIDERS["custom"]["model"]
 
 
+def resolve_llm_config_now(
+    provider: str | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict:
+    """Resolve provider credentials from the current environment.
+
+    ``PROVIDERS`` and the historical top-level constants remain import-time
+    snapshots for compatibility.  Production callers must use this resolver,
+    which rebuilds the catalog entries on every invocation.
+    """
+    import logging
+
+    source = os.environ if environ is None else environ
+    providers = {
+        spec[0]: _build_provider(*spec, environ=source)
+        for spec in _PROVIDER_CATALOG
+    }
+    requested_raw = provider if provider is not None else source.get(
+        "LLM_PROVIDER", "deepseek"
+    )
+    requested = str(requested_raw).strip().lower()
+    requested = requested if requested in providers else "deepseek"
+    cfg = providers.get(requested, providers["deepseek"])
+    active = requested
+
+    def _complete(candidate: dict) -> bool:
+        return bool(
+            candidate.get("api_key")
+            and candidate.get("base_url")
+            and candidate.get("model")
+        )
+
+    if not _complete(cfg):
+        for name in _FALLBACK_ORDER:
+            fallback = providers.get(name) or {}
+            if name != active and _complete(fallback):
+                logging.getLogger(__name__).warning(
+                    "LLM provider configuration is incomplete; using fallback %s",
+                    name,
+                )
+                active = name
+                cfg = fallback
+                break
+
+    def _int(name: str, legacy: str, default: str) -> int:
+        raw = source.get(name) or source.get(legacy) or default
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return int(default)
+
+    def _float(name: str, legacy: str, default: str) -> float:
+        raw = source.get(name) or source.get(legacy) or default
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return float(default)
+
+    return {
+        "provider": active,
+        "label": cfg["label"],
+        "api_key": cfg["api_key"],
+        "base_url": cfg["base_url"],
+        "model": cfg["model"],
+        "max_tokens": _int("LLM_MAX_TOKENS", "DEEPSEEK_MAX_TOKENS", "8192"),
+        "temperature": _float(
+            "LLM_TEMPERATURE",
+            "DEEPSEEK_TEMPERATURE",
+            "0.7",
+        ),
+        "timeout": _int("LLM_TIMEOUT", "DEEPSEEK_TIMEOUT", "120"),
+        "thinking_mode": str(source.get("LLM_THINKING_MODE", "")).strip(),
+    }
+
+
 def get_active_llm_config() -> dict:
     """
     返回当前生效的 LLM 配置。
@@ -142,51 +228,20 @@ def get_active_llm_config() -> dict:
     Returns:
         dict: 包含 provider/label/api_key/base_url/model/max_tokens/temperature/timeout
     """
-    import logging
+    return resolve_llm_config_now()
 
-    requested = LLM_PROVIDER if LLM_PROVIDER in PROVIDERS else "deepseek"
-    cfg = PROVIDERS.get(requested, PROVIDERS["deepseek"])
-    active = requested
 
-    def _complete(c: dict) -> bool:
-        return bool(c.get("api_key") and c.get("base_url") and c.get("model"))
-
-    if not _complete(cfg):
-        # 找一个完整的 fallback provider
-        for name in _FALLBACK_ORDER:
-            fb = PROVIDERS.get(name) or {}
-            if name != active and _complete(fb):
-                logging.getLogger(__name__).warning(
-                    "LLM_PROVIDER=%s 配置不完整(api_key/base_url/model 缺一), "
-                    "自动 fallback 到 %s。要消除此警告: 在 .env 填齐该 provider 的凭据, "
-                    "或把 LLM_PROVIDER 改成 %s。",
-                    requested,
-                    name,
-                    name,
-                )
-                active = name
-                cfg = fb
-                break
-        # 全员都不齐: 保留原 cfg, 让 OpenAI client 给出 Missing credentials, 此处不掩盖
-        else:
-            if not _complete(cfg):
-                logging.getLogger(__name__).warning(
-                    "所有 provider (deepseek/mimo/custom) 都缺凭据。"
-                    ".env 至少填一个 *_API_KEY。当前 LLM_PROVIDER=%s 将原样返回, "
-                    "上游 LLM 调用会报 Missing credentials。",
-                    requested,
-                )
-
-    return {
-        "provider": active,
-        "label": cfg["label"],
-        "api_key": cfg["api_key"],
-        "base_url": cfg["base_url"],
-        "model": cfg["model"],
-        "max_tokens": DEFAULT_MAX_TOKENS,
-        "temperature": DEFAULT_TEMPERATURE,
-        "timeout": DEFAULT_TIMEOUT,
-    }
+def get_provider_catalog() -> list[dict[str, str]]:
+    """Return public static provider metadata without credentials."""
+    return [
+        {
+            "provider": key,
+            "label": label,
+            "default_base_url": default_base_url,
+            "default_model": default_model,
+        }
+        for key, label, default_base_url, default_model, _ in _PROVIDER_CATALOG
+    ]
 
 
 # --- 向后兼容别名 -----------------------------------------------------------

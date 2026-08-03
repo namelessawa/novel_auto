@@ -20,6 +20,9 @@ from story.narrative_contract import (
 from story.writing_plan import SectionWritingPlan
 
 
+_PROVIDER_REPAIR_CELL_NAMES = ("beat_1", "beat_2", "beat_3")
+
+
 class RepairEventInstruction(NarrativeModel):
     event_id: str
     status: str
@@ -84,6 +87,7 @@ class ServerRepairPatchTemplate(NarrativeModel):
     end_offset: int | None = Field(default=None, ge=0)
     target_events: list[str] = Field(default_factory=list)
     target_end_states: list[str] = Field(default_factory=list)
+    min_chars: int = Field(default=0, ge=0, le=450)
     target_chars: int = Field(default=0, ge=0, le=450)
     max_chars: int = Field(default=300, ge=1, le=450)
     preserve: list[str] = Field(default_factory=list)
@@ -117,8 +121,17 @@ class ServerRepairPatchTemplate(NarrativeModel):
                 raise ValueError("only expand may require provider prose")
             if self.server_patch_text is not None:
                 raise ValueError("provider template cannot carry server patch prose")
+            if (
+                self.min_chars
+                and not self.min_chars <= self.target_chars <= self.max_chars
+            ) or self.target_chars > self.max_chars:
+                raise ValueError(
+                    "provider template requires min <= target <= max chars"
+                )
         elif self.server_patch_text is None:
             raise ValueError("deterministic template requires server patch prose")
+        elif self.min_chars:
+            raise ValueError("deterministic template cannot require provider min chars")
         return self
 
 
@@ -859,7 +872,34 @@ def _template_delta_from_model(
         return -narrative_char_count(
             narrative[template.start_offset : template.end_offset]
         )
+    if template.patch_type == "replace":
+        assert template.start_offset is not None
+        assert template.end_offset is not None
+        removed = narrative_char_count(
+            narrative[template.start_offset : template.end_offset]
+        )
+        inserted = narrative_char_count(template.server_patch_text or "")
+        return inserted - removed
     return narrative_char_count(template.server_patch_text or "")
+
+
+def _distribute_integer(total: int, count: int) -> list[int]:
+    """Distribute a frozen total deterministically without losing a character."""
+
+    if count <= 0:
+        return []
+    quotient, remainder = divmod(max(0, total), count)
+    return [
+        quotient + int(index < remainder)
+        for index in range(count)
+    ]
+
+
+def _repair_sentence_targets(target_chars: int) -> list[int]:
+    """Steer repair prose with complete sentences near forty characters each."""
+
+    sentence_count = max(1, (target_chars + 39) // 40)
+    return _distribute_integer(target_chars, sentence_count)
 
 
 def build_server_patch_templates(
@@ -926,6 +966,7 @@ def build_server_patch_templates(
         end: int | None = None,
         target_events: list[str] | None = None,
         target_end_states: list[str] | None = None,
+        min_chars: int = 0,
         target_chars: int = 0,
         max_chars: int = 300,
         purpose: str = "",
@@ -958,6 +999,7 @@ def build_server_patch_templates(
                 end_offset=end,
                 target_events=target_events or [],
                 target_end_states=target_end_states or [],
+                min_chars=min_chars,
                 target_chars=target_chars,
                 max_chars=max_chars,
                 preserve=(
@@ -1041,7 +1083,12 @@ def build_server_patch_templates(
         for item in templates
     )
     adjustment = plan.length_adjustment
-    projected_chars = adjustment.current_chars + projected_delta
+    original_chars = narrative_char_count(original_narrative)
+    if adjustment.current_chars != original_chars:
+        raise ValueError(
+            "length adjustment current_chars does not match original narrative"
+        )
+    projected_chars = original_chars + projected_delta
     desired = adjustment.desired_final_chars
     if desired <= 0:
         lower = min(adjustment.max_chars, adjustment.min_chars + 80)
@@ -1055,22 +1102,66 @@ def build_server_patch_templates(
                 upper,
             ),
         )
-    target_add = max(0, desired - projected_chars)
+    required_add = max(0, adjustment.min_chars - projected_chars)
+    target_add = max(required_add, desired - projected_chars)
     max_add = max(0, adjustment.max_chars - projected_chars)
-    if adjustment.action == "add" and target_add > 0 and max_add > 0:
-        max_patch_chars = min(450, max_add)
-        append_template(
-            patch_type="expand",
-            insertion=insertion_offset,
-            target_chars=min(target_add, max_patch_chars),
-            max_chars=max_patch_chars,
-            purpose=(
-                "expand existing action, environment, interaction, or emotion "
-                "without adding plot or facts"
-            ),
-            provider_text_required=True,
-            server_patch_text=None,
-        )
+    if (
+        adjustment.action == "add" or required_add > 0
+    ) and target_add > 0 and max_add > 0:
+        available = max(0, 8 - len(templates))
+        requested_target_total = min(max_add, target_add)
+        if requested_target_total > 0 and available > 0:
+            # Size the request count from the desired addition, then divide the
+            # final section headroom across exactly those requests. This freezes
+            # a provable aggregate ceiling instead of giving every sibling the
+            # independent 450-character cap that overflowed attempt 10.
+            chunk_count = max(1, (requested_target_total + 449) // 450)
+            chunk_count = min(available, requested_target_total, chunk_count)
+            authorized_max_total = min(max_add, 450 * chunk_count)
+            if required_add > authorized_max_total:
+                # Deterministic templates consumed too many of the eight slots.
+                # Return only those server-owned operations and avoid requesting
+                # a provider expansion that cannot possibly reach the floor.
+                return templates
+            centered_target_total = (
+                required_add + authorized_max_total
+            ) // 2
+            generation_target_total = max(
+                required_add,
+                chunk_count,
+                min(requested_target_total, centered_target_total),
+            )
+            targets = _distribute_integer(
+                generation_target_total,
+                chunk_count,
+            )
+            maxima = _distribute_integer(
+                authorized_max_total,
+                chunk_count,
+            )
+            minima = _distribute_integer(
+                max(required_add, chunk_count),
+                chunk_count,
+            )
+            for minimum, target, maximum in zip(
+                minima,
+                targets,
+                maxima,
+                strict=True,
+            ):
+                append_template(
+                    patch_type="expand",
+                    insertion=insertion_offset,
+                    min_chars=minimum,
+                    target_chars=target,
+                    max_chars=maximum,
+                    purpose=(
+                        "expand existing action, environment, interaction, or emotion "
+                        "without adding plot or facts"
+                    ),
+                    provider_text_required=True,
+                    server_patch_text=None,
+                )
     return templates
 
 
@@ -1083,12 +1174,75 @@ def repair_patch_prompt_payload(
         original_narrative=original_narrative,
         contract_hash=plan.original_contract_hash,
     )
+    provider_templates = [
+        item for item in templates if item.provider_text_required
+    ]
+    expansion_focus = (
+        "existing action and physical response",
+        "existing environment and immediate perception",
+        "existing-character interaction and present emotion",
+    )
+    deterministic_delta = sum(
+        _template_delta_from_model(item, original_narrative)
+        for item in templates
+        if not item.provider_text_required
+    )
+    projected_without_provider = (
+        narrative_char_count(original_narrative) + deterministic_delta
+    )
+    if plan.length_adjustment.current_chars != narrative_char_count(
+        original_narrative
+    ):
+        raise ValueError(
+            "length adjustment current_chars does not match original narrative"
+        )
+    aggregate_min = max(
+        sum(max(1, item.min_chars) for item in provider_templates),
+        plan.length_adjustment.min_chars - projected_without_provider,
+    )
+    aggregate_target = sum(item.target_chars for item in provider_templates)
+    aggregate_max = sum(item.max_chars for item in provider_templates)
+    final_headroom = max(
+        0,
+        plan.length_adjustment.max_chars - projected_without_provider,
+    )
+    if provider_templates and aggregate_max > final_headroom:
+        raise ValueError(
+            "provider repair template maxima exceed frozen final headroom"
+        )
+    if provider_templates and aggregate_min > aggregate_max:
+        raise ValueError(
+            "provider repair templates cannot reach the frozen aggregate floor"
+        )
+    if provider_templates and not aggregate_min <= aggregate_target <= aggregate_max:
+        raise ValueError(
+            "provider repair target must stay inside frozen aggregate bounds"
+        )
     provider_requests = [
         {
             "patch_id": item.patch_id,
+            "min_chars": max(1, item.min_chars),
             "target_chars": item.target_chars,
             "max_chars": item.max_chars,
+            "minimum_is_hard": True,
+            "target_is_advisory": True,
+            "maximum_is_hard": True,
+            "drafting_requirement": "mandatory",
+            "patch_text_shape": "required_object_cells",
+            "cell_names": list(_PROVIDER_REPAIR_CELL_NAMES),
+            "cell_count": len(_PROVIDER_REPAIR_CELL_NAMES),
+            "cell_target_chars": _distribute_integer(
+                item.target_chars,
+                len(_PROVIDER_REPAIR_CELL_NAMES),
+            ),
+            "cell_targets_are_advisory": True,
+            "punctuation_included": True,
             "purpose": item.purpose,
+            "distinct_focus": expansion_focus[index % len(expansion_focus)],
+            "diction": (
+                "neutral contemporary literal diction; avoid ornate or classical "
+                "number-bearing expressions"
+            ),
             "allowed_content": [
                 "existing action detail",
                 "existing environment",
@@ -1101,9 +1255,32 @@ def repair_patch_prompt_payload(
                 "new fact",
                 "new date, number, kinship, injury, casualty, or world rule",
             ],
+            "patch_text_lexical_contract": {
+                "scope": "patch_text_only",
+                "allowed_number_tokens": [],
+                "forbidden_pattern": (
+                    "[0-9零〇一二两三四五六七八九十百千万]"
+                ),
+                "includes": [
+                    "literal quantity",
+                    "rhetorical quantity",
+                    "approximate count",
+                    "idiom",
+                ],
+                "number_free_substitutions": [
+                    "他们",
+                    "些",
+                    "少许",
+                    "片刻",
+                    "反复",
+                    "短暂",
+                    "微微",
+                ],
+                "self_check_before_return": True,
+                "schema_version_and_patch_id_exempt": True,
+            },
         }
-        for item in templates
-        if item.provider_text_required
+        for index, item in enumerate(provider_templates)
     ]
     return {
         "execution_mode": "SERVER_OWNED_TEMPLATE_TEXT_ONLY",
@@ -1118,6 +1295,20 @@ def repair_patch_prompt_payload(
         ],
         "expansion_request": (
             provider_requests[0] if provider_requests else None
+        ),
+        "aggregate_patch_text_budget": (
+            {
+                "count_non_whitespace_unicode_characters": True,
+                "min_chars": aggregate_min,
+                "target_chars": aggregate_target,
+                "max_chars": aggregate_max,
+                "minimum_is_hard": True,
+                "target_is_advisory": True,
+                "maximum_is_hard": True,
+                "uneven_per_patch_allocation_allowed": True,
+            }
+            if provider_requests
+            else None
         ),
         "missing_events": [item.model_dump(mode="json") for item in plan.missing_events],
         "incomplete_events": [item.model_dump(mode="json") for item in plan.incomplete_events],
@@ -1136,30 +1327,50 @@ def repair_patch_prompt_payload(
         ],
         "must_preserve_facts": plan.must_preserve_facts,
         "forbidden_changes": plan.forbidden_changes,
-        "minimum_style_constraints": plan.style_constraints,
+        "minimum_style_constraints": (
+            [] if provider_requests else plan.style_constraints
+        ),
         "instruction": plan.repair_instruction,
         "priority_order": [
             "event_completion",
             "required_end_state",
             "unsupported_addition_delete",
             "length_expand_or_compact",
-            "style_tiny_adjustment",
+            *([] if provider_requests else ["style_tiny_adjustment"]),
         ],
         "relevant_windows": _repair_windows(plan, original_narrative),
         "output_contract": {
             "patches": [
                 {
                     "patch_id": "copy from provider_patch_requests",
-                    "patch_text": "only provider-authored prose",
+                    "patch_text": {
+                        cell_name: "one provider-authored prose beat"
+                        for cell_name in _PROVIDER_REPAIR_CELL_NAMES
+                    },
                 }
             ]
         },
         "final_instruction": (
             "Return schema_version=1 and exactly one patch_id/patch_text pair for "
-            "every provider_patch_requests item. Do not return patch_type, anchor, "
+            "every provider_patch_requests item. Each patch_text must be an object "
+            "with exactly beat_1, beat_2, and beat_3; each value must be one complete "
+            "developed prose beat. Do not return patch_type, anchor, "
             "offset, targets, target_chars, max_chars, preserve, purpose, hashes, "
             "state, threads, memory, or full narrative. Never repeat source prose "
-            "and never create plot or facts."
+            "and never create plot or facts. The server joins each patch_text object's "
+            "three values verbatim; every joined patch must stay within its own hard "
+            "min_chars and max_chars. Per-request target_chars is advisory: uneven "
+            "distribution is allowed only within every request's frozen band. The "
+            "total non-whitespace "
+            "patch_text length must stay within aggregate_patch_text_budget min_chars "
+            "and max_chars; aim near its target_chars. The supplied cell_target_chars "
+            "are mandatory drafting steering: write one complete developed beat per "
+            "cell, counting punctuation, rather than a fragment or terse summary. "
+            "Use neutral contemporary "
+            "literal diction rather than style ornament. Before returning, self-scan "
+            "each patch_text beat and ensure it contains no glyph matched by "
+            "[0-9零〇一二两三四五六七八九十百千万], even in rhetoric, "
+            "approximate counts, or idioms; schema_version and patch_id are exempt."
         ),
     }
 

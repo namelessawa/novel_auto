@@ -7,7 +7,7 @@
 - 生成时间：`2026-07-22T12:41:35+08:00`
 - Git 分支 / 提交：`codex/author-memory-refactor-20260721` / `a5cf7b05d62ebf227278fb9baa5773f4bc1e6962`
 - Provider / 模型：`custom` / `glm-5.2`
-- API 地址：`https://ark.cn-beijing.volces.com/api/plan/v3`
+- API 地址：`[REDACTED_PROVIDER_BASE_URL]`
 - 样本：`5/5` 成功
 - Token：prompt `3767` + completion `3468` = `7235`
 - 凭据：从 `coding.txt` 读取，仅用于调用，未写入报告

@@ -11,6 +11,11 @@ from dataclasses import dataclass, replace
 
 import novel_manager
 from nf_core.env_helpers import env_bool
+from nf_core.provider_runtime import (
+    ProviderError,
+    is_recognized_provider_error,
+    safe_provider_runtime_receipt,
+)
 from sections.section_store import TickSection, get_section_store
 from story.chapter_plan import (
     ChapterPlan,
@@ -59,6 +64,8 @@ from story.persistence import (
     StoryBibleStore,
     StoryThreadStore,
 )
+from story.production_models import ProductionContextSnapshot
+from story.production_persistence import BookOutlineStore, ProductionSpecStore
 from story.repair_patch import (
     ProviderRepairPatch,
     ProviderRepairPatchSet,
@@ -111,6 +118,10 @@ class RevisionChainBrokenError(RuntimeError):
         self.transaction = transaction
 
 
+class ProductionSnapshotMismatchError(RuntimeError):
+    """A production replay or authority no longer matches its frozen snapshot."""
+
+
 @dataclass(frozen=True)
 class PreparedGeneration:
     bible: StoryBible
@@ -125,6 +136,7 @@ class PreparedGeneration:
     context: ContextPackage
     transaction: GenerationTransaction
     chapter_plan: ChapterPlan | None = None
+    production_context: ProductionContextSnapshot | None = None
 
 
 class AuthorGenerationService:
@@ -201,11 +213,13 @@ class AuthorGenerationService:
         goal: SectionGoal,
         *,
         request_id: str | None = None,
+        production_context: ProductionContextSnapshot | None = None,
     ) -> GenerationTransaction:
         request_id = request_id or f"author_{uuid.uuid4().hex[:16]}"
         async with self._generation_lock:
             if self.transactions.exists(request_id):
                 existing = self.transactions.load(request_id)
+                self._assert_replay_snapshot(existing, production_context)
                 if existing.committed or existing.phase == "rejected":
                     return existing
                 if existing.phase == "stale_context":
@@ -217,12 +231,18 @@ class AuthorGenerationService:
                     f"transaction {request_id} already exists in phase {existing.phase}"
                 )
 
-            prepared = self.prepare(goal, request_id=request_id)
+            prepared = self.prepare(
+                goal,
+                request_id=request_id,
+                production_context=production_context,
+            )
             transaction = prepared.transaction
             try:
                 planner_method = getattr(self.writer, "plan", None)
                 planner_provider_call = bool(
-                    self.enable_llm_planner and callable(planner_method)
+                    production_context is None
+                    and self.enable_llm_planner
+                    and callable(planner_method)
                 )
                 planned = await self.plan(prepared)
                 plan_report = self.validate_chapter_plan(
@@ -308,7 +328,9 @@ class AuthorGenerationService:
                 strict_report = self.validate(prepared, candidate)
                 report = strict_report
                 writer_first_pass_pass = bool(
-                    initial_preflight_report.accepted
+                    generated.primary_output_contract_pass
+                    and generated.structured_output_repair_count == 0
+                    and initial_preflight_report.accepted
                     and narrative_report.accepted
                     and strict_report.accepted
                 )
@@ -358,9 +380,13 @@ class AuthorGenerationService:
                     )
                     self.transactions.save(transaction)
                     original_candidate = candidate
-                    repair_provider_called = any(
+                    repair_provider_requested = any(
                         item.provider_text_required
                         for item in repair_plan.patch_templates
+                    )
+                    repair_provider_called = bool(
+                        repair_provider_requested
+                        and transaction.structured_output_repair_count == 0
                     )
                     if repair_provider_called:
                         repaired = await self.repair(candidate, repair_plan)
@@ -373,9 +399,74 @@ class AuthorGenerationService:
                                 "cached_tokens": 0,
                                 "total_tokens": 0,
                             },
+                            audit_codes=(
+                                ["REPAIR_CALL_BUDGET_EXHAUSTED"]
+                                if repair_provider_requested
+                                else []
+                            ),
+                            provider_repair_patches=(
+                                ProviderRepairPatchSet()
+                                if repair_provider_requested
+                                else None
+                            ),
                         )
+                    # Persist the actual call telemetry before any provider
+                    # envelope is bound or validated. A malformed/oversized
+                    # patch must never leave a real call undercounted if a
+                    # downstream hard validator raises unexpectedly.
+                    transaction = transaction.model_copy(
+                        update={
+                            "writer_calls": min(
+                                3,
+                                transaction.writer_calls
+                                + int(repair_provider_called),
+                            ),
+                            "structured_output_repair_count": (
+                                transaction.structured_output_repair_count
+                                + repaired.structured_output_repair_count
+                            ),
+                            "provider": transaction.provider or repaired.provider,
+                            "provider_model": (
+                                transaction.provider_model
+                                or repaired.provider_model
+                            ),
+                            "provider_source": (
+                                transaction.provider_source
+                                or repaired.provider_source
+                            ),
+                            "provider_config_fingerprint": (
+                                transaction.provider_config_fingerprint
+                                or repaired.provider_config_fingerprint
+                            ),
+                            "provider_config_fingerprints": list(
+                                dict.fromkeys(
+                                    [
+                                        *transaction.provider_config_fingerprints,
+                                        repaired.provider_config_fingerprint,
+                                    ]
+                                )
+                            )
+                            if repaired.provider_config_fingerprint
+                            else transaction.provider_config_fingerprints,
+                            "repair_performed": True,
+                            "usage": self._merge_usage(
+                                transaction.usage,
+                                repaired.usage,
+                                phase="repair",
+                            ),
+                            "updated_at": utc_now(),
+                        }
+                    )
+                    self.transactions.save(transaction)
                     provider_patch_set = repaired.provider_repair_patches
                     audit_codes = list(repaired.audit_codes)
+                    if (
+                        transaction.writer_calls
+                        + transaction.structured_output_repair_count
+                        > 2
+                    ):
+                        provider_patch_set = ProviderRepairPatchSet()
+                        audit_codes.append("PROVIDER_CALL_BUDGET_EXCEEDED")
                     if (
                         provider_patch_set is None
                         and repaired.repair_patches is not None
@@ -436,12 +527,6 @@ class AuthorGenerationService:
                         update={
                             "candidate": candidate,
                             "candidate_history": candidate_history,
-                            "writer_calls": min(
-                                3,
-                                transaction.writer_calls
-                                + int(repair_provider_called),
-                            ),
-                            "repair_performed": True,
                             "repair_patches": patch_set,
                             "repair_patch_report": patch_result.report,
                             "repair_enforced_removals": (
@@ -450,13 +535,12 @@ class AuthorGenerationService:
                             "repair_ignored_fields": repaired.ignored_fields,
                             "repair_audit_codes": list(
                                 dict.fromkeys(
-                                    [*audit_codes, *patch_codes]
+                                    [
+                                        *transaction.repair_audit_codes,
+                                        *audit_codes,
+                                        *patch_codes,
+                                    ]
                                 )
-                            ),
-                            "usage": self._merge_usage(
-                                transaction.usage,
-                                repaired.usage,
-                                phase="repair",
                             ),
                             "updated_at": utc_now(),
                         }
@@ -603,15 +687,10 @@ class AuthorGenerationService:
                 current = self.transactions.load(transaction.id)
                 if current.phase == "committing":
                     raise CommitPendingError(
-                        f"transaction {current.id} will be recovered on restart: {exc}"
+                        f"transaction {current.id} will be recovered on restart "
+                        f"after {type(exc).__name__}"
                     ) from exc
-                failed = current.model_copy(
-                    update={
-                        "phase": "failed",
-                        "error": f"{type(exc).__name__}: {exc}",
-                        "updated_at": utc_now(),
-                    }
-                )
+                failed = self._record_failed_transaction(current, exc)
                 self.transactions.save(failed)
                 raise
 
@@ -738,12 +817,172 @@ class AuthorGenerationService:
             novel_manager.touch_last_accessed(self.user_id, self.novel_id)
             return self.transactions.load(staged.id)
 
+    @staticmethod
+    def _assert_replay_snapshot(
+        transaction: GenerationTransaction,
+        production_context: ProductionContextSnapshot | None,
+    ) -> None:
+        frozen = transaction.production_context
+        if frozen is None and production_context is None:
+            return
+        if frozen is None or production_context is None:
+            raise ProductionSnapshotMismatchError(
+                "transaction production snapshot presence does not match replay"
+            )
+        if frozen.model_dump(mode="json") != production_context.model_dump(
+            mode="json"
+        ):
+            raise ProductionSnapshotMismatchError(
+                "transaction production snapshot does not match replay"
+            )
+
+    @staticmethod
+    def _production_style_contract(
+        production_context: ProductionContextSnapshot,
+    ) -> dict:
+        profile = production_context.style_profile
+        if profile.prompt_hash != profile.computed_prompt_hash():
+            raise ProductionSnapshotMismatchError(
+                "StyleProfile prompt hash does not match its expression contract"
+            )
+        return {
+            "key": profile.base_preset_key,
+            "profile_id": profile.id,
+            "profile_revision": profile.revision,
+            "prompt_hash": profile.prompt_hash,
+            **profile.prompt_contract(),
+        }
+
+    @staticmethod
+    def _material_production_spec(production_context: ProductionContextSnapshot) -> dict:
+        return production_context.production_spec.model_dump(
+            mode="json",
+            exclude={
+                "revision",
+                "active_style_profile_id",
+                "production_status",
+                "created_at",
+                "updated_at",
+            },
+        )
+
+    def _validate_production_context(
+        self,
+        *,
+        goal: SectionGoal,
+        bible: StoryBible,
+        state: CanonicalState,
+        threads: StoryThreadRepository,
+        memories: MemoryRepositoryState,
+        production_context: ProductionContextSnapshot,
+    ) -> StoryBible:
+        snapshot = production_context
+        mismatches: list[str] = []
+        if bible.revision != snapshot.story_bible_revision:
+            mismatches.append("StoryBible revision")
+        if state.revision != snapshot.canonical_state_revision:
+            mismatches.append("CanonicalState revision")
+        if threads.revision != snapshot.story_thread_revision:
+            mismatches.append("StoryThreadRepository revision")
+        if memories.revision != snapshot.memory_revision:
+            mismatches.append("MemoryRepository revision")
+        if (
+            goal.production_chapter_ordinal
+            != snapshot.chapter_outline.ordinal
+        ):
+            mismatches.append("production chapter ordinal")
+        if goal.production_section_ordinal != snapshot.section_ordinal:
+            mismatches.append("production section ordinal")
+        if goal.desired_length != snapshot.section_target_chars:
+            mismatches.append("production section target length")
+        if not (
+            snapshot.section_min_chars
+            <= goal.desired_length
+            <= snapshot.section_max_chars
+        ):
+            mismatches.append("production section accepted range")
+
+        outline_store = BookOutlineStore(self.data_dir)
+        if not outline_store.exists():
+            mismatches.append("BookOutline missing")
+        else:
+            outline = outline_store.load()
+            if outline.revision != snapshot.outline_revision:
+                mismatches.append("BookOutline revision")
+            current_chapter = next(
+                (
+                    chapter
+                    for chapter in outline.chapters
+                    if chapter.id == snapshot.chapter_outline.id
+                ),
+                None,
+            )
+            if current_chapter is None:
+                mismatches.append("ChapterOutline missing")
+            else:
+                mutable_progress = {"status", "committed_section_ids"}
+                expected = snapshot.chapter_outline.model_dump(
+                    mode="json",
+                    exclude=mutable_progress,
+                )
+                actual = current_chapter.model_dump(
+                    mode="json",
+                    exclude=mutable_progress,
+                )
+                if actual != expected:
+                    mismatches.append("ChapterOutline contract")
+
+        spec_store = ProductionSpecStore(
+            self.data_dir,
+            lambda: snapshot.production_spec,
+        )
+        if not spec_store.exists():
+            mismatches.append("NovelProductionSpec missing")
+        else:
+            spec = spec_store.load()
+            if spec.model_dump(
+                mode="json",
+                exclude={
+                    "revision",
+                    "active_style_profile_id",
+                    "production_status",
+                    "created_at",
+                    "updated_at",
+                },
+            ) != self._material_production_spec(snapshot):
+                mismatches.append("NovelProductionSpec material snapshot")
+
+        # Recomputing is intentional even though model validation already
+        # checks the hash: this guards in-memory model_copy bypasses as well.
+        self._production_style_contract(snapshot)
+        if mismatches:
+            raise ProductionSnapshotMismatchError(
+                "stale production snapshot: " + ", ".join(mismatches)
+            )
+        return bible.model_copy(
+            update={
+                "style_contract": self._production_style_contract(snapshot),
+            }
+        )
+
+    def _goal_position(self, goal: SectionGoal) -> tuple[int, int]:
+        if (
+            goal.production_chapter_ordinal > 0
+            and goal.production_section_ordinal > 0
+        ):
+            return (
+                goal.production_chapter_ordinal,
+                goal.production_section_ordinal,
+            )
+        return self.sections.next_position()
+
     def prepare(
         self,
         goal: SectionGoal,
         *,
         request_id: str,
         require_default_objective_event: bool = True,
+        production_context: ProductionContextSnapshot | None = None,
     ) -> PreparedGeneration:
         bible = self.bibles.load()
         publish_errors = bible.publish_errors()
@@ -752,7 +991,16 @@ class AuthorGenerationService:
         state = self.states.load()
         threads = self.threads.load()
         memories = self.memories.load()
-        chapter, section = self.sections.next_position()
+        if production_context is not None:
+            bible = self._validate_production_context(
+                goal=goal,
+                bible=bible,
+                state=state,
+                threads=threads,
+                memories=memories,
+                production_context=production_context,
+            )
+        chapter, section = self._goal_position(goal)
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
         prepared_goal = self.thread_liveness.bind_goal(
@@ -833,6 +1081,7 @@ class AuthorGenerationService:
             user_id=self.user_id,
             novel_id=self.novel_id,
             section_id=section_id,
+            production_context=production_context,
             story_bible_revision=bible.revision,
             canonical_state_revision=state.revision,
             target_canonical_revision=state.revision + 1,
@@ -856,6 +1105,7 @@ class AuthorGenerationService:
             section_budget_plan=section_budget_plan,
             context=context,
             transaction=transaction,
+            production_context=production_context,
         )
 
     def preview_contract(self, goal: SectionGoal) -> NarrativeContract:
@@ -866,7 +1116,7 @@ class AuthorGenerationService:
             raise ValueError("StoryBible 尚不可用于生成: " + "；".join(publish_errors))
         state = self.states.load()
         threads = self.threads.load()
-        chapter, section = self.sections.next_position()
+        chapter, section = self._goal_position(goal)
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
         prepared_goal = self.thread_liveness.bind_goal(
@@ -883,7 +1133,7 @@ class AuthorGenerationService:
         bible = self.bibles.load()
         state = self.states.load()
         threads = self.threads.load()
-        chapter, section = self.sections.next_position()
+        chapter, section = self._goal_position(goal)
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
         prepared_goal = self.thread_liveness.bind_goal(
@@ -907,7 +1157,7 @@ class AuthorGenerationService:
         bible = self.bibles.load()
         state = self.states.load()
         threads = self.threads.load()
-        chapter, section = self.sections.next_position()
+        chapter, section = self._goal_position(goal)
         section_id = goal.section_id or f"ch{chapter:04d}_s{section:04d}"
         prepared_goal = goal.model_copy(update={"section_id": section_id})
         prepared_goal = self.thread_liveness.bind_goal(
@@ -943,7 +1193,11 @@ class AuthorGenerationService:
 
     async def plan(self, prepared: PreparedGeneration) -> PlannerResult:
         planner_method = getattr(self.writer, "plan", None)
-        if self.enable_llm_planner and callable(planner_method):
+        if (
+            prepared.production_context is None
+            and self.enable_llm_planner
+            and callable(planner_method)
+        ):
             return await planner_method(prepared.context, prepared.goal)
         # The formal path is server-owned and deterministic. Existing injected
         # Writers and AuthorWriter receive the same frozen allocation without a
@@ -1194,6 +1448,30 @@ class AuthorGenerationService:
                 "candidate": result.candidate,
                 "candidate_history": [result.candidate],
                 "writer_calls": 1,
+                "structured_output_repair_count": (
+                    result.structured_output_repair_count
+                ),
+                "writer_block_nonspace_lengths": list(
+                    result.writer_block_nonspace_lengths
+                ),
+                "writer_cell_nonspace_lengths": list(
+                    result.writer_cell_nonspace_lengths
+                ),
+                "writer_cell_sentence_boundary_counts": list(
+                    result.writer_cell_sentence_boundary_counts
+                ),
+                "repair_audit_codes": list(result.audit_codes),
+                "provider": result.provider,
+                "provider_model": result.provider_model,
+                "provider_source": result.provider_source,
+                "provider_config_fingerprint": (
+                    result.provider_config_fingerprint
+                ),
+                "provider_config_fingerprints": (
+                    [result.provider_config_fingerprint]
+                    if result.provider_config_fingerprint
+                    else []
+                ),
                 "usage": self._merge_usage(
                     transaction.usage,
                     result.usage,
@@ -1203,6 +1481,89 @@ class AuthorGenerationService:
             }
         )
         return self.transactions.save(generated)
+
+    @staticmethod
+    def _record_failed_transaction(
+        current: GenerationTransaction,
+        exc: Exception,
+    ) -> GenerationTransaction:
+        """Persist a secret-free failure and make call counters authoritative."""
+
+        generic = {
+            "phase": "failed",
+            "error_code": "GENERATION_FAILED",
+            "error": "generation failed; exception details omitted",
+            "provider_error_category": "",
+            "provider_error_stage": "",
+            "updated_at": utc_now(),
+        }
+        if not isinstance(exc, ProviderError) or not is_recognized_provider_error(exc):
+            return current.model_copy(update=generic)
+
+        allowed_stages = {
+            "planner",
+            "writer",
+            "writer_json_repair",
+            "repair",
+            "repair_json_repair",
+        }
+        stage = str(exc.provider_stage or "")
+        try:
+            primary_calls = int(exc.provider_primary_calls)
+            structured_calls = int(exc.structured_output_repair_calls)
+            total_calls = int(exc.provider_call_count)
+        except (TypeError, ValueError):
+            primary_calls = structured_calls = total_calls = -1
+        telemetry_valid = bool(
+            stage in allowed_stages
+            and 0 <= primary_calls <= 1
+            and 0 <= structured_calls <= 1
+            and total_calls == primary_calls + structured_calls
+            and total_calls >= 1
+        )
+        planner_calls = current.planner_calls
+        writer_calls = current.writer_calls
+        structured_total = current.structured_output_repair_count
+        if telemetry_valid:
+            if stage == "planner":
+                planner_calls += primary_calls
+            else:
+                writer_calls += primary_calls
+            structured_total += structured_calls
+            telemetry_valid = bool(
+                planner_calls <= 1
+                and writer_calls <= 3
+                and structured_total <= 2
+            )
+        if not telemetry_valid:
+            planner_calls = current.planner_calls
+            writer_calls = current.writer_calls
+            structured_total = current.structured_output_repair_count
+            stage = ""
+
+        receipt = safe_provider_runtime_receipt(exc.config)
+        fingerprints = list(current.provider_config_fingerprints)
+        if receipt is not None and receipt.config_fingerprint not in fingerprints:
+            fingerprints.append(receipt.config_fingerprint)
+        return current.model_copy(
+            update={
+                **generic,
+                "error_code": exc.code,
+                "error": "generation failed; provider response omitted",
+                "planner_calls": planner_calls,
+                "writer_calls": writer_calls,
+                "structured_output_repair_count": structured_total,
+                "provider": receipt.provider if receipt is not None else "",
+                "provider_model": receipt.model if receipt is not None else "",
+                "provider_source": receipt.source if receipt is not None else "",
+                "provider_config_fingerprint": (
+                    receipt.config_fingerprint if receipt is not None else ""
+                ),
+                "provider_config_fingerprints": fingerprints,
+                "provider_error_category": exc.http_category,
+                "provider_error_stage": stage,
+            }
+        )
 
     def _stage(
         self,
@@ -1266,8 +1627,8 @@ class AuthorGenerationService:
             report,
             canonical_revision=prepared.state.revision,
         )
-        chapter, section = self.sections.next_position()
         goal = prepared.goal
+        chapter, section = self._goal_position(goal)
         section_record = TickSection(
             id=transaction.section_id,
             chapter=chapter,
@@ -1587,6 +1948,7 @@ __all__ = [
     "CommitPendingError",
     "GenerationRejected",
     "PreparedGeneration",
+    "ProductionSnapshotMismatchError",
     "RevisionChainBrokenError",
     "StaleStoryBibleError",
 ]

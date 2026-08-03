@@ -155,6 +155,33 @@ def test_p6_approximate_particle_count_is_removed_and_audited() -> None:
     ]
 
 
+def test_expand_still_rejects_other_unauthorized_numbers() -> None:
+    original, _, _, _ = _expand_context(target_chars=30)
+    result = _apply_expand(
+        "海风贴着铁栏缓缓移动，他们把既有动作反复确认了三遍才停下。",
+        target_chars=30,
+    )
+
+    assert "PATCH_ADDS_NUMBER" in {
+        item.code for item in result.report.violations
+    }
+    assert result.narrative_text == original
+    assert result.enforced_removals == []
+
+
+def test_expand_casualty_number_still_fails_closed() -> None:
+    original, _, _, _ = _expand_context(target_chars=30)
+    result = _apply_expand(
+        "海风贴着铁栏移动，三人遇难的消息没有获准进入现有事件。",
+        target_chars=30,
+    )
+
+    codes = {item.code for item in result.report.violations}
+    assert {"PATCH_ADDS_CASUALTY", "PATCH_ADDS_NUMBER"} <= codes
+    assert result.narrative_text == original
+    assert result.enforced_removals == []
+
+
 def test_expand_may_exceed_target_without_exceeding_server_maximum() -> None:
     original, contract, event_plan, plan = _expand_context(target_chars=20)
     patch = _expand_patch(

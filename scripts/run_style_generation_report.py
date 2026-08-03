@@ -130,12 +130,12 @@ def _report_markdown(report: dict[str, Any]) -> str:
         f"- Git 分支 / 提交：`{metadata['git_branch']}` / `{metadata['git_sha']}`",
         f"- Provider / 模型：`{metadata['provider']['provider']}` / "
         f"`{metadata['provider']['model']}`",
-        f"- API 地址：`{metadata['provider']['base_url']}`",
+        f"- 配置来源：`{metadata['provider']['source']}`；"
+        f"配置指纹：`{metadata['provider']['config_fingerprint']}`",
         f"- 样本：`{report['summary']['successful']}/{report['summary']['requested']}` 成功",
         f"- Token：prompt `{usage['prompt_tokens']}` + completion "
         f"`{usage['completion_tokens']}` = `{usage['total_tokens']}`",
-        f"- 凭据：从 `{metadata['provider']['source_file']}` 读取，仅用于调用，"
-        "未写入报告",
+        "- 凭据：仅在进程内使用；报告不保存 key、完整 URL 或配置文件路径",
         "- 生成策略：同一固定场景，每个风格各调用一次；temperature "
         f"`{metadata['request_defaults']['temperature']}`，max_tokens "
         f"`{metadata['request_defaults']['max_tokens']}`",
@@ -230,7 +230,10 @@ def _safe_error(exc: Exception) -> str:
 
 
 def _assert_secret_absent(*payloads: str) -> None:
-    secret = os.environ.get("CUSTOM_API_KEY", "")
+    from nf_core.provider_runtime import get_stage_provider_config
+
+    stage_config = get_stage_provider_config()
+    secret = stage_config.api_key if stage_config is not None else ""
     if secret and any(secret in payload for payload in payloads):
         raise RuntimeError("credential leak guard rejected report payload")
 
@@ -246,7 +249,7 @@ def _checkpoint(report: dict[str, Any], json_path: Path, markdown_path: Path) ->
 async def _generate(
     *,
     styles: list[str],
-    provider: dict[str, Any],
+    provider,
     json_path: Path,
     markdown_path: Path,
     temperature: float,
@@ -257,14 +260,8 @@ async def _generate(
     from novel_presets.style_presets import get_style_preset
     from quality_metrics.style_contract import style_contract_report
 
-    safe_provider = {
-        "provider": provider["provider"],
-        "base_url": provider["base_url"],
-        "model": provider["model"],
-        "source_file": Path(provider["source_file"]).name,
-        "credential_present": bool(provider["credential_present"]),
-        "credential_persisted": False,
-    }
+    safe_provider = provider.diagnostics()
+    safe_provider["credential_persisted"] = False
     report: dict[str, Any] = {
         "schema_version": "1.0",
         "metadata": {
@@ -401,9 +398,12 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    from validate_styles import _configure_provider
+    from validate_styles import configure_provider_runtime
 
-    provider = _configure_provider(args.provider_file.resolve())
+    provider = configure_provider_runtime(args.provider_file.resolve())
+    from nf_core.llm_client import llm_client
+    from nf_core.provider_runtime import stage_provider_scope
+
     styles = [item.strip() for item in args.styles.split(",") if item.strip()]
     if not styles:
         raise ValueError("at least one style is required")
@@ -411,17 +411,23 @@ def main() -> int:
     if json_path.suffix.lower() != ".json":
         raise ValueError("--out must use a .json suffix")
     markdown_path = json_path.with_suffix(".md")
-    report = asyncio.run(
-        _generate(
-            styles=styles,
-            provider=provider,
-            json_path=json_path,
-            markdown_path=markdown_path,
-            temperature=args.temperature,
-            max_tokens=args.max_tokens,
-            retries=max(0, args.retries),
-        )
-    )
+    async def _execute():
+        try:
+            return await _generate(
+                styles=styles,
+                provider=provider,
+                json_path=json_path,
+                markdown_path=markdown_path,
+                temperature=args.temperature,
+                max_tokens=args.max_tokens,
+                retries=max(0, args.retries),
+            )
+        finally:
+            await llm_client.aclose()
+
+    with stage_provider_scope(provider):
+        llm_client.reload(config=provider)
+        report = asyncio.run(_execute())
     print(f"JSON: {json_path}")
     print(f"Markdown: {markdown_path}")
     return 0 if report["summary"]["failed"] == 0 else 1

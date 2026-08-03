@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sys
 from collections import Counter
 from datetime import datetime
@@ -15,9 +16,6 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "backend"), str(ROOT / "scripts")]
-
-from run_author_longrange import RunLimits, _atomic_json, run_sequence  # noqa: E402
-from validate_styles import _configure_provider  # noqa: E402
 
 
 DEFAULT_THEMES = ("reality_mystery", "action_conflict", "warm_relationship")
@@ -34,6 +32,27 @@ def _split_csv(value: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
+def _combo_namespaces(
+    *,
+    base: str,
+    themes: tuple[str, ...],
+    styles: tuple[str, ...],
+) -> dict[tuple[str, str], str]:
+    values = {
+        (theme, style): "_".join(item for item in (base, theme, style) if item)
+        for theme in themes
+        for style in styles
+    }
+    if any(
+        not value or re.fullmatch(r"[a-z0-9_]+", value) is None
+        for value in values.values()
+    ):
+        raise ValueError("derived id namespace must match [a-z0-9_]+")
+    if len(values) != len(set(values.values())):
+        raise ValueError("theme/style values produce duplicate id namespaces")
+    return values
+
+
 def _identity(
     *,
     themes: tuple[str, ...],
@@ -46,6 +65,7 @@ def _identity(
     desired_length: int,
     checkpoint_every: int,
     runtime_rebuild_every: int,
+    id_namespace: str = "",
 ) -> dict[str, Any]:
     return {
         "themes": list(themes),
@@ -58,6 +78,7 @@ def _identity(
         "desired_length": desired_length,
         "checkpoint_every": checkpoint_every,
         "runtime_rebuild_every": runtime_rebuild_every,
+        "id_namespace": id_namespace,
     }
 
 
@@ -111,6 +132,11 @@ def aggregate(
         section
         for combination in combinations
         for section in combination.get("sections", [])
+    ]
+    failures = [
+        failure
+        for combination in combinations
+        for failure in combination.get("failures", [])
     ]
     attempted = len(sections)
     committed = sum(bool(item.get("committed")) for item in sections)
@@ -177,10 +203,14 @@ def aggregate(
         int(item.get("summary", {}).get("hard_rejects", 0))
         for item in combinations
     )
-    provider_errors = sum(
+    reported_provider_errors = sum(
         int(item.get("summary", {}).get("provider_errors", 0))
         for item in combinations
     )
+    observed_provider_errors = sum(
+        bool(item.get("provider_failure")) for item in failures
+    )
+    provider_errors = max(reported_provider_errors, observed_provider_errors)
     hard_fact_error_commits = sum(
         bool(item.get("committed"))
         and (
@@ -227,6 +257,9 @@ def aggregate(
             integrity_codes["story_bible_revision_changed"] == 0
         ),
         "provider_errors_zero": provider_errors == 0,
+        "provider_error_accounting_matches": (
+            reported_provider_errors == observed_provider_errors
+        ),
         "chapter_plan_success_at_least_95pct": (
             chapter_plan_success_rate >= 0.95
         ),
@@ -238,12 +271,24 @@ def aggregate(
         ),
     }
     complete = all_combinations and attempted == expected_sections
+    g1_single = expected_combinations == 1 and expected_sections == 1
     mini_matrix = expected_combinations == 5 and expected_sections == 15
-    if mini_matrix:
+    if g1_single:
+        gate_checks = {
+            **common_checks,
+            "committed_exactly_1": committed == 1,
+            "contract_accepted_exactly_1": contract_pass == 1,
+            "repair_after_accepted_exactly_100pct": repair_success_rate == 1.0,
+            "length_900_1100_exactly_1": length_in_range_count == 1,
+        }
+        gate = "G1_SINGLE_PASS" if complete and all(gate_checks.values()) else (
+            "G1_SINGLE_FAIL" if complete else "G1_SINGLE_INCOMPLETE"
+        )
+    elif mini_matrix:
         gate_checks = {
             **common_checks,
             "committed_at_least_14_of_15": committed >= 14,
-            "writer_first_pass_at_least_8_of_15": writer_first_pass_count >= 8,
+            "writer_first_pass_at_least_9_of_15": writer_first_pass_count >= 9,
             "contract_accepted_at_least_93pct": contract_rate >= 0.93,
             "repair_after_accepted_at_least_90pct": repair_success_rate >= 0.90,
             "length_900_1100_at_least_93pct": length_in_range_rate >= 0.93,
@@ -310,13 +355,22 @@ def aggregate(
         "data_integrity_violations": integrity,
         "data_integrity_violation_codes": dict(integrity_codes.most_common()),
         "provider_errors": provider_errors,
-        "provider_calls": sum(
-            int(item.get("writer_calls", 0))
-            + int(item.get("planner_calls", 0))
-            for item in sections
+        "provider_error_rows": observed_provider_errors,
+        "provider_calls": (
+            sum(
+                int(item.get("writer_calls", 0))
+                + int(item.get("structured_output_repair_count", 0))
+                + int(item.get("planner_calls", 0))
+                for item in sections
+            )
+            + sum(
+                int(failure.get("provider_call_count", 0))
+                for failure in failures
+            )
         ),
-        "planner_calls": sum(
-            int(item.get("planner_calls", 0)) for item in sections
+        "planner_calls": (
+            sum(int(item.get("planner_calls", 0)) for item in sections)
+            + sum(int(item.get("planner_calls", 0)) for item in failures)
         ),
         "planner_tokens": sum(
             int(item.get("planner_tokens", 0)) for item in sections
@@ -423,10 +477,19 @@ def _save(matrix: dict[str, Any], output_dir: Path) -> None:
     )
     matrix["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
     rendered = json.dumps(matrix, ensure_ascii=False)
-    secret = os.environ.get("CUSTOM_API_KEY", "")
+    from nf_core.provider_runtime import get_stage_provider_config
+
+    stage_config = get_stage_provider_config()
+    secret = stage_config.api_key if stage_config is not None else ""
     if secret and secret in rendered:
         raise RuntimeError("credential leak guard rejected Stage 1 matrix report")
-    _atomic_json(output_dir / "stage1-matrix.json", matrix)
+    json_path = output_dir / "stage1-matrix.json"
+    json_partial = json_path.with_suffix(".json.partial")
+    json_partial.write_text(
+        json.dumps(matrix, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(json_partial, json_path)
     markdown = output_dir / "stage1-matrix.md"
     partial = markdown.with_suffix(".md.partial")
     partial.write_text(_render_markdown(matrix), encoding="utf-8")
@@ -434,25 +497,58 @@ def _save(matrix: dict[str, Any], output_dir: Path) -> None:
 
 
 async def run_matrix(args: argparse.Namespace) -> dict[str, Any]:
+    # Import-order barrier: parse and bind the read-only provider file before
+    # importing the author runtime, Writer, or llm_client.
+    from validate_styles import configure_provider_runtime
+
+    provider = configure_provider_runtime(args.provider_file.resolve())
+    if args.model and args.model != provider.model:
+        raise ValueError(
+            "--model cannot override the model in the read-only provider file"
+        )
+    from nf_core.llm_client import llm_client
+    from nf_core.provider_runtime import stage_provider_scope
+
+    with stage_provider_scope(provider):
+        # Second barrier: retire any client created by an in-process importer.
+        llm_client.reload(config=provider)
+        try:
+            return await _run_matrix_configured(args, provider)
+        finally:
+            await llm_client.aclose()
+
+
+async def _run_matrix_configured(
+    args: argparse.Namespace,
+    provider,
+) -> dict[str, Any]:
+    from run_author_longrange import RunLimits, run_sequence
+
+    id_namespace = str(args.id_namespace or "").strip().lower()
+    if id_namespace and re.fullmatch(r"[a-z0-9_]+", id_namespace) is None:
+        raise ValueError("--id-namespace must match [a-z0-9_]+")
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     themes = _split_csv(args.themes)
     styles = _split_csv(args.styles)
-    provider = _configure_provider(args.provider_file.resolve())
-    model = args.model or str(provider["model"])
-    if args.model:
-        os.environ["CUSTOM_MODEL"] = args.model
+    combo_namespaces = _combo_namespaces(
+        base=id_namespace,
+        themes=themes,
+        styles=styles,
+    )
+    model = provider.model
     identity = _identity(
         themes=themes,
         styles=styles,
         seed=args.seed,
-        provider=str(provider["provider"]),
+        provider=provider.provider,
         model=model,
-        thinking_mode=str(provider.get("thinking_mode") or ""),
+        thinking_mode=provider.thinking_mode,
         sections_per_combo=args.sections_per_combo,
         desired_length=args.desired_length,
         checkpoint_every=args.checkpoint_every,
         runtime_rebuild_every=args.runtime_rebuild_every,
+        id_namespace=id_namespace,
     )
     matrix_path = output_dir / "stage1-matrix.json"
     if args.resume and matrix_path.is_file():
@@ -506,7 +602,7 @@ async def run_matrix(args: argparse.Namespace) -> dict[str, Any]:
                         completion_cost_per_million=args.completion_cost_per_million,
                     ),
                     resume=combo_resume,
-                    provider=str(provider["provider"]),
+                    provider=provider.provider,
                     model=model,
                     runtime_rebuild_every=(
                         None
@@ -515,6 +611,7 @@ async def run_matrix(args: argparse.Namespace) -> dict[str, Any]:
                     ),
                     inject_failure=args.inject_failure,
                     stop_on_gate_failure=args.stop_on_gate_failure,
+                    id_namespace=combo_namespaces[(theme, style)],
                 )
                 combo_resume = True
                 if report["summary"].get("stop_reason") != "generation_error":
@@ -556,6 +653,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--provider-file", type=Path, default=ROOT / "coding.txt")
     parser.add_argument("--model", default="")
+    parser.add_argument("--id-namespace", default="")
     parser.add_argument("--themes", default=",".join(DEFAULT_THEMES))
     parser.add_argument("--styles", default=",".join(DEFAULT_STYLES))
     parser.add_argument("--sections-per-combo", type=int, default=3)
@@ -580,7 +678,11 @@ def main() -> int:
     args.desired_length = max(200, args.desired_length)
     matrix = asyncio.run(run_matrix(args))
     print(json.dumps(matrix["summary"], ensure_ascii=False, indent=2))
-    return 0 if matrix["summary"]["gate"] in {"MINI_MATRIX_PASS", "STAGE1_PASS"} else 2
+    return 0 if matrix["summary"]["gate"] in {
+        "G1_SINGLE_PASS",
+        "MINI_MATRIX_PASS",
+        "STAGE1_PASS",
+    } else 2
 
 
 if __name__ == "__main__":

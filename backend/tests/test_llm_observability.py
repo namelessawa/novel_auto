@@ -12,6 +12,7 @@ TokenBudgetTracker 里全是 "unknown / medium / tick=-1", 无法分析成本结
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 import pytest
 
@@ -21,7 +22,31 @@ from nf_core.llm_client import (
     get_current_tick,
     set_current_tick,
 )
+from nf_core.provider_runtime import (
+    ProviderRuntimeConfig,
+    provider_client_registry,
+    reset_stage_provider_config,
+    set_stage_provider_config,
+)
 from nf_core.token_budget import TokenBudgetTracker, set_global_tracker
+
+
+@pytest.fixture(autouse=True)
+def offline_provider():
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="test",
+        api_key="test-only-key",
+        base_url="https://provider.invalid/v1",
+        model="test-model",
+        source="test_fixture",
+    )
+    token = set_stage_provider_config(config)
+    provider_client_registry.invalidate()
+    try:
+        yield
+    finally:
+        provider_client_registry.invalidate()
+        reset_stage_provider_config(token)
 
 
 @pytest.fixture
@@ -32,6 +57,44 @@ def fresh_tracker():
     yield tracker
     # 测试结束后重置 contextvar
     set_current_tick(-1)
+
+
+@pytest.mark.asyncio
+async def test_chat_forwards_only_supported_json_object_mode(fresh_tracker):
+    seen: dict = {}
+
+    async def fake_create(**kwargs):
+        seen.update(kwargs)
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(message=SimpleNamespace(content='{"ok":true}'))
+            ],
+            usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+        )
+
+    client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=fake_create),
+        )
+    )
+    await llm_module.llm_client.chat(
+        system_prompt="Return JSON.",
+        user_prompt="{}",
+        client_override=client,
+        response_format={"type": "json_object"},
+    )
+
+    assert seen["response_format"] == {"type": "json_object"}
+
+
+@pytest.mark.asyncio
+async def test_chat_rejects_unsupported_response_format_before_call():
+    with pytest.raises(ValueError, match="json_object"):
+        await llm_module.llm_client.chat(
+            system_prompt="Return JSON.",
+            user_prompt="{}",
+            response_format={"type": "json_schema"},
+        )
 
 
 @pytest.mark.asyncio

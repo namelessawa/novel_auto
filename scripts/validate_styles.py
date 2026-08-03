@@ -23,9 +23,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from dotenv import dotenv_values
-
-
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "backend")]
 
@@ -105,63 +102,16 @@ PRESSURE_SEQUENCE_CONSEQUENCES: tuple[tuple[str, ...], ...] = (
 )
 
 
-def _configure_provider(path: Path) -> dict[str, Any]:
-    """读取 coding.txt/.env 风格配置；绝不把 key 写入报告。"""
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    values = {str(k).upper(): str(v) for k, v in dotenv_values(path).items() if v}
+def configure_provider_runtime(path: Path):
+    """Parse a read-only provider file without mutating ambient context."""
+    from nf_core.provider_runtime import ProviderRuntimeConfig
 
-    def pick(*names: str) -> str:
-        for name in names:
-            if values.get(name):
-                return values[name]
-        return ""
+    return ProviderRuntimeConfig.from_provider_file(path)
 
-    key = pick("CUSTOM_API_KEY", "OPENAI_API_KEY", "API_KEY", "KEY")
-    base = pick("CUSTOM_BASE_URL", "OPENAI_BASE_URL", "BASE_URL", "URL")
-    model = pick("CUSTOM_MODEL", "OPENAI_MODEL", "MODEL")
-    if not (key and base and model):
-        # 兼容 ``key: value`` / 中文标签等非 dotenv 行，但只在内存中解析。
-        for raw in path.read_text(encoding="utf-8-sig").splitlines():
-            line = raw.strip()
-            if not line or line.startswith("#"):
-                continue
-            sep = "=" if "=" in line else (":" if ":" in line else "")
-            if not sep:
-                continue
-            name, value = (part.strip() for part in line.split(sep, 1))
-            lname = name.lower()
-            if not key and ("key" in lname or "密钥" in lname):
-                key = value
-            elif not base and ("url" in lname or "地址" in lname):
-                base = value
-            elif not model and ("model" in lname or "模型" in lname):
-                model = value
-    if not (key and base and model):
-        raise ValueError("provider file must contain API key, base URL and model")
-    # P6 real-provider failure 2026-07-29: glm-5.2 exhausted the structured
-    # Writer response in reasoning output and returned no parseable JSON.  The
-    # repository's OpenAI-compatible client already has a provider-supported
-    # thinking-disable transport switch.  Select it for GLM structured-output
-    # validation unless an operator explicitly supplied a different mode.
-    thinking_mode = (os.environ.get("LLM_THINKING_MODE") or "").strip()
-    if not thinking_mode and model.strip().lower().startswith("glm-"):
-        thinking_mode = "disabled"
-        os.environ["LLM_THINKING_MODE"] = thinking_mode
-    os.environ.update({
-        "LLM_PROVIDER": "custom",
-        "CUSTOM_API_KEY": key,
-        "CUSTOM_BASE_URL": base,
-        "CUSTOM_MODEL": model,
-    })
-    return {
-        "provider": "custom",
-        "base_url": base,
-        "model": model,
-        "thinking_mode": thinking_mode,
-        "credential_present": True,
-        "source_file": str(path.resolve()),
-    }
+
+def _configure_provider(path: Path):
+    """Backward-compatible name for existing validation entry points."""
+    return configure_provider_runtime(path)
 
 
 def _git_sha() -> str:
@@ -995,6 +945,9 @@ def main() -> None:
         parser.error("--ticks must be >= 1")
 
     provider = _configure_provider((ROOT / args.provider_file).resolve())
+    from nf_core.llm_client import llm_client
+    from nf_core.provider_runtime import stage_provider_scope
+
     from nf_core.token_budget import TokenBudgetTracker, set_global_tracker
 
     set_global_tracker(TokenBudgetTracker())
@@ -1010,7 +963,9 @@ def main() -> None:
         report = {
             "metadata": {
                 "started_at": int(time.time()), "git_sha": _git_sha(),
-                "provider": provider, "mode": args.mode, "ticks": args.ticks,
+                "provider": provider.diagnostics(),
+                "mode": args.mode,
+                "ticks": args.ticks,
                 "no_judge": args.no_judge, "max_revisions": args.max_revisions,
                 "shared_bootstrap": True,
                 **_execution_profile(),
@@ -1019,7 +974,15 @@ def main() -> None:
         }
         _atomic_json(out_path, report)
     report.setdefault("metadata", {}).update(_execution_profile())
-    final = asyncio.run(_run(args, report, out_path))
+    async def _execute():
+        try:
+            return await _run(args, report, out_path)
+        finally:
+            await llm_client.aclose()
+
+    with stage_provider_scope(provider):
+        llm_client.reload(config=provider)
+        final = asyncio.run(_execute())
     print(
         f"[DONE] {final['summary']['passed']}/{final['summary']['total']} passed; "
         f"report={out_path}",

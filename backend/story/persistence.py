@@ -8,6 +8,7 @@ import re
 import shutil
 import tempfile
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -49,8 +50,23 @@ class RevisionConflict(PersistenceError):
 
 
 T = TypeVar("T", bound=BaseModel)
+R = TypeVar("R")
 _LOCKS: dict[str, threading.RLock] = {}
 _LOCKS_GUARD = threading.Lock()
+_PERMISSION_RETRY_DELAYS = (0.01, 0.02, 0.04, 0.08)
+
+
+def _retry_permission_error(operation: Callable[[], R]) -> R:
+    """Retry transient Windows sharing violations without hiding real I/O errors."""
+
+    for delay in (*_PERMISSION_RETRY_DELAYS, None):
+        try:
+            return operation()
+        except PermissionError:
+            if delay is None:
+                raise
+            time.sleep(delay)
+    raise AssertionError("permission retry loop exhausted without returning")
 
 
 def _shared_lock(path: str) -> threading.RLock:
@@ -90,11 +106,17 @@ class AtomicModelStore(Generic[T]):
                 return self.default_factory()
             try:
                 return self._read_validated(self.path)
+            except OSError:
+                # An inaccessible file is not corrupt.  Never quarantine it or
+                # silently fall back to a stale backup revision.
+                raise
             except Exception as exc:
                 quarantine = self._quarantine_copy(self.path)
                 if os.path.isfile(self.backup_path):
                     try:
                         return self._read_validated(self.backup_path)
+                    except OSError:
+                        raise
                     except Exception:
                         self._quarantine_copy(self.backup_path)
                 raise DataCorruptionError(
@@ -108,6 +130,8 @@ class AtomicModelStore(Generic[T]):
             if os.path.isfile(self.path):
                 try:
                     self._read_validated(self.path)
+                except OSError:
+                    raise
                 except Exception as exc:
                     quarantine = self._quarantine_copy(self.path)
                     raise DataCorruptionError(
@@ -119,8 +143,11 @@ class AtomicModelStore(Generic[T]):
         return validated
 
     def _read_validated(self, path: str) -> T:
-        with open(path, encoding="utf-8") as handle:
-            payload = json.load(handle)
+        def read_payload() -> object:
+            with open(path, encoding="utf-8") as handle:
+                return json.load(handle)
+
+        payload = _retry_permission_error(read_payload)
         return self.model_type.model_validate(payload)
 
     def _atomic_write(self, payload: object, target: str) -> None:
@@ -135,7 +162,7 @@ class AtomicModelStore(Generic[T]):
                 handle.write("\n")
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(tmp, target)
+            _retry_permission_error(lambda: os.replace(tmp, target))
         except Exception:
             try:
                 os.unlink(tmp)
@@ -151,8 +178,8 @@ class AtomicModelStore(Generic[T]):
         )
         os.close(fd)
         try:
-            shutil.copy2(source, tmp)
-            os.replace(tmp, target)
+            _retry_permission_error(lambda: shutil.copy2(source, tmp))
+            _retry_permission_error(lambda: os.replace(tmp, target))
         except Exception:
             try:
                 os.unlink(tmp)
@@ -167,7 +194,7 @@ class AtomicModelStore(Generic[T]):
         target = os.path.join(
             quarantine_dir, f"{os.path.basename(source)}.{stamp}.corrupt"
         )
-        shutil.copy2(source, target)
+        _retry_permission_error(lambda: shutil.copy2(source, target))
         return target
 
 

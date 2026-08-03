@@ -58,7 +58,7 @@ def test_healthy_returns_0(capsys) -> None:
     assert rc == 0
     out = capsys.readouterr().out
     assert "[OK]" in out
-    assert "我在" in out
+    assert "我在" not in out
 
 
 def test_empty_content_returns_2(capsys) -> None:
@@ -141,15 +141,94 @@ def test_quota_match_case_insensitive(capsys) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_main_no_args_uses_default_provider(monkeypatch, capsys) -> None:
-    """main() 不带 --provider 仍跑."""
+def test_main_uses_read_only_provider_file(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    """main() applies its provider file before the lightweight client is used."""
     mock_resp = MagicMock()
     mock_resp.content = "ok"
     mock_resp.usage = {"total_tokens": 30}
-    monkeypatch.setattr(sys, "argv", ["probe_quota"])
+    provider_file = tmp_path / "coding.txt"
+    provider_file.write_text(
+        "KEY=test-only\n"
+        "URL=https://provider.invalid/v1\n"
+        "MODEL=glm-5.2\n",
+        encoding="utf-8",
+    )
+    original = provider_file.read_bytes()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["probe_quota", "--provider-file", str(provider_file)],
+    )
     with (
         patch("nf_core.llm_client.llm_client.chat", AsyncMock(return_value=mock_resp)),
         patch("probe_quota.asyncio.run", side_effect=_run_in_isolated_loop),
     ):
         rc = probe_quota.main()
     assert rc == 0
+    assert provider_file.read_bytes() == original
+    output = capsys.readouterr().out
+    assert '"provider": "custom"' in output
+    assert '"model": "glm-5.2"' in output
+    assert '"credential_present": true' in output
+    assert "test-only" not in output
+    assert "provider.invalid" not in output
+
+
+def test_main_checks_runtime_contract_before_call(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    provider_file = tmp_path / "coding.txt"
+    provider_file.write_text(
+        "KEY=test-only\n"
+        "URL=https://provider.invalid/v1\n"
+        "MODEL=wrong-model\n"
+        "THINKING_MODE=disabled\n"
+        "MAX_RETRIES=0\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "probe_quota",
+            "--provider-file",
+            str(provider_file),
+            "--provider",
+            "custom",
+            "--expect-model",
+            "glm-5.2",
+            "--expect-thinking-mode",
+            "disabled",
+            "--expect-max-retries",
+            "0",
+        ],
+    )
+    chat = AsyncMock()
+
+    with patch("nf_core.llm_client.llm_client.chat", chat):
+        rc = probe_quota.main()
+
+    assert rc == 2
+    chat.assert_not_awaited()
+    assert "provider configuration unavailable" in capsys.readouterr().out
+
+
+def test_main_fails_closed_when_provider_file_is_missing(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "probe_quota",
+            "--provider-file",
+            str(tmp_path / "missing-provider.txt"),
+        ],
+    )
+
+    rc = probe_quota.main()
+
+    assert rc == 2
+    assert "provider configuration unavailable" in capsys.readouterr().out

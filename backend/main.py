@@ -11,8 +11,9 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,11 +32,14 @@ from api.bootstrap_routes import router as bootstrap_router
 from api.llm_routes import router as llm_router
 from api.image_routes import router as image_router
 from api.multimodal_routes import router as multimodal_router
+from api.production_control_routes import router as production_control_router
+from api.production_routes import router as production_router
 from auth import router as auth_router
 from cleanup_task import cleanup_loop
 from config.settings import settings
 from middleware.sliding_refresh import SlidingRefreshMiddleware
 from middleware.user_llm import UserLLMHeadersMiddleware
+from nf_core.provider_runtime import ProviderConfigurationError, ProviderError
 from tasks import router as tasks_router
 
 logging.basicConfig(
@@ -89,6 +93,22 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         log.error("legacy migration failed: %s", e)
 
+    # Durable whole-book jobs are reconstructed from journals.  Pytest never
+    # starts background production implicitly; its suites inject recorded
+    # runners explicitly.
+    if (
+        os.environ.get("DISABLE_PRODUCTION_RECOVERY", "0") != "1"
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
+        try:
+            from story.production_runtime import recover_persisted_productions
+
+            recovered = await recover_persisted_productions()
+            if recovered:
+                log.info("scheduled %s durable production job(s)", recovered)
+        except Exception as e:
+            log.error("production startup recovery failed: %s", type(e).__name__)
+
     # cleanup 后台任务
     global _cleanup_task
     if os.environ.get("DISABLE_CLEANUP", "0") != "1":
@@ -110,18 +130,65 @@ async def lifespan(app: FastAPI):
             log.error("cleanup task shutdown error: %s", e)
 
     try:
+        from story.production_runtime import close_all_production_runtimes
+
+        await close_all_production_runtimes()
+    except Exception as e:
+        log.error("close_all_production_runtimes failed: %s", type(e).__name__)
+
+    try:
         from tick_runtime import close_all_runtimes
         close_all_runtimes()
     except Exception as e:
         log.error("close_all_runtimes failed: %s", e)
 
+    try:
+        from nf_core.llm_client import llm_client
+
+        await llm_client.aclose()
+    except Exception as e:
+        log.error("provider client shutdown failed: %s", e)
+
 
 app = FastAPI(
-    title="AI 长篇小说生成 Agent 系统",
-    description="多 Agent + 7 阶段 Tick 调度 + 邮箱 OTP 认证 + 多租户数据隔离",
-    version="2.26.0",
+    title="AI 长篇小说作者生产系统",
+    description=(
+        "默认使用整书规格、大纲和可恢复 Author 事务链；"
+        "九 Agent Tick 世界模拟仅保留在实验入口。"
+    ),
+    version="2.49+unreleased",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(ProviderConfigurationError)
+async def _provider_configuration_error_handler(
+    request: Request,
+    exc: ProviderConfigurationError,
+) -> JSONResponse:
+    del request
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": {
+                "code": "PROVIDER_CONFIG_INVALID",
+                "message": str(exc),
+                "details": {},
+            }
+        },
+    )
+
+
+@app.exception_handler(ProviderError)
+async def _provider_error_handler(
+    request: Request,
+    exc: ProviderError,
+) -> JSONResponse:
+    del request
+    return JSONResponse(
+        status_code=exc.http_status,
+        content={"detail": exc.to_detail()},
+    )
 
 def _cors_policy(origins: list[str]) -> tuple[list[str], bool]:
     """v2.37 — origins 含 "*" 时禁用 credentials。
@@ -143,6 +210,12 @@ def _cors_policy(origins: list[str]) -> tuple[list[str], bool]:
 
 _cors_origins, _cors_allow_credentials = _cors_policy(settings.cors_origins)
 
+# Starlette wraps middleware in reverse registration order.  Register request
+# context and refresh first, then CORS last so CORS is outermost: preflight is
+# handled before credential parsing and middleware-generated provider 4xx
+# responses still receive browser-readable CORS headers.
+app.add_middleware(UserLLMHeadersMiddleware)
+app.add_middleware(SlidingRefreshMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -153,12 +226,6 @@ app.add_middleware(
     # 不显式 expose 浏览器跨域请求里 JS 拿不到。
     expose_headers=["X-Refreshed-Token"],
 )
-# v2.28 — 必须在 CORS 之后注册 (Starlette middleware 栈是 LIFO; 后注册的先执行
-# 入站请求); 这样 CORS 先处理 preflight, 再轮到 user-llm middleware 提取 header.
-app.add_middleware(UserLLMHeadersMiddleware)
-# Sliding refresh — 注册顺序同 user-llm; 在 user-llm 之后注册意味着出站方向先跑
-# (LIFO), 所以响应阶段先添加 X-Refreshed-Token 再走 user-llm (它不改 response).
-app.add_middleware(SlidingRefreshMiddleware)
 
 # v2.26 — auth_router 必须在所有受保护 router 之前注册 (FastAPI 路由匹配顺序无关
 # 但日志可读性: 让 /api/auth/* 优先出现)
@@ -171,6 +238,8 @@ app.include_router(tick_router)
 app.include_router(agent_router)
 app.include_router(section_router)
 app.include_router(story_router)
+app.include_router(production_router)
+app.include_router(production_control_router)
 app.include_router(bootstrap_router)
 app.include_router(tasks_router)
 
@@ -183,8 +252,8 @@ app.include_router(tasks_router)
 @app.get("/api/health")
 async def health() -> dict:
     return {
-        "name": "AI 长篇小说生成 Agent 系统",
-        "version": "2.26.0",
+        "name": "AI 长篇小说作者生产系统",
+        "version": "2.49+unreleased",
         "status": "running",
         "auth": "email-otp + optional password",
     }

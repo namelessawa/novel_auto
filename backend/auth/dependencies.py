@@ -22,6 +22,16 @@ LEGACY_USER_ID = "_legacy"
 _bearer = HTTPBearer(auto_error=False)
 
 
+def _raise_auth_error(code: str, message: str) -> None:
+    """Return a stable application-auth contract, never a Provider error."""
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={"code": code, "message": message, "details": {}},
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 def get_client_ip(request: Request) -> str:
     """提取真实客户端 IP。
 
@@ -86,41 +96,33 @@ def get_current_user(
         return _legacy_user()
 
     if credentials is None or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="未登录",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        _raise_auth_error("AUTH_REQUIRED", "未登录")
     try:
         payload = decode_token(credentials.credentials)
-    except TokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="登录态无效或已过期",
-            headers={"WWW-Authenticate": "Bearer"},
+    except TokenError as exc:
+        message = (
+            "登录态已过期"
+            if exc.code == "AUTH_TOKEN_EXPIRED"
+            else "登录态无效"
         )
+        _raise_auth_error(exc.code, message)
     # 服务端撤销: logout 把 jti 写入撤销表, 这里查表后立即拒绝
     if is_revoked(payload.get("jti")):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="登录态已撤销, 请重新登录",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        _raise_auth_error("AUTH_TOKEN_REVOKED", "登录态已撤销，请重新登录")
     user_id = payload.get("sub")
     if not user_id:
-        raise HTTPException(status_code=401, detail="登录态无效")
+        _raise_auth_error("AUTH_TOKEN_INVALID", "登录态无效")
     row = get_user_store().get_by_id(user_id)
     if row is None:
         # 用户被删除 / DB 切换 — 当作未登录
-        raise HTTPException(status_code=401, detail="用户不存在")
+        _raise_auth_error("AUTH_USER_NOT_FOUND", "用户不存在")
     # 密码变更失效: 改密码会自增 store.users.password_version, 旧 token pv 不匹配 → 401
     pv_token = int(payload.get("pv") or 0)
     pv_db = int(row.get("password_version") or 0)
     if pv_token != pv_db:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="密码已更新, 请重新登录",
-            headers={"WWW-Authenticate": "Bearer"},
+        _raise_auth_error(
+            "AUTH_TOKEN_PASSWORD_CHANGED",
+            "密码已更新，请重新登录",
         )
     return to_user(row)
 

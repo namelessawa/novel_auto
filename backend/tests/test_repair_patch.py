@@ -75,3 +75,37 @@ def test_repair_prompt_exposes_only_provider_text_requests() -> None:
     assert payload["server_owned_actions"]
     assert "patch_id 和 patch_text" in AuthorWriter.REPAIR_SYSTEM_PROMPT
     assert "Do not return patch_type, anchor" in payload["final_instruction"]
+
+
+def test_length_expand_prompt_has_zero_numeral_authority() -> None:
+    original = "沈砚替林秋包扎了手。沈砚把旧信交给林秋。海风掠过灯塔。"
+    _, _, _, plan = _plan_and_report(original)
+    plan = plan.model_copy(
+        update={
+            "length_adjustment": plan.length_adjustment.model_copy(
+                update={
+                    "action": "add",
+                    "target_chars": 80,
+                    "desired_final_chars": 220,
+                    "max_add_chars": 120,
+                    "min_chars": 200,
+                    "max_chars": 260,
+                }
+            ),
+            "patch_templates": [],
+        }
+    )
+    payload = repair_patch_prompt_payload(plan, original)
+
+    assert payload["provider_patch_requests"]
+    request = payload["provider_patch_requests"][0]
+    lexical = request["patch_text_lexical_contract"]
+    assert lexical["scope"] == "patch_text_only"
+    assert lexical["allowed_number_tokens"] == []
+    assert lexical["forbidden_pattern"] == (
+        "[0-9零〇一二两三四五六七八九十百千万]"
+    )
+    assert lexical["self_check_before_return"] is True
+    assert lexical["schema_version_and_patch_id_exempt"] is True
+    assert "逐个自检 patch_text" in AuthorWriter.REPAIR_SYSTEM_PROMPT
+    assert "schema_version and patch_id are exempt" in payload["final_instruction"]

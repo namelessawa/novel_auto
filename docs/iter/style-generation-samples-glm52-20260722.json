@@ -6,7 +6,7 @@
     "git_sha": "a5cf7b05d62ebf227278fb9baa5773f4bc1e6962",
     "provider": {
       "provider": "custom",
-      "base_url": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "base_url": "[REDACTED_PROVIDER_BASE_URL]",
       "model": "glm-5.2",
       "source_file": "coding.txt",
       "credential_present": true,

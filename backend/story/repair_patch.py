@@ -52,7 +52,7 @@ class RepairPatch(NarrativeModel):
     insertion_offset: int | None = Field(default=None, ge=0)
     start_offset: int | None = Field(default=None, ge=0)
     end_offset: int | None = Field(default=None, ge=0)
-    patch_text: str = Field(default="", max_length=600)
+    patch_text: str = Field(default="", max_length=900)
     target_events: list[str] = Field(default_factory=list)
     target_end_states: list[str] = Field(default_factory=list)
     max_chars: int = Field(default=300, ge=1, le=450)
@@ -676,9 +676,11 @@ class RepairPatchValidator:
                     else None
                 )
                 if frozen_template is not None:
+                    allowed_min = frozen_template.min_chars
                     allowed_target = frozen_template.target_chars
                     allowed_max = frozen_template.max_chars
                 else:
+                    allowed_min = 0
                     allowed_target = min(
                         450,
                         max(
@@ -700,6 +702,11 @@ class RepairPatchValidator:
                     )
                 length_add_authorized = (
                     plan.length_adjustment.action == "add"
+                    or (
+                        server_template_mode
+                        and frozen_template is not None
+                        and frozen_template.provider_text_required
+                    )
                 )
                 if not length_add_authorized:
                     add("EXPAND_NOT_AUTHORIZED", "RepairPlan 未授权长度扩写")
@@ -737,10 +744,15 @@ class RepairPatchValidator:
                         "EXPAND 正文超过 max_chars",
                         str(actual_chars),
                     )
-                if actual_chars < max(1, int(patch.target_chars * 0.6)):
+                minimum_patch_chars = (
+                    allowed_min
+                    if frozen_template is not None and allowed_min > 0
+                    else max(1, int(patch.target_chars * 0.6))
+                )
+                if actual_chars < minimum_patch_chars:
                     add(
                         "EXPAND_TOO_SMALL",
-                        "EXPAND 正文未达到服务端目标的 60%",
+                        "EXPAND 正文未达到服务端冻结下限",
                         str(actual_chars),
                     )
                 if patch.patch_text.strip() in original_text:
@@ -834,7 +846,11 @@ class RepairPatchValidator:
                 and not delete_authorized
                 and not (
                     patch.patch_type == "expand"
-                    and _nonspace_chars(text) < plan.length_adjustment.min_chars
+                    and (
+                        frozen_template is not None
+                        or _nonspace_chars(text)
+                        < plan.length_adjustment.min_chars
+                    )
                 )
                 and patch.patch_type != "compact"
             ):
@@ -1029,12 +1045,24 @@ class RepairPatchValidator:
                 continue
             applied_count += 1
 
-        if _nonspace_chars(text) > plan.length_adjustment.max_chars:
+        final_chars = _nonspace_chars(text)
+        if (
+            server_template_mode
+            and final_chars < plan.length_adjustment.min_chars
+        ):
+            violations.append(
+                RepairPatchViolation(
+                    code="PATCH_FINAL_TOO_SHORT",
+                    message="应用全部局部 Patch 后正文仍低于服务端最小长度",
+                    evidence=str(final_chars),
+                )
+            )
+        if final_chars > plan.length_adjustment.max_chars:
             violations.append(
                 RepairPatchViolation(
                     code="PATCH_FINAL_TOO_LONG",
                     message="应用局部 Patch 后正文超过服务端最大长度",
-                    evidence=str(_nonspace_chars(text)),
+                    evidence=str(final_chars),
                 )
             )
         final_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()

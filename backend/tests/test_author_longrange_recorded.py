@@ -5,11 +5,13 @@ import hashlib
 
 import pytest
 
+from nf_core.provider_runtime import ProviderError, ProviderRuntimeConfig
 from scripts.analyze_author_longrange import analyze
-from scripts.run_author_longrange import RunLimits, _constraints, run_sequence
+from scripts.run_author_longrange import RunLimits, _constraints, _safe_error, run_sequence
 from story.models import CanonicalState, SectionGoal, StoryBible
 from story.narrative_contract import NarrativeContractBuilder
 from story.narrative_validator import NarrativeContractValidator
+from story.writer import AuthorWriter
 
 
 def _limits(max_sections: int) -> RunLimits:
@@ -20,6 +22,65 @@ def _limits(max_sections: int) -> RunLimits:
         prompt_cost_per_million=0.0,
         completion_cost_per_million=0.0,
     )
+
+
+def test_safe_error_keeps_only_allowlisted_provider_failure_metadata() -> None:
+    secret = "test-only-super-secret-provider-key"
+    endpoint = "https://provider-secret.invalid/v1"
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="custom",
+        api_key=secret,
+        base_url=endpoint,
+        model="glm-5.2",
+        thinking_mode="disabled",
+        max_retries=0,
+    )
+    error = ProviderError(
+        code="PROVIDER_UNAVAILABLE",
+        message=f"raw upstream body {secret} from {endpoint}",
+        http_status=502,
+        http_category="unavailable",
+        config=config,
+        upstream_status=503,
+    )
+    AuthorWriter._annotate_provider_failure(
+        error,
+        stage="writer_json_repair",
+        primary_calls=1,
+        structured_calls=1,
+    )
+
+    safe = _safe_error(error)
+    rendered = json.dumps(safe, ensure_ascii=False)
+
+    assert safe == {
+        "provider_failure": True,
+        "provider_code": "PROVIDER_UNAVAILABLE",
+        "provider_http_category": "unavailable",
+        "provider_stage": "writer_json_repair",
+        "planner_calls": 0,
+        "writer_calls": 1,
+        "structured_output_repair_count": 1,
+        "provider_call_count": 2,
+        "provider_call_count_known": True,
+        "runtime_provider": "custom",
+        "runtime_provider_model": "glm-5.2",
+        "runtime_provider_source": "explicit",
+        "runtime_provider_config_fingerprint": config.config_fingerprint,
+    }
+    assert secret not in rendered
+    assert endpoint not in rendered
+
+    non_provider = _safe_error(RuntimeError(f"internal {secret} at {endpoint}"))
+    assert non_provider == {
+        "provider_failure": False,
+        "planner_calls": 0,
+        "writer_calls": 0,
+        "structured_output_repair_count": 0,
+        "provider_call_count": 0,
+        "provider_call_count_known": False,
+    }
+    assert secret not in json.dumps(non_provider)
 
 
 def test_longrange_holder_evidence_accepts_natural_put_away_wording() -> None:
@@ -157,8 +218,17 @@ async def test_recorded_longrange_repair_checkpoint_recovery_and_sample_replay(
     assert f"section_summary_{first['section_id']}" in first[
         "memory_record_ids_added"
     ]
+    assert first["initial_narrative_length"] == first["initial_length_report"]["chars"]
     assert first["illegal_thread_change_commits"] == 0
     assert first["evidenceless_state_delta_commits"] == 0
+    repaired = report["sections"][3]
+    assert repaired["repair_patch_nonspace_lengths"]
+    assert sum(repaired["repair_patch_nonspace_lengths"]) == repaired[
+        "repair_patch_total_nonspace_chars"
+    ]
+    assert repaired["repair_patch_max_nonspace_chars"] == max(
+        repaired["repair_patch_nonspace_lengths"]
+    )
     assert analyze(report)["gate"] == "STAGE0_PASS"
     bible = json.loads(
         (output_dir / "runtime" / "story_bible.json").read_text(encoding="utf-8")
@@ -203,6 +273,67 @@ async def test_recorded_longrange_resume_has_no_duplicate_sections(tmp_path) -> 
 
 
 @pytest.mark.asyncio
+async def test_id_namespace_is_bound_to_run_transaction_and_section_ids(tmp_path) -> None:
+    reports = []
+    for namespace in ("g1_action_conflict_literary", "g2_action_conflict_literary"):
+        reports.append(
+            await run_sequence(
+                output_dir=tmp_path / namespace,
+                mode="recorded",
+                style="literary",
+                theme="action_conflict",
+                seed=7,
+                desired_length=300,
+                checkpoint_every=1,
+                limits=_limits(2),
+                resume=False,
+                id_namespace=namespace,
+            )
+        )
+
+    left, right = reports
+    assert left["config"]["id_namespace"] == "g1_action_conflict_literary"
+    assert right["config"]["id_namespace"] == "g2_action_conflict_literary"
+    assert left["run_id"] == (
+        "author-g1_action_conflict_literary-recorded-action_conflict-literary-7"
+    )
+    assert right["run_id"] == (
+        "author-g2_action_conflict_literary-recorded-action_conflict-literary-7"
+    )
+    assert [item["transaction_id"] for item in left["sections"]] == [
+        "g1_action_conflict_literary_section_0001",
+        "g1_action_conflict_literary_section_0002",
+    ]
+    assert [item["section_id"] for item in left["sections"]] == [
+        "g1_action_conflict_literary_section_0001",
+        "g1_action_conflict_literary_section_0002",
+    ]
+    assert {
+        item["transaction_id"] for item in left["sections"]
+    }.isdisjoint(item["transaction_id"] for item in right["sections"])
+    assert {
+        item["section_id"] for item in left["sections"]
+    }.isdisjoint(item["section_id"] for item in right["sections"])
+
+
+@pytest.mark.asyncio
+async def test_id_namespace_rejects_unsafe_file_identifier_text(tmp_path) -> None:
+    with pytest.raises(ValueError, match="id_namespace"):
+        await run_sequence(
+            output_dir=tmp_path / "unsafe",
+            mode="recorded",
+            style="literary",
+            theme="action_conflict",
+            seed=7,
+            desired_length=300,
+            checkpoint_every=1,
+            limits=_limits(1),
+            resume=False,
+            id_namespace="../escape",
+        )
+
+
+@pytest.mark.asyncio
 async def test_recorded_resume_rejects_identity_change(tmp_path) -> None:
     output_dir = tmp_path / "identity"
     await run_sequence(
@@ -228,6 +359,37 @@ async def test_recorded_resume_rejects_identity_change(tmp_path) -> None:
             checkpoint_every=2,
             limits=_limits(4),
             resume=True,
+        )
+
+
+@pytest.mark.asyncio
+async def test_recorded_resume_rejects_id_namespace_change(tmp_path) -> None:
+    output_dir = tmp_path / "namespace-identity"
+    await run_sequence(
+        output_dir=output_dir,
+        mode="recorded",
+        style="literary",
+        theme="action_conflict",
+        seed=7,
+        desired_length=300,
+        checkpoint_every=2,
+        limits=_limits(2),
+        resume=False,
+        id_namespace="g1_action_conflict_literary",
+    )
+
+    with pytest.raises(ValueError, match="resume configuration mismatch"):
+        await run_sequence(
+            output_dir=output_dir,
+            mode="recorded",
+            style="literary",
+            theme="action_conflict",
+            seed=7,
+            desired_length=300,
+            checkpoint_every=2,
+            limits=_limits(4),
+            resume=True,
+            id_namespace="g2_action_conflict_literary",
         )
 
 

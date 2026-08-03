@@ -48,10 +48,22 @@ def _try_load_main_project_llm() -> dict | None:
 def _load_config() -> dict:
     path = os.path.normpath(_CONFIG_PATH)
     if not os.path.isfile(path):
-        raise FileNotFoundError(
-            f"config.json not found at {path}. "
-            "Copy config.example.json to config.json and fill in your API key."
-        )
+        # Importing stable server settings must not require an LLM credential
+        # file.  ProviderRuntimeConfig reports a clear configuration error only
+        # when an actual LLM call is attempted.
+        return {
+            "llm": {
+                "api_key": "",
+                "base_url": "https://api.deepseek.com",
+                "model": "deepseek-chat",
+                "provider": "deepseek",
+            },
+            "memory": {},
+            "vector_db": {},
+            "knowledge_graph": {},
+            "pipeline": {},
+            "server": {},
+        }
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -112,6 +124,36 @@ def resolve_llm_block_now() -> dict:
     llm_client.reload() 通过本入口拿到 *当前* 真实的 api_key/base_url/model。
     """
     return _resolve_llm_block(_load_config())
+
+
+def resolve_server_llm_block_now() -> dict | None:
+    """Resolve only the persistent server fallback from ``config.json``.
+
+    Provider runtime precedence is handled by ``nf_core.provider_runtime``.
+    This function deliberately does not consult environment variables, so a
+    stage/request configuration can never be silently replaced by this layer.
+    """
+    cfg = _load_config()
+    llm = cfg.get("llm", {}) or {}
+    api_key = str(llm.get("api_key") or "").strip()
+    if not api_key:
+        return None
+    return {
+        "api_key": api_key,
+        "base_url": str(
+            llm.get("base_url") or "https://api.deepseek.com"
+        ).strip(),
+        "model": str(llm.get("model") or "deepseek-chat").strip(),
+        "provider": str(llm.get("provider") or "deepseek").strip().lower(),
+        "thinking_mode": str(llm.get("thinking_mode") or "").strip().lower(),
+        "timeout": float(llm.get("timeout") or 600),
+        "max_retries": int(llm.get("max_retries") or 0),
+        "temperature": float(
+            0.7 if llm.get("temperature") in (None, "") else llm["temperature"]
+        ),
+        "max_tokens_cap": int(llm.get("max_tokens_cap") or 65536),
+        "source": "server_config",
+    }
 
 
 def _resolve_llm_block(cfg: dict) -> dict:

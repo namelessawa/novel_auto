@@ -21,6 +21,7 @@ from story.narrative_contract import (
 from story.ending_validator import EndingCompletionReport
 from story.repair_patch import RepairPatchSet, RepairPatchValidationReport
 from story.repair_plan import RepairPlan
+from story.production_models import ProductionContextSnapshot
 from story.section_budget import SectionBudgetPlan
 from story.section_length_validator import SectionBalanceReport, SectionLengthReport
 from story.writer_preflight import WriterPreflightReport
@@ -285,6 +286,8 @@ class CanonicalState(StoryModel):
 
 class SectionGoal(StoryModel):
     section_id: str = ""
+    production_chapter_ordinal: int = Field(default=0, ge=0)
+    production_section_ordinal: int = Field(default=0, ge=0)
     objective: str = Field(min_length=1)
     viewpoint_character_id: str = ""
     location_id: str = ""
@@ -296,6 +299,18 @@ class SectionGoal(StoryModel):
     narrative_constraints: NarrativeContractInput = Field(
         default_factory=NarrativeContractInput
     )
+
+    @model_validator(mode="after")
+    def _production_position_is_complete(self) -> "SectionGoal":
+        positioned = (
+            self.production_chapter_ordinal > 0,
+            self.production_section_ordinal > 0,
+        )
+        if positioned[0] != positioned[1]:
+            raise ValueError(
+                "production chapter and section ordinals must be supplied together"
+            )
+        return self
 
 
 StateOperationKind = Literal["set", "add", "append", "remove", "transfer"]
@@ -465,16 +480,28 @@ class GenerationTransaction(StoryModel):
     user_id: str
     novel_id: str
     section_id: str
+    production_context: ProductionContextSnapshot | None = None
     phase: TransactionPhase = "prepared"
     story_bible_revision: int = Field(ge=1)
     canonical_state_revision: int = Field(ge=1)
     target_canonical_revision: int = Field(ge=1)
     journal_canonical_revision: int = Field(default=1, ge=1)
     writer_calls: int = Field(default=0, ge=0, le=3)
+    structured_output_repair_count: int = Field(default=0, ge=0, le=2)
     writer_retry_count: int = Field(default=0, ge=0, le=1)
     writer_retry_performed: bool = False
     writer_first_pass_pass: bool = False
+    writer_block_nonspace_lengths: list[int] = Field(default_factory=list)
+    writer_cell_nonspace_lengths: list[int] = Field(default_factory=list)
+    writer_cell_sentence_boundary_counts: list[int] = Field(default_factory=list)
     planner_calls: int = Field(default=0, ge=0, le=1)
+    provider: str = ""
+    provider_model: str = ""
+    provider_source: str = ""
+    provider_config_fingerprint: str = ""
+    provider_config_fingerprints: list[str] = Field(default_factory=list)
+    provider_error_category: str = ""
+    provider_error_stage: str = ""
     chapter_plan_success: bool = False
     writer_plan_followed: bool = False
     repair_performed: bool = False

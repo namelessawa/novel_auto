@@ -2,9 +2,15 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import pytest
+
 from scripts.analyze_author_longrange import analyze, render_markdown
 from scripts.run_author_longrange import _request_id
-from scripts.run_author_stage1_matrix import _combo_integrity, aggregate
+from scripts.run_author_stage1_matrix import (
+    _combo_integrity,
+    _combo_namespaces,
+    aggregate,
+)
 
 
 def _matrix() -> dict:
@@ -122,6 +128,39 @@ def test_stage1_aggregate_requires_and_accepts_complete_45_section_matrix() -> N
     assert all(summary["gate_checks"].values())
 
 
+def test_single_section_g1_uses_its_own_complete_gate() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:1]
+    combination = matrix["combinations"][0]
+    combination["sections"] = combination["sections"][:1]
+    combination["summary"].update(
+        {"attempted": 1, "committed": 1, "hard_rejects": 0}
+    )
+
+    summary = aggregate(matrix, expected_combinations=1, sections_per_combo=1)
+
+    assert summary["gate"] == "G1_SINGLE_PASS"
+    assert summary["attempted"] == summary["committed"] == 1
+    assert summary["length_in_range_count"] == 1
+    assert all(summary["gate_checks"].values())
+
+
+def test_single_section_g1_fails_its_local_length_gate() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:1]
+    combination = matrix["combinations"][0]
+    combination["sections"] = combination["sections"][:1]
+    combination["sections"][0]["narrative_length"] = 899
+    combination["summary"].update(
+        {"attempted": 1, "committed": 1, "hard_rejects": 0}
+    )
+
+    summary = aggregate(matrix, expected_combinations=1, sections_per_combo=1)
+
+    assert summary["gate"] == "G1_SINGLE_FAIL"
+    assert summary["gate_checks"]["length_900_1100_exactly_1"] is False
+
+
 def test_stage1_aggregate_allows_one_reject_within_43_of_45_gate() -> None:
     matrix = deepcopy(_matrix())
     failed = matrix["combinations"][0]
@@ -136,6 +175,36 @@ def test_stage1_aggregate_allows_one_reject_within_43_of_45_gate() -> None:
     assert summary["committed"] == 44
     assert summary["hard_rejects"] == 1
     assert summary["gate_checks"]["committed_at_least_43_of_45"] is True
+
+
+def test_stage1_aggregate_counts_provider_calls_from_failures() -> None:
+    matrix = _matrix()
+    matrix["combinations"][0]["failures"] = [
+        {"provider_call_count": 2},
+        {"provider_call_count": 1},
+    ]
+
+    summary = aggregate(matrix, expected_combinations=15, sections_per_combo=3)
+
+    assert summary["provider_calls"] == 108
+
+
+def test_stage1_analyzer_uses_authoritative_or_fallback_provider_call_total() -> None:
+    matrix = _matrix()
+    matrix["combinations"][0]["failures"] = [
+        {"provider_call_count": 2},
+        {"provider_call_count": 1},
+    ]
+    matrix["summary"] = aggregate(
+        matrix,
+        expected_combinations=15,
+        sections_per_combo=3,
+    )
+
+    assert analyze(matrix)["metrics"]["provider_calls"] == 108
+
+    del matrix["summary"]["provider_calls"]
+    assert analyze(matrix)["metrics"]["provider_calls"] == 108
 
 
 def test_stage1_aggregate_fails_below_43_commits() -> None:
@@ -170,7 +239,7 @@ def test_mini_matrix_aggregate_uses_14_of_15_gate() -> None:
     assert summary["contract_pass_rate"] == 0.9333
     assert summary["length_in_range_rate"] == 1.0
     assert summary["writer_first_pass_pass"] == 10
-    assert summary["gate_checks"]["writer_first_pass_at_least_8_of_15"] is True
+    assert summary["gate_checks"]["writer_first_pass_at_least_9_of_15"] is True
 
 
 def test_mini_matrix_fails_when_fewer_than_93pct_are_900_to_1100() -> None:
@@ -187,7 +256,7 @@ def test_mini_matrix_fails_when_fewer_than_93pct_are_900_to_1100() -> None:
     assert summary["gate"] == "MINI_MATRIX_FAIL"
 
 
-def test_mini_matrix_requires_eight_writer_first_passes() -> None:
+def test_mini_matrix_requires_nine_writer_first_passes() -> None:
     matrix = _matrix()
     matrix["combinations"] = matrix["combinations"][:5]
     for item in [
@@ -201,15 +270,56 @@ def test_mini_matrix_requires_eight_writer_first_passes() -> None:
         for combination in matrix["combinations"]
         for section in combination["sections"]
     ]
-    for item in all_sections[:7]:
+    for item in all_sections[:8]:
         item["writer_first_pass_pass"] = True
 
     summary = aggregate(matrix, expected_combinations=5, sections_per_combo=3)
 
-    assert summary["writer_first_pass_pass"] == 7
-    assert summary["writer_first_pass_rate"] == 0.4667
-    assert summary["gate_checks"]["writer_first_pass_at_least_8_of_15"] is False
+    assert summary["writer_first_pass_pass"] == 8
+    assert summary["writer_first_pass_rate"] == 0.5333
+    assert summary["gate_checks"]["writer_first_pass_at_least_9_of_15"] is False
     assert summary["gate"] == "MINI_MATRIX_FAIL"
+
+
+def test_mini_matrix_accepts_nine_writer_first_passes() -> None:
+    matrix = _matrix()
+    matrix["combinations"] = matrix["combinations"][:5]
+    all_sections = [
+        section
+        for combination in matrix["combinations"]
+        for section in combination["sections"]
+    ]
+    for item in all_sections:
+        item["writer_first_pass_pass"] = False
+    for item in all_sections[:9]:
+        item["writer_first_pass_pass"] = True
+
+    summary = aggregate(matrix, expected_combinations=5, sections_per_combo=3)
+
+    assert summary["writer_first_pass_pass"] == 9
+    assert summary["writer_first_pass_rate"] == 0.6
+    assert summary["gate_checks"]["writer_first_pass_at_least_9_of_15"] is True
+    assert summary["gate"] == "MINI_MATRIX_PASS"
+
+
+def test_combo_namespaces_reject_ambiguous_underscore_composition() -> None:
+    with pytest.raises(ValueError, match="duplicate id namespaces"):
+        _combo_namespaces(
+            base="g2",
+            themes=("a_b", "a"),
+            styles=("c", "b_c"),
+        )
+
+
+def test_combo_namespaces_match_fixed_acceptance_catalog() -> None:
+    assert _combo_namespaces(
+        base="g2",
+        themes=("action_conflict",),
+        styles=("literary", "noir_cold"),
+    ) == {
+        ("action_conflict", "literary"): "g2_action_conflict_literary",
+        ("action_conflict", "noir_cold"): "g2_action_conflict_noir_cold",
+    }
 
 
 def test_mini_matrix_requires_95pct_valid_chapter_plans() -> None:

@@ -52,7 +52,8 @@ def client():
     app.dependency_overrides[get_current_user] = lambda: _user("u1")
     mgr = get_task_manager()
     mgr._clear_for_tests()
-    yield TestClient(app), mgr
+    with TestClient(app) as test_client:
+        yield test_client, mgr
     mgr._clear_for_tests()
     app.dependency_overrides.clear()
 

@@ -63,7 +63,8 @@ def client(tmp_path):
     # v2.26 — 用 dependency_overrides 绕过 get_current_user + _resolve_runtime
     stub_rt = _StubRuntime(orchestrator=orch, tick_state=ts)
     app.dependency_overrides[tick_routes._resolve_runtime] = lambda: stub_rt
-    yield TestClient(app), ts, orch
+    with TestClient(app) as test_client:
+        yield test_client, ts, orch
     app.dependency_overrides.clear()
 
 

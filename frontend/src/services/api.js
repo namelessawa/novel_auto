@@ -7,7 +7,8 @@ const BASE = import.meta.env.VITE_API_BASE || ''
 // ---------------------------------------------------------------------------
 // - Reads JWT from localStorage on every request
 // - Attaches Authorization: Bearer <token>
-// - On 401: clears token + dispatches "auth:expired" event so AuthContext logs out
+// - On an explicit application-auth 401: clears token + dispatches
+//   "auth:expired". Upstream Provider failures must never destroy the app session.
 // - Skips /api/auth/* (login/register) and /api/health (public)
 
 const TOKEN_STORAGE_KEY = 'novel_auto_jwt'
@@ -54,27 +55,127 @@ function _handleUnauthorized() {
   _emit401()
 }
 
-async function authedFetch(path, init = {}) {
-  const headers = new Headers(init.headers || {})
-  if (!headers.has('Content-Type') && init.body && typeof init.body === 'string') {
+function _detailFromPayload(body) {
+  if (!body || typeof body !== 'object') return {}
+  if (body.detail && typeof body.detail === 'object') return body.detail
+  return body
+}
+
+function _isApplicationAuthCode(code) {
+  const normalized = String(code || '').trim().toUpperCase()
+  return normalized.startsWith('AUTH_TOKEN_') || normalized === 'AUTH_REQUIRED'
+}
+
+function _isProviderErrorCode(code) {
+  return String(code || '').trim().toUpperCase().startsWith('PROVIDER_')
+}
+
+function _isLegacyApplicationAuthDetail(detail) {
+  if (!detail || typeof detail !== 'object') return false
+  if (_isProviderErrorCode(detail.code)) return false
+  const message = String(
+    detail.message ||
+    (typeof detail.detail === 'string' ? detail.detail : ''),
+  ).trim()
+  if (!message) return false
+  return (
+    /未登录|登录态(?:无效|已过期|已撤销)|用户不存在|密码已更新.*重新登录/.test(message) ||
+    /(?:invalid|expired|revoked|missing)\s+(?:authentication\s+)?token/i.test(message) ||
+    /not authenticated/i.test(message)
+  )
+}
+
+async function _responseErrorDetail(response) {
+  try {
+    const body = await response.clone().json()
+    return _detailFromPayload(body)
+  } catch {
+    return {}
+  }
+}
+
+// A raw 401 is not enough evidence that the Novel Auto JWT is invalid. Provider
+// gateways occasionally leak a 401 despite the backend's 424 mapping. Fail safe:
+// preserve the app session unless the backend explicitly identifies AUTH_*.
+async function _handleUnauthorizedResponse(response, path) {
+  if (response.status !== 401 || _isPublicPath(path)) return false
+  const detail = await _responseErrorDetail(response)
+  if (_isProviderErrorCode(detail.code)) return false
+  if (
+    !_isApplicationAuthCode(detail.code) &&
+    !_isLegacyApplicationAuthDetail(detail)
+  ) return false
+  _handleUnauthorized()
+  return true
+}
+
+function _shouldAttachLLMConfig(path) {
+  const route = String(path || '').split(/[?#]/, 1)[0]
+  return (
+    route.startsWith('/api/llm/') ||
+    route === '/api/config/llm/probe' ||
+    route === '/api/generate' ||
+    route === '/api/generate/stream' ||
+    route === '/api/section/generate' ||
+    route === '/api/tick/run' ||
+    /\/api\/novels\/[^/]+\/(?:bootstrap-world|regenerate-style-anchors|outline\/generate|production\/(?:start|resume|retry-failed)|style-profiles\/[^/]+\/preview|sections\/generate)$/.test(route)
+  )
+}
+
+function _attachUserLLMConfig(headers) {
+  const llm = getUserLLMConfig()
+  // A partial override is unsafe: the backend intentionally rejects any
+  // Provider selector without its matching one-shot credential.  When the
+  // browser has no key, send no Provider headers at all and let the server
+  // resolve its configured fallback runtime.
+  if (!llm.api_key) return
+  if (!headers.has('X-User-LLM-Key')) {
+    headers.set('X-User-LLM-Key', llm.api_key)
+  }
+  if (llm.base_url && !headers.has('X-User-LLM-Base-Url')) {
+    headers.set('X-User-LLM-Base-Url', llm.base_url)
+  }
+  if (llm.model && !headers.has('X-User-LLM-Model')) {
+    headers.set('X-User-LLM-Model', llm.model)
+  }
+  if (llm.provider && !headers.has('X-User-LLM-Provider')) {
+    headers.set('X-User-LLM-Provider', llm.provider)
+  }
+  if (llm.thinking_mode && !headers.has('X-User-LLM-Thinking-Mode')) {
+    headers.set('X-User-LLM-Thinking-Mode', llm.thinking_mode)
+  }
+  if (llm.timeout != null && !headers.has('X-User-LLM-Timeout')) {
+    headers.set('X-User-LLM-Timeout', String(llm.timeout))
+  }
+  if (llm.max_retries != null && !headers.has('X-User-LLM-Max-Retries')) {
+    headers.set('X-User-LLM-Max-Retries', String(llm.max_retries))
+  }
+}
+
+export async function authedFetch(path, init = {}) {
+  const { skipUserLLMConfig = false, ...requestInit } = init
+  const headers = new Headers(requestInit.headers || {})
+  if (
+    !headers.has('Content-Type') &&
+    requestInit.body &&
+    typeof requestInit.body === 'string'
+  ) {
     headers.set('Content-Type', 'application/json')
   }
   const token = getStoredToken()
   if (token && !_isPublicPath(path)) {
     headers.set('Authorization', `Bearer ${token}`)
   }
-  // v2.28 — 总是带上用户的 LLM 凭据 header. 后端 middleware 写入 ContextVar,
-  // 让所有 LLM 调用 (主创作链 / 随机种子 / 续写) 都用用户的 key 而非 config.json.
-  // 公开路径 (登录/注册) 不发, 减少 noise.
-  if (!_isPublicPath(path)) {
-    const llm = getUserLLMConfig()
-    if (llm.api_key && !headers.has('X-User-LLM-Key')) {
-      headers.set('X-User-LLM-Key', llm.api_key)
-      if (llm.base_url) headers.set('X-User-LLM-Base-Url', llm.base_url)
-      if (llm.model) headers.set('X-User-LLM-Model', llm.model)
-    }
+  // Only attach credentials to requests that may actually invoke a model.
+  // This keeps secrets away from unrelated chapter/stat/export traffic.
+  if (
+    !skipUserLLMConfig &&
+    !_isPublicPath(path) &&
+    _shouldAttachLLMConfig(path)
+  ) {
+    _attachUserLLMConfig(headers)
   }
-  const res = await fetch(`${BASE}${path}`, { ...init, headers })
+  const res = await fetch(`${BASE}${path}`, { ...requestInit, headers })
   // sliding refresh: 后端在距过期 < 1 天时通过 X-Refreshed-Token 响应头签新 token,
   // 浏览器 JS 仅在后端 expose_headers 显式列出时能读到 (main.py CORS 已配置).
   try {
@@ -83,9 +184,7 @@ async function authedFetch(path, init = {}) {
   } catch {
     /* private mode / 跨域无 expose 等情况静默忽略 */
   }
-  if (res.status === 401 && !_isPublicPath(path)) {
-    _handleUnauthorized()
-  }
+  await _handleUnauthorizedResponse(res, path)
   return res
 }
 
@@ -106,6 +205,10 @@ async function assertOk(res) {
       detail = body.detail.message || detail
       code = body.detail.code || ''
       details = body.detail.details || {}
+    } else if (body && typeof body.message === 'string') {
+      detail = body.message
+      code = body.code || ''
+      details = body.details || {}
     } else if (body && Array.isArray(body.detail)) {
       detail = body.detail
         .map((d) => `${(d.loc || []).join('.')}: ${d.msg}`)
@@ -198,6 +301,7 @@ export async function authLogout() {
     /* server-side noop on token error; 仍要清本地 */
   }
   setStoredToken('')
+  _sessionLLMConfig = null
   // 用户登出时一并清掉他们的 LLM / image api key — 防共享设备下泄露给下个登录者.
   try {
     localStorage.removeItem(USER_LLM_STORAGE_KEY)
@@ -213,26 +317,92 @@ export async function authLogout() {
 
 const USER_LLM_STORAGE_KEY = 'novel_auto_user_llm'
 const USER_IMAGE_STORAGE_KEY = 'novel_auto_user_image'
+let _sessionLLMConfig = null
 
-export function getUserLLMConfig() {
-  try {
-    const raw = localStorage.getItem(USER_LLM_STORAGE_KEY)
-    if (!raw) return { api_key: '', base_url: '', model: '' }
-    return JSON.parse(raw)
-  } catch {
-    return { api_key: '', base_url: '', model: '' }
+function _emptyLLMConfig() {
+  return {
+    api_key: '',
+    base_url: '',
+    model: '',
+    provider: '',
+    thinking_mode: 'disabled',
+    timeout: 600,
+    max_retries: 0,
   }
 }
 
-export function setUserLLMConfig({ api_key, base_url, model, provider }) {
+function _readDeviceLLMConfig() {
   try {
-    const payload = { api_key, base_url, model }
-    // 修复(11) — 持久化 provider id, ConfigView 读取时优先用它而非 base_url 推断。
-    // 旧调用方不传 provider 时不写该字段, 读取方退回推断 — 向后兼容。
-    if (provider) payload.provider = provider
+    const raw = localStorage.getItem(USER_LLM_STORAGE_KEY)
+    if (!raw) return _emptyLLMConfig()
+    return { ..._emptyLLMConfig(), ...JSON.parse(raw) }
+  } catch {
+    return _emptyLLMConfig()
+  }
+}
+
+export function getUserLLMConfig() {
+  return _sessionLLMConfig
+    ? { ..._emptyLLMConfig(), ..._sessionLLMConfig }
+    : _readDeviceLLMConfig()
+}
+
+export function getUserLLMConfigSummary() {
+  const config = getUserLLMConfig()
+  return {
+    provider: config.provider || '',
+    base_url: config.base_url || '',
+    model: config.model || '',
+    thinking_mode: config.thinking_mode || 'disabled',
+    timeout: Number(config.timeout || 600),
+    max_retries: Number(config.max_retries || 0),
+    credential_present: Boolean(config.api_key),
+    source: _sessionLLMConfig ? 'session' : config.api_key ? 'device' : 'none',
+  }
+}
+
+export function setUserLLMConfig(config = {}, options = {}) {
+  const remember = options.remember !== false
+  const previous = getUserLLMConfig()
+  const provider = String(config.provider ?? previous.provider ?? '').trim()
+  const baseUrl = String(config.base_url ?? previous.base_url ?? '').trim()
+  const sameIdentity = (
+    provider.toLowerCase() === String(previous.provider || '').trim().toLowerCase() &&
+    baseUrl.replace(/\/+$/, '') ===
+      String(previous.base_url || '').trim().replace(/\/+$/, '')
+  )
+  const suppliedKey = String(config.api_key || '')
+  const payload = {
+    provider,
+    base_url: baseUrl,
+    model: String(config.model ?? previous.model ?? '').trim(),
+    api_key:
+      options.clearApiKey || !sameIdentity
+        ? suppliedKey
+        : suppliedKey || previous.api_key || '',
+    thinking_mode:
+      String(config.thinking_mode ?? previous.thinking_mode ?? 'disabled'),
+    timeout: Number(config.timeout ?? previous.timeout ?? 600),
+    max_retries: Number(config.max_retries ?? previous.max_retries ?? 0),
+  }
+  if (!remember) {
+    _sessionLLMConfig = payload
+    return
+  }
+  _sessionLLMConfig = null
+  try {
     localStorage.setItem(USER_LLM_STORAGE_KEY, JSON.stringify(payload))
   } catch {
     /* silent */
+  }
+}
+
+export function clearUserLLMConfig() {
+  _sessionLLMConfig = null
+  try {
+    localStorage.removeItem(USER_LLM_STORAGE_KEY)
+  } catch {
+    /* private mode */
   }
 }
 
@@ -370,18 +540,16 @@ export async function fetchMultimodalAssetBlobUrl(novel_id, chapter, section, fi
   if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(url, { headers })
   if (res.status === 401) {
-    // 修复(17) — 复用共享 401 处理, 与 authedFetch 行为永远同步,
-    // 防止登录态过期后所有资产加载静默失败, 用户卡在"加载中…"
-    _handleUnauthorized()
-    throw new Error('登录态已过期, 请重新登录')
+    const expired = await _handleUnauthorizedResponse(res, '/api/multimodal/asset')
+    if (expired) throw new Error('登录态已过期, 请重新登录')
   }
-  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${filename}`)
+  if (!res.ok) return assertOk(res)
   const blob = await res.blob()
   return URL.createObjectURL(blob)
 }
 
-// 修复(16) — X-User-LLM-* headers 统一由 authedFetch 注入 (它对所有非公开
-// 路径在 api_key 存在时自动加), 调用点不再手工重复 (原 _userLLMHeaders 已删)。
+// X-User-LLM-* headers 统一由 authedFetch 注入，但只发送给会实际调用模型的
+// 明确 allowlist 路径，避免凭据进入状态、导出或正文读取请求。
 
 export async function randomSeed({ existing_title = '' } = {}) {
   const res = await authedFetch('/api/llm/random-seed', {
@@ -471,8 +639,9 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
   }
 
   const token = getStoredToken()
-  const headers = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+  const headers = new Headers({ 'Content-Type': 'application/json' })
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  _attachUserLLMConfig(headers)
 
   fetch(`${BASE}/api/generate/stream`, {
     method: 'POST',
@@ -482,9 +651,11 @@ export function generateSectionStream(outline = '', onEvent, onText, onDone, onE
   })
     .then(async (response) => {
       if (response.status === 401) {
-        _handleUnauthorized()
-        reportError(new Error('登录态已过期, 请重新登录'))
-        return
+        const expired = await _handleUnauthorizedResponse(response, '/api/generate/stream')
+        if (expired) {
+          reportError(new Error('登录态已过期, 请重新登录'))
+          return
+        }
       }
       if (!response.ok) {
         let detail = `HTTP ${response.status}`
@@ -639,6 +810,50 @@ export async function fetchLLMConfig() {
   return assertOk(res)
 }
 
+export async function fetchLLMProviders() {
+  const res = await authedFetch('/api/config/llm/providers')
+  return assertOk(res)
+}
+
+export async function fetchLLMRuntime() {
+  const res = await authedFetch('/api/config/llm/runtime')
+  return assertOk(res)
+}
+
+function _explicitProviderHeaders(config = {}) {
+  // Keep the request override atomic.  Empty-key drafts are UI metadata, not
+  // permission to shadow a valid server-side Provider runtime.
+  if (!config.api_key) return {}
+  const headers = {}
+  headers['X-User-LLM-Key'] = config.api_key
+  if (config.base_url) headers['X-User-LLM-Base-Url'] = config.base_url
+  if (config.model) headers['X-User-LLM-Model'] = config.model
+  if (config.provider) headers['X-User-LLM-Provider'] = config.provider
+  if (config.thinking_mode) {
+    headers['X-User-LLM-Thinking-Mode'] = config.thinking_mode
+  }
+  if (config.timeout != null) {
+    headers['X-User-LLM-Timeout'] = String(config.timeout)
+  }
+  if (config.max_retries != null) {
+    headers['X-User-LLM-Max-Retries'] = String(config.max_retries)
+  }
+  return headers
+}
+
+export async function probeLLMConfig(config = {}) {
+  const res = await authedFetch('/api/config/llm/probe', {
+    method: 'POST',
+    headers: _explicitProviderHeaders(config),
+    body: JSON.stringify({}),
+    // The explicit draft is authoritative for a probe.  In particular, an
+    // empty-key draft must not silently reuse a credential from another saved
+    // browser identity; it intentionally probes the server fallback instead.
+    skipUserLLMConfig: true,
+  })
+  return assertOk(res)
+}
+
 export async function updateLLMConfig({ api_key, base_url, model, provider }) {
   const body = {}
   if (api_key !== undefined) body.api_key = api_key
@@ -662,6 +877,17 @@ export async function fetchNovels() {
 }
 
 export async function createNovel(title = '未命名小说', generationMode = 'author') {
+  if (title && typeof title === 'object') {
+    const payload = title
+    const res = await authedFetch('/api/novels', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...payload,
+        generation_mode: payload.generation_mode || 'author',
+      }),
+    })
+    return assertOk(res)
+  }
   const res = await authedFetch('/api/novels', {
     method: 'POST',
     body: JSON.stringify({ title, generation_mode: generationMode }),
@@ -690,6 +916,226 @@ export async function switchNovel(novelId) {
     { method: 'POST' },
   )
   return assertOk(res)
+}
+
+// ---------------------------------------------------------------------------
+// Whole-book author production
+// ---------------------------------------------------------------------------
+
+function _novelPath(novelId, suffix) {
+  return `/api/novels/${encodeURIComponent(novelId)}${suffix}`
+}
+
+export async function fetchProductionSpec(novelId) {
+  const res = await authedFetch(_novelPath(novelId, '/production-spec'))
+  return assertOk(res)
+}
+
+export async function saveProductionSpec(novelId, payload) {
+  const res = await authedFetch(_novelPath(novelId, '/production-spec'), {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  return assertOk(res)
+}
+
+export async function generateBookOutline(novelId, payload = {}) {
+  const res = await authedFetch(_novelPath(novelId, '/outline/generate'), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return assertOk(res)
+}
+
+export async function fetchBookOutline(novelId) {
+  const res = await authedFetch(_novelPath(novelId, '/outline'))
+  return assertOk(res)
+}
+
+export async function saveBookOutline(novelId, payload) {
+  const res = await authedFetch(_novelPath(novelId, '/outline'), {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  return assertOk(res)
+}
+
+export async function fetchStyleProfiles(novelId) {
+  const res = await authedFetch(_novelPath(novelId, '/style-profiles'))
+  return assertOk(res)
+}
+
+export async function createStyleProfile(novelId, payload) {
+  const res = await authedFetch(_novelPath(novelId, '/style-profiles'), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return assertOk(res)
+}
+
+export async function saveStyleProfile(novelId, styleId, payload) {
+  const res = await authedFetch(
+    _novelPath(novelId, `/style-profiles/${encodeURIComponent(styleId)}`),
+    { method: 'PUT', body: JSON.stringify(payload) },
+  )
+  return assertOk(res)
+}
+
+export async function deleteStyleProfile(novelId, styleId, expectedRevision = null) {
+  const params = expectedRevision == null
+    ? ''
+    : `?expected_revision=${encodeURIComponent(expectedRevision)}`
+  const res = await authedFetch(
+    _novelPath(
+      novelId,
+      `/style-profiles/${encodeURIComponent(styleId)}${params}`,
+    ),
+    { method: 'DELETE' },
+  )
+  return assertOk(res)
+}
+
+export async function previewStyleProfile(novelId, styleId, payload = {}) {
+  const res = await authedFetch(
+    _novelPath(
+      novelId,
+      `/style-profiles/${encodeURIComponent(styleId)}/preview`,
+    ),
+    { method: 'POST', body: JSON.stringify(payload) },
+  )
+  return assertOk(res)
+}
+
+export async function activateStyleProfile(novelId, styleId, payload = {}) {
+  const res = await authedFetch(
+    _novelPath(
+      novelId,
+      `/style-profiles/${encodeURIComponent(styleId)}/activate`,
+    ),
+    { method: 'POST', body: JSON.stringify(payload) },
+  )
+  return assertOk(res)
+}
+
+async function _productionAction(novelId, action, payload = {}) {
+  const res = await authedFetch(_novelPath(novelId, `/production/${action}`), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return assertOk(res)
+}
+
+export function startProduction(novelId, payload = {}) {
+  return _productionAction(novelId, 'start', payload)
+}
+
+export function pauseProduction(novelId, payload = {}) {
+  return _productionAction(novelId, 'pause', payload)
+}
+
+export function resumeProduction(novelId, payload = {}) {
+  return _productionAction(novelId, 'resume', payload)
+}
+
+export function cancelProduction(novelId, payload = {}) {
+  return _productionAction(novelId, 'cancel', payload)
+}
+
+export function retryFailedChapter(novelId, payload = {}) {
+  return _productionAction(novelId, 'retry-failed', payload)
+}
+
+export async function fetchProductionStatus(novelId) {
+  const res = await authedFetch(_novelPath(novelId, '/production/status'))
+  return assertOk(res)
+}
+
+export async function fetchCommittedChapters(novelId) {
+  const res = await authedFetch(_novelPath(novelId, '/chapters'))
+  return assertOk(res)
+}
+
+export async function fetchCommittedChapter(novelId, chapterId) {
+  const res = await authedFetch(
+    _novelPath(novelId, `/chapters/${encodeURIComponent(chapterId)}`),
+  )
+  return assertOk(res)
+}
+
+export function watchProductionEvents(
+  novelId,
+  { jobId, afterSequence = 0, onEvent, onError, onOpen } = {},
+) {
+  const query = new URLSearchParams()
+  if (jobId) query.set('job_id', jobId)
+  if (Number(afterSequence) > 0) {
+    query.set('after_sequence', String(Number(afterSequence)))
+  }
+  const suffix = query.toString()
+  const path = `${_novelPath(novelId, '/production/events')}${
+    suffix ? `?${suffix}` : ''
+  }`
+  const controller = new AbortController()
+  const token = getStoredToken()
+  const headers = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  fetch(`${BASE}${path}`, { headers, signal: controller.signal })
+    .then(async (response) => {
+      if (response.status === 401) {
+        const expired = await _handleUnauthorizedResponse(response, path)
+        if (expired) {
+          onError?.(Object.assign(new Error('登录态已过期'), {
+            code: 'AUTH_TOKEN_EXPIRED',
+          }))
+          return
+        }
+      }
+      if (!response.ok) {
+        try {
+          await assertOk(response)
+        } catch (error) {
+          onError?.(error)
+        }
+        return
+      }
+      onOpen?.()
+      if (!response.body) {
+        onError?.(new Error('当前连接不支持生产事件流'))
+        return
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let eventName = 'message'
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split(/\r?\n/)
+        buffer = lines.pop() || ''
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            eventName = line.slice(6).trim() || 'message'
+          } else if (line.startsWith('data:')) {
+            const raw = line.slice(5).trim()
+            try {
+              onEvent?.({ type: eventName, data: JSON.parse(raw) })
+            } catch {
+              onEvent?.({ type: eventName, data: raw })
+            }
+            eventName = 'message'
+          } else if (!line.trim()) {
+            eventName = 'message'
+          }
+        }
+      }
+    })
+    .catch((error) => {
+      if (error.name !== 'AbortError') onError?.(error)
+    })
+
+  return controller
 }
 
 // ---------------------------------------------------------------------------
@@ -1120,10 +1566,12 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
   })
     .then(async (response) => {
       if (response.status === 401) {
-        _handleUnauthorized()
-        if (typeof onError === 'function')
-          onError(new Error('登录态已过期'))
-        return
+        const expired = await _handleUnauthorizedResponse(response, '/api/tasks/stream')
+        if (expired) {
+          if (typeof onError === 'function')
+            onError(new Error('登录态已过期'))
+          return
+        }
       }
       if (!response.ok) {
         const err = new Error(`HTTP ${response.status}`)

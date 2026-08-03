@@ -20,9 +20,11 @@ from __future__ import annotations
 
 import logging
 
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from nf_core.llm_client import set_user_llm_config
+from nf_core.llm_client import reset_user_llm_config, set_user_llm_config
+from nf_core.provider_runtime import ProviderConfigurationError
 
 from .url_safety import is_safe_public_url
 
@@ -46,24 +48,111 @@ class UserLLMHeadersMiddleware:
         api_key = ""
         base_url = ""
         model = ""
+        provider = ""
+        thinking_mode = ""
+        timeout: float | None = None
+        max_retries: int | None = None
+        header_error = ""
+        provider_header_present = False
         for k, v in scope.get("headers", ()):
+            value = v.decode("latin-1", "ignore").strip()
             if k == b"x-user-llm-key":
-                api_key = v.decode("latin-1", "ignore").strip()
+                api_key = value
             elif k == b"x-user-llm-base-url":
-                base_url = v.decode("latin-1", "ignore").strip()
+                provider_header_present = True
+                base_url = value
             elif k == b"x-user-llm-model":
-                model = v.decode("latin-1", "ignore").strip()
+                provider_header_present = True
+                model = value
+            elif k == b"x-user-llm-provider":
+                provider_header_present = True
+                provider = value
+            elif k == b"x-user-llm-thinking-mode":
+                provider_header_present = True
+                thinking_mode = value
+            elif k == b"x-user-llm-timeout":
+                provider_header_present = True
+                try:
+                    timeout = float(value)
+                except ValueError:
+                    header_error = "X-User-LLM-Timeout 必须是正数"
+            elif k == b"x-user-llm-max-retries":
+                provider_header_present = True
+                try:
+                    max_retries = int(value)
+                except ValueError:
+                    header_error = "X-User-LLM-Max-Retries 必须是非负整数"
 
-        # SSRF 防御: base_url 若被填入但指向内网/保留地址, 直接丢弃 (传 "" 让 LLMClient
-        # 回落到 config.json 默认). 不返回 400 — 防止攻击者用错误码做内网端口扫描。
+        if header_error:
+            await JSONResponse(
+                status_code=400,
+                content={
+                    "detail": {
+                        "code": "PROVIDER_CONFIG_INVALID",
+                        "message": header_error,
+                        "details": {},
+                    }
+                },
+            )(scope, receive, send)
+            return
+
+        # Never replace an unsafe user endpoint with a different provider's
+        # endpoint: doing so could send the user's credential to the wrong
+        # service.  The response intentionally does not echo the rejected URL.
         if base_url and not is_safe_public_url(base_url):
-            _log.warning(
-                "rejected user-supplied LLM base_url pointing to non-public host: %r",
-                base_url,
-            )
-            base_url = ""
+            _log.warning("rejected unsafe user-supplied LLM base URL")
+            await JSONResponse(
+                status_code=400,
+                content={
+                    "detail": {
+                        "code": "PROVIDER_BASE_URL_UNSAFE",
+                        "message": "X-User-LLM-Base-Url 必须是公网 https:// 地址",
+                        "details": {},
+                    }
+                },
+            )(scope, receive, send)
+            return
 
+        if not api_key and provider_header_present:
+            await JSONResponse(
+                status_code=400,
+                content={
+                    "detail": {
+                        "code": "PROVIDER_CREDENTIAL_REQUIRED",
+                        "message": "提供模型配置 header 时必须同时提供 API key",
+                        "details": {},
+                    }
+                },
+            )(scope, receive, send)
+            return
+
+        token = None
         if api_key:
-            set_user_llm_config(api_key=api_key, base_url=base_url, model=model)
+            try:
+                token = set_user_llm_config(
+                    api_key=api_key,
+                    base_url=base_url,
+                    model=model,
+                    provider=provider,
+                    thinking_mode=thinking_mode,
+                    timeout=timeout,
+                    max_retries=max_retries,
+                )
+            except ProviderConfigurationError as exc:
+                await JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": {
+                            "code": "PROVIDER_CONFIG_INVALID",
+                            "message": str(exc),
+                            "details": {},
+                        }
+                    },
+                )(scope, receive, send)
+                return
 
-        await self.app(scope, receive, send)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            if token is not None:
+                reset_user_llm_config(token)

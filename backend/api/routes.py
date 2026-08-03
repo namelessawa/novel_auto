@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -24,6 +25,13 @@ import novel_manager
 from auth import User, get_current_user
 from config.settings import get_llm_config, update_llm_config
 from memory_system.models import Entity, EntityType, Relation, RelationType
+from nf_core.provider_runtime import (
+    ProviderConfigurationError,
+    ProviderError,
+    ephemeral_provider_client,
+    provider_output_invalid,
+    resolve_provider_runtime,
+)
 from pipeline.engine import GenerationPipeline, PipelineEvent, PipelineStage
 
 logger = logging.getLogger(__name__)
@@ -93,6 +101,10 @@ class LLMConfigUpdateRequest(BaseModel):
     base_url: str | None = None
     model: str | None = None
     provider: str | None = None
+
+
+class LLMProbeRequest(BaseModel):
+    max_tokens: int = Field(default=16, ge=1, le=64)
 
 
 class NovelCreateRequest(BaseModel):
@@ -365,6 +377,90 @@ async def get_llm_config_route(current_user: User = Depends(get_current_user)):
     return get_llm_config()
 
 
+@router.get("/api/config/llm/providers")
+async def get_llm_providers_route(
+    current_user: User = Depends(get_current_user),
+):
+    from core.config import get_provider_catalog
+
+    return {"providers": get_provider_catalog()}
+
+
+@router.get("/api/config/llm/runtime")
+async def get_llm_runtime_route(
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return resolve_provider_runtime().diagnostics()
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "PROVIDER_CONFIG_INVALID",
+                "message": str(exc),
+                "details": {},
+            },
+        ) from exc
+
+
+@router.post("/api/config/llm/probe")
+async def probe_llm_runtime_route(
+    req: LLMProbeRequest | None = None,
+    current_user: User = Depends(get_current_user),
+):
+    del current_user
+    try:
+        config = resolve_provider_runtime()
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "PROVIDER_CONFIG_INVALID",
+                "message": str(exc),
+                "details": {},
+            },
+        ) from exc
+    from nf_core.llm_client import llm_client
+
+    started = time.perf_counter()
+    try:
+        async with ephemeral_provider_client(config) as client:
+            response = await llm_client.chat(
+                system_prompt="Return exactly: OK",
+                user_prompt="OK",
+                temperature=0.0,
+                max_tokens=(req.max_tokens if req is not None else 16),
+                agent_id="provider_probe",
+                priority="critical",
+                provider_config=config,
+                client_override=client,
+            )
+        if not response.content.strip():
+            raise provider_output_invalid(config)
+    except ProviderError as exc:
+        detail = exc.to_probe_detail(
+            latency_ms=(time.perf_counter() - started) * 1000,
+        )
+        raise HTTPException(
+            status_code=exc.http_status,
+            detail=detail,
+        ) from exc
+    return {
+        "success": True,
+        "http_category": "ok",
+        "code": "OK",
+        "provider": config.provider,
+        "model": config.model,
+        "thinking_mode": config.thinking_mode,
+        "sdk_retries": config.max_retries,
+        "prompt_tokens": response.usage_prompt_tokens,
+        "completion_tokens": response.usage_completion_tokens,
+        "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+        "source": config.source,
+        "config_fingerprint": config.config_fingerprint,
+    }
+
+
 @router.put("/api/config/llm")
 async def update_llm_config_route(
     req: LLMConfigUpdateRequest,
@@ -382,7 +478,12 @@ async def update_llm_config_route(
 
     try:
         from nf_core.llm_client import llm_client
-        applied = llm_client.reload()
+        applied = llm_client.reload(
+            config=resolve_provider_runtime(
+                include_request=False,
+                include_stage=False,
+            )
+        )
         result["applied"] = applied
     except Exception as e:
         logger.error("llm_client.reload after config update failed: %s", e)

@@ -4,16 +4,22 @@ from __future__ import annotations
 
 import logging
 import os
-import threading
-from collections import OrderedDict
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 from dataclasses import dataclass
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
-import httpx
-from openai import AsyncOpenAI
-
-from config.settings import settings
+from nf_core.provider_runtime import (
+    ProviderError,
+    ProviderRuntimeConfig,
+    ProviderRuntimeReceipt,
+    classify_provider_exception,
+    get_request_provider_config,
+    provider_client_registry,
+    provider_output_invalid,
+    reset_request_provider_config,
+    resolve_provider_runtime,
+    set_request_provider_config,
+)
 from nf_core.token_budget import BudgetExceeded, get_global_tracker
 
 logger = logging.getLogger(__name__)
@@ -57,51 +63,62 @@ class UserLLMConfig:
     api_key: str
     base_url: str = ""
     model: str = ""
+    provider: str = ""
+    thinking_mode: str = ""
+    timeout: float = 600.0
+    max_retries: int = 0
+    temperature: float = 0.7
+    max_tokens_cap: int = 65536
 
 
-_user_llm_var: ContextVar[UserLLMConfig | None] = ContextVar(
-    "llm_user_config", default=None
-)
-
-
-def set_user_llm_config(*, api_key: str, base_url: str = "", model: str = "") -> None:
+def set_user_llm_config(
+    *,
+    api_key: str,
+    base_url: str = "",
+    model: str = "",
+    provider: str = "",
+    thinking_mode: str = "",
+    timeout: float | None = None,
+    max_retries: int | None = None,
+    temperature: float | None = None,
+    max_tokens_cap: int | None = None,
+) -> Token[ProviderRuntimeConfig | None]:
     """Middleware 调用 — 把请求里的用户凭据写入 ContextVar。"""
-    _user_llm_var.set(
-        UserLLMConfig(api_key=api_key, base_url=base_url, model=model)
+    config = ProviderRuntimeConfig.from_user_request(
+        api_key=api_key,
+        provider=provider,
+        base_url=base_url,
+        model=model,
+        thinking_mode=thinking_mode,
+        timeout=timeout if timeout is not None else 600.0,
+        max_retries=max_retries if max_retries is not None else 0,
+        temperature=temperature if temperature is not None else 0.7,
+        max_tokens_cap=max_tokens_cap if max_tokens_cap is not None else 65536,
     )
+    return set_request_provider_config(config)
+
+
+def reset_user_llm_config(
+    token: Token[ProviderRuntimeConfig | None],
+) -> None:
+    reset_request_provider_config(token)
 
 
 def get_user_llm_config() -> UserLLMConfig | None:
-    return _user_llm_var.get()
-
-
-# 客户端缓存: 按 (api_key, base_url) 缓存 AsyncOpenAI; 避免每请求重建连接池。
-# LRU + 上限 — 防止恶意 / 误传大量不同 key 造成内存膨胀。
-_USER_CLIENT_CACHE_MAX = 32
-_user_client_cache: "OrderedDict[tuple[str, str], AsyncOpenAI]" = OrderedDict()
-_user_client_lock = threading.Lock()
-
-
-def _get_user_client(cfg: UserLLMConfig) -> AsyncOpenAI:
-    base = cfg.base_url or "https://api.deepseek.com"
-    key = (cfg.api_key, base)
-    with _user_client_lock:
-        client = _user_client_cache.get(key)
-        if client is not None:
-            _user_client_cache.move_to_end(key)
-            return client
-        # _get_user_client also picks up LLM_MAX_RETRIES — per-user clients
-        # benefit from the same backoff knob during bench / batch flows.
-        client = AsyncOpenAI(
-            api_key=cfg.api_key,
-            base_url=base,
-            max_retries=_resolve_max_retries(),
-            timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
-        )
-        _user_client_cache[key] = client
-        while len(_user_client_cache) > _USER_CLIENT_CACHE_MAX:
-            _user_client_cache.popitem(last=False)
-        return client
+    config = get_request_provider_config()
+    if config is None:
+        return None
+    return UserLLMConfig(
+        api_key=config.api_key,
+        base_url=config.base_url,
+        model=config.model,
+        provider=config.provider,
+        thinking_mode=config.thinking_mode,
+        timeout=config.timeout,
+        max_retries=config.max_retries,
+        temperature=config.temperature,
+        max_tokens_cap=config.max_tokens_cap,
+    )
 
 
 @dataclass(frozen=True)
@@ -113,6 +130,11 @@ class LLMResponse:
     # 不支持时为 0). 让 narrator cache 重排能直接量化命中率, 而不是只看总 token
     # 趋势猜测。
     usage_cached_tokens: int = 0
+    provider: str = ""
+    model: str = ""
+    provider_source: str = ""
+    provider_config_fingerprint: str = ""
+    provider_runtime_receipt: ProviderRuntimeReceipt | None = None
 
 
 def _resolve_timeout() -> float:
@@ -138,15 +160,15 @@ def _resolve_max_tokens_cap() -> int:
         return 65536
 
 
-def _clamp_max_tokens(n: int) -> int:
+def _clamp_max_tokens(n: int, cap: int | None = None) -> int:
     """HIGH fix (code review 2026-06-17): lazy 读 env, 与其他 _resolve_* helper 一致.
 
     历史 module-level 冻结的 _MAX_TOKENS_CAP 让 hot-reload 路径无法切换 cap —
     生产 server 启动后改 LLM_MAX_TOKENS_CAP 静默无效. 现在每次 chat() 调用都按
     当前 env 解析.
     """
-    cap = _resolve_max_tokens_cap()
-    return min(n, cap) if n > 0 else cap
+    effective_cap = cap if cap is not None else _resolve_max_tokens_cap()
+    return min(n, effective_cap) if n > 0 else effective_cap
 
 
 def _resolve_max_retries() -> int:
@@ -186,7 +208,7 @@ def _resolve_per_call_sleep() -> float:
         return 0.0
 
 
-def _resolve_extra_body() -> dict | None:
+def _resolve_extra_body(thinking_mode: str | None = None) -> dict | None:
     """Phase 5-A: env-driven extra_body for provider-specific quirks.
 
     现在只用于 ARK volces 的 thinking-disable. ``LLM_THINKING_MODE=disabled``
@@ -197,7 +219,12 @@ def _resolve_extra_body() -> dict | None:
     其他取值留作未来扩展 (例如 enabled / auto), 当前一律忽略, 返回 None.
     返回 None 时调用方不传 extra_body, 与原生 OpenAI 调用完全一致.
     """
-    mode = (os.environ.get("LLM_THINKING_MODE") or "").strip().lower()
+    mode = (
+        thinking_mode
+        if thinking_mode is not None
+        else os.environ.get("LLM_THINKING_MODE")
+    )
+    mode = (mode or "").strip().lower()
     if mode == "disabled":
         return {"thinking": {"type": "disabled"}}
     return None
@@ -248,62 +275,120 @@ class LLMClient:
     """Async wrapper around any OpenAI-compatible API (DeepSeek / mimo / custom)."""
 
     def __init__(self) -> None:
-        self._client = AsyncOpenAI(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
-            max_retries=_resolve_max_retries(),
-            timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
-        )
-        self._model = settings.deepseek_model
+        # Intentionally empty: importing this module must not resolve credentials
+        # or create a network client.
+        pass
 
-    # v2.17 — 热更新入口。PUT /api/config/llm 写完 config.json 后调用本方法,
-    # 调用方无需重启进程。注意: 主项目 .env 设置的 LLM_PROVIDER 仍然优先 ——
-    # _resolve_llm_block 的源优先级保持不变。
+    @property
+    def _client(self):
+        """Compatibility view used by older tests and diagnostics."""
+        config = resolve_provider_runtime()
+        return provider_client_registry.get_client(config)
+
+    @property
+    def _model(self) -> str:
+        return resolve_provider_runtime().model
+
     def reload(
         self,
         *,
+        config: ProviderRuntimeConfig | None = None,
+        provider: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
         model: str | None = None,
+        thinking_mode: str | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        temperature: float | None = None,
+        max_tokens_cap: int | None = None,
     ) -> dict:
-        """重建 AsyncOpenAI 客户端。
-
-        显式参数为 None 时,从 config.json/主项目 .env 重新解析当前值。
-        返回应用到客户端的有效配置(供调用方记日志)。
-        """
-        from config.settings import resolve_llm_block_now
-
-        if api_key is None or base_url is None or model is None:
-            block = resolve_llm_block_now()
-            eff_key = api_key if api_key is not None else block.get("api_key", "")
-            eff_url = base_url if base_url is not None else block.get("base_url", "")
-            eff_model = model if model is not None else block.get("model", "")
-            source = block.get("source", "unknown")
-        else:
-            eff_key, eff_url, eff_model, source = api_key, base_url, model, "explicit"
-
-        # AsyncOpenAI 没有显式 close() 同步方法; 释放旧 client 引用即可让 GC 接管
-        # httpx 连接池。下次 chat() 用新 _client 发起新连接,旧连接随 GC 释放。
-        self._client = AsyncOpenAI(
-            api_key=eff_key,
-            base_url=eff_url,
-            max_retries=_resolve_max_retries(),
-            timeout=httpx.Timeout(_resolve_timeout(), connect=15.0),
+        """Resolve a runtime and retire cached clients without changing context."""
+        has_overrides = any(
+            value is not None
+            for value in (
+                provider,
+                api_key,
+                base_url,
+                model,
+                thinking_mode,
+                timeout,
+                max_retries,
+                temperature,
+                max_tokens_cap,
+            )
         )
-        self._model = eff_model
-        # v2.17 — 故意不 logger.info() base_url/model/source 字符串: 它们在 CodeQL
-        # 视图里都从含 api_key 的 block dict 派生, 直接日志会触发
-        # py/clear-text-logging-sensitive-data。调用方拿到返回 dict 后可自行决定
-        # 是否记账, 是否脱敏。
-        logger.info("LLMClient reloaded (model length=%d, base_url length=%d)",
-                    len(eff_model), len(eff_url))
-        return {"base_url": eff_url, "model": eff_model, "source": source}
+        if config is not None:
+            current = config
+        elif (
+            api_key is not None
+            and base_url is not None
+            and model is not None
+        ):
+            current = ProviderRuntimeConfig.from_explicit(
+                provider=provider or "custom",
+                api_key=api_key,
+                base_url=base_url,
+                model=model,
+                thinking_mode=thinking_mode or "",
+                timeout=timeout if timeout is not None else 600,
+                max_retries=max_retries if max_retries is not None else 0,
+                temperature=temperature if temperature is not None else 0.7,
+                max_tokens_cap=(
+                    max_tokens_cap if max_tokens_cap is not None else 65536
+                ),
+                source="explicit",
+            )
+            has_overrides = False
+        else:
+            current = resolve_provider_runtime()
+        if has_overrides:
+            current = ProviderRuntimeConfig.from_explicit(
+                provider=provider or current.provider,
+                api_key=api_key if api_key is not None else current.api_key,
+                base_url=(
+                    base_url if base_url is not None else current.base_url
+                ),
+                model=model if model is not None else current.model,
+                thinking_mode=(
+                    thinking_mode
+                    if thinking_mode is not None
+                    else current.thinking_mode
+                ),
+                timeout=timeout if timeout is not None else current.timeout,
+                max_retries=(
+                    max_retries
+                    if max_retries is not None
+                    else current.max_retries
+                ),
+                temperature=(
+                    temperature
+                    if temperature is not None
+                    else current.temperature
+                ),
+                max_tokens_cap=(
+                    max_tokens_cap
+                    if max_tokens_cap is not None
+                    else current.max_tokens_cap
+                ),
+                source="explicit",
+            )
+        provider_client_registry.invalidate()
+        logger.info(
+            "LLM runtime reloaded (provider=%s, fingerprint=%s)",
+            current.provider,
+            current.config_fingerprint,
+        )
+        return current.diagnostics()
+
+    async def aclose(self) -> None:
+        await provider_client_registry.aclose_all()
 
     async def chat(
         self,
         system_prompt: str,
         user_prompt: str,
-        temperature: float = 0.7,
+        temperature: float | None = None,
         max_tokens: int = 4096,
         # v2.7 — 调用方可标注用途, 自动入 TokenBudgetTracker
         agent_id: str = "unknown",
@@ -315,7 +400,16 @@ class LLMClient:
         # 直接被 chat.completions.create() 路由。调用方在 logger.info 里能看到
         # override 长度作为可观测信号。
         model_override: str | None = None,
+        provider_config: ProviderRuntimeConfig | None = None,
+        client_override: Any | None = None,
+        response_format: dict[str, str] | None = None,
     ) -> LLMResponse:
+        if response_format is not None and response_format != {
+            "type": "json_object"
+        }:
+            raise ValueError(
+                "response_format must be exactly {'type': 'json_object'}"
+            )
         # v2.17 — 调用前硬拦截。token_budget 之前只「记账」, README 写的
         # 「optional 退化、medium 拒绝」从未连到执行路径。现在: priority=critical
         # 一律放行(Narrator/Guardian 不可被掐断); medium/optional 由 tracker
@@ -343,19 +437,14 @@ class LLMClient:
                 ),
             )
 
-        # v2.28 — 优先用 ContextVar 里的用户 LLM 凭据 (per-request),
-        # 没有才退回 self._client (config.json 兜底, 兼容 dev / 后台任务)。
-        user_cfg = get_user_llm_config()
-        if user_cfg and user_cfg.api_key:
-            client = _get_user_client(user_cfg)
-            effective_model = (
-                model_override
-                or user_cfg.model
-                or self._model
-            )
-        else:
-            client = self._client
-            effective_model = model_override or self._model
+        config = resolve_provider_runtime(provider_config)
+        lease = (
+            None
+            if client_override is not None
+            else provider_client_registry.acquire(config)
+        )
+        client = client_override if client_override is not None else lease.client
+        effective_model = model_override or config.model
         if model_override:
             logger.info(
                 "LLMClient.chat override model: agent_id=%s priority=%s override length=%d",
@@ -371,51 +460,96 @@ class LLMClient:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            "temperature": temperature,
-            "max_tokens": _clamp_max_tokens(max_tokens),
+            "temperature": (
+                config.temperature if temperature is None else temperature
+            ),
+            "max_tokens": _clamp_max_tokens(max_tokens, config.max_tokens_cap),
         }
-        _extra = _resolve_extra_body()
+        _extra = _resolve_extra_body(config.thinking_mode)
         if _extra:
             _create_kwargs["extra_body"] = _extra
-        # Phase 5+: per-call throttle 跨 ARK TPM 窗口. 默认 0 = 无 sleep.
-        _sleep = _resolve_per_call_sleep()
-        if _sleep > 0:
-            import asyncio as _async
-            await _async.sleep(_sleep)
-        response = await client.chat.completions.create(**_create_kwargs)
-        choice = response.choices[0]
-        usage = response.usage
-        # extract_message_text: content 空时退到 reasoning_content, 兼容
-        # MiMo / DeepSeek-Reasoner 等推理模型在 max_tokens 不够时正文丢失.
-        result = LLMResponse(
-            content=extract_message_text(choice.message),
-            usage_prompt_tokens=usage.prompt_tokens if usage else 0,
-            usage_completion_tokens=usage.completion_tokens if usage else 0,
-            usage_cached_tokens=_extract_cached_tokens(usage),
-        )
-        # v2.16 — 调用方未显式传 tick 时, 用 ContextVar 中 orchestrator 设的当前 tick。
-        # 这让 CharacterAgent / NarratorAgent 等内层 agent 无需修改签名也能正确归账。
-        effective_tick = tick if tick != -1 else _current_tick_var.get()
-        # 记账 — 失败不阻塞主流程
+        if response_format is not None:
+            # The GLM-compatible API documents JSON-object mode. It improves
+            # syntactic reliability only; callers must still validate their
+            # JSON schema and all semantic/length contracts locally.
+            _create_kwargs["response_format"] = {"type": "json_object"}
         try:
-            get_global_tracker().record(
-                agent_id=agent_id,
-                priority=priority,  # type: ignore[arg-type]
-                prompt_tokens=result.usage_prompt_tokens,
-                completion_tokens=result.usage_completion_tokens,
-                cached_tokens=result.usage_cached_tokens,
-                model=effective_model,
-                tick=effective_tick,
-            )
-        except Exception as e:  # pragma: no cover
-            logger.debug("TokenBudgetTracker record failed: %s", e)
-        return result
+            # Phase 5+: per-call throttle 跨 ARK TPM 窗口. 默认 0 = 无 sleep.
+            _sleep = _resolve_per_call_sleep()
+            if _sleep > 0:
+                import asyncio as _async
+
+                await _async.sleep(_sleep)
+            try:
+                response = await client.chat.completions.create(**_create_kwargs)
+            except Exception as exc:
+                raise classify_provider_exception(exc, config) from exc
+            try:
+                choices = getattr(response, "choices", None) or []
+                if not choices:
+                    raise provider_output_invalid(config)
+                choice = choices[0]
+                usage = getattr(response, "usage", None)
+                content = extract_message_text(choice.message)
+                if not content:
+                    raise provider_output_invalid(
+                        config,
+                        "模型服务返回为空",
+                    )
+                result = LLMResponse(
+                    content=content,
+                    usage_prompt_tokens=(
+                        int(getattr(usage, "prompt_tokens", 0) or 0)
+                        if usage
+                        else 0
+                    ),
+                    usage_completion_tokens=(
+                        int(getattr(usage, "completion_tokens", 0) or 0)
+                        if usage
+                        else 0
+                    ),
+                    usage_cached_tokens=_extract_cached_tokens(usage),
+                    provider=config.provider,
+                    model=config.model,
+                    provider_source=config.source,
+                    provider_config_fingerprint=config.config_fingerprint,
+                    provider_runtime_receipt=ProviderRuntimeReceipt(
+                        provider=config.provider,
+                        model=config.model,
+                        thinking_mode=config.thinking_mode,
+                        max_retries=config.max_retries,
+                        source=config.source,
+                        config_fingerprint=config.config_fingerprint,
+                    ),
+                )
+            except ProviderError:
+                raise
+            except Exception as exc:
+                raise provider_output_invalid(config) from exc
+            # v2.16 — 调用方未显式传 tick 时, 用 ContextVar 中 orchestrator 设的当前 tick。
+            effective_tick = tick if tick != -1 else _current_tick_var.get()
+            try:
+                get_global_tracker().record(
+                    agent_id=agent_id,
+                    priority=priority,  # type: ignore[arg-type]
+                    prompt_tokens=result.usage_prompt_tokens,
+                    completion_tokens=result.usage_completion_tokens,
+                    cached_tokens=result.usage_cached_tokens,
+                    model=effective_model,
+                    tick=effective_tick,
+                )
+            except Exception as e:  # pragma: no cover
+                logger.debug("TokenBudgetTracker record failed: %s", e)
+            return result
+        finally:
+            if lease is not None:
+                lease.release()
 
     async def chat_stream(
         self,
         system_prompt: str,
         user_prompt: str,
-        temperature: float = 0.7,
+        temperature: float | None = None,
         max_tokens: int = 4096,
         # v2.19 — 与 chat() 对齐, 让节级 SSE (writer_agent.write_stream)
         # 也走 budget pre-check + ContextVar tick + tracker 记账。
@@ -423,6 +557,8 @@ class LLMClient:
         priority: str = "medium",
         tick: int = -1,
         model_override: str | None = None,
+        provider_config: ProviderRuntimeConfig | None = None,
+        client_override: Any | None = None,
     ) -> AsyncIterator[str]:
         # v2.19 — 调用前 budget pre-check, 与 chat() 同源逻辑。
         # 注意: async generator 的 body 在第一次 __anext__ 时才执行, 因此调用方
@@ -448,18 +584,14 @@ class LLMClient:
                 ),
             )
 
-        # v2.28 — 同 chat(): 用户凭据优先
-        user_cfg = get_user_llm_config()
-        if user_cfg and user_cfg.api_key:
-            client = _get_user_client(user_cfg)
-            effective_model = (
-                model_override
-                or user_cfg.model
-                or self._model
-            )
-        else:
-            client = self._client
-            effective_model = model_override or self._model
+        config = resolve_provider_runtime(provider_config)
+        lease = (
+            None
+            if client_override is not None
+            else provider_client_registry.acquire(config)
+        )
+        client = client_override if client_override is not None else lease.client
+        effective_model = model_override or config.model
         if model_override:
             logger.info(
                 "LLMClient.chat_stream override model: agent_id=%s priority=%s override length=%d",
@@ -475,41 +607,51 @@ class LLMClient:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            "temperature": temperature,
-            "max_tokens": _clamp_max_tokens(max_tokens),
+            "temperature": (
+                config.temperature if temperature is None else temperature
+            ),
+            "max_tokens": _clamp_max_tokens(max_tokens, config.max_tokens_cap),
             "stream": True,
             # v2.19 — 请求提供商在最后一个 chunk 返回 usage; 提供商不支持时
             # 自动忽略, 我们的 _capture_usage 静默兼容 None。
             "stream_options": {"include_usage": True},
         }
-        _extra = _resolve_extra_body()
+        _extra = _resolve_extra_body(config.thinking_mode)
         if _extra:
             _stream_kwargs["extra_body"] = _extra
-        # Phase 5+: per-call throttle. 与 chat() 同源.
-        _sleep = _resolve_per_call_sleep()
-        if _sleep > 0:
-            import asyncio as _async
-            await _async.sleep(_sleep)
-        stream = await client.chat.completions.create(**_stream_kwargs)
-
         usage_obj: object | None = None
+        emitted_content = False
         # v2.19.5 — 用 try/finally 包裹 stream 消费, 让失败 (provider 502 /
         # 网络断 / safety filter mid-stream) 也至少 record 一次。否则失败的大段
         # 写作完全不进 tracker, 生产监控的失败率全是虚低数据。
         try:
+            # Phase 5+: per-call throttle. 与 chat() 同源.
+            _sleep = _resolve_per_call_sleep()
+            if _sleep > 0:
+                import asyncio as _async
+
+                await _async.sleep(_sleep)
+            stream = await client.chat.completions.create(**_stream_kwargs)
             async for chunk in stream:
                 # usage chunk 在 stream_options.include_usage=True 时通常 choices=[]
                 # 且 usage 非 None — 不要因为 choices 空就崩溃。
                 choices = getattr(chunk, "choices", None) or []
                 if choices:
-                    delta = choices[0].delta
+                    delta = getattr(choices[0], "delta", None)
                     if getattr(delta, "content", None):
+                        emitted_content = True
                         yield delta.content
                 chunk_usage = getattr(chunk, "usage", None)
                 if chunk_usage is not None:
                     # 用最后一个含 usage 的 chunk — 提供商规范是最后一帧给最终统计
                     usage_obj = chunk_usage
+            if not emitted_content:
+                raise provider_output_invalid(config, "模型服务返回为空")
+        except Exception as exc:
+            raise classify_provider_exception(exc, config) from exc
         finally:
+            if lease is not None:
+                lease.release()
             # 不管成功还是异常, 都尝试记账一次。usage 缺失时记 0 token, 让调用
             # 频次仍能反映在 snapshot.call_count 与 by_agent 上。
             effective_tick = tick if tick != -1 else _current_tick_var.get()

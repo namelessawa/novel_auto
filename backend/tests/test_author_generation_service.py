@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from nf_core.provider_runtime import ProviderError, ProviderRuntimeConfig
 from sections.section_store import _clear_for_tests
 from story.models import (
     SectionGoal,
@@ -24,7 +25,7 @@ from story.service import (
     GenerationRejected,
     StaleStoryBibleError,
 )
-from story.writer import WriterResult
+from story.writer import AuthorWriter, WriterResult
 
 
 class FakeWriter:
@@ -85,6 +86,86 @@ class FakeWriter:
                 if self.repair_patches is not None
                 else ProviderRepairPatchSet(patches=provider_patches)
             ),
+        )
+
+
+class ProviderReceiptWriter(FakeWriter):
+    async def generate(self, context, goal):
+        result = await super().generate(context, goal)
+        return WriterResult(
+            candidate=result.candidate,
+            usage=result.usage,
+            provider="custom",
+            provider_model="glm-5.2",
+            provider_source="provider_file",
+            provider_config_fingerprint="0123456789abcdef",
+            writer_block_nonspace_lengths=[40] * 10,
+            writer_cell_nonspace_lengths=[7] * 51 + [43],
+            writer_cell_sentence_boundary_counts=[1] * 52,
+        )
+
+
+class FormatRecoveredWriter(FakeWriter):
+    async def generate(self, context, goal):
+        result = await super().generate(context, goal)
+        return WriterResult(
+            candidate=result.candidate,
+            usage=result.usage,
+            structured_output_repair_count=1,
+            primary_output_contract_pass=False,
+            audit_codes=["WRITER_FORMAT_RECOVERY_USED"],
+        )
+
+
+class RepairFormatRecoveredWriter(FakeWriter):
+    async def repair(self, candidate, report):
+        result = await super().repair(candidate, report)
+        return WriterResult(
+            candidate=result.candidate,
+            usage=result.usage,
+            structured_output_repair_count=1,
+            provider_repair_patches=result.provider_repair_patches,
+        )
+
+
+class ProviderFailureWriter(FakeWriter):
+    def __init__(
+        self,
+        generated: WriterCandidate,
+        error: ProviderError,
+        *,
+        fail_stage: str,
+    ) -> None:
+        super().__init__(generated)
+        self.provider_error = error
+        self.fail_stage = fail_stage
+
+    async def generate(self, context, goal):
+        if self.fail_stage == "writer":
+            raise AuthorWriter._annotate_provider_failure(
+                self.provider_error,
+                stage="writer",
+                primary_calls=1,
+                structured_calls=0,
+            )
+        result = await super().generate(context, goal)
+        config = self.provider_error.config
+        return WriterResult(
+            candidate=result.candidate,
+            usage=result.usage,
+            provider=config.provider,
+            provider_model=config.model,
+            provider_source=config.source,
+            provider_config_fingerprint=config.config_fingerprint,
+        )
+
+    async def repair(self, candidate, report):
+        del candidate, report
+        raise AuthorWriter._annotate_provider_failure(
+            self.provider_error,
+            stage=self.fail_stage,
+            primary_calls=1,
+            structured_calls=int(self.fail_stage == "repair_json_repair"),
         )
 
 
@@ -158,6 +239,131 @@ async def test_author_service_commits_one_writer_call_and_persists_long_memory(
 
 
 @pytest.mark.asyncio
+async def test_format_recovered_content_is_not_counted_as_writer_first_pass(
+    tmp_path: Path,
+) -> None:
+    writer = FormatRecoveredWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+
+    transaction = await service.run(_goal(), request_id="format_first_pass")
+
+    assert transaction.committed is True
+    assert transaction.writer_first_pass_pass is False
+    assert transaction.structured_output_repair_count == 1
+    assert "WRITER_FORMAT_RECOVERY_USED" in transaction.repair_audit_codes
+
+
+@pytest.mark.asyncio
+async def test_author_transaction_records_only_safe_provider_receipt(
+    tmp_path: Path,
+) -> None:
+    writer = ProviderReceiptWriter(_valid_candidate())
+    service = _service(tmp_path, writer)
+
+    transaction = await service.run(_goal(), request_id="provider_receipt")
+
+    assert transaction.provider == "custom"
+    assert transaction.provider_model == "glm-5.2"
+    assert transaction.provider_source == "provider_file"
+    assert transaction.provider_config_fingerprint == "0123456789abcdef"
+    assert transaction.provider_config_fingerprints == ["0123456789abcdef"]
+    assert transaction.writer_block_nonspace_lengths == [40] * 10
+    assert transaction.writer_cell_nonspace_lengths == [7] * 51 + [43]
+    assert transaction.writer_cell_sentence_boundary_counts == [1] * 52
+    serialized = transaction.model_dump_json()
+    assert "api_key" not in serialized
+    assert "base_url" not in serialized
+
+
+@pytest.mark.asyncio
+async def test_provider_failure_journal_is_secret_free_and_counts_direct_call(
+    tmp_path: Path,
+) -> None:
+    secret = "test-only-journal-secret"
+    endpoint = "https://journal-provider.invalid/v1"
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="custom",
+        api_key=secret,
+        base_url=endpoint,
+        model="glm-5.2",
+        thinking_mode="disabled",
+        max_retries=0,
+        source="provider_file",
+    )
+    error = ProviderError(
+        code="PROVIDER_UNAVAILABLE",
+        message=f"raw body with {secret} and {endpoint}",
+        http_status=502,
+        http_category="unavailable",
+        config=config,
+    )
+    service = _service(
+        tmp_path,
+        ProviderFailureWriter(_valid_candidate(), error, fail_stage="writer"),
+    )
+
+    with pytest.raises(ProviderError):
+        await service.run(_goal(), request_id="provider_direct_failure")
+
+    transaction = service.transactions.load("provider_direct_failure")
+    serialized = transaction.model_dump_json()
+    assert transaction.phase == "failed"
+    assert transaction.error_code == "PROVIDER_UNAVAILABLE"
+    assert transaction.error == "generation failed; provider response omitted"
+    assert transaction.provider_error_category == "unavailable"
+    assert transaction.provider_error_stage == "writer"
+    assert transaction.planner_calls == 0
+    assert transaction.writer_calls == 1
+    assert transaction.structured_output_repair_count == 0
+    assert transaction.provider_config_fingerprint == config.config_fingerprint
+    assert secret not in serialized
+    assert endpoint not in serialized
+    assert "raw body" not in serialized
+
+
+@pytest.mark.asyncio
+async def test_repair_json_provider_failure_counts_each_call_once(
+    tmp_path: Path,
+) -> None:
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="custom",
+        api_key="test-only",
+        base_url="https://provider.invalid/v1",
+        model="glm-5.2",
+        thinking_mode="disabled",
+        max_retries=0,
+        source="provider_file",
+    )
+    error = ProviderError(
+        code="PROVIDER_OUTPUT_INVALID",
+        message="raw malformed payload",
+        http_status=502,
+        http_category="output_invalid",
+        config=config,
+    )
+    too_short = _valid_candidate(
+        "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
+    )
+    service = _service(
+        tmp_path,
+        ProviderFailureWriter(
+            too_short,
+            error,
+            fail_stage="repair_json_repair",
+        ),
+    )
+
+    with pytest.raises(ProviderError):
+        await service.run(_goal(), request_id="provider_repair_failure")
+
+    transaction = service.transactions.load("provider_repair_failure")
+    assert transaction.phase == "failed"
+    assert transaction.provider_error_stage == "repair_json_repair"
+    assert transaction.planner_calls == 0
+    assert transaction.writer_calls == 2
+    assert transaction.structured_output_repair_count == 1
+
+@pytest.mark.asyncio
 async def test_author_service_repairs_once_then_commits(tmp_path: Path) -> None:
     bad = _valid_candidate(
         "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
@@ -185,6 +391,54 @@ async def test_author_service_repairs_once_then_commits(tmp_path: Path) -> None:
     assert writer.repair_calls == 1
     assert tx.usage["total_tokens"] == 200
     assert tx.usage["repair_tokens"] == 50
+
+
+@pytest.mark.asyncio
+async def test_format_recovery_exhausts_the_second_call_before_prose_repair(
+    tmp_path: Path,
+) -> None:
+    too_short = _valid_candidate(
+        "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
+    )
+    writer = FormatRecoveredWriter(too_short)
+    service = _service(tmp_path, writer)
+
+    with pytest.raises(GenerationRejected) as error:
+        await service.run(_goal(), request_id="format_then_length")
+
+    transaction = error.value.transaction
+    assert writer.generate_calls == 1
+    assert writer.repair_calls == 0
+    assert transaction.writer_calls == 1
+    assert transaction.structured_output_repair_count == 1
+    assert "REPAIR_CALL_BUDGET_EXHAUSTED" in transaction.repair_audit_codes
+    assert "PATCH_ID_MISSING" in {
+        item.code for item in transaction.repair_patch_report.violations
+    }
+
+
+@pytest.mark.asyncio
+async def test_repair_format_recovery_cannot_commit_after_three_provider_calls(
+    tmp_path: Path,
+) -> None:
+    too_short = _valid_candidate(
+        "主角确认自己的身份，并选择为同伴承担牺牲的代价。" * 7
+    )
+    writer = RepairFormatRecoveredWriter(too_short)
+    service = _service(tmp_path, writer)
+
+    with pytest.raises(GenerationRejected) as error:
+        await service.run(_goal(), request_id="repair_format_budget")
+
+    transaction = error.value.transaction
+    assert writer.generate_calls == 1
+    assert writer.repair_calls == 1
+    assert transaction.writer_calls == 2
+    assert transaction.structured_output_repair_count == 1
+    assert "PROVIDER_CALL_BUDGET_EXCEEDED" in transaction.repair_audit_codes
+    assert transaction.committed is False
+    assert service.states.load().revision == 1
+    assert service.sections.count() == 0
 
 
 @pytest.mark.asyncio

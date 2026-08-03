@@ -1,5 +1,8 @@
 # Narrative Contract Stage 1 真实矩阵复跑（2026-07-22）
 
+> 历史真实矩阵记录，不授权当前 Provider 调用，也不代表当前 G1/G2。当前候选必须使用
+> [最终验收](./FINAL_ACCEPTANCE.md) 的全新独占 evidence 周期。
+
 ## 结论
 
 `STAGE1_FAIL`

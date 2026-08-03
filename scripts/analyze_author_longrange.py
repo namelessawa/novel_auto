@@ -214,6 +214,25 @@ def _analyze_matrix(report: dict[str, Any]) -> dict[str, Any]:
             sections.append(section)
 
     summary = report.get("summary", {})
+    failures = [
+        failure
+        for combination in combinations
+        for failure in combination.get("failures", [])
+    ]
+    provider_calls_fallback = sum(
+        int(item.get("writer_calls", 0))
+        + int(item.get("structured_output_repair_count", 0))
+        + int(item.get("planner_calls", 0))
+        for item in sections
+    ) + sum(int(item.get("provider_call_count", 0)) for item in failures)
+    reported_provider_calls = summary.get("provider_calls")
+    provider_calls = (
+        reported_provider_calls
+        if isinstance(reported_provider_calls, int)
+        and not isinstance(reported_provider_calls, bool)
+        and reported_provider_calls >= 0
+        else provider_calls_fallback
+    )
     repaired = [item for item in sections if item.get("repair_performed")]
     rejected = [item for item in sections if not item.get("committed")]
     mainline_warnings: list[str] = []
@@ -413,9 +432,7 @@ def _analyze_matrix(report: dict[str, Any]) -> dict[str, Any]:
         "total_tokens": sum(
             int(item.get("total_tokens", 0)) for item in sections
         ),
-        "provider_calls": sum(
-            int(item.get("writer_calls", 0)) for item in sections
-        ),
+        "provider_calls": provider_calls,
         "provider_errors": int(summary.get("provider_errors", 0)),
         "mean_latency_seconds": round(
             mean(float(item.get("latency_seconds", 0.0)) for item in sections),

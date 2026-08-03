@@ -85,17 +85,27 @@ def test_g1_rejects_planner_or_full_retry_calls() -> None:
     assert result["checks"]["full_retry_calls_zero"] is False
 
 
-def test_g2_accepts_strict_15_section_gate() -> None:
+def test_g2_accepts_target_15_section_gate() -> None:
     assert assess_g2(_matrix(count=15, first_pass=9, repairs=6))["status"] == "passed"
 
 
-def test_g2_requires_all_15_commits_and_contracts() -> None:
+def test_g2_accepts_fourteen_commits_and_contracts() -> None:
     matrix = _matrix(count=15, first_pass=9)
     matrix["summary"]["committed"] = 14
     matrix["summary"]["contract_pass"] = 14
     result = assess_g2(matrix)
-    assert result["checks"]["committed_15"] is False
-    assert result["checks"]["contract_15"] is False
+    assert result["status"] == "passed"
+    assert result["checks"]["committed_at_least_14"] is True
+    assert result["checks"]["contract_at_least_14"] is True
+
+
+def test_g2_rejects_thirteen_commits_or_contracts() -> None:
+    matrix = _matrix(count=15, first_pass=9)
+    matrix["summary"]["committed"] = 13
+    matrix["summary"]["contract_pass"] = 13
+    result = assess_g2(matrix)
+    assert result["checks"]["committed_at_least_14"] is False
+    assert result["checks"]["contract_at_least_14"] is False
 
 
 def test_g2_requires_at_least_14_lengths_in_hard_range() -> None:

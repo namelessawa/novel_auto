@@ -1,5 +1,8 @@
 # Author 权威链加固验收（2026-07-22）
 
+> 历史单节 Author 验证记录，不是当前整书发布 verdict。当前候选只按
+> [最终验收](./FINAL_ACCEPTANCE.md) 的全新六阶段 evidence 判定。
+
 ## 结论与范围
 
 本轮只收口既有 Author Memory Refactor 的权威漏洞，不扩展 StateGuard 研究、provider、Critic、多 Agent、多媒体或知识图谱。修复后的后端、前端、恢复路径与录制式 smoke 均通过；结果来自本轮重新执行，不复用首次验收中“无高/中风险”的旧结论。

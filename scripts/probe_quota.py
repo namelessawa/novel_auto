@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import os
+import json
 import sys
 from pathlib import Path
 
@@ -34,10 +34,7 @@ sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_REPO_ROOT / "backend"))
 
 # 默认走 LLM_PROVIDER (本 repo 现 custom = deepseek).
-os.environ.setdefault("LLM_PROVIDER", "custom")
-
-
-async def _probe() -> int:
+async def _probe(*, provider_config=None, client_override=None) -> int:
     from nf_core.llm_client import llm_client  # noqa: E402
 
     try:
@@ -49,13 +46,16 @@ async def _probe() -> int:
             agent_id="probe",
             priority="critical",
             tick=0,
+            provider_config=provider_config,
+            client_override=client_override,
         )
-    except Exception as e:  # broad — we want to inspect error class
+    except Exception as e:  # broad — CLI maps every provider failure to an exit code
+        code = str(getattr(e, "code", "") or "")
         msg = str(e)
         # DeepSeek 429 出 AccountQuotaExceeded / RateLimitExceeded
         # ARK 同样 ServerOverloaded / RateLimit
         lower = msg.lower()
-        if any(
+        if code == "PROVIDER_RATE_LIMITED" or any(
             s in lower
             for s in (
                 "accountquotaexceeded",
@@ -67,28 +67,122 @@ async def _probe() -> int:
                 "serveroverloaded",
             )
         ):
-            print(f"[QUOTA] {msg[:300]}")
+            print("[QUOTA] provider rate limit or quota reached")
             return 1
-        print(f"[ERR] {type(e).__name__}: {msg[:300]}")
+        safe_code = code or "PROVIDER_PROBE_FAILED"
+        print(f"[ERR] {safe_code}")
         return 2
 
     content = (resp.content or "").strip()
-    tokens = getattr(resp, "usage", {}).get("total_tokens", "?")
+    prompt_tokens = getattr(resp, "usage_prompt_tokens", None)
+    completion_tokens = getattr(resp, "usage_completion_tokens", None)
+    if isinstance(prompt_tokens, int) and isinstance(completion_tokens, int):
+        tokens: int | str = prompt_tokens + completion_tokens
+    else:
+        usage = getattr(resp, "usage", {})
+        tokens = usage.get("total_tokens", "?") if isinstance(usage, dict) else "?"
     if not content:
         print(f"[ERR] empty content from LLM. tokens={tokens}")
         return 2
     print(f"[OK] quota healthy. content_len={len(content)} tokens={tokens}")
-    print(f"     sample: {content[:60]}")
     return 0
+
+
+async def _run_configured_probe(config) -> int:
+    """Use a one-shot client that never retains the probe credential."""
+    from nf_core.provider_runtime import ephemeral_provider_client
+
+    async with ephemeral_provider_client(config) as client:
+        return await _probe(
+            provider_config=config,
+            client_override=client,
+        )
 
 
 def main() -> int:
     p = argparse.ArgumentParser(description="LLM quota smoke probe")
-    p.add_argument("--provider", default="", help="覆盖 LLM_PROVIDER env (e.g. deepseek)")
+    p.add_argument(
+        "--provider-file",
+        type=Path,
+        default=_REPO_ROOT / "coding.txt",
+        help="read-only provider configuration file (default: repository coding.txt)",
+    )
+    p.add_argument(
+        "--provider",
+        default="",
+        help="optional assertion; must match the provider declared by the file",
+    )
+    p.add_argument(
+        "--expect-model",
+        default="",
+        help="optional exact model assertion evaluated before the Provider call",
+    )
+    p.add_argument(
+        "--expect-thinking-mode",
+        default="",
+        help="optional exact thinking-mode assertion evaluated before the call",
+    )
+    p.add_argument(
+        "--expect-max-retries",
+        type=int,
+        default=None,
+        help="optional SDK retry assertion evaluated before the Provider call",
+    )
     args = p.parse_args()
-    if args.provider:
-        os.environ["LLM_PROVIDER"] = args.provider
-    return asyncio.run(_probe())
+    from nf_core.provider_runtime import (
+        ProviderConfigurationError,
+        stage_provider_file_scope,
+    )
+
+    try:
+        with stage_provider_file_scope(args.provider_file.resolve()) as config:
+            if args.provider and args.provider.strip().lower() != config.provider:
+                raise ProviderConfigurationError(
+                    "provider assertion does not match provider file"
+                )
+            if args.expect_model and args.expect_model.strip() != config.model:
+                raise ProviderConfigurationError(
+                    "model assertion does not match provider file"
+                )
+            if (
+                args.expect_thinking_mode
+                and args.expect_thinking_mode.strip().lower()
+                != config.thinking_mode
+            ):
+                raise ProviderConfigurationError(
+                    "thinking-mode assertion does not match provider file"
+                )
+            if (
+                args.expect_max_retries is not None
+                and args.expect_max_retries != config.max_retries
+            ):
+                raise ProviderConfigurationError(
+                    "SDK retry assertion does not match provider file"
+                )
+            diagnostics = config.diagnostics()
+            print(
+                "[RUNTIME] "
+                + json.dumps(
+                    {
+                        key: diagnostics[key]
+                        for key in (
+                            "provider",
+                            "model",
+                            "source",
+                            "thinking_mode",
+                            "retries",
+                            "credential_present",
+                            "config_fingerprint",
+                        )
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+            )
+            return asyncio.run(_run_configured_probe(config))
+    except (FileNotFoundError, ProviderConfigurationError):
+        print("[ERR] provider configuration unavailable")
+        return 2
 
 
 if __name__ == "__main__":

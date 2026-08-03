@@ -1,19 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-// v2.47 — Dashboard 左侧栏: 我的小说 + 视图 nav (滑动 indicator) + 后台任务.
-
 export const NAV_ITEMS = [
-  { key: 'author',      label: '章节创作', group: 'author' },
-  { key: 'bible',       label: '创作圣经', group: 'author' },
-  { key: 'state',       label: '当前故事状态', group: 'author' },
-  { key: 'threads',     label: '故事线', group: 'author' },
-  { key: 'chapter',     label: '正文与多模态', group: 'author' },
-  { key: 'overview',    label: '运行概览', group: 'advanced' },
-  { key: 'tick',        label: 'Tick 调度 · 实验', group: 'advanced' },
-  { key: 'agent',       label: 'Agent 上下文 · 诊断', group: 'advanced' },
-  { key: 'kg',          label: '知识图谱 · 派生', group: 'advanced' },
-  { key: 'multimodal',  label: '多模态生成', group: 'advanced' },
-  { key: 'config',      label: '系统配置', group: 'advanced' },
+  { key: 'production', label: '生产中心', index: '01' },
+  { key: 'outline', label: '整书大纲', index: '02' },
+  { key: 'chapters', label: '章节', index: '03' },
+  { key: 'styles', label: '风格工作室', index: '04' },
+  { key: 'bible', label: '创作圣经', index: '05' },
+  { key: 'state', label: '当前事实', index: '06' },
+  { key: 'memory', label: '故事线与记忆', index: '07' },
+  { key: 'provider', label: 'Provider 配置', index: '08' },
+  { key: 'export', label: '导出', index: '09' },
+  { key: 'lab', label: '实验室', index: '10', experimental: true },
 ]
 
 export default function Sidebar({
@@ -24,194 +21,187 @@ export default function Sidebar({
   view,
   onView,
   tasks,
+  open = false,
+  onClose,
 }) {
-  // 我的小说 list
   const novelCount = (novels || []).length
-
-  // 视图 nav 滑动 indicator
   const navRef = useRef(null)
   const itemRefs = useRef({})
   const [indicator, setIndicator] = useState({ top: 0, height: 0 })
 
   useEffect(() => {
-    const el = itemRefs.current[view]
-    if (el && navRef.current) {
+    function measure() {
+      const element = itemRefs.current[view]
+      if (!element || !navRef.current) return
       const parentRect = navRef.current.getBoundingClientRect()
-      const rect = el.getBoundingClientRect()
+      const rect = element.getBoundingClientRect()
       setIndicator({ top: rect.top - parentRect.top, height: rect.height })
     }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [view, novelCount, (tasks || []).length])
 
-  // window resize 重算
-  useEffect(() => {
-    function onResize() {
-      const el = itemRefs.current[view]
-      if (el && navRef.current) {
-        const parentRect = navRef.current.getBoundingClientRect()
-        const rect = el.getBoundingClientRect()
-        setIndicator({ top: rect.top - parentRect.top, height: rect.height })
-      }
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [view])
-
-  const runningTasks = (tasks || []).filter(
-    (t) => t.status && (t.status === 'running' || t.status === 'pending'),
+  const runningTasks = (tasks || []).filter((task) =>
+    ['running', 'pending', 'queued'].includes(task.status),
   )
 
+  function selectView(key) {
+    onView?.(key)
+    onClose?.()
+  }
+
   return (
-    <aside className="dc-sidebar">
-      {/* —— 我的小说 —— */}
-      <div className="dc-sb-section">
+    <aside
+      className={`dc-sidebar ${open ? 'is-open' : ''}`}
+      aria-label="作品工作区导航"
+    >
+      <div className="dc-sidebar-mobile-head">
+        <span>WORKSPACE</span>
+        <button type="button" onClick={onClose} aria-label="关闭导航">×</button>
+      </div>
+
+      <section className="dc-sb-section">
         <div className="dc-sb-head">
           <span className="dc-sb-kicker">我的小说</span>
           <span className="dc-sb-counter">{novelCount}</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {(novels || []).map((n) => (
-            <div
-              key={n.id}
-              className={`dc-sb-novel ${n.id === activeNovelId ? 'is-active' : ''}`}
-              onClick={() => onSwitchNovel?.(n.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') onSwitchNovel?.(n.id)
+        <div className="dc-sb-novels">
+          {(novels || []).map((novel) => (
+            <button
+              type="button"
+              key={novel.id}
+              className={`dc-sb-novel ${novel.id === activeNovelId ? 'is-active' : ''}`}
+              onClick={() => {
+                onSwitchNovel?.(novel.id)
+                onClose?.()
               }}
             >
               <span className="dc-sb-novel-bar" />
-              <div className="dc-sb-novel-body">
-                <span className="dc-sb-novel-title">{n.title || n.id}</span>
+              <span className="dc-sb-novel-body">
+                <span className="dc-sb-novel-title">{novel.title || novel.id}</span>
                 <span className="dc-sb-novel-meta">
-                  {n.id}
-                  {typeof n.current_tick === 'number' && ` · ${n.current_tick} tick`}
+                  {novel.id}
+                  {typeof novel.current_tick === 'number' && ` · ${novel.current_tick} tick`}
                 </span>
-              </div>
-            </div>
+              </span>
+            </button>
           ))}
-          <button type="button" className="dc-sb-novel-add" onClick={onCreateNovel}>
+          <button
+            type="button"
+            className="dc-sb-novel-add"
+            onClick={() => {
+              onCreateNovel?.()
+              onClose?.()
+            }}
+          >
             <span className="dc-sb-novel-add-plus">+</span>
             <span>新建小说</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* —— 视图 —— */}
-      <div className="dc-sb-section">
+      <section className="dc-sb-section dc-sb-workspace">
+        <span className="dc-sb-nav-group">长篇生产工作区</span>
         <div className="dc-sb-nav" ref={navRef}>
           <div
             className="dc-sb-nav-indicator"
             style={{ top: indicator.top, height: indicator.height }}
           />
-          {NAV_ITEMS.map((item, index) => {
+          {NAV_ITEMS.map((item) => {
             const active = view === item.key
             return (
-              <React.Fragment key={item.key}>
-                {(index === 0 || NAV_ITEMS[index - 1].group !== item.group) && (
-                  <span className={`dc-sb-nav-group is-${item.group}`}>
-                    {item.group === 'author' ? '写作工作区' : '高级 · 实验与诊断'}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  ref={(el) => {
-                    itemRefs.current[item.key] = el
-                  }}
-                  className={`dc-sb-nav-item ${active ? 'is-active' : ''}`}
-                  onClick={() => onView?.(item.key)}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span className="dc-sb-nav-label">{item.label}</span>
-                  {item.hot && (
-                    <span className={`dc-sb-nav-hot ${active ? 'is-accent' : ''}`}>
-                      {item.hot}
-                    </span>
-                  )}
-                </button>
-              </React.Fragment>
+              <button
+                type="button"
+                key={item.key}
+                ref={(element) => {
+                  itemRefs.current[item.key] = element
+                }}
+                className={`dc-sb-nav-item ${active ? 'is-active' : ''} ${
+                  item.experimental ? 'is-experimental' : ''
+                }`}
+                onClick={() => selectView(item.key)}
+                aria-current={active ? 'page' : undefined}
+              >
+                <span className="dc-sb-nav-index">{item.index}</span>
+                <span className="dc-sb-nav-label">{item.label}</span>
+                {item.experimental && <em>OPT-IN</em>}
+              </button>
             )
           })}
         </div>
-      </div>
+      </section>
 
-      {/* —— 后台任务 —— */}
-      <div className="dc-sb-section">
+      <section className="dc-sb-section dc-sb-tasks">
         <div className="dc-sb-head">
           <span className="dc-sb-kicker">后台任务</span>
-          {runningTasks.length > 0 ? (
-            <span className="dc-sb-counter is-running">
-              {runningTasks.length} RUNNING
-            </span>
-          ) : (
-            <span className="dc-sb-counter">空闲</span>
-          )}
+          <span className={`dc-sb-counter ${runningTasks.length ? 'is-running' : ''}`}>
+            {runningTasks.length ? `${runningTasks.length} LIVE` : '空闲'}
+          </span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {(tasks || []).slice(0, 3).map((t) => {
-            const pct = computePct(t)
+        <div className="dc-sb-task-list">
+          {(tasks || []).slice(0, 3).map((task) => {
+            const pct = computePct(task)
             return (
-              <div
-                key={t.task_id || t.id}
+              <button
+                type="button"
+                key={task.task_id || task.id}
                 className="dc-sb-task"
-                onClick={() => onView?.(t.kind === 'author_section_generation' ? 'author' : 'tick')}
+                onClick={() => selectView(
+                  task.kind === 'author_section_generation' ? 'production' : 'lab',
+                )}
               >
-                <div className="dc-sb-task-row1">
+                <span className="dc-sb-task-row1">
                   <span className="dc-sb-task-name">
                     <span className="dc-sb-task-caret">›</span>
-                    {prettyTaskName(t)}
+                    {prettyTaskName(task)}
                   </span>
-                  <span className="dc-sb-task-pct">{pct != null ? `${pct}%` : statusBadge(t)}</span>
-                </div>
-                <div className="dc-sb-task-track">
-                  <div
-                    className="dc-sb-task-fill"
-                    style={{ width: `${pct ?? 0}%` }}
-                  />
-                </div>
-                <div className="dc-sb-task-sub">{prettyTaskSub(t)}</div>
-              </div>
+                  <span className="dc-sb-task-pct">
+                    {pct != null ? `${pct}%` : statusBadge(task)}
+                  </span>
+                </span>
+                <span className="dc-sb-task-track">
+                  <span className="dc-sb-task-fill" style={{ width: `${pct ?? 0}%` }} />
+                </span>
+                <span className="dc-sb-task-sub">{prettyTaskSub(task)}</span>
+              </button>
             )
           })}
           {(tasks || []).length === 0 && (
-            <div
-              style={{
-                font: "400 11px/1.6 'Inter', sans-serif",
-                color: 'var(--text3)',
-                padding: '0 4px',
-              }}
-            >
-              尚无任务 — 续写一节会出现在这里
-            </div>
+            <p className="dc-sb-empty">尚无后台任务。整书生产启动后会在这里显示。</p>
           )}
         </div>
-      </div>
+      </section>
     </aside>
   )
 }
 
-function prettyTaskName(t) {
-  return t.label || t.kind || t.name || t.task_id || '后台任务'
+function prettyTaskName(task) {
+  return task.label || task.kind || task.name || task.task_id || '后台任务'
 }
 
-function prettyTaskSub(t) {
-  const stage = t.stage || t.phase || t.status || ''
-  const novel = t.novel_id || ''
-  if (stage && novel) return `${novel} · ${stage}`
-  return stage || novel || '—'
+function prettyTaskSub(task) {
+  const stage = task.stage || task.phase || task.status || ''
+  const novel = task.novel_id || ''
+  return [novel, stage].filter(Boolean).join(' · ') || '—'
 }
 
-function computePct(t) {
-  if (typeof t.progress === 'number') return Math.max(0, Math.min(100, Math.round(t.progress * 100)))
-  if (typeof t.percent === 'number') return Math.max(0, Math.min(100, Math.round(t.percent)))
-  if (typeof t.pct === 'number') return Math.max(0, Math.min(100, Math.round(t.pct)))
+function computePct(task) {
+  if (typeof task.progress === 'number') {
+    return Math.max(0, Math.min(100, Math.round(task.progress * 100)))
+  }
+  for (const key of ['percent', 'pct']) {
+    if (typeof task[key] === 'number') {
+      return Math.max(0, Math.min(100, Math.round(task[key])))
+    }
+  }
   return null
 }
 
-function statusBadge(t) {
-  if (!t.status) return '—'
-  if (t.status === 'completed') return 'DONE'
-  if (t.status === 'failed') return 'FAIL'
-  if (t.status === 'cancelled') return 'CANC'
-  return t.status.toUpperCase()
+function statusBadge(task) {
+  if (!task.status) return '—'
+  if (task.status === 'completed') return 'DONE'
+  if (task.status === 'failed') return 'FAIL'
+  if (task.status === 'cancelled') return 'CANC'
+  return String(task.status).toUpperCase()
 }

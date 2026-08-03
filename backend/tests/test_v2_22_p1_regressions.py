@@ -184,7 +184,8 @@ def api_client(monkeypatch, tmp_path):
         save_my_works=True,
         created_at=datetime.fromtimestamp(0, tz=timezone.utc),
     )
-    return TestClient(app), kg
+    with TestClient(app) as test_client:
+        yield test_client, kg
 
 
 def test_create_entity_invalid_type_returns_422(api_client):

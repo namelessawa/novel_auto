@@ -232,5 +232,11 @@ def test_writer_directive_stops_after_resolution() -> None:
     # assertion pins the explicit stop contract against prompt regressions.
     assert "soft structural guidance" in AuthorWriter.PLANNING_WRITER_PROMPT
     assert "not exact prose quotas" in AuthorWriter.PLANNING_WRITER_PROMPT
-    assert "only hard length boundary" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "authoritative acceptance" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "additional first-pass generation" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "only hard length boundary" not in AuthorWriter.PLANNING_WRITER_PROMPT
     assert "Do not create plot to fill length" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert '"Soft" describes server acceptance' in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "required beat cell" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "one complete developed prose sentence" in AuthorWriter.PLANNING_WRITER_PROMPT
+    assert "fragment" in AuthorWriter.PLANNING_WRITER_PROMPT

@@ -1,5 +1,8 @@
 # Narrative Contract Hardening + Long-Run Validation（2026-07-22）
 
+> 历史 NarrativeContract 实验记录，不可替代当前整书 recorded/G1/G2/product receipts。
+> 当前判定见 [最终验收](./FINAL_ACCEPTANCE.md)。
+
 ## 结论
 
 `LONG_RUN_CONDITIONAL_PASS`

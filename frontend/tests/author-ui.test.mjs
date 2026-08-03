@@ -10,6 +10,9 @@ globalThis.window = {
   addEventListener() {},
   removeEventListener() {},
   confirm: () => true,
+  dispatchEvent() {},
+  location: { hash: '' },
+  history: { replaceState() {} },
   setTimeout,
   clearTimeout,
 }
@@ -56,6 +59,16 @@ function nodeText(node) {
 
 function findButton(renderer, text) {
   return renderer.root.findAllByType('button').find((node) => nodeText(node).includes(text))
+}
+
+function findLabeledControl(renderer, labelText) {
+  const label = renderer.root
+    .findAllByType('label')
+    .find((node) => nodeText(node).includes(labelText))
+  if (!label) return null
+  return label.findAll(
+    (node) => ['input', 'textarea', 'select'].includes(node.type),
+  )[0]
 }
 
 function snapshotText(renderer) {
@@ -259,25 +272,779 @@ function authorApi(overrides = {}) {
   }
 }
 
-test('sidebar presents author workflow before experimental diagnostics', async () => {
+test('sidebar presents the whole-book workflow in its required order', async () => {
   const html = await render('/src/dashboard/Sidebar.jsx', {
     novels: [],
     activeNovelId: null,
-    view: 'author',
+    view: 'production',
     tasks: [],
   })
-  assert.ok(html.indexOf('章节创作') < html.indexOf('Tick 调度 · 实验'))
-  assert.match(html, /创作圣经/)
-  assert.match(html, /当前故事状态/)
-  assert.match(html, /知识图谱 · 派生/)
+  const orderedLabels = [
+    '生产中心',
+    '整书大纲',
+    '章节',
+    '风格工作室',
+    '创作圣经',
+    '当前事实',
+    '故事线与记忆',
+    'Provider 配置',
+    '导出',
+    '实验室',
+  ]
+  let previous = -1
+  for (const label of orderedLabels) {
+    const current = html.indexOf(label)
+    assert.ok(current > previous, `${label} should follow the prior route`)
+    previous = current
+  }
+  assert.match(html, /OPT-IN/)
+  assert.doesNotMatch(html, /Tick 调度 · 实验/)
 })
 
-test('new novel dialog defaults to author mode and labels simulation experimental', async () => {
+test('new novel dialog is a five-step author-production wizard', async () => {
   const html = await render('/src/dashboard/modals/NewNovelModal.jsx', {})
-  assert.match(html, /aria-checked="true"/)
-  assert.match(html, /作者模式/)
-  assert.match(html, /EXPERIMENTAL/)
-  assert.match(html, /世界模拟/)
+  for (const step of ['故事', '篇幅', '风格', '模型', '确认']) {
+    assert.match(html, new RegExp(step))
+  }
+  assert.match(html, /原始 seed/)
+  assert.match(html, /NEW AUTHOR PROJECT/)
+  assert.doesNotMatch(html, /aria-checked=/)
+  assert.doesNotMatch(html, /启用世界模拟/)
+})
+
+test('hash routing keeps production as default and legacy diagnostics in lab', async () => {
+  const {
+    hashForView,
+    mainNavigationView,
+    normalizeView,
+    viewFromHash,
+  } = await load('/src/dashboard/routing.js')
+  assert.equal(viewFromHash(''), 'production')
+  assert.equal(viewFromHash('#/outline'), 'outline')
+  assert.equal(normalizeView('author'), 'production')
+  assert.equal(normalizeView('tick'), 'lab-tick')
+  assert.equal(mainNavigationView('lab-agent'), 'lab')
+  assert.equal(hashForView('styles'), '#/styles')
+  assert.equal(viewFromHash('#/unknown'), 'production')
+})
+
+test('wizard persists the exact seed before planning the book outline', async () => {
+  let savedBible
+  let savedSpec
+  let activatedStyle
+  let createdResult
+  const api = {
+    getUserLLMConfigSummary: () => ({}),
+    setUserLLMConfig() {},
+    fetchPresets: async () => ({
+      styles: [{ key: 'restrained', label: '克制现实主义' }],
+    }),
+    fetchLLMProviders: async () => ({
+      providers: [{
+        provider: 'custom',
+        label: 'Custom',
+        default_base_url: 'https://gateway.example/v1',
+        default_model: 'writer-v1',
+      }],
+    }),
+    fetchLLMRuntime: async () => ({
+      provider: 'custom',
+      model: 'writer-v1',
+      credential_present: true,
+      key_fingerprint: 'sk-…42',
+    }),
+    probeLLMConfig: async () => ({ success: true }),
+    createNovel: async () => ({ id: 'novel-1' }),
+    fetchStoryBible: async () => ({
+      story_bible: {
+        revision: 0,
+        style_contract: {},
+        immutable_world_rules: [],
+        forbidden_deviations: [],
+        protagonist_contracts: [],
+        main_conflicts: [],
+      },
+    }),
+    saveStoryBible: async (_id, payload) => {
+      savedBible = payload
+      return { story_bible: { ...payload, revision: 1 } }
+    },
+    createStyleProfile: async () => {
+      throw new Error('built-in style must not create a custom profile')
+    },
+    saveProductionSpec: async (_id, payload) => {
+      savedSpec = payload
+      return { production_spec: { ...payload, revision: 1 } }
+    },
+    fetchStyleProfiles: async () => ({
+      profiles: {},
+      active_style: {
+        revision: 4,
+        style_profile_id: 'preset_literary',
+      },
+    }),
+    activateStyleProfile: async (novelId, styleId, payload) => {
+      activatedStyle = { novelId, styleId, payload }
+      return {
+        active_style: {
+          revision: 5,
+          style_profile_id: styleId,
+          applies_from_chapter_ordinal: 1,
+        },
+        production_spec: { ...savedSpec, revision: 2 },
+      }
+    },
+    generateBookOutline: async () => ({
+      book_outline: { revision: 1, volumes: [], chapters: [] },
+    }),
+  }
+  const renderer = await mount('/src/dashboard/modals/NewNovelModal.jsx', {
+    api,
+    notify() {},
+    onCreated: (...args) => { createdResult = args },
+    onClose() {},
+  })
+
+  await change(findLabeledControl(renderer, '小说名'), '潮汐尽头的灯')
+  await change(findLabeledControl(renderer, '一句话设想'), '守灯人发现旧信。')
+  await change(findLabeledControl(renderer, '题材'), '现实主义悬疑')
+  await change(findLabeledControl(renderer, '主题'), '记忆与责任')
+  await change(findLabeledControl(renderer, '原始 seed'), exactSeed)
+  await click(findButton(renderer, '继续'))
+  await click(findButton(renderer, '继续'))
+  await click(findButton(renderer, '继续'))
+  assert.match(snapshotText(renderer), /writer-v1/)
+  await click(findButton(renderer, '继续'))
+  await click(findButton(renderer, '创建作品并生成大纲'))
+
+  assert.equal(savedBible.source_seed, exactSeed)
+  assert.equal(savedBible.expected_revision, 0)
+  assert.equal(savedSpec.target_total_chars, 300000)
+  assert.equal(savedSpec.accepted_chapter_min_chars, 2800)
+  assert.equal(savedSpec.accepted_chapter_max_chars, 3900)
+  assert.deepEqual(activatedStyle, {
+    novelId: 'novel-1',
+    styleId: 'preset_literary',
+    payload: {
+      expected_revision: 4,
+      expected_spec_revision: 1,
+    },
+  })
+  assert.equal(createdResult[0], 'novel-1')
+  assert.equal(createdResult[1], 'author')
+  renderer.unmount()
+})
+
+test('provider catalog is normalized only from backend descriptors', async () => {
+  const {
+    normalizeProviderCatalog,
+    providerDraftFrom,
+  } = await load('/src/dashboard/components/ProviderConfigPanel.jsx')
+  const providers = normalizeProviderCatalog({
+    providers: [
+      {
+        provider: 'alpha',
+        label: 'Alpha Gateway',
+        default_base_url: 'https://alpha.example/v1',
+        default_model: 'alpha-writer',
+      },
+      {
+        provider: 'beta',
+        label: 'Beta Gateway',
+        default_base_url: 'https://beta.example/v1',
+        default_model: 'beta-writer',
+      },
+    ],
+  })
+  assert.deepEqual(providers.map((item) => item.key), ['alpha', 'beta'])
+  assert.equal(providers[0].defaultModel, 'alpha-writer')
+  assert.equal(
+    providerDraftFrom({ runtime: { provider: 'beta' }, providers }).model,
+    'beta-writer',
+  )
+  const serverFallback = providerDraftFrom({
+    runtime: {
+      provider: 'beta',
+      model: 'beta-runtime-writer',
+      credential_present: true,
+      thinking_mode: 'disabled',
+    },
+    local: {
+      provider: 'alpha',
+      model: 'stale-local-model',
+      credential_present: false,
+    },
+    providers,
+  })
+  assert.equal(serverFallback.provider, 'beta')
+  assert.equal(serverFallback.model, 'beta-runtime-writer')
+  assert.equal(serverFallback.base_url, '')
+  assert.equal(serverFallback.credential_present, true)
+  assert.deepEqual(normalizeProviderCatalog({ providers: null }), [])
+})
+
+test('production controls follow persisted job state and SSE commits', async () => {
+  const {
+    applyProductionEvent,
+    deriveProductionActions,
+    formatLatency,
+    isProductionReadyOutline,
+    productionFailureCopy,
+    productionRepairTotal,
+    productionTokenTotal,
+    safeTransaction,
+    statusLabel,
+  } = await load('/src/dashboard/views/ProductionCenterView.jsx')
+  assert.deepEqual(deriveProductionActions({ status: 'draft' }, true), {
+    start: true,
+    pause: false,
+    resume: false,
+    cancel: false,
+    retry: false,
+  })
+  assert.equal(deriveProductionActions({ status: 'running' }, true).start, false)
+  assert.equal(deriveProductionActions({ status: 'running' }, true).pause, true)
+  assert.equal(deriveProductionActions({ status: 'pausing' }, true).start, false)
+  assert.equal(deriveProductionActions({ status: 'pausing' }, true).cancel, true)
+  assert.equal(deriveProductionActions({ status: 'paused' }, true).resume, true)
+  assert.equal(deriveProductionActions({ status: 'failed' }, true).resume, false)
+  assert.equal(deriveProductionActions({ status: 'cancelling' }, true).start, false)
+  assert.equal(deriveProductionActions({ status: 'cancelling' }, true).cancel, false)
+  assert.equal(statusLabel('pausing'), '将在安全边界暂停')
+  assert.equal(statusLabel('cancelling'), '正在安全取消')
+  assert.equal(
+    isProductionReadyOutline({ status: 'ready', chapters: [{}] }),
+    true,
+  )
+  assert.equal(
+    isProductionReadyOutline({ status: 'locked', chapters: [{}] }),
+    true,
+  )
+  assert.equal(
+    isProductionReadyOutline({ status: 'draft', chapters: [{}] }),
+    false,
+  )
+  assert.equal(
+    productionFailureCopy('PROVIDER_RATE_LIMITED').title,
+    'Provider 请求受限',
+  )
+  assert.equal(
+    productionFailureCopy('PROVIDER_OUTPUT_INVALID').title,
+    'Provider 输出无法解析',
+  )
+  assert.equal(
+    deriveProductionActions({
+      status: 'failed',
+      failed_chapter_id: 'chapter-7',
+    }, true).retry,
+    true,
+  )
+  assert.equal(
+    deriveProductionActions({
+      status: 'failed',
+      failed_chapter_id: 'chapter-7',
+    }, true).start,
+    false,
+  )
+  const committed = applyProductionEvent(
+    { completed_chapters: 3, status: 'running' },
+    { type: 'chapter_committed', data: { transaction_id: 'tx-4' } },
+  )
+  assert.equal(committed.completed_chapters, 4)
+  assert.equal(committed.transaction_id, 'tx-4')
+  assert.equal(
+    applyProductionEvent(
+      { status: 'running' },
+      { type: 'pausing', data: {} },
+    ).status,
+    'pausing',
+  )
+  const persistedJob = {
+    prompt_tokens_total: 120,
+    completion_tokens_total: 80,
+    latency_total_ms: 2500,
+    repair_total: 3,
+    active_transaction_id: 'tx-live',
+  }
+  assert.equal(productionTokenTotal(persistedJob), 200)
+  assert.equal(productionRepairTotal(persistedJob), 3)
+  assert.equal(formatLatency(persistedJob), '2.50s total')
+  assert.equal(safeTransaction(persistedJob).transaction_id, 'tx-live')
+})
+
+test('production starts an SSE subscription only after the first job exists', async () => {
+  let jobExists = false
+  let streamAborts = 0
+  const streamCalls = []
+  const job = { id: 'job-1', revision: 1, status: 'queued' }
+  const api = {
+    fetchProductionSpec: async () => ({
+      production_spec: { revision: 1, target_total_chars: 3_000 },
+    }),
+    fetchBookOutline: async () => ({
+      book_outline: {
+        revision: 2,
+        status: 'ready',
+        chapters: [{ id: 'chapter-1' }],
+      },
+    }),
+    fetchProductionStatus: async () => {
+      if (!jobExists) {
+        const error = new Error('no production job')
+        error.status = 404
+        throw error
+      }
+      return { job }
+    },
+    fetchLLMRuntime: async () => ({
+      provider: 'custom',
+      credential_present: true,
+    }),
+    startProduction: async () => {
+      jobExists = true
+      return { job }
+    },
+    watchProductionEvents: (novelId, options) => {
+      streamCalls.push({ novelId, jobId: options.jobId })
+      options.onOpen?.()
+      return { abort: () => { streamAborts += 1 } }
+    },
+  }
+  const renderer = await mount(
+    '/src/dashboard/views/ProductionCenterView.jsx',
+    { novel: { id: 'novel-1' }, api, notify() {} },
+  )
+  assert.equal(streamCalls.length, 0)
+  await click(findButton(renderer, '开始生产'))
+  assert.deepEqual(streamCalls, [{ novelId: 'novel-1', jobId: 'job-1' }])
+  assert.match(snapshotText(renderer), /LIVE EVENTS/)
+  await act(async () => {
+    renderer.unmount()
+    await flush()
+  })
+  assert.equal(streamAborts, 1)
+})
+
+test('production renders the durable failure reason with code-specific copy', async () => {
+  const api = {
+    fetchProductionSpec: async () => ({
+      production_spec: { revision: 1, target_total_chars: 3_000 },
+    }),
+    fetchBookOutline: async () => ({
+      book_outline: {
+        revision: 2,
+        status: 'ready',
+        chapters: [{ id: 'chapter-1' }],
+      },
+    }),
+    fetchProductionStatus: async () => ({
+      job: {
+        id: 'job-failed',
+        revision: 4,
+        status: 'failed',
+        failed_chapter_id: 'chapter-1',
+        failure_code: 'PROVIDER_OUTPUT_INVALID',
+        failure_message: '结构化输出在一次修复后仍未通过。',
+      },
+    }),
+    fetchLLMRuntime: async () => ({
+      provider: 'custom',
+      credential_present: true,
+    }),
+    watchProductionEvents: () => ({ abort() {} }),
+  }
+  const renderer = await mount(
+    '/src/dashboard/views/ProductionCenterView.jsx',
+    { novel: { id: 'novel-1' }, api, notify() {} },
+  )
+  const snapshot = snapshotText(renderer)
+  assert.match(snapshot, /Provider 输出无法解析/)
+  assert.match(snapshot, /结构化输出在一次修复后仍未通过/)
+  assert.doesNotMatch(snapshot, /模型服务认证失败/)
+  renderer.unmount()
+})
+
+test('committed chapter filter excludes every non-final transaction state', async () => {
+  const {
+    chapterContent,
+    chapterMetadata,
+    isCommittedChapter,
+    isCommittedSection,
+  } = await load(
+    '/src/dashboard/views/CommittedChaptersView.jsx',
+  )
+  assert.equal(isCommittedChapter({ status: 'committed' }), true)
+  assert.equal(isCommittedChapter({ committed: true }), true)
+  for (const status of [
+    'generating',
+    'rejected',
+    'failed',
+    'staged',
+    'candidate',
+    'validating',
+    'pausing',
+    'cancelling',
+  ]) {
+    assert.equal(isCommittedChapter({ status }), false)
+  }
+  assert.equal(isCommittedChapter({}), false)
+  assert.equal(isCommittedChapter({ status: 'committed', committed: false }), false)
+  const committedSection = {
+    content: '正式正文',
+    transaction_id: 'tx-1',
+    validation_passed: true,
+    committed_at: '2026-07-30T00:00:00Z',
+  }
+  assert.equal(isCommittedSection(committedSection), true)
+  assert.equal(isCommittedSection({ content: '候选正文' }), false)
+  assert.equal(
+    chapterContent({
+      sections: [
+        committedSection,
+        { status: 'rejected', content: '不得展示的正文' },
+        { content: '无提交证据的正文' },
+      ],
+    }),
+    '正式正文',
+  )
+  assert.deepEqual(
+    chapterMetadata({
+      transaction_ids: ['tx-1', 'tx-2'],
+      story_bible_revision_start: 4,
+      story_bible_revision_end: 5,
+      canonical_revision_start: 8,
+      canonical_revision_end: 10,
+      repair_total: 1,
+    }),
+    {
+      transactionIds: ['tx-1', 'tx-2'],
+      transactionLabel: '2 个 · tx-2',
+      storyBibleRevision: '4→5',
+      canonicalRevision: '8→10',
+      repairPerformed: true,
+    },
+  )
+})
+
+test('Provider 401 preserves login while structured and legacy JWT 401 expire it', async () => {
+  const api = await load('/src/services/api.js')
+  const previousFetch = globalThis.fetch
+  const previousStorage = globalThis.localStorage
+  const previousCustomEvent = globalThis.CustomEvent
+  const storage = new Map()
+  let expiredEvents = 0
+  globalThis.localStorage = {
+    getItem: (key) => storage.get(key) || null,
+    setItem: (key, value) => storage.set(key, String(value)),
+    removeItem: (key) => storage.delete(key),
+  }
+  globalThis.CustomEvent = class CustomEvent {
+    constructor(type) { this.type = type }
+  }
+  globalThis.window.dispatchEvent = (event) => {
+    if (event.type === 'auth:expired') expiredEvents += 1
+  }
+  try {
+    api.setStoredToken('app-session')
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      detail: {
+        code: 'PROVIDER_AUTH_FAILED',
+        message: 'upstream rejected key',
+      },
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+    await api.authedFetch('/api/config/llm/probe')
+    assert.equal(api.getStoredToken(), 'app-session')
+    assert.equal(expiredEvents, 0)
+
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      detail: 'upstream provider rejected credentials',
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+    await api.authedFetch('/api/config/llm/probe')
+    assert.equal(api.getStoredToken(), 'app-session')
+    assert.equal(expiredEvents, 0)
+
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      detail: '登录态无效或已过期',
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+    await api.authedFetch('/api/novels')
+    assert.equal(api.getStoredToken(), '')
+    assert.equal(expiredEvents, 1)
+
+    api.setStoredToken('renewed-app-session')
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      detail: {
+        code: 'AUTH_TOKEN_EXPIRED',
+        message: 'session expired',
+      },
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+    await api.authedFetch('/api/novels')
+    assert.equal(api.getStoredToken(), '')
+    assert.equal(expiredEvents, 2)
+  } finally {
+    api.clearUserLLMConfig()
+    globalThis.fetch = previousFetch
+    globalThis.localStorage = previousStorage
+    globalThis.CustomEvent = previousCustomEvent
+    globalThis.window.dispatchEvent = () => {}
+  }
+})
+
+test('LLM credentials attach only to model-call routes', async () => {
+  const api = await load('/src/services/api.js')
+  const previousFetch = globalThis.fetch
+  const captures = []
+  try {
+    api.setUserLLMConfig({
+      provider: 'custom',
+      model: 'writer-v1',
+      base_url: 'https://gateway.example/v1',
+      api_key: 'secret-key',
+      thinking_mode: 'enabled',
+      timeout: 120,
+      max_retries: 2,
+    }, { remember: false })
+    globalThis.fetch = async (path, init) => {
+      captures.push({ path, headers: init.headers })
+      return new Response('{}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    await api.authedFetch('/api/novels')
+    await api.authedFetch('/api/novels/n1/outline/generate', {
+      method: 'POST',
+      body: '{}',
+    })
+    assert.equal(captures[0].headers.get('X-User-LLM-Key'), null)
+    assert.equal(captures[1].headers.get('X-User-LLM-Key'), 'secret-key')
+    assert.equal(captures[1].headers.get('X-User-LLM-Provider'), 'custom')
+    assert.equal(captures[1].headers.get('X-User-LLM-Thinking-Mode'), 'enabled')
+    assert.equal(captures[1].headers.get('X-User-LLM-Max-Retries'), '2')
+  } finally {
+    api.clearUserLLMConfig()
+    globalThis.fetch = previousFetch
+  }
+})
+
+test('provider identity changes clear prior credentials and require re-entry', async () => {
+  const api = await load('/src/services/api.js')
+  const previousFetch = globalThis.fetch
+  const captures = []
+  try {
+    api.clearUserLLMConfig()
+    api.setUserLLMConfig({
+      provider: 'alpha',
+      base_url: 'https://alpha.invalid/v1',
+      model: 'alpha-model',
+      api_key: 'test-credential-alpha',
+    }, { remember: false })
+    api.setUserLLMConfig({
+      provider: 'beta',
+      base_url: 'https://beta.invalid/v1',
+      model: 'beta-model',
+      api_key: '',
+    }, { remember: false })
+    assert.equal(api.getUserLLMConfig().api_key, '')
+
+    globalThis.fetch = async (_path, init) => {
+      captures.push(init.headers)
+      return new Response('{}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    await api.authedFetch('/api/novels/n1/outline/generate', {
+      method: 'POST',
+      body: '{}',
+    })
+    assert.equal(captures[0].get('X-User-LLM-Key'), null)
+    for (const header of [
+      'X-User-LLM-Provider',
+      'X-User-LLM-Base-Url',
+      'X-User-LLM-Model',
+      'X-User-LLM-Thinking-Mode',
+      'X-User-LLM-Timeout',
+      'X-User-LLM-Max-Retries',
+    ]) {
+      assert.equal(captures[0].get(header), null)
+    }
+  } finally {
+    api.clearUserLLMConfig()
+    globalThis.fetch = previousFetch
+  }
+
+  const providers = [
+    {
+      key: 'alpha',
+      label: 'Alpha',
+      defaultBaseUrl: 'https://alpha.invalid/v1',
+      defaultModel: 'alpha-model',
+    },
+    {
+      key: 'beta',
+      label: 'Beta',
+      defaultBaseUrl: 'https://beta.invalid/v1',
+      defaultModel: 'beta-model',
+    },
+  ]
+  let changed
+  const renderer = await mount(
+    '/src/dashboard/components/ProviderConfigPanel.jsx',
+    {
+      providers,
+      value: {
+        provider: 'alpha',
+        base_url: 'https://alpha.invalid/v1',
+        model: 'alpha-model',
+        api_key: '',
+        thinking_mode: 'disabled',
+        timeout: 600,
+        max_retries: 0,
+        credential_present: true,
+        credential_required: false,
+      },
+      onChange: (value) => { changed = value },
+      onProbe() {},
+    },
+  )
+  await click(findButton(renderer, 'Beta'))
+  assert.equal(changed.provider, 'beta')
+  assert.equal(changed.api_key, '')
+  assert.equal(changed.credential_required, true)
+  renderer.unmount()
+})
+
+test('empty-key model calls and probes use the server Provider fallback', async () => {
+  const api = await load('/src/services/api.js')
+  const previousFetch = globalThis.fetch
+  const captures = []
+  try {
+    api.clearUserLLMConfig()
+    api.setUserLLMConfig({
+      provider: 'custom',
+      base_url: 'https://browser-draft.invalid/v1',
+      model: 'browser-draft-model',
+      api_key: '',
+      thinking_mode: 'enabled',
+      timeout: 120,
+      max_retries: 2,
+    }, { remember: false })
+    globalThis.fetch = async (path, init) => {
+      captures.push({ path, headers: init.headers })
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    await api.authedFetch('/api/novels/n1/outline/generate', {
+      method: 'POST',
+      body: '{}',
+    })
+    api.setUserLLMConfig({
+      provider: 'stale-browser-provider',
+      model: 'stale-browser-model',
+      api_key: 'stale-browser-key',
+    }, { remember: false })
+    await api.probeLLMConfig({
+      provider: 'custom',
+      model: 'another-browser-draft',
+      api_key: '',
+    })
+    const providerHeaders = [
+      'X-User-LLM-Key',
+      'X-User-LLM-Provider',
+      'X-User-LLM-Base-Url',
+      'X-User-LLM-Model',
+      'X-User-LLM-Thinking-Mode',
+      'X-User-LLM-Timeout',
+      'X-User-LLM-Max-Retries',
+    ]
+    assert.equal(captures.length, 2)
+    for (const capture of captures) {
+      for (const header of providerHeaders) {
+        assert.equal(capture.headers.get(header), null)
+      }
+    }
+  } finally {
+    api.clearUserLLMConfig()
+    globalThis.fetch = previousFetch
+  }
+})
+
+test('style activation uses active binding revision from active_style response', async () => {
+  const baseStyle = {
+    revision: 1,
+    description: '',
+    read_only: false,
+    prompt_hash: 'a'.repeat(64),
+  }
+  let activation
+  const api = {
+    fetchStyleProfiles: async () => ({
+      profiles: {
+        preset_literary: {
+          ...baseStyle,
+          id: 'preset_literary',
+          name: '默认风格',
+          read_only: true,
+        },
+        style_target: {
+          ...baseStyle,
+          id: 'style_target',
+          name: '目标风格',
+        },
+      },
+      active_style: {
+        revision: 7,
+        style_profile_id: 'preset_literary',
+        applies_from_chapter_ordinal: 1,
+      },
+    }),
+    fetchProductionSpec: async () => ({
+      production_spec: { revision: 11 },
+    }),
+    fetchCommittedChapters: async () => ({ chapters: [] }),
+    activateStyleProfile: async (novelId, styleId, payload) => {
+      activation = { novelId, styleId, payload }
+      return {
+        active_style: {
+          revision: 8,
+          style_profile_id: styleId,
+          applies_from_chapter_ordinal: 4,
+        },
+        production_spec: { revision: 12 },
+      }
+    },
+  }
+  const renderer = await mount('/src/dashboard/views/StyleStudioView.jsx', {
+    novel: { id: 'novel-style' },
+    api,
+    notify() {},
+  })
+  await click(findButton(renderer, '目标风格'))
+  await click(findButton(renderer, '应用到下一章'))
+  assert.deepEqual(activation, {
+    novelId: 'novel-style',
+    styleId: 'style_target',
+    payload: {
+      expected_revision: 7,
+      expected_spec_revision: 11,
+    },
+  })
+  assert.match(snapshotText(renderer), /第 4 章/)
+  renderer.unmount()
 })
 
 test('author authorities have safe empty states without a selected novel', async () => {
@@ -341,31 +1108,35 @@ test('StoryBible exposes revision conflict and legacy inferred provenance', asyn
   renderer.unmount()
 })
 
-test('author mode switch succeeds, while failed switch preserves current mode', async () => {
+test('experiment lab owns simulation opt-in and preserves author mode on failure', async () => {
   let switched
-  const success = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+  const success = await mount('/src/dashboard/views/ExperimentLabView.jsx', {
     novel: { id: 'n1' },
-    api: authorApi({
+    api: {
+      fetchGenerationMode: async () => ({ mode: 'author', revision: 4 }),
       updateGenerationMode: async (_novelId, revision, mode) => {
         switched = { revision, mode }
         return { mode, revision: revision + 1 }
       },
-    }),
+    },
     notify() {},
   })
-  await click(findButton(success, '世界模拟模式'))
+  await click(findButton(success, '启用世界模拟'))
   assert.deepEqual(switched, { revision: 4, mode: 'simulation' })
-  assert.match(snapshotText(success), /当前作品由世界模拟推进/)
+  assert.match(snapshotText(success), /SIMULATION LIVE/)
   success.unmount()
 
-  const failed = await mount('/src/dashboard/views/AuthorStudioView.jsx', {
+  const failed = await mount('/src/dashboard/views/ExperimentLabView.jsx', {
     novel: { id: 'n1' },
-    api: authorApi({ updateGenerationMode: async () => { throw new Error('网络失败') } }),
+    api: {
+      fetchGenerationMode: async () => ({ mode: 'author', revision: 4 }),
+      updateGenerationMode: async () => { throw new Error('网络失败') },
+    },
     notify() {},
   })
-  await click(findButton(failed, '世界模拟模式'))
+  await click(findButton(failed, '启用世界模拟'))
   assert.match(snapshotText(failed), /网络失败/)
-  assert.match(snapshotText(failed), /这一节必须完成什么/)
+  assert.match(snapshotText(failed), /AUTHOR PRODUCTION SAFE/)
   failed.unmount()
 })
 

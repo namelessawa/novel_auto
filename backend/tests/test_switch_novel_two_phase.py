@@ -79,7 +79,8 @@ def client(monkeypatch, tmp_path):
     app = FastAPI()
     app.include_router(routes.router)
     app.dependency_overrides[get_current_user] = _fake_user
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def _install_tick_runtime_stub(monkeypatch, *, succeed: bool):

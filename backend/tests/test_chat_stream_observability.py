@@ -22,6 +22,13 @@ import pytest
 
 import nf_core.llm_client as llm_module
 from nf_core.llm_client import set_current_tick
+from nf_core.provider_runtime import (
+    ProviderError,
+    ProviderRuntimeConfig,
+    provider_client_registry,
+    reset_stage_provider_config,
+    set_stage_provider_config,
+)
 from nf_core.token_budget import (
     BudgetExceeded,
     TokenBudgetTracker,
@@ -32,6 +39,24 @@ from nf_core.token_budget import (
 # ------------------------------------------------------------------
 # fixtures + stream stub
 # ------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def offline_provider():
+    config = ProviderRuntimeConfig.from_explicit(
+        provider="test",
+        api_key="test-only-key",
+        base_url="https://provider.invalid/v1",
+        model="test-model",
+        source="test_fixture",
+    )
+    token = set_stage_provider_config(config)
+    provider_client_registry.invalidate()
+    try:
+        yield
+    finally:
+        provider_client_registry.invalidate()
+        reset_stage_provider_config(token)
 
 
 @pytest.fixture
@@ -372,7 +397,7 @@ async def test_chat_stream_exception_still_records_attempt(
         llm_module.llm_client._client.chat.completions, "create", boom_create
     )
 
-    with pytest.raises(RuntimeError, match="502"):
+    with pytest.raises(ProviderError) as raised:
         async for _ in llm_module.llm_client.chat_stream(
             system_prompt="sys",
             user_prompt="usr",
@@ -381,6 +406,7 @@ async def test_chat_stream_exception_still_records_attempt(
             tick=33,
         ):
             pass
+    assert raised.value.code == "PROVIDER_UNAVAILABLE"
 
     assert fresh_tracker.snapshot.call_count == 1, (
         f"失败的 stream 也应在 tracker 留下 1 条记录, 否则失败率不可观测。"

@@ -373,14 +373,18 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
-    from validate_styles import _configure_provider
+    from validate_styles import configure_provider_runtime
+
+    provider = configure_provider_runtime((ROOT / args.provider_file).resolve())
+    from nf_core.llm_client import llm_client
+    from nf_core.provider_runtime import stage_provider_scope
+
     from novel_presets import (
         STYLE_PRESET_SCHEMA_VERSION,
         get_style_preset,
         list_style_keys,
     )
 
-    provider = _configure_provider((ROOT / args.provider_file).resolve())
     output = (ROOT / args.out).resolve()
     if args.resume and output.exists():
         report = json.loads(output.read_text(encoding="utf-8"))
@@ -395,7 +399,7 @@ def main() -> None:
             "metadata": {
                 "started_at": int(time.time()),
                 "git_sha": _git_sha(),
-                "provider": provider,
+                "provider": provider.diagnostics(),
                 "input": str((ROOT / args.input).resolve()),
                 "input_sha256": hashlib.sha256(
                     (ROOT / args.input).read_bytes()
@@ -408,7 +412,15 @@ def main() -> None:
             },
             "results": [],
         }
-    final = asyncio.run(_run(args, report, output))
+    async def _execute():
+        try:
+            return await _run(args, report, output)
+        finally:
+            await llm_client.aclose()
+
+    with stage_provider_scope(provider):
+        llm_client.reload(config=provider)
+        final = asyncio.run(_execute())
     summary = final["summary"]
     print(
         f"[DONE] top1={summary['top1_accuracy']} top3={summary['top3_accuracy']} "

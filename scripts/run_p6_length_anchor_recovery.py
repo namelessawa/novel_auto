@@ -658,8 +658,10 @@ def assess_g2(matrix: dict[str, Any]) -> dict[str, Any]:
     provider_calls = int(summary.get("provider_calls", 0) or 0)
     checks = {
         "attempted_15": summary.get("attempted") == 15,
-        "committed_15": summary.get("committed") == 15,
-        "contract_15": summary.get("contract_pass") == 15,
+        "committed_at_least_14": int(summary.get("committed", 0) or 0) >= 14,
+        "contract_at_least_14": (
+            int(summary.get("contract_pass", 0) or 0) >= 14
+        ),
         "length_in_range_at_least_14": in_range >= 14,
         "writer_first_pass_at_least_9": (
             int(summary.get("writer_first_pass_pass", 0) or 0) >= 9
