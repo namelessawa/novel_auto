@@ -12,6 +12,7 @@ node_modules/
 
 # Phase 5+: 本地 LLM 凭据/暂存 (绝不 commit)
 coding.txt
+coding_deepseek_v4_pro.txt
 
 # Test / lint caches
 .coverage

@@ -403,10 +403,14 @@ async def extract_information(
     *,
     max_tokens: int = 4096,
     model_override: str | None = None,
+    provider_config: Any | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Extract structured information from prose according to schema.
 
     Returns dict mapping field keys to lists of extracted items.
+
+    provider_config, when given, overrides the request-scoped provider for
+    this call only (e.g. to route extraction through deepseek-v4-pro).
     """
     field_descriptions = [
         {
@@ -441,6 +445,7 @@ async def extract_information(
             priority="critical",
             response_format={"type": "json_object"},
             model_override=model_override,
+            provider_config=provider_config,
         )
 
     def _validate(content: str):
