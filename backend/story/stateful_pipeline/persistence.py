@@ -313,3 +313,54 @@ class MemoryIntegrationStore:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(record.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
         return record
+
+
+# ---------------------------------------------------------------------------
+# Pacing Store
+# ---------------------------------------------------------------------------
+
+
+class PacingStore:
+    """Store pacing state and per-chapter pacing receipts."""
+
+    def __init__(self, data_dir: str):
+        self._dir = os.path.join(data_dir, "pipeline")
+        os.makedirs(self._dir, exist_ok=True)
+
+    def _state_path(self) -> str:
+        return os.path.join(self._dir, "pacing_state.json")
+
+    def _receipt_path(self, chapter: int) -> str:
+        return os.path.join(self._dir, f"pacing_receipt_ch{chapter}.json")
+
+    def load_state(self, novel_id: str):
+        from story.stateful_pipeline.pacing import PacingState
+
+        path = self._state_path()
+        if not os.path.isfile(path):
+            return PacingState(novel_id=novel_id)
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return PacingState.model_validate(data)
+
+    def save_state(self, state) -> None:
+        path = self._state_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
+
+    def load_receipt(self, novel_id: str, chapter: int):
+        from story.stateful_pipeline.pacing import PacingReceipt
+
+        path = self._receipt_path(chapter)
+        if not os.path.isfile(path):
+            return None
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return PacingReceipt.model_validate(data)
+
+    def save_receipt(self, receipt) -> None:
+        path = self._receipt_path(receipt.chapter)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(receipt.model_dump(mode="json"), f, ensure_ascii=False, indent=2)

@@ -423,64 +423,70 @@ class StatefulPipelineService:
         synopsis: ChapterSynopsis | None,
         transfer_context: TransferContext | None,
     ) -> str:
-        """Write chapter prose using the Novel LLM via AuthorGenerationService.
+        """Write chapter prose using the simplified writer with pacing mode.
 
-        The Novel LLM uses:
-          - StyleProfile.writer_prompt_prefix (style_prefix) via AuthorWriter
-          - NarrativeContract (derived from chapter goal/synopsis)
+        The simplified writer outputs plain prose based on:
+          - StyleProfile.writer_prompt_prefix (style_prefix)
+          - Chapter synopsis
+          - Pacing mode (flat/conflict/climax)
           - TransferContext (from chapter >= 3)
-          - CanonicalState (necessary facts)
-
-        Delegates to the existing generation service which handles
-        validation, repair, and transaction commit.
         """
-        from story.models import SectionGoal
-        from story.service import AuthorGenerationService
-        from story.writer import AuthorWriter
+        from story.stateful_pipeline.llm_roles import write_chapter_simplified
+        from story.stateful_pipeline.pacing import PacingModeSelector
+        from story.stateful_pipeline.persistence import PacingStore
 
-        # Build the objective from synopsis + transfer context
-        objective_parts = []
-        if synopsis and synopsis.synopsis:
-            objective_parts.append(f"章节梗概：{synopsis.synopsis}")
-        if chapter_goal:
-            objective_parts.append(f"章节目标：{chapter_goal}")
-        if transfer_context:
-            if transfer_context.recent_context:
-                objective_parts.append(f"近期上下文：{transfer_context.recent_context}")
-            if transfer_context.foreshadow_to_consider:
-                objective_parts.append(f"需融入的伏笔：{transfer_context.foreshadow_to_consider}")
-            if transfer_context.continuity_constraints:
-                objective_parts.append(
-                    "连续性约束：" + "；".join(transfer_context.continuity_constraints)
-                )
+        # Get or create pacing state
+        pacing_store = PacingStore(self._data_dir)
+        pacing_state = pacing_store.load_state(novel_id)
+        pacing_selector = PacingModeSelector()
 
-        objective = "\n".join(objective_parts) if objective_parts else chapter_goal or "推进故事发展"
-
-        # Build SectionGoal for the author generation service
-        goal = SectionGoal(
-            objective=objective,
-            desired_length=2000,
-        )
-
-        # Create writer with style prefix (only affects Novel LLM)
-        writer = AuthorWriter(style_prompt_prefix=style_prefix)
-
-        # Create generation service and run
-        service = AuthorGenerationService(
-            user_id="pipeline",
+        # Check for existing pacing receipt (idempotent recovery)
+        pacing_receipt = pacing_store.load_receipt(novel_id, chapter)
+        pacing_receipt = pacing_selector.select_mode(
             novel_id=novel_id,
-            data_dir=self._data_dir,
-            writer=writer,
+            chapter=chapter,
+            state=pacing_state,
+            existing_receipt=pacing_receipt,
         )
+        pacing_store.save_state(pacing_state)
+        pacing_store.save_receipt(pacing_receipt)
+
+        # Determine the pacing mode instruction
+        pacing_mode = pacing_receipt.selected_mode.value
+        if pacing_mode == "conflict" and pacing_receipt.resolve_in_chapter:
+            pacing_mode = "conflict_resolve"
+
+        # Build synopsis text
+        synopsis_text = synopsis.synopsis if synopsis and synopsis.synopsis else chapter_goal or "推进故事发展"
+
+        # Build transfer context text
+        transfer_text = ""
+        if transfer_context:
+            parts = []
+            if transfer_context.recent_context:
+                parts.append(f"近期上下文：{transfer_context.recent_context}")
+            if transfer_context.foreshadow_to_consider:
+                parts.append(f"需融入的伏笔：{transfer_context.foreshadow_to_consider}")
+            if transfer_context.continuity_constraints:
+                parts.append("连续性约束：" + "；".join(transfer_context.continuity_constraints))
+            transfer_text = "\n".join(parts)
 
         try:
-            transaction = await service.run(goal)
-            if transaction.committed and transaction.candidate:
-                return transaction.candidate.narrative_text
-            raise PipelineError(
-                f"Chapter {chapter} generation did not commit: "
-                f"phase={transaction.phase}"
+            prose = await write_chapter_simplified(
+                novel_id=novel_id,
+                chapter_number=chapter,
+                synopsis=synopsis_text,
+                style_prefix=style_prefix,
+                pacing_mode=pacing_mode,
+                transfer_context=transfer_text,
             )
+
+            # If the pacing mode resolved an open conflict, mark it resolved
+            if pacing_mode in ("conflict_resolve", "climax"):
+                pacing_selector.resolve_open_conflict(pacing_state, chapter)
+                pacing_store.save_state(pacing_state)
+
+            return prose
         except Exception as exc:
             raise PipelineError(f"Chapter writing failed: {exc}") from exc
 

@@ -144,6 +144,93 @@ async def generate_synopsis(
 
 
 # ---------------------------------------------------------------------------
+# Simplified Chapter Writer (plain prose output)
+# ---------------------------------------------------------------------------
+
+SIMPLIFIED_WRITER_SYSTEM_PROMPT = """你是一个小说章节写作器。根据提供的梗概、风格要求和节奏模式，写出一章完整的正文。
+要求：
+- 直接输出散文正文，不要 JSON 结构
+- 遵循梗概的情节方向
+- 遵循风格要求的叙事方式
+- 根据节奏模式调整本章基调
+- 字数控制在 1500-2500 字
+正文用 <prose> 标签包裹。"""
+
+PACING_MODE_INSTRUCTIONS = {
+    "flat": "本章基调：平淡叙事。以日常描写、人物刻画、环境铺垫为主，节奏舒缓，不引入重大冲突。",
+    "conflict": "本章基调：冲突制造。引入新的矛盾、对立或危机，制造紧张感和悬念。",
+    "conflict_resolve": "本章基调：冲突解决。此前引入的冲突必须在本章得到明确解决或重大推进，给出结果。",
+    "climax": "本章基调：高潮。安排重大转折点或重大事故，情绪张力达到峰值，是全书关键节点。",
+}
+
+
+async def write_chapter_simplified(
+    novel_id: str,
+    chapter_number: int,
+    synopsis: str,
+    style_prefix: str,
+    pacing_mode: str,
+    transfer_context: str,
+    *,
+    max_tokens: int = 6000,
+) -> str:
+    """Write a chapter with simplified plain-prose output.
+
+    Returns the prose text (without <prose> tags).
+    """
+    pacing_instruction = PACING_MODE_INSTRUCTIONS.get(
+        pacing_mode, PACING_MODE_INSTRUCTIONS["flat"]
+    )
+
+    # Build the user prompt
+    prompt_parts = [
+        f"## 章节：第{chapter_number}章",
+        "",
+        "## 节奏模式",
+        pacing_instruction,
+        "",
+        "## 章节梗概",
+        synopsis,
+    ]
+
+    if style_prefix:
+        prompt_parts.extend(["", "## 风格要求", style_prefix])
+
+    if transfer_context:
+        prompt_parts.extend(["", "## 前文上下文", transfer_context])
+
+    prompt_parts.extend([
+        "",
+        "## 输出要求",
+        "请用 <prose> 标签包裹正文，例如：",
+        "<prose>",
+        "正文内容...",
+        "</prose>",
+    ])
+
+    user_prompt = "\n".join(prompt_parts)
+
+    response = await llm_client.chat(
+        system_prompt=SIMPLIFIED_WRITER_SYSTEM_PROMPT,
+        user_prompt=user_prompt,
+        temperature=0.7,
+        max_tokens=max_tokens,
+        agent_id="pipeline_simplified_writer",
+        priority="critical",
+    )
+
+    # Extract prose from <prose> tags
+    content = response.content
+    if "<prose>" in content and "</prose>" in content:
+        start = content.find("<prose>") + len("<prose>")
+        end = content.find("</prose>")
+        return content[start:end].strip()
+
+    # Fallback: return as-is if no tags
+    return content.strip()
+
+
+# ---------------------------------------------------------------------------
 # Foreshadow Extractor LLM
 # ---------------------------------------------------------------------------
 
