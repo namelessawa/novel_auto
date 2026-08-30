@@ -80,6 +80,62 @@ def _parse_llm_output(raw: str) -> Any:
     raise PipelineLLMError(f"Failed to parse LLM output: {raw[:200]}")
 
 
+# Maximum attempts for structured LLM role calls (extraction / integration).
+DEFAULT_ROLE_MAX_ATTEMPTS = 3
+
+
+async def _retry_llm_call(
+    call,
+    *,
+    max_attempts: int = DEFAULT_ROLE_MAX_ATTEMPTS,
+    validate=None,
+    role_name: str = "llm_role",
+):
+    """Invoke an async LLM call with retry on failure or invalid output.
+
+    Args:
+        call: async callable returning an LLM response (with .content).
+        max_attempts: total attempts before giving up.
+        validate: optional callable(content) -> parsed result. If it raises
+            or returns None, the attempt is treated as failed and retried.
+        role_name: label used in error messages.
+
+    Returns:
+        The validated result if ``validate`` is given, else the raw content.
+
+    Raises:
+        PipelineLLMError: after all attempts fail.
+    """
+    last_error: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = await call()
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        content = response.content
+        if validate is None:
+            if content and content.strip():
+                return content
+            last_error = PipelineLLMError(f"{role_name} returned empty output")
+            continue
+
+        try:
+            result = validate(content)
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        if result is not None:
+            return result
+        last_error = PipelineLLMError(f"{role_name} output failed validation")
+
+    raise PipelineLLMError(
+        f"{role_name} failed after {max_attempts} attempts: {last_error}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Synopsis LLM
 # ---------------------------------------------------------------------------
@@ -164,6 +220,22 @@ PACING_MODE_INSTRUCTIONS = {
 }
 
 
+def _extract_prose(content: str) -> str:
+    """Extract prose text from <prose> tags, falling back to raw content."""
+    if "<prose>" in content and "</prose>" in content:
+        start = content.find("<prose>") + len("<prose>")
+        end = content.find("</prose>")
+        return content[start:end].strip()
+    return content.strip()
+
+
+# Minimum characters for a valid chapter prose. Below this, treat as empty
+# and trigger a retry.
+MIN_VALID_PROSE_CHARS = 200
+# Maximum writer attempts per chapter (initial call + retries).
+DEFAULT_WRITER_MAX_ATTEMPTS = 3
+
+
 async def write_chapter_simplified(
     novel_id: str,
     chapter_number: int,
@@ -173,10 +245,16 @@ async def write_chapter_simplified(
     transfer_context: str,
     *,
     max_tokens: int = 6000,
+    max_attempts: int = DEFAULT_WRITER_MAX_ATTEMPTS,
+    min_prose_chars: int = MIN_VALID_PROSE_CHARS,
 ) -> str:
     """Write a chapter with simplified plain-prose output.
 
+    Retries automatically when the model returns empty or too-short prose.
     Returns the prose text (without <prose> tags).
+
+    Raises:
+        PipelineLLMError: if all attempts produce empty/invalid output.
     """
     pacing_instruction = PACING_MODE_INSTRUCTIONS.get(
         pacing_mode, PACING_MODE_INSTRUCTIONS["flat"]
@@ -210,24 +288,33 @@ async def write_chapter_simplified(
 
     user_prompt = "\n".join(prompt_parts)
 
-    response = await llm_client.chat(
-        system_prompt=SIMPLIFIED_WRITER_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-        temperature=0.7,
-        max_tokens=max_tokens,
-        agent_id="pipeline_simplified_writer",
-        priority="critical",
+    last_error: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = await llm_client.chat(
+                system_prompt=SIMPLIFIED_WRITER_SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                temperature=0.7,
+                max_tokens=max_tokens,
+                agent_id="pipeline_simplified_writer",
+                priority="critical",
+            )
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        prose = _extract_prose(response.content)
+        if len(prose) >= min_prose_chars:
+            return prose
+
+        # Output empty or too short — retry.
+        last_error = PipelineLLMError(
+            f"Writer output too short ({len(prose)} chars) on attempt {attempt}"
+        )
+
+    raise PipelineLLMError(
+        f"Chapter writing failed after {max_attempts} attempts: {last_error}"
     )
-
-    # Extract prose from <prose> tags
-    content = response.content
-    if "<prose>" in content and "</prose>" in content:
-        start = content.find("<prose>") + len("<prose>")
-        end = content.find("</prose>")
-        return content[start:end].strip()
-
-    # Fallback: return as-is if no tags
-    return content.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -343,34 +430,36 @@ async def extract_information(
         ensure_ascii=False,
     )
 
-    response = await llm_client.chat(
-        system_prompt=INFORMATION_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-        temperature=0.2,
-        max_tokens=max_tokens,
-        agent_id="pipeline_information_extractor",
-        priority="critical",
-        response_format={"type": "json_object"},
-    )
+    async def _call():
+        return await llm_client.chat(
+            system_prompt=INFORMATION_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            temperature=0.2,
+            max_tokens=max_tokens,
+            agent_id="pipeline_information_extractor",
+            priority="critical",
+            response_format={"type": "json_object"},
+        )
 
-    try:
-        data = _parse_llm_output(response.content)
+    def _validate(content: str):
+        data = _parse_llm_output(content)
         if isinstance(data, dict):
-            # Validate keys match schema
             allowed_keys = set(schema.field_keys)
             result = {}
             for key in allowed_keys:
                 if key in data:
                     items = data[key]
-                    if isinstance(items, list):
-                        result[key] = items
-                    else:
-                        result[key] = [items]
+                    result[key] = items if isinstance(items, list) else [items]
                 else:
                     result[key] = []
             return result
         raise ValueError(f"Unexpected information output type: {type(data)}")
-    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
+
+    try:
+        return await _retry_llm_call(
+            _call, validate=_validate, role_name="information_extractor"
+        )
+    except PipelineLLMError as exc:
         raise PipelineLLMError(f"Failed to parse information output: {exc}") from exc
 
 
@@ -420,26 +509,30 @@ async def integrate_memory(
         ensure_ascii=False,
     )
 
-    response = await llm_client.chat(
-        system_prompt=INTEGRATION_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-        temperature=0.2,
-        max_tokens=max_tokens,
-        agent_id="pipeline_integration",
-        priority="critical",
-        response_format={"type": "json_object"},
-    )
+    async def _call():
+        return await llm_client.chat(
+            system_prompt=INTEGRATION_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            temperature=0.2,
+            max_tokens=max_tokens,
+            agent_id="pipeline_integration",
+            priority="critical",
+            response_format={"type": "json_object"},
+        )
+
+    def _validate(content: str):
+        data = _parse_llm_output(content)
+        if isinstance(data, dict):
+            return data.get("documents", data.get("memories", []))
+        if isinstance(data, list):
+            return data
+        raise ValueError(f"Unexpected integration output type: {type(data)}")
 
     try:
-        data = _parse_llm_output(response.content)
-        if isinstance(data, dict):
-            docs = data.get("documents", data.get("memories", []))
-        elif isinstance(data, list):
-            docs = data
-        else:
-            raise ValueError(f"Unexpected integration output type: {type(data)}")
-        return docs
-    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
+        return await _retry_llm_call(
+            _call, validate=_validate, role_name="integration"
+        )
+    except PipelineLLMError as exc:
         raise PipelineLLMError(f"Failed to parse integration output: {exc}") from exc
 
 
