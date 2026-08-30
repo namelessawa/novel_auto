@@ -18,8 +18,6 @@ Key principles:
 
 from __future__ import annotations
 
-import json
-import os
 from typing import Any
 
 from story.models import (
@@ -31,7 +29,6 @@ from story.stateful_pipeline.foreshadow_selection import (
     ForeshadowSelectionService,
 )
 from story.stateful_pipeline.llm_roles import (
-    PipelineLLMError,
     build_transfer_context,
     extract_foreshadows,
     extract_information,
@@ -46,7 +43,6 @@ from story.stateful_pipeline.models import (
     ChapterPipelinePhase,
     ChapterPipelineState,
     ChapterSynopsis,
-    ForeshadowMode,
     ForeshadowRecord,
     ForeshadowSelectionState,
     ForeshadowStatus,

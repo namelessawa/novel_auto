@@ -15,19 +15,16 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from auth import User, get_current_user
 from story.stateful_pipeline.models import (
     ChapterGenerationPreference,
     ChapterPipelinePhase,
-    ChapterSynopsis,
     ForeshadowMode,
-    InformationField,
 )
 from story.stateful_pipeline.service import (
-    ConfirmationRequiredError,
     PipelineError,
     StatefulPipelineService,
 )
@@ -535,9 +532,6 @@ async def rebuild_chroma(
 ):
     """Rebuild ChromaDB from committed chapter information."""
     service = _get_pipeline_service(novel_id)
-
-    import novel_manager
-    data_dir = novel_manager.get_novel_dir(novel_id)
 
     # Load all chapter informations
     chapter_informations = []

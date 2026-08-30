@@ -9,7 +9,6 @@ Wraps ChromaDB with:
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 from typing import Any
@@ -55,7 +54,7 @@ class ChromaMemoryRepository:
 
     def __init__(self, persist_dir: str | None = None) -> None:
         _patch_posthog()
-        import chromadb  # noqa: WPS433
+        import chromadb
 
         from config.settings import settings
 
@@ -144,15 +143,19 @@ class ChromaMemoryRepository:
 
         documents: list[dict[str, Any]] = []
         if results and results.get("documents"):
-            for i, doc_list in enumerate(results["documents"]):
-                if i < len(doc_list):
-                    metadata = results["metadatas"][i] if results.get("metadatas") else {}
-                    distance = results["distances"][i][0] if results.get("distances") else 1.0
-                    documents.append({
-                        "content": doc_list[i] if isinstance(doc_list, list) else doc_list,
-                        "metadata": metadata,
-                        "distance": distance,
-                    })
+            # ChromaDB returns nested lists: [[doc1, doc2, ...]] for one query
+            doc_list = results["documents"][0] if results["documents"] else []
+            metadata_list = results["metadatas"][0] if results.get("metadatas") else []
+            distance_list = results["distances"][0] if results.get("distances") else []
+
+            for i, doc in enumerate(doc_list):
+                metadata = metadata_list[i] if i < len(metadata_list) else {}
+                distance = distance_list[i] if i < len(distance_list) else 1.0
+                documents.append({
+                    "content": doc,
+                    "metadata": metadata,
+                    "distance": distance,
+                })
 
         return documents
 
