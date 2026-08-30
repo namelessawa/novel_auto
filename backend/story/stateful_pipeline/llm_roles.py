@@ -402,6 +402,7 @@ async def extract_information(
     schema: InformationSchema,
     *,
     max_tokens: int = 4096,
+    model_override: str | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Extract structured information from prose according to schema.
 
@@ -439,6 +440,7 @@ async def extract_information(
             agent_id="pipeline_information_extractor",
             priority="critical",
             response_format={"type": "json_object"},
+            model_override=model_override,
         )
 
     def _validate(content: str):
@@ -476,33 +478,28 @@ INTEGRATION_SYSTEM_PROMPT = """你是一个记忆整合器。将结构化的章�
 不要直接访问数据库，你只负责生成文档内容。"""
 
 
-async def integrate_memory(
-    novel_id: str,
+async def _integrate_single_field(
     chapter_number: int,
-    information: ChapterInformation,
-    schema: InformationSchema,
+    field_key: str,
+    field_name: str,
+    items: list[Any],
     *,
-    max_tokens: int = 4096,
+    max_tokens: int = 2048,
+    model_override: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Transform structured information into memory documents.
-
-    Returns list of {"content": "...", "metadata": {...}}
-    """
+    """Integrate one schema field's items into memory documents."""
     user_prompt = json.dumps(
         {
             "task": "integrate_memory",
             "chapter": chapter_number,
-            "schema_revision": schema.revision,
-            "information": information.data,
+            "field": field_key,
+            "field_name": field_name,
+            "items": items,
             "output_format": {
                 "type": "array",
                 "items": {
                     "content": "string (自然语言记忆描述)",
-                    "metadata": {
-                        "chapter": "int",
-                        "field": "string (来源字段)",
-                        "entities": "array of strings",
-                    },
+                    "entities": "array of strings (涉及的实体)",
                 },
             },
         },
@@ -518,6 +515,7 @@ async def integrate_memory(
             agent_id="pipeline_integration",
             priority="critical",
             response_format={"type": "json_object"},
+            model_override=model_override,
         )
 
     def _validate(content: str):
@@ -528,12 +526,61 @@ async def integrate_memory(
             return data
         raise ValueError(f"Unexpected integration output type: {type(data)}")
 
-    try:
-        return await _retry_llm_call(
-            _call, validate=_validate, role_name="integration"
+    docs = await _retry_llm_call(_call, validate=_validate, role_name="integration")
+    # Tag each doc with its source field for metadata.
+    for doc in docs:
+        if isinstance(doc, dict):
+            doc.setdefault("metadata", {})
+            doc["metadata"]["field"] = field_key
+    return docs
+
+
+async def integrate_memory(
+    novel_id: str,
+    chapter_number: int,
+    information: ChapterInformation,
+    schema: InformationSchema,
+    *,
+    max_tokens: int = 2048,
+    model_override: str | None = None,
+) -> list[dict[str, Any]]:
+    """Transform structured information into memory documents.
+
+    Processes each non-empty schema field in a separate LLM call to keep
+    per-call input short, then combines the results. Empty fields are skipped.
+
+    Returns list of {"content": "...", "metadata": {...}}
+    """
+    field_names = {f.key: f.name for f in schema.fields}
+    all_documents: list[dict[str, Any]] = []
+    field_errors: list[str] = []
+
+    for field_key, items in information.data.items():
+        if not items:
+            continue  # Skip empty fields — nothing to integrate.
+
+        field_name = field_names.get(field_key, field_key)
+        try:
+            docs = await _integrate_single_field(
+                chapter_number=chapter_number,
+                field_key=field_key,
+                field_name=field_name,
+                items=items,
+                max_tokens=max_tokens,
+                model_override=model_override,
+            )
+            all_documents.extend(docs)
+        except PipelineLLMError as exc:
+            # Record the failure but continue with other fields so one
+            # field's failure does not lose the rest of the chapter's memory.
+            field_errors.append(f"{field_key}: {exc}")
+
+    if not all_documents and field_errors:
+        raise PipelineLLMError(
+            f"Integration failed for all fields: {'; '.join(field_errors)}"
         )
-    except PipelineLLMError as exc:
-        raise PipelineLLMError(f"Failed to parse integration output: {exc}") from exc
+
+    return all_documents
 
 
 # ---------------------------------------------------------------------------
