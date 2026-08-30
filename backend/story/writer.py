@@ -109,6 +109,14 @@ class WriterProtocol(Protocol):
 
 
 class AuthorWriter:
+    def __init__(self, style_prompt_prefix: str = "") -> None:
+        """Initialize writer with optional per-style prompt prefix.
+
+        The prefix is prepended to the Novel Writer system prompt only.
+        It does not affect planner, repair, or other LLM roles.
+        """
+        self._style_prompt_prefix = style_prompt_prefix
+
     STRUCTURED_OUTPUT_REPAIR_SYSTEM_PROMPT = """You repair serialization only.
 Return exactly one JSON object that validates against the supplied JSON Schema.
 Preserve every recoverable narrative, title, summary, evidence, state delta,
@@ -322,10 +330,12 @@ numeric content.
             ensure_ascii=False,
             separators=(",", ":"),
         )
+        style_prefix = self._style_prompt_prefix + "\n\n" if self._style_prompt_prefix else ""
         try:
             response = await llm_client.chat(
                 system_prompt=(
-                    self.SYSTEM_PROMPT
+                    style_prefix
+                    + self.SYSTEM_PROMPT
                     + self.LENGTH_SYSTEM_PROMPT
                     + self.PLANNING_WRITER_PROMPT
                     + self._writer_shape_prompt(context)

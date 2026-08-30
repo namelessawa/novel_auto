@@ -488,7 +488,11 @@ async def generate_chapter(
     chapter: int,
     user: User = Depends(get_current_user),
 ):
-    """Start chapter generation (requires prior confirmation)."""
+    """Start chapter generation (requires prior confirmation).
+
+    Submits a pipeline_chapter_generation task to the TaskManager.
+    Progress is streamed via SSE at /api/tasks/{task_id}/stream.
+    """
     service = _get_pipeline_service(novel_id)
 
     # Check if already confirmed
@@ -499,14 +503,71 @@ async def generate_chapter(
             detail="Chapter requires user confirmation before generation. Call /confirm first.",
         )
 
-    # TODO: Integrate with TaskManager for async execution
-    # For now, return status indicating generation would start
-    return {
-        "status": "queued",
-        "chapter": chapter,
-        "phase": state.phase.value,
-        "message": "Generation task created. Use SSE /api/tasks/{task_id}/stream for progress.",
-    }
+    from tasks.task_manager import TaskConflict, get_task_manager
+
+    task_manager = get_task_manager()
+
+    async def pipeline_executor(updater, user_id: str, task_novel_id: str):
+        """Execute the chapter generation pipeline."""
+        import novel_manager
+        from story.persistence import CanonicalStateStore, StoryBibleStore
+        from story.stateful_pipeline.service import ConfirmationRequiredError
+
+        data_dir = novel_manager.get_novel_dir(task_novel_id)
+        bible_store = StoryBibleStore(data_dir)
+        bible = bible_store.load()
+        canon_store = CanonicalStateStore(data_dir)
+        canon = canon_store.load()
+
+        updater.set(current_words=0, last_message="准备上下文...")
+
+        try:
+            # Get confirmation from pipeline state
+            confirmation = state.generation_preference
+            if confirmation is None:
+                raise ConfirmationRequiredError("No confirmation found")
+
+            result_state = await service.run_chapter_pipeline(
+                novel_id=task_novel_id,
+                chapter=chapter,
+                confirmation=confirmation,
+                bible=bible,
+                canon=canon,
+                style_prefix="",  # TODO: get from active style
+                chapter_goal=state.generation_preference.foreshadow_mode.value if state.generation_preference else "",
+            )
+
+            updater.set(last_message=f"第 {chapter} 章生成完成")
+            return {
+                "chapter": chapter,
+                "phase": result_state.phase.value,
+                "committed": result_state.phase == ChapterPipelinePhase.COMPLETED,
+            }
+        except ConfirmationRequiredError as exc:
+            raise RuntimeError(f"Confirmation required: {exc}") from exc
+        except PipelineError as exc:
+            raise RuntimeError(f"Pipeline failed: {exc}") from exc
+
+    try:
+        task = task_manager.submit(
+            user_id=user.id,
+            novel_id=novel_id,
+            kind="pipeline_chapter_generation",
+            executor=pipeline_executor,
+            chapter=chapter,
+        )
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "chapter": chapter,
+            "phase": state.phase.value,
+            "stream_url": f"/api/tasks/{task.id}/stream",
+        }
+    except TaskConflict:
+        raise HTTPException(
+            status_code=409,
+            detail="A generation task is already running for this novel.",
+        )
 
 
 # ---------------------------------------------------------------------------

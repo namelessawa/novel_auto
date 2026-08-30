@@ -381,6 +381,7 @@ class StyleProfile(ProductionModel):
     optional_user_sample: str = ""
     derived_style_anchors: list[str] = Field(default_factory=list)
     deterministic_rules: list[str] = Field(default_factory=list)
+    writer_prompt_prefix: str = ""
     prompt_hash: str = ""
     read_only: bool = False
     source: Literal["preset", "user", "legacy"] = "user"
@@ -429,6 +430,7 @@ class StyleProfile(ProductionModel):
             "avoided_phrases": self.avoided_phrases,
             "derived_style_anchors": self.derived_style_anchors,
             "deterministic_rules": self.deterministic_rules,
+            "writer_prompt_prefix": self.writer_prompt_prefix,
         }
 
     def prompt_text(self) -> str:
@@ -476,6 +478,7 @@ class StyleProfileCreate(ProductionModel):
     optional_user_sample: str = ""
     derived_style_anchors: list[str] = Field(default_factory=list)
     deterministic_rules: list[str] = Field(default_factory=list)
+    writer_prompt_prefix: str = ""
 
 
 class StyleProfileUpdate(ProductionModel):
@@ -504,6 +507,7 @@ class StyleProfileUpdate(ProductionModel):
     optional_user_sample: str | None = None
     derived_style_anchors: list[str] | None = None
     deterministic_rules: list[str] | None = None
+    writer_prompt_prefix: str | None = None
 
 
 class ProductionContextSnapshot(ProductionModel):

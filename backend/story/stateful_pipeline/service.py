@@ -423,26 +423,66 @@ class StatefulPipelineService:
         synopsis: ChapterSynopsis | None,
         transfer_context: TransferContext | None,
     ) -> str:
-        """Write chapter prose using the Novel LLM.
+        """Write chapter prose using the Novel LLM via AuthorGenerationService.
 
-        This integrates with the existing AuthorWriter mechanism.
-        For now, returns a placeholder that shows where the
-        existing Writer integration would go.
+        The Novel LLM uses:
+          - StyleProfile.writer_prompt_prefix (style_prefix) via AuthorWriter
+          - NarrativeContract (derived from chapter goal/synopsis)
+          - TransferContext (from chapter >= 3)
+          - CanonicalState (necessary facts)
+
+        Delegates to the existing generation service which handles
+        validation, repair, and transaction commit.
         """
-        # TODO: Integrate with existing AuthorWriter / AuthorGenerationService
-        # The Novel LLM uses:
-        #   - StyleProfile.writer_prompt_prefix (style_prefix)
-        #   - NarrativeContract (from chapter goal)
-        #   - TransferContext (from chapter >= 3)
-        #   - CanonicalState (necessary facts)
-        #
-        # This should call the existing generation service's run() method
-        # which already handles validation, repair, and transaction commit.
+        from story.models import SectionGoal
+        from story.service import AuthorGenerationService
+        from story.writer import AuthorWriter
 
-        raise NotImplementedError(
-            "Chapter writing requires integration with existing "
-            "AuthorGenerationService. Use the production job system."
+        # Build the objective from synopsis + transfer context
+        objective_parts = []
+        if synopsis and synopsis.synopsis:
+            objective_parts.append(f"章节梗概：{synopsis.synopsis}")
+        if chapter_goal:
+            objective_parts.append(f"章节目标：{chapter_goal}")
+        if transfer_context:
+            if transfer_context.recent_context:
+                objective_parts.append(f"近期上下文：{transfer_context.recent_context}")
+            if transfer_context.foreshadow_to_consider:
+                objective_parts.append(f"需融入的伏笔：{transfer_context.foreshadow_to_consider}")
+            if transfer_context.continuity_constraints:
+                objective_parts.append(
+                    "连续性约束：" + "；".join(transfer_context.continuity_constraints)
+                )
+
+        objective = "\n".join(objective_parts) if objective_parts else chapter_goal or "推进故事发展"
+
+        # Build SectionGoal for the author generation service
+        goal = SectionGoal(
+            objective=objective,
+            desired_length=2000,
         )
+
+        # Create writer with style prefix (only affects Novel LLM)
+        writer = AuthorWriter(style_prompt_prefix=style_prefix)
+
+        # Create generation service and run
+        service = AuthorGenerationService(
+            user_id="pipeline",
+            novel_id=novel_id,
+            data_dir=self._data_dir,
+            writer=writer,
+        )
+
+        try:
+            transaction = await service.run(goal)
+            if transaction.committed and transaction.candidate:
+                return transaction.candidate.narrative_text
+            raise PipelineError(
+                f"Chapter {chapter} generation did not commit: "
+                f"phase={transaction.phase}"
+            )
+        except Exception as exc:
+            raise PipelineError(f"Chapter writing failed: {exc}") from exc
 
     async def _extract_foreshadows(
         self,

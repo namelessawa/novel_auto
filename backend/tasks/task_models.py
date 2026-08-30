@@ -16,6 +16,7 @@ TaskKind = Literal[
     "bootstrap_section",
     "bootstrap_world",
     "multimodal_generation",  # v2.33 — 分段 + 图 + TTS + 视频
+    "pipeline_chapter_generation",  # v2.50 — stateful pipeline
 ]
 TaskStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
