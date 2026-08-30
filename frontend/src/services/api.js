@@ -1644,3 +1644,103 @@ export function watchTaskStream(taskId, { onSnapshot, onDone, onError }) {
 
   return controller
 }
+
+// ---------------------------------------------------------------------------
+// Stateful Pipeline API (v2.50+)
+// ---------------------------------------------------------------------------
+
+export async function fetchPipelineSynopses(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/synopsis`)
+  return assertOk(res)
+}
+
+export async function fetchPipelineSynopsis(novelId, chapter) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/synopsis/${chapter}`)
+  return assertOk(res)
+}
+
+export async function updatePipelineSynopsis(novelId, chapter, payload) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/synopsis/${chapter}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  return assertOk(res)
+}
+
+export async function generatePipelineSynopses(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/synopsis/generate`, {
+    method: 'POST',
+  })
+  return assertOk(res)
+}
+
+export async function fetchPipelineSchema(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/schema`)
+  return assertOk(res)
+}
+
+export async function updatePipelineSchema(novelId, fields) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/schema`, {
+    method: 'PUT',
+    body: JSON.stringify({ fields }),
+  })
+  return assertOk(res)
+}
+
+export async function generatePipelineSchema(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/schema/generate`, {
+    method: 'POST',
+  })
+  return assertOk(res)
+}
+
+export async function fetchPipelineForeshadows(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/foreshadows`)
+  return assertOk(res)
+}
+
+export async function fetchPipelineForeshadowState(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/foreshadows/state`)
+  return assertOk(res)
+}
+
+export async function fetchPipelineStatus(novelId, chapter) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/status/${chapter}`)
+  return assertOk(res)
+}
+
+export async function fetchPipelineCurrentStatus(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/status`)
+  return assertOk(res)
+}
+
+export async function confirmPipelineChapter(novelId, chapter, options = {}) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({
+      chapter,
+      foreshadow_mode: options.foreshadowMode || 'random',
+      foreshadow_count: options.foreshadowCount || 0,
+    }),
+  })
+  return assertOk(res)
+}
+
+export async function generatePipelineChapter(novelId, chapter) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/generate/${chapter}`, {
+    method: 'POST',
+  })
+  return assertOk(res)
+}
+
+export async function fetchPipelineChromaStatus(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/chroma/status`)
+  return assertOk(res)
+}
+
+export async function rebuildPipelineChroma(novelId) {
+  const res = await authedFetch(`/api/novels/${encodeURIComponent(novelId)}/pipeline/chroma/rebuild`, {
+    method: 'POST',
+  })
+  return assertOk(res)
+}

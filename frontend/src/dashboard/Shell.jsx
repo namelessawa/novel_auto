@@ -28,6 +28,7 @@ import TickView from './views/TickView'
 import AgentView from './views/AgentView'
 import KGView from './views/KGView'
 import MultimodalView from '../views/MultimodalView'
+import PipelineView from './views/PipelineView'
 
 import ReaderOverlay from './ReaderOverlay'
 import InjectEventModal from './modals/InjectEventModal'
@@ -306,6 +307,8 @@ function DashboardShellInner() {
         return <CanonicalStateView novel={activeNovel} />
       case 'memory':
         return <ThreadsMemoryView novel={activeNovel} />
+      case 'pipeline':
+        return <PipelineView novelId={activeNovelId} />
       case 'provider':
         return <ProviderConfigView />
       case 'export':

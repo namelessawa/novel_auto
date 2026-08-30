@@ -8,9 +8,10 @@ export const NAV_ITEMS = [
   { key: 'bible', label: '创作圣经', index: '05' },
   { key: 'state', label: '当前事实', index: '06' },
   { key: 'memory', label: '故事线与记忆', index: '07' },
-  { key: 'provider', label: 'Provider 配置', index: '08' },
-  { key: 'export', label: '导出', index: '09' },
-  { key: 'lab', label: '实验室', index: '10', experimental: true },
+  { key: 'pipeline', label: '生成管线', index: '08' },
+  { key: 'provider', label: 'Provider 配置', index: '09' },
+  { key: 'export', label: '导出', index: '10' },
+  { key: 'lab', label: '实验室', index: '11', experimental: true },
 ]
 
 export default function Sidebar({
