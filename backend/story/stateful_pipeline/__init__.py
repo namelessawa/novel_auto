@@ -22,6 +22,14 @@ from story.stateful_pipeline.models import (
     SelectionRollResult,
     TransferContext,
 )
+from story.stateful_pipeline.foreshadow_selection import (
+    ForeshadowSelectionService,
+)
+from story.stateful_pipeline.service import (
+    ConfirmationRequiredError,
+    PipelineError,
+    StatefulPipelineService,
+)
 
 __all__ = [
     "ChapterConfirmation",
@@ -30,14 +38,18 @@ __all__ = [
     "ChapterPipelinePhase",
     "ChapterPipelineState",
     "ChapterSynopsis",
+    "ConfirmationRequiredError",
     "ForeshadowMode",
     "ForeshadowRecord",
     "ForeshadowSelectionReceipt",
+    "ForeshadowSelectionService",
     "ForeshadowSelectionState",
     "ForeshadowStatus",
     "InformationField",
     "InformationSchema",
     "MemoryIntegrationRecord",
+    "PipelineError",
     "SelectionRollResult",
+    "StatefulPipelineService",
     "TransferContext",
 ]
