@@ -146,6 +146,27 @@ Novels created before v2.50 will:
 - Have no ChromaDB collection (created on first integration)
 
 The system provides safe defaults and does not require data migration.
+All persistence stores return `None` or empty defaults when data is missing.
+
+## Integration with Existing System
+
+### Novel Writer Integration
+- `_write_chapter()` delegates to `AuthorGenerationService.run()` with a `SectionGoal`
+- Style prefix applied via `AuthorWriter(style_prompt_prefix=...)` constructor
+- Existing validation, repair, and transaction machinery fully reused
+- Only the Novel LLM receives the style prefix; foreshadow/info/integration LLMs do not
+
+### StyleProfile Extension
+- Added `writer_prompt_prefix: str` field to `StyleProfile`
+- Included in `prompt_contract()` and thus participates in `prompt_hash`
+- Style changes create new revision; only affect next unstarted chapter
+- Frozen at confirmation via `ActiveStyleBinding.profile_revision`
+
+### TaskManager Integration
+- New task kind: `pipeline_chapter_generation`
+- `POST /pipeline/generate/{chapter}` submits async task
+- Progress streamed via SSE at `/api/tasks/{task_id}/stream`
+- One active task per novel enforced by TaskManager
 
 ## Frontend
 
@@ -155,6 +176,7 @@ The PipelineView (`frontend/src/dashboard/views/PipelineView.jsx`) provides:
 - Foreshadow status table with probability display
 - Chapter confirmation UI with foreshadow mode selection
 - Pipeline phase progress display
+- SSE progress subscription via existing task stream
 
 ## Testing
 
@@ -167,3 +189,8 @@ Run tests:
 python -m pytest backend/tests/test_foreshadow_selection.py -v
 python -m pytest backend/tests/test_pipeline_persistence.py -v
 ```
+
+All existing tests continue to pass:
+- `backend/tests/test_author_generation_service.py` - 20 passed
+- `backend/tests/test_production_models.py` - 5 passed
+- `frontend` - 28 passed, build successful
