@@ -450,7 +450,7 @@ async def confirm_chapter(
 
     import novel_manager
     from story.persistence import CanonicalStateStore, StoryBibleStore
-    from story.production_persistence import ActiveStyleStore, StyleProfileStore
+    from story.production_persistence import ActiveStyleStore
     from story.production_models import ActiveStyleBinding
 
     data_dir = novel_manager.get_novel_dir(novel_id)
@@ -459,9 +459,8 @@ async def confirm_chapter(
     canon_store = CanonicalStateStore(data_dir)
     canon = canon_store.load()
 
-    # Get active style revision and prompt prefix
+    # Get active style revision
     style_revision = 0
-    style_prompt_prefix = ""
     try:
         active_store = ActiveStyleStore(
             data_dir,
@@ -474,11 +473,6 @@ async def confirm_chapter(
         active_binding = active_store.load()
         if active_binding and active_binding.style_profile_id:
             style_revision = active_binding.profile_revision
-            # Load the style profile to get writer_prompt_prefix
-            style_store = StyleProfileStore(data_dir)
-            profile = style_store.load(active_binding.style_profile_id)
-            if profile:
-                style_prompt_prefix = profile.writer_prompt_prefix
     except Exception:
         pass  # Use defaults if style not available
 
@@ -537,6 +531,8 @@ async def generate_chapter(
         """Execute the chapter generation pipeline."""
         import novel_manager
         from story.persistence import CanonicalStateStore, StoryBibleStore
+        from story.production_persistence import ActiveStyleStore, StyleProfileStore
+        from story.production_models import ActiveStyleBinding
         from story.stateful_pipeline.service import ConfirmationRequiredError
 
         data_dir = novel_manager.get_novel_dir(task_novel_id)
@@ -544,6 +540,26 @@ async def generate_chapter(
         bible = bible_store.load()
         canon_store = CanonicalStateStore(data_dir)
         canon = canon_store.load()
+
+        # Load style prompt prefix from active style
+        style_prefix = ""
+        try:
+            active_store = ActiveStyleStore(
+                data_dir,
+                default_factory=lambda: ActiveStyleBinding(
+                    style_profile_id="default",
+                    profile_revision=1,
+                    prompt_hash="0" * 64,
+                ),
+            )
+            active_binding = active_store.load()
+            if active_binding and active_binding.style_profile_id:
+                style_store = StyleProfileStore(data_dir)
+                profile = style_store.load(active_binding.style_profile_id)
+                if profile:
+                    style_prefix = profile.writer_prompt_prefix
+        except Exception:
+            pass
 
         updater.set(current_words=0, last_message="准备上下文...")
 
@@ -559,7 +575,7 @@ async def generate_chapter(
                 confirmation=confirmation,
                 bible=bible,
                 canon=canon,
-                style_prefix="",  # TODO: get from active style
+                style_prefix=style_prefix,
                 chapter_goal=state.generation_preference.foreshadow_mode.value if state.generation_preference else "",
             )
 
