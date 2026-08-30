@@ -34,6 +34,7 @@ from api.image_routes import router as image_router
 from api.multimodal_routes import router as multimodal_router
 from api.production_control_routes import router as production_control_router
 from api.production_routes import router as production_router
+from api.pipeline_routes import router as pipeline_router
 from auth import router as auth_router
 from cleanup_task import cleanup_loop
 from config.settings import settings
@@ -240,6 +241,7 @@ app.include_router(section_router)
 app.include_router(story_router)
 app.include_router(production_router)
 app.include_router(production_control_router)
+app.include_router(pipeline_router)
 app.include_router(bootstrap_router)
 app.include_router(tasks_router)
 
