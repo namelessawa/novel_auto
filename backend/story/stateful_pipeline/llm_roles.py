@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from nf_core.json_utils import parse_llm_json
+from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
 from story.stateful_pipeline.models import (
     ChapterInformation,
@@ -30,6 +30,54 @@ from story.stateful_pipeline.models import (
 
 class PipelineLLMError(RuntimeError):
     """Raised when a pipeline LLM role fails."""
+
+
+def _parse_llm_output(raw: str) -> Any:
+    """Parse LLM output that can be either a JSON object or array.
+
+    Unlike parse_llm_json which only handles objects, this handles arrays too.
+    """
+    text = strip_code_fence(raw)
+    # Try to parse as JSON directly (handles both objects and arrays)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    # Try parse_llm_json for objects
+    try:
+        return parse_llm_json(raw)
+    except json.JSONDecodeError:
+        pass
+    # Try to extract array if present
+    start = text.find("[")
+    if start >= 0:
+        # Find matching closing bracket
+        depth = 0
+        in_string = False
+        escape = False
+        for i in range(start, len(text)):
+            ch = text[i]
+            if escape:
+                escape = False
+                continue
+            if ch == "\\":
+                escape = True
+                continue
+            if ch == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start:i + 1])
+                    except json.JSONDecodeError:
+                        break
+    raise PipelineLLMError(f"Failed to parse LLM output: {raw[:200]}")
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +131,7 @@ async def generate_synopsis(
     )
 
     try:
-        data = parse_llm_json(response.content)
+        data = _parse_llm_output(response.content)
         if isinstance(data, dict):
             items = data.get("chapters", data.get("results", []))
         elif isinstance(data, list):
@@ -91,7 +139,7 @@ async def generate_synopsis(
         else:
             raise ValueError(f"Unexpected synopsis output type: {type(data)}")
         return items
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
         raise PipelineLLMError(f"Failed to parse synopsis output: {exc}") from exc
 
 
@@ -151,7 +199,7 @@ async def extract_foreshadows(
     )
 
     try:
-        data = parse_llm_json(response.content)
+        data = _parse_llm_output(response.content)
         if isinstance(data, dict):
             items = data.get("foreshadows", data.get("results", []))
         elif isinstance(data, list):
@@ -159,7 +207,7 @@ async def extract_foreshadows(
         else:
             raise ValueError(f"Unexpected foreshadow output type: {type(data)}")
         return items[:count]  # Ensure we don't return more than requested
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
         raise PipelineLLMError(f"Failed to parse foreshadow output: {exc}") from exc
 
 
@@ -219,7 +267,7 @@ async def extract_information(
     )
 
     try:
-        data = parse_llm_json(response.content)
+        data = _parse_llm_output(response.content)
         if isinstance(data, dict):
             # Validate keys match schema
             allowed_keys = set(schema.field_keys)
@@ -235,7 +283,7 @@ async def extract_information(
                     result[key] = []
             return result
         raise ValueError(f"Unexpected information output type: {type(data)}")
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
         raise PipelineLLMError(f"Failed to parse information output: {exc}") from exc
 
 
@@ -296,7 +344,7 @@ async def integrate_memory(
     )
 
     try:
-        data = parse_llm_json(response.content)
+        data = _parse_llm_output(response.content)
         if isinstance(data, dict):
             docs = data.get("documents", data.get("memories", []))
         elif isinstance(data, list):
@@ -304,7 +352,7 @@ async def integrate_memory(
         else:
             raise ValueError(f"Unexpected integration output type: {type(data)}")
         return docs
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
         raise PipelineLLMError(f"Failed to parse integration output: {exc}") from exc
 
 
@@ -380,7 +428,7 @@ async def build_transfer_context(
     )
 
     try:
-        data = parse_llm_json(response.content)
+        data = _parse_llm_output(response.content)
         return TransferContext(
             novel_id=novel_id,
             target_chapter=target_chapter,
@@ -390,7 +438,7 @@ async def build_transfer_context(
             important_entities=data.get("important_entities", []),
             source_chapters=source_chapters,
         )
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
         raise PipelineLLMError(f"Failed to parse transfer output: {exc}") from exc
 
 
@@ -445,7 +493,7 @@ async def generate_information_schema(
     )
 
     try:
-        data = parse_llm_json(response.content)
+        data = _parse_llm_output(response.content)
         if isinstance(data, dict):
             fields_data = data.get("fields", data.get("schema", []))
         elif isinstance(data, list):
@@ -464,5 +512,5 @@ async def generate_information_schema(
                 )
             )
         return fields
-    except (json.JSONDecodeError, ValueError, KeyError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, PipelineLLMError) as exc:
         raise PipelineLLMError(f"Failed to parse schema output: {exc}") from exc
