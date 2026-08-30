@@ -9,12 +9,7 @@ from __future__ import annotations
 import pytest
 
 from story.stateful_pipeline.foreshadow_selection import (
-    COOLDOWN_CHAPTERS,
-    DISCARD_PROBABILITY,
-    DISCARD_UNLOCK_THRESHOLD,
     MAX_PROBABILITY,
-    MINIMUM_AGE,
-    PROBABILITY_INCREMENT,
     ForeshadowSelectionService,
 )
 from story.stateful_pipeline.models import (
@@ -76,14 +71,14 @@ def make_state(
 
 class TestEligibility:
     def test_too_young(self):
-        """Foreshadow at chapter 5, current chapter 14: age=9, not eligible."""
+        """Foreshadow at chapter 5, current chapter 12: age=7, not eligible."""
         f = make_foreshadow(source_chapter=5)
-        assert not f.is_eligible(14)  # 14-5=9 < 10
+        assert not f.is_eligible(12)  # 12-5=7 < 8
 
     def test_minimum_age_met(self):
-        """Foreshadow at chapter 5, current chapter 15: age=10, eligible at 2%."""
+        """Foreshadow at chapter 5, current chapter 13: age=8, eligible at 2%."""
         f = make_foreshadow(source_chapter=5)
-        assert f.is_eligible(15)  # 15-5=10 >= 10
+        assert f.is_eligible(13)  # 13-5=8 >= 8
 
     def test_selected_once_never_eligible(self):
         """Once selected, never eligible again."""
@@ -94,7 +89,7 @@ class TestEligibility:
         """Foreshadow in cooldown period not eligible."""
         f = make_foreshadow(source_chapter=1, next_eligible=25)
         assert not f.is_eligible(20)  # 20 < 25
-        assert f.is_eligible(25)  # 25 >= 25 and age >= 10
+        assert f.is_eligible(25)  # 25 >= 25 and age >= 8
 
     def test_non_active_status(self):
         """Non-active foreshadows not eligible."""
@@ -230,7 +225,7 @@ class TestProbabilityGrowth:
         f2 = make_foreshadow("f2", source_chapter=1, probability=0.18)
         state = make_state()
 
-        receipt = service.select_foreshadow("test-novel", 30, [f1, f2], state)
+        _receipt = service.select_foreshadow("test-novel", 30, [f1, f2], state)
 
         # f2 enters cooldown with original probability
         assert f2.current_probability == pytest.approx(0.18)

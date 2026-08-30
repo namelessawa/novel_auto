@@ -26,7 +26,7 @@ from story.stateful_pipeline.models import (
     SelectionRollResult,
 )
 
-MINIMUM_AGE = 10
+MINIMUM_AGE = 8
 BASE_PROBABILITY = 0.02
 PROBABILITY_INCREMENT = 0.02
 MAX_PROBABILITY = 1.0

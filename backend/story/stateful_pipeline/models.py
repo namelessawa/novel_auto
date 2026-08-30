@@ -151,7 +151,7 @@ class ForeshadowRecord(PipelineModel):
             return False
         if chapter < self.next_eligible_chapter:
             return False
-        if self.age_at(chapter) < 10:
+        if self.age_at(chapter) < 8:
             return False
         return True
 

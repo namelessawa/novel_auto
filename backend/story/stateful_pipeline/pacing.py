@@ -44,6 +44,11 @@ CLIMAX_WINDOW = 15
 CONFLICT_RESOLUTION_CHANCE = 0.5
 CONFLICT_MAX_AGE = 3
 
+# Earliest chapter a mode may first appear. Climax needs 20 chapters written
+# before it (earliest = chapter 21); conflict needs 15 (earliest = chapter 16).
+CLIMAX_EARLIEST_CHAPTER = 21
+CONFLICT_EARLIEST_CHAPTER = 16
+
 
 class PipelineModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -161,14 +166,24 @@ class PacingModeSelector:
         forced_reason = ""
 
         # Apply hard constraints: fall back to flat if blocked.
-        if selected == PacingMode.CONFLICT and not state.can_use_conflict(chapter):
-            selected = PacingMode.FLAT
-            forced = True
-            forced_reason = "conflict_window_full"
-        elif selected == PacingMode.CLIMAX and not state.can_use_climax(chapter):
-            selected = PacingMode.FLAT
-            forced = True
-            forced_reason = "climax_window_full"
+        if selected == PacingMode.CONFLICT:
+            if chapter < CONFLICT_EARLIEST_CHAPTER:
+                selected = PacingMode.FLAT
+                forced = True
+                forced_reason = "conflict_too_early"
+            elif not state.can_use_conflict(chapter):
+                selected = PacingMode.FLAT
+                forced = True
+                forced_reason = "conflict_window_full"
+        elif selected == PacingMode.CLIMAX:
+            if chapter < CLIMAX_EARLIEST_CHAPTER:
+                selected = PacingMode.FLAT
+                forced = True
+                forced_reason = "climax_too_early"
+            elif not state.can_use_climax(chapter):
+                selected = PacingMode.FLAT
+                forced = True
+                forced_reason = "climax_window_full"
 
         # If conflict is selected, roll for same-chapter resolution.
         if selected == PacingMode.CONFLICT:
@@ -204,11 +219,15 @@ class PacingModeSelector:
 
         if mode == PacingMode.CONFLICT:
             if receipt.resolve_in_chapter:
-                # Resolved in the same chapter: record conflict, no open conflict.
-                state.conflict_history.append(chapter)
                 if state.open_conflict and not state.open_conflict.resolved:
+                    # Resolving an existing open conflict (forced deadline or
+                    # same-chapter): it was already counted at introduction,
+                    # so do not add to conflict_history again.
                     state.open_conflict.resolved = True
                     state.open_conflict.resolved_chapter = chapter
+                else:
+                    # A brand-new conflict introduced and resolved in this chapter.
+                    state.conflict_history.append(chapter)
                 state.open_conflict = None
             else:
                 # Opens a conflict that must resolve within 3 chapters.
