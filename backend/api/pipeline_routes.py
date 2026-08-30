@@ -450,12 +450,37 @@ async def confirm_chapter(
 
     import novel_manager
     from story.persistence import CanonicalStateStore, StoryBibleStore
+    from story.production_persistence import ActiveStyleStore, StyleProfileStore
+    from story.production_models import ActiveStyleBinding
 
     data_dir = novel_manager.get_novel_dir(novel_id)
     bible_store = StoryBibleStore(data_dir)
     bible = bible_store.load()
     canon_store = CanonicalStateStore(data_dir)
     canon = canon_store.load()
+
+    # Get active style revision and prompt prefix
+    style_revision = 0
+    style_prompt_prefix = ""
+    try:
+        active_store = ActiveStyleStore(
+            data_dir,
+            default_factory=lambda: ActiveStyleBinding(
+                style_profile_id="default",
+                profile_revision=1,
+                prompt_hash="0" * 64,
+            ),
+        )
+        active_binding = active_store.load()
+        if active_binding and active_binding.style_profile_id:
+            style_revision = active_binding.profile_revision
+            # Load the style profile to get writer_prompt_prefix
+            style_store = StyleProfileStore(data_dir)
+            profile = style_store.load(active_binding.style_profile_id)
+            if profile:
+                style_prompt_prefix = profile.writer_prompt_prefix
+    except Exception:
+        pass  # Use defaults if style not available
 
     preference = ChapterGenerationPreference(
         novel_id=novel_id,
@@ -471,11 +496,12 @@ async def confirm_chapter(
             preference=preference,
             bible=bible,
             canon=canon,
-            style_revision=0,  # TODO: get from active style
+            style_revision=style_revision,
         )
         return {
             "confirmed": True,
             "chapter": request.chapter,
+            "style_revision": style_revision,
             "binding": confirmation.model_dump(mode="json"),
         }
     except PipelineError as exc:
