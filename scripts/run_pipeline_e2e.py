@@ -178,22 +178,35 @@ async def run_pipeline_e2e(
     }
 
     try:
-        # Create StoryBible
+        # Create StoryBible with complete data for NarrativeContractBuilder
         print("[E2E] Creating StoryBible...")
         bible = StoryBible(
             title="测试小说",
-            genre="玄幻",
-            premise="一个少年获得神秘力量，踏上修仙之路",
-            main_conflicts=["正邪两道的对抗"],
+            genre="都市生活",
+            premise="一个普通上班族在大都市中追求梦想，经历职场起伏与情感波折",
+            main_conflicts=["职场竞争与个人理想的冲突"],
             theme="成长与选择",
+            setting_summary="繁华都市，现代写字楼与老街巷弄交织",
+            protagonist_contracts=["李明是主角，30岁，互联网公司项目经理"],
+            immutable_world_rules=["现实都市背景，无超自然元素", "职场规则真实可信"],
             style_contract={"narrative_voice": "第三人称", "pacing": "medium"},
         )
         bible_store = StoryBibleStore(str(data_dir))
         bible_store.save(bible)
 
-        # Load existing CanonicalState (store creates default with revision 1)
+        # Load existing CanonicalState and add characters
         canon_store = CanonicalStateStore(str(data_dir))
         canon = canon_store.load()
+        # Add protagonist character for NarrativeContractBuilder validation
+        canon.characters["li_ming"] = {
+            "name": "李明",
+            "role": "protagonist",
+            "status": "active",
+        }
+        # Increment revision before saving
+        updated_canon = canon.model_copy(update={"revision": canon.revision + 1})
+        canon_store.save_next(updated_canon, expected_revision=canon.revision)
+        canon = updated_canon
         print(f"[E2E] CanonicalState revision: {canon.revision}")
 
         # Create pipeline service
@@ -211,7 +224,7 @@ async def run_pipeline_e2e(
         synopses = await service.generate_initial_synopses(
             novel_id=novel_id,
             story_bible=bible,
-            genre="玄幻",
+            genre="都市生活",
         )
         print(f"[E2E] Generated {len(synopses)} synopses")
 
@@ -220,7 +233,7 @@ async def run_pipeline_e2e(
         schema = await service.ensure_schema(
             novel_id=novel_id,
             story_bible=bible,
-            genre="玄幻",
+            genre="都市生活",
             synopses=synopses,
         )
         print(f"[E2E] Schema has {len(schema.fields)} fields: {schema.field_keys}")
