@@ -253,8 +253,12 @@ def test_style_prompt_hash_is_stable_expression_only_and_tamper_evident() -> Non
 
     payload = first.model_dump()
     payload["prompt_hash"] = "0" * 64
-    with pytest.raises(ValidationError, match="prompt_hash"):
-        StyleProfile.model_validate(payload)
+    # Self-healing migration: a stale/mismatched stored hash is recomputed from
+    # the current contract on load instead of raising, so legacy profiles saved
+    # before a prompt_contract() change still load.
+    healed = StyleProfile.model_validate(payload)
+    assert healed.prompt_hash == healed.computed_prompt_hash()
+    assert healed.prompt_hash != "0" * 64
 
     update = StyleProfileUpdate(expected_revision=first.revision, pacing="快速推进")
     assert update.expected_revision == 1

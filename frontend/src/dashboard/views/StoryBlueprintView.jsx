@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { fetchBookOutline, fetchStoryBible, generateBookOutline } from '../../services/api'
+import {
+  fetchBookOutline,
+  fetchProductionSpec,
+  fetchStoryBible,
+  generateBookOutline,
+} from '../../services/api'
 import BookOutlineView from './BookOutlineView'
 import StoryBibleView from './StoryBibleView'
 import { showToast } from '../../utils/toast'
@@ -16,6 +21,8 @@ export default function StoryBlueprintView({ novel, notify = showToast }) {
   const [title, setTitle] = useState('')
   const [hasOutline, setHasOutline] = useState(null)
   const [hasBible, setHasBible] = useState(null)
+  const [specRevision, setSpecRevision] = useState(null)
+  const [outlineRevision, setOutlineRevision] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState('')
@@ -26,9 +33,10 @@ export default function StoryBlueprintView({ novel, notify = showToast }) {
   const probe = useCallback(async () => {
     if (!novelId) return
     setChecking(true)
-    const [bibleRes, outlineRes] = await Promise.allSettled([
+    const [bibleRes, outlineRes, specRes] = await Promise.allSettled([
       fetchStoryBible(novelId),
       fetchBookOutline(novelId),
+      fetchProductionSpec(novelId),
     ])
     if (bibleRes.status === 'fulfilled') {
       const bible = bibleRes.value?.story_bible
@@ -43,8 +51,16 @@ export default function StoryBlueprintView({ novel, notify = showToast }) {
         outlineRes.value?.outline ||
         outlineRes.value
       setHasOutline(Boolean(outline && (outline.chapters?.length || outline.volumes?.length)))
+      setOutlineRevision(outline?.revision ?? null)
     } else {
       setHasOutline(false)
+    }
+    if (specRes.status === 'fulfilled') {
+      const spec =
+        specRes.value?.production_spec ||
+        specRes.value?.spec ||
+        specRes.value
+      setSpecRevision(spec?.revision ?? null)
     }
     setChecking(false)
   }, [novelId])
@@ -62,12 +78,20 @@ export default function StoryBlueprintView({ novel, notify = showToast }) {
       setError('请先输入作品标题')
       return
     }
+    if (!specRevision) {
+      setError('生产规格尚未就绪，无法生成大纲')
+      return
+    }
     setGenerating(true)
     setError('')
     try {
-      await generateBookOutline(novelId, {})
+      await generateBookOutline(novelId, {
+        expected_spec_revision: specRevision,
+        expected_outline_revision: outlineRevision ?? undefined,
+      })
       notify('已根据标题生成整书大纲', 'success')
       setHasOutline(true)
+      probe()
     } catch (err) {
       setError(err.message || '生成失败，请重试')
     } finally {

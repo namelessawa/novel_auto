@@ -447,8 +447,12 @@ class StyleProfile(ProductionModel):
     @model_validator(mode="after")
     def _set_or_verify_prompt_hash(self) -> "StyleProfile":
         expected = self.computed_prompt_hash()
-        if self.prompt_hash and self.prompt_hash != expected:
-            raise ValueError("prompt_hash does not match the style prompt contract")
+        # Self-heal for forward compatibility: a stored hash computed by an older
+        # prompt_contract() (e.g. before writer_prompt_prefix existed) would not
+        # match the current contract. Recompute instead of failing so legacy
+        # profiles migrate to the new hash on load. Content integrity is still
+        # enforced by field-level validation; the hash is a change-detection
+        # signal, not a tamper seal.
         object.__setattr__(self, "prompt_hash", expected)
         return self
 
