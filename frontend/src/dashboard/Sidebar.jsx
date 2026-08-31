@@ -2,16 +2,15 @@ import React, { useEffect, useRef, useState } from 'react'
 
 export const NAV_ITEMS = [
   { key: 'production', label: '生产中心', index: '01' },
-  { key: 'outline', label: '整书大纲', index: '02' },
-  { key: 'chapters', label: '章节', index: '03' },
-  { key: 'styles', label: '风格工作室', index: '04' },
-  { key: 'bible', label: '创作圣经', index: '05' },
-  { key: 'state', label: '当前事实', index: '06' },
-  { key: 'memory', label: '故事线与记忆', index: '07' },
-  { key: 'pipeline', label: '生成管线', index: '08' },
-  { key: 'provider', label: 'Provider 配置', index: '09' },
-  { key: 'export', label: '导出', index: '10' },
-  { key: 'lab', label: '实验室', index: '11', experimental: true },
+  { key: 'blueprint', label: '故事蓝图', index: '02' },
+  { key: 'styles', label: '风格工作室', index: '03' },
+  { key: 'chapters', label: '章节', index: '04' },
+  { key: 'state', label: '当前事实', index: '05' },
+  { key: 'memory', label: '故事线与记忆', index: '06' },
+  { key: 'pipeline', label: '生成管线', index: '07' },
+  { key: 'provider', label: 'Provider 配置', index: '08' },
+  { key: 'export', label: '导出', index: '09' },
+  { key: 'lab', label: '实验室', index: '10', experimental: true },
 ]
 
 export default function Sidebar({

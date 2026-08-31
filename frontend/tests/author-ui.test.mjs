@@ -281,12 +281,12 @@ test('sidebar presents the whole-book workflow in its required order', async () 
   })
   const orderedLabels = [
     '生产中心',
-    '整书大纲',
-    '章节',
+    '故事蓝图',
     '风格工作室',
-    '创作圣经',
+    '章节',
     '当前事实',
     '故事线与记忆',
+    '生成管线',
     'Provider 配置',
     '导出',
     '实验室',
@@ -320,7 +320,9 @@ test('hash routing keeps production as default and legacy diagnostics in lab', a
     viewFromHash,
   } = await load('/src/dashboard/routing.js')
   assert.equal(viewFromHash(''), 'production')
-  assert.equal(viewFromHash('#/outline'), 'outline')
+  assert.equal(viewFromHash('#/outline'), 'blueprint')
+  assert.equal(viewFromHash('#/bible'), 'blueprint')
+  assert.equal(viewFromHash('#/blueprint'), 'blueprint')
   assert.equal(normalizeView('author'), 'production')
   assert.equal(normalizeView('tick'), 'lab-tick')
   assert.equal(mainNavigationView('lab-agent'), 'lab')

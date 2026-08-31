@@ -479,3 +479,35 @@
   .dc-au-receipt-metrics { grid-template-columns: 1fr; }
   .dc-au-paper { padding: 24px 20px; }
 }
+
+/* ---------------------------------------------------------------------------
+   故事蓝图 (StoryBlueprintView) — 合并创作圣经 + 整书大纲
+   ------------------------------------------------------------------------- */
+.dc-blueprint-root { display: flex; flex-direction: column; gap: 24px; }
+.dc-blueprint-section { display: flex; flex-direction: column; gap: 16px; }
+.dc-blueprint-section + .dc-blueprint-section {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.dc-blueprint-titleprompt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.dc-blueprint-titleprompt label { display: flex; flex-direction: column; gap: 6px; }
+.dc-blueprint-titleprompt label span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.dc-blueprint-titleprompt input {
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+}

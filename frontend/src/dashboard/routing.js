@@ -2,12 +2,12 @@ export const DEFAULT_VIEW = 'production'
 
 export const MAIN_VIEWS = new Set([
   'production',
-  'outline',
+  'blueprint',
   'chapters',
   'styles',
-  'bible',
   'state',
   'memory',
+  'pipeline',
   'provider',
   'export',
   'lab',
@@ -25,6 +25,8 @@ export const LAB_VIEWS = new Set([
 const LEGACY_ALIASES = {
   author: 'production',
   chapter: 'chapters',
+  outline: 'blueprint',
+  bible: 'blueprint',
   threads: 'memory',
   config: 'provider',
   overview: 'lab-overview',

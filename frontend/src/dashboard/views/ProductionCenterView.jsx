@@ -447,8 +447,8 @@ export default function ProductionCenterView({
       </section>
 
       <div className="dc-production-secondary">
-        <button type="button" onClick={() => onNavigate?.('outline')}>
-          <span>整书大纲</span>
+        <button type="button" onClick={() => onNavigate?.('blueprint')}>
+          <span>故事蓝图</span>
           <strong>
             {hasOutline
               ? `R${outline.revision || '—'}`

@@ -12,10 +12,9 @@ import {
 } from './routing'
 
 import ProductionCenterView from './views/ProductionCenterView'
-import BookOutlineView from './views/BookOutlineView'
+import StoryBlueprintView from './views/StoryBlueprintView'
 import CommittedChaptersView from './views/CommittedChaptersView'
 import StyleStudioView from './views/StyleStudioView'
-import StoryBibleView from './views/StoryBibleView'
 import CanonicalStateView from './views/CanonicalStateView'
 import ThreadsMemoryView from './views/ThreadsMemoryView'
 import ProviderConfigView from './views/ProviderConfigView'
@@ -295,14 +294,12 @@ function DashboardShellInner() {
     switch (view) {
       case 'production':
         return <ProductionCenterView novel={activeNovel} onNavigate={navigate} />
-      case 'outline':
-        return <BookOutlineView novel={activeNovel} />
+      case 'blueprint':
+        return <StoryBlueprintView novel={activeNovel} />
       case 'chapters':
         return <CommittedChaptersView novel={activeNovel} />
       case 'styles':
         return <StyleStudioView novel={activeNovel} />
-      case 'bible':
-        return <StoryBibleView novel={activeNovel} />
       case 'state':
         return <CanonicalStateView novel={activeNovel} />
       case 'memory':
@@ -447,7 +444,7 @@ function DashboardShellInner() {
             if (id) {
               setActiveNovelId(id)
               setGenerationMode({ mode: 'author', revision: 1 })
-              navigate('outline')
+              navigate('blueprint')
             }
           }}
         />
