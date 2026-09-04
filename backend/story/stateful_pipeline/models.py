@@ -216,6 +216,7 @@ class ForeshadowSelectionReceipt(PipelineModel):
     discarded: bool = False
     cooldown_applied: list[str] = Field(default_factory=list)
     probability_increments: dict[str, float] = Field(default_factory=dict)
+    applied_to_records: bool = False
     created_at: str = Field(default_factory=utc_now)
 
     @property

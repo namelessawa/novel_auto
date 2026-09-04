@@ -44,6 +44,7 @@ from story.stateful_pipeline.models import (
     ChapterPipelineState,
     ChapterSynopsis,
     ForeshadowRecord,
+    ForeshadowSelectionReceipt,
     ForeshadowSelectionState,
     ForeshadowStatus,
     InformationSchema,
@@ -331,10 +332,14 @@ class StatefulPipelineService:
         # Phase 1: Prepare context
         state = self._transition(state, ChapterPipelinePhase.PREPARING_CONTEXT)
 
+        # Roll new-foreshadow count + select eligible foreshadows.
+        # Persisted as a receipt BEFORE writing so retry never re-rolls.
+        receipt = self._prepare_foreshadow_decisions(novel_id, chapter, state)
+
         transfer_context = None
         if chapter >= 3:
             transfer_context = await self._prepare_transfer_context(
-                novel_id, chapter, state
+                novel_id, chapter, state, receipt
             )
 
         # Phase 2: Write (uses existing Writer mechanism)
@@ -378,6 +383,7 @@ class StatefulPipelineService:
         novel_id: str,
         chapter: int,
         state: ChapterPipelineState,
+        receipt: ForeshadowSelectionReceipt | None = None,
     ) -> TransferContext | None:
         """Run Transfer LLM for chapters >= 3."""
         # Check for cached transfer context (idempotent recovery)
@@ -389,7 +395,8 @@ class StatefulPipelineService:
         recent_infos = self._info_store.load_recent(novel_id, chapter, count=3)
 
         # Get selected foreshadow (from receipt)
-        receipt = self._foreshadow_store.load_receipt(novel_id, chapter)
+        if receipt is None:
+            receipt = self._foreshadow_store.load_receipt(novel_id, chapter)
         selected_foreshadow = None
         if receipt and receipt.collision_winner and not receipt.discarded:
             records = self._foreshadow_store.load_records(novel_id)
@@ -411,6 +418,69 @@ class StatefulPipelineService:
 
         self._transfer_store.save(transfer_ctx)
         return transfer_ctx
+
+    def _prepare_foreshadow_decisions(
+        self,
+        novel_id: str,
+        chapter: int,
+        state: ChapterPipelineState,
+    ) -> ForeshadowSelectionReceipt | None:
+        """Roll new-foreshadow count and select eligible foreshadows.
+
+        Runs during preparing_context. All random decisions are persisted
+        in a receipt so retry/restart never re-rolls (spec §17).
+
+        Idempotency: if the receipt already exists it is replayed only when
+        its decisions were not yet applied to records (applied_to_records).
+        """
+        existing = self._foreshadow_store.load_receipt(novel_id, chapter)
+        records = self._foreshadow_store.load_records(novel_id)
+        selection_state = self._foreshadow_store.load_state(novel_id)
+
+        if existing is not None:
+            if not existing.applied_to_records:
+                self._selection_service.apply_receipt_to_records(
+                    existing, records, selection_state
+                )
+                marked = existing.model_copy(update={"applied_to_records": True})
+                self._foreshadow_store.save_records(records)
+                self._foreshadow_store.save_state(selection_state)
+                self._foreshadow_store.save_receipt(marked)
+                return marked
+            return existing
+
+        preference = state.generation_preference
+        if preference is None:
+            preference = ChapterGenerationPreference(
+                novel_id=novel_id,
+                chapter_number=chapter,
+            )
+
+        # Roll the new-foreshadow count once for this chapter (persisted below).
+        count, count_roll = self._selection_service.determine_new_foreshadow_count(
+            preference.foreshadow_mode,
+            preference.foreshadow_fixed_count,
+        )
+
+        # Run selection over existing foreshadows (mutates records/state).
+        receipt = self._selection_service.select_foreshadow(
+            novel_id=novel_id,
+            chapter=chapter,
+            foreshadows=records,
+            state=selection_state,
+        )
+        receipt = receipt.model_copy(
+            update={
+                "new_foreshadow_count": count,
+                "new_foreshadow_roll": count_roll,
+                "applied_to_records": True,
+            }
+        )
+
+        self._foreshadow_store.save_records(records)
+        self._foreshadow_store.save_state(selection_state)
+        self._foreshadow_store.save_receipt(receipt)
+        return receipt
 
     async def _write_chapter(
         self,
@@ -497,62 +567,63 @@ class StatefulPipelineService:
         prose_text: str,
         state: ChapterPipelineState,
     ) -> None:
-        """Determine count and extract foreshadows."""
-        preference = state.generation_preference
-        if preference is None:
-            preference = ChapterGenerationPreference(
-                novel_id=novel_id,
-                chapter_number=chapter,
-            )
+        """Extract new foreshadows from the written prose.
 
-        # Check for existing receipt (idempotent recovery)
+        The count was frozen in the receipt during preparing_context — this
+        method never re-rolls. Record IDs are deterministic, so a retry after
+        a crash between extraction and save does not duplicate records.
+        """
+        from story.stateful_pipeline.foreshadow_selection import MINIMUM_AGE
+
         receipt = self._foreshadow_store.load_receipt(novel_id, chapter)
         if receipt is not None:
-            # Replay: reapply receipt decisions
-            records = self._foreshadow_store.load_records(novel_id)
-            selection_state = self._foreshadow_store.load_state(novel_id)
-            self._selection_service.apply_receipt_to_records(
-                receipt, records, selection_state
+            count = receipt.new_foreshadow_count
+        else:
+            # Defensive fallback: no receipt (direct phase invocation in
+            # tests). Roll is not persisted in this path.
+            preference = state.generation_preference
+            if preference is None:
+                preference = ChapterGenerationPreference(
+                    novel_id=novel_id,
+                    chapter_number=chapter,
+                )
+            count, _ = self._selection_service.determine_new_foreshadow_count(
+                preference.foreshadow_mode,
+                preference.foreshadow_fixed_count,
             )
-            self._foreshadow_store.save_records(records)
-            self._foreshadow_store.save_state(selection_state)
+
+        if count <= 0:
             return
 
-        # Determine new foreshadow count
-        count, roll = self._selection_service.determine_new_foreshadow_count(
-            preference.foreshadow_mode,
-            preference.foreshadow_fixed_count,
+        extracted = await extract_foreshadows(
+            novel_id=novel_id,
+            chapter_number=chapter,
+            prose_text=prose_text,
+            count=count,
         )
 
-        if count > 0:
-            # Extract foreshadows from prose
-            extracted = await extract_foreshadows(
-                novel_id=novel_id,
-                chapter_number=chapter,
-                prose_text=prose_text,
-                count=count,
-            )
-
-            # Create foreshadow records
-            records = self._foreshadow_store.load_records(novel_id)
-            for i, item in enumerate(extracted):
-                record = ForeshadowRecord(
-                    id=f"{novel_id}:ch{chapter}:f{i+1}",
+        records = self._foreshadow_store.load_records(novel_id)
+        existing_ids = {r.id for r in records}
+        changed = False
+        for i, item in enumerate(extracted):
+            record_id = f"{novel_id}:ch{chapter}:f{i + 1}"
+            if record_id in existing_ids:
+                continue  # retry dedup: already persisted
+            records.append(
+                ForeshadowRecord(
+                    id=record_id,
                     novel_id=novel_id,
                     source_chapter=chapter,
                     source_text=item.get("source_text", ""),
                     summary=item.get("summary", ""),
                     status=ForeshadowStatus.ACTIVE,
                     current_probability=0.02,
-                    next_eligible_chapter=chapter + 10,
+                    next_eligible_chapter=chapter + MINIMUM_AGE,
                 )
-                records.append(record)
+            )
+            changed = True
+        if changed:
             self._foreshadow_store.save_records(records)
-
-        # Run foreshadow selection for future chapters
-        # (this determines if any existing foreshadow is selected for THIS chapter's writing)
-        # Actually, selection happens BEFORE writing, not after
-        # The extraction happens after writing
 
     async def _extract_information(
         self,

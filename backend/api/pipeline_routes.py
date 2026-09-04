@@ -564,10 +564,27 @@ async def generate_chapter(
         updater.set(current_words=0, last_message="准备上下文...")
 
         try:
-            # Get confirmation from pipeline state
-            confirmation = state.generation_preference
-            if confirmation is None:
+            # Rebuild the confirmation binding from the persisted state
+            # (frozen at /confirm time). generation_preference is NOT a
+            # confirmation — it carries no revision fields.
+            from story.stateful_pipeline.models import ChapterConfirmation
+
+            if state.synopsis_revision is None or state.story_bible_revision is None:
                 raise ConfirmationRequiredError("No confirmation found")
+            confirmation = ChapterConfirmation(
+                novel_id=task_novel_id,
+                chapter_number=chapter,
+                synopsis_revision=state.synopsis_revision,
+                story_bible_revision=state.story_bible_revision,
+                canon_revision=state.canon_revision or canon.revision,
+                style_revision=state.style_revision or 0,
+                information_schema_revision=state.information_schema_revision or 0,
+            )
+
+            synopsis = service.get_synopsis(task_novel_id, chapter)
+            chapter_goal = f"推进第{chapter}章剧情"
+            if synopsis and synopsis.synopsis:
+                chapter_goal = synopsis.synopsis
 
             result_state = await service.run_chapter_pipeline(
                 novel_id=task_novel_id,
@@ -576,7 +593,7 @@ async def generate_chapter(
                 bible=bible,
                 canon=canon,
                 style_prefix=style_prefix,
-                chapter_goal=state.generation_preference.foreshadow_mode.value if state.generation_preference else "",
+                chapter_goal=chapter_goal,
             )
 
             updater.set(last_message=f"第 {chapter} 章生成完成")
