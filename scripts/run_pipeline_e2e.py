@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import sys
 import tempfile
 import uuid
@@ -106,6 +105,71 @@ class LLMCallRecorder:
 
 
 # ---------------------------------------------------------------------------
+# Chapter prose persistence
+# ---------------------------------------------------------------------------
+
+
+def _extract_prose(content: str) -> str:
+    """Extract prose from <prose> tags, falling back to raw content."""
+    if "<prose>" in content and "</prose>" in content:
+        start = content.find("<prose>") + len("<prose>")
+        end = content.find("</prose>")
+        return content[start:end].strip()
+    return content.strip()
+
+
+def _prose_path(data_dir: Path, chapter: int) -> Path:
+    return Path(data_dir) / "pipeline" / f"prose_ch{chapter}.md"
+
+
+def _save_chapter_prose(recorder: "LLMCallRecorder", data_dir: Path, chapter: int) -> None:
+    """Persist the last writer output for this chapter as prose_ch{N}.md."""
+    writer_calls = [
+        c for c in recorder.calls
+        if c.get("agent_id") == "pipeline_simplified_writer" and c.get("success")
+    ]
+    if not writer_calls:
+        return
+    prose = _extract_prose(writer_calls[-1]["output"])
+    if prose:
+        path = _prose_path(data_dir, chapter)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(prose, encoding="utf-8")
+        print(f"[E2E] Saved chapter {chapter} prose ({len(prose)} chars) to {path.name}")
+
+
+def _backfill_prose_from_report(report_path: Path, data_dir: Path) -> None:
+    """Backfill prose_ch{N}.md for chapters missing them, from an old report.
+
+    Writer calls appear in chapter order in the report's llm_calls list.
+    """
+    if not report_path.is_file():
+        return
+    with open(report_path, encoding="utf-8") as f:
+        report = json.load(f)
+    writer_calls = [
+        c for c in report.get("llm_calls", [])
+        if c.get("agent_id") == "pipeline_simplified_writer" and c.get("success")
+    ]
+    # Map by chapter from pipeline_states order when possible
+    states = [
+        s for s in report.get("pipeline_states", [])
+        if s.get("phase") == "chapter_completed"
+    ]
+    completed = [s["chapter"] for s in states]
+    for idx, call in enumerate(writer_calls):
+        chapter = completed[idx] if idx < len(completed) else idx + 1
+        path = _prose_path(data_dir, chapter)
+        if path.exists():
+            continue
+        prose = _extract_prose(call.get("output", ""))
+        if prose:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(prose, encoding="utf-8")
+            print(f"[E2E] Backfilled chapter {chapter} prose from old report")
+
+
+# ---------------------------------------------------------------------------
 # Main Runner
 # ---------------------------------------------------------------------------
 
@@ -114,8 +178,15 @@ async def run_pipeline_e2e(
     provider_file: Path,
     chapters: int = 3,
     output_dir: Path | None = None,
+    resume_novel_id: str | None = None,
 ) -> dict[str, Any]:
-    """Run the full pipeline and generate a report."""
+    """Run the full pipeline and generate a report.
+
+    When resume_novel_id is given together with an existing output_dir,
+    the run continues that novel: bible/canon/synopsis/schema are loaded
+    from the stores and already-completed chapters are skipped.
+    """
+    resume = resume_novel_id is not None
 
     # Import after path setup
     from nf_core import provider_runtime
@@ -125,7 +196,7 @@ async def run_pipeline_e2e(
         ForeshadowMode,
     )
     from story.stateful_pipeline.service import StatefulPipelineService
-    from story.models import StoryBible, CanonicalState
+    from story.models import StoryBible
     from story.persistence import StoryBibleStore, CanonicalStateStore
 
     # Setup output directory
@@ -149,10 +220,18 @@ async def run_pipeline_e2e(
     # Set up provider runtime
     provider_runtime.set_request_provider_config(provider_config)
 
-    # Create temporary novel directory
-    novel_id = f"e2e_test_{uuid.uuid4().hex[:8]}"
+    # Create temporary novel directory (or reuse for resume)
+    novel_id = resume_novel_id or f"e2e_test_{uuid.uuid4().hex[:8]}"
     data_dir = output_dir / "novel_data"
     data_dir.mkdir(parents=True, exist_ok=True)
+
+    if resume:
+        # Backfill prose_ch{N}.md for chapters completed in the previous run.
+        old_report = output_dir / "pipeline_e2e_report.json"
+        _backfill_prose_from_report(old_report, data_dir)
+        # Archive the previous report so this run's report doesn't overwrite it.
+        if old_report.is_file():
+            old_report.replace(output_dir / "pipeline_e2e_report_prev.json")
 
     print(f"[E2E] Novel ID: {novel_id}")
     print(f"[E2E] Data directory: {data_dir}")
@@ -178,36 +257,44 @@ async def run_pipeline_e2e(
     }
 
     try:
-        # Create StoryBible with complete data for NarrativeContractBuilder
-        print("[E2E] Creating StoryBible...")
-        bible = StoryBible(
-            title="测试小说",
-            genre="都市生活",
-            premise="一个普通上班族在大都市中追求梦想，经历职场起伏与情感波折",
-            main_conflicts=["职场竞争与个人理想的冲突"],
-            theme="成长与选择",
-            setting_summary="繁华都市，现代写字楼与老街巷弄交织",
-            protagonist_contracts=["李明是主角，30岁，互联网公司项目经理"],
-            immutable_world_rules=["现实都市背景，无超自然元素", "职场规则真实可信"],
-            style_contract={"narrative_voice": "第三人称", "pacing": "medium"},
-        )
         bible_store = StoryBibleStore(str(data_dir))
-        bible_store.save(bible)
-
-        # Load existing CanonicalState and add characters
         canon_store = CanonicalStateStore(str(data_dir))
-        canon = canon_store.load()
-        # Add protagonist character for NarrativeContractBuilder validation
-        canon.characters["li_ming"] = {
-            "name": "李明",
-            "role": "protagonist",
-            "status": "active",
-        }
-        # Increment revision before saving
-        updated_canon = canon.model_copy(update={"revision": canon.revision + 1})
-        canon_store.save_next(updated_canon, expected_revision=canon.revision)
-        canon = updated_canon
-        print(f"[E2E] CanonicalState revision: {canon.revision}")
+
+        if resume:
+            # Continue an existing novel: load persisted authorities.
+            print("[E2E] Resume mode: loading StoryBible and CanonicalState...")
+            bible = bible_store.load()
+            canon = canon_store.load()
+            print(f"[E2E] Loaded bible '{bible.title}' R{bible.revision}, canon R{canon.revision}")
+        else:
+            # Create StoryBible with complete data for NarrativeContractBuilder
+            print("[E2E] Creating StoryBible...")
+            bible = StoryBible(
+                title="测试小说",
+                genre="都市生活",
+                premise="一个普通上班族在大都市中追求梦想，经历职场起伏与情感波折",
+                main_conflicts=["职场竞争与个人理想的冲突"],
+                theme="成长与选择",
+                setting_summary="繁华都市，现代写字楼与老街巷弄交织",
+                protagonist_contracts=["李明是主角，30岁，互联网公司项目经理"],
+                immutable_world_rules=["现实都市背景，无超自然元素", "职场规则真实可信"],
+                style_contract={"narrative_voice": "第三人称", "pacing": "medium"},
+            )
+            bible_store.save(bible)
+
+            # Load existing CanonicalState and add characters
+            canon = canon_store.load()
+            # Add protagonist character for NarrativeContractBuilder validation
+            canon.characters["li_ming"] = {
+                "name": "李明",
+                "role": "protagonist",
+                "status": "active",
+            }
+            # Increment revision before saving
+            updated_canon = canon.model_copy(update={"revision": canon.revision + 1})
+            canon_store.save_next(updated_canon, expected_revision=canon.revision)
+            canon = updated_canon
+            print(f"[E2E] CanonicalState revision: {canon.revision}")
 
         # Create pipeline service
         chroma_dir = output_dir / "chroma"
@@ -219,14 +306,19 @@ async def run_pipeline_e2e(
             chroma_repo=chroma_repo,
         )
 
-        # Generate synopses
-        print("[E2E] Generating synopses for chapters 1-2...")
-        synopses = await service.generate_initial_synopses(
-            novel_id=novel_id,
-            story_bible=bible,
-            genre="都市生活",
-        )
-        print(f"[E2E] Generated {len(synopses)} synopses")
+        # Generate synopses (or load existing on resume)
+        if resume:
+            from story.stateful_pipeline.persistence import SynopsisStore
+            synopses = SynopsisStore(str(data_dir)).load_all(novel_id)
+            print(f"[E2E] Resume mode: loaded {len(synopses)} existing synopses")
+        else:
+            print("[E2E] Generating synopses for chapters 1-2...")
+            synopses = await service.generate_initial_synopses(
+                novel_id=novel_id,
+                story_bible=bible,
+                genre="都市生活",
+            )
+            print(f"[E2E] Generated {len(synopses)} synopses")
 
         # Ensure schema
         print("[E2E] Ensuring information schema...")
@@ -239,8 +331,26 @@ async def run_pipeline_e2e(
         print(f"[E2E] Schema has {len(schema.fields)} fields: {schema.field_keys}")
 
         # Run chapters
+        from story.stateful_pipeline.models import ChapterPipelinePhase
+
         for chapter in range(1, chapters + 1):
             print(f"\n[E2E] === Chapter {chapter} ===")
+
+            # Resume: skip chapters already completed in a previous run
+            prev_state = service.get_pipeline_state(novel_id, chapter)
+            if prev_state is not None and prev_state.phase == ChapterPipelinePhase.COMPLETED:
+                print(f"[E2E] Chapter {chapter} already completed — skipping")
+                report["chapters_completed"] += 1
+                report["pipeline_states"].append({
+                    "chapter": chapter,
+                    "phase": "chapter_completed",
+                    "resumed_skip": True,
+                })
+                chroma_count = await chroma_repo.count(novel_id)
+                report["chroma_state"][f"after_chapter_{chapter}"] = {
+                    "document_count": chroma_count,
+                }
+                continue
 
             # Create preference
             preference = ChapterGenerationPreference(
@@ -279,6 +389,9 @@ async def run_pipeline_e2e(
                     "synopsis_revision": state.synopsis_revision,
                 })
                 print(f"[E2E] Chapter {chapter} completed: {state.phase.value}")
+
+                # Persist the chapter prose (from the last writer call)
+                _save_chapter_prose(recorder, data_dir, chapter)
             except Exception as exc:
                 error_msg = f"Chapter {chapter} failed: {exc}"
                 print(f"[E2E] ERROR: {error_msg}")
@@ -449,16 +562,41 @@ def main():
         default=None,
         help="Output directory for report",
     )
+    parser.add_argument(
+        "--resume-dir",
+        type=Path,
+        default=None,
+        help="Resume an existing run: reuse this output directory (skips completed chapters)",
+    )
+    parser.add_argument(
+        "--novel-id",
+        type=str,
+        default=None,
+        help="Novel id to resume (required with --resume-dir)",
+    )
     args = parser.parse_args()
 
     if not args.provider_file.exists():
         print(f"Error: Provider file not found: {args.provider_file}")
         sys.exit(1)
 
+    output_dir = args.output_dir
+    resume_novel_id = None
+    if args.resume_dir is not None:
+        if not args.resume_dir.is_dir():
+            print(f"Error: resume dir not found: {args.resume_dir}")
+            sys.exit(1)
+        if not args.novel_id:
+            print("Error: --novel-id is required with --resume-dir")
+            sys.exit(1)
+        output_dir = args.resume_dir
+        resume_novel_id = args.novel_id
+
     asyncio.run(run_pipeline_e2e(
         provider_file=args.provider_file,
         chapters=args.chapters,
-        output_dir=args.output_dir,
+        output_dir=output_dir,
+        resume_novel_id=resume_novel_id,
     ))
 
 
