@@ -649,3 +649,117 @@ async def test_completed_state_without_manuscript_fails_closed(env):
     with pytest.raises(PipelineError):
         await service.run_chapter_pipeline(NOVEL_ID, 1, author_service=author)
     assert env["writer"].generate_calls == 1
+
+
+# ---------------------------------------------------------------------------
+# The outline contract is carried into the frozen goal, field by field
+# ---------------------------------------------------------------------------
+
+
+def test_outline_contract_is_carried_into_the_section_goal():
+    from story.narrative_contract import (
+        ForbiddenAddition,
+        RequiredEndState,
+        RequiredEvent,
+    )
+    from story.production_models import BookOutline
+    from story.stateful_pipeline.author_bridge import (
+        build_section_goal,
+        resolve_chapter_intent,
+    )
+
+    outline = BookOutline(
+        revision=4,
+        volumes=[
+            VolumeOutline(
+                id="vol_1",
+                ordinal=1,
+                title="第一卷",
+                objective="追查储物柜",
+                target_chapters=3,
+                target_chars=4200,
+            )
+        ],
+        chapters=[
+            ChapterOutline(
+                id=f"ch{ordinal:03d}",
+                ordinal=ordinal,
+                volume_id="vol_1",
+                title=f"第{ordinal}章",
+                objective=CHAPTER_OBJECTIVES[ordinal],
+                target_chars=600,
+            )
+            for ordinal in (1, 2)
+        ]
+        + [
+            ChapterOutline(
+                id="ch003",
+                ordinal=3,
+                volume_id="vol_1",
+                title="第三章",
+                objective=CHAPTER_OBJECTIVES[3],
+                viewpoint_character_id="chen_chen",
+                location_id="warehouse",
+                involved_characters=["chen_chen", "landlord"],
+                target_threads=["thread_copper_key"],
+                required_events=[
+                    RequiredEvent(id="ev_open_locker", action="打开储物柜")
+                ],
+                required_end_states=[
+                    RequiredEndState(
+                        id="es_key_used",
+                        path="/items/copper_key/used",
+                        expected=True,
+                    )
+                ],
+                prohibited_additions=[
+                    ForbiddenAddition(
+                        id="fa_no_supernatural",
+                        category="world_rule",
+                        description="不得出现超自然力量",
+                    )
+                ],
+                target_chars=3000,
+            )
+        ],
+        status="ready",
+    )
+
+    intent = resolve_chapter_intent(
+        chapter=3,
+        synopsis_title="第三章",
+        synopsis_text="陈晨在深夜打开储物柜。",
+        outline=outline,
+        foreshadow_hint="旧照片上的第二个人影",
+    )
+
+    assert intent.anchors == ("book_outline", "chapter_synopsis", "foreshadow_selection")
+    assert intent.outline_chapter_id == "ch003"
+    # The long-range anchor, the frozen synopsis and the selected foreshadow all
+    # reach the objective; no generic fallback exists.
+    assert CHAPTER_OBJECTIVES[3] in intent.objective
+    assert "本章细纲：陈晨在深夜打开储物柜。" in intent.objective
+    assert "本章需呼应的伏笔：旧照片上的第二个人影" in intent.objective
+
+    constraints = intent.narrative_constraints
+    assert [event.id for event in constraints.required_events] == ["ev_open_locker"]
+    assert [item.id for item in constraints.required_end_state] == ["es_key_used"]
+    assert [item.id for item in constraints.forbidden_additions] == [
+        "fa_no_supernatural"
+    ]
+    assert constraints.length_constraint is not None
+    assert constraints.length_constraint.min_chars < 3000 < (
+        constraints.length_constraint.max_chars
+    )
+
+    goal = build_section_goal(intent)
+    assert goal.production_chapter_ordinal == 3
+    assert goal.production_section_ordinal == 1
+    assert goal.viewpoint_character_id == "chen_chen"
+    assert goal.location_id == "warehouse"
+    assert goal.involved_characters == ["chen_chen", "landlord"]
+    assert goal.target_threads == ["thread_copper_key"]
+    assert goal.desired_length == 3000
+    assert goal.narrative_constraints == constraints
+    # The Author service derives the section id from these ordinals.
+    assert goal.section_id == ""
