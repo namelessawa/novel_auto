@@ -80,6 +80,11 @@ class ConfirmAndGenerateRequest(BaseModel):
     foreshadow_count: int = Field(default=0, ge=0, le=2)
 
 
+class RetryChapterRequest(BaseModel):
+    foreshadow_mode: str = "random"
+    foreshadow_count: int = Field(default=0, ge=0, le=2)
+
+
 class ForeshadowResponse(BaseModel):
     id: str
     source_chapter: int
@@ -100,8 +105,13 @@ class ForeshadowStateResponse(BaseModel):
 class PipelineStatusResponse(BaseModel):
     chapter: int
     phase: str
+    attempt: int = 1
     synopsis_revision: int | None
     style_revision: int | None
+    committed: bool = False
+    committed_section_id: str = ""
+    committed_char_count: int = 0
+    committed_canonical_revision: int | None = None
     error_message: str | None
 
 
@@ -114,16 +124,23 @@ class ChromaStatusResponse(BaseModel):
 # Service Factory
 # ---------------------------------------------------------------------------
 
-_service_cache: dict[str, StatefulPipelineService] = {}
+_service_cache: dict[tuple[str, str], StatefulPipelineService] = {}
 
 
-def _get_pipeline_service(novel_id: str) -> StatefulPipelineService:
-    """Get or create pipeline service for a novel."""
-    if novel_id not in _service_cache:
-        import novel_manager
-        data_dir = novel_manager.get_novel_dir(novel_id)
-        _service_cache[novel_id] = StatefulPipelineService(data_dir)
-    return _service_cache[novel_id]
+def _get_pipeline_service(user_id: str, novel_id: str) -> StatefulPipelineService:
+    """Get or create the pipeline service for a caller-owned novel."""
+    import novel_manager
+
+    key = (user_id, novel_id)
+    cached = _service_cache.get(key)
+    if cached is not None:
+        return cached
+    if novel_manager.get_novel(user_id, novel_id) is None:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    data_dir = novel_manager.get_novel_data_dir(user_id, novel_id)
+    service = StatefulPipelineService(data_dir)
+    _service_cache[key] = service
+    return service
 
 
 def _sanitize_error(msg: str) -> str:
@@ -148,7 +165,7 @@ async def get_synopses(
     user: User = Depends(get_current_user),
 ):
     """Get all chapter synopses."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     synopses = service._synopsis_store.load_all(novel_id)
     return [
         SynopsisResponse(
@@ -169,7 +186,7 @@ async def get_synopsis(
     user: User = Depends(get_current_user),
 ):
     """Get synopsis for a specific chapter."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     synopsis = service.get_synopsis(novel_id, chapter)
     if synopsis is None:
         raise HTTPException(status_code=404, detail="Synopsis not found")
@@ -190,7 +207,7 @@ async def update_synopsis(
     user: User = Depends(get_current_user),
 ):
     """Update synopsis (user edit). Creates new revision."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     try:
         updated = service.update_synopsis(
             novel_id,
@@ -216,12 +233,12 @@ async def generate_synopses(
     user: User = Depends(get_current_user),
 ):
     """Generate initial synopses for chapters 1 and 2."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
 
     import novel_manager
     from story.persistence import StoryBibleStore
 
-    data_dir = novel_manager.get_novel_dir(novel_id)
+    data_dir = novel_manager.get_novel_data_dir(user.id, novel_id)
     bible_store = StoryBibleStore(data_dir)
     bible = bible_store.load()
 
@@ -256,7 +273,7 @@ async def get_schema(
     user: User = Depends(get_current_user),
 ):
     """Get current information schema."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     schema = service.get_schema(novel_id)
     if schema is None:
         return None
@@ -277,7 +294,7 @@ async def update_schema(
     user: User = Depends(get_current_user),
 ):
     """Update information schema fields (user edit). Creates new revision."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     try:
         schema = service.update_schema(
             novel_id,
@@ -302,12 +319,12 @@ async def generate_schema(
     user: User = Depends(get_current_user),
 ):
     """Auto-generate information schema based on story context."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
 
     import novel_manager
     from story.persistence import StoryBibleStore
 
-    data_dir = novel_manager.get_novel_dir(novel_id)
+    data_dir = novel_manager.get_novel_data_dir(user.id, novel_id)
     bible_store = StoryBibleStore(data_dir)
     bible = bible_store.load()
 
@@ -343,7 +360,7 @@ async def get_foreshadows(
     user: User = Depends(get_current_user),
 ):
     """Get all foreshadow records."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     records = service.get_foreshadows(novel_id)
     return [
         ForeshadowResponse(
@@ -366,7 +383,7 @@ async def get_foreshadow_state(
     user: User = Depends(get_current_user),
 ):
     """Get foreshadow selection state."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     state = service.get_foreshadow_state(novel_id)
     return ForeshadowStateResponse(
         consecutive_selection_count=state.consecutive_selection_count,
@@ -382,7 +399,7 @@ async def get_selection_receipt(
     user: User = Depends(get_current_user),
 ):
     """Get selection receipt for a chapter (for debugging/audit)."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     receipt = service.get_selection_receipt(novel_id, chapter)
     if receipt is None:
         raise HTTPException(status_code=404, detail="No receipt found")
@@ -401,7 +418,7 @@ async def get_pipeline_status(
     user: User = Depends(get_current_user),
 ):
     """Get pipeline status for a chapter."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     state = service.get_pipeline_state(novel_id, chapter)
     if state is None:
         return PipelineStatusResponse(
@@ -414,8 +431,13 @@ async def get_pipeline_status(
     return PipelineStatusResponse(
         chapter=state.chapter_number,
         phase=state.phase.value,
+        attempt=state.attempt,
         synopsis_revision=state.synopsis_revision,
         style_revision=state.style_revision,
+        committed=state.committed_manuscript,
+        committed_section_id=state.committed_section_id,
+        committed_char_count=state.committed_char_count,
+        committed_canonical_revision=state.committed_canonical_revision,
         error_message=state.error_message,
     )
 
@@ -426,7 +448,7 @@ async def get_current_status(
     user: User = Depends(get_current_user),
 ):
     """Get current chapter number and overall pipeline state."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     current_chapter = service.get_current_chapter(novel_id)
     return {
         "current_chapter": current_chapter,
@@ -445,36 +467,8 @@ async def confirm_chapter(
     request: ConfirmAndGenerateRequest,
     user: User = Depends(get_current_user),
 ):
-    """Confirm chapter for generation (creates confirmation binding)."""
-    service = _get_pipeline_service(novel_id)
-
-    import novel_manager
-    from story.persistence import CanonicalStateStore, StoryBibleStore
-    from story.production_persistence import ActiveStyleStore
-    from story.production_models import ActiveStyleBinding
-
-    data_dir = novel_manager.get_novel_dir(novel_id)
-    bible_store = StoryBibleStore(data_dir)
-    bible = bible_store.load()
-    canon_store = CanonicalStateStore(data_dir)
-    canon = canon_store.load()
-
-    # Get active style revision
-    style_revision = 0
-    try:
-        active_store = ActiveStyleStore(
-            data_dir,
-            default_factory=lambda: ActiveStyleBinding(
-                style_profile_id="default",
-                profile_revision=1,
-                prompt_hash="0" * 64,
-            ),
-        )
-        active_binding = active_store.load()
-        if active_binding and active_binding.style_profile_id:
-            style_revision = active_binding.profile_revision
-    except Exception:
-        pass  # Use defaults if style not available
+    """Freeze the chapter's authorities and move it to ``confirmed``."""
+    service = _get_pipeline_service(user.id, novel_id)
 
     preference = ChapterGenerationPreference(
         novel_id=novel_id,
@@ -488,18 +482,70 @@ async def confirm_chapter(
             novel_id=novel_id,
             chapter=request.chapter,
             preference=preference,
-            bible=bible,
-            canon=canon,
-            style_revision=style_revision,
         )
-        return {
-            "confirmed": True,
-            "chapter": request.chapter,
-            "style_revision": style_revision,
-            "binding": confirmation.model_dump(mode="json"),
-        }
     except PipelineError as exc:
         raise HTTPException(status_code=400, detail=_sanitize_error(str(exc)))
+    return {
+        "confirmed": True,
+        "chapter": request.chapter,
+        "phase": ChapterPipelinePhase.CONFIRMED.value,
+        "style_revision": confirmation.style_revision,
+        "binding": confirmation.model_dump(mode="json"),
+    }
+
+
+@router.post("/retry/{chapter}")
+async def retry_chapter(
+    novel_id: str,
+    chapter: int,
+    request: RetryChapterRequest,
+    user: User = Depends(get_current_user),
+):
+    """Create a new attempt for a failed or completed chapter.
+
+    The whole chain re-executes under a fresh Author transaction; derived
+    information and memory for this chapter are purged first so new prose can
+    never be paired with a previous attempt's extraction.
+    """
+    service = _get_pipeline_service(user.id, novel_id)
+
+    preference = ChapterGenerationPreference(
+        novel_id=novel_id,
+        chapter_number=chapter,
+        foreshadow_mode=ForeshadowMode(request.foreshadow_mode),
+        foreshadow_fixed_count=request.foreshadow_count,
+    )
+    try:
+        confirmation = service.retry_chapter(novel_id, chapter, preference)
+    except PipelineError as exc:
+        raise HTTPException(status_code=409, detail=_sanitize_error(str(exc)))
+    state = service.get_pipeline_state(novel_id, chapter)
+    return {
+        "confirmed": True,
+        "chapter": chapter,
+        "attempt": state.attempt if state else 1,
+        "phase": ChapterPipelinePhase.CONFIRMED.value,
+        "binding": confirmation.model_dump(mode="json"),
+    }
+
+
+def _committed_response(state) -> dict[str, Any]:
+    """Report a chapter from its verified Author commit evidence."""
+
+    return {
+        "status": "already_completed",
+        "chapter": state.chapter_number,
+        "phase": state.phase.value,
+        "attempt": state.attempt,
+        # P0-2: this flag comes from the Author commit journal, never from the
+        # pipeline phase alone.
+        "committed": state.committed_manuscript,
+        "transaction_id": state.author_transaction_id,
+        "section_id": state.committed_section_id,
+        "char_count": state.committed_char_count,
+        "canonical_revision": state.committed_canonical_revision,
+        "committed_at": state.committed_at,
+    }
 
 
 @router.post("/generate/{chapter}")
@@ -508,104 +554,77 @@ async def generate_chapter(
     chapter: int,
     user: User = Depends(get_current_user),
 ):
-    """Start chapter generation (requires prior confirmation).
+    """Start chapter generation on the official Author production chain.
 
-    Submits a pipeline_chapter_generation task to the TaskManager.
-    Progress is streamed via SSE at /api/tasks/{task_id}/stream.
+    Requires a prior ``/confirm``.  Submits a pipeline_chapter_generation task
+    to the TaskManager; progress is streamed via SSE at
+    ``/api/tasks/{task_id}/stream``.
     """
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
 
-    # Check if already confirmed
-    state = service.get_pipeline_state(novel_id, chapter)
-    if state is None or state.phase == ChapterPipelinePhase.AWAITING_CONFIRMATION:
+    from story.stateful_pipeline.service import (
+        ConfirmationRequiredError,
+        ConfirmationStaleError,
+    )
+
+    try:
+        state = service.assert_generation_allowed(novel_id, chapter)
+    except ConfirmationRequiredError as exc:
         raise HTTPException(
             status_code=409,
-            detail="Chapter requires user confirmation before generation. Call /confirm first.",
-        )
+            detail=(
+                "Chapter requires user confirmation before generation. "
+                "Call /confirm first."
+            ),
+        ) from exc
+    except ConfirmationStaleError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=_sanitize_error(str(exc)),
+        ) from exc
+    except PipelineError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=_sanitize_error(str(exc)),
+        ) from exc
+
+    if state.phase == ChapterPipelinePhase.COMPLETED:
+        # A completed chapter is never silently regenerated; a rewrite must go
+        # through /retry so it becomes a new attempt.
+        return _committed_response(state)
 
     from tasks.task_manager import TaskConflict, get_task_manager
 
     task_manager = get_task_manager()
 
     async def pipeline_executor(updater, user_id: str, task_novel_id: str):
-        """Execute the chapter generation pipeline."""
-        import novel_manager
-        from story.persistence import CanonicalStateStore, StoryBibleStore
-        from story.production_persistence import ActiveStyleStore, StyleProfileStore
-        from story.production_models import ActiveStyleBinding
-        from story.stateful_pipeline.service import ConfirmationRequiredError
-
-        data_dir = novel_manager.get_novel_dir(task_novel_id)
-        bible_store = StoryBibleStore(data_dir)
-        bible = bible_store.load()
-        canon_store = CanonicalStateStore(data_dir)
-        canon = canon_store.load()
-
-        # Load style prompt prefix from active style
-        style_prefix = ""
-        try:
-            active_store = ActiveStyleStore(
-                data_dir,
-                default_factory=lambda: ActiveStyleBinding(
-                    style_profile_id="default",
-                    profile_revision=1,
-                    prompt_hash="0" * 64,
-                ),
-            )
-            active_binding = active_store.load()
-            if active_binding and active_binding.style_profile_id:
-                style_store = StyleProfileStore(data_dir)
-                profile = style_store.load(active_binding.style_profile_id)
-                if profile:
-                    style_prefix = profile.writer_prompt_prefix
-        except Exception:
-            pass
+        """Execute the chapter pipeline against Author production."""
+        from story.runtime import get_author_runtime
 
         updater.set(current_words=0, last_message="准备上下文...")
-
+        author_service = get_author_runtime(user_id, task_novel_id).service
         try:
-            # Rebuild the confirmation binding from the persisted state
-            # (frozen at /confirm time). generation_preference is NOT a
-            # confirmation — it carries no revision fields.
-            from story.stateful_pipeline.models import ChapterConfirmation
-
-            if state.synopsis_revision is None or state.story_bible_revision is None:
-                raise ConfirmationRequiredError("No confirmation found")
-            confirmation = ChapterConfirmation(
-                novel_id=task_novel_id,
-                chapter_number=chapter,
-                synopsis_revision=state.synopsis_revision,
-                story_bible_revision=state.story_bible_revision,
-                canon_revision=state.canon_revision or canon.revision,
-                style_revision=state.style_revision or 0,
-                information_schema_revision=state.information_schema_revision or 0,
-            )
-
-            synopsis = service.get_synopsis(task_novel_id, chapter)
-            chapter_goal = f"推进第{chapter}章剧情"
-            if synopsis and synopsis.synopsis:
-                chapter_goal = synopsis.synopsis
-
             result_state = await service.run_chapter_pipeline(
-                novel_id=task_novel_id,
-                chapter=chapter,
-                confirmation=confirmation,
-                bible=bible,
-                canon=canon,
-                style_prefix=style_prefix,
-                chapter_goal=chapter_goal,
+                task_novel_id,
+                chapter,
+                author_service=author_service,
             )
-
-            updater.set(last_message=f"第 {chapter} 章生成完成")
-            return {
-                "chapter": chapter,
-                "phase": result_state.phase.value,
-                "committed": result_state.phase == ChapterPipelinePhase.COMPLETED,
-            }
         except ConfirmationRequiredError as exc:
             raise RuntimeError(f"Confirmation required: {exc}") from exc
+        except ConfirmationStaleError as exc:
+            raise RuntimeError(f"Confirmation stale: {exc}") from exc
         except PipelineError as exc:
-            raise RuntimeError(f"Pipeline failed: {exc}") from exc
+            raise RuntimeError(f"Pipeline failed: {_sanitize_error(str(exc))}") from exc
+
+        if not result_state.committed_manuscript:
+            raise RuntimeError(
+                f"第 {chapter} 章未提交正式正文（phase={result_state.phase.value}）"
+            )
+        updater.set(
+            current_words=result_state.committed_char_count,
+            last_message=f"第 {chapter} 章已提交",
+        )
+        return _committed_response(result_state)
 
     try:
         task = task_manager.submit(
@@ -619,7 +638,9 @@ async def generate_chapter(
             "status": "queued",
             "task_id": task.id,
             "chapter": chapter,
+            "attempt": state.attempt,
             "phase": state.phase.value,
+            "committed": False,
             "stream_url": f"/api/tasks/{task.id}/stream",
         }
     except TaskConflict:
@@ -640,7 +661,7 @@ async def get_chroma_status(
     user: User = Depends(get_current_user),
 ):
     """Get ChromaDB document count for this novel."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
     count = await service._chroma.count(novel_id)
     return ChromaStatusResponse(novel_id=novel_id, document_count=count)
 
@@ -651,7 +672,7 @@ async def rebuild_chroma(
     user: User = Depends(get_current_user),
 ):
     """Rebuild ChromaDB from committed chapter information."""
-    service = _get_pipeline_service(novel_id)
+    service = _get_pipeline_service(user.id, novel_id)
 
     # Load all chapter informations
     chapter_informations = []

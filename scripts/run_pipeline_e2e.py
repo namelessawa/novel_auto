@@ -122,20 +122,25 @@ def _prose_path(data_dir: Path, chapter: int) -> Path:
     return Path(data_dir) / "pipeline" / f"prose_ch{chapter}.md"
 
 
-def _save_chapter_prose(recorder: "LLMCallRecorder", data_dir: Path, chapter: int) -> None:
-    """Persist the last writer output for this chapter as prose_ch{N}.md."""
-    writer_calls = [
-        c for c in recorder.calls
-        if c.get("agent_id") == "pipeline_simplified_writer" and c.get("success")
-    ]
-    if not writer_calls:
+def _save_committed_prose(
+    service: Any,
+    author_service: Any,
+    novel_id: str,
+    data_dir: Path,
+    chapter: int,
+) -> None:
+    """Persist the officially committed manuscript as prose_ch{N}.md."""
+    prose = service.committed_chapter_prose(novel_id, chapter, author_service)
+    if not prose.strip():
+        print(f"[E2E] WARNING: chapter {chapter} has no committed prose")
         return
-    prose = _extract_prose(writer_calls[-1]["output"])
-    if prose:
-        path = _prose_path(data_dir, chapter)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(prose, encoding="utf-8")
-        print(f"[E2E] Saved chapter {chapter} prose ({len(prose)} chars) to {path.name}")
+    path = _prose_path(data_dir, chapter)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(prose, encoding="utf-8")
+    print(
+        f"[E2E] Saved chapter {chapter} committed prose "
+        f"({len(prose)} chars) to {path.name}"
+    )
 
 
 def _backfill_prose_from_report(report_path: Path, data_dir: Path) -> None:
@@ -167,6 +172,85 @@ def _backfill_prose_from_report(report_path: Path, data_dir: Path) -> None:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(prose, encoding="utf-8")
             print(f"[E2E] Backfilled chapter {chapter} prose from old report")
+
+
+async def _ensure_book_outline(
+    data_dir: Path,
+    bible: Any,
+    chapters: int,
+    title: str,
+) -> Any:
+    """Guarantee a BookOutline anchor covering chapters 1..N.
+
+    The converged pipeline refuses to generate a chapter that has neither a
+    frozen synopsis nor a BookOutline objective, so a real whole-book outline is
+    produced once with the existing generator instead of inventing per-chapter
+    placeholder goals.
+    """
+    from story.outline_generator import WholeBookOutlineGenerator
+    from story.production_models import BookOutlineUpdate, NovelProductionSpecUpdate
+    from story.production_persistence import (
+        BookOutlineStore,
+        ProductionSpecStore,
+        ensure_production_domain,
+    )
+
+    ensure_production_domain(str(data_dir), title=title)
+    outlines = BookOutlineStore(str(data_dir))
+    existing = outlines.load() if outlines.exists() else None
+    if existing is not None and len(existing.chapters) >= chapters:
+        print(f"[E2E] Reusing BookOutline R{existing.revision} ({len(existing.chapters)} chapters)")
+        return existing
+
+    target_chapter_chars = 3_000
+    specs = ProductionSpecStore(
+        str(data_dir),
+        lambda: (_ for _ in ()).throw(AssertionError("production spec is missing")),
+    )
+    initial_spec = specs.load()
+    spec = specs.update(
+        NovelProductionSpecUpdate(
+            expected_revision=initial_spec.revision,
+            title=title or initial_spec.title,
+            premise=bible.premise,
+            genre=bible.genre,
+            theme=bible.theme,
+            central_question=bible.central_question,
+            target_total_chars=chapters * target_chapter_chars,
+            volume_count=1,
+            chapter_count=chapters,
+            target_chapter_chars=target_chapter_chars,
+            accepted_chapter_min_chars=2_400,
+            accepted_chapter_max_chars=3_600,
+            section_target_chars=target_chapter_chars,
+            ending_direction=bible.ending_direction,
+            production_status="ready",
+        )
+    )
+
+    print(f"[E2E] Generating BookOutline for {chapters} chapters...")
+    result = await WholeBookOutlineGenerator().generate(spec=spec, bible=bible)
+    proposal = result.proposal
+    outline = outlines.update(
+        BookOutlineUpdate(
+            expected_revision=(existing.revision if existing else outlines.load().revision),
+            logline=proposal.logline,
+            global_arc=proposal.global_arc,
+            volumes=proposal.volumes,
+            chapters=proposal.chapters,
+            ending_target=proposal.ending_target,
+            major_turning_points=proposal.major_turning_points,
+            central_conflict_progression=proposal.central_conflict_progression,
+            thread_schedule=proposal.thread_schedule,
+            character_arc_schedule=proposal.character_arc_schedule,
+            status="ready",
+        )
+    )
+    errors = outline.validation_errors_for(spec)
+    if errors:
+        raise RuntimeError("generated BookOutline failed validation: " + "; ".join(errors))
+    print(f"[E2E] BookOutline R{outline.revision} ready with {len(outline.chapters)} chapters")
+    return outline
 
 
 # ---------------------------------------------------------------------------
@@ -306,6 +390,18 @@ async def run_pipeline_e2e(
             chroma_repo=chroma_repo,
         )
 
+        # Official Author production chain: the only Writer/Validator/Commit.
+        from story.service import AuthorGenerationService
+
+        author_user_id = "e2e_runner"
+        author_service = AuthorGenerationService(
+            user_id=author_user_id,
+            novel_id=novel_id,
+            data_dir=str(data_dir),
+            title=bible.title,
+            enable_llm_planner=False,
+        )
+
         # Generate synopses (or load existing on resume)
         if resume:
             from story.stateful_pipeline.persistence import SynopsisStore
@@ -329,6 +425,9 @@ async def run_pipeline_e2e(
             synopses=synopses,
         )
         print(f"[E2E] Schema has {len(schema.fields)} fields: {schema.field_keys}")
+
+        # Every chapter needs a durable long-range anchor before confirmation.
+        await _ensure_book_outline(data_dir, bible, chapters, bible.title)
 
         # Run chapters
         from story.stateful_pipeline.models import ChapterPipelinePhase
@@ -359,39 +458,49 @@ async def run_pipeline_e2e(
                 foreshadow_mode=ForeshadowMode.RANDOM,
             )
 
-            # Confirm chapter
+            # Confirm chapter (freezes every authority revision)
             print(f"[E2E] Confirming chapter {chapter}...")
             confirmation = service.confirm_chapter(
                 novel_id=novel_id,
                 chapter=chapter,
                 preference=preference,
-                bible=bible,
-                canon=canon,
-                style_revision=1,
+            )
+            print(
+                f"[E2E] Frozen: bible R{confirmation.story_bible_revision}, "
+                f"canon R{confirmation.canon_revision}, "
+                f"outline R{confirmation.outline_revision}"
             )
 
             # Run pipeline
             print(f"[E2E] Running pipeline for chapter {chapter}...")
             try:
                 state = await service.run_chapter_pipeline(
-                    novel_id=novel_id,
-                    chapter=chapter,
-                    confirmation=confirmation,
-                    bible=bible,
-                    canon=canon,
-                    style_prefix="",
-                    chapter_goal=f"推进第{chapter}章剧情",
+                    novel_id,
+                    chapter,
+                    author_service=author_service,
                 )
+                if not state.committed_manuscript:
+                    raise RuntimeError(
+                        f"pipeline reported {state.phase.value} without a committed manuscript"
+                    )
                 report["chapters_completed"] += 1
                 report["pipeline_states"].append({
                     "chapter": chapter,
                     "phase": state.phase.value,
+                    "attempt": state.attempt,
                     "synopsis_revision": state.synopsis_revision,
+                    "author_transaction_id": state.author_transaction_id,
+                    "committed_section_id": state.committed_section_id,
+                    "committed_char_count": state.committed_char_count,
+                    "canonical_revision": state.committed_canonical_revision,
                 })
-                print(f"[E2E] Chapter {chapter} completed: {state.phase.value}")
+                print(
+                    f"[E2E] Chapter {chapter} committed: {state.committed_char_count} chars, "
+                    f"canon R{state.committed_canonical_revision}"
+                )
 
-                # Persist the chapter prose (from the last writer call)
-                _save_chapter_prose(recorder, data_dir, chapter)
+                # Persist the officially committed manuscript
+                _save_committed_prose(service, author_service, novel_id, data_dir, chapter)
             except Exception as exc:
                 error_msg = f"Chapter {chapter} failed: {exc}"
                 print(f"[E2E] ERROR: {error_msg}")

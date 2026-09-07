@@ -6,22 +6,18 @@ pipeline state, ChromaDB idempotency, and multi-novel isolation.
 
 from __future__ import annotations
 
-import os
 import tempfile
 
 import pytest
 
 from story.stateful_pipeline.models import (
-    ChapterGenerationPreference,
     ChapterInformation,
     ChapterPipelinePhase,
     ChapterPipelineState,
     ChapterSynopsis,
-    ForeshadowMode,
     ForeshadowRecord,
     ForeshadowSelectionReceipt,
     ForeshadowSelectionState,
-    ForeshadowStatus,
     InformationField,
     InformationSchema,
     MemoryIntegrationRecord,

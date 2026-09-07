@@ -1,29 +1,31 @@
 """Backend connectivity integration test: full 3-chapter pipeline.
 
-Verifies every module boundary of the stateful pipeline works together,
-using the shared mock_llm fixture (no real provider):
+Verifies every module boundary of the converged pipeline works together,
+without a real provider:
 
-  StoryBible/Canon setup → synopsis LLM → schema LLM → confirm gate →
-  foreshadow decisions (count roll + selection receipt) → pacing →
-  simplified writer → foreshadow extraction → information extraction →
-  split integration → ChromaDB upsert → transfer context (ch3) →
-  idempotent re-run (no duplicated side effects)
+  StoryBible/Canon/Thread/BookOutline setup → synopsis LLM → schema LLM →
+  confirm freeze → foreshadow decisions (count roll + selection receipt) →
+  Author production (Writer → NarrativeContract → Validator → Repair →
+  transaction commit) → foreshadow extraction → information extraction →
+  split integration → ChromaDB upsert → idempotent re-run
 
-The test is fully deterministic: FIXED foreshadow mode consumes no RNG,
-no foreshadow is old enough to be eligible (age < 8), and chapters 1-3
-are below the conflict/climax earliest-chapter thresholds, so pacing is
-always 'flat'.
+The pipeline-owned LLM roles run through the shared ``mock_llm`` fixture; the
+official Writer is a recording stand-in so every real Author validator, the
+repair gate and the commit journal stay in the path.
+
+The test is deterministic: FIXED foreshadow mode consumes no RNG, and no
+foreshadow is old enough to be eligible (age < 8).
 """
 
 from __future__ import annotations
 
-import shutil
-import tempfile
+from pathlib import Path
 
 import pytest
 
-from story.models import StoryBible
-from story.persistence import CanonicalStateStore, StoryBibleStore
+from sections.section_store import _clear_for_tests
+from story.persistence import CanonicalStateStore, StoryThreadStore
+from story.service import AuthorGenerationService
 from story.stateful_pipeline.chroma_repository import ChromaMemoryRepository
 from story.stateful_pipeline.models import (
     ChapterGenerationPreference,
@@ -35,48 +37,71 @@ from story.stateful_pipeline.persistence import (
     ChapterInformationStore,
     ForeshadowStore,
     MemoryIntegrationStore,
-    PacingStore,
     SynopsisStore,
-    TransferContextStore,
 )
-from story.stateful_pipeline.service import StatefulPipelineService
+from story.stateful_pipeline.service import (
+    ConfirmationRequiredError,
+    StatefulPipelineService,
+)
 
-NOVEL_ID = "integration-novel"
+from tests.test_pipeline_author_bridge import (
+    CHAPTER_OBJECTIVES,
+    NOVEL_ID,
+    USER_ID,
+    RecordingWriter,
+    _publish_bible,
+    _seed_canon,
+    _seed_outline,
+    _seed_thread,
+)
 
-# 240 chars of prose — above MIN_VALID_PROSE_CHARS (200).
-PROSE = "这是用于集成测试的章节正文内容。" * 30
+
+@pytest.fixture(autouse=True)
+def clear_sections():
+    _clear_for_tests()
+    yield
+    _clear_for_tests()
 
 
 @pytest.fixture
-def pipeline_env():
-    """Windows-safe temp dir with bible/canon/chroma/service wired up."""
-    data_dir = tempfile.mkdtemp(prefix="pipeline_integration_")
-    chroma_dir = tempfile.mkdtemp(prefix="pipeline_integration_chroma_")
+def pipeline_env(tmp_path: Path):
+    """Windows-safe temp dir with every authority and both services wired up."""
+    data_dir = str(tmp_path)
+    chroma_dir = str(tmp_path / "chroma")
 
-    bible = StoryBible(title="集成测试小说", genre="都市生活", premise="主角在城市中生活")
-    StoryBibleStore(data_dir).save(bible)
-    canon = CanonicalStateStore(data_dir).load()
+    writer = RecordingWriter()
+    author = AuthorGenerationService(
+        user_id=USER_ID,
+        novel_id=NOVEL_ID,
+        data_dir=data_dir,
+        title="铜钥匙",
+        writer=writer,
+        enable_llm_planner=False,
+    )
+    _publish_bible(author)
+    _seed_canon(data_dir)
+    _seed_thread(data_dir)
+    _seed_outline(data_dir, "铜钥匙")
 
-    chroma = ChromaMemoryRepository(persist_dir=chroma_dir)
-    service = StatefulPipelineService(data_dir=data_dir, chroma_repo=chroma)
-
+    service = StatefulPipelineService(
+        data_dir=data_dir,
+        chroma_repo=ChromaMemoryRepository(persist_dir=chroma_dir),
+    )
     yield {
         "data_dir": data_dir,
-        "bible": bible,
-        "canon": canon,
-        "chroma": chroma,
         "service": service,
+        "author": author,
+        "writer": writer,
+        "chroma": service._chroma,
+        "bible": author.bibles.load(),
     }
-
-    shutil.rmtree(data_dir, ignore_errors=True)
-    shutil.rmtree(chroma_dir, ignore_errors=True)
 
 
 def _synopsis_response() -> dict:
     return {
         "chapters": [
-            {"chapter": 1, "title": "第一章 清晨", "synopsis": "主角开始新的一天，遇到邻居。" * 5},
-            {"chapter": 2, "title": "第二章 变故", "synopsis": "工作出现变故，主角做出决定。" * 5},
+            {"chapter": 1, "title": "第一章 钥匙", "synopsis": "陈晨在旧仓库清点遗物时找到铜钥匙。" * 3},
+            {"chapter": 2, "title": "第二章 房东", "synopsis": "陈晨向房东追问储物柜的来历。" * 3},
         ]
     }
 
@@ -96,75 +121,56 @@ def _foreshadow_response(summary: str) -> list:
 def _information_response() -> dict:
     # 2 non-empty fields → 2 split-integration calls; 1 empty field skipped.
     return {
-        "characters": [{"name": "李明", "status": "active"}],
-        "locations": [{"name": "写字楼"}],
+        "characters": [{"name": "陈晨", "status": "active"}],
+        "locations": [{"name": "旧仓库"}],
         "events": [],
     }
 
 
 def _integration_response(field_hint: str) -> list:
-    return [{"content": f"整合记忆文档：{field_hint}", "entities": ["李明"]}]
-
-
-def _transfer_response() -> dict:
-    return {
-        "recent_context": "前两章主角经历了工作变故。",
-        "foreshadow_to_consider": "",
-        "continuity_constraints": ["保持人物一致"],
-        "important_entities": ["李明"],
-    }
+    return [{"content": f"整合记忆文档：{field_hint}", "entities": ["陈晨"]}]
 
 
 def _queue_full_run(mock_llm) -> None:
-    """Queue all 17 LLM responses for the deterministic 3-chapter run."""
+    """Queue every pipeline-owned LLM response for the 3-chapter run.
+
+    The official Writer is not an LLM role here, so it consumes nothing.
+    """
     mock_llm.set_responses([
-        _synopsis_response(),                    # 1. synopsis
-        _schema_response(),                      # 2. schema generator
+        _synopsis_response(),                       # 1. synopsis
+        _schema_response(),                         # 2. schema generator
         # --- chapter 1 (fixed count=1) ---
-        f"<prose>{PROSE}</prose>",               # 3. writer
-        _foreshadow_response("第一章伏笔：神秘钥匙"),  # 4. foreshadow extract
-        _information_response(),                 # 5. information extract
-        _integration_response("ch1-a"),          # 6. integration field A
-        _integration_response("ch1-b"),          # 7. integration field B
+        _foreshadow_response("第一章伏笔：铜钥匙的刻痕"),  # 3. foreshadow extract
+        _information_response(),                    # 4. information extract
+        _integration_response("ch1-a"),              # 5. integration field A
+        _integration_response("ch1-b"),              # 6. integration field B
         # --- chapter 2 (fixed count=0, no foreshadow call) ---
-        f"<prose>{PROSE}</prose>",               # 8. writer
-        _information_response(),                 # 9. information extract
-        _integration_response("ch2-a"),          # 10. integration A
-        _integration_response("ch2-b"),          # 11. integration B
-        # --- chapter 3 (transfer first, then fixed count=1) ---
-        _transfer_response(),                    # 12. transfer
-        f"<prose>{PROSE}</prose>",               # 13. writer
-        _foreshadow_response("第三章伏笔：旧照片"),  # 14. foreshadow extract
-        _information_response(),                 # 15. information extract
-        _integration_response("ch3-a"),          # 16. integration A
-        _integration_response("ch3-b"),          # 17. integration B
+        _information_response(),                    # 7. information extract
+        _integration_response("ch2-a"),              # 8. integration A
+        _integration_response("ch2-b"),              # 9. integration B
+        # --- chapter 3 (fixed count=1) ---
+        _foreshadow_response("第三章伏笔：储物柜里的旧照片"),  # 10. foreshadow extract
+        _information_response(),                    # 11. information extract
+        _integration_response("ch3-a"),              # 12. integration A
+        _integration_response("ch3-b"),              # 13. integration B
     ])
 
 
-async def _run_chapter(service, bible, canon, chapter: int, count: int):
-    """Confirm + run one chapter with FIXED foreshadow count."""
-    preference = ChapterGenerationPreference(
+async def _run_chapter(env, chapter: int, count: int):
+    """Confirm + run one chapter with a FIXED foreshadow count."""
+    service: StatefulPipelineService = env["service"]
+    service.confirm_chapter(NOVEL_ID, chapter, _preference(chapter, count))
+    return await service.run_chapter_pipeline(
+        NOVEL_ID, chapter, author_service=env["author"]
+    )
+
+
+def _preference(chapter: int, count: int) -> ChapterGenerationPreference:
+    return ChapterGenerationPreference(
         novel_id=NOVEL_ID,
         chapter_number=chapter,
         foreshadow_mode=ForeshadowMode.FIXED,
         foreshadow_fixed_count=count,
-    )
-    confirmation = service.confirm_chapter(
-        novel_id=NOVEL_ID,
-        chapter=chapter,
-        preference=preference,
-        bible=bible,
-        canon=canon,
-        style_revision=1,
-    )
-    return await service.run_chapter_pipeline(
-        novel_id=NOVEL_ID,
-        chapter=chapter,
-        confirmation=confirmation,
-        bible=bible,
-        canon=canon,
-        style_prefix="以冷静的第三人称叙事。",
-        chapter_goal=f"推进第{chapter}章剧情",
     )
 
 
@@ -173,67 +179,88 @@ async def test_three_chapter_pipeline_connectivity(mock_llm, pipeline_env):
     """Full 3-chapter run: every module boundary crossed successfully."""
     env = pipeline_env
     service: StatefulPipelineService = env["service"]
+    author: AuthorGenerationService = env["author"]
     data_dir = env["data_dir"]
     _queue_full_run(mock_llm)
 
     # --- Step 1: synopsis generation (LLM role → SynopsisStore) ---
     synopses = await service.generate_initial_synopses(
-        novel_id=NOVEL_ID, story_bible=env["bible"], genre="都市生活"
+        novel_id=NOVEL_ID, story_bible=env["bible"], genre="都市悬疑"
     )
     assert len(synopses) == 2
     store_syn = SynopsisStore(data_dir).load(NOVEL_ID, 1)
-    assert store_syn is not None and store_syn.title == "第一章 清晨"
+    assert store_syn is not None and store_syn.title == "第一章 钥匙"
+
+    # The frozen StoryBible projection reached the synopsis prompt.
+    synopsis_prompt = mock_llm.calls[0][1]
+    assert "陈晨在旧仓库继承了一把来历不明的铜钥匙。" in synopsis_prompt
+    assert "一座旧城区仓库改建的出租楼，共五层。" in synopsis_prompt
 
     # --- Step 2: schema generation (LLM role → InformationSchemaStore) ---
     schema = await service.ensure_schema(
         novel_id=NOVEL_ID,
         story_bible=env["bible"],
-        genre="都市生活",
+        genre="都市悬疑",
         synopses=synopses,
     )
     assert schema.field_keys == ["characters", "locations", "events"]
 
     # --- Step 3: run chapters 1..3 through the full pipeline ---
-    state1 = await _run_chapter(service, env["bible"], env["canon"], 1, count=1)
-    assert state1.phase == ChapterPipelinePhase.COMPLETED
+    canon_revision = CanonicalStateStore(data_dir).load().revision
+    committed = []
+    for chapter, count in ((1, 1), (2, 0), (3, 1)):
+        before = canon_revision
+        state = await _run_chapter(env, chapter, count)
+        assert state.phase == ChapterPipelinePhase.COMPLETED, state.error_message
+        assert state.committed_manuscript is True
+        committed.append(state)
+        canon_revision = CanonicalStateStore(data_dir).load().revision
+        assert canon_revision == before + 1
 
-    state2 = await _run_chapter(service, env["bible"], env["canon"], 2, count=0)
-    assert state2.phase == ChapterPipelinePhase.COMPLETED
+    # --- Every chapter really committed an official Author section ---
+    assert [item.committed_canonical_revision for item in committed] == [3, 4, 5]
+    for state in committed:
+        section = author.sections.get_by_id(state.committed_section_id)
+        assert section is not None
+        assert section.generation_mode == "author"
+        assert section.content.strip()
+        transaction = author.transactions.load(state.author_transaction_id)
+        assert transaction.committed is True
+        assert transaction.narrative_validation_report.accepted is True
+        assert transaction.validation_report.accepted is True
 
-    state3 = await _run_chapter(service, env["bible"], env["canon"], 3, count=1)
-    assert state3.phase == ChapterPipelinePhase.COMPLETED
-
-    # --- Verify LLM call order matches the wired pipeline ---
+    # --- Verify pipeline-owned LLM call order ---
     agent_ids = [kw.get("agent_id") for kw in mock_llm.call_kwargs]
     assert agent_ids == [
         "pipeline_synopsis",
         "pipeline_schema_generator",
         # ch1
-        "pipeline_simplified_writer",
         "pipeline_foreshadow_extractor",
         "pipeline_information_extractor",
         "pipeline_integration",
         "pipeline_integration",
         # ch2 (no foreshadow call: fixed count 0)
-        "pipeline_simplified_writer",
         "pipeline_information_extractor",
         "pipeline_integration",
         "pipeline_integration",
-        # ch3 (transfer BEFORE writer)
-        "pipeline_transfer",
-        "pipeline_simplified_writer",
+        # ch3
         "pipeline_foreshadow_extractor",
         "pipeline_information_extractor",
         "pipeline_integration",
         "pipeline_integration",
     ]
+    # The simplified writer is no longer part of the official chain.
+    assert "pipeline_simplified_writer" not in agent_ids
+    # Continuity now comes from the Author ContextBuilder, not a Transfer LLM.
+    assert "pipeline_transfer" not in agent_ids
+    assert env["writer"].generate_calls == 3
 
-    # --- Pacing: receipts persisted, all flat (chapters < 16/21) ---
-    pacing_store = PacingStore(data_dir)
-    for chapter in (1, 2, 3):
-        receipt = pacing_store.load_receipt(NOVEL_ID, chapter)
-        assert receipt is not None
-        assert receipt.selected_mode.value == "flat"
+    # --- Each chapter goal is anchored in the BookOutline ---
+    for index, chapter in enumerate((1, 2, 3), start=1):
+        goal = env["writer"].goals[index - 1]
+        assert CHAPTER_OBJECTIVES[chapter] in goal.objective
+        assert goal.production_chapter_ordinal == chapter
+        assert f"推进第{chapter}章剧情" not in goal.objective
 
     # --- Foreshadow records: ch1 + ch3, deterministic ids, MINIMUM_AGE=8 ---
     fstore = ForeshadowStore(data_dir)
@@ -247,7 +274,7 @@ async def test_three_chapter_pipeline_connectivity(mock_llm, pipeline_env):
         assert r.current_probability == 0.02
         assert r.next_eligible_chapter == r.source_chapter + 8
 
-    # --- Selection receipts exist for every chapter (connectivity fix) ---
+    # --- Selection receipts exist for every chapter ---
     for chapter in (1, 2, 3):
         receipt = fstore.load_receipt(NOVEL_ID, chapter)
         assert receipt is not None
@@ -265,12 +292,6 @@ async def test_three_chapter_pipeline_connectivity(mock_llm, pipeline_env):
         assert info.schema_revision == 1
         assert set(info.data.keys()) == {"characters", "locations", "events"}
 
-    # --- Transfer context: ch3 only, sources are ch1+ch2 ---
-    transfer = TransferContextStore(data_dir).load(NOVEL_ID, 3)
-    assert transfer is not None
-    assert transfer.source_chapters == [1, 2]
-    assert TransferContextStore(data_dir).load(NOVEL_ID, 1) is None
-
     # --- Integration records committed + ChromaDB documents ---
     istore = MemoryIntegrationStore(data_dir)
     total_docs = 0
@@ -285,28 +306,10 @@ async def test_three_chapter_pipeline_connectivity(mock_llm, pipeline_env):
     rec1 = istore.load(NOVEL_ID, 1)
     assert all(doc_id.startswith(f"{NOVEL_ID}:1:1:") for doc_id in rec1.document_ids)
 
-    # --- Writer received style prefix and pacing instruction ---
-    writer_calls = [
-        (sys_p, user_p)
-        for (sys_p, user_p), kw in zip(mock_llm.calls, mock_llm.call_kwargs)
-        if kw.get("agent_id") == "pipeline_simplified_writer"
-    ]
-    assert len(writer_calls) == 3
-    for _sys, user in writer_calls:
-        assert "以冷静的第三人称叙事。" in user  # style prefix applied
-        assert "平淡叙事" in user  # pacing mode instruction applied
-    # transfer context reached the ch3 writer prompt
-    assert "前两章主角经历了工作变故" in writer_calls[2][1]
-
-    # --- Style prefix NOT leaked to other roles ---
-    for (sys_p, user_p), kw in zip(mock_llm.calls, mock_llm.call_kwargs):
-        if kw.get("agent_id") in (
-            "pipeline_foreshadow_extractor",
-            "pipeline_information_extractor",
-            "pipeline_integration",
-            "pipeline_transfer",
-        ):
-            assert "以冷静的第三人称叙事。" not in sys_p + user_p
+    # --- StoryThreads advanced through the official commit boundary ---
+    thread = StoryThreadStore(data_dir).load().threads["thread_copper_key"]
+    assert thread.status == "advancing"
+    assert thread.evidence
 
 
 @pytest.mark.asyncio
@@ -315,69 +318,61 @@ async def test_rerun_chapter_is_idempotent(mock_llm, pipeline_env):
     env = pipeline_env
     service: StatefulPipelineService = env["service"]
     data_dir = env["data_dir"]
+    author: AuthorGenerationService = env["author"]
     _queue_full_run(mock_llm)
 
-    await service.generate_initial_synopses(
-        novel_id=NOVEL_ID, story_bible=env["bible"], genre="都市生活"
+    synopses = await service.generate_initial_synopses(
+        novel_id=NOVEL_ID, story_bible=env["bible"], genre="都市悬疑"
     )
-    synopses = SynopsisStore(data_dir).load_all(NOVEL_ID)
     await service.ensure_schema(
-        novel_id=NOVEL_ID, story_bible=env["bible"], genre="都市生活", synopses=synopses
+        novel_id=NOVEL_ID,
+        story_bible=env["bible"],
+        genre="都市悬疑",
+        synopses=synopses,
     )
-    await _run_chapter(service, env["bible"], env["canon"], 1, count=1)
-    await _run_chapter(service, env["bible"], env["canon"], 2, count=0)
-    await _run_chapter(service, env["bible"], env["canon"], 3, count=1)
+    for chapter, count in ((1, 1), (2, 0), (3, 1)):
+        await _run_chapter(env, chapter, count)
 
     docs_before = await env["chroma"].count(NOVEL_ID)
     records_before = len(ForeshadowStore(data_dir).load_records(NOVEL_ID))
-
-    # Re-run chapter 3: transfer/info/integration are cached or skipped;
-    # only writer + foreshadow extraction consume LLM calls again.
+    canon_before = CanonicalStateStore(data_dir).load().revision
+    threads_before = StoryThreadStore(data_dir).load().revision
     calls_before = len(mock_llm.call_kwargs)
-    mock_llm.set_responses([
-        f"<prose>{PROSE}</prose>",
-        _foreshadow_response("第三章伏笔：旧照片"),
-    ])
-    state = await _run_chapter(service, env["bible"], env["canon"], 3, count=1)
+    prose_before = author.sections.get_by_id(
+        service.get_pipeline_state(NOVEL_ID, 3).committed_section_id
+    ).content
+
+    # Re-running a completed chapter is a pure read: no LLM role, no Writer,
+    # no authority mutation.  Deliberately not re-confirmed — a completed
+    # chapter is replayed, never silently regenerated.
+    state = await service.run_chapter_pipeline(
+        NOVEL_ID, 3, author_service=author
+    )
+
     assert state.phase == ChapterPipelinePhase.COMPLETED
-
-    rerun_agents = [kw.get("agent_id") for kw in mock_llm.call_kwargs[calls_before:]]
-    assert rerun_agents == [
-        "pipeline_simplified_writer",
-        "pipeline_foreshadow_extractor",
-    ]
-
-    # No duplicated foreshadow records (deterministic id dedup)
+    assert mock_llm.call_kwargs[calls_before:] == []
+    assert env["writer"].generate_calls == 3
     assert len(ForeshadowStore(data_dir).load_records(NOVEL_ID)) == records_before
-    # No duplicated Chroma documents (integration skipped: record committed)
     assert await env["chroma"].count(NOVEL_ID) == docs_before
-    # Receipt not re-rolled
+    assert CanonicalStateStore(data_dir).load().revision == canon_before
+    assert StoryThreadStore(data_dir).load().revision == threads_before
+    assert author.sections.get_by_id(state.committed_section_id).content == prose_before
     receipt = ForeshadowStore(data_dir).load_receipt(NOVEL_ID, 3)
     assert receipt.new_foreshadow_count == 1
 
 
 @pytest.mark.asyncio
 async def test_generation_blocked_without_confirmation(mock_llm, pipeline_env):
-    """No confirmation → Novel LLM call count must be 0 (spec §38)."""
-    from story.stateful_pipeline.service import ConfirmationRequiredError
-
+    """No confirmation → Writer and pipeline LLM call count must both be 0."""
     env = pipeline_env
     service: StatefulPipelineService = env["service"]
     mock_llm.set_responses([])
 
     with pytest.raises(ConfirmationRequiredError):
         await service.run_chapter_pipeline(
-            novel_id=NOVEL_ID,
-            chapter=1,
-            confirmation=None,
-            bible=env["bible"],
-            canon=env["canon"],
-            style_prefix="",
-            chapter_goal="test",
+            NOVEL_ID, 1, author_service=env["author"]
         )
 
-    writer_calls = [
-        kw for kw in mock_llm.call_kwargs
-        if kw.get("agent_id") == "pipeline_simplified_writer"
-    ]
-    assert len(writer_calls) == 0
+    assert env["writer"].generate_calls == 0
+    assert mock_llm.call_kwargs == []
+    assert env["author"].transactions.list_all() == []

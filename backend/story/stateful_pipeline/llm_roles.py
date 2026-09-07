@@ -17,19 +17,91 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from pydantic import Field
+
 from nf_core.json_utils import parse_llm_json, strip_code_fence
 from nf_core.llm_client import llm_client
+from story.models import StoryBible
 from story.stateful_pipeline.models import (
     ChapterInformation,
     ForeshadowRecord,
     InformationField,
     InformationSchema,
+    PipelineModel,
     TransferContext,
 )
 
 
 class PipelineLLMError(RuntimeError):
     """Raised when a pipeline LLM role fails."""
+
+
+# ---------------------------------------------------------------------------
+# StoryBible → PromptView
+# ---------------------------------------------------------------------------
+
+
+class StoryBiblePromptView(PipelineModel):
+    """The exact StoryBible material pipeline-owned prompts may use.
+
+    Every field is read by name, so renaming a ``StoryBible`` field breaks here
+    loudly instead of silently dropping setting material from a prompt.
+    """
+
+    title: str = ""
+    genre: str = ""
+    premise: str = ""
+    theme: str = ""
+    central_question: str = ""
+    setting_summary: str = ""
+    immutable_world_rules: list[str] = Field(default_factory=list)
+    forbidden_deviations: list[str] = Field(default_factory=list)
+    protagonist_contracts: list[str] = Field(default_factory=list)
+    main_conflicts: list[str] = Field(default_factory=list)
+    ending_direction: str = ""
+
+
+def story_bible_prompt_view(bible: StoryBible) -> StoryBiblePromptView:
+    """Convert the authoritative StoryBible into its prompt projection."""
+
+    return StoryBiblePromptView(
+        title=bible.title,
+        genre=bible.genre,
+        premise=bible.premise,
+        theme=bible.theme,
+        central_question=bible.central_question,
+        setting_summary=bible.setting_summary,
+        immutable_world_rules=list(bible.immutable_world_rules),
+        forbidden_deviations=list(bible.forbidden_deviations),
+        protagonist_contracts=list(bible.protagonist_contracts),
+        main_conflicts=list(bible.main_conflicts),
+        ending_direction=bible.ending_direction,
+    )
+
+
+def render_story_bible_prompt(view: StoryBiblePromptView) -> str:
+    """Render the projection as compact prompt text (empty fields omitted)."""
+
+    lines: list[str] = []
+    for label, value in (
+        ("标题", view.title),
+        ("类型", view.genre),
+        ("故事前提", view.premise),
+        ("主题", view.theme),
+        ("核心问题", view.central_question),
+        ("背景摘要", view.setting_summary),
+        ("不可变世界规则", view.immutable_world_rules),
+        ("禁止偏离", view.forbidden_deviations),
+        ("主角契约", view.protagonist_contracts),
+        ("主要冲突", view.main_conflicts),
+        ("结局方向", view.ending_direction),
+    ):
+        if isinstance(value, str):
+            if value.strip():
+                lines.append(f"{label}：{value.strip()}")
+        elif value:
+            lines.append(f"{label}：" + "；".join(value))
+    return "\n".join(lines)
 
 
 def _parse_llm_output(raw: str) -> Any:
@@ -200,7 +272,7 @@ async def generate_synopsis(
 
 
 # ---------------------------------------------------------------------------
-# Simplified Chapter Writer (plain prose output)
+# Simplified Chapter Writer — experimental / smoke / legacy compatibility only
 # ---------------------------------------------------------------------------
 
 SIMPLIFIED_WRITER_SYSTEM_PROMPT = """你是一个小说章节写作器。根据提供的梗概、风格要求和节奏模式，写出一章完整的正文。
@@ -249,6 +321,13 @@ async def write_chapter_simplified(
     min_prose_chars: int = MIN_VALID_PROSE_CHARS,
 ) -> str:
     """Write a chapter with simplified plain-prose output.
+
+    Not the official chapter writer.  This role bypasses StoryBible,
+    CanonicalState, NarrativeContract, the Author validator, repair and the
+    transaction commit boundary, so it is retained only for experimental,
+    smoke-test and legacy-compatibility use.  Official chapter prose is
+    produced by ``AuthorGenerationService`` through
+    :mod:`story.stateful_pipeline.author_bridge`.
 
     Retries automatically when the model returns empty or too-short prose.
     Returns the prose text (without <prose> tags).
@@ -609,7 +688,12 @@ async def build_transfer_context(
 ) -> TransferContext:
     """Compile context from recent chapters and selected foreshadow.
 
-    Returns TransferContext for the Novel LLM.
+    Experimental / derived retrieval only.  Official chapter continuity comes
+    from the Author ``ContextBuilder`` (previous prose tail, recent section
+    summaries and typed long-term memories), so this role is not called on the
+    production path and must not become a second context mechanism.
+
+    Returns TransferContext for inspection and derived retrieval.
     """
     recent_data = []
     source_chapters = []

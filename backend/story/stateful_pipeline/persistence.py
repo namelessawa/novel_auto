@@ -26,6 +26,13 @@ class PipelineStoreError(RuntimeError):
     pass
 
 
+def _remove_file(path: str) -> None:
+    """Delete one derived artifact if present (explicit retry purge only)."""
+
+    if os.path.isfile(path):
+        os.remove(path)
+
+
 # ---------------------------------------------------------------------------
 # Synopsis Store
 # ---------------------------------------------------------------------------
@@ -167,6 +174,9 @@ class ForeshadowStore:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(receipt.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
 
+    def delete_receipt(self, novel_id: str, chapter: int) -> None:
+        _remove_file(self._receipt_path(chapter))
+
 
 # ---------------------------------------------------------------------------
 # Chapter Information Store
@@ -207,6 +217,9 @@ class ChapterInformationStore:
                 results.append(info)
         return results
 
+    def delete(self, novel_id: str, chapter: int) -> None:
+        _remove_file(self._path(chapter))
+
 
 # ---------------------------------------------------------------------------
 # Transfer Context Store
@@ -237,6 +250,9 @@ class TransferContextStore:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(ctx.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
         return ctx
+
+    def delete(self, novel_id: str, chapter: int) -> None:
+        _remove_file(self._path(chapter))
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +329,9 @@ class MemoryIntegrationStore:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(record.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
         return record
+
+    def delete(self, novel_id: str, chapter: int) -> None:
+        _remove_file(self._path(chapter))
 
 
 # ---------------------------------------------------------------------------

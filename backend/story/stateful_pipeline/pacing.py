@@ -1,5 +1,11 @@
 """Chapter pacing mode selection with hard constraints.
 
+Experimental metadata only.  Since the pipeline was converged back onto Author
+production, official chapter structure is owned by the Author
+``SectionWritingPlan`` / ``NarrativeContract``; this selector no longer decides
+plot or prose and is not called on the production path.  It is retained, with
+its receipts, for compatibility and for future pacing analytics.
+
 Each chapter draws one pacing mode from a weighted distribution:
   - flat (平淡叙事): weight 6
   - conflict (冲突制造): weight 2

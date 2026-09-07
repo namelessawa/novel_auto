@@ -17,6 +17,7 @@ import { showToast } from '../../utils/toast'
 
 const PHASE_LABELS = {
   awaiting_user_confirmation: '等待确认',
+  confirmed: '已确认',
   preparing_context: '准备上下文',
   writing: '正文生成',
   extracting_foreshadows: '伏笔提取',

@@ -267,6 +267,7 @@ class MemoryIntegrationRecord(PipelineModel):
 
 class ChapterPipelinePhase(str, Enum):
     AWAITING_CONFIRMATION = "awaiting_user_confirmation"
+    CONFIRMED = "confirmed"
     PREPARING_CONTEXT = "preparing_context"
     WRITING = "writing"
     EXTRACTING_FORESHADOWS = "extracting_foreshadows"
@@ -277,20 +278,66 @@ class ChapterPipelinePhase(str, Enum):
     FAILED = "failed"
 
 
+class AuthorityRevisions(PipelineModel):
+    """Every authority revision the Author production chain reads.
+
+    Frozen at confirmation and re-checked before generation so a chapter can
+    never silently bind to an authority the user edited afterwards.
+    """
+
+    synopsis_revision: int = Field(ge=0)
+    story_bible_revision: int = Field(ge=1)
+    canon_revision: int = Field(ge=1)
+    story_thread_revision: int = Field(ge=1)
+    memory_revision: int = Field(ge=1)
+    outline_revision: int = Field(ge=1)
+    style_revision: int = Field(ge=0)
+    information_schema_revision: int = Field(ge=0)
+
+    def drift(self, current: "AuthorityRevisions") -> list[str]:
+        """Return every authority that moved since confirmation."""
+
+        drifted = []
+        for name in type(self).model_fields:
+            frozen = getattr(self, name)
+            live = getattr(current, name)
+            if frozen != live:
+                drifted.append(f"{name}: confirmed {frozen}, current {live}")
+        return drifted
+
+
 class ChapterPipelineState(PipelineModel):
-    """State machine tracking the current phase of chapter generation."""
+    """State machine tracking the current phase of chapter generation.
+
+    The revision fields plus ``synopsis_title``/``synopsis_text`` are the
+    immutable confirmation snapshot: generation binds to them and fails closed
+    when a live authority has moved on, never silently reading the new value.
+    ``committed_*`` fields are the Author commit evidence that makes
+    ``COMPLETED`` meaningful.
+    """
 
     novel_id: str
     chapter_number: int = Field(ge=1)
     phase: ChapterPipelinePhase = ChapterPipelinePhase.AWAITING_CONFIRMATION
+    attempt: int = Field(default=1, ge=1)
     synopsis_revision: int | None = None
+    synopsis_title: str = ""
+    synopsis_text: str = ""
     story_bible_revision: int | None = None
     canon_revision: int | None = None
+    story_thread_revision: int | None = None
+    memory_revision: int | None = None
+    outline_revision: int | None = None
     style_revision: int | None = None
     information_schema_revision: int | None = None
     generation_preference: ChapterGenerationPreference | None = None
     selection_receipt: ForeshadowSelectionReceipt | None = None
     transfer_context: TransferContext | None = None
+    author_transaction_id: str = ""
+    committed_section_id: str = ""
+    committed_char_count: int = Field(default=0, ge=0)
+    committed_canonical_revision: int | None = None
+    committed_at: str | None = None
     error_message: str | None = None
     started_at: str | None = None
     updated_at: str = Field(default_factory=utc_now)
@@ -302,6 +349,54 @@ class ChapterPipelineState(PipelineModel):
             ChapterPipelinePhase.FAILED,
         )
 
+    @property
+    def is_confirmed(self) -> bool:
+        return self.phase is not ChapterPipelinePhase.AWAITING_CONFIRMATION and (
+            self.story_bible_revision is not None
+        )
+
+    @property
+    def committed_manuscript(self) -> bool:
+        """True only when a real Author commit was recorded for this chapter."""
+
+        return bool(
+            self.phase == ChapterPipelinePhase.COMPLETED
+            and self.committed_section_id
+            and self.author_transaction_id
+            and self.committed_char_count > 0
+            and (self.committed_canonical_revision or 0) > 0
+        )
+
+    def frozen_confirmation(self) -> ChapterConfirmation | None:
+        """Rebuild the immutable confirmation binding, or None when absent."""
+
+        revisions = (
+            self.synopsis_revision,
+            self.story_bible_revision,
+            self.canon_revision,
+            self.story_thread_revision,
+            self.memory_revision,
+            self.outline_revision,
+            self.style_revision,
+            self.information_schema_revision,
+        )
+        if any(value is None for value in revisions):
+            return None
+        return ChapterConfirmation(
+            novel_id=self.novel_id,
+            chapter_number=self.chapter_number,
+            synopsis_revision=self.synopsis_revision or 0,
+            synopsis_title=self.synopsis_title,
+            synopsis_text=self.synopsis_text,
+            story_bible_revision=self.story_bible_revision or 0,
+            canon_revision=self.canon_revision or 0,
+            story_thread_revision=self.story_thread_revision or 0,
+            memory_revision=self.memory_revision or 0,
+            outline_revision=self.outline_revision or 0,
+            style_revision=self.style_revision or 0,
+            information_schema_revision=self.information_schema_revision or 0,
+        )
+
 
 # ---------------------------------------------------------------------------
 # Confirmation Binding
@@ -309,13 +404,35 @@ class ChapterPipelineState(PipelineModel):
 
 
 class ChapterConfirmation(PipelineModel):
-    """Binding snapshot when user confirms a chapter for generation."""
+    """Immutable binding snapshot taken when the user confirms a chapter.
+
+    Every authority revision the Author production chain reads is frozen here,
+    together with the synopsis content itself (the synopsis store keeps only the
+    newest revision, so the text must travel with the confirmation).
+    """
 
     novel_id: str
     chapter_number: int = Field(ge=1)
-    synopsis_revision: int
-    story_bible_revision: int
-    canon_revision: int
-    style_revision: int
-    information_schema_revision: int
+    synopsis_revision: int = Field(ge=0)
+    synopsis_title: str = ""
+    synopsis_text: str = ""
+    story_bible_revision: int = Field(ge=1)
+    canon_revision: int = Field(ge=1)
+    story_thread_revision: int = Field(ge=1)
+    memory_revision: int = Field(ge=1)
+    outline_revision: int = Field(ge=1)
+    style_revision: int = Field(ge=0)
+    information_schema_revision: int = Field(ge=0)
     confirmed_at: str = Field(default_factory=utc_now)
+
+    def revisions(self) -> AuthorityRevisions:
+        return AuthorityRevisions(
+            synopsis_revision=self.synopsis_revision,
+            story_bible_revision=self.story_bible_revision,
+            canon_revision=self.canon_revision,
+            story_thread_revision=self.story_thread_revision,
+            memory_revision=self.memory_revision,
+            outline_revision=self.outline_revision,
+            style_revision=self.style_revision,
+            information_schema_revision=self.information_schema_revision,
+        )
